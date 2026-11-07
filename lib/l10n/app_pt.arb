@@ -328,8 +328,6 @@
   "askAiRiskCaution": "Altera o sistema",
   "askAiRiskUnvetted": "Host não verificado",
   "askAiRiskDestructive": "Alto risco",
-  "askAiAutoRunSafeCommands": "Executar automaticamente comandos somente leitura",
-  "askAiAutoRunSafeCommandsTip": "Só executa se o modelo e a verificação local o considerarem só de leitura",
   "askAiHistory": "Histórico de conversas",
   "askAiNewConversation": "Nova conversa",
   "askAiUntitledConversation": "Sem título",
@@ -438,7 +436,7 @@
   "continueInTerminal": "Continuar no terminal",
   "askAiRiskUnknown": "Não classificado",
   "agentLocalExec": "Executar comandos neste dispositivo",
-  "agentLocalExecTip": "Deixa o Agent trabalhar na máquina que executa o ServerBox. Mesmo os comandos só de leitura são revistos",
+  "agentLocalExecTip": "Permite que o Agent trabalhe na máquina que executa o ServerBox. Seus comandos seguem o modo de permissão",
   "agentLocalExecRootfsTip": "Deixa o Agent trabalhar localmente, limitado ao contentor Linux que o ServerBox instalou",
   "macDmgImportedPartly": "Os dados da versão instalada anteriormente foram importados. Os ficheiros transferidos ficaram em {path}.",
   "bmcAccount": "Conta",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "Memorizar durante 15 minutos",
   "agentNewOn": "Nova conversa: {place}",
   "agentRemoteNewHint": "Pergunte ao agente em {server} ou atribua uma tarefa.",
-  "agentPermissionMode": "Modo de permissões",
-  "agentModeAuto": "Automático",
-  "agentModeManual": "Manual",
-  "agentModeBypass": "Permitir tudo",
-  "agentModeBypassOff": "Desativado neste servidor",
   "agentModeBypassWarn": "Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar.",
   "webApps": "Apps web",
   "webAppUnhealthy": "Com falhas",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Filtrar por nome ou endereço",
   "discoverySameMachine": "A mesma máquina em vários endereços",
   "discoveryPrimaryAddress": "Endereço principal",
-  "discoveryAlternateAddress": "Endereço alternativo"
+  "discoveryAlternateAddress": "Endereço alternativo",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "Descartar as alterações não salvas?"
 }

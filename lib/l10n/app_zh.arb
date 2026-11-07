@@ -22,8 +22,6 @@
   "askAiRiskCaution": "会更改系统",
   "askAiRiskUnvetted": "未审核的主机",
   "askAiRiskDestructive": "高风险",
-  "askAiAutoRunSafeCommands": "自动执行只读命令",
-  "askAiAutoRunSafeCommandsTip": "仅当模型与本地安全检查都判定命令为只读时自动执行",
   "askAiHistory": "对话历史",
   "askAiNewConversation": "新建对话",
   "askAiUntitledConversation": "新对话",
@@ -461,7 +459,7 @@
   "continueInTerminal": "在终端中继续",
   "askAiRiskUnknown": "未判定",
   "agentLocalExec": "在本机执行命令",
-  "agentLocalExecTip": "允许 Agent 在当前设备上执行本机命令（所有命令执行前均需你确认）",
+  "agentLocalExecTip": "允许 Agent 在当前设备上执行本机命令，命令按权限模式处理",
   "agentLocalExecRootfsTip": "仅允许 Agent 在 ServerBox 内置的本地 Linux 容器中执行命令。",
   "macDmgImportedPartly": "已导入此前安装版本的数据。下载的文件仍保留在 {path}。",
   "bmcAccount": "账户",
@@ -1850,11 +1848,6 @@
   "agentRemoteSudoRemember": "记住 15 分钟",
   "agentNewOn": "新建于 {place}",
   "agentRemoteNewHint": "向 {server} 上的 agent 提问，或交给它一个任务。",
-  "agentPermissionMode": "权限模式",
-  "agentModeAuto": "自动",
-  "agentModeManual": "手动",
-  "agentModeBypass": "全部放行",
-  "agentModeBypassOff": "此服务器已关闭",
   "agentModeBypassWarn": "全部放行：删除、重启和修改配置都会直接执行，不再询问。",
   "webApps": "Web 应用",
   "webAppUnhealthy": "异常",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "按名称或地址筛选",
   "discoverySameMachine": "同一台机器，多个地址",
   "discoveryPrimaryAddress": "主地址",
-  "discoveryAlternateAddress": "备用地址"
+  "discoveryAlternateAddress": "备用地址",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "放弃未保存的修改？"
 }

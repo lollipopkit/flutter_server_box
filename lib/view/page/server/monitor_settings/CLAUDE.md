@@ -10,7 +10,7 @@
 
 **The form is four groups in a `PageColumns` grid, and each collection is a page of its own.** `view.dart` holds the form, `lists.dart` the three list editors, `widgets.dart` (`MonitorUi`) what both draw, `push_edit.dart` one channel.
 
-- Groups: **Collection** (intervals, idle pause), **Alerts** (two rows), **Storage** (retention), **Network** (CORS). A heading names the *category*, not the first row under it. Idle pause is inside Collection because what it pauses is the extended cycle two fields above it.
+- Groups: **Collection** (intervals, idle pause), **Alerts** (two rows), **Storage** (retention), **Network** (CORS), **Agent** (command permissions). A heading names the *category*, not the first row under it. Idle pause is inside Collection because what it pauses is the extended cycle two fields above it.
 - Alert rules, notification channels and CORS origins are `MonitorRulesPage` / `MonitorPushListPage` / `MonitorCorsPage`, reached from a row whose subtitle is *what is inside* — names, not a count.
   - Each takes the list plus an `onChanged` callback rather than answering with the edited list. A page can be left by a back gesture, which answers `null` and cannot be told apart from "changed nothing", and the form's dirty flag has to be set exactly when something changed.
   - Rows are numbered, not iconed: every row of one list had the same icon, which said what the page had already said. For a channel the position is also what the agent resolves a withheld credential against.
@@ -25,3 +25,5 @@
 
 - That is also why removing a channel asks first and removing a rule or an origin does not: a rule and an origin are entirely visible in the row that holds them and can be typed back, and a channel's credential was never on screen at all.
 - One Save button, two requests, each sent only if its half changed: the endpoints are separate so that an edit to a collection interval can never be what drops a credential. A failure in one is reported without claiming the other did not happen.
+
+**Command permissions are their own page with their own save**: fl_pi_llm_ui's `PermissionsPage`, pushed by `AgentPermissions.route` (`lib/view/page/agent/permissions.dart`) with a `MonitorPermissionsSource` (`GET/PUT /api/v1/agent/permissions`); the app's own Agent opens the same page with `LocalPermissionsSource`. Both decide by `fl_pi_llm::permissions`. A monitor stores them in its database, not `config.toml`, so they are not part of the form's two requests; the form shows its row only when `/capabilities` lists `agentMode`. A mode or field this app does not know is sent back as the agent gave it. An auto mode list left empty is sent absent, which reads as the built-in list.

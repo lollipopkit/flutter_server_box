@@ -328,8 +328,6 @@
   "askAiRiskCaution": "Modifica el sistema",
   "askAiRiskUnvetted": "Host no verificado",
   "askAiRiskDestructive": "Riesgo alto",
-  "askAiAutoRunSafeCommands": "Ejecutar automáticamente los comandos de solo lectura",
-  "askAiAutoRunSafeCommandsTip": "Solo se ejecuta si el modelo y la comprobación local lo consideran de solo lectura",
   "askAiHistory": "Historial de conversaciones",
   "askAiNewConversation": "Nueva conversación",
   "askAiUntitledConversation": "Sin título",
@@ -438,7 +436,7 @@
   "continueInTerminal": "Continuar en la terminal",
   "askAiRiskUnknown": "Sin clasificar",
   "agentLocalExec": "Ejecutar comandos en este dispositivo",
-  "agentLocalExecTip": "Deja que el Agent trabaje en la máquina que ejecuta ServerBox. Incluso los comandos de solo lectura se revisan",
+  "agentLocalExecTip": "Permite que el Agent trabaje en la máquina donde se ejecuta ServerBox. Sus comandos siguen el modo de permisos",
   "agentLocalExecRootfsTip": "Deja que el Agent trabaje en local, limitado al contenedor Linux que instaló ServerBox",
   "macDmgImportedPartly": "Se importaron los datos de la versión instalada anteriormente. Los archivos descargados se quedaron en {path}.",
   "bmcAccount": "Cuenta",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "Recordar durante 15 minutos",
   "agentNewOn": "Nuevo chat: {place}",
   "agentRemoteNewHint": "Pregúntale al agente de {server} o asígnale una tarea.",
-  "agentPermissionMode": "Modo de permisos",
-  "agentModeAuto": "Automático",
-  "agentModeManual": "Manual",
-  "agentModeBypass": "Permitir todo",
-  "agentModeBypassOff": "Desactivado en este servidor",
   "agentModeBypassWarn": "Permitir todo: las eliminaciones, los reinicios y los cambios de configuración se ejecutan sin preguntar.",
   "webApps": "Apps web",
   "webAppUnhealthy": "Con fallos",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Filtrar por nombre o dirección",
   "discoverySameMachine": "La misma máquina en varias direcciones",
   "discoveryPrimaryAddress": "Dirección principal",
-  "discoveryAlternateAddress": "Dirección alternativa"
+  "discoveryAlternateAddress": "Dirección alternativa",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "¿Descartar los cambios sin guardar?"
 }

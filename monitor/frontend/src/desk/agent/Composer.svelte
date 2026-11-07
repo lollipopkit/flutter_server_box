@@ -41,10 +41,17 @@
   let picker = $state<HTMLInputElement | null>(null)
   let menu = $state<HTMLDivElement | null>(null)
 
-  const mode = $derived.by<PermissionMode>(() => {
-    const m = d.mode ?? store.defaultMode
-    return m === 'bypass' && !store.bypassAllowed ? 'manual' : m
-  })
+  /// The mode new tasks start in: picking one here changes it for all of
+  /// them, as the permissions page does.
+  const mode = $derived<PermissionMode>(store.defaultMode === 'bypass' && !store.bypassAllowed ? 'manual' : store.defaultMode)
+
+  async function pickMode(id: PermissionMode) {
+    try {
+      await store.setDefaultMode(id)
+    } catch (e) {
+      error = errorText(e)
+    }
+  }
 
   const MODES: { id: PermissionMode; glyph: string; bg: string; fg: string }[] = [
     { id: 'auto', glyph: 'auto_mode', bg: 'var(--color-accent-soft)', fg: 'var(--color-accent-text)' },
@@ -66,7 +73,7 @@
 
   function cycleMode() {
     const ids = MODES.map((m) => m.id).filter(usable)
-    d.mode = ids[(ids.indexOf(mode) + 1) % ids.length]
+    void pickMode(ids[(ids.indexOf(mode) + 1) % ids.length])
   }
 
   const keys = $derived([
@@ -129,9 +136,8 @@
     try {
       const ids = await atts.ids()
       if (!ids) return
-      const f = await store.startFlow(words, mode, ids, d.choice())
+      const f = await store.startFlow(words, ids, d.choice())
       clear(false)
-      d.mode = null
       ta?.blur()
       onstarted(f)
     } catch (e) {
@@ -262,7 +268,7 @@
           disabled={!usable(m.id)}
           onmousedown={keep}
           onclick={() => {
-            d.mode = m.id
+            void pickMode(m.id)
             modeOpen = false
           }}
         >

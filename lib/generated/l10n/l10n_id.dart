@@ -85,14 +85,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiRiskDestructive => 'Risiko tinggi';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Jalankan otomatis perintah hanya-baca';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Hanya jalan jika model dan pemeriksaan lokal sama-sama menyebutnya hanya-baca';
-
-  @override
   String get askAiHistory => 'Riwayat percakapan';
 
   @override
@@ -1686,7 +1678,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Membiarkan Agent bekerja di mesin yang menjalankan ServerBox. Perintah hanya-baca pun ditinjau';
+      'Mengizinkan Agent bekerja di mesin yang menjalankan ServerBox. Perintahnya mengikuti mode izin';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6590,21 +6582,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Mode izin';
-
-  @override
-  String get agentModeAuto => 'Otomatis';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Izinkan semua';
-
-  @override
-  String get agentModeBypassOff => 'Dinonaktifkan di server ini';
-
-  @override
   String get agentModeBypassWarn =>
       'Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.';
 
@@ -7278,4 +7255,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alamat cadangan';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Buang perubahan yang belum disimpan?';
 }

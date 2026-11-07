@@ -67,6 +67,12 @@ export class AgentStore {
   #retry = RETRY_MIN_MS
   #noticeTimer: ReturnType<typeof setTimeout> | null = null
   #detailSeq = 0
+  /// The default mode being saved: one at a time, and a task started
+  /// meanwhile waits for it, so it starts in the mode shown.
+  #modeSave: Promise<void> = Promise.resolve()
+  /// Bumped as a mode save starts: a listing asked for before it does not
+  /// put the old mode back.
+  #modeSeq = 0
 
   constructor(entry: ServerEntry) {
     this.entry = { ...entry }
@@ -100,13 +106,14 @@ export class AgentStore {
   }
 
   async refresh(): Promise<void> {
+    const modeSeq = this.#modeSeq
     try {
       const list = await agentApi.list(this.entry)
       this.flows = list.flows
       this.configured = list.configured
       this.hostname = list.hostname
       this.maxRunning = list.maxRunning
-      this.defaultMode = list.defaultMode ?? 'manual'
+      if (modeSeq === this.#modeSeq) this.defaultMode = list.defaultMode ?? 'manual'
       this.bypassAllowed = list.bypassAllowed ?? true
       this.error = null
       if (list.configured) void this.#loadChoices()
@@ -199,8 +206,28 @@ export class AgentStore {
     }
   }
 
-  async startFlow(prompt: string, mode?: PermissionMode, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
-    const f = await agentApi.start(this.entry, prompt, mode, files, choice)
+  /// Makes [mode] the one new tasks start in, as the permissions page does.
+  setDefaultMode(mode: PermissionMode): Promise<void> {
+    const save = this.#modeSave.then(async () => {
+      this.#modeSeq++
+      const prev = this.defaultMode
+      this.defaultMode = mode
+      try {
+        const v = await agentApi.permissions(this.entry)
+        this.defaultMode = (await agentApi.savePermissions(this.entry, { ...v.permissions, defaultMode: mode })).permissions.defaultMode
+      } catch (e) {
+        this.defaultMode = prev
+        throw e
+      }
+    })
+    this.#modeSave = save.catch(() => {})
+    return save
+  }
+
+  /// A new task, in the mode new tasks start in.
+  async startFlow(prompt: string, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
+    await this.#modeSave
+    const f = await agentApi.start(this.entry, prompt, undefined, files, choice)
     this.#upsert(f)
     return f
   }

@@ -85,14 +85,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiRiskDestructive => 'Высокий риск';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Автоматически выполнять команды только для чтения';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Выполняется, только если и модель, и локальная проверка считают команду только для чтения';
-
-  @override
   String get askAiHistory => 'История диалогов';
 
   @override
@@ -1699,7 +1691,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Позволяет агенту работать на машине, где запущен ServerBox. Даже команды только для чтения проверяются';
+      'Позволяет Agent работать на машине, где запущен ServerBox. Его команды идут по режиму разрешений';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6633,21 +6625,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Режим разрешений';
-
-  @override
-  String get agentModeAuto => 'Авто';
-
-  @override
-  String get agentModeManual => 'Вручную';
-
-  @override
-  String get agentModeBypass => 'Разрешить всё';
-
-  @override
-  String get agentModeBypassOff => 'Отключено на этом сервере';
-
-  @override
   String get agentModeBypassWarn =>
       'Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются без подтверждения.';
 
@@ -7329,4 +7306,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Резервный адрес';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Отменить несохранённые изменения?';
 }

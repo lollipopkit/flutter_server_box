@@ -377,8 +377,6 @@
   "askAiRiskCaution": "시스템 변경",
   "askAiRiskUnvetted": "미검증 호스트",
   "askAiRiskDestructive": "높은 위험",
-  "askAiAutoRunSafeCommands": "읽기 전용 명령 자동 실행",
-  "askAiAutoRunSafeCommandsTip": "모델과 로컬 검사가 모두 읽기 전용이라고 판단할 때만 실행",
   "askAiHistory": "대화 기록",
   "askAiNewConversation": "새 대화",
   "askAiUntitledConversation": "제목 없음",
@@ -438,7 +436,7 @@
   "continueInTerminal": "터미널에서 계속하기",
   "askAiRiskUnknown": "분류되지 않음",
   "agentLocalExec": "이 기기에서 명령 실행",
-  "agentLocalExecTip": "ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다",
+  "agentLocalExecTip": "ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다",
   "agentLocalExecRootfsTip": "Agent를 로컬에서 동작하게 하며, 범위는 ServerBox가 설치한 Linux 컨테이너 안으로 제한됩니다",
   "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다.",
   "bmcAccount": "계정",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "15분 동안 기억",
   "agentNewOn": "{place}에서 새 대화 시작",
   "agentRemoteNewHint": "{server}의 agent에게 질문하거나 작업을 맡기세요.",
-  "agentPermissionMode": "권한 모드",
-  "agentModeAuto": "자동",
-  "agentModeManual": "수동",
-  "agentModeBypass": "모두 허용",
-  "agentModeBypassOff": "이 서버에서 사용 중지됨",
   "agentModeBypassWarn": "모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.",
   "webApps": "웹 앱",
   "webAppUnhealthy": "비정상",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "이름 또는 주소로 필터",
   "discoverySameMachine": "같은 머신, 여러 주소",
   "discoveryPrimaryAddress": "기본 주소",
-  "discoveryAlternateAddress": "대체 주소"
+  "discoveryAlternateAddress": "대체 주소",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "저장하지 않은 변경 사항을 버릴까요?"
 }

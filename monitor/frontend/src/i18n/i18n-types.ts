@@ -7372,7 +7372,7 @@ type RootTranslation = {
 	 */
 	deskAgentModeAutoDesc: string
 	/**
-	 * S​t​e​p​s​ ​g​o​ ​b​y​ ​t​h​e​ ​r​u​l​e​s​ ​i​n​ ​S​e​t​t​i​n​g​s​.​ ​A​ ​c​h​a​n​g​e​ ​n​o​ ​r​u​l​e​ ​m​a​t​c​h​e​s​ ​w​a​i​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​c​o​n​f​i​r​m​ ​i​t​.
+	 * S​t​e​p​s​ ​g​o​ ​b​y​ ​t​h​e​ ​r​u​l​e​s​ ​i​n​ ​S​e​t​t​i​n​g​s​.​ ​A​ ​s​t​e​p​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​w​a​i​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​c​o​n​f​i​r​m​ ​i​t​.
 	 */
 	deskAgentModeManualDesc: string
 	/**
@@ -7632,7 +7632,7 @@ type RootTranslation = {
 	 */
 	settingsAgent: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​a​s​k​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​w​i​t​h​ ​t​h​e​ ​m​o​d​e​l​ ​c​h​o​s​e​n​ ​h​e​r​e​.​ ​I​t​ ​r​e​a​d​s​ ​f​r​e​e​l​y​,​ ​a​n​d​ ​a​s​k​s​ ​b​e​f​o​r​e​ ​c​h​a​n​g​i​n​g​ ​a​n​y​t​h​i​n​g​.
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​a​s​k​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​w​i​t​h​ ​t​h​e​ ​m​o​d​e​l​ ​c​h​o​s​e​n​ ​h​e​r​e​.​ ​W​h​a​t​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g​ ​g​o​e​s​ ​b​y​ ​i​t​s​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​.
 	 */
 	settingsAgentAbout: string
 	/**
@@ -7802,7 +7802,7 @@ type RootTranslation = {
 	 */
 	settingsAgentMcpSub: string
 	/**
-	 * T​a​s​k​s​ ​g​e​t​ ​t​h​e​ ​t​o​o​l​s​ ​o​f​ ​t​h​e​s​e​ ​s​e​r​v​e​r​s​.​ ​A​ ​t​o​o​l​ ​t​h​a​t​ ​s​a​y​s​ ​i​t​ ​o​n​l​y​ ​r​e​a​d​s​ ​r​u​n​s​;​ ​a​n​y​ ​o​t​h​e​r​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​t​a​s​k​'​s​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​,​ ​a​s​ ​a​ ​c​o​m​m​a​n​d​ ​d​o​e​s​.​ ​A​ ​t​o​k​e​n​ ​i​s​ ​w​r​i​t​t​e​n​ ​h​e​r​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​o​w​n​ ​a​g​a​i​n​.
+	 * T​a​s​k​s​ ​g​e​t​ ​t​h​e​ ​t​o​o​l​s​ ​o​f​ ​t​h​e​s​e​ ​s​e​r​v​e​r​s​.​ ​E​a​c​h​ ​c​a​l​l​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​t​a​s​k​'​s​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​,​ ​a​s​ ​a​ ​c​o​m​m​a​n​d​ ​d​o​e​s​,​ ​o​n​e​ ​t​h​a​t​ ​s​a​y​s​ ​i​t​ ​o​n​l​y​ ​r​e​a​d​s​ ​i​n​c​l​u​d​e​d​.​ ​A​ ​t​o​k​e​n​ ​i​s​ ​w​r​i​t​t​e​n​ ​h​e​r​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​o​w​n​ ​a​g​a​i​n​.
 	 */
 	settingsAgentMcpAbout: string
 	/**
@@ -8010,7 +8010,7 @@ type RootTranslation = {
 	 */
 	settingsAgentPermissionsSub: string
 	/**
-	 * E​v​e​r​y​ ​c​o​m​m​a​n​d​ ​a​n​ ​A​g​e​n​t​ ​m​o​d​e​ ​t​a​s​k​ ​r​u​n​s​ ​m​e​e​t​s​ ​t​h​e​s​e​ ​r​u​l​e​s​ ​f​i​r​s​t​:​ ​d​e​n​y​,​ ​t​h​e​n​ ​a​s​k​,​ ​t​h​e​n​ ​a​l​l​o​w​.​ ​W​h​a​t​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​a​n​d​ ​i​s​ ​n​o​t​ ​a​ ​k​n​o​w​n​ ​r​e​a​d​ ​g​o​e​s​ ​b​y​ ​t​h​e​ ​t​a​s​k​'​s​ ​m​o​d​e​,​ ​p​i​c​k​e​d​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.​ ​F​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * E​v​e​r​y​ ​c​o​m​m​a​n​d​ ​a​n​ ​A​g​e​n​t​ ​m​o​d​e​ ​t​a​s​k​ ​r​u​n​s​ ​m​e​e​t​s​ ​t​h​e​s​e​ ​r​u​l​e​s​ ​f​i​r​s​t​:​ ​d​e​n​y​,​ ​t​h​e​n​ ​a​s​k​,​ ​t​h​e​n​ ​a​l​l​o​w​.​ ​W​h​a​t​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​g​o​e​s​ ​b​y​ ​t​h​e​ ​t​a​s​k​'​s​ ​m​o​d​e​,​ ​p​i​c​k​e​d​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.​ ​F​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
 	 */
 	settingsAgentPermissionsAbout: string
 	/**
@@ -8026,11 +8026,11 @@ type RootTranslation = {
 	 */
 	settingsAgentModeAuto: string
 	/**
-	 * N​e​w​ ​t​a​s​k​s​ ​a​s​k​ ​a​b​o​u​t​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​.
+	 * N​e​w​ ​t​a​s​k​s​ ​a​s​k​ ​a​b​o​u​t​ ​e​v​e​r​y​ ​s​t​e​p​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​.
 	 */
 	settingsAgentModeManualNote: string
 	/**
-	 * N​e​w​ ​t​a​s​k​s​ ​h​a​v​e​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​j​u​d​g​e​d​ ​b​y​ ​t​h​e​ ​m​o​d​e​l​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​a​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s​ ​b​e​l​o​w​:​ ​a​l​l​o​w​e​d​ ​r​u​n​s​ ​i​t​,​ ​b​l​o​c​k​e​d​ ​t​e​l​l​s​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​y​;​ ​w​i​t​h​ ​n​o​ ​v​e​r​d​i​c​t​ ​y​o​u​ ​a​r​e​ ​a​s​k​e​d​.
+	 * N​e​w​ ​t​a​s​k​s​ ​h​a​v​e​ ​e​v​e​r​y​ ​s​t​e​p​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​j​u​d​g​e​d​ ​b​y​ ​t​h​e​ ​m​o​d​e​l​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​a​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s​ ​b​e​l​o​w​:​ ​a​l​l​o​w​e​d​ ​r​u​n​s​ ​i​t​,​ ​b​l​o​c​k​e​d​ ​t​e​l​l​s​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​y​;​ ​w​i​t​h​ ​n​o​ ​v​e​r​d​i​c​t​ ​y​o​u​ ​a​r​e​ ​a​s​k​e​d​.
 	 */
 	settingsAgentModeAutoNote: string
 	/**
@@ -8054,7 +8054,7 @@ type RootTranslation = {
 	 */
 	settingsAgentRulesAllow: string
 	/**
-	 * O​n​e​ ​p​e​r​ ​l​i​n​e​.​ ​*​ ​i​s​ ​a​n​y​ ​t​e​x​t​,​ ​a​s​ ​i​n​ ​s​y​s​t​e​m​c​t​l​ ​s​t​a​t​u​s​ ​*​ ​o​r​ ​a​p​t​-​g​e​t​ ​i​n​s​t​a​l​l​ ​*​;​ ​a​ ​t​r​a​i​l​i​n​g​ ​:​*​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​a​s​ ​"​ ​*​"​.​ ​A​ ​c​h​a​i​n​e​d​ ​c​o​m​m​a​n​d​ ​i​s​ ​c​h​e​c​k​e​d​ ​p​a​r​t​ ​b​y​ ​p​a​r​t​:​ ​d​e​n​y​ ​a​n​d​ ​a​s​k​ ​a​p​p​l​y​ ​w​h​e​n​ ​a​n​y​ ​p​a​r​t​ ​m​a​t​c​h​e​s​,​ ​a​l​l​o​w​ ​o​n​l​y​ ​w​h​e​n​ ​e​v​e​r​y​ ​p​a​r​t​ ​i​s​ ​c​o​v​e​r​e​d​.​ ​R​u​l​e​s​ ​m​a​t​c​h​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​s​ ​w​r​i​t​t​e​n​ ​(​/​b​i​n​/​r​m​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h​ ​r​m​ ​*​)​;​ ​t​h​e​y​ ​a​r​e​ ​n​o​t​ ​a​ ​s​e​c​u​r​i​t​y​ ​b​o​u​n​d​a​r​y​.
+	 * O​n​e​ ​p​e​r​ ​l​i​n​e​.​ ​*​ ​i​s​ ​a​n​y​ ​t​e​x​t​,​ ​a​s​ ​i​n​ ​s​y​s​t​e​m​c​t​l​ ​s​t​a​t​u​s​ ​*​ ​o​r​ ​a​p​t​-​g​e​t​ ​i​n​s​t​a​l​l​ ​*​;​ ​a​ ​t​r​a​i​l​i​n​g​ ​:​*​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​a​s​ ​"​ ​*​"​.​ ​A​ ​c​h​a​i​n​e​d​ ​c​o​m​m​a​n​d​ ​i​s​ ​c​h​e​c​k​e​d​ ​p​a​r​t​ ​b​y​ ​p​a​r​t​:​ ​d​e​n​y​ ​a​n​d​ ​a​s​k​ ​a​p​p​l​y​ ​w​h​e​n​ ​a​n​y​ ​p​a​r​t​ ​m​a​t​c​h​e​s​,​ ​a​l​l​o​w​ ​o​n​l​y​ ​w​h​e​n​ ​e​v​e​r​y​ ​p​a​r​t​ ​i​s​ ​c​o​v​e​r​e​d​.​ ​R​u​l​e​s​ ​m​a​t​c​h​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​s​ ​w​r​i​t​t​e​n​ ​(​s​h​ ​-​c​ ​'​r​m​ ​…​'​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h​ ​r​m​ ​*​)​;​ ​t​h​e​y​ ​a​r​e​ ​n​o​t​ ​a​ ​s​e​c​u​r​i​t​y​ ​b​o​u​n​d​a​r​y​.
 	 */
 	settingsAgentRulesHint: string
 	/**
@@ -17775,7 +17775,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAgentModeAutoDesc: () => LocalizedString
 	/**
-	 * Steps go by the rules in Settings. A change no rule matches waits for you to confirm it.
+	 * Steps go by the rules in Settings. A step no rule covers waits for you to confirm it.
 	 */
 	deskAgentModeManualDesc: () => LocalizedString
 	/**
@@ -18023,7 +18023,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgent: () => LocalizedString
 	/**
-	 * The agent runs tasks on this machine with the model chosen here. It reads freely, and asks before changing anything.
+	 * The agent runs tasks on this machine with the model chosen here. What runs without asking goes by its permission mode.
 	 */
 	settingsAgentAbout: () => LocalizedString
 	/**
@@ -18191,7 +18191,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentMcpSub: () => LocalizedString
 	/**
-	 * Tasks get the tools of these servers. A tool that says it only reads runs; any other goes through the task's permission mode, as a command does. A token is written here and never shown again.
+	 * Tasks get the tools of these servers. Each call goes through the task's permission mode, as a command does, one that says it only reads included. A token is written here and never shown again.
 	 */
 	settingsAgentMcpAbout: () => LocalizedString
 	/**
@@ -18395,7 +18395,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentPermissionsSub: () => LocalizedString
 	/**
-	 * Every command an Agent mode task runs meets these rules first: deny, then ask, then allow. What no rule covers and is not a known read goes by the task's mode, picked when it starts. For every account on this server.
+	 * Every command an Agent mode task runs meets these rules first: deny, then ask, then allow. What no rule covers goes by the task's mode, picked when it starts. For every account on this server.
 	 */
 	settingsAgentPermissionsAbout: () => LocalizedString
 	/**
@@ -18411,11 +18411,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentModeAuto: () => LocalizedString
 	/**
-	 * New tasks ask about changes no rule covers.
+	 * New tasks ask about every step no rule covers.
 	 */
 	settingsAgentModeManualNote: () => LocalizedString
 	/**
-	 * New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.
+	 * New tasks have every step no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.
 	 */
 	settingsAgentModeAutoNote: () => LocalizedString
 	/**
@@ -18439,7 +18439,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentRulesAllow: () => LocalizedString
 	/**
-	 * One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as " *". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.
+	 * One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as " *". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (sh -c 'rm …' does not match rm *); they are not a security boundary.
 	 */
 	settingsAgentRulesHint: () => LocalizedString
 	/**

@@ -85,14 +85,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiRiskDestructive => 'Riesgo alto';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Ejecutar automáticamente los comandos de solo lectura';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Solo se ejecuta si el modelo y la comprobación local lo consideran de solo lectura';
-
-  @override
   String get askAiHistory => 'Historial de conversaciones';
 
   @override
@@ -1709,7 +1701,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Deja que el Agent trabaje en la máquina que ejecuta ServerBox. Incluso los comandos de solo lectura se revisan';
+      'Permite que el Agent trabaje en la máquina donde se ejecuta ServerBox. Sus comandos siguen el modo de permisos';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6682,21 +6674,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Modo de permisos';
-
-  @override
-  String get agentModeAuto => 'Automático';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Permitir todo';
-
-  @override
-  String get agentModeBypassOff => 'Desactivado en este servidor';
-
-  @override
   String get agentModeBypassWarn =>
       'Permitir todo: las eliminaciones, los reinicios y los cambios de configuración se ejecutan sin preguntar.';
 
@@ -7379,4 +7356,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Dirección alternativa';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '¿Descartar los cambios sin guardar?';
 }

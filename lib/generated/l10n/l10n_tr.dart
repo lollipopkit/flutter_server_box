@@ -85,14 +85,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksek risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Salt okunur komutları otomatik çalıştır';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnızca hem model hem yerel kontrol salt okunur derse çalışır';
-
-  @override
   String get askAiHistory => 'Konuşma geçmişi';
 
   @override
@@ -1680,7 +1672,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agent’ın ServerBox’ın çalıştığı makinede çalışmasına izin verir. Salt okunur komutlar da incelenir';
+      'Agent\'ın ServerBox\'ı çalıştıran makinede çalışmasına izin verir. Komutları izin moduna göre işlenir';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6575,21 +6567,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İzin modu';
-
-  @override
-  String get agentModeAuto => 'Otomatik';
-
-  @override
-  String get agentModeManual => 'Manuel';
-
-  @override
-  String get agentModeBypass => 'Tümüne izin ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu sunucuda devre dışı';
-
-  @override
   String get agentModeBypassWarn =>
       'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır.';
 
@@ -7262,4 +7239,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Yedek adres';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Kaydedilmemiş değişiklikler atılsın mı?';
 }

@@ -85,14 +85,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiRiskDestructive => 'Hoog risico';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Alleen-lezen commando\'s automatisch uitvoeren';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Draait alleen als model én lokale controle het alleen-lezen noemen';
-
-  @override
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
@@ -1693,7 +1685,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld';
+      'Laat de Agent werken op de machine waarop ServerBox draait. Zijn commando\'s volgen de toestemmingsmodus';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6649,21 +6641,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Machtigingsmodus';
-
-  @override
-  String get agentModeAuto => 'Automatisch';
-
-  @override
-  String get agentModeManual => 'Handmatig';
-
-  @override
-  String get agentModeBypass => 'Alles toestaan';
-
-  @override
-  String get agentModeBypassOff => 'Uitgeschakeld op deze server';
-
-  @override
   String get agentModeBypassWarn =>
       'Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.';
 
@@ -7345,4 +7322,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alternatief adres';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Niet-opgeslagen wijzigingen verwerpen?';
 }

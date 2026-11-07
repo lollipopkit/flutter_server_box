@@ -80,12 +80,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRiskDestructive => '高风险';
 
   @override
-  String get askAiAutoRunSafeCommands => '自动执行只读命令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '仅当模型与本地安全检查都判定命令为只读时自动执行';
-
-  @override
   String get askAiHistory => '对话历史';
 
   @override
@@ -1545,7 +1539,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令（所有命令执行前均需你确认）';
+  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令，命令按权限模式处理';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6203,21 +6197,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '权限模式';
-
-  @override
-  String get agentModeAuto => '自动';
-
-  @override
-  String get agentModeManual => '手动';
-
-  @override
-  String get agentModeBypass => '全部放行';
-
-  @override
-  String get agentModeBypassOff => '此服务器已关闭';
-
-  @override
   String get agentModeBypassWarn => '全部放行：删除、重启和修改配置都会直接执行，不再询问。';
 
   @override
@@ -6868,6 +6847,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => '备用地址';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '放弃未保存的修改？';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6945,12 +6930,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiRiskDestructive => '高風險';
-
-  @override
-  String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '僅當模型與本機安全檢查都判定命令為唯讀時自動執行';
 
   @override
   String get askAiHistory => '對話歷史';
@@ -8411,7 +8390,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentLocalExec => '在本機執行命令';
 
   @override
-  String get agentLocalExecTip => '允許 Agent 在執行 ServerBox 的這台機器上工作。唯讀的命令也需要審核';
+  String get agentLocalExecTip => '允許 Agent 在目前裝置上執行本機指令，指令依權限模式處理';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -13073,21 +13052,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get agentPermissionMode => '權限模式';
-
-  @override
-  String get agentModeAuto => '自動';
-
-  @override
-  String get agentModeManual => '手動';
-
-  @override
-  String get agentModeBypass => '全部允許';
-
-  @override
-  String get agentModeBypassOff => '此伺服器已關閉';
-
-  @override
   String get agentModeBypassWarn => '全部允許：刪除、重新啟動和設定變更都會直接執行，不再詢問。';
 
   @override
@@ -13738,4 +13702,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get discoveryAlternateAddress => '備用位址';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '放棄未儲存的修改？';
 }

@@ -83,12 +83,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiRiskDestructive => '높은 위험';
 
   @override
-  String get askAiAutoRunSafeCommands => '읽기 전용 명령 자동 실행';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '모델과 로컬 검사가 모두 읽기 전용이라고 판단할 때만 실행';
-
-  @override
   String get askAiHistory => '대화 기록';
 
   @override
@@ -1583,7 +1577,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다';
+      'ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6309,21 +6303,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '권한 모드';
-
-  @override
-  String get agentModeAuto => '자동';
-
-  @override
-  String get agentModeManual => '수동';
-
-  @override
-  String get agentModeBypass => '모두 허용';
-
-  @override
-  String get agentModeBypassOff => '이 서버에서 사용 중지됨';
-
-  @override
   String get agentModeBypassWarn => '모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.';
 
   @override
@@ -6981,4 +6960,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => '대체 주소';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '저장하지 않은 변경 사항을 버릴까요?';
 }

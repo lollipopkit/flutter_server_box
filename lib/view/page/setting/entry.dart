@@ -6,6 +6,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_highlight/theme_map.dart';
@@ -35,6 +36,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/bmc_credential/list.dart';

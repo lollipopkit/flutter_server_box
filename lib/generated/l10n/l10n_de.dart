@@ -85,14 +85,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get askAiRiskDestructive => 'Hohes Risiko';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Nur lesende Befehle automatisch ausführen';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Läuft nur, wenn Modell und lokale Prüfung ihn beide als lesend einstufen';
-
-  @override
   String get askAiHistory => 'Gesprächsverlauf';
 
   @override
@@ -1704,7 +1696,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Auch lesende Befehle werden geprüft';
+      'Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Seine Befehle richten sich nach dem Berechtigungsmodus';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6676,21 +6668,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Berechtigungsmodus';
-
-  @override
-  String get agentModeAuto => 'Automatisch';
-
-  @override
-  String get agentModeManual => 'Manuell';
-
-  @override
-  String get agentModeBypass => 'Alles erlauben';
-
-  @override
-  String get agentModeBypassOff => 'Auf diesem Server deaktiviert';
-
-  @override
   String get agentModeBypassWarn =>
       'Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt.';
 
@@ -7373,4 +7350,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Ausweichadresse';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Ungespeicherte Änderungen verwerfen?';
 }

@@ -123,16 +123,6 @@ abstract final class AgentChats {
   /// floating window does not make the window vanish under the pointer.
   static final engaged = ValueNotifier(false);
 
-  /// Told the id of every chat deleted, for what keeps state per chat (the
-  /// tools' auto-run grants) to drop it.
-  static final onForget = <void Function(String chatId)>[];
-
-  static void _forget(String id) {
-    for (final f in onForget) {
-      f(id);
-    }
-  }
-
   static void select(String? scope, String? id) {
     // A chat of this device takes the pane from a server's task.
     if (scope == null) RemoteAgentTasks.select(null);
@@ -162,7 +152,6 @@ abstract final class AgentChats {
     for (final trashed in const [false, true]) {
       for (final meta in LlmStores.chat.all(scope: scope, trashed: trashed)) {
         await Chats.deleteForever(meta.id);
-        _forget(meta.id);
       }
     }
     select(scope, null);
@@ -171,7 +160,6 @@ abstract final class AgentChats {
   /// Deletes chat [id] of [scope], and shows the next one if it was showing.
   static Future<void> delete(String? scope, String id) async {
     await Chats.deleteForever(id);
-    _forget(id);
     if (of(scope).value == id) {
       select(scope, LlmStores.chat.all(scope: scope).firstOrNull?.id);
     }

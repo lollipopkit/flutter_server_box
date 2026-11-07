@@ -85,13 +85,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiRiskDestructive => 'High risk';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Runs only when both the model and the local check call it read-only';
-
-  @override
   String get askAiHistory => 'Conversation history';
 
   @override
@@ -1678,7 +1671,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed';
+      'Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6587,21 +6580,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Permission mode';
-
-  @override
-  String get agentModeAuto => 'Auto';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Allow all';
-
-  @override
-  String get agentModeBypassOff => 'Turned off on this server';
-
-  @override
   String get agentModeBypassWarn =>
       'Allow all: deleting, restarting and config changes run directly, without asking.';
 
@@ -7279,4 +7257,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alternate address';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Discard unsaved changes?';
 }

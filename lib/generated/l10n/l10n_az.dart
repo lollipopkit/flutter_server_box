@@ -85,14 +85,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksək risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Yalnız oxuma əmrlərini avtomatik icra et';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur';
-
-  @override
   String get askAiHistory => 'Söhbət tarixçəsi';
 
   @override
@@ -1689,7 +1681,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır';
+      'Agent-ə ServerBox-un işlədiyi maşında işləməyə icazə verir. Əmrləri icazə rejiminə görə işlənir';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6583,21 +6575,6 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İcazə rejimi';
-
-  @override
-  String get agentModeAuto => 'Avtomatik';
-
-  @override
-  String get agentModeManual => 'Əl ilə';
-
-  @override
-  String get agentModeBypass => 'Hamısına icazə ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu serverdə deaktiv edilib';
-
-  @override
   String get agentModeBypassWarn =>
       'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
 
@@ -7268,4 +7245,10 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Ehtiyat ünvan';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Yadda saxlanmamış dəyişikliklər atılsın?';
 }

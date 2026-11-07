@@ -22,8 +22,6 @@
   "askAiRiskCaution": "Sistemi dəyişir",
   "askAiRiskUnvetted": "Yoxlanılmamış host",
   "askAiRiskDestructive": "Yüksək risk",
-  "askAiAutoRunSafeCommands": "Yalnız oxuma əmrlərini avtomatik icra et",
-  "askAiAutoRunSafeCommandsTip": "Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur",
   "askAiHistory": "Söhbət tarixçəsi",
   "askAiNewConversation": "Yeni söhbət",
   "askAiUntitledConversation": "Adsız",
@@ -441,7 +439,7 @@
   "continueInTerminal": "Terminalda davam et",
   "askAiRiskUnknown": "Təsnif edilməyib",
   "agentLocalExec": "Bu cihazda əmrlər icra et",
-  "agentLocalExecTip": "Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır",
+  "agentLocalExecTip": "Agent-ə ServerBox-un işlədiyi maşında işləməyə icazə verir. Əmrləri icazə rejiminə görə işlənir",
   "agentLocalExecRootfsTip": "Agentin yerli olaraq, ServerBox tərəfindən quraşdırılmış Linux konteyneri daxilində işləməsinə icazə verir",
   "macDmgImportedPartly": "Əvvəllər quraşdırılmış versiyanın məlumatları idxal edildi. Endirilmiş fayllar əvvəlki yerində, {path} qovluğunda saxlanıldı.",
   "bmcAccount": "Hesab",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "15 dəqiqə yadda saxla",
   "agentNewOn": "Yeni söhbət: {place}",
   "agentRemoteNewHint": "Agentə {server} serverində sual verin və ya ona tapşırıq verin.",
-  "agentPermissionMode": "İcazə rejimi",
-  "agentModeAuto": "Avtomatik",
-  "agentModeManual": "Əl ilə",
-  "agentModeBypass": "Hamısına icazə ver",
-  "agentModeBypassOff": "Bu serverdə deaktiv edilib",
   "agentModeBypassWarn": "Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.",
   "webApps": "Veb tətbiqlər",
   "webAppUnhealthy": "Problemli",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Ad və ya ünvana görə süz",
   "discoverySameMachine": "Eyni maşın, bir neçə ünvan",
   "discoveryPrimaryAddress": "Əsas ünvan",
-  "discoveryAlternateAddress": "Ehtiyat ünvan"
+  "discoveryAlternateAddress": "Ehtiyat ünvan",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "Yadda saxlanmamış dəyişikliklər atılsın?"
 }

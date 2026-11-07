@@ -5,7 +5,7 @@
 import { get } from 'svelte/store'
 import { errorText } from '../../lib/errorText'
 import { LL } from '../../i18n/i18n-svelte'
-import { agentApi, type ModelRef, type PermissionMode, type TaskChoice, type Upload } from '../../lib/agentApi'
+import { agentApi, type ModelRef, type TaskChoice, type Upload } from '../../lib/agentApi'
 import { fmtBytes } from '../../lib/format'
 import type { ServerEntry } from '../../lib/servers.svelte'
 import { fileGlyph } from './agentView'
@@ -147,8 +147,6 @@ export class Attachments {
 /// one) while Agent mode is away, so coming back finds it as it was left.
 export class Draft {
   text = $state('')
-  /// A new task's permission mode, when one was picked.
-  mode = $state<PermissionMode | null>(null)
   /// A model and thinking level picked for the next message; sent with it.
   model = $state<ModelRef | null>(null)
   thinking = $state<string | null>(null)

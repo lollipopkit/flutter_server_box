@@ -85,14 +85,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get askAiRiskDestructive => 'Risque élevé';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Exécuter automatiquement les commandes en lecture seule';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Ne s’exécute que si le modèle et la vérification locale le jugent en lecture seule';
-
-  @override
   String get askAiHistory => 'Historique des conversations';
 
   @override
@@ -1709,7 +1701,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Laisse l’Agent travailler sur la machine qui exécute ServerBox. Même les commandes en lecture seule sont examinées';
+      'Permet à l’Agent de travailler sur la machine qui exécute ServerBox. Ses commandes suivent le mode d’autorisation';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6695,21 +6687,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Mode d’autorisation';
-
-  @override
-  String get agentModeAuto => 'Automatique';
-
-  @override
-  String get agentModeManual => 'Manuel';
-
-  @override
-  String get agentModeBypass => 'Tout autoriser';
-
-  @override
-  String get agentModeBypassOff => 'Désactivé sur ce serveur';
-
-  @override
   String get agentModeBypassWarn =>
       'Tout autoriser : les suppressions, redémarrages et modifications de configuration s’exécutent sans demander.';
 
@@ -7392,4 +7369,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Adresse de secours';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved =>
+      'Abandonner les modifications non enregistrées ?';
 }

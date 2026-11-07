@@ -328,8 +328,6 @@
   "askAiRiskCaution": "Wijzigt het systeem",
   "askAiRiskUnvetted": "Niet-geverifieerde host",
   "askAiRiskDestructive": "Hoog risico",
-  "askAiAutoRunSafeCommands": "Alleen-lezen commando's automatisch uitvoeren",
-  "askAiAutoRunSafeCommandsTip": "Draait alleen als model én lokale controle het alleen-lezen noemen",
   "askAiHistory": "Gespreksgeschiedenis",
   "askAiNewConversation": "Nieuw gesprek",
   "askAiUntitledConversation": "Naamloos",
@@ -438,7 +436,7 @@
   "continueInTerminal": "Doorgaan in terminal",
   "askAiRiskUnknown": "Niet ingedeeld",
   "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
-  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld",
+  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait. Zijn commando's volgen de toestemmingsmodus",
   "agentLocalExecRootfsTip": "Laat de Agent lokaal werken, beperkt tot de Linux-container die ServerBox installeerde",
   "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}.",
   "bmcAccount": "Account",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "15 minuten onthouden",
   "agentNewOn": "Nieuw gesprek: {place}",
   "agentRemoteNewHint": "Stel de agent op {server} een vraag of geef hem een taak.",
-  "agentPermissionMode": "Machtigingsmodus",
-  "agentModeAuto": "Automatisch",
-  "agentModeManual": "Handmatig",
-  "agentModeBypass": "Alles toestaan",
-  "agentModeBypassOff": "Uitgeschakeld op deze server",
   "agentModeBypassWarn": "Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.",
   "webApps": "Webapps",
   "webAppUnhealthy": "Ongezond",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Filteren op naam of adres",
   "discoverySameMachine": "Dezelfde machine, meerdere adressen",
   "discoveryPrimaryAddress": "Primair adres",
-  "discoveryAlternateAddress": "Alternatief adres"
+  "discoveryAlternateAddress": "Alternatief adres",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "Niet-opgeslagen wijzigingen verwerpen?"
 }

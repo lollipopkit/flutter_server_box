@@ -85,13 +85,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get askAiRiskDestructive => 'خطر بالا';
 
   @override
-  String get askAiAutoRunSafeCommands => 'اجرای خودکار دستورهای فقط‌خواندنی';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'فقط زمانی اجرا می‌شود که هم مدل و هم بررسی محلی آن را فقط‌خواندنی تشخیص دهند';
-
-  @override
   String get askAiHistory => 'تاریخچه گفتگو';
 
   @override
@@ -1686,7 +1679,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'به Agent امکان می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. حتی دستورهای فقط‌خواندنی نیز بررسی می‌شوند';
+      'به Agent اجازه می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. فرمان‌هایش طبق حالت مجوز انجام می‌شوند';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6632,21 +6625,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Permission mode';
-
-  @override
-  String get agentModeAuto => 'Auto';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Allow all';
-
-  @override
-  String get agentModeBypassOff => 'Turned off on this server';
-
-  @override
   String get agentModeBypassWarn =>
       'Allow all: deleting, restarting and config changes run directly, without asking.';
 
@@ -7325,4 +7303,10 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'نشانی جایگزین';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'تغییرات ذخیره‌نشده کنار گذاشته شود؟';
 }

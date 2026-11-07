@@ -265,18 +265,6 @@ abstract class AppLocalizations {
   /// **'High risk'**
   String get askAiRiskDestructive;
 
-  /// User-facing label or message for ask AI auto run safe commands.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-run read-only commands'**
-  String get askAiAutoRunSafeCommands;
-
-  /// Help text for the ask AI auto run safe commands setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs only when both the model and the local check call it read-only'**
-  String get askAiAutoRunSafeCommandsTip;
-
   /// User-facing label or message for ask AI history.
   ///
   /// In en, this message translates to:
@@ -2949,7 +2937,7 @@ abstract class AppLocalizations {
   /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
+  /// **'Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode'**
   String get agentLocalExecTip;
 
   /// Help text for the agent local exec rootfs setting or action.
@@ -11237,36 +11225,6 @@ abstract class AppLocalizations {
   /// **'Ask the agent on {server}, or give it a task.'**
   String agentRemoteNewHint(String server);
 
-  /// Agent: what a server's agent may run in a new task without asking.
-  ///
-  /// In en, this message translates to:
-  /// **'Permission mode'**
-  String get agentPermissionMode;
-
-  /// Agent permission mode: the model allows or refuses each step.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get agentModeAuto;
-
-  /// Agent permission mode: steps go by the server's rules; others wait for confirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual'**
-  String get agentModeManual;
-
-  /// Agent permission mode: every step runs without asking.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow all'**
-  String get agentModeBypass;
-
-  /// Agent: the server's admin turned the allow-all mode off.
-  ///
-  /// In en, this message translates to:
-  /// **'Turned off on this server'**
-  String get agentModeBypassOff;
-
   /// Agent: warning shown while the allow-all mode is picked for a new task.
   ///
   /// In en, this message translates to:
@@ -12388,6 +12346,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alternate address'**
   String get discoveryAlternateAddress;
+
+  /// Agent command permissions: Agent
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentPermsGroup;
+
+  /// Asked before leaving a page with unsaved edits
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get discardUnsaved;
 }
 
 class _AppLocalizationsDelegate

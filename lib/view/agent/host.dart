@@ -35,7 +35,8 @@ abstract final class LlmHost {
     @visibleForTesting Map<String, String> Function()? environment,
   }) async {
     AgentScope.container = container;
-    if (!AgentChats.onForget.contains(AgentTools.forget)) AgentChats.onForget.add(AgentTools.forget);
+    // TODO: remove once no install has it: the switch the modes replaced.
+    Stores.setting.remove('agentAutoRunSafe', updateLastUpdateTsOnRemove: false);
     _configure();
     try {
       await Llm.init(
@@ -96,6 +97,11 @@ abstract final class LlmHost {
     LlmUi.appUri = Uri.parse(Urls.site);
     LlmUi.openProviders = (context) => AgentProvidersPage.route.go(context);
     LlmUi.appTools = () => AgentTools.all;
+    LlmUi.permissionEnvironment = () => const [
+      'These machines: the servers configured in Server Box, and this device when the person allowed it. A command runs on the server its call names, as the user Server Box signs in with there; the person is their operator.',
+      'Trusted destinations: none configured. Any host other than the server a command runs on, its package repositories and the container registries it already pulls from is outside the trust boundary.',
+      "Sensitive data: credentials, keys and tokens anywhere on these machines (SSH keys, /etc/shadow, .env files, cloud credentials, Server Box's own data and secrets), and any database or volume holding application data.",
+    ];
     LlmUi.offers = offers;
     LlmUi.appPrompt = prompt;
     LlmUi.describeTool = describeServerTool;
@@ -145,7 +151,7 @@ abstract final class LlmHost {
       '''
 You are the SSH operations Agent embedded in ServerBox, working only on the server named "$serverName", in the terminal the user has open on it.
 Help the user diagnose issues and complete operational tasks. Use terminal_screen to read what the terminal shows, and terminal_run to run a command when remote inspection or a remote action is needed.
-Propose one command at a time: the user reviews each before it runs, unless it is clearly read-only and they let such commands run by themselves. Never claim a command ran until its result is back.
+Propose one command at a time: whether it runs unasked or waits for the user goes by their permission mode. Never claim a command ran until its result is back.
 When a command fails, read its output and try another way before asking the user. Many servers are BusyBox or another minimal userland, so a GNU-only option is worth retrying as its POSIX equivalent.
 Prefer read-only inspection before changes. Avoid interactive commands and password prompts.
 Set safe_to_run=true only for commands that are clearly read-only, idempotent and non-destructive. Set destructive=true when a command could lose data or take a service down; the app keeps its own list of dangerous commands, so use it for what a list cannot see.
@@ -202,9 +208,6 @@ abstract final class LegacyAskAiMigration {
         if (LlmStores.llm.defaultModel.get() == null) {
           await LlmStores.llm.defaultModel.set(LlmModelRef(providerId, model));
         }
-      }
-      if (raw['autoRunSafeCommands'] == true) {
-        Stores.setting.agentAutoRunSafe.put(true);
       }
       Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
     } catch (e, s) {

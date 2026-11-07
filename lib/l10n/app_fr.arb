@@ -328,8 +328,6 @@
   "askAiRiskCaution": "Modifie le système",
   "askAiRiskUnvetted": "Hôte non vérifié",
   "askAiRiskDestructive": "Risque élevé",
-  "askAiAutoRunSafeCommands": "Exécuter automatiquement les commandes en lecture seule",
-  "askAiAutoRunSafeCommandsTip": "Ne s’exécute que si le modèle et la vérification locale le jugent en lecture seule",
   "askAiHistory": "Historique des conversations",
   "askAiNewConversation": "Nouvelle conversation",
   "askAiUntitledConversation": "Sans titre",
@@ -438,7 +436,7 @@
   "continueInTerminal": "Continuer dans le terminal",
   "askAiRiskUnknown": "Non classé",
   "agentLocalExec": "Exécuter des commandes sur cet appareil",
-  "agentLocalExecTip": "Laisse l’Agent travailler sur la machine qui exécute ServerBox. Même les commandes en lecture seule sont examinées",
+  "agentLocalExecTip": "Permet à l’Agent de travailler sur la machine qui exécute ServerBox. Ses commandes suivent le mode d’autorisation",
   "agentLocalExecRootfsTip": "Laisse l’Agent travailler en local, limité au conteneur Linux installé par ServerBox",
   "macDmgImportedPartly": "Les données de la version précédemment installée ont été importées. Les fichiers téléchargés sont restés dans {path}.",
   "bmcAccount": "Compte",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "Mémoriser pendant 15 minutes",
   "agentNewOn": "Nouvelle conversation : {place}",
   "agentRemoteNewHint": "Posez une question à l’agent sur {server} ou confiez-lui une tâche.",
-  "agentPermissionMode": "Mode d’autorisation",
-  "agentModeAuto": "Automatique",
-  "agentModeManual": "Manuel",
-  "agentModeBypass": "Tout autoriser",
-  "agentModeBypassOff": "Désactivé sur ce serveur",
   "agentModeBypassWarn": "Tout autoriser : les suppressions, redémarrages et modifications de configuration s’exécutent sans demander.",
   "webApps": "Applications web",
   "webAppUnhealthy": "Défaillante",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Filtrer par nom ou adresse",
   "discoverySameMachine": "Même machine, plusieurs adresses",
   "discoveryPrimaryAddress": "Adresse principale",
-  "discoveryAlternateAddress": "Adresse de secours"
+  "discoveryAlternateAddress": "Adresse de secours",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "Abandonner les modifications non enregistrées ?"
 }

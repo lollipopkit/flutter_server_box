@@ -329,8 +329,6 @@
   "askAiRiskCaution": "Змінює систему",
   "askAiRiskUnvetted": "Неперевірений хост",
   "askAiRiskDestructive": "Високий ризик",
-  "askAiAutoRunSafeCommands": "Автоматично виконувати команди лише для читання",
-  "askAiAutoRunSafeCommandsTip": "Виконується, лише коли і модель, і локальна перевірка вважають команду лише для читання",
   "askAiHistory": "Історія розмов",
   "askAiNewConversation": "Нова розмова",
   "askAiUntitledConversation": "Без назви",
@@ -438,7 +436,7 @@
   "continueInTerminal": "Продовжити в терміналі",
   "askAiRiskUnknown": "Не визначено",
   "agentLocalExec": "Виконувати команди на цьому пристрої",
-  "agentLocalExecTip": "Дозволяє агенту працювати на машині, де запущено ServerBox. Навіть команди лише для читання перевіряються",
+  "agentLocalExecTip": "Дозволяє Agent працювати на машині, де запущено ServerBox. Його команди обробляються за режимом дозволів",
   "agentLocalExecRootfsTip": "Дозволяє агенту працювати локально, у межах контейнера Linux, встановленого ServerBox",
   "macDmgImportedPartly": "Дані раніше встановленої збірки імпортовано. Завантажені файли залишилися в {path}.",
   "bmcAccount": "Обліковий запис",
@@ -1848,11 +1846,6 @@
   "agentRemoteSudoRemember": "Запам’ятати на 15 хвилин",
   "agentNewOn": "Нова розмова: {place}",
   "agentRemoteNewHint": "Поставте запитання агенту на {server} або доручіть йому завдання.",
-  "agentPermissionMode": "Режим дозволів",
-  "agentModeAuto": "Авто",
-  "agentModeManual": "Вручну",
-  "agentModeBypass": "Дозволити все",
-  "agentModeBypassOff": "Вимкнено на цьому сервері",
   "agentModeBypassWarn": "Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.",
   "webApps": "Вебзастосунки",
   "webAppUnhealthy": "Несправний",
@@ -2041,5 +2034,7 @@
   "discoveryFilter": "Фільтр за назвою або адресою",
   "discoverySameMachine": "Одна машина, кілька адрес",
   "discoveryPrimaryAddress": "Основна адреса",
-  "discoveryAlternateAddress": "Резервна адреса"
+  "discoveryAlternateAddress": "Резервна адреса",
+  "agentPermsGroup": "Agent",
+  "discardUnsaved": "Скасувати незбережені зміни?"
 }

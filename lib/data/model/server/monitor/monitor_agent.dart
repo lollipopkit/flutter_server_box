@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
 
 /// A task of a monitor agent's Agent mode, as `GET /api/v1/agent/flows`
 /// lists it.
@@ -25,7 +26,7 @@ final class MonitorAgentFlow {
     title: j['title'] as String? ?? '',
     status: MonitorAgentStatus.of(j['status'] as String?),
     line: j['line'] as String? ?? '',
-    mode: AgentPermissionMode.of(j['mode']),
+    mode: LlmPermissionMode.of(j['mode']),
     createdAt: _time(j['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     updatedAt: _time(j['updatedAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     finishedAt: _time(j['finishedAt']),
@@ -42,7 +43,7 @@ final class MonitorAgentFlow {
   final String line;
 
   /// `manual`, `auto` or `bypass`.
-  final AgentPermissionMode mode;
+  final LlmPermissionMode mode;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? finishedAt;
@@ -149,7 +150,7 @@ final class MonitorAgentFlows {
         if (f is Map<String, dynamic>) MonitorAgentFlow.fromJson(f),
     ],
     configured: j['configured'] == true,
-    defaultMode: AgentPermissionMode.of(j['defaultMode']),
+    defaultMode: LlmPermissionMode.of(j['defaultMode']),
     bypassAllowed: j['bypassAllowed'] == true,
     next: j['next'] as String?,
   );
@@ -160,7 +161,7 @@ final class MonitorAgentFlows {
   /// that does not page.
   final String? next;
   final bool configured;
-  final AgentPermissionMode defaultMode;
+  final LlmPermissionMode defaultMode;
   final bool bypassAllowed;
 }
 
@@ -260,16 +261,4 @@ final class MonitorAgentOutput {
     for (final l in raw as List? ?? const [])
       if (l is List && l.length == 2 && l[1] is String) l[1] as String,
   ];
-}
-
-/// How a server's Agent task asks before it acts: `auto` decides by itself,
-/// `manual` asks by the server's rules, `bypass` never asks.
-enum AgentPermissionMode {
-  auto,
-  manual,
-  bypass;
-
-  /// [manual] for none and for a mode this app does not know: the safe one.
-  static AgentPermissionMode of(Object? name) =>
-      values.firstWhereOrNull((m) => m.name == name) ?? manual;
 }

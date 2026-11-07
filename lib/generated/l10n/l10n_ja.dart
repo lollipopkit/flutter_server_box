@@ -82,12 +82,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiRiskDestructive => '高リスク';
 
   @override
-  String get askAiAutoRunSafeCommands => '読み取り専用コマンドを自動実行';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => 'モデルとローカルの検査がどちらも読み取り専用と判断したときだけ実行';
-
-  @override
   String get askAiHistory => '会話履歴';
 
   @override
@@ -1578,7 +1572,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox が動いているこの端末上で Agent に作業させます。読み取り専用のコマンドも確認が必要です';
+      'ServerBox を実行しているマシンで Agent が作業できるようにします。コマンドは権限モードに従います';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6304,21 +6298,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '権限モード';
-
-  @override
-  String get agentModeAuto => '自動';
-
-  @override
-  String get agentModeManual => '手動';
-
-  @override
-  String get agentModeBypass => 'すべて許可';
-
-  @override
-  String get agentModeBypassOff => 'このサーバーでは無効';
-
-  @override
   String get agentModeBypassWarn => 'すべて許可：削除、再起動、設定変更は確認なしで実行されます。';
 
   @override
@@ -6979,4 +6958,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => '予備のアドレス';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '保存していない変更を破棄しますか？';
 }
