@@ -417,11 +417,18 @@ void main() {
       );
     });
 
-    test('runs a read-only command by itself, and reads its result', () async {
+    test('asks about a read as about any command, and reads its result', () async {
       ran.clear();
       final id = Chats.create(scope: scope);
       final chat = await Chats.open(id);
-      await Chats.send(id, 'list files');
+      final sending = Chats.send(id, 'list files');
+
+      while (chat.approvals.value.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(ran, isEmpty);
+      Chats.answer(id, ApprovalAnswer.once);
+      await sending;
 
       expect(ran, ['ls']);
       expect(chat.approvals.value, isEmpty);

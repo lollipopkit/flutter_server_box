@@ -173,7 +173,7 @@ final class TerminalRunTool extends ToolFunc {
   String get description =>
       'Run one non-interactive shell command on the server of the terminal '
       'the user has open. Its output comes back to you; the user reviews each '
-      'command first unless it is clearly read-only.';
+      'command first unless their permission mode runs it.';
 
   @override
   String get l10nName => l10n.agentToolShell;

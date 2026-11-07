@@ -22,7 +22,7 @@ use sqlx::SqlitePool;
 
 use crate::db::sealed::{self, Sealer};
 
-use super::permissions::{self, Judgment, Mode};
+use super::permissions::{self, Decision, Effect, Judgment};
 use super::{Flow, first_line};
 use crate::api::server::AppState;
 use crate::api::ws::audit::Outcome;
@@ -469,35 +469,27 @@ impl Gated {
     async fn allowed(&self, call: &ToolCall) -> Result<bool, String> {
         let state = &self.state;
         let flow = &self.flow;
-        if self.handle.tool.read_only {
-            return Ok(true);
-        }
         let shown = self.shown(call);
         let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
         let picked = flow.view.locked().mode;
-        let ask = match perms.mode_for(picked) {
-            Mode::Bypass => {
+        // By the mode, as any call: a tool's word that it only reads included.
+        let ask = match permissions::decide(&perms, picked, None, Effect::Change, false) {
+            Decision::Run => {
                 super::tools::record(state, &format!("bypass: {}", first_line(&shown, 200)), Outcome::Ok).await;
                 false
             }
-            Mode::Manual => true,
-            Mode::Auto => {
-                match super::tools::judge(state, flow, &shown, &self.handle.label(), "change", false, &perms.auto_mode).await {
-                    Some(Judgment::Allow) => {
-                        super::tools::record(state, &format!("auto: allowed {}", first_line(&shown, 200)), Outcome::Ok).await;
-                        false
-                    }
-                    Some(Judgment::Block { rule, reason }) => {
-                        super::tools::record(state, &format!("auto: blocked [{rule}] {}", first_line(&shown, 200)), Outcome::Denied)
-                            .await;
-                        return Err(format!(
-                            "Blocked by auto mode: {reason} Nothing was called. Do not try to reach the same end another way; \
-                             if it is needed, tell the person."
-                        ));
-                    }
-                    None => true,
+            Decision::Judge => match super::tools::judge(state, flow, &shown, &self.handle.label(), "change", false, &perms.auto_mode).await {
+                Some(Judgment::Allow) => {
+                    super::tools::record(state, &format!("auto: allowed {}", first_line(&shown, 200)), Outcome::Ok).await;
+                    false
                 }
-            }
+                Some(Judgment::Block { rule, reason }) => {
+                    super::tools::record(state, &format!("auto: blocked [{rule}] {}", first_line(&shown, 200)), Outcome::Denied).await;
+                    return Err(permissions::block_message(&rule, &reason));
+                }
+                None => true,
+            },
+            Decision::Ask { .. } | Decision::Deny { .. } => true,
         };
         if !ask {
             return Ok(true);

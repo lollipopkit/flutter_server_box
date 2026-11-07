@@ -43,10 +43,10 @@ Under **Settings → App → AI**:
 - **Command permissions** — the mode (**Manual**, **Auto**, **Allow all**; also
   switched under the message box, for every chat), deny / ask / allow command
   rules and the auto mode judge's rules — the same page and logic as a
-  Monitor's Agent mode. Read-only actions run in every mode; one that loses
-  something for good asks unless all is allowed.
+  Monitor's Agent mode. Every action goes by the mode, reads and MCP tools
+  included; one that loses something for good asks unless all is allowed.
 - **Run commands on this device** — off by default; such commands go by the
-  mode and never count as read-only.
+  mode.
 
 A terminal's own chat (the AI button in a terminal) sees only that terminal:
 it can read the screen and run commands in that session. The Agent tab

@@ -155,8 +155,9 @@ impl Tool for RunCommand {
         ToolDef {
             name: "run_command".into(),
             label: Some("Run a command".into()),
-            description: "Run one non-interactive shell command on this machine and get its output. A command that \
-                changes anything runs only after the person confirms it, unless a plan they approved lists it word for word."
+            description: "Run one non-interactive shell command on this machine and get its output. It runs as \
+                the task's permission mode and the operator's rules allow: it may wait for the person to confirm it, unless a plan they \
+                approved lists it word for word."
                 .into(),
             parameters: json!({
                 "type": "object",

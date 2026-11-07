@@ -136,15 +136,12 @@ box changes that server's mode for new tasks the same way.
 Every action goes through the command rules first: **Deny**, then **Ask**, then
 **Allow**. Then:
 
-- A read-only action runs: the model and the App's local check must both call
-  it read-only. On this device and on a host connected during the chat, nothing
-  counts as read-only.
 - An action that loses something for good asks, except in **Allow all**.
-- Anything else goes by the mode. **Manual** asks. **Auto** has the chat's
-  model judge it against the auto mode rules: allowed runs, blocked is told to
-  the Agent, no verdict asks. MCP tools count as read-only when their server
-  marks them so. **Allow all** runs it; deny and ask rules still
-  apply, and **Turn off Allow all** removes the mode.
+- Anything else goes by the mode, a read-only action and an MCP tool included.
+  **Manual** asks. **Auto** has the chat's model judge it against the auto mode
+  rules: allowed runs, blocked is told to the Agent, no verdict asks. **Allow
+  all** runs it; deny and ask rules still apply, and **Turn off Allow all**
+  removes the mode.
 
 When the App asks, it shows the command, its risk level and the model's
 explanation. A denial is sent to the model so it can respond. In a terminal
@@ -180,7 +177,7 @@ your other server credentials.
 
 **Run commands on this device** is a separate option at **Settings → Application → AI**
 and is off by default. Enabling it does not allow unattended commands: every
-local command goes by the permission mode, and none counts as read-only.
+local command goes by the permission mode.
 
 The command target depends on the platform:
 

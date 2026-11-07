@@ -238,7 +238,7 @@ async fn nothing_runs_until_it_is_configured() {
 }
 
 #[ntex::test]
-async fn a_read_runs_unasked_and_its_output_is_kept() {
+async fn a_read_asks_as_any_command_does_and_its_output_is_kept() {
     let (srv, state) = common::machine::server_with(server_box_monitor::core::config::Config::default()).await;
     let url = model(vec![
         Say::Tool("run_command", json!({ "command": sh::LIST_ROOT, "title": "List", "area": "files", "effect": "read" })),
@@ -246,6 +246,12 @@ async fn a_read_runs_unasked_and_its_output_is_kept() {
     ]);
     configure(&srv, &url).await;
     let id = start(&srv, "what is in /").await;
+    // A read is no different from a change: the mode decides.
+    let v = until(&srv, &id, |v| status(v) == "waiting").await;
+    assert_eq!(v["pending"]["kind"], "confirm");
+    let pid = v["pending"]["id"].as_str().unwrap();
+    let (s, _) = call(&srv, true, Method::POST, &format!("/api/v1/agent/flows/{id}/answer"), Some(json!({ "id": pid, "action": "run" }))).await;
+    assert_eq!(s, 204);
     let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let r = results(&v);
     assert_eq!(r.len(), 1, "{v}");
@@ -1109,7 +1115,9 @@ secret = "MCP_KEY"
     let keyed_list: &'static str = Box::leak(fl_pi_llm::host::mcp::tool_name(&keyed, "list_lights").into_boxed_str());
     let url = model(vec![Say::Tool(list, json!({})), Say::Tool(keyed_list, json!({})), Say::Text("Listed.")]);
     configure(&srv, &url).await;
-    let flow = start(&srv, "which lights are there").await;
+    let (s, body) = start_in(&srv, "which lights are there", "bypass").await;
+    assert_eq!(s, 201, "{body}");
+    let flow = body["id"].as_str().unwrap().to_string();
     until(&srv, &flow, |v| status(v) == "done").await;
     assert_eq!(calls.lock().unwrap().iter().map(|(_, t)| t.as_str()).collect::<Vec<_>>(), ["Bearer tok-2", "key-from-env"]);
 
@@ -1322,11 +1330,16 @@ async fn an_mcp_servers_tools_run_through_the_tasks_permissions() {
     let (s, _) = call(&srv, true, Method::PUT, "/api/v1/agent/mcp", Some(bad)).await;
     assert_eq!(s, 400);
 
-    // The read runs unasked; the other waits for the person.
+    // Each waits for the person, the one that says it only reads too.
     let url = model(vec![Say::Tool(list, json!({})), Say::Tool(turn, json!({ "id": "hall" })), Say::Text("On.")]);
     configure(&srv, &url).await;
     let flow = start(&srv, "turn the hall light on").await;
     let v = until(&srv, &flow, |v| status(v) == "waiting").await;
+    assert!(v["pending"]["command"].as_str().unwrap().contains("Lights · list_lights"), "{v}");
+    let pid = v["pending"]["id"].as_str().unwrap().to_string();
+    let (s, _) = call(&srv, true, Method::POST, &format!("/api/v1/agent/flows/{flow}/answer"), Some(json!({ "id": pid, "action": "run" }))).await;
+    assert_eq!(s, 204);
+    let v = until(&srv, &flow, |v| status(v) == "waiting" && v["pending"]["id"].as_str() != Some(pid.as_str())).await;
     assert_eq!(v["pending"]["kind"], "confirm");
     assert!(v["pending"]["command"].as_str().unwrap().contains("Lights · turn_on"), "{v}");
     assert_eq!(calls.lock().unwrap().iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), ["list_lights"]);

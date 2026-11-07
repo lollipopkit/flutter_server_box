@@ -119,6 +119,8 @@ without a question, after the command rules apply.
 | Auto | The model judges each such command against the auto mode rules. An allowed command runs. A refused command stops, and the agent receives the reason. With no verdict, you are asked. |
 | Allow all | Every command runs without a question, including deleting, restarting, and config changes. Deny and ask rules still apply. |
 
+A read-only command follows the mode as any other does.
+
 The default mode for new tasks is set under **Settings → Agent → Command
 permissions → Default mode**.
 
@@ -208,8 +210,8 @@ never shows a saved value again.
 
 The status of a server shows **Not connected** when the panel cannot reach it.
 
-A tool that is marked as read-only runs without a question. Any other tool
-follows the task's permission mode, as a command does. In Manual, it waits for
+A tool follows the task's permission mode, as a command does, one marked as
+read-only included. In Manual, it waits for
 your confirmation. In Auto, the model judges it. In Allow all, it runs and is
 recorded in the audit log.
 
