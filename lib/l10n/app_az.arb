@@ -345,7 +345,7 @@
   "suspendTip": "suspend funksiyası root icazəsi və systemd tələb edir.",
   "switchTo": "{val} rejiminə keç",
   "syncedData": "Sinxronlaşdırılan məlumatlar",
-  "syncSecrets": "Parollar və açarlar",
+  "syncSecrets": "Sudo parolları və API açarları",
   "keyPassphrases": "Açar parol ifadələri",
   "syncFiles": "Şriftlər, şəkillər və Skills",
   "syncRemoteTooNew": "Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyası tərəfindən yazılıb. Sinxronlaşdırmanı davam etdirmək üçün bu tətbiqi yeniləyin.",

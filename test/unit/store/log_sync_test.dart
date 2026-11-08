@@ -17,7 +17,9 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/picked_files.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
@@ -283,6 +285,36 @@ void main() {
     await _device();
     await _sync(log).sync();
     expect(Stores.benchmark.get('done'), isNull);
+  });
+
+  test('a benchmark whose server has not come yet is kept, and written once it has', () async {
+    final log = _Log();
+    await _device();
+    final spi = spiFixture(name: 'web', id: 'srv2', ip: '10.0.0.3');
+    Stores.server.put(spi);
+    Stores.benchmark.put(BenchmarkRun(
+      id: 'early',
+      serverId: spi.id,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+      finishedAt: DateTime.fromMillisecondsSinceEpoch(2000),
+      status: BenchmarkStatus.completed,
+      options: const YabsOptions(),
+      runDir: '/tmp/b',
+      resultJson: '{}',
+    ));
+    final run = Stores.benchmark.read('early')!;
+    final h = SyncRecorder.stampsOf([(BenchmarkStore.c, 'early')])[(BenchmarkStore.c, 'early')]!;
+    final server = await SyncRecords.read(Stores.server.table, spi.id);
+    final serverH = SyncRecorder.stampsOf([(Stores.server.table, spi.id)])[(Stores.server.table, spi.id)]!;
+
+    // Another device, reading the run before its server.
+    await _device();
+    await SyncAnnounce.write([(c: BenchmarkStore.c, id: 'early', h: h, d: run)]);
+    expect(Stores.benchmark.get('early'), isNull);
+    await SyncAnnounce.write([(c: Stores.server.table, id: spi.id, h: serverH, d: server)]);
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('early')?.resultJson, '{}');
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
   });
 
   test('a server carries its container host and PVE settings', () async {
@@ -690,6 +722,40 @@ void main() {
     LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
     await _sync(log).sync();
     expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'listed', 'old']);
+
+    // One deleted since stays deleted, whatever list comes later.
+    LlmStores.llm.removeCustomProvider('old');
+    LlmStores.llm.set('customProviders', [provider('old').toStoreJson()], updateLastUpdateTsOnSet: false);
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'listed']);
+  });
+
+  test('a run carries what it first asked; a category switched during it is the next run\'s', () async {
+    final log = _Log();
+    await _device();
+    Stores.setting.timeout.put(7);
+    await _sync(log).sync();
+
+    await _device();
+    Stores.setting.serverStatusUpdateInterval.put(11);
+    var settings = true;
+    final sync = LogSync(
+      log,
+      _Clear(),
+      carries: (c) => settings || c != 'kv:setting',
+      write: (won) async {
+        // Switched off while this run reads.
+        settings = false;
+        await SyncAnnounce.write(won);
+      },
+    );
+    await sync.sync();
+
+    final sent = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List) '${op['c']}/${op['id']}',
+    ];
+    expect(sent, contains('kv:setting/${Stores.setting.serverStatusUpdateInterval.key}'));
   });
 
   test('a picked file reaches the next device as its own copy, and its removal too', () async {
@@ -715,6 +781,25 @@ void main() {
     await _device();
     await _sync(log).sync();
     expect(Stores.setting.sshBgImage.fetch(), isEmpty);
+  });
+
+  test('a picked file missing here is not sent as removed', () async {
+    final log = _Log();
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_2.png'))..writeAsBytesSync([4, 5]);
+    Stores.setting.sshBgImage.put(picked.path);
+    PickedFiles.stamp();
+    picked.deleteSync();
+    await _sync(log).sync();
+
+    final sent = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+          if (op['c'] == PickedFiles.c) op,
+    ];
+    expect(sent, isEmpty);
+    expect(Stores.setting.sshBgImage.fetch(), picked.path);
   });
 
   test('a skill installed on one device is installed on the next, and removed', () async {

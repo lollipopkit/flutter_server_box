@@ -340,7 +340,7 @@
   "suspendTip": "suspend 功能需要 root 权限和 systemd。",
   "switchTo": "切换到 {val}",
   "syncedData": "同步内容",
-  "syncSecrets": "密码与密钥",
+  "syncSecrets": "sudo 密码与 API 密钥",
   "keyPassphrases": "私钥口令",
   "syncFiles": "字体、图片和 Skills",
   "syncRemoteTooNew": "同步的数据由更新版本的 ServerBox 写入。更新本应用后才能继续同步。",

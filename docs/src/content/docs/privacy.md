@@ -30,16 +30,18 @@ Agent conversations are excluded from backups and device sync. They remain on
 this device until you delete them from the conversation history.
 **Backup → Synced data** chooses what else sync carries, one switch per kind:
 settings, AI (providers, tool settings, permissions and memory notes),
-passwords and keys (with the WebDAV and Gist settings), key passphrases (only on a device that remembers them),
+sudo passwords and API keys (with MCP headers and the WebDAV and Gist settings), key passphrases (only on a device that remembers them),
 fonts, images and skills, and benchmarks. An Agent
 conversation can still be sent to the AI provider you configured; see
 [AI requests](#ai-requests).
 
 Backups are created only when you request one. Depending on the options and the
-backup format, a backup can contain server settings and credentials, private
-keys, snippets, port forwards, container settings, connection history, app
-settings, AI settings and, in an encrypted backup only, saved passwords, API
-keys and key passphrases. Agent conversations, sign-ins to AI providers and MCP
+backup format, a backup can contain server settings with their SSH passwords,
+private keys, snippets, port forwards, remote desktop profiles with their saved
+passwords, container settings, connection history, app settings and AI
+settings, encrypted or not. Only an encrypted backup also holds saved sudo
+passwords, API keys, MCP headers, the WebDAV and Gist settings, and key
+passphrases. Agent conversations, sign-ins to AI providers and MCP
 servers, and device-local state are not included. Fonts, images, skills and
 benchmarks are synced through iCloud, WebDAV and LK Cloud, not in a backup
 file.
@@ -164,7 +166,7 @@ or a `.zip` on this device is read locally, with no request. Skills are kept
 as files on this device and synced with the fonts and images.
 An MCP server's headers and sign-in tokens are kept in the App's encrypted
 database and sent only to that server, and only over `https` unless the server
-is on this device. The headers are synced with the passwords and keys; a
+is on this device. The headers are synced with the sudo passwords and API keys; a
 sign-in stays on this device.
 Server Box does not proxy AI requests through a developer service.
 

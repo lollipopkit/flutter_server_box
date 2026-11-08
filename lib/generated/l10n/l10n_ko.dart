@@ -1175,7 +1175,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncedData => '동기화 데이터';
 
   @override
-  String get syncSecrets => '비밀번호 및 키';
+  String get syncSecrets => 'sudo 비밀번호 및 API 키';
 
   @override
   String get keyPassphrases => '키 암호';

@@ -208,6 +208,16 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     );
   }
 
+  /// This backup without the stores of [SyncCategory.secrets] and
+  /// [SyncCategory.passphrases]: what a file without a password holds.
+  BackupV2 withoutSecrets() => copyWith(
+    stores: {
+      for (final e in stores.entries)
+        if (!const {SyncCategory.secrets, SyncCategory.passphrases}.contains(SyncCategory.of('kv:${e.key}')))
+          e.key: e.value,
+    },
+  );
+
   /// Whether this file lacks a record this device holds, or holds one older
   /// than this device's, a delete included — see `SyncIface.lacks`. Records
   /// and their stamps only: those converge. The themes do not (they are what
@@ -276,6 +286,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     }
     var bak = await BackupV2.loadFromStore(only: only, blobs: blobs);
     if (carry != null && only != null) bak = bak.carrying(carry, only);
+    // What was carried too: another device's secrets are no more this
+    // file's to hold in the clear than this one's.
+    if (!encrypted) bak = bak.withoutSecrets();
     var result = bak.toJsonString();
 
     if (encrypted) {

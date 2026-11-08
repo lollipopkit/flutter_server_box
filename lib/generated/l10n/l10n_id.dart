@@ -1239,7 +1239,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get syncedData => 'Data yang disinkronkan';
 
   @override
-  String get syncSecrets => 'Kata sandi dan kunci';
+  String get syncSecrets => 'Kata sandi sudo dan kunci API';
 
   @override
   String get keyPassphrases => 'Frasa sandi kunci';

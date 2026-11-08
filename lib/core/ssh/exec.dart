@@ -395,7 +395,12 @@ class SshExec implements CommandByteExec {
     final goneMark = es.execSessionGone();
     var gone = await _confirms(kill(es.SudoEntry.direct), goneMark);
     if (!gone) {
-      final password = sudoPassword?.call();
+      String? password;
+      try {
+        password = sudoPassword?.call();
+      } catch (_) {
+        // Not to be had: `sudo -n` is what is left.
+      }
       gone = password == null
           ? await _confirms(kill(es.SudoEntry.sudoNoPassword), goneMark)
           : await _confirms(

@@ -407,7 +407,7 @@
   "diskCountsNetworkTip": "NFS、SMB 等網路掛載始終會列在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。此設定僅在透過 SSH 採集狀態時生效；透過 Monitor 採集時，則由 Monitor 自身的設定決定。",
   "diskCountsNetworkAgentTip": "NFS、SMB 等網路掛載始終會顯示在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。Monitor 記錄歷史資料和判斷磁碟告警時使用的也是此總量。",
   "syncedData": "同步內容",
-  "syncSecrets": "密碼與金鑰",
+  "syncSecrets": "sudo 密碼與 API 金鑰",
   "keyPassphrases": "私密金鑰通行密碼",
   "syncFiles": "字型、圖片與 Skills",
   "syncRemoteTooNew": "同步的資料由較新版本的 ServerBox 寫入。更新此應用程式後才能繼續同步。",

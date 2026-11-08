@@ -58,12 +58,16 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
   exempt the app from battery optimisation): **Settings → App → General**.
 - **Backups**: the Backup page — a file, WebDAV, iCloud, a GitHub Gist, or one
   of your servers' Monitors (the Monitor must be recent enough to list
-  `backup` in its features). A backup has the servers, snippets, keys, settings and the Agent's settings
-  (passwords and API keys only when encrypted); chats are not in it. **Synced
+  `backup` in its features). A backup has the servers with their SSH passwords, private keys,
+  snippets, remote desktop profiles with their passwords, settings and the Agent's settings, encrypted or
+  not; sudo passwords, API keys, MCP headers, the WebDAV and Gist settings and key passphrases only when
+  encrypted. Chats are not in it. **Synced
   data** on that page switches each kind of data in or out of sync; fonts,
   images, skills and benchmarks sync only through iCloud, WebDAV and LK Cloud.
-  A device on an older version stops syncing once another device's newer
-  version has written, and says to update; its data stays as it was.
+  A version from before the current sync format keeps syncing to its old
+  backup file, silently apart from the newer devices. One that cannot read a
+  newer device's format stops reading, says to update, and still sends its own
+  changes. Update every device.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.

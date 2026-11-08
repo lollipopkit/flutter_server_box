@@ -1236,7 +1236,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get syncedData => 'Sinxronlaşdırılan məlumatlar';
 
   @override
-  String get syncSecrets => 'Parollar və açarlar';
+  String get syncSecrets => 'Sudo parolları və API açarları';
 
   @override
   String get keyPassphrases => 'Açar parol ifadələri';

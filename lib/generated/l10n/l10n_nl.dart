@@ -1239,7 +1239,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get syncedData => 'Gesynchroniseerde gegevens';
 
   @override
-  String get syncSecrets => 'Wachtwoorden en sleutels';
+  String get syncSecrets => 'Sudo-wachtwoorden en API-sleutels';
 
   @override
   String get keyPassphrases => 'Wachtwoordzinnen van sleutels';

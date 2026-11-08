@@ -1236,7 +1236,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get syncedData => 'داده‌های همگام‌شده';
 
   @override
-  String get syncSecrets => 'گذرواژه‌ها و کلیدها';
+  String get syncSecrets => 'گذرواژه‌های sudo و کلیدهای API';
 
   @override
   String get keyPassphrases => 'عبارت‌های عبور کلید';

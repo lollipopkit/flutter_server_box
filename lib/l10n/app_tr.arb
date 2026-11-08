@@ -390,7 +390,7 @@
   "diskCountsNetworkTip": "NFS ve SMB gibi ağ bağlamaları listede her zaman gösterilir. Kapasiteleri başka bir makineye aittir ve varsayılan olarak disk toplamına katılmaz. Bu ayar yalnızca SSH ile durum toplandığında geçerlidir; Monitor üzerinden toplandığında Monitor’ün kendi ayarı belirleyicidir.",
   "diskCountsNetworkAgentTip": "NFS ve SMB gibi ağ bağlamaları listede her zaman gösterilir. Kapasiteleri başka bir makineye aittir ve varsayılan olarak disk toplamına katılmaz. Monitor’ün geçmişe kaydettiği ve disk uyarılarını karşılaştırdığı değer bu toplamdır.",
   "syncedData": "Eşitlenen veriler",
-  "syncSecrets": "Parolalar ve anahtarlar",
+  "syncSecrets": "Sudo parolaları ve API anahtarları",
   "keyPassphrases": "Anahtar parolaları",
   "syncFiles": "Yazı tipleri, görseller ve Skills",
   "syncRemoteTooNew": "Eşitlenen veriler ServerBox'ın daha yeni bir sürümüyle yazıldı. Eşitlemeye devam etmek için bu uygulamayı güncelleyin.",

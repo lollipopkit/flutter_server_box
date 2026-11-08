@@ -390,7 +390,7 @@
   "diskCountsNetworkTip": "NFS-, SMB- und ähnliche Netzlaufwerke werden immer in der Liste angezeigt. Ihre Kapazität gehört zu einem anderen Rechner und wird daher standardmäßig nicht zur Gesamtkapazität gezählt. Diese Einstellung gilt nur bei der Statuserfassung per SSH. Bei der Erfassung über den Monitor entscheidet dessen eigene Einstellung.",
   "diskCountsNetworkAgentTip": "NFS-, SMB- und ähnliche Netzlaufwerke werden immer in der Liste angezeigt. Ihre Kapazität gehört zu einem anderen Rechner und wird daher standardmäßig nicht zur Gesamtkapazität gezählt. Der Monitor verwendet diese Gesamtkapazität auch für Verlaufsdaten und Festplattenwarnungen.",
   "syncedData": "Synchronisierte Daten",
-  "syncSecrets": "Passwörter und Schlüssel",
+  "syncSecrets": "Sudo-Passwörter und API-Schlüssel",
   "keyPassphrases": "Schlüssel-Passphrasen",
   "syncFiles": "Schriften, Bilder und Skills",
   "syncRemoteTooNew": "Die synchronisierten Daten wurden von einer neueren ServerBox-Version geschrieben. Aktualisiere diese App, um weiter zu synchronisieren.",

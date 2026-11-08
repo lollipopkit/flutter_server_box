@@ -1236,7 +1236,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedData => 'Eşitlenen veriler';
 
   @override
-  String get syncSecrets => 'Parolalar ve anahtarlar';
+  String get syncSecrets => 'Sudo parolaları ve API anahtarları';
 
   @override
   String get keyPassphrases => 'Anahtar parolaları';

@@ -7,6 +7,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
@@ -108,7 +109,7 @@ abstract base class SyncEngine {
     bool Function(String c)? carries,
     void Function()? stamp,
   }) : _write = write ?? SyncAnnounce.write,
-       _carries = carries ?? _all,
+       _carriesNow = carries ?? _all,
        _stamp = stamp ?? _stampFiles;
 
   final SyncBlobStore _blobs;
@@ -127,7 +128,14 @@ abstract base class SyncEngine {
 
   /// Whether records of collection `c` are sent and taken (the settings only
   /// while the user syncs them).
-  final bool Function(String c) _carries;
+  final bool Function(String c) _carriesNow;
+
+  /// [_carriesNow] as each run first asked it: a category switched during a
+  /// run is taken by the next (a [reset] follows), so a snapshot this one
+  /// writes keeps what it was passing on.
+  Map<String, bool>? _carried;
+
+  bool _carries(String c) => _carried == null ? _carriesNow(c) : _carried!.putIfAbsent(c, () => _carriesNow(c));
 
   static bool _all(String _) => true;
 
@@ -176,14 +184,22 @@ abstract base class SyncEngine {
       _tooNew.value = true;
       rethrow;
     }
-    // Read past: a theme that could not be installed then is tried again.
+    // Read past: what could not be written then is tried again.
+    if (_carries(BenchmarkStore.c)) Stores.benchmark.retry();
     if (_carries(SyncThemes.c)) await SyncThemes.retry();
   }
 
   Future<void> _running = Future.value();
 
   Future<void> _serial(Future<void> Function() run) {
-    final next = _running.then((_) => run());
+    final next = _running.then((_) async {
+      _carried = {};
+      try {
+        await run();
+      } finally {
+        _carried = null;
+      }
+    });
     _running = next.catchError((Object _) {});
     return next;
   }
@@ -197,6 +213,7 @@ abstract base class SyncEngine {
     for (final r in records) {
       final d = await read(r.c, r.id);
       if (identical(d, SyncRecords.unread)) return (ops: ops, complete: false);
+      if (identical(d, SyncRecords.silent)) continue;
       // A theme is added only: one removed here says nothing to the others.
       if (d == null && r.c == SyncThemes.c) continue;
       ops.add(await send((c: r.c, id: r.id, h: r.hlc, d: d)));

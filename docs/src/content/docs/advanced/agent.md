@@ -92,7 +92,7 @@ Tap a server to edit it. One (Streamable HTTP) that wants a key takes it as
 headers, a name and a value each, such as `Authorization` with
 `Bearer <token>`. One that uses OAuth shows **Sign-in required**; **Log in**
 opens the browser, and the App keeps the token and renews it. Headers sync with
-the passwords and keys; a sign-in stays on this device. Both are sent only over
+the sudo passwords and API keys; a sign-in stays on this device. Both are sent only over
 `https` unless the server is on this device.
 
 ## Skills
@@ -197,7 +197,7 @@ Chats are stored on the device, in the App's encrypted database, and long ones
 are summarised as they grow. You can reopen, rename and delete them from the
 history list. They are not included in backups or synced. Providers, tool
 settings, permissions and memory notes sync under **AI** in **Backup → Synced
-data**, the API keys under **Passwords and keys**. Messages and tool results can
+data**, the API keys under **Sudo passwords and API keys**. Messages and tool results can
 contain command output, file contents and any terminal text you pasted; they
 are sent to the provider when used in a chat.
 

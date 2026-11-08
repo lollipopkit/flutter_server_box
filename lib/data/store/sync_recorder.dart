@@ -82,12 +82,16 @@ abstract final class SyncRecorder {
   /// an edit made on any device wins over it, and two devices that adopted
   /// different ones each keep theirs until one is edited.
   /// TODO: remove with the keychain adoptions.
+  /// A record already here, an edit or a deletion from any device, is newer
+  /// than anything adopted: nothing is written then.
   static void adopt(SqliteStore store, String key, Object value) {
+    final synced = _ready && syncedStores.containsKey(store.name) && !store.isDeviceLocalKey(key) && !store.isInternalKey(key);
+    final c = 'kv:${store.name}';
+    if (synced && stampsOf([(c, key)]).isNotEmpty) return;
     store.set(key, value, updateLastUpdateTsOnSet: false);
-    if (!_ready || !syncedStores.containsKey(store.name)) return;
     // As an edit is: one kept on this device is no record.
-    if (store.isDeviceLocalKey(key) || store.isInternalKey(key)) return;
-    receiving(syncStampOf(ms: BigInt.zero, device: legacy), () => record('kv:${store.name}', key));
+    if (!synced) return;
+    receiving(syncStampOf(ms: BigInt.zero, device: legacy), () => record(c, key));
   }
 
   /// A stamp's wall-clock part.

@@ -2229,7 +2229,7 @@ abstract class AppLocalizations {
   /// Sync category label.
   ///
   /// In en, this message translates to:
-  /// **'Passwords and keys'**
+  /// **'Sudo passwords and API keys'**
   String get syncSecrets;
 
   /// Sync category label.

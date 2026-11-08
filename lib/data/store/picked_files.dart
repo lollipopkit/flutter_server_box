@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_records.dart';
 
 /// A file the person picked, and the setting that points at it.
 final class _Role {
@@ -79,13 +80,16 @@ abstract final class PickedFiles {
     SyncRecorder.stampChanged(c, now, unknown: unknown);
   }
 
-  /// [role]'s file as an op carries it, null when none is picked.
+  /// [role]'s file as an op carries it, null when none is picked;
+  /// [SyncRecords.silent] when one is picked and its file is not there, as
+  /// [stamp] reads it: that says nothing to the others.
   static Future<Object?> read(String role) async {
     final r = _roles[role];
     if (r == null) return null;
     final path = r.path().fetch();
+    if (path.isEmpty) return null;
     final file = File(path);
-    if (path.isEmpty || !await file.exists()) return null;
+    if (!await file.exists()) return SyncRecords.silent;
     return {'name': path.getFileName(), 'data': base64Encode(await file.readAsBytes())};
   }
 

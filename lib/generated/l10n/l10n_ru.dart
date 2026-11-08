@@ -1241,7 +1241,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncedData => 'Синхронизируемые данные';
 
   @override
-  String get syncSecrets => 'Пароли и ключи';
+  String get syncSecrets => 'Пароли sudo и ключи API';
 
   @override
   String get keyPassphrases => 'Парольные фразы ключей';

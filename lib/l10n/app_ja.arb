@@ -390,7 +390,7 @@
   "diskCountsNetworkTip": "NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含まれません。この設定は SSH で状態を収集する場合に適用されます。Monitor 経由の場合は Monitor 自身の設定が使われます。",
   "diskCountsNetworkAgentTip": "NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含まれません。Monitor はこの合計を履歴に記録し、ディスクアラートの判定にも使用します。",
   "syncedData": "同期するデータ",
-  "syncSecrets": "パスワードとキー",
+  "syncSecrets": "sudo パスワードと API キー",
   "keyPassphrases": "鍵のパスフレーズ",
   "syncFiles": "フォント、画像、Skills",
   "syncRemoteTooNew": "同期データは新しいバージョンの ServerBox で書き込まれています。同期を続けるにはこのアプリを更新してください。",

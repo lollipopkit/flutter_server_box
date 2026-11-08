@@ -1237,7 +1237,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get syncedData => 'Dados sincronizados';
 
   @override
-  String get syncSecrets => 'Senhas e chaves';
+  String get syncSecrets => 'Senhas sudo e chaves de API';
 
   @override
   String get keyPassphrases => 'Frases-senha das chaves';

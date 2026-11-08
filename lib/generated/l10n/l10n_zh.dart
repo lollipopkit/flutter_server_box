@@ -1151,7 +1151,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncedData => '同步内容';
 
   @override
-  String get syncSecrets => '密码与密钥';
+  String get syncSecrets => 'sudo 密码与 API 密钥';
 
   @override
   String get keyPassphrases => '私钥口令';
@@ -8018,7 +8018,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncedData => '同步內容';
 
   @override
-  String get syncSecrets => '密碼與金鑰';
+  String get syncSecrets => 'sudo 密碼與 API 金鑰';
 
   @override
   String get keyPassphrases => '私密金鑰通行密碼';

@@ -391,7 +391,7 @@
   "diskCountsNetworkTip": "I mount NFS, SMB e simili vengono sempre mostrati nell’elenco. La loro capacità appartiene a un’altra macchina, quindi per impostazione predefinita non rientra nel totale dei dischi. Questa opzione si applica solo quando lo stato viene raccolto via SSH; se viene raccolto tramite il Monitor, decide l’impostazione del Monitor.",
   "diskCountsNetworkAgentTip": "I mount NFS, SMB e simili vengono sempre mostrati nell’elenco. La loro capacità appartiene a un’altra macchina, quindi per impostazione predefinita non rientra nel totale dei dischi. Il Monitor usa questo totale anche per registrare la cronologia e valutare gli avvisi sui dischi.",
   "syncedData": "Dati sincronizzati",
-  "syncSecrets": "Password e chiavi",
+  "syncSecrets": "Password sudo e chiavi API",
   "keyPassphrases": "Passphrase delle chiavi",
   "syncFiles": "Font, immagini e skill",
   "syncRemoteTooNew": "I dati sincronizzati sono stati scritti da una versione più recente di ServerBox. Aggiorna questa app per continuare a sincronizzare.",

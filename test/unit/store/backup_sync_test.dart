@@ -164,6 +164,11 @@ void main() {
     final sealed = await bakSync.writeEncryptedBackup(name: 'sealed.age');
     final opened = await BackupV2.open(await File(sealed).readAsBytes(), 'remote-password');
     expect((opened.stores[Stores.sudoPassword.name] as Map?)?['s1'], 'pw');
+
+    // Nor carried into one from another device's.
+    final carried = await BackupV2.backup('carried.json', null, only: {SyncCategory.ai}, carry: opened);
+    final clear = BackupV2.fromJsonString(await File(carried).readAsString());
+    expect(clear.stores.keys, isNot(contains(Stores.sudoPassword.name)));
   });
 
   test('a sync nobody waits for handles its own network failure', () async {

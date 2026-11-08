@@ -390,7 +390,7 @@
   "diskCountsNetworkTip": "Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal. Dit geldt alleen wanneer status via SSH wordt opgehaald; via Monitor bepaalt de eigen instelling van Monitor dit.",
   "diskCountsNetworkAgentTip": "Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal — het totaal dat Monitor in zijn historie opslaat en waartegen het schijfmeldingen controleert.",
   "syncedData": "Gesynchroniseerde gegevens",
-  "syncSecrets": "Wachtwoorden en sleutels",
+  "syncSecrets": "Sudo-wachtwoorden en API-sleutels",
   "keyPassphrases": "Wachtwoordzinnen van sleutels",
   "syncFiles": "Lettertypen, afbeeldingen en skills",
   "syncRemoteTooNew": "De gesynchroniseerde gegevens zijn geschreven door een nieuwere versie van ServerBox. Werk deze app bij om te blijven synchroniseren.",

@@ -41,6 +41,11 @@ abstract final class SyncRecords {
   /// files), as against null for one that is not here.
   static const unread = Object();
 
+  /// What [read] answers for a record with nothing to say now: not sent,
+  /// and nothing after it held back (a picked file missing under a path
+  /// still set). It is stamped again once there is.
+  static const silent = Object();
+
   /// [c]/[id] as it is now, JSON; null when it is not here (deleted).
   static FutureOr<Object?> read(String c, String id) => reader()(c, id);
 

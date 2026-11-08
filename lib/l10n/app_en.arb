@@ -1567,7 +1567,7 @@
   "@syncedData": {
     "description": "Title of the list of what sync carries."
   },
-  "syncSecrets": "Passwords and keys",
+  "syncSecrets": "Sudo passwords and API keys",
   "@syncSecrets": {
     "description": "Sync category label."
   },

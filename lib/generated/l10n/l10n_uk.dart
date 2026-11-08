@@ -1241,7 +1241,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get syncedData => 'Дані для синхронізації';
 
   @override
-  String get syncSecrets => 'Паролі та ключі';
+  String get syncSecrets => 'Паролі sudo та ключі API';
 
   @override
   String get keyPassphrases => 'Парольні фрази ключів';

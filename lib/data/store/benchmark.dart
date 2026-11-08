@@ -202,22 +202,66 @@ class BenchmarkStore {
   }
 
   /// Writes the runs [ops] carry ([read]), or removes them, each recorded at
-  /// its op's stamp. One of a server not here is left out: a run is made
-  /// where its server is, so the server's op is in the log before it, and
-  /// one not here was removed here.
+  /// its op's stamp. One of a server not here yet (the files' sync reads
+  /// each device's changes apart, so the server may come later) is kept
+  /// for [retry]; one of a server removed here is left out.
   void install(List<({String c, String id, String h, Object? d})> ops) {
     for (final op in ops) {
+      _drop(op.id);
       SyncRecorder.receiving(op.h, () {
         final d = op.d;
         if (d is! Map) return remove(op.id);
         final server = d['server_id'];
-        if (_db.select('SELECT 1 FROM server WHERE id = ?;', [server]).isEmpty) return;
+        if (_db.select('SELECT 1 FROM server WHERE id = ?;', [server]).isEmpty) {
+          final removed = _db.select('SELECT 1 FROM tombstone WHERE tbl = ? AND row_id = ?;', ['server', server]).isNotEmpty;
+          if (!removed) _keep(op);
+          return;
+        }
         final run = _fromRow(d.cast());
         if (run == null || run.id != op.id || run.status == BenchmarkStatus.running) return;
         put(run);
       });
     }
   }
+
+  static const _retryPrefix = 'retry:$c:';
+
+  /// Installs what [install] kept once its server is here, unless a newer
+  /// record of the run came since.
+  void retry() {
+    final rows = _db.select('SELECT k, v FROM sync_state WHERE k LIKE ?;', ['$_retryPrefix%']);
+    if (rows.isEmpty) return;
+    final due = <({String c, String id, String h, Object? d})>[];
+    for (final row in rows) {
+      final id = (row['k'] as String).substring(_retryPrefix.length);
+      final Object? kept;
+      try {
+        kept = json.decode(row['v'] as String);
+      } catch (_) {
+        _drop(id);
+        continue;
+      }
+      if (kept case {'h': final String h, 'd': final Map d}) {
+        final current = SyncRecorder.stampsOf([(c, id)])[(c, id)];
+        if (current != null && current.compareTo(h) >= 0) {
+          _drop(id);
+        } else if (_db.select('SELECT 1 FROM server WHERE id = ?;', [d['server_id']]).isNotEmpty ||
+            _db.select('SELECT 1 FROM tombstone WHERE tbl = ? AND row_id = ?;', ['server', d['server_id']]).isNotEmpty) {
+          due.add((c: c, id: id, h: h, d: d));
+        }
+      } else {
+        _drop(id);
+      }
+    }
+    if (due.isNotEmpty) install(due);
+  }
+
+  void _keep(({String c, String id, String h, Object? d}) op) => _db.execute(
+    'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
+    ['$_retryPrefix${op.id}', json.encode({'h': op.h, 'd': op.d})],
+  );
+
+  void _drop(String id) => _db.execute('DELETE FROM sync_state WHERE k = ?;', ['$_retryPrefix$id']);
 
   /// The finished runs, for a migration seeding their records: id and when
   /// each finished.

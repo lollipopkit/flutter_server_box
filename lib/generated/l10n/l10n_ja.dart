@@ -1172,7 +1172,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedData => '同期するデータ';
 
   @override
-  String get syncSecrets => 'パスワードとキー';
+  String get syncSecrets => 'sudo パスワードと API キー';
 
   @override
   String get keyPassphrases => '鍵のパスフレーズ';

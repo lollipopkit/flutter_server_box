@@ -1248,7 +1248,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncedData => 'Données synchronisées';
 
   @override
-  String get syncSecrets => 'Mots de passe et clés';
+  String get syncSecrets => 'Mots de passe sudo et clés API';
 
   @override
   String get keyPassphrases => 'Phrases secrètes des clés';

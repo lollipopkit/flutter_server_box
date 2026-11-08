@@ -390,7 +390,7 @@
   "diskCountsNetworkTip": "Les montages NFS, SMB et similaires apparaissent toujours dans la liste. Leur capacité appartenant à une autre machine, elle n’est pas comptée par défaut dans le total des disques. Ce réglage s’applique uniquement lorsque l’état est recueilli par SSH ; via le Monitor, c’est le réglage du Monitor qui prévaut.",
   "diskCountsNetworkAgentTip": "Les montages NFS, SMB et similaires apparaissent toujours dans la liste. Leur capacité appartenant à une autre machine, elle n’est pas comptée par défaut dans le total des disques. Le Monitor utilise également ce total pour enregistrer l’historique et évaluer les alertes de disque.",
   "syncedData": "Données synchronisées",
-  "syncSecrets": "Mots de passe et clés",
+  "syncSecrets": "Mots de passe sudo et clés API",
   "keyPassphrases": "Phrases secrètes des clés",
   "syncFiles": "Polices, images et skills",
   "syncRemoteTooNew": "Les données synchronisées ont été écrites par une version plus récente de ServerBox. Mettez à jour cette app pour continuer à synchroniser.",

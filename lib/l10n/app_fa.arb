@@ -349,7 +349,7 @@
   "suspendTip": "قابلیت suspend به دسترسی root و پشتیبانی systemd نیاز دارد.",
   "switchTo": "جابه‌جایی به {val}",
   "syncedData": "داده‌های همگام‌شده",
-  "syncSecrets": "گذرواژه‌ها و کلیدها",
+  "syncSecrets": "گذرواژه‌های sudo و کلیدهای API",
   "keyPassphrases": "عبارت‌های عبور کلید",
   "syncFiles": "فونت‌ها، تصاویر و مهارت‌ها",
   "syncRemoteTooNew": "داده‌های همگام‌شده با نسخهٔ جدیدتری از ServerBox نوشته شده‌اند. برای ادامهٔ همگام‌سازی این برنامه را به‌روز کنید.",
