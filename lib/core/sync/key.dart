@@ -91,8 +91,16 @@ final class SyncKey implements SyncSeal {
   /// [create] (a restore, nothing synced), none is put where there is none:
   /// [SyncKeyNotHere].
   static Future<SyncKey> of(SyncKeyFile file, {bool create = true}) async {
+    final fresh = !_keys.containsKey(file.id);
     final key = _keys[file.id] ??= SyncKey._(file);
-    await key.check(create: create);
+    try {
+      await key.check(create: create);
+    } catch (_) {
+      // A restore's lookup leaves nothing behind for a remote nothing syncs
+      // to; a sync's stays, to be checked again.
+      if (!create && fresh && identical(_keys[file.id], key)) _keys.remove(file.id);
+      rethrow;
+    }
     return key;
   }
 

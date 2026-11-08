@@ -94,5 +94,10 @@ void main() {
     expect(PrefProps.gistSync.get(), isFalse);
     expect(const PrefPropDefault('monitor_sync', false).get(), isFalse);
     expect(await SecureStoreProps.githubToken.read(), isNull);
+
+    // Brought back by a restore or another device: removed again.
+    Stores.syncRemote.set('githubToken', 'tok');
+    await Future<void>.delayed(Duration.zero);
+    expect(Stores.syncRemote.get<String>('githubToken'), isNull);
   });
 }

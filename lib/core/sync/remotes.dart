@@ -96,14 +96,21 @@ abstract final class SyncRemotes {
 
   static const _adopted = PrefPropDefault('sync_remote_adopted', false, updateLastUpdateTsOnSetProp: false);
 
+  /// The keys of the retired GitHub Gist sync.
+  static const _retired = ['gistId', 'githubToken'];
+
   /// Removes what the GitHub Gist and monitor agent backup syncs left: they
-  /// are gone. TODO: remove with [_droppedRetired] once no install can still
-  /// hold them.
+  /// are gone. Once, and again whenever a restore or another device brings
+  /// one back (an older backup, a build that still had them). TODO: remove
+  /// with [_droppedRetired] once no install can still hold them.
   static Future<void> dropRetired() async {
+    Stores.syncRemote.watch().listen((key) {
+      if (_retired.contains(key) && _get(key) != null) Stores.syncRemote.remove(key);
+    });
     if (_droppedRetired.get()) return;
     try {
       SqliteStore.transact(() {
-        for (final key in const ['gistId', 'githubToken']) {
+        for (final key in _retired) {
           if (_get(key) != null) Stores.syncRemote.remove(key);
         }
       });

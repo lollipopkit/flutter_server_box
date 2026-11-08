@@ -305,6 +305,8 @@ void main() {
     _restart();
     await expectLater(SyncKey.of(file, create: false), throwsA(isA<SyncKeyNotHere>()));
     expect(file.body, isNull);
+    await SyncKey.passwordChanged('a');
+    expect(await _pending(), isNull, reason: 'the restore left nothing to seal again');
     await SyncKey.recheck();
     await SyncKey.of(file);
     await _expectFile(file, 'a', epoch: 0, keys: keys);
