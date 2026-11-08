@@ -62,6 +62,10 @@ final class TmuxControlClient {
   /// before tmux has the pane at this size, and is replayed to fit it.
   int? _viewHeight;
 
+  /// The active pane and window whose full history was last captured into local xterm.
+  TmuxPaneId? _lastCapturedPaneId;
+  TmuxWindowId? _lastCapturedWindowId;
+
   /// Called for fire-and-forget commands (notably keyboard input) which fail.
   void Function(String command, Object error)? onCommandError;
 
@@ -270,6 +274,8 @@ final class TmuxControlClient {
     _commands.close();
     _refreshTimer?.cancel();
     _refreshTimer = null;
+    _lastCapturedPaneId = null;
+    _lastCapturedWindowId = null;
 
     await _outputSubscription?.cancel();
     await _stateController.close();
@@ -532,6 +538,10 @@ final class TmuxControlClient {
     final paneId = _snapshot?.activePaneId;
     if (paneId == null) return;
 
+    final windowId = _snapshot?.activeWindowId;
+    final paneChanged = paneId != _lastCapturedPaneId ||
+        windowId != _lastCapturedWindowId;
+
     // Freeze pane delivery around the capture. Without this boundary, output
     // can arrive between the capture and its control-mode result and then be
     // erased when the older captured screen is replayed. tmux before 3.2 has
@@ -545,7 +555,10 @@ final class TmuxControlClient {
     final effectiveHistoryLimit = math.min(_historyLimit, maxScrollbackLines);
     // Alternate-screen applications own their screen and have no scrollback in
     // xterm, so replaying tmux history there would only throw lines away.
-    final captureHistory = !mode.alternateScreen && effectiveHistoryLimit > 0;
+    // When the pane has not changed, the local xterm already owns the scrollback
+    // buffer; we only need to refresh the visible viewport.
+    final captureHistory =
+        paneChanged && !mode.alternateScreen && effectiveHistoryLimit > 0;
     final command = captureHistory
         ? "capture-pane -p -e -S -$effectiveHistoryLimit -t '$paneId'"
         : "capture-pane -p -e -t '$paneId'";
@@ -577,45 +590,71 @@ final class TmuxControlClient {
     );
     final screenStart = historyCount + shift;
     final screenEnd = math.min(result.lines.length, screenStart + viewHeight);
-    // The alternate screen has no scrollback to keep the shifted rows in.
-    final scrolledOff = mode.alternateScreen ? historyCount : screenStart;
 
-    // Replay history in screen-sized chunks. Each chunk is written by absolute
-    // row so escapes in the captured line cannot move later rows, then the
-    // cursor is moved to the bottom and the chunk is scrolled off with exactly
-    // chunk.length line feeds. This preserves the chunk in scrollback without
-    // leaving blank lines between history and the live screen.
     final captured = StringBuffer();
-    for (var at = 0; at < scrolledOff; at += viewHeight) {
-      final chunk = result.lines.sublist(
-        at,
-        math.min(at + viewHeight, scrolledOff),
-      );
-      for (var row = 0; row < chunk.length; row++) {
+
+    if (paneChanged) {
+      // The alternate screen has no scrollback to keep the shifted rows in.
+      final scrolledOff = mode.alternateScreen ? historyCount : screenStart;
+
+      // Replay history in screen-sized chunks. Each chunk is written by absolute
+      // row so escapes in the captured line cannot move later rows, then the
+      // cursor is moved to the bottom and the chunk is scrolled off with exactly
+      // chunk.length line feeds. This preserves the chunk in scrollback without
+      // leaving blank lines between history and the live screen.
+      for (var at = 0; at < scrolledOff; at += viewHeight) {
+        final chunk = result.lines.sublist(
+          at,
+          math.min(at + viewHeight, scrolledOff),
+        );
+        for (var row = 0; row < chunk.length; row++) {
+          captured
+            ..write('\x1b[${row + 1};1H')
+            ..write(chunk[row]);
+        }
         captured
-          ..write('\x1b[${row + 1};1H')
-          ..write(chunk[row]);
+          ..write('\x1b[$viewHeight;1H')
+          ..write('\r\n' * chunk.length);
       }
-      captured
-        ..write('\x1b[$viewHeight;1H')
-        ..write('\r\n' * chunk.length);
-    }
 
-    // Replay the live screen at its absolute rows. Advancing with LF/CR would
-    // work on an empty terminal, but a viewport resize or an output race can
-    // turn trailing blank rows into scrollback and leave the prompt detached
-    // from its tmux row.
-    for (var row = screenStart; row < screenEnd; row++) {
-      captured
-        ..write('\x1b[${row - screenStart + 1};1H')
-        ..write(result.lines[row]);
-    }
+      // Replay the live screen at its absolute rows. Advancing with LF/CR would
+      // work on an empty terminal, but a viewport resize or an output race can
+      // turn trailing blank rows into scrollback and leave the prompt detached
+      // from its tmux row.
+      for (var row = screenStart; row < screenEnd; row++) {
+        captured
+          ..write('\x1b[${row - screenStart + 1};1H')
+          ..write(result.lines[row]);
+      }
 
-    final restoreCursor = '\x1b[${cursorY - shift + 1};${cursorX + 1}H';
-    final bytes = utf8.encode(
-      '\x1bc${mode.restorePrefix}$captured$restoreCursor',
-    );
-    _paneOutputController.add(TmuxControlPaneOutput(paneId, bytes));
+      final restoreCursor = '\x1b[${cursorY - shift + 1};${cursorX + 1}H';
+      final bytes = utf8.encode(
+        '\x1bc${mode.restorePrefix}$captured$restoreCursor',
+      );
+      _lastCapturedPaneId = paneId;
+      _lastCapturedWindowId = windowId;
+      _paneOutputController.add(TmuxControlPaneOutput(paneId, bytes));
+    } else {
+      // Same-pane redraw (resize, %layout-change, keyboard toggle):
+      // Do NOT emit \x1bc, do NOT replay history with \r\n, preserve local scrollback.
+      // Reset text attributes first to avoid SGR background color bleed on \x1b[2K.
+      captured.write('\x1b[m');
+
+      for (var row = screenStart; row < screenEnd; row++) {
+        captured
+          ..write('\x1b[${row - screenStart + 1};1H\x1b[2K')
+          ..write(result.lines[row]);
+      }
+
+      // If pane height is less than viewport height (e.g. split pane), clear remainder.
+      if (screenEnd - screenStart < viewHeight) {
+        captured.write('\x1b[${screenEnd - screenStart + 1};1H\x1b[J');
+      }
+
+      final restoreCursor = '\x1b[${cursorY - shift + 1};${cursorX + 1}H';
+      final bytes = utf8.encode('$captured$restoreCursor');
+      _paneOutputController.add(TmuxControlPaneOutput(paneId, bytes));
+    }
     if (pause) _resumePaneOutput(paneId);
   }
 

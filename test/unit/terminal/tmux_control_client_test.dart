@@ -619,21 +619,78 @@ void main() {
       final capturesBefore = shell.writes
           .where((command) => command == "capture-pane -p -e -S -1000 -t '%3'")
           .length;
+      final visibleCapturesBefore = shell.writes
+          .where((command) => command == "capture-pane -p -e -t '%3'")
+          .length;
       shell.emit('%layout-change @1 ca2a,80x24,0,0,0 80x24,0,0,0 *\n');
       await Future<void>.delayed(const Duration(milliseconds: 80));
       await _pumpEventQueue();
 
+      // Same-pane layout change refreshes visible rows without re-fetching scrollback.
       expect(
         shell.writes
-            .where(
-              (command) => command == "capture-pane -p -e -S -1000 -t '%3'",
-            )
+            .where((command) => command == "capture-pane -p -e -t '%3'")
             .length,
-        capturesBefore + 1,
+        visibleCapturesBefore + 1,
+      );
+      expect(
+        shell.writes
+            .where((command) => command == "capture-pane -p -e -S -1000 -t '%3'")
+            .length,
+        capturesBefore,
       );
       await client.dispose();
       shell.close();
     });
+
+    test(
+      'same-pane layout change redraws visible viewport without RIS or history feed',
+      () async {
+        final shell = _FakeTmuxShell();
+        final client = TmuxControlClient(shell);
+        final output = <List<int>>[];
+        final subscription = client.paneOutput.listen(
+          (event) => output.add(event.data),
+        );
+
+        final initialized = client.initialize();
+        shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+        await initialized;
+        await _pumpEventQueue();
+
+        // Initial capture must do full capture with RIS and scrollback history.
+        expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%0'"));
+        expect(output, isNotEmpty);
+        final initialCaptured = utf8.decode(output.last);
+        expect(initialCaptured, contains('\x1bc'));
+
+        output.clear();
+        final writesBefore = shell.writes.length;
+
+        // Same-pane layout change (%0 in @0)
+        shell.emit('%layout-change @0 ca2a,80x24,0,0,0 80x24,0,0,0 *\n');
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        await _pumpEventQueue();
+
+        final newWrites = shell.writes.skip(writesBefore).toList();
+        expect(newWrites, contains("capture-pane -p -e -t '%0'"));
+        expect(
+          newWrites.where((c) => c.startsWith('capture-pane -p -e -S')),
+          isEmpty,
+        );
+
+        // Same-pane output must not contain RIS (\x1bc) or line feed history feeds.
+        expect(output, isNotEmpty);
+        final samePaneOutput = utf8.decode(output.last);
+        expect(samePaneOutput, isNot(contains('\x1bc')));
+        expect(samePaneOutput, contains('\x1b[m'));
+        expect(samePaneOutput, contains('\x1b[2K'));
+
+        await subscription.cancel();
+        await client.dispose();
+        shell.close();
+      },
+    );
 
     test('creates a window with tmux command quoting', () async {
       final shell = _FakeTmuxShell();
