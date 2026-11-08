@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Widget Rumah Pembaruan Otomatis",
   "availableTabs": "Tab Tersedia",
   "backupEncrypted": "Cadangan telah dienkripsi",
-  "backupNotEncrypted": "Cadangan tidak dienkripsi",
   "backupPassword": "Kata sandi cadangan",
   "backupPasswordRemoveSynced": "Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.",
   "backupPasswordRemoved": "Kata sandi cadangan dihapus",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Alamat utama",
   "discoveryAlternateAddress": "Alamat cadangan",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Buang perubahan yang belum disimpan?"
+  "discardUnsaved": "Buang perubahan yang belum disimpan?",
+  "syncAuto": "Sinkronisasi otomatis",
+  "syncOff": "Nonaktif",
+  "syncDone": "Tersinkron",
+  "syncLastAt": "Sinkronisasi terakhir {time}",
+  "syncNow": "Sinkronkan sekarang",
+  "syncSwitchBody": "Sinkronisasi otomatis ke {name} berhenti. Cadangan yang sudah ada di sana tetap tersimpan.",
+  "bakPwdSet": "Sudah diatur",
+  "bakPwdNotSet": "Belum diatur",
+  "syncChannel": "Saluran",
+  "syncStateFailed": "Sinkronisasi gagal",
+  "syncStatePassword": "Kata sandi tidak cocok",
+  "syncStateUpdate": "Perlu diperbarui",
+  "syncStateRunning": "Menyinkronkan"
 }

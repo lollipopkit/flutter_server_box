@@ -172,9 +172,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupEncrypted => 'バックアップは暗号化されています';
 
   @override
-  String get backupNotEncrypted => 'バックアップは暗号化されていません';
-
-  @override
   String get backupPassword => 'バックアップパスワード';
 
   @override
@@ -6944,4 +6941,47 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get discardUnsaved => '保存していない変更を破棄しますか？';
+
+  @override
+  String get syncAuto => '自動同期';
+
+  @override
+  String get syncOff => 'オフ';
+
+  @override
+  String get syncDone => '同期済み';
+
+  @override
+  String syncLastAt(String time) {
+    return '最終同期 $time';
+  }
+
+  @override
+  String get syncNow => '今すぐ同期';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name への自動同期を停止します。そこにある既存のバックアップは残ります。';
+  }
+
+  @override
+  String get bakPwdSet => '設定済み';
+
+  @override
+  String get bakPwdNotSet => '未設定';
+
+  @override
+  String get syncChannel => 'チャネル';
+
+  @override
+  String get syncStateFailed => '同期に失敗しました';
+
+  @override
+  String get syncStatePassword => 'パスワードが一致しません';
+
+  @override
+  String get syncStateUpdate => 'アップデートが必要です';
+
+  @override
+  String get syncStateRunning => '同期中';
 }

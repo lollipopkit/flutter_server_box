@@ -199,7 +199,6 @@ export type MachineFeature =
   | 'firewall'
   | 'snippets'
   | 'desktop'
-  | 'backup'
   | 'bmc'
   | 'virt'
   /// The agent keeps the panel's desk (`/desk*`).
@@ -1697,20 +1696,6 @@ export interface DesktopProtocolView {
 export interface DesktopsView {
   desktops: Desktop[]
   protocols: DesktopProtocolView[]
-}
-
-/// One blob the agent hosts (`api::backup::BlobView`). Never its contents.
-export interface BackupBlob {
-  name: string
-  size: number
-  /// RFC 3339.
-  updated_at: string
-}
-
-/// `GET /backup`.
-export interface BackupView {
-  blobs: BackupBlob[]
-  max_bytes: number
 }
 
 /// A BMC target the agent reaches (`api::bmc::TargetView`). The password is

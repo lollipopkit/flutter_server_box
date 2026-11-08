@@ -180,9 +180,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupEncrypted => 'Yedekleme şifrelenmiş';
 
   @override
-  String get backupNotEncrypted => 'Yedekleme şifreli değil';
-
-  @override
   String get backupPassword => 'Yedekleme parolası';
 
   @override
@@ -7224,4 +7221,47 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Kaydedilmemiş değişiklikler atılsın mı?';
+
+  @override
+  String get syncAuto => 'Otomatik eşitleme';
+
+  @override
+  String get syncOff => 'Kapalı';
+
+  @override
+  String get syncDone => 'Eşitlendi';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son eşitleme $time';
+  }
+
+  @override
+  String get syncNow => 'Şimdi eşitle';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ile otomatik eşitleme durur. Orada zaten bulunan yedek kalır.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ayarlandı';
+
+  @override
+  String get bakPwdNotSet => 'Ayarlanmadı';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Eşitleme başarısız';
+
+  @override
+  String get syncStatePassword => 'Parola eşleşmiyor';
+
+  @override
+  String get syncStateUpdate => 'Güncelleme gerekli';
+
+  @override
+  String get syncStateRunning => 'Eşitleniyor';
 }

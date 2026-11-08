@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Home-Widget automatisch aktualisieren",
   "availableTabs": "Verfügbare Tabs",
   "backupEncrypted": "Backup ist verschlüsselt",
-  "backupNotEncrypted": "Backup ist nicht verschlüsselt",
   "backupPassword": "Backup-Passwort",
   "backupPasswordRemoveSynced": "Dadurch wird das Backup-Passwort von allen Geräten entfernt, die denselben iCloud-Schlüsselbund verwenden. Ihre Synchronisierung stoppt, bis wieder ein Passwort gesetzt wird.",
   "backupPasswordRemoved": "Backup-Passwort entfernt",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Hauptadresse",
   "discoveryAlternateAddress": "Ausweichadresse",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Ungespeicherte Änderungen verwerfen?"
+  "discardUnsaved": "Ungespeicherte Änderungen verwerfen?",
+  "syncAuto": "Automatische Synchronisierung",
+  "syncOff": "Aus",
+  "syncDone": "Synchronisiert",
+  "syncLastAt": "Zuletzt synchronisiert {time}",
+  "syncNow": "Jetzt synchronisieren",
+  "syncSwitchBody": "Die automatische Synchronisierung mit {name} wird beendet. Die dort vorhandene Sicherung bleibt erhalten.",
+  "bakPwdSet": "Festgelegt",
+  "bakPwdNotSet": "Nicht festgelegt",
+  "syncChannel": "Kanal",
+  "syncStateFailed": "Synchronisierung fehlgeschlagen",
+  "syncStatePassword": "Passwort stimmt nicht überein",
+  "syncStateUpdate": "Aktualisierung erforderlich",
+  "syncStateRunning": "Wird synchronisiert"
 }

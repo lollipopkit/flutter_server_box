@@ -185,9 +185,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupEncrypted => 'La sauvegarde est chiffrée';
 
   @override
-  String get backupNotEncrypted => 'La sauvegarde n\'est pas chiffrée';
-
-  @override
   String get backupPassword => 'Mot de passe de sauvegarde';
 
   @override
@@ -7355,4 +7352,47 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get discardUnsaved =>
       'Abandonner les modifications non enregistrées ?';
+
+  @override
+  String get syncAuto => 'Synchronisation automatique';
+
+  @override
+  String get syncOff => 'Désactivée';
+
+  @override
+  String get syncDone => 'Synchronisé';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Dernière synchronisation $time';
+  }
+
+  @override
+  String get syncNow => 'Synchroniser maintenant';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'La synchronisation automatique vers $name s’arrête. La sauvegarde qui s’y trouve est conservée.';
+  }
+
+  @override
+  String get bakPwdSet => 'Défini';
+
+  @override
+  String get bakPwdNotSet => 'Non défini';
+
+  @override
+  String get syncChannel => 'Canal';
+
+  @override
+  String get syncStateFailed => 'Échec de la synchronisation';
+
+  @override
+  String get syncStatePassword => 'Mot de passe différent';
+
+  @override
+  String get syncStateUpdate => 'Mise à jour requise';
+
+  @override
+  String get syncStateRunning => 'Synchronisation…';
 }

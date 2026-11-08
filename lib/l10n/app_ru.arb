@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Автоматическое обновление виджета на главном экране",
   "availableTabs": "Доступные вкладки",
   "backupEncrypted": "Резервная копия зашифрована",
-  "backupNotEncrypted": "Резервная копия не зашифрована",
   "backupPassword": "Пароль резервной копии",
   "backupPasswordRemoveSynced": "Пароль резервной копии будет удалён со всех устройств, использующих ту же связку ключей iCloud. Их синхронизация остановится, пока пароль не будет задан снова.",
   "backupPasswordRemoved": "Пароль резервной копии удален",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Основной адрес",
   "discoveryAlternateAddress": "Резервный адрес",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Отменить несохранённые изменения?"
+  "discardUnsaved": "Отменить несохранённые изменения?",
+  "syncAuto": "Автосинхронизация",
+  "syncOff": "Выключена",
+  "syncDone": "Синхронизировано",
+  "syncLastAt": "Последняя синхронизация {time}",
+  "syncNow": "Синхронизировать сейчас",
+  "syncSwitchBody": "Автосинхронизация с {name} прекратится. Резервная копия, которая уже там есть, сохранится.",
+  "bakPwdSet": "Задан",
+  "bakPwdNotSet": "Не задан",
+  "syncChannel": "Канал",
+  "syncStateFailed": "Ошибка синхронизации",
+  "syncStatePassword": "Пароль не совпадает",
+  "syncStateUpdate": "Требуется обновление",
+  "syncStateRunning": "Синхронизация"
 }

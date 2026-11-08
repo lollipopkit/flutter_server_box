@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Автоматичне оновлення віджетів на головному екрані",
   "availableTabs": "Доступні вкладки",
   "backupEncrypted": "Резервна копія зашифрована",
-  "backupNotEncrypted": "Резервна копія не зашифрована",
   "backupPassword": "Пароль резервного копіювання",
   "backupPasswordRemoveSynced": "Пароль резервного копіювання буде видалено з усіх пристроїв, що використовують ту саму в'язку ключів iCloud. Їхня синхронізація зупиниться, доки пароль не буде встановлено знову.",
   "backupPasswordRemoved": "Пароль резервного копіювання видалено",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Основна адреса",
   "discoveryAlternateAddress": "Резервна адреса",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Скасувати незбережені зміни?"
+  "discardUnsaved": "Скасувати незбережені зміни?",
+  "syncAuto": "Автосинхронізація",
+  "syncOff": "Вимкнено",
+  "syncDone": "Синхронізовано",
+  "syncLastAt": "Остання синхронізація {time}",
+  "syncNow": "Синхронізувати зараз",
+  "syncSwitchBody": "Автосинхронізацію з {name} буде зупинено. Резервна копія, що вже там є, залишиться.",
+  "bakPwdSet": "Задано",
+  "bakPwdNotSet": "Не задано",
+  "syncChannel": "Канал",
+  "syncStateFailed": "Помилка синхронізації",
+  "syncStatePassword": "Пароль не збігається",
+  "syncStateUpdate": "Потрібне оновлення",
+  "syncStateRunning": "Синхронізація"
 }

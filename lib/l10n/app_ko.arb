@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "홈 위젯 자동 업데이트",
   "availableTabs": "사용 가능한 탭",
   "backupEncrypted": "백업이 암호화되어 있습니다",
-  "backupNotEncrypted": "백업이 암호화되어 있지 않습니다",
   "backupPassword": "백업 비밀번호",
   "backupPasswordRemoveSynced": "같은 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 비밀번호를 다시 설정할 때까지 해당 기기의 동기화가 중지됩니다.",
   "backupPasswordRemoved": "백업 비밀번호가 제거되었습니다",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "기본 주소",
   "discoveryAlternateAddress": "대체 주소",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "저장하지 않은 변경 사항을 버릴까요?"
+  "discardUnsaved": "저장하지 않은 변경 사항을 버릴까요?",
+  "syncAuto": "자동 동기화",
+  "syncOff": "끄기",
+  "syncDone": "동기화됨",
+  "syncLastAt": "마지막 동기화 {time}",
+  "syncNow": "지금 동기화",
+  "syncSwitchBody": "{name}(으)로의 자동 동기화가 중지됩니다. 이미 있는 백업은 그대로 남습니다.",
+  "bakPwdSet": "설정됨",
+  "bakPwdNotSet": "설정 안 됨",
+  "syncChannel": "채널",
+  "syncStateFailed": "동기화 실패",
+  "syncStatePassword": "비밀번호 불일치",
+  "syncStateUpdate": "업데이트 필요",
+  "syncStateRunning": "동기화 중"
 }

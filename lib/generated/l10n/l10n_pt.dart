@@ -182,9 +182,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get backupEncrypted => 'Backup está criptografado';
 
   @override
-  String get backupNotEncrypted => 'Backup não está criptografado';
-
-  @override
   String get backupPassword => 'Senha de backup';
 
   @override
@@ -7309,4 +7306,47 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Descartar as alterações não salvas?';
+
+  @override
+  String get syncAuto => 'Sincronização automática';
+
+  @override
+  String get syncOff => 'Desativada';
+
+  @override
+  String get syncDone => 'Sincronizado';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Última sincronização $time';
+  }
+
+  @override
+  String get syncNow => 'Sincronizar agora';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'A sincronização automática com $name para. O backup que já está lá é mantido.';
+  }
+
+  @override
+  String get bakPwdSet => 'Definida';
+
+  @override
+  String get bakPwdNotSet => 'Não definida';
+
+  @override
+  String get syncChannel => 'Canal';
+
+  @override
+  String get syncStateFailed => 'Falha na sincronização';
+
+  @override
+  String get syncStatePassword => 'Senha diferente';
+
+  @override
+  String get syncStateUpdate => 'Atualização necessária';
+
+  @override
+  String get syncStateRunning => 'Sincronizando';
 }

@@ -181,9 +181,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupEncrypted => 'Back-up is versleuteld';
 
   @override
-  String get backupNotEncrypted => 'Back-up is niet versleuteld';
-
-  @override
   String get backupPassword => 'Back-up wachtwoord';
 
   @override
@@ -7307,4 +7304,47 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Niet-opgeslagen wijzigingen verwerpen?';
+
+  @override
+  String get syncAuto => 'Automatisch synchroniseren';
+
+  @override
+  String get syncOff => 'Uit';
+
+  @override
+  String get syncDone => 'Gesynchroniseerd';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Laatst gesynchroniseerd $time';
+  }
+
+  @override
+  String get syncNow => 'Nu synchroniseren';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Automatisch synchroniseren naar $name stopt. De back-up die daar al staat, blijft bewaard.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ingesteld';
+
+  @override
+  String get bakPwdNotSet => 'Niet ingesteld';
+
+  @override
+  String get syncChannel => 'Kanaal';
+
+  @override
+  String get syncStateFailed => 'Synchronisatie mislukt';
+
+  @override
+  String get syncStatePassword => 'Wachtwoord komt niet overeen';
+
+  @override
+  String get syncStateUpdate => 'Update vereist';
+
+  @override
+  String get syncStateRunning => 'Bezig met synchroniseren';
 }

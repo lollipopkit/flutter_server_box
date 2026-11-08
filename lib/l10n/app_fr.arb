@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Mise à jour automatique du widget d'accueil",
   "availableTabs": "Onglets disponibles",
   "backupEncrypted": "La sauvegarde est chiffrée",
-  "backupNotEncrypted": "La sauvegarde n'est pas chiffrée",
   "backupPassword": "Mot de passe de sauvegarde",
   "backupPasswordRemoveSynced": "Cela supprime le mot de passe de sauvegarde de tous les appareils utilisant le même trousseau iCloud. Leur synchronisation s'arrête jusqu'à ce qu'un mot de passe soit de nouveau défini.",
   "backupPasswordRemoved": "Mot de passe de sauvegarde supprimé",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Adresse principale",
   "discoveryAlternateAddress": "Adresse de secours",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Abandonner les modifications non enregistrées ?"
+  "discardUnsaved": "Abandonner les modifications non enregistrées ?",
+  "syncAuto": "Synchronisation automatique",
+  "syncOff": "Désactivée",
+  "syncDone": "Synchronisé",
+  "syncLastAt": "Dernière synchronisation {time}",
+  "syncNow": "Synchroniser maintenant",
+  "syncSwitchBody": "La synchronisation automatique vers {name} s’arrête. La sauvegarde qui s’y trouve est conservée.",
+  "bakPwdSet": "Défini",
+  "bakPwdNotSet": "Non défini",
+  "syncChannel": "Canal",
+  "syncStateFailed": "Échec de la synchronisation",
+  "syncStatePassword": "Mot de passe différent",
+  "syncStateUpdate": "Mise à jour requise",
+  "syncStateRunning": "Synchronisation…"
 }

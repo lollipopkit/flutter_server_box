@@ -182,9 +182,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupEncrypted => 'Cadangan telah dienkripsi';
 
   @override
-  String get backupNotEncrypted => 'Cadangan tidak dienkripsi';
-
-  @override
   String get backupPassword => 'Kata sandi cadangan';
 
   @override
@@ -7240,4 +7237,47 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Buang perubahan yang belum disimpan?';
+
+  @override
+  String get syncAuto => 'Sinkronisasi otomatis';
+
+  @override
+  String get syncOff => 'Nonaktif';
+
+  @override
+  String get syncDone => 'Tersinkron';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Sinkronisasi terakhir $time';
+  }
+
+  @override
+  String get syncNow => 'Sinkronkan sekarang';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Sinkronisasi otomatis ke $name berhenti. Cadangan yang sudah ada di sana tetap tersimpan.';
+  }
+
+  @override
+  String get bakPwdSet => 'Sudah diatur';
+
+  @override
+  String get bakPwdNotSet => 'Belum diatur';
+
+  @override
+  String get syncChannel => 'Saluran';
+
+  @override
+  String get syncStateFailed => 'Sinkronisasi gagal';
+
+  @override
+  String get syncStatePassword => 'Kata sandi tidak cocok';
+
+  @override
+  String get syncStateUpdate => 'Perlu diperbarui';
+
+  @override
+  String get syncStateRunning => 'Menyinkronkan';
 }

@@ -25,7 +25,7 @@ extension BackupV2Restore on BackupV2 {
     // Every store shares this SQLite connection. Keep the reference order, but
     // commit the whole restore as one unit so a later failure cannot leave the
     // earlier stores visible without it.
-    final restored = _restoredServerGraph();
+    final restored = _restoredServerGraph(force: force);
     final keysBefore = [for (final k in Stores.key.fetch()) k.key];
     // A restore the user started ([force]) is their change, and syncs out; a
     // sync's merge is another device's, stamped as no device's
@@ -45,6 +45,8 @@ extension BackupV2Restore on BackupV2 {
         force: force,
         notify: false,
         appliedIds: appliedServerIds,
+        // [_restoredServerGraph] matched them, and every reference with them.
+        byName: false,
       );
       final snippetsChanged = Stores.snippet.merge(
         _snippetsWithRestoredServerIds(restored.serverIds),
@@ -209,8 +211,14 @@ extension BackupV2Restore on BackupV2 {
   /// so `bmc.credId` needs the same treatment — restoring one backup twice
   /// would otherwise leave every server pointing at an account id that the
   /// second restore did not create.
+  ///
+  /// A server is matched by name only as [ServerStore.reconcile] matches it
+  /// in `EntityStore.merge`: in a restore ([force]) or for a record carrying
+  /// no id. In a sync, another device's server of the same name is another
+  /// server. Never onto an id another server of the backup has: both would
+  /// be restored as one.
   ({Map<String, Object?> servers, Map<String, String> serverIds})
-  _restoredServerGraph() {
+  _restoredServerGraph({required bool force}) {
     final keyIds = _restoredIds(
       keys,
       PrivateKeyInfo.fromJson,
@@ -244,6 +252,14 @@ extension BackupV2Restore on BackupV2 {
       sourceOwners[id] = sourceKey;
     }
 
+    final backupIds = <String>{
+      for (final entry in spis.entries)
+        if (!_isInternalStoreKey(entry.key) && entry.value is Map) ...[
+          entry.key,
+          if ((entry.value as Map)['id'] case final String id when id.isNotEmpty) id,
+        ],
+    };
+
     for (final entry in spis.entries) {
       if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
       final server = Map<String, Object?>.from(entry.value as Map);
@@ -258,10 +274,11 @@ extension BackupV2Restore on BackupV2 {
       // `ServerStore.reconcile` applies, and it has to be the same one, since
       // the id decided here is what reconcile is later handed. Resolving it to
       // one of them instead overwrote whichever the lookup answered with.
-      final namedLocally = name is String ? localByName[name] : null;
+      final idLess = embedded is! String || embedded.isEmpty;
+      final namedLocally = (force || idLess) && name is String ? localByName[name] : null;
       final restoredId = Stores.server.fetchOneRaw(backupId) != null
           ? backupId
-          : (namedLocally != null && namedLocally.length == 1
+          : (namedLocally != null && namedLocally.length == 1 && !backupIds.contains(namedLocally.single)
                 ? namedLocally.single
                 : backupId);
       claimSourceId(entry.key, entry.key);

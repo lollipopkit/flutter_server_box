@@ -52,7 +52,6 @@
   "autoUpdateHomeWidget": "Ana ekran vidcetinin avtomatik yenilənməsi",
   "availableTabs": "Mövcud vərəqlər",
   "backupEncrypted": "Ehtiyat nüsxə şifrələnib",
-  "backupNotEncrypted": "Ehtiyat nüsxə şifrələnməyib",
   "backupPassword": "Ehtiyat nüsxə parolu",
   "backupPasswordRemoveSynced": "Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.",
   "backupPasswordRemoved": "Ehtiyat nüsxə parolu silindi",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Əsas ünvan",
   "discoveryAlternateAddress": "Ehtiyat ünvan",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Yadda saxlanmamış dəyişikliklər atılsın?"
+  "discardUnsaved": "Yadda saxlanmamış dəyişikliklər atılsın?",
+  "syncAuto": "Avtomatik sinxronlaşdırma",
+  "syncOff": "Söndürülüb",
+  "syncDone": "Sinxronlaşdırılıb",
+  "syncLastAt": "Son sinxronlaşdırma {time}",
+  "syncNow": "İndi sinxronlaşdır",
+  "syncSwitchBody": "{name} ilə avtomatik sinxronlaşdırma dayanır. Orada artıq olan ehtiyat nüsxə qalır.",
+  "bakPwdSet": "Təyin edilib",
+  "bakPwdNotSet": "Təyin edilməyib",
+  "syncChannel": "Kanal",
+  "syncStateFailed": "Sinxronlaşdırma alınmadı",
+  "syncStatePassword": "Parol uyğun gəlmir",
+  "syncStateUpdate": "Yeniləmə tələb olunur",
+  "syncStateRunning": "Sinxronlaşdırılır"
 }

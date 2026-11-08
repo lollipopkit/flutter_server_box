@@ -26,8 +26,7 @@ use tokio::sync::{RwLock, RwLockReadGuard};
 /// listed here, or [`Blobs::collect`] removes its files.
 const NAMED: &str = "SELECT sha256 FROM desk_wallpaper \
      UNION SELECT sha256 FROM desk_theme_background \
-     UNION SELECT sha256 FROM desk_app_file \
-     UNION SELECT sha256 FROM backup_file";
+     UNION SELECT sha256 FROM desk_app_file";
 
 pub struct Blobs {
     dir: PathBuf,
@@ -179,52 +178,13 @@ async fn create_private_dir(dir: &Path) -> std::io::Result<()> {
     builder.create(dir).await
 }
 
-/// Moves the backups an agent before migration 020 kept in the database
-/// (`backup_blob`) into files, then drops that table. Run after the
-/// migrations; does nothing once the table is gone.
-///
-/// TODO: remove once no agent from before migration 020 can be upgraded
-/// (with a migration dropping `backup_blob` for any that never ran this).
-pub async fn move_database_backups(db: &SqlitePool, blobs: &Blobs) -> anyhow::Result<()> {
-    let exists: bool = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'backup_blob')")
-        .fetch_one(db)
-        .await?;
-    if !exists {
-        return Ok(());
-    }
-    let _writing = blobs.writing().await;
-    let rows: Vec<(String, Vec<u8>, i64, String)> = sqlx::query_as("SELECT name, data, size, updated_at FROM backup_blob").fetch_all(db).await?;
-    let mut named = Vec::with_capacity(rows.len());
-    for (name, data, size, updated_at) in rows {
-        let sha = blobs.put(&data).await?;
-        named.push((name, sha, size, updated_at));
-    }
-    let mut tx = db.begin().await?;
-    for (name, sha, size, updated_at) in &named {
-        sqlx::query(
-            "INSERT INTO backup_file (name, sha256, size, updated_at) VALUES (?, ?, ?, ?) \
-             ON CONFLICT(name) DO UPDATE SET sha256 = excluded.sha256, size = excluded.size, updated_at = excluded.updated_at",
-        )
-        .bind(name)
-        .bind(sha)
-        .bind(size)
-        .bind(updated_at)
-        .execute(&mut *tx)
-        .await?;
-    }
-    sqlx::query("DROP TABLE backup_blob").execute(&mut *tx).await?;
-    tx.commit().await?;
-    tracing::info!("blobs: moved {} hosted backups out of the database", named.len());
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     async fn db() -> SqlitePool {
         let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
-        for table in ["desk_wallpaper", "desk_theme_background", "desk_app_file", "backup_file"] {
+        for table in ["desk_wallpaper", "desk_theme_background", "desk_app_file"] {
             sqlx::query(sqlx::AssertSqlSafe(format!("CREATE TABLE {table} (sha256 TEXT)"))).execute(&pool).await.unwrap();
         }
         pool

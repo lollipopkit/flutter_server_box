@@ -183,9 +183,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupEncrypted => 'Резервная копия зашифрована';
 
   @override
-  String get backupNotEncrypted => 'Резервная копия не зашифрована';
-
-  @override
   String get backupPassword => 'Пароль резервной копии';
 
   @override
@@ -7291,4 +7288,47 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Отменить несохранённые изменения?';
+
+  @override
+  String get syncAuto => 'Автосинхронизация';
+
+  @override
+  String get syncOff => 'Выключена';
+
+  @override
+  String get syncDone => 'Синхронизировано';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Последняя синхронизация $time';
+  }
+
+  @override
+  String get syncNow => 'Синхронизировать сейчас';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Автосинхронизация с $name прекратится. Резервная копия, которая уже там есть, сохранится.';
+  }
+
+  @override
+  String get bakPwdSet => 'Задан';
+
+  @override
+  String get bakPwdNotSet => 'Не задан';
+
+  @override
+  String get syncChannel => 'Канал';
+
+  @override
+  String get syncStateFailed => 'Ошибка синхронизации';
+
+  @override
+  String get syncStatePassword => 'Пароль не совпадает';
+
+  @override
+  String get syncStateUpdate => 'Требуется обновление';
+
+  @override
+  String get syncStateRunning => 'Синхронизация';
 }

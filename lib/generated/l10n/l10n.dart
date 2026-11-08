@@ -445,12 +445,6 @@ abstract class AppLocalizations {
   /// **'Backup is encrypted'**
   String get backupEncrypted;
 
-  /// User-facing label or message for backup not encrypted.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup is not encrypted'**
-  String get backupNotEncrypted;
-
   /// User-facing label or message for backup password.
   ///
   /// In en, this message translates to:
@@ -12328,6 +12322,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard unsaved changes?'**
   String get discardUnsaved;
+
+  /// No description provided for @syncAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync'**
+  String get syncAuto;
+
+  /// No description provided for @syncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get syncOff;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncDone;
+
+  /// No description provided for @syncLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {time}'**
+  String syncLastAt(String time);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync to {name} stops. The backup already there stays.'**
+  String syncSwitchBody(String name);
+
+  /// No description provided for @bakPwdSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get bakPwdSet;
+
+  /// No description provided for @bakPwdNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get bakPwdNotSet;
+
+  /// No description provided for @syncChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get syncChannel;
+
+  /// No description provided for @syncStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStateFailed;
+
+  /// No description provided for @syncStatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password mismatch'**
+  String get syncStatePassword;
+
+  /// No description provided for @syncStateUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get syncStateUpdate;
+
+  /// No description provided for @syncStateRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStateRunning;
 }
 
 class _AppLocalizationsDelegate

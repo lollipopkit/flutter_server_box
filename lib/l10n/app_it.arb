@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Aggiornamento automatico widget home",
   "availableTabs": "Schede disponibili",
   "backupEncrypted": "Il backup è crittografato",
-  "backupNotEncrypted": "Il backup non è crittografato",
   "backupPassword": "Password di backup",
   "backupPasswordRemoveSynced": "Questo rimuove la password di backup da tutti i dispositivi che usano lo stesso Portachiavi iCloud. La loro sincronizzazione si interrompe finché non viene impostata di nuovo una password.",
   "backupPasswordRemoved": "Password di backup rimossa",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Indirizzo principale",
   "discoveryAlternateAddress": "Indirizzo alternativo",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Scartare le modifiche non salvate?"
+  "discardUnsaved": "Scartare le modifiche non salvate?",
+  "syncAuto": "Sincronizzazione automatica",
+  "syncOff": "Disattivata",
+  "syncDone": "Sincronizzato",
+  "syncLastAt": "Ultima sincronizzazione {time}",
+  "syncNow": "Sincronizza ora",
+  "syncSwitchBody": "La sincronizzazione automatica con {name} si interrompe. Il backup già presente resta.",
+  "bakPwdSet": "Impostata",
+  "bakPwdNotSet": "Non impostata",
+  "syncChannel": "Canale",
+  "syncStateFailed": "Sincronizzazione non riuscita",
+  "syncStatePassword": "Password diversa",
+  "syncStateUpdate": "Aggiornamento necessario",
+  "syncStateRunning": "Sincronizzazione in corso"
 }

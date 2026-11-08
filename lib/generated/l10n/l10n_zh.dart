@@ -170,9 +170,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupEncrypted => '备份已加密';
 
   @override
-  String get backupNotEncrypted => '备份未加密';
-
-  @override
   String get backupPassword => '备份密码';
 
   @override
@@ -6833,6 +6830,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get discardUnsaved => '放弃未保存的修改？';
+
+  @override
+  String get syncAuto => '自动同步';
+
+  @override
+  String get syncOff => '关闭';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '将停止自动同步到 $name。那里已有的备份会保留。';
+  }
+
+  @override
+  String get bakPwdSet => '已设置';
+
+  @override
+  String get bakPwdNotSet => '未设置';
+
+  @override
+  String get syncChannel => '渠道';
+
+  @override
+  String get syncStateFailed => '同步失败';
+
+  @override
+  String get syncStatePassword => '密码不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7000,9 +7040,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupEncrypted => '備份已加密';
-
-  @override
-  String get backupNotEncrypted => '備份未加密';
 
   @override
   String get backupPassword => '備份密碼';
@@ -13669,4 +13706,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get discardUnsaved => '放棄未儲存的修改？';
+
+  @override
+  String get syncAuto => '自動同步';
+
+  @override
+  String get syncOff => '關閉';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '將停止自動同步到 $name。那裡已有的備份會保留。';
+  }
+
+  @override
+  String get bakPwdSet => '已設定';
+
+  @override
+  String get bakPwdNotSet => '未設定';
+
+  @override
+  String get syncChannel => '管道';
+
+  @override
+  String get syncStateFailed => '同步失敗';
+
+  @override
+  String get syncStatePassword => '密碼不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }

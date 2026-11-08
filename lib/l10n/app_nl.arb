@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Automatische update van home-widget",
   "availableTabs": "Beschikbare tabbladen",
   "backupEncrypted": "Back-up is versleuteld",
-  "backupNotEncrypted": "Back-up is niet versleuteld",
   "backupPassword": "Back-up wachtwoord",
   "backupPasswordRemoveSynced": "Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.",
   "backupPasswordRemoved": "Back-up wachtwoord verwijderd",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Primair adres",
   "discoveryAlternateAddress": "Alternatief adres",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Niet-opgeslagen wijzigingen verwerpen?"
+  "discardUnsaved": "Niet-opgeslagen wijzigingen verwerpen?",
+  "syncAuto": "Automatisch synchroniseren",
+  "syncOff": "Uit",
+  "syncDone": "Gesynchroniseerd",
+  "syncLastAt": "Laatst gesynchroniseerd {time}",
+  "syncNow": "Nu synchroniseren",
+  "syncSwitchBody": "Automatisch synchroniseren naar {name} stopt. De back-up die daar al staat, blijft bewaard.",
+  "bakPwdSet": "Ingesteld",
+  "bakPwdNotSet": "Niet ingesteld",
+  "syncChannel": "Kanaal",
+  "syncStateFailed": "Synchronisatie mislukt",
+  "syncStatePassword": "Wachtwoord komt niet overeen",
+  "syncStateUpdate": "Update vereist",
+  "syncStateRunning": "Bezig met synchroniseren"
 }

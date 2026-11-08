@@ -182,9 +182,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get backupEncrypted => 'Ehtiyat nüsxə şifrələnib';
 
   @override
-  String get backupNotEncrypted => 'Ehtiyat nüsxə şifrələnməyib';
-
-  @override
   String get backupPassword => 'Ehtiyat nüsxə parolu';
 
   @override
@@ -7230,4 +7227,47 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Yadda saxlanmamış dəyişikliklər atılsın?';
+
+  @override
+  String get syncAuto => 'Avtomatik sinxronlaşdırma';
+
+  @override
+  String get syncOff => 'Söndürülüb';
+
+  @override
+  String get syncDone => 'Sinxronlaşdırılıb';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son sinxronlaşdırma $time';
+  }
+
+  @override
+  String get syncNow => 'İndi sinxronlaşdır';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ilə avtomatik sinxronlaşdırma dayanır. Orada artıq olan ehtiyat nüsxə qalır.';
+  }
+
+  @override
+  String get bakPwdSet => 'Təyin edilib';
+
+  @override
+  String get bakPwdNotSet => 'Təyin edilməyib';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Sinxronlaşdırma alınmadı';
+
+  @override
+  String get syncStatePassword => 'Parol uyğun gəlmir';
+
+  @override
+  String get syncStateUpdate => 'Yeniləmə tələb olunur';
+
+  @override
+  String get syncStateRunning => 'Sinxronlaşdırılır';
 }

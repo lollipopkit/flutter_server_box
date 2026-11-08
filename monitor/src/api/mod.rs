@@ -12,7 +12,6 @@ macro_rules! require {
 pub mod lkc;
 pub mod agent;
 pub mod cron;
-pub mod backup;
 pub mod bmc;
 pub mod virt;
 pub mod virt_backups;

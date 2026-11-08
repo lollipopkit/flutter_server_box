@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Ana ekran bileşenini otomatik güncelle",
   "availableTabs": "Mevcut Sekmeler",
   "backupEncrypted": "Yedekleme şifrelenmiş",
-  "backupNotEncrypted": "Yedekleme şifreli değil",
   "backupPassword": "Yedekleme parolası",
   "backupPasswordRemoveSynced": "Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.",
   "backupPasswordRemoved": "Yedekleme parolası kaldırıldı",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Birincil adres",
   "discoveryAlternateAddress": "Yedek adres",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Kaydedilmemiş değişiklikler atılsın mı?"
+  "discardUnsaved": "Kaydedilmemiş değişiklikler atılsın mı?",
+  "syncAuto": "Otomatik eşitleme",
+  "syncOff": "Kapalı",
+  "syncDone": "Eşitlendi",
+  "syncLastAt": "Son eşitleme {time}",
+  "syncNow": "Şimdi eşitle",
+  "syncSwitchBody": "{name} ile otomatik eşitleme durur. Orada zaten bulunan yedek kalır.",
+  "bakPwdSet": "Ayarlandı",
+  "bakPwdNotSet": "Ayarlanmadı",
+  "syncChannel": "Kanal",
+  "syncStateFailed": "Eşitleme başarısız",
+  "syncStatePassword": "Parola eşleşmiyor",
+  "syncStateUpdate": "Güncelleme gerekli",
+  "syncStateRunning": "Eşitleniyor"
 }

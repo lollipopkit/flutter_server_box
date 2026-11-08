@@ -57,7 +57,6 @@ pub const FEATURES: &[&str] = &[
     "system_users",
     "snippets",
     "desktop",
-    "backup",
     "bmc",
     "virt",
     "firewall",

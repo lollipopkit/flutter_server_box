@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "ホームウィジェットを自動更新",
   "availableTabs": "利用可能なタブ",
   "backupEncrypted": "バックアップは暗号化されています",
-  "backupNotEncrypted": "バックアップは暗号化されていません",
   "backupPassword": "バックアップパスワード",
   "backupPasswordRemoveSynced": "同じ iCloud キーチェーンを使用しているすべてのデバイスからバックアップパスワードが削除されます。パスワードを再設定するまで、それらのデバイスの同期は停止します。",
   "backupPasswordRemoved": "バックアップパスワードが削除されました",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "メインのアドレス",
   "discoveryAlternateAddress": "予備のアドレス",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "保存していない変更を破棄しますか？"
+  "discardUnsaved": "保存していない変更を破棄しますか？",
+  "syncAuto": "自動同期",
+  "syncOff": "オフ",
+  "syncDone": "同期済み",
+  "syncLastAt": "最終同期 {time}",
+  "syncNow": "今すぐ同期",
+  "syncSwitchBody": "{name} への自動同期を停止します。そこにある既存のバックアップは残ります。",
+  "bakPwdSet": "設定済み",
+  "bakPwdNotSet": "未設定",
+  "syncChannel": "チャネル",
+  "syncStateFailed": "同期に失敗しました",
+  "syncStatePassword": "パスワードが一致しません",
+  "syncStateUpdate": "アップデートが必要です",
+  "syncStateRunning": "同期中"
 }

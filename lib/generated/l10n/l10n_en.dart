@@ -181,9 +181,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupEncrypted => 'Backup is encrypted';
 
   @override
-  String get backupNotEncrypted => 'Backup is not encrypted';
-
-  @override
   String get backupPassword => 'Backup password';
 
   @override
@@ -7242,4 +7239,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Discard unsaved changes?';
+
+  @override
+  String get syncAuto => 'Auto sync';
+
+  @override
+  String get syncOff => 'Off';
+
+  @override
+  String get syncDone => 'Synced';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Last sync $time';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Auto sync to $name stops. The backup already there stays.';
+  }
+
+  @override
+  String get bakPwdSet => 'Set';
+
+  @override
+  String get bakPwdNotSet => 'Not set';
+
+  @override
+  String get syncChannel => 'Channel';
+
+  @override
+  String get syncStateFailed => 'Sync failed';
+
+  @override
+  String get syncStatePassword => 'Password mismatch';
+
+  @override
+  String get syncStateUpdate => 'Update required';
+
+  @override
+  String get syncStateRunning => 'Syncing';
 }

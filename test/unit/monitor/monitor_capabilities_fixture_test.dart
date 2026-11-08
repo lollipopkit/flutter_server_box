@@ -27,7 +27,7 @@ void main() {
     expect(caps.version, '0.1.3');
     expect(caps.retention, const Duration(days: 30));
     expect(caps.oldestSample, isNotNull);
-    expect(caps.features, containsAll(['power', 'backup', 'virt', 'tmux']));
+    expect(caps.features, containsAll(['power', 'virt', 'tmux']));
   });
 
   test('refused, and why', () {

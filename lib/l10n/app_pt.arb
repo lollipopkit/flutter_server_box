@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Atualização automática do widget da tela inicial",
   "availableTabs": "Abas disponíveis",
   "backupEncrypted": "Backup está criptografado",
-  "backupNotEncrypted": "Backup não está criptografado",
   "backupPassword": "Senha de backup",
   "backupPasswordRemoveSynced": "Isso remove a senha de backup de todos os dispositivos que usam o mesmo Porta-chaves do iCloud. A sincronização deles para até que uma senha seja definida novamente.",
   "backupPasswordRemoved": "Senha de backup removida",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Endereço principal",
   "discoveryAlternateAddress": "Endereço alternativo",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "Descartar as alterações não salvas?"
+  "discardUnsaved": "Descartar as alterações não salvas?",
+  "syncAuto": "Sincronização automática",
+  "syncOff": "Desativada",
+  "syncDone": "Sincronizado",
+  "syncLastAt": "Última sincronização {time}",
+  "syncNow": "Sincronizar agora",
+  "syncSwitchBody": "A sincronização automática com {name} para. O backup que já está lá é mantido.",
+  "bakPwdSet": "Definida",
+  "bakPwdNotSet": "Não definida",
+  "syncChannel": "Canal",
+  "syncStateFailed": "Falha na sincronização",
+  "syncStatePassword": "Senha diferente",
+  "syncStateUpdate": "Atualização necessária",
+  "syncStateRunning": "Sincronizando"
 }

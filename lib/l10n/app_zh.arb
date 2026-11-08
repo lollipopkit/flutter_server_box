@@ -52,7 +52,6 @@
   "autoUpdateHomeWidget": "自动更新桌面小部件",
   "availableTabs": "可用标签",
   "backupEncrypted": "备份已加密",
-  "backupNotEncrypted": "备份未加密",
   "backupPassword": "备份密码",
   "backupPasswordRemoveSynced": "这会从使用同一 iCloud 钥匙串的所有设备上移除备份密码。重新设置密码之前，这些设备的同步会停止。",
   "backupPasswordRemoved": "备份密码已移除",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "主地址",
   "discoveryAlternateAddress": "备用地址",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "放弃未保存的修改？"
+  "discardUnsaved": "放弃未保存的修改？",
+  "syncAuto": "自动同步",
+  "syncOff": "关闭",
+  "syncDone": "已同步",
+  "syncLastAt": "上次同步 {time}",
+  "syncNow": "立即同步",
+  "syncSwitchBody": "将停止自动同步到 {name}。那里已有的备份会保留。",
+  "bakPwdSet": "已设置",
+  "bakPwdNotSet": "未设置",
+  "syncChannel": "渠道",
+  "syncStateFailed": "同步失败",
+  "syncStatePassword": "密码不一致",
+  "syncStateUpdate": "需要更新",
+  "syncStateRunning": "同步中"
 }

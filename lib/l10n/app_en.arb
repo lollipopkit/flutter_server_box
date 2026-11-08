@@ -209,10 +209,6 @@
   "@backupEncrypted": {
     "description": "User-facing label or message for backup encrypted."
   },
-  "backupNotEncrypted": "Backup is not encrypted",
-  "@backupNotEncrypted": {
-    "description": "User-facing label or message for backup not encrypted."
-  },
   "backupPassword": "Backup password",
   "@backupPassword": {
     "description": "User-facing label or message for backup password."
@@ -9383,5 +9379,32 @@
   "discardUnsaved": "Discard unsaved changes?",
   "@discardUnsaved": {
     "description": "Asked before leaving a page with unsaved edits"
-  }
+  },
+  "syncAuto": "Auto sync",
+  "syncOff": "Off",
+  "syncDone": "Synced",
+  "syncLastAt": "Last sync {time}",
+  "@syncLastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNow": "Sync now",
+  "syncSwitchBody": "Auto sync to {name} stops. The backup already there stays.",
+  "@syncSwitchBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bakPwdSet": "Set",
+  "bakPwdNotSet": "Not set",
+  "syncChannel": "Channel",
+  "syncStateFailed": "Sync failed",
+  "syncStatePassword": "Password mismatch",
+  "syncStateUpdate": "Update required",
+  "syncStateRunning": "Syncing"
 }

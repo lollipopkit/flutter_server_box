@@ -99,7 +99,6 @@ cd /opt/server-box-monitor   # 或 ~/.local/share/server-box-monitor
 | 远程桌面、本地和动态端口转发 | `/api/v1/stream/ws` |
 | 远程端口转发 | `/api/v1/listen/ws` |
 | 面板里的远程桌面（VNC、RDP） | `/api/v1/stream/ws`、`/api/v1/rdp/ws` |
-| 备份同步到这个 Monitor、面板的备份页面 | `/api/v1/backup` |
 
 `/api/v1/stream/ws` 以 Monitor 进程所属的账号从本机向 App 指定的地址发起一条 TCP
 连接并中继。`/api/v1/listen/ws` 方向相反：Monitor 在本机监听一个端口，把每条进来的

@@ -25,7 +25,6 @@
   "autoUpdateHomeWidget": "Actualizar automáticamente el widget del escritorio",
   "availableTabs": "Pestañas disponibles",
   "backupEncrypted": "El respaldo está encriptado",
-  "backupNotEncrypted": "El respaldo no está encriptado",
   "backupPassword": "Contraseña de respaldo",
   "backupPasswordRemoveSynced": "Esto elimina la contraseña de respaldo de todos los dispositivos que usan el mismo Llavero de iCloud. Su sincronización se detiene hasta que se vuelva a establecer una contraseña.",
   "backupPasswordRemoved": "Contraseña de respaldo eliminada",
@@ -2031,5 +2030,18 @@
   "discoveryPrimaryAddress": "Dirección principal",
   "discoveryAlternateAddress": "Dirección alternativa",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "¿Descartar los cambios sin guardar?"
+  "discardUnsaved": "¿Descartar los cambios sin guardar?",
+  "syncAuto": "Sincronización automática",
+  "syncOff": "Desactivada",
+  "syncDone": "Sincronizado",
+  "syncLastAt": "Última sincronización {time}",
+  "syncNow": "Sincronizar ahora",
+  "syncSwitchBody": "La sincronización automática con {name} se detiene. La copia de seguridad que ya está allí se conserva.",
+  "bakPwdSet": "Establecida",
+  "bakPwdNotSet": "Sin establecer",
+  "syncChannel": "Canal",
+  "syncStateFailed": "Error de sincronización",
+  "syncStatePassword": "La contraseña no coincide",
+  "syncStateUpdate": "Actualización necesaria",
+  "syncStateRunning": "Sincronizando"
 }

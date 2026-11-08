@@ -173,9 +173,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupEncrypted => '백업이 암호화되어 있습니다';
 
   @override
-  String get backupNotEncrypted => '백업이 암호화되어 있지 않습니다';
-
-  @override
   String get backupPassword => '백업 비밀번호';
 
   @override
@@ -6945,4 +6942,47 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discardUnsaved => '저장하지 않은 변경 사항을 버릴까요?';
+
+  @override
+  String get syncAuto => '자동 동기화';
+
+  @override
+  String get syncOff => '끄기';
+
+  @override
+  String get syncDone => '동기화됨';
+
+  @override
+  String syncLastAt(String time) {
+    return '마지막 동기화 $time';
+  }
+
+  @override
+  String get syncNow => '지금 동기화';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name(으)로의 자동 동기화가 중지됩니다. 이미 있는 백업은 그대로 남습니다.';
+  }
+
+  @override
+  String get bakPwdSet => '설정됨';
+
+  @override
+  String get bakPwdNotSet => '설정 안 됨';
+
+  @override
+  String get syncChannel => '채널';
+
+  @override
+  String get syncStateFailed => '동기화 실패';
+
+  @override
+  String get syncStatePassword => '비밀번호 불일치';
+
+  @override
+  String get syncStateUpdate => '업데이트 필요';
+
+  @override
+  String get syncStateRunning => '동기화 중';
 }

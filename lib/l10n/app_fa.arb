@@ -53,7 +53,6 @@
   "autoUpdateHomeWidget": "به‌روزرسانی خودکار ویجت صفحه اصلی",
   "availableTabs": "تب‌های موجود",
   "backupEncrypted": "نسخه پشتیبان رمزگذاری شده است",
-  "backupNotEncrypted": "نسخه پشتیبان رمزگذاری نشده است",
   "backupPassword": "گذرواژه پشتیبان‌گیری",
   "backupPasswordRemoveSynced": "این کار گذرواژه پشتیبان‌گیری را از همه دستگاه‌هایی که از همان جاکلیدی iCloud استفاده می‌کنند حذف می‌کند. همگام‌سازی آن‌ها تا تنظیم دوباره گذرواژه متوقف می‌شود.",
   "backupPasswordRemoved": "گذرواژه پشتیبان‌گیری حذف شد",
@@ -1714,5 +1713,18 @@
   "discoveryPrimaryAddress": "نشانی اصلی",
   "discoveryAlternateAddress": "نشانی جایگزین",
   "agentPermsGroup": "Agent",
-  "discardUnsaved": "تغییرات ذخیره‌نشده کنار گذاشته شود؟"
+  "discardUnsaved": "تغییرات ذخیره‌نشده کنار گذاشته شود؟",
+  "syncAuto": "همگام‌سازی خودکار",
+  "syncOff": "خاموش",
+  "syncDone": "همگام شد",
+  "syncLastAt": "آخرین همگام‌سازی {time}",
+  "syncNow": "همگام‌سازی اکنون",
+  "syncSwitchBody": "همگام‌سازی خودکار با {name} متوقف می‌شود. پشتیبانی که از قبل آنجاست باقی می‌ماند.",
+  "bakPwdSet": "تنظیم شده",
+  "bakPwdNotSet": "تنظیم نشده",
+  "syncChannel": "کانال",
+  "syncStateFailed": "همگام‌سازی ناموفق بود",
+  "syncStatePassword": "رمز عبور مطابقت ندارد",
+  "syncStateUpdate": "به‌روزرسانی لازم است",
+  "syncStateRunning": "در حال همگام‌سازی"
 }

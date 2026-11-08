@@ -182,9 +182,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get backupEncrypted => 'نسخه پشتیبان رمزگذاری شده است';
 
   @override
-  String get backupNotEncrypted => 'نسخه پشتیبان رمزگذاری نشده است';
-
-  @override
   String get backupPassword => 'گذرواژه پشتیبان‌گیری';
 
   @override
@@ -7288,4 +7285,47 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'تغییرات ذخیره‌نشده کنار گذاشته شود؟';
+
+  @override
+  String get syncAuto => 'همگام‌سازی خودکار';
+
+  @override
+  String get syncOff => 'خاموش';
+
+  @override
+  String get syncDone => 'همگام شد';
+
+  @override
+  String syncLastAt(String time) {
+    return 'آخرین همگام‌سازی $time';
+  }
+
+  @override
+  String get syncNow => 'همگام‌سازی اکنون';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'همگام‌سازی خودکار با $name متوقف می‌شود. پشتیبانی که از قبل آنجاست باقی می‌ماند.';
+  }
+
+  @override
+  String get bakPwdSet => 'تنظیم شده';
+
+  @override
+  String get bakPwdNotSet => 'تنظیم نشده';
+
+  @override
+  String get syncChannel => 'کانال';
+
+  @override
+  String get syncStateFailed => 'همگام‌سازی ناموفق بود';
+
+  @override
+  String get syncStatePassword => 'رمز عبور مطابقت ندارد';
+
+  @override
+  String get syncStateUpdate => 'به‌روزرسانی لازم است';
+
+  @override
+  String get syncStateRunning => 'در حال همگام‌سازی';
 }
