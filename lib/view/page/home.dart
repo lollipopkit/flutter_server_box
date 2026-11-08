@@ -4,8 +4,7 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
-import 'package:flutter/foundation.dart'
-    show SynchronousFuture, kReleaseMode, visibleForTesting;
+import 'package:flutter/foundation.dart' show kReleaseMode, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
@@ -57,8 +56,7 @@ class _HomePageState extends ConsumerState<HomePage>
     with
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
-        WidgetsBindingObserver,
-        TickerProviderStateMixin {
+        WidgetsBindingObserver {
   /// Which tab to come back to, by [AppTab.name] — see
   /// [_HomePageTabs._rememberTab].
   ///
@@ -113,56 +111,23 @@ class _HomePageState extends ConsumerState<HomePage>
   /// both, and it is null exactly when there is no strip to point at.
   final _navKey = GlobalKey();
 
+  /// Where a tab is shown: the tabs, and the settings pushed over them.
+  final _areaNavKey = GlobalKey<NavigatorState>();
+
+  /// The settings' route while it is in [_areaNavKey]'s navigator.
+  Route<dynamic>? _settingsRoute;
+
   /// Whether the settings are what the content area is showing.
   ///
   /// Not an `AppTab`: it is never arranged, never stored and never one of the
   /// pages [_selectIndex] addresses. But it *is* shown where a tab is shown,
-  /// over the same rail — it used to be pushed over the whole window, which
-  /// took away the only navigation on screen to get back out with.
-  bool _settingsOpen = false;
+  /// over the same rail — pushed over the whole window it took away the only
+  /// navigation on screen to get back out with.
+  bool get _settingsOpen => _settingsRoute != null;
 
-  /// The settings' own stack, so that back can be asked whether it has
-  /// somewhere to go before it is taken to mean "put the settings away".
-  final _settingsNavKey = GlobalKey<NavigatorState>();
-
-  /// The settings arriving and leaving.
-  ///
-  /// A tab is swapped for a tab by the `PageView` sliding, which is a move
-  /// between siblings. This is not one — it is a different kind of place, so
-  /// it crosses rather than slides: each side fades, and each is displaced by
-  /// a fraction of the pane in the direction it is going.
-  late final _settingsCtrl = AnimationController(
-    vsync: this,
-    duration: Durations.medium2,
-  );
-  late final _settingsAnim = CurvedAnimation(
-    parent: _settingsCtrl,
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInCubic,
-  );
-
-  /// A back swipe on the settings' first page, as Android's predictive back
-  /// draws one: the page shrinks and follows the finger, the tabs show
-  /// under it ([_followSettingsSwipe]). How far, 0 to 1.
-  late final _settingsSwipe = AnimationController(
-    vsync: this,
-    duration: Durations.short4,
-  );
-
-  /// From a swipe's first move until the settings stay or are gone.
-  bool _settingsSwiping = false;
-
-  /// Whether they have been opened at all since launch.
-  ///
-  /// They keep their place once they have been — which section, what was
-  /// typed in the search, where the page was scrolled to — the way a tab
-  /// keeps its own. Built for the first time only when asked for, because
-  /// most launches never go near them.
-  bool _settingsSeen = false;
-
-  /// The putting away in progress, which every other way out waits on rather
-  /// than asking again.
-  Future<bool>? _closingSettings;
+  late final _areaRoutes = _AreaRoutes((route) {
+    if (mounted && route == _settingsRoute) _onSettingsRoute(null);
+  });
 
   /// Whether the guide over that strip has been dealt with this launch.
   ///
@@ -218,9 +183,6 @@ class _HomePageState extends ConsumerState<HomePage>
     _selectIndex.removeListener(_publishCurrentTab);
     _selectIndex.removeListener(_dropFocus);
     _selectIndex.dispose();
-    _settingsAnim.dispose();
-    _settingsCtrl.dispose();
-    _settingsSwipe.dispose();
     super.dispose();
   }
 
@@ -253,23 +215,6 @@ class _HomePageState extends ConsumerState<HomePage>
     // and one of those would eventually be forgotten.
     _selectIndex.addListener(_publishCurrentTab);
     _selectIndex.addListener(_dropFocus);
-
-    // Only at the ends. What moves in between is drawn by `FadeTransition`
-    // and `SlideTransition`, which listen for themselves; what a rebuild is
-    // for is [_tabsHidden] and [_settingsShowing], and both only change there.
-    _settingsCtrl.addStatusListener((status) {
-      switch (status) {
-        case AnimationStatus.completed || AnimationStatus.dismissed:
-          // Put away by a swipe: the page it shrank goes with them.
-          if (status.isDismissed && _settingsSwiping) {
-            _settingsSwiping = false;
-            _settingsSwipe.value = 0;
-          }
-          if (mounted) setState(() {});
-        case _:
-          break;
-      }
-    });
   }
 
   /// Re-announces the tab after a hot reload.
@@ -429,6 +374,9 @@ class _HomePageState extends ConsumerState<HomePage>
     Widget mainContent(bool narrow, Rect? column, Size area) => ListenableBuilder(
       listenable: _selectIndex,
       builder: (_, _) => Scaffold(
+        // The keyboard is the tabs' Scaffold's and each page's to make room
+        // for: shrunk here, the bar inside the tabs' page sat on top of it.
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Row(
@@ -450,11 +398,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     child: SizedBox(width: _kRailWidth),
                   ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      _buildTabPages(),
-                      if (_settingsSeen) _buildSettingsPane(),
-                    ],
+                  child: RailBeside(
+                    present: _hasRail(narrow, column),
+                    child: _buildArea(
+                      bar: narrow && !_wantsWindow && column == null ? _buildBottomBar() : null,
+                    ),
                   ),
                 ),
               ],
@@ -488,15 +436,6 @@ class _HomePageState extends ConsumerState<HomePage>
                 ),
           ],
         ),
-        // The settings fill the room the tabs had, so the bar leaves with the
-        // tabs; their own bar is the way out.
-        bottomNavigationBar: narrow && !_wantsWindow && column == null
-            ? SizeTransition(
-                sizeFactor: ReverseAnimation(_settingsAnim),
-                alignment: Alignment.topCenter,
-                child: _buildBottomBar(),
-              )
-            : null,
       ),
     );
 
@@ -550,17 +489,13 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
     );
 
-    // While the settings are shown, back is theirs (`SettingsPage.onLeave`),
-    // never the app's to close.
-    final withBack = PopScope(canPop: !_settingsOpen, child: withShell);
-
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
     // which is where a shortcut is *discovered* — but the menu bar is a macOS
     // API, and until now it was also the only thing that bound the keys, so
     // Linux and Windows had no way to switch tabs from the keyboard at all.
     // And on Android, for a hardware keyboard and the desktop mode.
     final withKeys = !isDesktop && !isAndroid
-        ? withBack
+        ? withShell
         : CallbackShortcuts(
             bindings: desktopShortcuts(
               tabCount: _tabs.length,
@@ -574,7 +509,7 @@ class _HomePageState extends ConsumerState<HomePage>
             // Focused so the bindings are reachable without clicking
             // something first, and skipping traversal so Tab still walks the
             // actual controls.
-            child: Focus(autofocus: true, skipTraversal: true, child: withBack),
+            child: Focus(autofocus: true, skipTraversal: true, child: withShell),
           );
     // The same chords as asked for by a terminal, which takes every key it
     // is given and hands the app's on as intents rather than letting them

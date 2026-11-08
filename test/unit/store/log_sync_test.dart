@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart' show ThemePackages;
-import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Skills;
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmApi, LlmCustomProvider;
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores, Skills;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/sync/log.dart';
@@ -13,6 +16,7 @@ import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
@@ -591,6 +595,101 @@ void main() {
     await device('c');
     await _sync(log, settings: false).sync();
     expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root), isNull);
+  });
+
+  test('a store theme the sender could only name is installed from the store, once it answers', () async {
+    final log = _Log();
+    addTearDown(() => SyncThemes.root = null);
+    addTearDown(() => ThemePackages.debugFetch = null);
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-themes-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      SyncThemes.root = dir.path;
+      await _device();
+      initThemeHost();
+    }
+
+    final bytes = fsbtOf('example.piggy', 'Piggy');
+    final digest = sha256.convert(bytes).toString();
+    final listing = 'id = "example.piggy"\nname = "Piggy"\n[[version]]\nversion = "1.0.0"\n'
+        'schema_min = 1\nschema_max = 1\nurl = "https://example.org/piggy.fsbt"\n'
+        'sha256 = "$digest"\nsize = ${bytes.length}\n';
+    final tree = Archive()
+      ..add(ArchiveFile.string('repo.toml', 'schema = 1\nname = "Official"\n'))
+      ..add(ArchiveFile.string('themes/example.piggy.toml', listing));
+    final store = {
+      Urls.themeCatalog: utf8.encode('schema = 1\nname = "Test"\n[[repo]]\nurl = "https://example.org/store.tar.gz"\n'),
+      'https://example.org/store.tar.gz': const GZipEncoder().encode(TarEncoder().encode(tree)),
+      'https://example.org/piggy.fsbt': bytes,
+    };
+    var reachable = false;
+    ThemePackages.debugFetch = (uri) async {
+      if (!reachable) throw HttpException('offline', uri: uri);
+      return Uint8List.fromList(store[uri.toString()] ?? (throw HttpException('404', uri: uri)));
+    };
+
+    // Installed from the store, which keeps no package; the store out of
+    // reach as it is sent, so it goes by name.
+    await device('a');
+    await ThemePackages.install(bytes, rootDirectory: SyncThemes.root);
+    await File('${SyncThemes.root}/.sources/$digest.fsbt').delete();
+    await _sync(log).sync();
+
+    await device('b');
+    await _sync(log).sync();
+    expect(ThemePackages.installed(digest, rootDirectory: SyncThemes.root), isNull);
+
+    // The log is read past it; the next read tries it again.
+    reachable = true;
+    SqliteDb.instance.execute(
+      "UPDATE sync_state SET v = json_set(v, '\$.t', 0) WHERE k = ?;",
+      ['retry:${SyncThemes.c}:$digest'],
+    );
+    await _sync(log).sync();
+    expect(ThemePackages.installed(digest, rootDirectory: SyncThemes.root)?.name, 'Piggy');
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
+
+    // One the store never offers is given up after its tries, and a kept
+    // row nothing reads does not fail the read.
+    SqliteDb.instance.execute(
+      'INSERT INTO sync_state (k, v) VALUES (?, ?), (?, ?);',
+      [
+        'retry:${SyncThemes.c}:${'e' * 64}',
+        jsonEncode({'h': '0' * 32, 'd': {'id': 'example.gone', 'name': 'Gone'}, 't': 0, 'n': 10}),
+        'retry:${SyncThemes.c}:${'f' * 64}',
+        'not json',
+      ],
+    );
+    await _sync(log).sync();
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
+  });
+
+  test('a provider added on each device is on both, the list builds before kept included', () async {
+    final log = _Log();
+    LlmCustomProvider provider(String id) =>
+        LlmCustomProvider(id: id, name: id, api: LlmApi.openaiCompletions, baseUrl: 'https://$id.example/v1');
+
+    await _device();
+    // As builds before kept them: one list, moved in as no edit.
+    LlmStores.llm.set('customProviders', [provider('old').toStoreJson()], updateLastUpdateTsOnSet: false);
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    LlmStores.llm.putCustomProvider(provider('a'));
+    await _sync(log).sync();
+
+    await _device();
+    LlmStores.llm.putCustomProvider(provider('b'));
+    await _sync(log).sync();
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'old']);
+
+    // A list another device sent as builds before kept it is split too.
+    await _device();
+    SyncRecorder.receiving(
+      syncStampOf(ms: BigInt.one, device: SyncRecorder.legacy),
+      () => LlmStores.llm.set('customProviders', [provider('listed').toStoreJson()]),
+    );
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    await _sync(log).sync();
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'listed', 'old']);
   });
 
   test('a picked file reaches the next device as its own copy, and its removal too', () async {

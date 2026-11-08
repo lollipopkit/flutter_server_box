@@ -383,7 +383,7 @@ void main() {
 
   group('the settings from before fl_pi_llm', () {
     test('become a provider, its key a credential', () async {
-      final provider = LlmStores.llm.customProviders.get()!.single;
+      final provider = LlmStores.llm.customProviders.single;
       expect(provider.id, LegacyAskAiMigration.providerId);
       expect(provider.api, LlmApi.openaiCompletions);
       expect(provider.baseUrl, 'http://127.0.0.1:${server.port}/v1');

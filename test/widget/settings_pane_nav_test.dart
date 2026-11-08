@@ -13,7 +13,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,6 +29,7 @@ import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 import '../helpers/test_db.dart';
 
@@ -44,8 +44,9 @@ void _useWideView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app({Future<bool> Function()? onLeave, ValueChanged<double?>? onSwipe}) => ProviderScope(
+Widget _app({GlobalKey<NavigatorState>? navigatorKey, bool pushed = false}) => ProviderScope(
   child: MaterialApp(
+    navigatorKey: navigatorKey,
     locale: const Locale('en'),
     localizationsDelegates: const [
       ...app_locale.appLocalizationsDelegates,
@@ -55,11 +56,32 @@ Widget _app({Future<bool> Function()? onLeave, ValueChanged<double?>? onSwipe}) 
       builder: (context) {
         app_locale.l10n = AppLocalizations.of(context)!;
         context.setLibL10n();
-        return SettingsPage(onLeave: onLeave ?? () async => true, onSwipe: onSwipe);
+        return pushed ? const Scaffold(body: Text('under')) : const SettingsPage();
       },
     ),
   ),
 );
+
+/// The settings pushed over a page, as the home pushes them where a tab is
+/// shown; [_left] once they are gone.
+Future<void> _pushSettings(WidgetTester tester, {bool rail = false}) async {
+  final nav = GlobalKey<NavigatorState>();
+  await tester.pumpWidget(_app(navigatorKey: nav, pushed: true));
+  unawaited(
+    nav.currentState!.push(
+      AppPageRoute<void>(builder: (_) => RailBeside(present: rail, child: const SettingsPage())),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 600));
+}
+
+Future<bool> _left(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  return find.byType(SettingsPage).evaluate().isEmpty;
+}
 
 /// One group as a route builds it, which is what a caller outside the settings
 /// tree gets.
@@ -270,7 +292,7 @@ void main() {
     expect(find.text('dirty editor'), findsNothing);
   });
 
-  group('in the home pane', () {
+  group('pushed where a tab is shown', () {
     for (final (name, width) in [('wide', 1400.0), ('narrow', 400.0)]) {
       testWidgets('$name: back and its button put the settings away', (
         tester,
@@ -278,26 +300,17 @@ void main() {
         tester.view.devicePixelRatio = 1;
         tester.view.physicalSize = Size(width, 900);
         addTearDown(tester.view.reset);
-        var left = 0;
-        await tester.pumpWidget(
-          _app(
-            onLeave: () async {
-              left++;
-              return true;
-            },
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 300));
+        final wide = width >= 1000;
+        await _pushSettings(tester, rail: wide);
 
         await tester.binding.handlePopRoute();
-        await tester.pump();
-        expect(left, 1);
+        expect(await _left(tester), isTrue);
 
         // Wide, the home rail beside the settings is the way out.
-        if (width < 1000) {
+        await _pushSettings(tester, rail: wide);
+        if (!wide) {
           await tester.tap(find.byType(BackButton).hitTestable().first);
-          await tester.pump();
-          expect(left, 2);
+          expect(await _left(tester), isTrue);
         } else {
           expect(find.byType(BackButton), findsNothing);
         }
@@ -305,23 +318,10 @@ void main() {
     }
 
     testWidgets('narrow on iOS, a swipe from the left edge is followed, and puts the settings away', (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      addTearDown(() => debugDefaultTargetPlatformOverride = null);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 900);
       addTearDown(tester.view.reset);
-      var left = 0;
-      final swiped = <double?>[];
-      await tester.pumpWidget(
-        _app(
-          onLeave: () async {
-            left++;
-            return true;
-          },
-          onSwipe: swiped.add,
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
+      await _pushSettings(tester);
 
       Future<void> swipe(int steps) async {
         final g = await tester.startGesture(const Offset(4, 450));
@@ -329,37 +329,42 @@ void main() {
           await g.moveBy(const Offset(30, 0));
           await tester.pump(const Duration(milliseconds: 50));
         }
+        // Followed: the page under shows through.
+        expect(find.text('under'), findsOneWidget);
         await g.up();
-        await tester.pump(const Duration(milliseconds: 300));
       }
 
       // Short of a third, slowly: back to the settings.
       await swipe(3);
-      expect(left, 0);
-      expect(swiped.last, isNull);
-      expect(swiped.whereType<double>(), isNotEmpty);
+      expect(await _left(tester), isFalse);
 
-      swiped.clear();
       await swipe(10);
-      expect(left, 1);
-      expect(swiped.whereType<double>().last, greaterThan(0.5));
-      debugDefaultTargetPlatformOverride = null;
+      expect(await _left(tester), isTrue);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('wide with no rail, the header button leaves the settings with a page open in them', (tester) async {
+      _useWideView(tester);
+      await _pushSettings(tester);
+      unawaited(
+        _contentNav(tester).push(
+          MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('pushed editor'))),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await tester.tap(
+        find.descendant(of: find.byKey(settingsHeaderKey), matching: find.byType(BackButton)),
+      );
+      expect(await _left(tester), isTrue);
     });
 
     testWidgets('back leaves a pushed page and a search before the settings', (
       tester,
     ) async {
       _useWideView(tester);
-      var left = 0;
-      await tester.pumpWidget(
-        _app(
-          onLeave: () async {
-            left++;
-            return true;
-          },
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
+      await _pushSettings(tester);
 
       unawaited(
         _contentNav(tester).push(
@@ -372,60 +377,20 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       await tester.binding.handlePopRoute();
-      for (var i = 0; i < 6; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
+      expect(await _left(tester), isFalse);
       expect(find.text('pushed editor'), findsNothing);
-      expect(left, 0);
 
       await tester.enterText(find.byType(TextField).first, 'zzzz');
       await tester.pump(const Duration(milliseconds: 300));
       await tester.binding.handlePopRoute();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(left, 0);
+      expect(await _left(tester), isFalse);
       expect(
         tester.widget<TextField>(find.byType(TextField).first).controller!.text,
         isEmpty,
       );
 
       await tester.binding.handlePopRoute();
-      await tester.pump();
-      expect(left, 1);
-    });
-
-    testWidgets('put away, the settings let back through', (tester) async {
-      _useWideView(tester);
-      var left = 0;
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            localizationsDelegates: const [
-              ...app_locale.appLocalizationsDelegates,
-            ],
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Builder(
-              builder: (context) {
-                app_locale.l10n = AppLocalizations.of(context)!;
-                context.setLibL10n();
-                return BackScope(
-                  enabled: false,
-                  child: SettingsPage(
-                    onLeave: () async {
-                      left++;
-                      return true;
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
-
-      final route = ModalRoute.of(tester.element(find.byType(SettingsPage)))!;
-      expect(route.popDisposition, isNot(RoutePopDisposition.doNotPop));
-      expect(left, 0);
+      expect(await _left(tester), isTrue);
     });
   });
 }

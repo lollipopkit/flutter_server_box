@@ -83,7 +83,8 @@ abstract final class SyncThemes {
   /// Installs the themes [ops] describe, each recorded at its op's stamp. A
   /// theme already here under the same manifest id at another version is
   /// kept, and the op's installation is held as it ([_aliasOf]). A theme that
-  /// cannot be installed is logged and left.
+  /// cannot be installed now (the store out of reach) is kept for [retry]:
+  /// the log has been read past it.
   static Future<void> install(List<({String c, String id, String h, Object? d})> ops) async {
     _installing++;
     try {
@@ -111,14 +112,90 @@ abstract final class SyncThemes {
         }
         final report = await ThemeBackup.restore({op.id: entry}, rootDirectory: root, blobs: carried);
         final local = report.installedAs[op.id];
-        if (local == null) continue;
+        if (local == null) {
+          _keep(op);
+          continue;
+        }
         if (local != op.id) _alias(op.id, local);
         SyncRecorder.receiving(op.h, () => SyncRecorder.record(c, op.id));
+        _drop(op.id);
       } catch (e, s) {
         Loggers.app.warning('Sync skipped theme ${op.id}', e, s);
+        _keep(op);
       }
     }
   }
+
+  static const _retryPrefix = 'retry:$c:';
+
+  /// How long a theme that could not be installed waits before it is tried
+  /// again, doubled with each try up to a day: each try may read the theme
+  /// store, and one it does not offer may never come.
+  static Duration _retryAfter(int tries) {
+    final wait = const Duration(minutes: 10) * (1 << (tries - 1).clamp(0, 8));
+    return wait < const Duration(days: 1) ? wait : const Duration(days: 1);
+  }
+
+  /// Tries after which a theme that could not be installed is given up:
+  /// the store does not offer it, and a week of asking is enough.
+  static const _retryMax = 10;
+
+  static Future<void>? _retrying;
+
+  /// Installs again what [install] could not, unless a newer record of the
+  /// same installation came since; one run at a time for every sync, and
+  /// never the reason a read fails.
+  static Future<void> retry() => _retrying ??= _retry().catchError((Object e, StackTrace s) {
+    Loggers.app.warning('Sync retried the themes', e, s);
+  }).whenComplete(() => _retrying = null);
+
+  static Future<void> _retry() async {
+    SqliteDb.instance.execute('DELETE FROM sync_state WHERE k LIKE ? AND NOT json_valid(v);', ['$_retryPrefix%']);
+    // Only what is due is read whole: a kept op may carry its package.
+    final rows = SqliteDb.instance.select(
+      "SELECT k, json_extract(v, '\$.h') h, json_extract(v, '\$.t') t, json_extract(v, '\$.n') n "
+      'FROM sync_state WHERE k LIKE ? AND json_valid(v);',
+      ['$_retryPrefix%'],
+    );
+    if (rows.isEmpty) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final ids = [for (final row in rows) (row['k'] as String).substring(_retryPrefix.length)];
+    final current = SyncRecorder.stampsOf([for (final id in ids) (c, id)]);
+    final due = <({String c, String id, String h, Object? d})>[];
+    for (final (i, row) in rows.indexed) {
+      final id = ids[i];
+      if ((row['h'], row['t'], row['n']) case (final String h, final int t, final int n)) {
+        if (current[(c, id)] case final had? when had.compareTo(h) >= 0) {
+          _drop(id);
+        } else if (n >= _retryMax) {
+          Loggers.app.warning('Sync gave up on theme $id');
+          _drop(id);
+        } else if (now - t >= _retryAfter(n).inMilliseconds) {
+          final v = SqliteDb.instance.select('SELECT v FROM sync_state WHERE k = ?;', [row['k']]).first['v'] as String;
+          due.add((c: c, id: id, h: h, d: (jsonDecode(v) as Map)['d']));
+        }
+      } else {
+        _drop(id);
+      }
+    }
+    if (due.isNotEmpty) await install(due);
+  }
+
+  static void _keep(({String c, String id, String h, Object? d}) op) {
+    final k = '$_retryPrefix${op.id}';
+    final before = SqliteDb.instance.select('SELECT v FROM sync_state WHERE k = ?;', [k]).firstOrNull?['v'];
+    final tries = switch (before is String ? jsonDecode(before) : null) {
+      {'h': final String h, 'n': final int n} when h == op.h => n + 1,
+      _ => 1,
+    };
+    SqliteDb.instance.execute(
+      'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
+      [k, jsonEncode({'h': op.h, 'd': op.d, 't': DateTime.now().millisecondsSinceEpoch, 'n': tries})],
+    );
+  }
+
+  static void _drop(String id) =>
+      SqliteDb.instance.execute('DELETE FROM sync_state WHERE k = ?;', ['$_retryPrefix$id']);
 
   /// Points this device's own selection keys (`appThemePackage`,
   /// `appBackgroundPath`) at its copy of the theme the synced preset names,

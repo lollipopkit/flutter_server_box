@@ -36,16 +36,19 @@ abstract final class AgentScreen {
   static NavigatorObserver tabObserver(AppTab tab) =>
       _tabs[tab] ??= _Routes();
 
-  /// The navigator of the settings shown in place of a tab.
+  /// The navigator where a tab is shown, which the settings are pushed on.
   static NavigatorObserver get settingsObserver => _settings;
+
+  /// The settings' route there.
+  static const settingsRoute = '/settings';
 
   /// The navigator of workspace tab [tabId].
   static NavigatorObserver workspaceObserver(String tabId) =>
       _wsTabs[tabId] ??= _Routes();
 
-  /// Whether the settings are shown in place of the tabs, which go on being
-  /// the current tab behind them.
-  static var settingsOpen = false;
+  /// Whether the settings are pushed over the tabs, which go on being the
+  /// current tab under them.
+  static bool get settingsOpen => _settings.has(settingsRoute);
 
   static TerminalSource? Function()? _terminal;
   static String? Function()? _files;
@@ -73,7 +76,7 @@ abstract final class AgentScreen {
     if (tab == null) return null;
     final at = switch (tab) {
       _ when _root.above != null => _page(_root.above!),
-      _ when settingsOpen => switch (_settings.above) {
+      _ when settingsOpen => switch (_settings.after(settingsRoute)) {
         final r? => 'Settings, ${_page(r)}',
         null => 'Settings',
       },
@@ -192,6 +195,17 @@ final class _Routes extends NavigatorObserver {
   Route<dynamic>? get above {
     final pages = _routes.whereType<PageRoute<dynamic>>();
     if (pages.length < 2) return null;
+    return pages.last;
+  }
+
+  /// Whether a route named [name] is here.
+  bool has(String name) => _routes.any((r) => r.settings.name == name);
+
+  /// The page on top, when it is above the one named [name].
+  Route<dynamic>? after(String name) {
+    final pages = _routes.whereType<PageRoute<dynamic>>().toList();
+    final at = pages.lastIndexWhere((r) => r.settings.name == name);
+    if (at < 0 || at == pages.length - 1) return null;
     return pages.last;
   }
 

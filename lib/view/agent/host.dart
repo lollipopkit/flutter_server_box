@@ -199,11 +199,7 @@ abstract final class LegacyAskAiMigration {
           allowInsecure: raw['allowInsecure'] == true,
         );
         await Llm.setCredential(providerId, LlmCredential.apiKey(apiKey));
-        await LlmStores.llm.customProviders.set([
-          for (final p in LlmStores.llm.customProviders.get() ?? const [])
-            if (p.id != providerId) p,
-          provider,
-        ]);
+        LlmStores.llm.putCustomProvider(provider);
         await Llm.applyCustomProviders();
         if (LlmStores.llm.defaultModel.get() == null) {
           await LlmStores.llm.defaultModel.set(LlmModelRef(providerId, model));

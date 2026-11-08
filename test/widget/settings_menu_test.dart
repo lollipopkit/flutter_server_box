@@ -18,6 +18,7 @@ import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 import '../helpers/test_db.dart';
 
@@ -120,6 +121,7 @@ void main() {
     required double width,
     bool reduceMotion = false,
     ThemeData? theme,
+    bool rail = true,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = Size(width, 900);
@@ -147,12 +149,7 @@ void main() {
               builder: (ctx) => TextButton(
                 onPressed: () => Navigator.of(ctx).push(
                   MaterialPageRoute<void>(
-                    builder: (page) => SettingsPage(
-                      onLeave: () async {
-                        Navigator.of(page).pop();
-                        return true;
-                      },
-                    ),
+                    builder: (page) => RailBeside(present: rail, child: const SettingsPage()),
                   ),
                 ),
                 child: const Text('open'),
@@ -189,6 +186,15 @@ void main() {
 
     expect(find.byType(AppBar), findsNothing);
     expect(headerBack, findsNothing);
+  });
+
+  testWidgets('wide with no rail beside, the header leads out', (tester) async {
+    await pump(tester, width: 1200, rail: false);
+
+    expect(find.byType(AppBar), findsNothing);
+    await tester.tap(headerBack);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
   });
 
   testWidgets('narrow, the bar leads out of the settings at their root', (

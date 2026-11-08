@@ -60,6 +60,7 @@ import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/marked_title.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
@@ -84,16 +85,7 @@ part 'menu.dart';
 part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key, required this.onLeave, this.onSwipe});
-
-  /// Puts the settings away; false when a page in them refused to go. The
-  /// home's: the settings are a pane of it at every width.
-  final Future<bool> Function() onLeave;
-
-  /// How far a back swipe from the left edge has taken the settings away, 0
-  /// to 1, for the home to follow with its own transition; null once it is
-  /// let go short of leaving. A swipe that goes through is [onLeave].
-  final ValueChanged<double?>? onSwipe;
+  const SettingsPage({super.key});
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -251,6 +243,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   /// The navigator holding the right-hand side, so a selection can reach it.
   final _contentNav = GlobalKey<NavigatorState>();
+
+  /// Whether [_contentNav] has a page to go back from, as it last said; back
+  /// and the swipe are its until it has none.
+  bool _contentCanPop = false;
 
 
   /// Removes anything pushed on top of the levels [_path] describes, once

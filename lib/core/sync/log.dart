@@ -176,6 +176,8 @@ abstract base class SyncEngine {
       _tooNew.value = true;
       rethrow;
     }
+    // Read past: a theme that could not be installed then is tried again.
+    if (_carries(SyncThemes.c)) await SyncThemes.retry();
   }
 
   Future<void> _running = Future.value();

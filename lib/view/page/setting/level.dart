@@ -235,7 +235,12 @@ final class _SettingsContentHeader extends StatelessWidget {
     required this.selectedId,
     required this.onTap,
     required this.actions,
+    this.leading,
   });
+
+  /// Before [title]: the way out where the window has no rail beside the
+  /// settings (#1886) — and on a wide one, no bar.
+  final Widget? leading;
 
   final String title;
 
@@ -274,6 +279,7 @@ final class _SettingsContentHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (leading case final leading?) ...[leading, UIs.width7],
           Text(
             title,
             maxLines: 1,

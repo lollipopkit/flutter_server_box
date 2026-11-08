@@ -3,6 +3,20 @@ import 'dart:ui' show lerpDouble;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// Whether the home rail stands beside what is under this: a page shown where
+/// a tab is shown leaves the way back out to it, and otherwise draws its own.
+class RailBeside extends InheritedWidget {
+  const RailBeside({super.key, required this.present, required super.child});
+
+  final bool present;
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<RailBeside>()?.present ?? false;
+
+  @override
+  bool updateShouldNotify(RailBeside oldWidget) => present != oldWidget.present;
+}
+
 /// The rail's geometry, in both of the shapes it has.
 ///
 /// It stands collapsed — an icon in a pill and nothing else — and opens under
