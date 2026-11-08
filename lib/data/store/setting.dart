@@ -512,16 +512,15 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
-    // Whether this device's vault keeps key passphrases: the vault is not in
-    // the backup, so the answer is not either.
+    // Whether this device keeps key passphrases: one that does not neither
+    // sends nor takes them (`SyncCategory.passphrases`).
     'rememberKeyPassphrase',
     // Where this device installed the selected theme, and its background
     // inside that: the backup carries the themes themselves (`themes`), and a
     // restore points these at this device's copy — `ThemeBackup.reselect`.
     'appThemePackage',
     'appBackgroundPath',
-    // TODO(appearance): carry a custom background image and an imported font
-    // in backups; until then they are files only this device has.
+    // This device's copy of a picked file; the file syncs (`PickedFiles`).
     'appCustomBackgroundPath',
     'appImportedFontPath',
     'themeStoreCache',
@@ -544,7 +543,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'dmgTipBuild',
     'legacyStatusNoticePending',
     'firstTimeReadSSHCfg',
-    // Files only this device has.
+    // This device's copy of a picked file, as above.
     'fontPath',
     'sshBgImage',
     // This device's screen, hardware and network.
@@ -707,8 +706,8 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
 
-  /// Keep the passphrases of encrypted private keys in the system vault, so
-  /// they are not asked for again after a restart. See `KeyPassphrases`.
+  /// Keep the passphrases of encrypted private keys, so they are not asked
+  /// for again after a restart. See `KeyPassphrases`.
   late final rememberKeyPassphrase = propertyDefault(
     'rememberKeyPassphrase',
     true,

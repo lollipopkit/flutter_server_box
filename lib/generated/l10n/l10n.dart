@@ -1186,7 +1186,7 @@ abstract class AppLocalizations {
   /// Help text for the rememberKeyPassphrase setting.
   ///
   /// In en, this message translates to:
-  /// **'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.'**
+  /// **'Keep the passphrases of encrypted private keys, so they are not asked for after a restart. Turning this off removes the ones kept on this device.'**
   String get rememberKeyPassphraseTip;
 
   /// Help text for the SSH key unlock setting or action.
@@ -2220,17 +2220,47 @@ abstract class AppLocalizations {
   /// **'Switch to {val}'**
   String switchTo(String val);
 
-  /// User-facing label or message for sync app settings.
+  /// Title of the list of what sync carries.
   ///
   /// In en, this message translates to:
-  /// **'Sync app settings'**
-  String get syncAppSettings;
+  /// **'Synced data'**
+  String get syncedData;
 
-  /// Help text for the sync app settings setting or action.
+  /// Sync category label.
   ///
   /// In en, this message translates to:
-  /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
-  String get syncAppSettingsTip;
+  /// **'Passwords and keys'**
+  String get syncSecrets;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Key passphrases'**
+  String get keyPassphrases;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts, images and skills'**
+  String get syncFiles;
+
+  /// Shown on the backup page when this build stops syncing at data a newer build wrote.
+  ///
+  /// In en, this message translates to:
+  /// **'The synced data was written by a newer version of ServerBox. Update this app to keep syncing.'**
+  String get syncRemoteTooNew;
+
+  /// A sync stopped: the remote backup opens with another backup password.
+  ///
+  /// In en, this message translates to:
+  /// **'The synced data is encrypted with a different backup password. Set the backup password your other devices use.'**
+  String get syncPasswordMismatch;
+
+  /// A sync stopped: the destination could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the sync destination. Check the network and try again.'**
+  String get syncUnreachable;
 
   /// Help text for the term font size setting or action.
   ///

@@ -614,7 +614,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifrələnmiş şəxsi açarların parol ifadələrini bu cihazın sistem açar zəncirində saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Ehtiyat nüsxələrdə açarlar şifrəli qalır. Söndürdükdə saxlanmış ifadələr silinir.';
+      'Şifrələnmiş şəxsi açarların parol ifadələrini saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Söndürmək bu cihazda saxlananları silir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1233,11 +1233,28 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Tətbiq parametrlərini sinxronlaşdır';
+  String get syncedData => 'Sinxronlaşdırılan məlumatlar';
 
   @override
-  String get syncAppSettingsTip =>
-      'Tema, düzülüş, redaktor, terminal və digər cihaz seçimlərini avtomatik sinxronlaşdırmaya daxil et.';
+  String get syncSecrets => 'Parollar və açarlar';
+
+  @override
+  String get keyPassphrases => 'Açar parol ifadələri';
+
+  @override
+  String get syncFiles => 'Şriftlər, şəkillər və Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyası tərəfindən yazılıb. Sinxronlaşdırmanı davam etdirmək üçün bu tətbiqi yeniləyin.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Sinxronlaşdırılan məlumatlar başqa ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızın istifadə etdiyi parolu təyin edin.';
+
+  @override
+  String get syncUnreachable =>
+      'Sinxronlaşdırma yerinə qoşulmaq mümkün deyil. Şəbəkəni yoxlayıb yenidən cəhd edin.';
 
   @override
   String get termFontSizeTip =>

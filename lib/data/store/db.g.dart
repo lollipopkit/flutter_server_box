@@ -9644,6 +9644,336 @@ class SyncRecordsCompanion extends UpdateCompanion<SyncRecordRow> {
   }
 }
 
+class $SyncPassedTable extends SyncPassed
+    with TableInfo<$SyncPassedTable, SyncPassedRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncPassedTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _eMeta = const VerificationMeta('e');
+  @override
+  late final GeneratedColumn<String> e = GeneratedColumn<String>(
+    'e',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cMeta = const VerificationMeta('c');
+  @override
+  late final GeneratedColumn<String> c = GeneratedColumn<String>(
+    'c',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hMeta = const VerificationMeta('h');
+  @override
+  late final GeneratedColumn<String> h = GeneratedColumn<String>(
+    'h',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dMeta = const VerificationMeta('d');
+  @override
+  late final GeneratedColumn<String> d = GeneratedColumn<String>(
+    'd',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [e, c, id, h, d];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_passed';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPassedRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('e')) {
+      context.handle(_eMeta, e.isAcceptableOrUnknown(data['e']!, _eMeta));
+    } else if (isInserting) {
+      context.missing(_eMeta);
+    }
+    if (data.containsKey('c')) {
+      context.handle(_cMeta, c.isAcceptableOrUnknown(data['c']!, _cMeta));
+    } else if (isInserting) {
+      context.missing(_cMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('h')) {
+      context.handle(_hMeta, h.isAcceptableOrUnknown(data['h']!, _hMeta));
+    } else if (isInserting) {
+      context.missing(_hMeta);
+    }
+    if (data.containsKey('d')) {
+      context.handle(_dMeta, d.isAcceptableOrUnknown(data['d']!, _dMeta));
+    } else if (isInserting) {
+      context.missing(_dMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {e, c, id};
+  @override
+  SyncPassedRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPassedRow(
+      e: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}e'],
+      )!,
+      c: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}c'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      h: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}h'],
+      )!,
+      d: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}d'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncPassedTable createAlias(String alias) {
+    return $SyncPassedTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class SyncPassedRow extends DataClass implements Insertable<SyncPassedRow> {
+  final String e;
+  final String c;
+  final String id;
+  final String h;
+
+  /// The op's data as JSON: a blob's name for a large one.
+  final String d;
+  const SyncPassedRow({
+    required this.e,
+    required this.c,
+    required this.id,
+    required this.h,
+    required this.d,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['e'] = Variable<String>(e);
+    map['c'] = Variable<String>(c);
+    map['id'] = Variable<String>(id);
+    map['h'] = Variable<String>(h);
+    map['d'] = Variable<String>(d);
+    return map;
+  }
+
+  SyncPassedCompanion toCompanion(bool nullToAbsent) {
+    return SyncPassedCompanion(
+      e: Value(e),
+      c: Value(c),
+      id: Value(id),
+      h: Value(h),
+      d: Value(d),
+    );
+  }
+
+  factory SyncPassedRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPassedRow(
+      e: serializer.fromJson<String>(json['e']),
+      c: serializer.fromJson<String>(json['c']),
+      id: serializer.fromJson<String>(json['id']),
+      h: serializer.fromJson<String>(json['h']),
+      d: serializer.fromJson<String>(json['d']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'e': serializer.toJson<String>(e),
+      'c': serializer.toJson<String>(c),
+      'id': serializer.toJson<String>(id),
+      'h': serializer.toJson<String>(h),
+      'd': serializer.toJson<String>(d),
+    };
+  }
+
+  SyncPassedRow copyWith({
+    String? e,
+    String? c,
+    String? id,
+    String? h,
+    String? d,
+  }) => SyncPassedRow(
+    e: e ?? this.e,
+    c: c ?? this.c,
+    id: id ?? this.id,
+    h: h ?? this.h,
+    d: d ?? this.d,
+  );
+  SyncPassedRow copyWithCompanion(SyncPassedCompanion data) {
+    return SyncPassedRow(
+      e: data.e.present ? data.e.value : this.e,
+      c: data.c.present ? data.c.value : this.c,
+      id: data.id.present ? data.id.value : this.id,
+      h: data.h.present ? data.h.value : this.h,
+      d: data.d.present ? data.d.value : this.d,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPassedRow(')
+          ..write('e: $e, ')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('h: $h, ')
+          ..write('d: $d')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(e, c, id, h, d);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPassedRow &&
+          other.e == this.e &&
+          other.c == this.c &&
+          other.id == this.id &&
+          other.h == this.h &&
+          other.d == this.d);
+}
+
+class SyncPassedCompanion extends UpdateCompanion<SyncPassedRow> {
+  final Value<String> e;
+  final Value<String> c;
+  final Value<String> id;
+  final Value<String> h;
+  final Value<String> d;
+  const SyncPassedCompanion({
+    this.e = const Value.absent(),
+    this.c = const Value.absent(),
+    this.id = const Value.absent(),
+    this.h = const Value.absent(),
+    this.d = const Value.absent(),
+  });
+  SyncPassedCompanion.insert({
+    required String e,
+    required String c,
+    required String id,
+    required String h,
+    required String d,
+  }) : e = Value(e),
+       c = Value(c),
+       id = Value(id),
+       h = Value(h),
+       d = Value(d);
+  static Insertable<SyncPassedRow> custom({
+    Expression<String>? e,
+    Expression<String>? c,
+    Expression<String>? id,
+    Expression<String>? h,
+    Expression<String>? d,
+  }) {
+    return RawValuesInsertable({
+      if (e != null) 'e': e,
+      if (c != null) 'c': c,
+      if (id != null) 'id': id,
+      if (h != null) 'h': h,
+      if (d != null) 'd': d,
+    });
+  }
+
+  SyncPassedCompanion copyWith({
+    Value<String>? e,
+    Value<String>? c,
+    Value<String>? id,
+    Value<String>? h,
+    Value<String>? d,
+  }) {
+    return SyncPassedCompanion(
+      e: e ?? this.e,
+      c: c ?? this.c,
+      id: id ?? this.id,
+      h: h ?? this.h,
+      d: d ?? this.d,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (e.present) {
+      map['e'] = Variable<String>(e.value);
+    }
+    if (c.present) {
+      map['c'] = Variable<String>(c.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (h.present) {
+      map['h'] = Variable<String>(h.value);
+    }
+    if (d.present) {
+      map['d'] = Variable<String>(d.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPassedCompanion(')
+          ..write('e: $e, ')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('h: $h, ')
+          ..write('d: $d')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
@@ -9676,6 +10006,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $TombstonesTable tombstones = $TombstonesTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
   late final $SyncRecordsTable syncRecords = $SyncRecordsTable(this);
+  late final $SyncPassedTable syncPassed = $SyncPassedTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9704,6 +10035,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     tombstones,
     syncStates,
     syncRecords,
+    syncPassed,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -18900,6 +19232,185 @@ typedef $$SyncRecordsTableProcessedTableManager =
       SyncRecordRow,
       PrefetchHooks Function()
     >;
+typedef $$SyncPassedTableCreateCompanionBuilder =
+    SyncPassedCompanion Function({
+      required String e,
+      required String c,
+      required String id,
+      required String h,
+      required String d,
+    });
+typedef $$SyncPassedTableUpdateCompanionBuilder =
+    SyncPassedCompanion Function({
+      Value<String> e,
+      Value<String> c,
+      Value<String> id,
+      Value<String> h,
+      Value<String> d,
+    });
+
+class $$SyncPassedTableFilterComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get e => $composableBuilder(
+    column: $table.e,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get h => $composableBuilder(
+    column: $table.h,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get d => $composableBuilder(
+    column: $table.d,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncPassedTableOrderingComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get e => $composableBuilder(
+    column: $table.e,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get h => $composableBuilder(
+    column: $table.h,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get d => $composableBuilder(
+    column: $table.d,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncPassedTableAnnotationComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get e =>
+      $composableBuilder(column: $table.e, builder: (column) => column);
+
+  GeneratedColumn<String> get c =>
+      $composableBuilder(column: $table.c, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get h =>
+      $composableBuilder(column: $table.h, builder: (column) => column);
+
+  GeneratedColumn<String> get d =>
+      $composableBuilder(column: $table.d, builder: (column) => column);
+}
+
+class $$SyncPassedTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $SyncPassedTable,
+          SyncPassedRow,
+          $$SyncPassedTableFilterComposer,
+          $$SyncPassedTableOrderingComposer,
+          $$SyncPassedTableAnnotationComposer,
+          $$SyncPassedTableCreateCompanionBuilder,
+          $$SyncPassedTableUpdateCompanionBuilder,
+          (
+            SyncPassedRow,
+            BaseReferences<_$AppDb, $SyncPassedTable, SyncPassedRow>,
+          ),
+          SyncPassedRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncPassedTableTableManager(_$AppDb db, $SyncPassedTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncPassedTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncPassedTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncPassedTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> e = const Value.absent(),
+                Value<String> c = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> h = const Value.absent(),
+                Value<String> d = const Value.absent(),
+              }) => SyncPassedCompanion(e: e, c: c, id: id, h: h, d: d),
+          createCompanionCallback:
+              ({
+                required String e,
+                required String c,
+                required String id,
+                required String h,
+                required String d,
+              }) => SyncPassedCompanion.insert(e: e, c: c, id: id, h: h, d: d),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncPassedTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $SyncPassedTable,
+      SyncPassedRow,
+      $$SyncPassedTableFilterComposer,
+      $$SyncPassedTableOrderingComposer,
+      $$SyncPassedTableAnnotationComposer,
+      $$SyncPassedTableCreateCompanionBuilder,
+      $$SyncPassedTableUpdateCompanionBuilder,
+      (SyncPassedRow, BaseReferences<_$AppDb, $SyncPassedTable, SyncPassedRow>),
+      SyncPassedRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDbManager {
   final _$AppDb _db;
@@ -18950,4 +19461,6 @@ class $AppDbManager {
       $$SyncStatesTableTableManager(_db, _db.syncStates);
   $$SyncRecordsTableTableManager get syncRecords =>
       $$SyncRecordsTableTableManager(_db, _db.syncRecords);
+  $$SyncPassedTableTableManager get syncPassed =>
+      $$SyncPassedTableTableManager(_db, _db.syncPassed);
 }

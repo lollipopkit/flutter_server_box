@@ -614,7 +614,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Зберігати парольні фрази зашифрованих приватних ключів у системній в\'язці ключів цього пристрою, щоб не запитувати їх після перезапуску. У резервних копіях ключі залишаються зашифрованими. Вимкнення видаляє збережені фрази.';
+      'Зберігати парольні фрази зашифрованих закритих ключів, щоб не запитувати їх після перезапуску. Вимкнення видаляє збережені на цьому пристрої.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1238,11 +1238,28 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Синхронізувати налаштування застосунку';
+  String get syncedData => 'Дані для синхронізації';
 
   @override
-  String get syncAppSettingsTip =>
-      'Включити тему, компонування, редактор, термінал та інші налаштування пристрою в автоматичну синхронізацію.';
+  String get syncSecrets => 'Паролі та ключі';
+
+  @override
+  String get keyPassphrases => 'Парольні фрази ключів';
+
+  @override
+  String get syncFiles => 'Шрифти, зображення та Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Дані синхронізації записано новішою версією ServerBox. Оновіть застосунок, щоб продовжити синхронізацію.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Синхронізовані дані зашифровано іншим паролем резервної копії. Встановіть той самий пароль, що й на інших пристроях.';
+
+  @override
+  String get syncUnreachable =>
+      'Не вдається підключитися до місця синхронізації. Перевірте мережу та спробуйте ще раз.';
 
   @override
   String get termFontSizeTip =>

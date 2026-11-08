@@ -155,7 +155,7 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _clearSudoPasswordOverrideBestEffort(String id) async {
     SudoPassword.forget(id);
     try {
-      await SudoPassword.clearOverride(id);
+      SudoPassword.unsave(id);
     } catch (e, s) {
       Loggers.app.warning(
         'Failed to clear sudo password override for server $id',

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/sync/sync.dart';
@@ -188,8 +189,8 @@ void main() {
   test('an edit to a synced setting starts a sync', () async {
     await become(phone);
     var edits = 0;
-    final sub = BakSyncer.watchEdits(() => edits++);
-    addTearDown(sub.cancel);
+    final subs = BakSyncer.watchEdits(() => edits++);
+    addTearDown(() => Future.wait([for (final s in subs) s.cancel()]));
 
     Stores.setting.maxRetryCount.put(6);
     await _settle();
@@ -203,10 +204,14 @@ void main() {
     await _settle();
     expect(edits, 1, reason: 'the history goes with the next sync');
 
+    LlmStores.tool.enabled.put(false);
+    await _settle();
+    expect(edits, 2, reason: "the Agent's settings sync too");
+
     await PrefProps.syncAppSettings.set(false);
     Stores.setting.maxRetryCount.put(7);
     await _settle();
-    expect(edits, 1, reason: 'settings not synced');
+    expect(edits, 2, reason: 'settings not synced');
   });
 
   test('a remote written over with less is written back by a device that was not edited', () async {

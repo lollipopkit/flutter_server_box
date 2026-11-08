@@ -8,7 +8,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
 import 'package:fl_tty/fl_tty.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -84,11 +84,16 @@ part 'menu.dart';
 part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key, required this.onLeave});
+  const SettingsPage({super.key, required this.onLeave, this.onSwipe});
 
   /// Puts the settings away; false when a page in them refused to go. The
   /// home's: the settings are a pane of it at every width.
   final Future<bool> Function() onLeave;
+
+  /// How far a back swipe from the left edge has taken the settings away, 0
+  /// to 1, for the home to follow with its own transition; null once it is
+  /// let go short of leaving. A swipe that goes through is [onLeave].
+  final ValueChanged<double?>? onSwipe;
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();

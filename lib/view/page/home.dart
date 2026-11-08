@@ -58,7 +58,7 @@ class _HomePageState extends ConsumerState<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver,
-        SingleTickerProviderStateMixin {
+        TickerProviderStateMixin {
   /// Which tab to come back to, by [AppTab.name] — see
   /// [_HomePageTabs._rememberTab].
   ///
@@ -141,6 +141,17 @@ class _HomePageState extends ConsumerState<HomePage>
     reverseCurve: Curves.easeInCubic,
   );
 
+  /// A back swipe on the settings' first page, as Android's predictive back
+  /// draws one: the page shrinks and follows the finger, the tabs show
+  /// under it ([_followSettingsSwipe]). How far, 0 to 1.
+  late final _settingsSwipe = AnimationController(
+    vsync: this,
+    duration: Durations.short4,
+  );
+
+  /// From a swipe's first move until the settings stay or are gone.
+  bool _settingsSwiping = false;
+
   /// Whether they have been opened at all since launch.
   ///
   /// They keep their place once they have been — which section, what was
@@ -209,6 +220,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _selectIndex.dispose();
     _settingsAnim.dispose();
     _settingsCtrl.dispose();
+    _settingsSwipe.dispose();
     super.dispose();
   }
 
@@ -248,6 +260,11 @@ class _HomePageState extends ConsumerState<HomePage>
     _settingsCtrl.addStatusListener((status) {
       switch (status) {
         case AnimationStatus.completed || AnimationStatus.dismissed:
+          // Put away by a swipe: the page it shrank goes with them.
+          if (status.isDismissed && _settingsSwiping) {
+            _settingsSwiping = false;
+            _settingsSwipe.value = 0;
+          }
           if (mounted) setState(() {});
         case _:
           break;

@@ -22,6 +22,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
@@ -73,6 +74,7 @@ void main() {
     await SqliteDb.close();
     SqliteDb.openInMemory();
     await Stores.init();
+    if (remote == 'webdav') SyncRemotes.setWebdav(url: webdav.url!, user: webdav.user ?? '', pwd: webdav.pwd ?? '');
     if (remote == 'monitor') {
       Stores.server.put(Spi(id: agentId, name: 'e2e agent', monitorHttp: agent));
     }
@@ -102,15 +104,9 @@ void main() {
     await PrefStore.shared.init();
     // What is asserted on is a setting: they travel only with this on.
     await PrefProps.syncAppSettings.set(true);
-    FlutterSecureStorage.setMockInitialValues({
-      SecureStoreProps.bakPwd.key: _password,
-      if (webdav.pwd != null) SecureStoreProps.webdavPwd.key: webdav.pwd!,
-    });
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: _password});
     switch (remote) {
       case 'webdav':
-        await PrefProps.webdavUrl.set(webdav.url!);
-        await PrefProps.webdavUser.set(webdav.user ?? '');
-        await Webdav.initShared();
         await PrefProps.webdavSync.set(true);
       case 'monitor':
         await BakSyncer.monitorSync.set(true);

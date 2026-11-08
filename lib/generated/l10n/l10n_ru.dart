@@ -614,7 +614,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Хранить парольные фразы зашифрованных закрытых ключей в системной связке ключей этого устройства, чтобы не запрашивать их после перезапуска. В резервных копиях ключи остаются зашифрованными. При отключении сохранённые фразы удаляются.';
+      'Сохранять парольные фразы зашифрованных закрытых ключей, чтобы не запрашивать их после перезапуска. При отключении сохранённые на этом устройстве удаляются.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1238,11 +1238,28 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Синхронизировать настройки приложения';
+  String get syncedData => 'Синхронизируемые данные';
 
   @override
-  String get syncAppSettingsTip =>
-      'Включить тему, макет, редактор, терминал и другие настройки устройства в автоматическую синхронизацию.';
+  String get syncSecrets => 'Пароли и ключи';
+
+  @override
+  String get keyPassphrases => 'Парольные фразы ключей';
+
+  @override
+  String get syncFiles => 'Шрифты, изображения и Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Синхронизируемые данные записаны более новой версией ServerBox. Обновите приложение, чтобы продолжить синхронизацию.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Синхронизированные данные зашифрованы другим паролем резервной копии. Установите тот же пароль, что на других устройствах.';
+
+  @override
+  String get syncUnreachable =>
+      'Не удаётся подключиться к месту синхронизации. Проверьте сеть и повторите попытку.';
 
   @override
   String get termFontSizeTip =>

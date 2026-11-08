@@ -133,17 +133,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // key's own comment is inside the part that gets encrypted.
       _commentController.text =
           pki.comment ?? describeSshKey(pki.key).comment ?? '';
-      KeyPassphrases.read(pki.key).then((kept) {
-        // Not over what was typed while it was read, nor for a key no longer
-        // the one in the editor.
-        if (kept == null || !mounted) return;
-        if (_pwdController.text.isNotEmpty || _keyController.text != pki.key) {
-          return;
-        }
+      if (KeyPassphrases.read(pki.key) case final kept?) {
         _kept = kept;
         _pwdController.text = kept;
         _pwdShown.value = false;
-      });
+      }
       // The kept one is for these bytes: another key needs its own. One the
       // user has typed over is theirs, and stays.
       _keyController.addListener(() {
@@ -474,7 +468,7 @@ extension _Actions on _PrivateKeyEditPageState {
       }
       // Only for a key that was stored.
       if (pwd.isNotEmpty && opened != key) {
-        unawaited(KeyPassphrases.write(key, pwd));
+        KeyPassphrases.write(key, pwd);
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema, so this is where a collision is

@@ -5,8 +5,10 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/temp_file.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -101,10 +103,17 @@ final class ICloudSyncFiles implements SyncFiles {
   @override
   Future<void> putBlob(String name, Uint8List body) => write(name, body);
 
+  /// A download iCloud says nothing of for this long fails, and is tried
+  /// again at the next sync: the reads are one at a time, and one iCloud
+  /// never ended held every later sync behind it.
+  static const _downloadIdle = Duration(minutes: 2);
+
   @override
   Future<Uint8List?> getBlob(String name) => withTempFile(name, (path) async {
     try {
-      await _icloud.download(relativePath: '$_dir$name', localPath: path);
+      await _icloud.download(relativePath: '$_dir$name', localPath: path, idle: _downloadIdle);
+    } on TimeoutException {
+      rethrow;
     } catch (_) {
       if (!await _icloud.exists('$_dir$name')) return null;
       rethrow;
@@ -171,7 +180,7 @@ abstract final class FileLogSync {
     final Webdav webdav when webdav.client != null => (
       id: 'webdav:${syncBlobName(
         secret: _folder,
-        data: utf8.encode('${webdav.identity}|${PrefProps.webdavUser.get()}'),
+        data: utf8.encode('${webdav.identity}|${SyncRemotes.webdavUser}'),
       )}',
       files: WebdavSyncFiles(webdav),
     ),
@@ -186,9 +195,9 @@ abstract final class FileLogSync {
       _soon?.cancel();
       _soon = Timer(_debounce, () => unawaited(sync()));
     });
-    // Settings carried or not: every device is read again from its start,
+    // A category carried or not: every device is read again from its start,
     // and everything here sent, so neither side misses what was left out.
-    PrefProps.syncAppSettings.listenable().addListener(() {
+    Listenable.merge([for (final c in SyncCategory.values) c.changes]).addListener(() {
       if (!SqliteDb.isOpen) return;
       final opening = _opening;
       if (opening == null) return SegmentSync.forget();

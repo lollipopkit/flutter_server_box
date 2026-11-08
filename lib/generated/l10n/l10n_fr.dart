@@ -618,7 +618,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Conserve les phrases de passe des clés privées chiffrées dans le trousseau système de cet appareil, pour ne pas les redemander après un redémarrage. Les clés restent chiffrées dans les sauvegardes. Désactiver supprime les phrases enregistrées.';
+      'Conserve les phrases secrètes des clés privées chiffrées, pour ne pas les redemander après un redémarrage. Désactiver supprime celles conservées sur cet appareil.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1245,11 +1245,28 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Synchroniser les réglages de l\'app';
+  String get syncedData => 'Données synchronisées';
 
   @override
-  String get syncAppSettingsTip =>
-      'Inclure le thème, la disposition, l\'éditeur, le terminal et les autres préférences de l\'appareil dans la synchronisation automatique.';
+  String get syncSecrets => 'Mots de passe et clés';
+
+  @override
+  String get keyPassphrases => 'Phrases secrètes des clés';
+
+  @override
+  String get syncFiles => 'Polices, images et skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Les données synchronisées ont été écrites par une version plus récente de ServerBox. Mettez à jour cette app pour continuer à synchroniser.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Les données synchronisées sont chiffrées avec un autre mot de passe de sauvegarde. Définissez celui de vos autres appareils.';
+
+  @override
+  String get syncUnreachable =>
+      'Impossible d\'atteindre la destination de synchronisation. Vérifiez le réseau et réessayez.';
 
   @override
   String get termFontSizeTip =>

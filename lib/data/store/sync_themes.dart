@@ -34,14 +34,27 @@ abstract final class SyncThemes {
 
   /// Stamps each installation no record names yet: a theme installed here
   /// since the last send.
-  static void stamp() {
+  /// [notify] for one installed just now, sent without waiting for the
+  /// next send ([follow]).
+  static void stamp({bool notify = false}) {
     final ids = _installed();
     if (ids.isEmpty) return;
     final known = SyncRecorder.stampsOf([for (final id in ids) (c, id)]);
     for (final id in ids) {
       // Read in the send this runs before: no second send for it.
-      if (!known.containsKey((c, id))) SyncRecorder.record(c, id, notify: false);
+      if (!known.containsKey((c, id))) SyncRecorder.record(c, id, notify: notify);
     }
+  }
+
+  static bool _following = false;
+
+  /// Sends a theme or icon pack installed here as it is installed.
+  static void follow() {
+    if (_following) return;
+    _following = true;
+    SyncRecorder.follow(ThemePackages.installedChanged, () {
+      if (_installing == 0) stamp(notify: true);
+    });
   }
 
   /// Each installation's op value, read once per send or snapshot (only one
@@ -72,6 +85,19 @@ abstract final class SyncThemes {
   /// kept, and the op's installation is held as it ([_aliasOf]). A theme that
   /// cannot be installed is logged and left.
   static Future<void> install(List<({String c, String id, String h, Object? d})> ops) async {
+    _installing++;
+    try {
+      await _install(ops);
+    } finally {
+      _installing--;
+    }
+  }
+
+  /// [install]s running: what they put here is recorded at the op's stamp
+  /// once restored, after `installedChanged` has told of it.
+  static int _installing = 0;
+
+  static Future<void> _install(List<({String c, String id, String h, Object? d})> ops) async {
     for (final op in ops) {
       final d = op.d;
       // Added only: a removal elsewhere removes nothing here.

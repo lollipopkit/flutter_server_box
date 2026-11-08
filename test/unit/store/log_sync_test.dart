@@ -4,16 +4,20 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart' show ThemePackages;
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Skills;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
+import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
+import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 
 import '../../helpers/fsbt.dart';
@@ -151,6 +155,7 @@ void main() {
   setUpAll(() async {
     final dir = await Directory.systemTemp.createTemp('sbm-log-sync-');
     Paths.doc = dir.path;
+    Paths.img = dir.path.joinPath('img');
     addTearDown(() => dir.delete(recursive: true));
   });
 
@@ -245,6 +250,37 @@ void main() {
     expect(log.batches, hasLength(before + 1), reason: 'the same key is taken once, and nothing sent twice');
   });
 
+  test('a finished benchmark reaches the next device, one running does not', () async {
+    final log = _Log();
+    await _device();
+    final spi = spiFixture(name: 'web', id: 'srv1', ip: '10.0.0.2');
+    Stores.server.put(spi);
+    BenchmarkRun run(String id, BenchmarkStatus status) => BenchmarkRun(
+      id: id,
+      serverId: spi.id,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+      finishedAt: status == BenchmarkStatus.running ? null : DateTime.fromMillisecondsSinceEpoch(2000),
+      status: status,
+      options: const YabsOptions(),
+      runDir: '/tmp/b',
+      resultJson: '{}',
+    );
+    Stores.benchmark.put(run('done', BenchmarkStatus.completed));
+    Stores.benchmark.put(run('going', BenchmarkStatus.running));
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('done')?.resultJson, '{}');
+    expect(Stores.benchmark.get('going'), isNull);
+    Stores.benchmark.remove('done');
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('done'), isNull);
+  });
+
   test('a server carries its container host and PVE settings', () async {
     final log = _Log();
     await _device();
@@ -268,6 +304,7 @@ void main() {
     await _sync(log).sync();
     expect(LogSync.behind(1), isFalse);
     expect(log.batches.length, greaterThan(1));
+    expect(LogSync.tooNew.value, isFalse);
 
     final sent = log.batches.length;
     log.batches.add((sent + 1, Uint8List.fromList(gzip.encode('{"v":99,"ops":[]}'.codeUnits))));
@@ -275,6 +312,10 @@ void main() {
     await expectLater(_sync(log).sync(), throwsA(isA<SyncLogTooNew>()));
     expect(log.batches.length, sent + 2, reason: 'the edit is sent all the same');
     expect(LogSync.behind(sent + 1), isTrue);
+    expect(LogSync.tooNew.value, isTrue, reason: 'shown on the backup page');
+
+    LogSync.forget();
+    expect(LogSync.tooNew.value, isFalse);
   });
 
   test('a full log is compacted, then the batch sent', () async {
@@ -289,7 +330,7 @@ void main() {
     expect(log.batches, hasLength(2));
   });
 
-  test('a device that left settings out writes no snapshot', () async {
+  test('a device that left settings out still writes the snapshot when asked', () async {
     final log = _Log();
     await _device();
     Stores.setting.timeout.put(17);
@@ -299,7 +340,13 @@ void main() {
     await _device();
     Stores.snippet.put(snippet);
     await _sync(log, settings: false).sync();
-    expect(log.snap, isNull);
+    expect(log.snap, isNotNull);
+    // With what it took and did not apply: a device reading only it has both.
+    log.floor = log.snap!.seq;
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.timeout.fetch(), 17);
+    expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
   });
 
   test("this device's own append moves the cursor when nothing is between", () async {
@@ -382,14 +429,77 @@ void main() {
     expect(Stores.setting.timeout.fetch(), 21);
   });
 
-  test('a device that leaves records out does not replace the key', () async {
+  test('a device that leaves records out carries them on in its snapshot', () async {
     final log = _Log();
     await _device();
     Stores.setting.timeout.put(17);
     await _sync(log).sync();
+    // Settings off here: taken as they came, not applied, and still in the
+    // snapshot it writes (here as it replaces the key).
     await _device();
-    final sync = _sync(log, settings: false);
-    await expectLater(sync.rotate(() async {}), throwsA(isA<SyncLogPartial>()));
+    await _sync(log, settings: false).rotate(() async {});
+    expect(Stores.setting.timeout.fetch(), isNot(17));
+    // The batches the snapshot covers are gone: a device joining now reads
+    // the snapshot alone, and has the setting.
+    log.floor = log.snap!.seq;
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.timeout.fetch(), 17);
+  });
+
+  test('a large record carried on is sealed again under a key replaced here', () async {
+    final log = _Log();
+    final account = ['k1'];
+    final big = 'x' * (SyncEngine.inlineMax + 1);
+    await _device();
+    Stores.setting.set('bigNote', big);
+    await LogSync(log, _Keyed(account)).sync();
+
+    // Settings off here: kept as they came, and in the snapshot the
+    // replaced key writes.
+    await _device();
+    final b = _Keyed(account);
+    await LogSync(log, b, carries: (c) => c != 'kv:setting' && c != 'theme').rotate(() => b.rotate('k2'));
+    final passed = SqliteDb.instance.select('SELECT d FROM sync_passed;').single['d'] as String;
+    expect(passed, isNot(contains(r'$blob')));
+
+    // A device holding the new key alone reads it from the snapshot.
+    log.floor = log.snap!.seq;
+    await _device();
+    await LogSync(log, _Keyed(['k2'])).sync();
+    expect(Stores.setting.get<String>('bigNote'), big);
+  });
+
+  test('a picked file missing for a while, or an unreadable skills lock, removes nothing elsewhere', () async {
+    final log = _Log();
+    final skills = await Directory.systemTemp.createTemp('sbm-skills-lock-');
+    addTearDown(() => skills.delete(recursive: true));
+    Skills.root = skills.path;
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_2.png'))..writeAsBytesSync([4, 5]);
+    Stores.setting.sshBgImage.put(picked.path);
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await _sync(log).sync();
+    final sent = log.batches.length;
+
+    final lock = File('${skills.path}/.lock.json');
+    final readable = lock.readAsStringSync();
+    picked.deleteSync();
+    lock.writeAsStringSync('{');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    expect(log.batches.length, sent, reason: 'nothing sent as gone');
+
+    // Readable again as it was: nothing in it is a new edit here.
+    lock.writeAsStringSync(readable);
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    expect(log.batches.length, sent, reason: 'nothing sent again');
+    Skills.remove('notes');
   });
 
   test('the same record under two ids (restored before ids existed) is one record, not two', () async {
@@ -481,6 +591,92 @@ void main() {
     await device('c');
     await _sync(log, settings: false).sync();
     expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root), isNull);
+  });
+
+  test('a picked file reaches the next device as its own copy, and its removal too', () async {
+    final log = _Log();
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_1.png'))..writeAsBytesSync([1, 2, 3]);
+    Stores.setting.sshBgImage.put(picked.path);
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    final copy = Stores.setting.sshBgImage.fetch();
+    expect(copy, isNot(picked.path));
+    expect(File(copy).readAsBytesSync(), [1, 2, 3]);
+    final batches = log.batches.length;
+    await _sync(log).sync();
+    expect(log.batches.length, batches, reason: 'what came in is not sent back');
+
+    Stores.setting.sshBgImage.put('');
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.sshBgImage.fetch(), isEmpty);
+  });
+
+  test('a skill installed on one device is installed on the next, and removed', () async {
+    final log = _Log();
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-skills-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      Skills.root = dir.path;
+      await _device();
+    }
+
+    await device('a');
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await _sync(log).sync();
+
+    await device('b');
+    await _sync(log).sync();
+    expect(Skills.byDir('notes')?.description, 'Takes notes.');
+    expect(Skills.filesOf('notes'), ['SKILL.md']);
+    Skills.remove('notes');
+    await _sync(log).sync();
+
+    await device('c');
+    await _sync(log).sync();
+    expect(Skills.byDir('notes'), isNull);
+  });
+
+  test('a skill changed here is sent at once; one a sync installs is not sent back', () async {
+    final dir = await Directory.systemTemp.createTemp('sbm-skills-follow-');
+    addTearDown(() => dir.delete(recursive: true));
+    Skills.root = dir.path;
+    await _device();
+    SyncSkills.follow();
+    var woken = 0;
+    void wake() => woken++;
+    SyncRecorder.onLocal.add(wake);
+    addTearDown(() => SyncRecorder.onLocal.remove(wake));
+
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await Future<void>.delayed(Duration.zero);
+    expect(woken, 1);
+    final stamped = SqliteDb.instance.select("SELECT hlc FROM sync_record WHERE c = 'skill' AND id = 'notes';");
+    expect(stamped, hasLength(1));
+
+    woken = 0;
+    SyncSkills.install([
+      (c: SyncSkills.c, id: 'other', h: '${'0' * 12}${'0' * 4}${'1' * 16}', d: {
+        'lock': {'name': 'other', 'description': 'Other.', 'hash': 'h2'},
+        'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: other\n---\n'))},
+      }),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    expect(woken, 0, reason: 'what came from elsewhere is not an edit here');
+    Skills.remove('notes');
+    Skills.remove('other');
   });
 
   test('a theme here at another version is kept, and the selection points at it', () async {

@@ -163,16 +163,9 @@ extension _Actions on _ServerEditPageState {
     WindowsStatusCmdType.diskSmart,
   ];
 
-  Future<void> _refreshStoredSudoPasswordState() async {
-    String? storedValue;
-    try {
-      storedValue = await SudoPassword.readOverride(_serverId);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to read sudo password override', e, s);
-      return;
-    }
+  void _refreshStoredSudoPasswordState() {
     if (!mounted) return;
-    _pendingSudoPassword ??= storedValue;
+    _pendingSudoPassword ??= SudoPassword.saved(_serverId);
     _hasStoredSudoPassword.value =
         _pendingSudoPassword != null && _pendingSudoPassword!.isNotEmpty;
   }
@@ -462,12 +455,8 @@ extension _Actions on _ServerEditPageState {
     SudoPassword.forget(_serverId);
     try {
       final pending = _pendingSudoPassword;
-      if (pending == null || pending.isEmpty) {
-        await SudoPassword.clearOverride(_serverId);
-      } else {
-        await SudoPassword.writeOverride(_serverId, pending);
-      }
-      await _refreshStoredSudoPasswordState();
+      SudoPassword.save(_serverId, pending ?? '');
+      _refreshStoredSudoPasswordState();
       _sudoPasswordDirty = false;
       return true;
     } catch (e, s) {

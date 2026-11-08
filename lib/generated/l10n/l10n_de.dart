@@ -613,7 +613,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Passphrasen verschlüsselter privater Schlüssel im Systemschlüsselbund dieses Geräts speichern, damit sie nach einem Neustart nicht erneut abgefragt werden. In Backups bleiben die Schlüssel verschlüsselt. Beim Ausschalten werden gespeicherte Passphrasen gelöscht.';
+      'Speichert die Passphrasen verschlüsselter privater Schlüssel, damit sie nach einem Neustart nicht erneut abgefragt werden. Ausschalten entfernt die auf diesem Gerät gespeicherten.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1242,11 +1242,28 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'App-Einstellungen synchronisieren';
+  String get syncedData => 'Synchronisierte Daten';
 
   @override
-  String get syncAppSettingsTip =>
-      'Design, Layout, Editor, Terminal und weitere Geräteeinstellungen in die automatische Synchronisierung einbeziehen.';
+  String get syncSecrets => 'Passwörter und Schlüssel';
+
+  @override
+  String get keyPassphrases => 'Schlüssel-Passphrasen';
+
+  @override
+  String get syncFiles => 'Schriften, Bilder und Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Die synchronisierten Daten wurden von einer neueren ServerBox-Version geschrieben. Aktualisiere diese App, um weiter zu synchronisieren.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Die synchronisierten Daten sind mit einem anderen Backup-Passwort verschlüsselt. Lege das Backup-Passwort deiner anderen Geräte fest.';
+
+  @override
+  String get syncUnreachable =>
+      'Das Synchronisierungsziel ist nicht erreichbar. Prüfe das Netzwerk und versuche es erneut.';
 
   @override
   String get termFontSizeTip =>

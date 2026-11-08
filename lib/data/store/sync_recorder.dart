@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
+import 'package:flutter/foundation.dart' show Listenable;
+import 'package:server_box/data/store/secret.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -16,9 +20,24 @@ import 'package:sqlite3/sqlite3.dart';
 /// sent ([pending]); the value goes with it as the store holds it then, so a
 /// child's edit, which stamps its parent, sends the parent whole.
 abstract final class SyncRecorder {
-  /// The kv stores that sync. Every other one stays on the device: `history`
-  /// (what was typed and visited here), and fl_pi_llm's chats and providers.
-  static const syncedStores = {'setting'};
+  /// The kv stores that sync, by name: the settings, the Agent's
+  /// providers, tool switches and memory, and the secrets. Every other one
+  /// stays on the device: `history` (what was typed and visited here) and
+  /// the chats.
+  static final syncedStores = <String, SqliteStore>{
+    for (final store in [
+      SettingStore.instance,
+      LlmStores.llm,
+      LlmStores.tool,
+      LlmStores.memory,
+      LlmStores.credential,
+      LlmStores.mcpSecret,
+      SudoPasswordStore.instance,
+      KeyPassphraseStore.instance,
+      SyncRemoteStore.instance,
+    ])
+      store.name: store,
+  };
 
   /// The sync roots' tables, by name: a migration seeds from them before any
   /// store is registered. `Stores.syncedTables` answers the same
@@ -56,6 +75,19 @@ abstract final class SyncRecorder {
     } finally {
       _receiving = previous;
     }
+  }
+
+  /// Sets [key] of [store] to what an older build kept outside the stores,
+  /// as no device's edit at no time, for the log and the whole backup alike:
+  /// an edit made on any device wins over it, and two devices that adopted
+  /// different ones each keep theirs until one is edited.
+  /// TODO: remove with the keychain adoptions.
+  static void adopt(SqliteStore store, String key, Object value) {
+    store.set(key, value, updateLastUpdateTsOnSet: false);
+    if (!_ready || !syncedStores.containsKey(store.name)) return;
+    // As an edit is: one kept on this device is no record.
+    if (store.isDeviceLocalKey(key) || store.isInternalKey(key)) return;
+    receiving(syncStampOf(ms: BigInt.zero, device: legacy), () => record('kv:${store.name}', key));
   }
 
   /// A stamp's wall-clock part.
@@ -113,7 +145,7 @@ abstract final class SyncRecorder {
   static void install() {
     if (_ready) device;
     KvStore.onEdit = (store, key, _) {
-      if (!syncedStores.contains(store.name)) return;
+      if (!syncedStores.containsKey(store.name)) return;
       record('kv:${store.name}', key);
     };
   }
@@ -199,13 +231,107 @@ abstract final class SyncRecorder {
         rows.add((table, row['row_id'] as String, row['deleted_at'] as int));
       }
     }
-    for (final store in [SettingStore.instance]) {
+    for (final store in syncedStores.values) {
       for (final MapEntry(:key, :value) in (store.lastUpdateTs ?? const <String, int>{}).entries) {
         rows.add(('kv:${store.name}', key, value));
       }
     }
     SqliteStore.transact(() {
       for (final (c, id, ms) in rows) {
+        _db.execute(
+          'INSERT OR IGNORE INTO sync_record (c, id, hlc) VALUES (?, ?, ?);',
+          [c, id, syncStampOf(ms: BigInt.from(ms), device: legacy)],
+        );
+      }
+    });
+    _last = null;
+  }
+
+  /// Stamps each record of [c] whose fingerprint in [now] differs from the
+  /// one last seen ([see]), and each seen one gone since: for records kept
+  /// outside the stores (files), which no write stamps. [unknown] ones cannot
+  /// be told now (a file that should be there is not): left as last seen, so
+  /// nothing is sent as gone that may only be missing for a while.
+  /// [notify] as [record]'s: true for a change made just now, which the
+  /// syncs send without waiting for their next run.
+  static void stampChanged(String c, Map<String, String> now, {Set<String> unknown = const {}, bool notify = false}) {
+    final prefix = 'seen:$c:';
+    final seen = {
+      for (final row in _db.select('SELECT k, v FROM sync_state WHERE substr(k, 1, ?) = ?;', [prefix.length, prefix]))
+        (row['k'] as String).substring(prefix.length): row['v'] as String,
+    };
+    // Lost meanwhile ([loseSeen]): one seen then and not here now went with
+    // what was lost, and is not sent as removed.
+    final lost = _db.select('SELECT 1 FROM sync_state WHERE k = ?;', ['lost:$c']).isNotEmpty;
+    for (final id in {...seen.keys, ...now.keys}) {
+      if (now[id] == seen[id] || unknown.contains(id)) continue;
+      if (lost && !now.containsKey(id)) {
+        see(c, id, null);
+        continue;
+      }
+      record(c, id, notify: notify);
+      see(c, id, now[id]);
+    }
+    if (lost) _db.execute('DELETE FROM sync_state WHERE k = ?;', ['lost:$c']);
+  }
+
+  /// Runs [stamp] after each change [changes] tells of, once for changes
+  /// close together, for records kept outside the stores: changing one
+  /// writes no store, which is what wakes the syncs. After the writes that
+  /// told of it, so one a sync put here is already recorded as seen.
+  static void follow(Listenable changes, void Function() stamp) {
+    var pending = false;
+    changes.addListener(() {
+      if (pending) return;
+      pending = true;
+      scheduleMicrotask(() {
+        pending = false;
+        if (SqliteDb.isOpen) stamp();
+      });
+    });
+  }
+
+  /// What [stampChanged] saw of [c] may be lost here now (its list could
+  /// not be read): the next one that reads it sends no removal of what is
+  /// not there then. What is there unchanged is not sent again either.
+  static void loseSeen(String c) => _db.execute(
+    'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO NOTHING;',
+    ['lost:$c', '1'],
+  );
+
+  /// Notes [c]/[id] as [fingerprint] (null: not here) for [stampChanged]:
+  /// what came from another device, which is not sent back.
+  static void see(String c, String id, String? fingerprint) {
+    if (fingerprint == null) {
+      _db.execute('DELETE FROM sync_state WHERE k = ?;', ['seen:$c:$id']);
+    } else {
+      _db.execute(
+        'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
+        ['seen:$c:$id', fingerprint],
+      );
+    }
+  }
+
+  /// Empties [store] on this device as though it never held anything: its
+  /// stamps and records go too, so no delete is sent and another device's
+  /// values are taken again.
+  static void forgetStore(SqliteStore store) => SqliteStore.transact(() {
+    // Each removed as no edit (nothing sent), told to who watches the store;
+    // the stamps go with them, and the other internal keys stay.
+    for (final key in store.keys()) {
+      store.remove(key, updateLastUpdateTsOnRemove: false);
+    }
+    _db.execute('DELETE FROM kv WHERE store = ? AND key = ?;', [store.name, store.lastUpdateTsKey]);
+    _db.execute('DELETE FROM sync_record WHERE c = ?;', ['kv:${store.name}']);
+  });
+
+  /// Records [rows] (each an id and when it was last changed, ms) of [c]
+  /// as [legacy] stamps, keeping a record already there: what existed before
+  /// [c] synced.
+  static void seedRecords(String c, Iterable<(String, int)> rows) {
+    if (!_ready) return;
+    SqliteStore.transact(() {
+      for (final (id, ms) in rows) {
         _db.execute(
           'INSERT OR IGNORE INTO sync_record (c, id, hlc) VALUES (?, ?, ?);',
           [c, id, syncStampOf(ms: BigInt.from(ms), device: legacy)],

@@ -15,6 +15,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/sync/file_log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
@@ -40,7 +41,7 @@ void main() {
 
   late Directory dir;
   final folder = '${Webdav.defaultPrefix}srvbox_sync/';
-  WebdavClient client() => Webdav.shared.client!;
+  final client = WebdavClient.basicAuth(url: url, user: user ?? '', pwd: pwd ?? '');
 
   /// A device of its own: an empty database, a new device id, and only the
   /// backup password in the keychain (the sync key is read from the remote).
@@ -49,23 +50,21 @@ void main() {
       await getIt.reset();
       await SqliteDb.close();
     }
-    FlutterSecureStorage.setMockInitialValues({
-      SecureStoreProps.bakPwd.key: _password,
-      SecureStoreProps.webdavPwd.key: ?pwd,
-    });
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: _password});
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
     SyncRecorder.install();
+    SyncRemotes.setWebdav(url: url, user: user ?? '', pwd: pwd ?? '');
     FileLogSync.reset();
     return SyncRecorder.deviceHexOf(SyncRecorder.device);
   }
 
-  Future<List<String>> listed() async => [for (final f in await client().readDir(folder)) f.name];
+  Future<List<String>> listed() async => [for (final f in await client.readDir(folder)) f.name];
 
   Future<void> removeOurs() async {
     try {
-      await client().remove(folder);
+      await client.remove(folder);
     } catch (_) {}
   }
 
@@ -78,10 +77,6 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await PrefStore.shared.init();
     await PrefProps.syncAppSettings.set(true);
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.webdavPwd.key: ?pwd});
-    await PrefProps.webdavUrl.set(url);
-    await PrefProps.webdavUser.set(user ?? '');
-    await Webdav.initShared();
     await PrefProps.webdavSync.set(true);
     await removeOurs();
   });
@@ -104,7 +99,7 @@ void main() {
     expect(written, containsAll(['identity.age', 'seg-$a-1.age']));
     if (out != null) {
       for (final name in ['identity.age', 'seg-$a-1.age']) {
-        await File('$out/$name').writeAsBytes(await client().read('$folder$name'));
+        await File('$out/$name').writeAsBytes(await client.read('$folder$name'));
       }
     }
 

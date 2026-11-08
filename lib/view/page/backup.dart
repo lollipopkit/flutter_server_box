@@ -11,11 +11,15 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/monitor/backup_storage.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/failure.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
+import 'package:server_box/core/sync/log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
@@ -27,7 +31,6 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
-import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 /// Which half of the page to show.
 ///
@@ -105,6 +108,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   List<Widget> get _syncTiles => [
     _buildTip,
+    _buildTooNew,
     _buildBakPwd,
     _buildSyncSettings,
     if (isICloudSupported) _buildIcloud,
@@ -196,6 +200,21 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   }
 
   bool get _hasEnabledRemoteSync => _remoteSyncOn();
+
+  /// Says why the sync just run stopped, when one did ([SyncIface.lastFailure]);
+  /// false then, so the switch stays off.
+  bool _syncWent() {
+    final e = bakSync.lastFailure.value;
+    if (e == null) return true;
+    if (mounted) {
+      context.showRoundDialog(
+        title: libL10n.fail,
+        child: Text(syncFailureText(e) ?? '$e'),
+        actions: Btnx.oks,
+      );
+    }
+    return false;
+  }
 
   /// Whether an automatic sync destination is on, [but] aside. The one rule
   /// every switch checks, so a new destination cannot be missed by one of them.
@@ -318,6 +337,23 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
+  Widget get _buildTooNew {
+    return ListenableBuilder(
+      listenable: Listenable.merge([BakSyncer.remoteTooNew, LogSync.tooNew, SegmentSync.tooNew]),
+      builder: (context, _) {
+        if (BakSyncer.remoteTooNew.value == null && !LogSync.tooNew.value && !SegmentSync.tooNew.value) {
+          return UIs.placeholder;
+        }
+        return CardX(
+          child: ListTile(
+            leading: const Icon(Icons.system_update),
+            title: Text(l10n.syncRemoteTooNew),
+          ),
+        );
+      },
+    );
+  }
+
   Widget get _buildFile {
     return CardX(
       child: ExpandTile(
@@ -364,6 +400,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 if (p0) {
                   await bakSync.sync(rs: icloud);
                   if (mounted) _refreshIcloudStatus();
+                  return _syncWent();
                 }
                 return true;
               },
@@ -400,25 +437,17 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   if (!ok) return false;
                 }
                 if (p0) {
-                  final url = PrefProps.webdavUrl.get();
-                  final user = PrefProps.webdavUser.get();
-                  final pwd = await SecureStoreProps.webdavPwd.read();
-
-                  final anyNull = url == null || user == null || pwd == null;
-                  if (anyNull) {
-                    Toast.show(l10n.webdavSettingEmpty);
-                    return false;
-                  }
-
-                  final anyEmpty = url.isEmpty || user.isEmpty || pwd.isEmpty;
-                  if (anyEmpty) {
+                  if (SyncRemotes.webdavUrl == null ||
+                      SyncRemotes.webdavUser == null ||
+                      SyncRemotes.webdavPwd == null) {
                     Toast.show(l10n.webdavSettingEmpty);
                     return false;
                   }
 
                   webdavLoading.value = true;
-                  await bakSync.sync(rs: Webdav.shared);
+                  await bakSync.sync(rs: SyncRemotes.webdav);
                   webdavLoading.value = false;
+                  return _syncWent();
                 }
                 return true;
               },
@@ -476,16 +505,15 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   if (!ok) return false;
                 }
                 if (p0) {
-                  final token = await SecureStoreProps.githubToken.read();
                   // The first upload creates a Gist when no id is stored.
-                  final hasToken = token != null && token.isNotEmpty;
-                  if (!hasToken) {
+                  if (SyncRemotes.githubToken == null) {
                     Toast.show(context.l10n.githubGistTokenEmpty);
                     return false;
                   }
                   gistLoading.value = true;
-                  await bakSync.sync(rs: GistRs.shared);
+                  await bakSync.sync(rs: SyncRemotes.gist);
                   gistLoading.value = false;
+                  return _syncWent();
                 }
                 return true;
               },
@@ -570,7 +598,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 try {
                   await storage.check();
                   await bakSync.sync(rs: storage);
-                  return true;
+                  return _syncWent();
                 } catch (e, s) {
                   if (mounted) context.showErrDialog(e, s, l10n.monitorAgent);
                   return false;
@@ -656,7 +684,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   // writing, and says so only in the log.
                   final after = storage.writtenTag(Miscs.bakFileName);
                   if (after == null || after == before) {
-                    Toast.show(libL10n.fail);
+                    if (_syncWent()) Toast.show(libL10n.fail);
                     return false;
                   }
                   return true;
@@ -679,24 +707,14 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               );
             }),
           ),
-          // Only where the log is whole here: one that leaves the settings
-          // out writes no snapshot.
-          ListenableBuilder(
-            listenable: Listenable.merge([
-              LkcSyncPrefs.enabled.listenable(),
-              PrefProps.syncAppSettings.listenable(),
-            ]),
-            builder: (_, _) {
-              if (!LkcSyncPrefs.enabled.get() || !PrefProps.syncAppSettings.get()) {
-                return UIs.placeholder;
-              }
-              return ListTile(
-                title: Text(l10n.syncKeyRotate),
-                trailing: const Icon(Icons.key),
-                onTap: () async => _onTapRotateSyncKey(context),
-              );
-            },
-          ),
+          LkcSyncPrefs.enabled.listenable().listenVal((on) {
+            if (!on) return UIs.placeholder;
+            return ListTile(
+              title: Text(l10n.syncKeyRotate),
+              trailing: const Icon(Icons.key),
+              onTap: () async => _onTapRotateSyncKey(context),
+            );
+          }),
         ],
       ),
     );
@@ -753,15 +771,39 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  /// One switch for every destination: what the sync carries, not where.
+  /// One switch per category for every destination: what the sync
+  /// carries, not where.
   Widget get _buildSyncSettings {
     return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.settings),
-        title: Text(l10n.syncAppSettings),
-        subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
+      child: ExpandTile(
+        leading: const Icon(Icons.sync),
+        title: Text(l10n.syncedData),
+        children: [
+          for (final c in SyncCategory.values)
+            if (c == SyncCategory.passphrases)
+              Stores.setting.rememberKeyPassphrase.listenable().listenVal(
+                (remember) => remember ? _syncCategoryTile(c) : UIs.placeholder,
+              )
+            else
+              _syncCategoryTile(c),
+        ],
       ),
+    );
+  }
+
+  Widget _syncCategoryTile(SyncCategory c) {
+    final (icon, label) = switch (c) {
+      SyncCategory.settings => (Icons.settings, libL10n.setting),
+      SyncCategory.ai => (Icons.auto_awesome, libL10n.ai),
+      SyncCategory.secrets => (Icons.password, l10n.syncSecrets),
+      SyncCategory.passphrases => (Icons.key, l10n.keyPassphrases),
+      SyncCategory.files => (Icons.folder, l10n.syncFiles),
+      SyncCategory.benchmarks => (Icons.speed, l10n.benchmark),
+    };
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: StoreSwitch(prop: c.pref),
     );
   }
 
@@ -1003,7 +1045,7 @@ extension on _BackupPageState {
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
-      final files = await Webdav.shared.list();
+      final files = await SyncRemotes.webdav.list();
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
@@ -1012,7 +1054,7 @@ extension on _BackupPageState {
       );
       if (fileName == null) return;
 
-      await Webdav.shared.download(relativePath: fileName);
+      await SyncRemotes.webdav.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
       await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
@@ -1031,7 +1073,7 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       await bakSync.writeEncryptedBackup(name: bakName);
-      await Webdav.shared.upload(relativePath: bakName);
+      await SyncRemotes.webdav.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.upload);
@@ -1044,7 +1086,7 @@ extension on _BackupPageState {
   Future<void> _onTapGistDl(BuildContext context) async {
     gistLoading.value = true;
     try {
-      final files = await GistRs.shared.list();
+      final files = await SyncRemotes.gist.list();
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
@@ -1053,7 +1095,7 @@ extension on _BackupPageState {
       );
       if (fileName == null) return;
 
-      await GistRs.shared.download(relativePath: fileName);
+      await SyncRemotes.gist.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
       await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
@@ -1072,7 +1114,7 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       await bakSync.writeEncryptedBackup(name: bakName);
-      await GistRs.shared.upload(relativePath: bakName);
+      await SyncRemotes.gist.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.upload);
@@ -1171,10 +1213,8 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapGistSetting(BuildContext context) async {
-    final tokenCtrl = TextEditingController(
-      text: await SecureStoreProps.githubToken.read(),
-    );
-    final gistIdCtrl = TextEditingController(text: PrefProps.gistId.get());
+    final tokenCtrl = TextEditingController(text: SyncRemotes.githubToken);
+    final gistIdCtrl = TextEditingController(text: SyncRemotes.gistId);
     final nodeToken = FocusNode();
     final appL10n = context.l10n;
     final result = await context.showRoundDialog<bool>(
@@ -1233,13 +1273,7 @@ extension on _BackupPageState {
     try {
       await GistRs.test(token: token, gistId: gistId);
 
-      await SecureStoreProps.githubToken.write(token);
-      GistRs.shared.token = token;
-      if (gistId == null) {
-        await PrefProps.gistId.remove();
-      } else {
-        await PrefProps.gistId.set(gistId);
-      }
+      SyncRemotes.setGist(token: token, id: gistId);
       // Same reason as WebDAV: a different gist behind the same backend.
       await BakSyncer.forgetCheckpoint();
       // Only once all of it is saved: a write that fails is the error below.
@@ -1267,11 +1301,9 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
-    final url = TextEditingController(text: PrefProps.webdavUrl.get());
-    final user = TextEditingController(text: PrefProps.webdavUser.get());
-    final pwd = TextEditingController(
-      text: await SecureStoreProps.webdavPwd.read(),
-    );
+    final url = TextEditingController(text: SyncRemotes.webdavUrl);
+    final user = TextEditingController(text: SyncRemotes.webdavUser);
+    final pwd = TextEditingController(text: SyncRemotes.webdavPwd);
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -1313,14 +1345,7 @@ extension on _BackupPageState {
         await Webdav.test(url_, user_, pwd_);
         Toast.success(libL10n.success);
 
-        Webdav.shared.client = WebdavClient.basicAuth(
-          url: url_,
-          user: user_,
-          pwd: pwd_,
-        );
-        await PrefProps.webdavUrl.set(url_);
-        await PrefProps.webdavUser.set(user_);
-        await SecureStoreProps.webdavPwd.write(pwd_);
+        SyncRemotes.setWebdav(url: url_, user: user_, pwd: pwd_);
         // The sync shortcut remembers a tag from *a* WebDAV server, and the
         // backend's type is the same whichever one it points at. Pointing it
         // somewhere new is exactly when the skip would be wrong.

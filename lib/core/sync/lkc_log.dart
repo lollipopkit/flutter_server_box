@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/log.dart';
@@ -134,9 +135,9 @@ abstract final class LkcLogSync {
       _soon?.cancel();
       _soon = Timer(_debounce, () => unawaited(sync()));
     });
-    // Settings carried or not: the log is read again from its start, and
+    // A category carried or not: the log is read again from its start, and
     // everything here sent, so neither side misses what was left out.
-    PrefProps.syncAppSettings.listenable().addListener(() {
+    Listenable.merge([for (final c in SyncCategory.values) c.changes]).addListener(() {
       if (!SqliteDb.isOpen) return;
       final opening = _opening;
       if (opening == null) return LogSync.forget();

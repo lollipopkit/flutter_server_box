@@ -1,119 +1,77 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/src/rust/api/digest.dart';
 
-/// Passphrases of encrypted private keys, kept in the system vault while
-/// [SettingStore.rememberKeyPassphrase] is on.
-///
-/// The key itself stays encrypted in the database, and so in every backup;
-/// only this device's vault can open it without asking.
+/// Passphrases of encrypted private keys, kept in [Stores.keyPassphrase]
+/// while [SettingStore.rememberKeyPassphrase] is on.
 ///
 /// Named by the BLAKE3 of the key's bytes rather than its id: a passphrase
 /// kept for other bytes never meets these, a key referred to by path is
 /// covered as well, and a restore bringing the same key back finds it.
-///
-/// The names kept are listed in one more entry, so that clearing them never
-/// reads the rest of the vault. Every call is queued behind the one before:
-/// a delete and the write after it land in that order.
 abstract final class KeyPassphrases {
-  static const _prefix = 'sshKeyPassphrase.';
-  static const _index = 'sshKeyPassphrases';
-
   @visibleForTesting
   static bool Function() enabled = () =>
       Stores.setting.rememberKeyPassphrase.fetch();
 
-  static FlutterSecureStorage get _vault => SecureStore.storage;
+  static String _name(String pem) => blake3Hex(data: utf8.encode(pem));
 
-  static Future<void> _tail = Future.value();
-
-  /// How long a caller waits for its call: a vault that never answers must
-  /// not keep a connection waiting. The queue itself waits for the call to
-  /// end, so that one running late still lands before the next.
-  static const _timeout = Duration(seconds: 10);
-
-  static Future<T> _queued<T>(String what, T fallback, Future<T> Function() f) {
-    final op = _tail.then((_) => f());
-    _tail = op.then((_) {}, onError: (_) {});
-    return op.timeout(_timeout).catchError((Object e, StackTrace s) {
-      Loggers.app.warning('$what key passphrase', e, s);
-      return fallback;
-    });
-  }
-
-  /// A queue started in the test's own zone: one finished in another zone
-  /// answers there, which a fake clock never runs.
-  @visibleForTesting
-  static void resetQueue() => _tail = Future.value();
-
-  static String _name(String pem) =>
-      '$_prefix${blake3Hex(data: utf8.encode(pem))}';
-
-  static Future<Set<String>> _names() async {
-    final raw = await _vault.read(key: _index);
-    if (raw == null) return {};
-    return {for (final n in jsonDecode(raw) as List) n as String};
-  }
-
-  static Future<void> _setNames(Set<String> names) => names.isEmpty
-      ? _vault.delete(key: _index)
-      : _vault.write(key: _index, value: jsonEncode(names.toList()));
-
-  /// The passphrase kept for [pem]; null when there is none, or no vault on
-  /// this isolate (the transfer isolate has none).
-  static Future<String?> read(String pem) => _queued('Read', null, () async {
-    if (!enabled()) return null;
-    return _vault.read(key: _name(pem));
-  });
+  /// The passphrase kept for [pem]; null when there is none.
+  static String? read(String pem) =>
+      enabled() ? Stores.keyPassphrase.get<String>(_name(pem)) : null;
 
   /// Keeps [passphrase] for [pem], if passphrases are to be remembered.
-  static Future<void> write(String pem, String passphrase) =>
-      _queued('Write', null, () async {
-        if (!enabled()) return;
-        final name = _name(pem);
-        // Listed first: a name listed without its entry costs a delete that
-        // finds nothing, an entry not listed is one nothing would remove.
-        final names = await _names();
-        if (names.add(name)) await _setNames(names);
-        await _vault.write(key: name, value: passphrase);
-      });
+  static void write(String pem, String passphrase) {
+    if (enabled()) Stores.keyPassphrase.set(_name(pem), passphrase);
+  }
 
-  static Future<void> delete(String pem) => _queued('Delete', null, () async {
-    final name = _name(pem);
-    await _vault.delete(key: name);
-    // Unlisted only once it is gone, for the same reason.
-    final names = await _names();
-    if (names.remove(name)) await _setNames(names);
-  });
+  static void delete(String pem) => Stores.keyPassphrase.remove(_name(pem));
 
   /// Drops the passphrases of [before] that no key of [after] holds: what an
   /// edit, a delete or a restore left without a key.
-  static Future<void> forgetGone(
-    Iterable<String> before,
-    Iterable<String> after,
-  ) {
+  static void forgetGone(Iterable<String> before, Iterable<String> after) {
     final still = after.toSet();
-    return Future.wait([
-      for (final pem in before.toSet())
-        if (!still.contains(pem)) delete(pem),
-    ]);
+    for (final pem in before.toSet()) {
+      if (!still.contains(pem)) delete(pem);
+    }
   }
 
-  /// Drops every passphrase kept.
-  static Future<void> clear() => _queued('Clear', null, () async {
-    for (final name in await _names()) {
-      await _vault.delete(key: name);
-    }
-    await _vault.delete(key: _index);
-  });
+  /// Drops every passphrase kept on this device, and nowhere else: turning
+  /// remembering off is this device's choice (`SyncRecorder.forgetStore`).
+  static void clear() => SyncRecorder.forgetStore(Stores.keyPassphrase);
 
-  /// At launch: what a clear that failed while switching off left behind.
+  /// At launch: none kept while off; the ones builds before kept in the
+  /// keychain moved here while on, removed there either way.
   static Future<void> init() async {
-    if (!enabled()) await clear();
+    final keep = enabled();
+    if (!keep) clear();
+    await _leaveKeychain(keep: keep);
+  }
+
+  static const _legacyPrefix = 'sshKeyPassphrase.';
+  static const _legacyIndex = 'sshKeyPassphrases';
+
+  /// Again at the next launch when the keychain fails.
+  /// TODO: remove once no install can still hold them.
+  static Future<void> _leaveKeychain({required bool keep}) async {
+    final vault = SecureStore.storage;
+    try {
+      final raw = await vault.read(key: _legacyIndex);
+      if (raw == null) return;
+      for (final name in [for (final n in jsonDecode(raw) as List) n as String]) {
+        final value = await vault.read(key: name);
+        final key = name.substring(_legacyPrefix.length);
+        if (keep && value != null && Stores.keyPassphrase.get<String>(key) == null) {
+          SyncRecorder.adopt(Stores.keyPassphrase, key, value);
+        }
+        await vault.delete(key: name);
+      }
+      await vault.delete(key: _legacyIndex);
+    } catch (e, s) {
+      Loggers.app.warning('Move key passphrases out of the keychain', e, s);
+    }
   }
 }

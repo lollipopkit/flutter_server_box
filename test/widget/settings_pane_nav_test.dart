@@ -13,6 +13,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -43,7 +44,7 @@ void _useWideView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app({Future<bool> Function()? onLeave}) => ProviderScope(
+Widget _app({Future<bool> Function()? onLeave, ValueChanged<double?>? onSwipe}) => ProviderScope(
   child: MaterialApp(
     locale: const Locale('en'),
     localizationsDelegates: const [
@@ -54,7 +55,7 @@ Widget _app({Future<bool> Function()? onLeave}) => ProviderScope(
       builder: (context) {
         app_locale.l10n = AppLocalizations.of(context)!;
         context.setLibL10n();
-        return SettingsPage(onLeave: onLeave ?? () async => true);
+        return SettingsPage(onLeave: onLeave ?? () async => true, onSwipe: onSwipe);
       },
     ),
   ),
@@ -302,6 +303,48 @@ void main() {
         }
       });
     }
+
+    testWidgets('narrow on iOS, a swipe from the left edge is followed, and puts the settings away', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 900);
+      addTearDown(tester.view.reset);
+      var left = 0;
+      final swiped = <double?>[];
+      await tester.pumpWidget(
+        _app(
+          onLeave: () async {
+            left++;
+            return true;
+          },
+          onSwipe: swiped.add,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      Future<void> swipe(int steps) async {
+        final g = await tester.startGesture(const Offset(4, 450));
+        for (var i = 0; i < steps; i++) {
+          await g.moveBy(const Offset(30, 0));
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        await g.up();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      // Short of a third, slowly: back to the settings.
+      await swipe(3);
+      expect(left, 0);
+      expect(swiped.last, isNull);
+      expect(swiped.whereType<double>(), isNotEmpty);
+
+      swiped.clear();
+      await swipe(10);
+      expect(left, 1);
+      expect(swiped.whereType<double>().last, greaterThan(0.5));
+      debugDefaultTargetPlatformOverride = null;
+    });
 
     testWidgets('back leaves a pushed page and a search before the settings', (
       tester,

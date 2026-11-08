@@ -262,7 +262,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       'edit opened',
       data: {'mode': widget.args?.spi == null ? 'new' : 'existing'},
     );
-    unawaited(_refreshStoredSudoPasswordState());
+    _refreshStoredSudoPasswordState();
   }
 
   @override

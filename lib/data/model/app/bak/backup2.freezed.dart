@@ -31,7 +31,10 @@ mixin _$BackupV2 {
 /// [ThemeBackup]. Only beside [settings]: they are what the theme
 /// settings point at. Absent from files written before themes were
 /// carried (#1637), whose theme settings restore onto the default.
- Map<String, Object?> get themes;
+ Map<String, Object?> get themes;/// The synced kv stores beside [settings], by name
+/// (`SyncRecorder.syncedStores`): the Agent's. Absent from files written
+/// before they synced.
+ Map<String, Object?> get stores;
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -44,16 +47,16 @@ $BackupV2CopyWith<BackupV2> get copyWith => _$BackupV2CopyWithImpl<BackupV2>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.spis, spis)&&const DeepCollectionEquality().equals(other.snippets, snippets)&&const DeepCollectionEquality().equals(other.keys, keys)&&const DeepCollectionEquality().equals(other.container, container)&&const DeepCollectionEquality().equals(other.history, history)&&const DeepCollectionEquality().equals(other.settings, settings)&&const DeepCollectionEquality().equals(other.portForwards, portForwards)&&const DeepCollectionEquality().equals(other.remoteDesktopProfiles, remoteDesktopProfiles)&&const DeepCollectionEquality().equals(other.bmcCredentials, bmcCredentials)&&const DeepCollectionEquality().equals(other.pve, pve)&&const DeepCollectionEquality().equals(other.themes, themes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.spis, spis)&&const DeepCollectionEquality().equals(other.snippets, snippets)&&const DeepCollectionEquality().equals(other.keys, keys)&&const DeepCollectionEquality().equals(other.container, container)&&const DeepCollectionEquality().equals(other.history, history)&&const DeepCollectionEquality().equals(other.settings, settings)&&const DeepCollectionEquality().equals(other.portForwards, portForwards)&&const DeepCollectionEquality().equals(other.remoteDesktopProfiles, remoteDesktopProfiles)&&const DeepCollectionEquality().equals(other.bmcCredentials, bmcCredentials)&&const DeepCollectionEquality().equals(other.pve, pve)&&const DeepCollectionEquality().equals(other.themes, themes)&&const DeepCollectionEquality().equals(other.stores, stores));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(spis),const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(keys),const DeepCollectionEquality().hash(container),const DeepCollectionEquality().hash(history),const DeepCollectionEquality().hash(settings),const DeepCollectionEquality().hash(portForwards),const DeepCollectionEquality().hash(remoteDesktopProfiles),const DeepCollectionEquality().hash(bmcCredentials),const DeepCollectionEquality().hash(pve),const DeepCollectionEquality().hash(themes));
+int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(spis),const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(keys),const DeepCollectionEquality().hash(container),const DeepCollectionEquality().hash(history),const DeepCollectionEquality().hash(settings),const DeepCollectionEquality().hash(portForwards),const DeepCollectionEquality().hash(remoteDesktopProfiles),const DeepCollectionEquality().hash(bmcCredentials),const DeepCollectionEquality().hash(pve),const DeepCollectionEquality().hash(themes),const DeepCollectionEquality().hash(stores));
 
 @override
 String toString() {
-  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards, remoteDesktopProfiles: $remoteDesktopProfiles, bmcCredentials: $bmcCredentials, pve: $pve, themes: $themes)';
+  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards, remoteDesktopProfiles: $remoteDesktopProfiles, bmcCredentials: $bmcCredentials, pve: $pve, themes: $themes, stores: $stores)';
 }
 
 
@@ -64,7 +67,7 @@ abstract mixin class $BackupV2CopyWith<$Res>  {
   factory $BackupV2CopyWith(BackupV2 value, $Res Function(BackupV2) _then) = _$BackupV2CopyWithImpl;
 @useResult
 $Res call({
- int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards, Map<String, Object?> remoteDesktopProfiles, Map<String, Object?> bmcCredentials, Map<String, Object?> pve, Map<String, Object?> themes
+ int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards, Map<String, Object?> remoteDesktopProfiles, Map<String, Object?> bmcCredentials, Map<String, Object?> pve, Map<String, Object?> themes, Map<String, Object?> stores
 });
 
 
@@ -81,7 +84,7 @@ class _$BackupV2CopyWithImpl<$Res>
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,Object? remoteDesktopProfiles = null,Object? bmcCredentials = null,Object? pve = null,Object? themes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,Object? remoteDesktopProfiles = null,Object? bmcCredentials = null,Object? pve = null,Object? themes = null,Object? stores = null,}) {
   return _then(_self.copyWith(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -96,6 +99,7 @@ as Map<String, Object?>,remoteDesktopProfiles: null == remoteDesktopProfiles ? _
 as Map<String, Object?>,bmcCredentials: null == bmcCredentials ? _self.bmcCredentials : bmcCredentials // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,pve: null == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,themes: null == themes ? _self.themes : themes // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,stores: null == stores ? _self.stores : stores // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,
   ));
 }
@@ -181,10 +185,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes,  Map<String, Object?> stores)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BackupV2() when $default != null:
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes,_that.stores);case _:
   return orElse();
 
 }
@@ -202,10 +206,10 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes,  Map<String, Object?> stores)  $default,) {final _that = this;
 switch (_that) {
 case _BackupV2():
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes,_that.stores);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -222,10 +226,10 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  int date,  Map<String, Object?> spis,  Map<String, Object?> snippets,  Map<String, Object?> keys,  Map<String, Object?> container,  Map<String, Object?> history,  Map<String, Object?> settings,  Map<String, Object?> portForwards,  Map<String, Object?> remoteDesktopProfiles,  Map<String, Object?> bmcCredentials,  Map<String, Object?> pve,  Map<String, Object?> themes,  Map<String, Object?> stores)?  $default,) {final _that = this;
 switch (_that) {
 case _BackupV2() when $default != null:
-return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes);case _:
+return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_that.container,_that.history,_that.settings,_that.portForwards,_that.remoteDesktopProfiles,_that.bmcCredentials,_that.pve,_that.themes,_that.stores);case _:
   return null;
 
 }
@@ -237,7 +241,7 @@ return $default(_that.version,_that.date,_that.spis,_that.snippets,_that.keys,_t
 @JsonSerializable()
 
 class _BackupV2 extends BackupV2 {
-  const _BackupV2({required this.version, required this.date, required final  Map<String, Object?> spis, required final  Map<String, Object?> snippets, required final  Map<String, Object?> keys, required final  Map<String, Object?> container, required final  Map<String, Object?> history, required final  Map<String, Object?> settings, final  Map<String, Object?> portForwards = const <String, Object?>{}, final  Map<String, Object?> remoteDesktopProfiles = const <String, Object?>{}, final  Map<String, Object?> bmcCredentials = const <String, Object?>{}, final  Map<String, Object?> pve = const <String, Object?>{}, final  Map<String, Object?> themes = const <String, Object?>{}}): _spis = spis,_snippets = snippets,_keys = keys,_container = container,_history = history,_settings = settings,_portForwards = portForwards,_remoteDesktopProfiles = remoteDesktopProfiles,_bmcCredentials = bmcCredentials,_pve = pve,_themes = themes,super._();
+  const _BackupV2({required this.version, required this.date, required final  Map<String, Object?> spis, required final  Map<String, Object?> snippets, required final  Map<String, Object?> keys, required final  Map<String, Object?> container, required final  Map<String, Object?> history, required final  Map<String, Object?> settings, final  Map<String, Object?> portForwards = const <String, Object?>{}, final  Map<String, Object?> remoteDesktopProfiles = const <String, Object?>{}, final  Map<String, Object?> bmcCredentials = const <String, Object?>{}, final  Map<String, Object?> pve = const <String, Object?>{}, final  Map<String, Object?> themes = const <String, Object?>{}, final  Map<String, Object?> stores = const <String, Object?>{}}): _spis = spis,_snippets = snippets,_keys = keys,_container = container,_history = history,_settings = settings,_portForwards = portForwards,_remoteDesktopProfiles = remoteDesktopProfiles,_bmcCredentials = bmcCredentials,_pve = pve,_themes = themes,_stores = stores,super._();
   factory _BackupV2.fromJson(Map<String, dynamic> json) => _$BackupV2FromJson(json);
 
 @override final  int version;
@@ -351,6 +355,19 @@ class _BackupV2 extends BackupV2 {
   return EqualUnmodifiableMapView(_themes);
 }
 
+/// The synced kv stores beside [settings], by name
+/// (`SyncRecorder.syncedStores`): the Agent's. Absent from files written
+/// before they synced.
+ final  Map<String, Object?> _stores;
+/// The synced kv stores beside [settings], by name
+/// (`SyncRecorder.syncedStores`): the Agent's. Absent from files written
+/// before they synced.
+@override@JsonKey() Map<String, Object?> get stores {
+  if (_stores is EqualUnmodifiableMapView) return _stores;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_stores);
+}
+
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
@@ -365,16 +382,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._spis, _spis)&&const DeepCollectionEquality().equals(other._snippets, _snippets)&&const DeepCollectionEquality().equals(other._keys, _keys)&&const DeepCollectionEquality().equals(other._container, _container)&&const DeepCollectionEquality().equals(other._history, _history)&&const DeepCollectionEquality().equals(other._settings, _settings)&&const DeepCollectionEquality().equals(other._portForwards, _portForwards)&&const DeepCollectionEquality().equals(other._remoteDesktopProfiles, _remoteDesktopProfiles)&&const DeepCollectionEquality().equals(other._bmcCredentials, _bmcCredentials)&&const DeepCollectionEquality().equals(other._pve, _pve)&&const DeepCollectionEquality().equals(other._themes, _themes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BackupV2&&(identical(other.version, version) || other.version == version)&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._spis, _spis)&&const DeepCollectionEquality().equals(other._snippets, _snippets)&&const DeepCollectionEquality().equals(other._keys, _keys)&&const DeepCollectionEquality().equals(other._container, _container)&&const DeepCollectionEquality().equals(other._history, _history)&&const DeepCollectionEquality().equals(other._settings, _settings)&&const DeepCollectionEquality().equals(other._portForwards, _portForwards)&&const DeepCollectionEquality().equals(other._remoteDesktopProfiles, _remoteDesktopProfiles)&&const DeepCollectionEquality().equals(other._bmcCredentials, _bmcCredentials)&&const DeepCollectionEquality().equals(other._pve, _pve)&&const DeepCollectionEquality().equals(other._themes, _themes)&&const DeepCollectionEquality().equals(other._stores, _stores));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(_spis),const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_keys),const DeepCollectionEquality().hash(_container),const DeepCollectionEquality().hash(_history),const DeepCollectionEquality().hash(_settings),const DeepCollectionEquality().hash(_portForwards),const DeepCollectionEquality().hash(_remoteDesktopProfiles),const DeepCollectionEquality().hash(_bmcCredentials),const DeepCollectionEquality().hash(_pve),const DeepCollectionEquality().hash(_themes));
+int get hashCode => Object.hash(runtimeType,version,date,const DeepCollectionEquality().hash(_spis),const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_keys),const DeepCollectionEquality().hash(_container),const DeepCollectionEquality().hash(_history),const DeepCollectionEquality().hash(_settings),const DeepCollectionEquality().hash(_portForwards),const DeepCollectionEquality().hash(_remoteDesktopProfiles),const DeepCollectionEquality().hash(_bmcCredentials),const DeepCollectionEquality().hash(_pve),const DeepCollectionEquality().hash(_themes),const DeepCollectionEquality().hash(_stores));
 
 @override
 String toString() {
-  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards, remoteDesktopProfiles: $remoteDesktopProfiles, bmcCredentials: $bmcCredentials, pve: $pve, themes: $themes)';
+  return 'BackupV2(version: $version, date: $date, spis: $spis, snippets: $snippets, keys: $keys, container: $container, history: $history, settings: $settings, portForwards: $portForwards, remoteDesktopProfiles: $remoteDesktopProfiles, bmcCredentials: $bmcCredentials, pve: $pve, themes: $themes, stores: $stores)';
 }
 
 
@@ -385,7 +402,7 @@ abstract mixin class _$BackupV2CopyWith<$Res> implements $BackupV2CopyWith<$Res>
   factory _$BackupV2CopyWith(_BackupV2 value, $Res Function(_BackupV2) _then) = __$BackupV2CopyWithImpl;
 @override @useResult
 $Res call({
- int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards, Map<String, Object?> remoteDesktopProfiles, Map<String, Object?> bmcCredentials, Map<String, Object?> pve, Map<String, Object?> themes
+ int version, int date, Map<String, Object?> spis, Map<String, Object?> snippets, Map<String, Object?> keys, Map<String, Object?> container, Map<String, Object?> history, Map<String, Object?> settings, Map<String, Object?> portForwards, Map<String, Object?> remoteDesktopProfiles, Map<String, Object?> bmcCredentials, Map<String, Object?> pve, Map<String, Object?> themes, Map<String, Object?> stores
 });
 
 
@@ -402,7 +419,7 @@ class __$BackupV2CopyWithImpl<$Res>
 
 /// Create a copy of BackupV2
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,Object? remoteDesktopProfiles = null,Object? bmcCredentials = null,Object? pve = null,Object? themes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? date = null,Object? spis = null,Object? snippets = null,Object? keys = null,Object? container = null,Object? history = null,Object? settings = null,Object? portForwards = null,Object? remoteDesktopProfiles = null,Object? bmcCredentials = null,Object? pve = null,Object? themes = null,Object? stores = null,}) {
   return _then(_BackupV2(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -417,6 +434,7 @@ as Map<String, Object?>,remoteDesktopProfiles: null == remoteDesktopProfiles ? _
 as Map<String, Object?>,bmcCredentials: null == bmcCredentials ? _self._bmcCredentials : bmcCredentials // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,pve: null == pve ? _self._pve : pve // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,themes: null == themes ? _self._themes : themes // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,stores: null == stores ? _self._stores : stores // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,
   ));
 }

@@ -210,12 +210,30 @@ extension _SettingsLayout on _SettingsPageState {
     // Back is this page's while the pane is the one in use. Put away, it lets
     // back through, or the app would claim every back and the system's own
     // animation home would never show.
+    final mine = BackScope.of(context);
     final scaffold = PopScope(
-      canPop: !BackScope.of(context),
+      canPop: !mine,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBack();
       },
-      child: page,
+      // No route under this page to swipe back to: the swipe is a back,
+      // which leaves. Inside, a level's own route takes it. Where routes
+      // swipe back (`SwipeBackPageTransitionsBuilder`).
+      child: switch (Theme.of(context).platform) {
+        TargetPlatform.iOS || TargetPlatform.macOS => EdgeSwipeBack(
+          enabled: () => mine && !_searching && !(_contentNav.currentState?.canPop() ?? false),
+          onProgress: widget.onSwipe,
+          onEnd: ({required commit}) {
+            if (commit) {
+              _onBack();
+            } else {
+              widget.onSwipe?.call(null);
+            }
+          },
+          child: page,
+        ),
+        _ => page,
+      },
     );
 
     // The chord the field advertises, actually bound. `Focus` so the binding

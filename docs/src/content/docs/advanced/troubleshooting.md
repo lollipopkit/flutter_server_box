@@ -67,6 +67,10 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 - Confirm that it was created by a compatible App version.
 - If it contains credentials, check that the App can access the platform's secure storage needed to decrypt them.
 
+**Sync stops on one device:**
+
+- When another device runs a newer version, a device on an older one stops syncing and asks to be updated; its own data is left as it was. Update every device that syncs.
+
 ## Widget and Watch App issues
 
 ### Widgets or the Watch App do not update

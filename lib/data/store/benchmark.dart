@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Every benchmark this device has run, newest first.
@@ -18,6 +19,11 @@ class BenchmarkStore {
   BenchmarkStore([this._table = 'benchmark_run']);
 
   static final instance = BenchmarkStore();
+
+  /// The record kind a finished run syncs as, by its id (`SyncRecorder`).
+  /// One running is this device's: its directory is on the server, polled
+  /// from here.
+  static const c = 'benchmark';
 
   final String _table;
 
@@ -35,7 +41,7 @@ class BenchmarkStore {
       'id, server_id, started_at, finished_at, status, options, run_dir, '
       'result_json, log, exit_code, error';
 
-  BenchmarkRun? _fromRow(Row row) {
+  BenchmarkRun? _fromRow(Map<String, Object?> row) {
     final status = BenchmarkStatus.byName(row['status'] as String?);
     // A status no build knows is a row this one cannot reason about — it might
     // be running. Skipped rather than guessed at.
@@ -136,6 +142,12 @@ class BenchmarkStore {
   /// that form deletes and reinserts, which for a row with a foreign key means
   /// firing cascades for a row that is not going anywhere.
   void put(BenchmarkRun run) {
+    _write(run);
+    _prune(run.serverId);
+    if (run.status != BenchmarkStatus.running && _table == instance._table) SyncRecorder.record(c, run.id);
+  }
+
+  void _write(BenchmarkRun run) {
     _db.execute(
       'INSERT INTO $_table ($_columns) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT (id) DO UPDATE SET '
@@ -157,7 +169,6 @@ class BenchmarkStore {
         run.error,
       ],
     );
-    _prune(run.serverId);
   }
 
   /// Drops this server's oldest runs past [historyLimit].
@@ -166,18 +177,57 @@ class BenchmarkStore {
   /// server that still has a process in it, and losing the row is losing the
   /// only way to reach either.
   void _prune(String serverId) {
-    _db.execute(
-      'DELETE FROM $_table WHERE id IN ('
-      '  SELECT id FROM $_table WHERE server_id = ? AND status != ? '
-      '  ORDER BY started_at DESC LIMIT -1 OFFSET ?'
-      ');',
-      [serverId, BenchmarkStatus.running.name, historyLimit],
-    );
+    final gone = [
+      for (final row in _db.select(
+        'SELECT id FROM $_table WHERE server_id = ? AND status != ? '
+        'ORDER BY started_at DESC LIMIT -1 OFFSET ?;',
+        [serverId, BenchmarkStatus.running.name, historyLimit],
+      ))
+        row['id'] as String,
+    ];
+    for (final id in gone) {
+      remove(id);
+    }
   }
 
   void remove(String id) {
     _db.execute('DELETE FROM $_table WHERE id = ?;', [id]);
+    if (_table == instance._table) SyncRecorder.record(c, id);
   }
+
+  /// The finished run [id] as an op carries it; null when it is not here.
+  Map<String, Object?>? read(String id) {
+    final rows = _db.select('SELECT $_columns FROM $_table WHERE id = ? AND status != ?;', [id, BenchmarkStatus.running.name]);
+    return rows.isEmpty ? null : {...rows.first};
+  }
+
+  /// Writes the runs [ops] carry ([read]), or removes them, each recorded at
+  /// its op's stamp. One of a server not here is left out: a run is made
+  /// where its server is, so the server's op is in the log before it, and
+  /// one not here was removed here.
+  void install(List<({String c, String id, String h, Object? d})> ops) {
+    for (final op in ops) {
+      SyncRecorder.receiving(op.h, () {
+        final d = op.d;
+        if (d is! Map) return remove(op.id);
+        final server = d['server_id'];
+        if (_db.select('SELECT 1 FROM server WHERE id = ?;', [server]).isEmpty) return;
+        final run = _fromRow(d.cast());
+        if (run == null || run.id != op.id || run.status == BenchmarkStatus.running) return;
+        put(run);
+      });
+    }
+  }
+
+  /// The finished runs, for a migration seeding their records: id and when
+  /// each finished.
+  static Iterable<(String, int)> finished() => [
+    for (final row in SqliteDb.instance.select(
+      'SELECT id, COALESCE(finished_at, started_at) AS at FROM benchmark_run WHERE status != ?;',
+      [BenchmarkStatus.running.name],
+    ))
+      (row['id'] as String, row['at'] as int),
+  ];
 
   /// Every run of every server, newest first.
   ///
