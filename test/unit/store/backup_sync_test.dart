@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/failure.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -104,6 +105,34 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'remote-password'});
     await bakSync.sync(throttleMilli: 0, rs: rs);
     expect(bakSync.lastFailure.value, isNull);
+  });
+
+  test('a password changed here seals the remote with it, opened with the one before', () async {
+    Stores.setting.timeout.put(17);
+    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    final rs = _FileRemote(remote);
+
+    // Changed here, from `remote-password`, as the backup page does.
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'changed-here'});
+    SecureProp.resetRateLimits();
+    await SyncKey.passwordChanged('remote-password', lkc: false, files: false, backup: true);
+    await BakSyncer.forgetPasswordState();
+    addTearDown(SyncKey.resetForTest);
+    Stores.setting.timeout.put(18);
+
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+    expect(bakSync.lastFailure.value, isNull);
+    expect(rs.uploads, 1);
+    final sealed = await remote.readAsBytes();
+    await expectLater(BackupV2.open(sealed, 'remote-password'), throwsA(isA<WrongPasswordException>()));
+    expect((await BackupV2.open(sealed, 'changed-here')).settings['timeOut'], 18);
+    expect(SyncKey.backupRewrap.get() ?? false, isFalse);
+
+    // Another device still on the one before is told so.
+    await becomeAnotherDevice();
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'remote-password'});
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+    expect(bakSync.lastFailure.value, isA<WrongPasswordException>());
   });
 
   test('a synced setting is not applied with the switch off', () async {

@@ -319,7 +319,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // Tried with it now: what it says replaces what the last one said.
     if (_hasEnabledRemoteSync) unawaited(bakSync.sync(throttleMilli: 0));
     if (previous != pwd) {
-      await SyncKey.passwordChanged(previous);
+      await SyncKey.passwordChanged(
+        previous,
+        lkc: Lkc.enabled && LkcSyncPrefs.enabled.get(),
+        files: (isICloudSupported && PrefProps.icloudSync.get()) || PrefProps.webdavSync.get(),
+        backup: _hasEnabledRemoteSync,
+      );
       LkcLogSync.reset();
       FileLogSync.reset();
       unawaited(LkcLogSync.sync());

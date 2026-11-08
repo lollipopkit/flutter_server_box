@@ -9,6 +9,7 @@ import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/monitor/backup_storage.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/remotes.dart';
@@ -156,40 +157,55 @@ final class BakSyncer extends SyncIface {
       // A plaintext backup, uploaded before remote encryption became
       // mandatory, is still accepted: the password is only used on an
       // encrypted payload.
-      final plain = await BackupV2.unlock(content, pwd);
-      // It opens what the devices share, so it is theirs: one kept on this
-      // device only (set by an older build) goes to iCloud Keychain now,
-      // where it cannot be replacing another device's newer one.
-      if (pwd != null &&
-          pwd.isNotEmpty &&
-          await SecureStoreProps.bakPwd.inLegacyOnly()) {
-        try {
-          await SecureStoreProps.bakPwd.write(pwd);
-        } catch (e, s) {
-          Loggers.app.warning('Backup password not moved to iCloud', e, s);
-        }
+      final Uint8List plain;
+      try {
+        plain = await BackupV2.unlock(content, pwd);
+      } on WrongPasswordException {
+        // Sealed with the password this device changed from: opened with
+        // it, and sealed with the new one by this sync's upload (what that
+        // change forgot makes it upload).
+        final previous = await SyncKey.previousPassword();
+        if (previous == null) rethrow;
+        return await _read(await BackupV2.unlock(content, previous), pwd);
       }
-      final mergeable = await compute(_parse, plain);
-      if (mergeable is BackupV2) {
-        _remote = mergeable.copyWith(
-          spis: const {},
-          snippets: const {},
-          keys: const {},
-          container: const {},
-          history: const {},
-          portForwards: const {},
-          remoteDesktopProfiles: const {},
-          bmcCredentials: const {},
-          pve: const {},
-        );
-      }
-      return _normalizeSyncPayload(mergeable);
+      return await _read(plain, pwd);
     } on SchemaTooNewException catch (e) {
       // Recorded so `backup` refuses to upload over data this build cannot
       // read.
       remoteTooNew.value = e;
       rethrow;
     }
+  }
+
+  /// [plain], the remote backup, read; [pwd] is the password here.
+  Future<Mergeable> _read(Uint8List plain, String? pwd) async {
+    // It opens what the devices share, so it is theirs: one kept on this
+    // device only (set by an older build) goes to iCloud Keychain now,
+    // where it cannot be replacing another device's newer one.
+    if (pwd != null &&
+        pwd.isNotEmpty &&
+        await SecureStoreProps.bakPwd.inLegacyOnly()) {
+      try {
+        await SecureStoreProps.bakPwd.write(pwd);
+      } catch (e, s) {
+        Loggers.app.warning('Backup password not moved to iCloud', e, s);
+      }
+    }
+    final mergeable = await compute(_parse, plain);
+    if (mergeable is BackupV2) {
+      _remote = mergeable.copyWith(
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        portForwards: const {},
+        remoteDesktopProfiles: const {},
+        bmcCredentials: const {},
+        pve: const {},
+      );
+    }
+    return _normalizeSyncPayload(mergeable);
   }
 
   static Mergeable _parse(Uint8List plain) =>
@@ -295,13 +311,18 @@ final class BakSyncer extends SyncIface {
     }
     Diag.crumb(SbDiag.sync, 'upload');
     final target = rs ?? remoteStorage;
-    if (target is! LkcRemoteStorage) return super.backup(target);
+    if (target is! LkcRemoteStorage) {
+      await super.backup(target);
+      // Uploaded: sealed with the password here now.
+      return SyncKey.backupResealed();
+    }
     final blobs = _themeBlobs = LkcThemeBlobs.shared..begin();
     try {
       await super.backup(target);
     } finally {
       _themeBlobs = null;
     }
+    await SyncKey.backupResealed();
     // Only once the backup naming them is written.
     await blobs.sweep();
   }

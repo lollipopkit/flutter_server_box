@@ -45,6 +45,28 @@ final class SyncKey implements SyncSeal {
   /// WebDAV's and iCloud's ([SyncKeyFile.rewrap]). Key is permanent.
   static const filesRewrap = PrefProp<bool>('files_sync_key_rewrap');
 
+  /// The whole backup's, which the backup sync seals again: it opens the
+  /// remote one with [previousPassword] while this is set. Key is permanent.
+  static const backupRewrap = PrefProp<bool>('backup_rewrap');
+
+  static const _rewraps = [lkcRewrap, filesRewrap, backupRewrap];
+
+  /// The password before this device's change, while something is still
+  /// sealed with it; null otherwise.
+  static Future<String?> previousPassword() async =>
+      _rewraps.any((f) => f.get() ?? false) ? await _previous.read() : null;
+
+  /// The whole backup is sealed with the password here now.
+  static Future<void> backupResealed() async {
+    if (!(backupRewrap.get() ?? false)) return;
+    await backupRewrap.remove();
+    await _forgetPreviousIfDone();
+  }
+
+  static Future<void> _forgetPreviousIfDone() async {
+    if (!_rewraps.any((f) => f.get() ?? false)) await _previous.write(null);
+  }
+
   /// The keys of [id], one per line, the newest first; kept beside the
   /// backup password: another Apple device of the person's has them with no
   /// passphrase asked.
@@ -73,8 +95,9 @@ final class SyncKey implements SyncSeal {
   @visibleForTesting
   static Future<void> resetForTest() async {
     passwordMismatch.value = const {};
-    await lkcRewrap.remove();
-    await filesRewrap.remove();
+    for (final flag in _rewraps) {
+      await flag.remove();
+    }
     await _previous.write(null);
   }
 
@@ -111,16 +134,25 @@ final class SyncKey implements SyncSeal {
   }
 
   /// After the user changed the backup password on this device, from
-  /// [previous]: each key file is sealed with the new one at its next
-  /// [load]. Only here: the other devices take the new password and find it
-  /// done.
-  static Future<void> passwordChanged(String? previous) async {
-    // A change before the last one was done: the files are still sealed
+  /// [previous]: what each sync that is on here ([lkc], [files], [backup])
+  /// sealed is sealed with the new one at its next run. Only here: the other
+  /// devices take the new password and find it done. One that is off keeps
+  /// nothing of the old password waiting for it.
+  static Future<void> passwordChanged(
+    String? previous, {
+    required bool lkc,
+    required bool files,
+    required bool backup,
+  }) async {
+    final flags = [if (lkc) lkcRewrap, if (files) filesRewrap, if (backup) backupRewrap];
+    if (flags.isEmpty) return;
+    // A change before the last one was done: what is pending is still sealed
     // with the password before that one.
-    final pending = (lkcRewrap.get() ?? false) || (filesRewrap.get() ?? false);
+    final pending = _rewraps.any((f) => f.get() ?? false);
     if (!pending || await _previous.read() == null) await _previous.write(previous);
-    await lkcRewrap.set(true);
-    await filesRewrap.set(true);
+    for (final flag in flags) {
+      await flag.set(true);
+    }
   }
 
   /// Whether the password here still opens [file], said through
@@ -159,7 +191,7 @@ final class SyncKey implements SyncSeal {
     _opened(_file.id, opened: true);
     await _adopt(identities);
     await _file.rewrap.remove();
-    if (!(lkcRewrap.get() ?? false) && !(filesRewrap.get() ?? false)) await _previous.write(null);
+    await _forgetPreviousIfDone();
   }
 
   /// A new key in place of this one, put in the file first, so a device that

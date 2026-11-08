@@ -428,7 +428,7 @@ void main() {
       // kept keys go on syncing.
       final before = file.body;
       password('third', kept: keys);
-      await SyncKey.passwordChanged('old');
+      await SyncKey.passwordChanged('old', lkc: false, files: true, backup: false);
       final key = await SyncKey.load(file);
       expect(await key.open(await key.seal(Uint8List.fromList([7]))), [7]);
       expect(file.body, same(before));
@@ -436,7 +436,7 @@ void main() {
 
       // The others' password: taken, and nothing to say any more.
       password('new', kept: keys, previous: 'old');
-      await SyncKey.passwordChanged('third');
+      await SyncKey.passwordChanged('third', lkc: false, files: true, backup: false);
       await SyncKey.load(file);
       expect(SyncKey.passwordMismatch.value, isEmpty);
       expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
@@ -449,7 +449,7 @@ void main() {
       final keys = await AgeCryptor.decrypt(file.body!, 'old');
 
       // Changed to `new`, and the app ended before any sync sealed it again.
-      await SyncKey.passwordChanged('old');
+      await SyncKey.passwordChanged('old', lkc: false, files: true, backup: false);
       FlutterSecureStorage.setMockInitialValues({
         SecureStoreProps.bakPwd.key: 'new',
         'syncIdentity.${file.id}': utf8.decode(keys),
