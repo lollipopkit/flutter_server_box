@@ -3,16 +3,15 @@ title: Agent
 description: Configure providers, tools, and action approval for Agent
 ---
 
-Agent connects a language model to your servers. It suggests an action, shows
-you what it plans to do, and runs it only after you approve — unless you let
-read-only commands run by themselves (see [Review actions](#review-actions)).
+Agent connects a language model to your servers. The permission mode decides
+which actions run without asking you (see [Review actions](#review-actions)).
 
 Before the first message, add a provider at **Settings → Application → AI →
 Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
 others from the model catalog) and enter its API key, or add a custom
 OpenAI-compatible, Anthropic or Google endpoint. The same page chooses the
-model a new chat uses. API keys are stored in the system keychain, not in the
-App's database, and are sent only to their own provider. A request is sent only
+model a new chat uses. API keys are stored in the App's encrypted database and
+are sent only to their own provider. A request is sent only
 when you send a message.
 
 ## Choose an Agent
@@ -62,7 +61,7 @@ any provider. This is for a desktop App started from a shell: on macOS, an App
 opened from Finder or the Dock does not see what your shell profile exports.
 
 Settings from an earlier version — endpoint, model, protocol and key — were
-moved to a custom provider when you updated, and the key to the keychain.
+moved to a custom provider when you updated.
 
 ## What Agent can do
 
@@ -92,8 +91,9 @@ tools the Agent tab then offers too.
 Tap a server to edit it. One (Streamable HTTP) that wants a key takes it as
 headers, a name and a value each, such as `Authorization` with
 `Bearer <token>`. One that uses OAuth shows **Sign-in required**; **Log in**
-opens the browser, and the App keeps the token and renews it. Headers and tokens stay on this device and are not backed up, and
-are sent only over `https` unless the server is on this device.
+opens the browser, and the App keeps the token and renews it. Headers sync with
+the sudo passwords and API keys; a sign-in stays on this device. Both are sent only over
+`https` unless the server is on this device.
 
 ## Skills
 
@@ -128,20 +128,26 @@ file API.
 
 ## Review actions
 
-Before a server action runs, the App shows the command, its risk level, and
-the model's explanation. Read-only commands that meet the auto-run rules below
-skip this approval step. Review each command before allowing or denying it. A
-denial is sent to the model so it can respond to your feedback. In a terminal
-chat, you can insert the proposed command, edit it, and run it yourself. The
-model's safety label is advisory; make your own assessment.
+The permission mode is **Manual**, **Auto** or **Allow all**, picked under the
+message box or under **Settings → Application → AI → Command permissions**;
+either one changes it for every chat. That page has the same rules and logic
+as a Monitor's [Agent mode](/docs/advanced/monitor-agent-mode/), whose message
+box changes that server's mode for new tasks the same way.
 
-Server actions outside the auto-run rules require approval every time; there is
-no "always allow" option for them. **Auto-run read-only commands** is under
-**Settings → Application → AI**. A server command runs without approval only if
-both the model and the App's local check classify it as read-only, idempotent,
-and non-destructive. The limit is three commands per message. This setting is
-off by default and never applies to commands on this device. Other tools offer
-"always allow" on the approval card; revoke it under **Tools**.
+Every action goes through the command rules first: **Deny**, then **Ask**, then
+**Allow**. Then:
+
+- An action that loses something for good asks, except in **Allow all**.
+- Anything else goes by the mode, a read-only action and an MCP tool included.
+  **Manual** asks. **Auto** has the chat's model judge it against the auto mode
+  rules: allowed runs, blocked is told to the Agent, no verdict asks. **Allow
+  all** runs it; deny and ask rules still apply, and **Turn off Allow all**
+  removes the mode.
+
+When the App asks, it shows the command, its risk level and the model's
+explanation. A denial is sent to the model so it can respond. In a terminal
+chat, you can insert the proposed command, edit it and run it yourself. The
+model's safety label is advisory; make your own assessment.
 
 ## When the Agent asks you
 
@@ -171,9 +177,8 @@ your other server credentials.
 ## Run commands on this device
 
 **Run commands on this device** is a separate option at **Settings → Application → AI**
-and is off by default. Enabling it does not allow unattended commands: every
-local command requires your confirmation, even if it appears read-only or
-**Auto-run read-only commands** is enabled.
+and is off by default. Once on, local commands go by the permission mode like
+any other: **Allow all** runs them unasked.
 
 The command target depends on the platform:
 
@@ -190,8 +195,9 @@ build without the Linux engine cannot provide local command execution either.
 
 Chats are stored on the device, in the App's encrypted database, and long ones
 are summarised as they grow. You can reopen, rename and delete them from the
-history list. They are not included in backups or synced, and neither are your
-providers, tool settings and memory notes. Messages and tool results can
+history list. They are not included in backups or synced. Providers, tool
+settings, permissions and memory notes sync under **AI** in **Backup → Synced
+data**, the API keys under **Sudo passwords and API keys**. Messages and tool results can
 contain command output, file contents and any terminal text you pasted; they
 are sent to the provider when used in a chat.
 

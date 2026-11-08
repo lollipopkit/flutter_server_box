@@ -5,8 +5,10 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/temp_file.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -20,19 +22,27 @@ const _folder = 'srvbox_sync';
 final class WebdavSyncFiles implements SyncFiles {
   WebdavSyncFiles(this._webdav);
 
-  /// Read on each call: its client is made again when the settings change.
-  final Webdav _webdav;
+  /// Read on each call: a new one is made when the settings change (a new
+  /// password, say), and what is kept of this one must not hold the old.
+  final Webdav Function() _webdav;
 
-  WebdavClient get _client => _webdav.client ?? (throw StateError('WebDAV is not set up'));
+  WebdavClient get _client => _webdav().client ?? (throw StateError('WebDAV is not set up'));
 
-  String get _dir => '${_webdav.prefix}$_folder/';
+  String get _dir => '${_webdav().prefix}$_folder/';
 
-  Future<void>? _made;
+  /// The folder made, for the client it was made with.
+  (WebdavClient, Future<void>)? _made;
 
-  Future<void> _mkdir() => _made ??= _client.mkdirAll(_dir).catchError((Object e, StackTrace s) {
-    _made = null;
-    Error.throwWithStackTrace(e, s);
-  });
+  Future<void> _mkdir() {
+    final client = _client;
+    if (_made case (final c, final made) when identical(c, client)) return made;
+    final made = client.mkdirAll(_dir).catchError((Object e, StackTrace s) {
+      _made = null;
+      Error.throwWithStackTrace(e, s);
+    });
+    _made = (client, made);
+    return made;
+  }
 
   static int? _status(Object e) => switch (e) {
     WebdavException(:final statusCode) => statusCode,
@@ -101,10 +111,17 @@ final class ICloudSyncFiles implements SyncFiles {
   @override
   Future<void> putBlob(String name, Uint8List body) => write(name, body);
 
+  /// A download iCloud says nothing of for this long fails, and is tried
+  /// again at the next sync: the reads are one at a time, and one iCloud
+  /// never ended held every later sync behind it.
+  static const _downloadIdle = Duration(minutes: 2);
+
   @override
   Future<Uint8List?> getBlob(String name) => withTempFile(name, (path) async {
     try {
-      await _icloud.download(relativePath: '$_dir$name', localPath: path);
+      await _icloud.download(relativePath: '$_dir$name', localPath: path, idle: _downloadIdle);
+    } on TimeoutException {
+      rethrow;
     } catch (_) {
       if (!await _icloud.exists('$_dir$name')) return null;
       rethrow;
@@ -124,8 +141,9 @@ final class ICloudSyncFiles implements SyncFiles {
 }
 
 /// [SyncKey]'s file beside the segments: `identity.age`. The store does not
-/// order writes: two devices that make a key at once each write theirs, and
-/// [SyncKey.refresh] merges them.
+/// order writes: a write checks the file just before, and two devices that
+/// make a key at the same moment each write theirs, which the next
+/// [SyncKey.check] merges.
 final class FilesKeyFile implements SyncKeyFile {
   FilesKeyFile(this._files, this.id);
 
@@ -137,17 +155,27 @@ final class FilesKeyFile implements SyncKeyFile {
   @override
   final String id;
 
-  @override
-  PrefProp<bool> get rewrap => SyncKey.filesRewrap;
+  /// The file itself: a few hundred bytes.
+  static String _versionOf(Uint8List body) => base64.encode(body);
 
   @override
-  Future<Uint8List?> read() => _files.getBlob(_name);
+  Future<({Uint8List body, String version})?> read() async {
+    final body = await _files.getBlob(_name);
+    return body == null ? null : (body: body, version: _versionOf(body));
+  }
+
+  /// Only beside nothing synced (no segment, no snapshot): with one there,
+  /// its key may not have arrived yet.
+  @override
+  Future<bool> canCreate() async =>
+      !(await _files.blobs('')).any((f) => f.name.startsWith('seg-') || f.name.startsWith('snap-'));
 
   @override
-  Future<bool> write(Uint8List body, {required bool replace}) async {
-    if (!replace && await _files.getBlob(_name) != null) return false;
+  Future<String?> write(Uint8List body, {required String? ifVersion}) async {
+    final now = await read();
+    if (now?.version != ifVersion) return null;
     await _files.write(_name, body);
-    return true;
+    return _versionOf(body);
   }
 }
 
@@ -164,21 +192,29 @@ abstract final class FileLogSync {
   static String? _openedFor;
   static Timer? _soon;
 
-  /// The store the backup syncs to, when it is one of these.
-  static ({String id, SyncFiles files})? _store() => switch (bakSync.remoteStorage) {
+  /// [rs], when it is one of these.
+  static ({String id, SyncFiles files})? _storeOf(RemoteStorage? rs) => switch (rs) {
     final ICloud icloud => (id: 'icloud:${icloud.containerId}', files: ICloudSyncFiles(icloud)),
     // Named by a keyed hash: no endpoint written to device-local state again.
     final Webdav webdav when webdav.client != null => (
       id: 'webdav:${syncBlobName(
         secret: _folder,
-        data: utf8.encode('${webdav.identity}|${PrefProps.webdavUser.get()}'),
+        data: utf8.encode('${webdav.identity}|${SyncRemotes.webdavUser}'),
       )}',
-      files: WebdavSyncFiles(webdav),
+      files: WebdavSyncFiles(() => SyncRemotes.webdav),
     ),
     _ => null,
   };
 
   static bool get _on => (PrefProps.icloudSync.get() && isICloudSupported) || PrefProps.webdavSync.get();
+
+  /// [rs]'s sync key, opened with the password here ([SyncKey.of]): what
+  /// its segments and the backup are sealed with.
+  static Future<SyncKey> keyOf(RemoteStorage rs) {
+    final store = _storeOf(rs);
+    if (store == null) throw StateError('Not a store of segments: ${rs.runtimeType}');
+    return SyncKey.of(FilesKeyFile(store.files, store.id));
+  }
 
   static void init() {
     SyncRecorder.onLocal.add(() {
@@ -186,9 +222,9 @@ abstract final class FileLogSync {
       _soon?.cancel();
       _soon = Timer(_debounce, () => unawaited(sync()));
     });
-    // Settings carried or not: every device is read again from its start,
+    // A category carried or not: every device is read again from its start,
     // and everything here sent, so neither side misses what was left out.
-    PrefProps.syncAppSettings.listenable().addListener(() {
+    Listenable.merge([for (final c in SyncCategory.values) c.changes]).addListener(() {
       if (!SqliteDb.isOpen) return;
       final opening = _opening;
       if (opening == null) return SegmentSync.forget();
@@ -209,22 +245,32 @@ abstract final class FileLogSync {
 
   /// Reads what other devices wrote, then writes what this one has.
   static Future<void> sync() async {
-    if (!_on || !SqliteDb.isOpen) return;
-    final store = _store();
-    if (store == null) return;
-    if (store.id != _openedFor) {
+    if (!SqliteDb.isOpen) return;
+    final rs = _on ? bakSync.remoteStorage : null;
+    final store = _storeOf(rs);
+    if (store?.id != _openedFor) {
+      // Off: read again when on. Another store in its place: this one is
+      // gone from this device.
+      if (_openedFor case final was?) {
+        store == null ? SyncKey.release(was) : await SyncKey.forget(was);
+      }
       _opening = null;
-      _openedFor = store.id;
+      _openedFor = store?.id;
     }
+    if (rs == null || store == null) return;
     final SegmentSync sync;
     try {
-      sync = await (_opening ??= _open(store));
+      sync = await (_opening ??= _open(rs, store.id));
+      // The password still opens the key: nothing syncs while it does not.
+      await keyOf(rs);
     } catch (e, s) {
       // Opened again next time: the password or the network may be there by
       // then. None set is the backup page's to ask for, as the backup's own
       // sync leaves it.
       _opening = null;
-      if (e is! RemoteBackupPasswordMissing) Loggers.app.warning('File log sync: opening', e, s);
+      if (e is! SyncPasswordMismatch && e is! RemoteBackupPasswordMissing) {
+        Loggers.app.warning('File log sync: opening', e, s);
+      }
       return;
     }
     try {
@@ -234,14 +280,10 @@ abstract final class FileLogSync {
     }
   }
 
-  static Future<SegmentSync> _open(({String id, SyncFiles files}) store) async {
-    final key = await SyncKey.load(FilesKeyFile(store.files, store.id));
-    SegmentSync.bind(store.id);
-    return SegmentSync(
-      store.files,
-      key,
-      carries: syncCarries,
-    );
+  static Future<SegmentSync> _open(RemoteStorage rs, String id) async {
+    final key = await keyOf(rs);
+    SegmentSync.bind(id);
+    return SegmentSync(_storeOf(rs)!.files, key, carries: syncCarries);
   }
 
   /// The key or the store changed: opened again for the next sync.

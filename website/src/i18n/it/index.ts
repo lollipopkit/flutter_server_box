@@ -278,15 +278,15 @@ const it: Translation = {
     llmapi: {
       title: 'LLM API',
       description:
-        'Gateway API unificato per i principali modelli LLM, pronto per l’agente IA di ServerBox, GPT Box o i tuoi strumenti.',
+        'Gateway API unificato per i principali modelli LLM, pronto per l’agente IA di ServerBox, LLMBox o i tuoi strumenti.',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         'Monitoraggio leggero dell’uptime e pagine di stato per siti web, API e server con avvisi immediati.',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         'Client nativo e veloce per le API OpenAI e modelli compatibili, con cronologia locale, tool calling ed endpoint personalizzati.',

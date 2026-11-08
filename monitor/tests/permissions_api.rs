@@ -385,7 +385,6 @@ async fn a_plaintext_link_only_reads() {
         (Method::GET, "/api/v1/live", None),
         (Method::DELETE, "/api/v1/live/devices/1", None),
         (Method::GET, "/api/v1/push", None),
-        (Method::GET, "/api/v1/backup", None),
         (Method::GET, "/api/v1/storage", None),
         (Method::GET, "/api/v1/shares", None),
         (Method::POST, "/api/v1/stacks/refresh", None),

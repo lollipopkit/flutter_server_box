@@ -25,6 +25,12 @@ final class SegmentSync extends SyncEngine {
 
   final SyncFiles _files;
 
+  /// [SyncEngine._tooNew] for the WebDAV or iCloud files.
+  static final tooNew = ValueNotifier(false);
+
+  @override
+  ValueNotifier<bool> get _tooNew => tooNew;
+
   /// The snapshots read to close a gap, and when each was written: one not
   /// written again since is not read again while the gap stays.
   final _snapshotsRead = <String, DateTime?>{};
@@ -102,7 +108,9 @@ final class SegmentSync extends SyncEngine {
   /// [forget], after the run going on.
   Future<void> reset() => _serial(() async => forget());
 
-  Future<void> _pull(_Listing listed) async {
+  Future<void> _pull(_Listing listed) => _reading(() => _read(listed));
+
+  Future<void> _read(_Listing listed) async {
     final mine = _mine;
     final read = {
       for (final MapEntry(key: d, value: at) in listed.snapshots.entries)
@@ -221,13 +229,8 @@ final class SegmentSync extends SyncEngine {
 
   /// Writes this device's snapshot: what it holds, and how far it read.
   Future<void> _writeSnapshot() async {
-    if (_get(SyncEngine._partialKey) != null) {
-      Loggers.app.info('Sync snapshot left to a device holding every record');
-      return;
-    }
-    _stamp();
-    final (:ops, :complete) = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
-    if (!complete) {
+    final ops = await _snapshotOps();
+    if (ops == null) {
       Loggers.app.info('Sync snapshot left: a record could not be read');
       return;
     }
@@ -290,8 +293,11 @@ final class SegmentSync extends SyncEngine {
 
   /// Forgets what was read and sent: the next sync reads every device anew
   /// and joins again. For another store, or what is carried changing.
-  static void forget() =>
-      SqliteDb.instance.execute('DELETE FROM sync_state WHERE k LIKE ? AND k != ?;', ['$_at%', '$_at$_storeKey']);
+  static void forget() {
+    SqliteDb.instance.execute('DELETE FROM sync_state WHERE k LIKE ? AND k != ?;', ['$_at%', '$_at$_storeKey']);
+    SyncEngine._forgetPassed(_at);
+    tooNew.value = false;
+  }
 
   /// The files of [store] from now on: another store's are forgotten.
   static void bind(String store) {

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -8,7 +7,6 @@ import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/agent/app_tools.dart';
 import 'package:server_box/view/agent/tool_preview.dart';
 
@@ -30,32 +28,9 @@ abstract final class AgentTools {
     ...AppDataTools.all,
   ];
 
-  /// How many calls a single prompt may run without asking, at most. A model
-  /// in a loop would otherwise run read-only commands for as long as it liked
-  /// with nobody looking.
-  static const maxAutoRuns = 3;
-
-  static final _autoRuns = <String, ({String? prompt, int n})>{};
-
-  /// Allows [command] outright when the user has asked for safe commands to
-  /// run by themselves and it is one — see [AskAiCommand.canAutoRun] — and
-  /// this prompt has not used up [maxAutoRuns]. Null to ask.
-  static LlmApproval? autoRun(AskAiCommand command, String chatId) {
-    if (!Stores.setting.agentAutoRunSafe.fetch()) return null;
-    if (!command.canAutoRun) return null;
-    // Counted per user message: the one the run was started by.
-    final prompt = Chats.openOf(chatId)?.entries.value
-        .lastWhereOrNull((e) => e.message?.role == 'user')
-        ?.id;
-    final seen = _autoRuns[chatId];
-    final n = seen?.prompt == prompt ? seen!.n : 0;
-    if (n >= maxAutoRuns) return null;
-    _autoRuns[chatId] = (prompt: prompt, n: n + 1);
-    return const LlmApproval.allow();
-  }
-
-  /// Forgets what chat [chatId] ran without asking: it was deleted.
-  static void forget(String chatId) => _autoRuns.remove(chatId);
+  /// The shell command [command] runs, for the permissions' rules; none for
+  /// a tool that runs none.
+  static String? shellOf(AskAiCommand command) => command.toolName == 'run_shell_command' ? command.command : null;
 
   static AskAiCommand commandOf(String name, Map<String, Object?> args) =>
       AskAiCommand.fromToolCall(id: name, name: name, args: args);
@@ -131,8 +106,10 @@ final class ServerAgentTool extends ToolFunc {
       AgentTools.commandOf(name, args).displayValue;
 
   @override
-  FutureOr<LlmApproval?> preApprove(Map<String, Object?> args, String chatId) =>
-      AgentTools.autoRun(AgentTools.commandOf(name, args), chatId);
+  LlmEffect effect(Map<String, Object?> args) => AgentTools.commandOf(name, args).claimedEffect;
+
+  @override
+  String? shellCommand(Map<String, Object?> args) => AgentTools.shellOf(AgentTools.commandOf(name, args));
 
   @override
   Widget preview(BuildContext context, Map<String, Object?> args, String chatId) =>
@@ -196,7 +173,7 @@ final class TerminalRunTool extends ToolFunc {
   String get description =>
       'Run one non-interactive shell command on the server of the terminal '
       'the user has open. Its output comes back to you; the user reviews each '
-      'command first unless it is clearly read-only.';
+      'command first unless their permission mode runs it.';
 
   @override
   String get l10nName => l10n.agentToolShell;
@@ -230,8 +207,10 @@ final class TerminalRunTool extends ToolFunc {
   );
 
   @override
-  FutureOr<LlmApproval?> preApprove(Map<String, Object?> args, String chatId) =>
-      AgentTools.autoRun(_command(args), chatId);
+  LlmEffect effect(Map<String, Object?> args) => _command(args).claimedEffect;
+
+  @override
+  String? shellCommand(Map<String, Object?> args) => '${args['command'] ?? ''}';
 
   @override
   Widget preview(BuildContext context, Map<String, Object?> args, String chatId) =>

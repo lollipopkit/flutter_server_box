@@ -85,14 +85,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksək risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Yalnız oxuma əmrlərini avtomatik icra et';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur';
-
-  @override
   String get askAiHistory => 'Söhbət tarixçəsi';
 
   @override
@@ -170,10 +162,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get authFailTip => 'Autentifikasiya uğursuz oldu. Məlumatları yoxla';
 
   @override
-  String get autoBackupConflict =>
-      'Eyni vaxtda yalnız bir avtomatik ehtiyat nüsxə funksiyası aktivləşdirilə bilər.';
-
-  @override
   String get autoConnect => 'Avtomatik əlaqə qur';
 
   @override
@@ -190,14 +178,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get backupEncrypted => 'Ehtiyat nüsxə şifrələnib';
 
   @override
-  String get backupNotEncrypted => 'Ehtiyat nüsxə şifrələnməyib';
-
-  @override
   String get backupPassword => 'Ehtiyat nüsxə parolu';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.';
+      'Eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan ehtiyat nüsxə parolu silinəcək. Yeni parol təyin edilənə qədər sinxronlaşdırma dayandırılacaq.';
 
   @override
   String get backupPasswordRemoved => 'Ehtiyat nüsxə parolu silindi';
@@ -207,7 +192,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Ehtiyat nüsxə fayllarını şifrələmək üçün parol təyin et. Şifrələməni söndürmək üçün boş saxla.';
+      'Ehtiyat nüsxələri və sinxronlaşdırılan məlumatları şifrələyir. Bütün cihazlarda eyni parol istifadə olunmalıdır; bir cihazda dəyişdirdikdə digər cihazlarda da yeni parolu daxil edin.';
 
   @override
   String get backupPasswordWrong => 'Ehtiyat nüsxə parolu yanlışdır';
@@ -304,40 +289,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bərpa edildi, bu mövzular istisna olmaqla. Onları mövzu mağazasından və ya gəldikləri fayldan yenidən quraşdırın.';
 
   @override
-  String get backupTip =>
-      'İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Ehtiyat nüsxənin statusu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud ehtiyat nüsxəsinin statusu yüklənir...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud ehtiyat nüsxəsinin metaməlumatlarını oxumaq mümkün olmadı';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Hələ iCloud ehtiyat nüsxə faylı tapılmayıb';
-
-  @override
-  String get icloudBackupStateUploading => 'Göndərilir';
-
-  @override
   String get icloudBackupStateConflict => 'Ziddiyyət aşkarlandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Göndərildi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud gözlənilir';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son ehtiyat nüsxə: $lastModified\nVəziyyət: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arxa planda işlət';
@@ -525,27 +477,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Cihaz üfüqi vəziyyətə çevrildikdə tam ekran rejimi aktivləşdirilsin? Bu seçim yalnız server vərəqinə aiddir.';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (istəyə bağlı)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist tokeni';
-
-  @override
-  String get githubGistTokenEmpty => 'Token boşdur';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Bu, nə Gist ID-dir, nə də Gist linkidir. Gist ünvanının son hissəsini istifadə edin (https://gist.github.com/<user>/<ID>) və ya ilk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün boş saxlayın.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub bu ID ilə tokenin oxuya biləcəyi gist tapmadı: ID səhv ola, gist silinmiş ola və ya başqa hesaba aid ola bilər. İlk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün ID-ni boş saxlayın.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub bu tokeni rədd etdi: token səhv, vaxtı bitmiş və ya ləğv edilmiş ola bilər, yaxud gist icazəsi çatışmır (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Keç';
 
   @override
@@ -622,7 +553,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifrələnmiş şəxsi açarların parol ifadələrini bu cihazın sistem açar zəncirində saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Ehtiyat nüsxələrdə açarlar şifrəli qalır. Söndürdükdə saxlanmış ifadələr silinir.';
+      'Yenidən başlatmadan sonra təkrar soruşulmaması üçün şifrələnmiş məxfi açarların parol ifadələrini yadda saxlayır. Söndürüldükdə bu cihazda saxlanılmış parol ifadələri silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1241,11 +1172,28 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Tətbiq parametrlərini sinxronlaşdır';
+  String get syncedData => 'Sinxronlaşdırılan məlumatlar';
 
   @override
-  String get syncAppSettingsTip =>
-      'Tema, düzülüş, redaktor, terminal və digər cihaz seçimlərini avtomatik sinxronlaşdırmaya daxil et.';
+  String get syncSecrets => 'Sudo parolları və API açarları';
+
+  @override
+  String get keyPassphrases => 'Açar parol ifadələri';
+
+  @override
+  String get syncFiles => 'Şriftlər, şəkillər və Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyasında yaradılıb. Sinxronlaşdırmanı davam etdirmək üçün tətbiqi yeniləyin.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Sinxronlaşdırılan məlumatlar fərqli ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızda istifadə etdiyiniz parolu daxil edin.';
+
+  @override
+  String get syncUnreachable =>
+      'Sinxronizasiya xidmətinə qoşulmaq mümkün olmadı. Şəbəkə bağlantısını yoxlayıb yenidən cəhd edin.';
 
   @override
   String get termFontSizeTip =>
@@ -1689,7 +1637,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır';
+      'Agent-ə ServerBox-un işlədiyi maşında işləməyə icazə verir. Əmrləri icazə rejiminə görə işlənir';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5341,23 +5289,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Ehtiyat nüsxəni saxlayacaq Monitor-un serverini seçin.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Bu Monitor ehtiyat nüsxə saxlaya bilmir. Monitor-u yeniləyin.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Ehtiyat nüsxə Monitor-un qəbul etdiyi ölçüdən ($max) böyükdür.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
-
-  @override
   String get virtCreateVmidInvalid => '100 ilə 999999999 arasında VMID.';
 
   @override
@@ -6583,21 +6514,6 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İcazə rejimi';
-
-  @override
-  String get agentModeAuto => 'Avtomatik';
-
-  @override
-  String get agentModeManual => 'Əl ilə';
-
-  @override
-  String get agentModeBypass => 'Hamısına icazə ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu serverdə deaktiv edilib';
-
-  @override
   String get agentModeBypassWarn =>
       'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
 
@@ -7268,4 +7184,53 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Ehtiyat ünvan';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Yadda saxlanmamış dəyişikliklər atılsın?';
+
+  @override
+  String get syncAuto => 'Avtomatik sinxronlaşdırma';
+
+  @override
+  String get syncOff => 'Söndürülüb';
+
+  @override
+  String get syncDone => 'Sinxronlaşdırılıb';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son sinxronlaşdırma $time';
+  }
+
+  @override
+  String get syncNow => 'İndi sinxronlaşdır';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ilə avtomatik sinxronlaşdırma söndürüləcək. Mövcud ehtiyat nüsxələr silinməyəcək.';
+  }
+
+  @override
+  String get bakPwdSet => 'Təyin edilib';
+
+  @override
+  String get bakPwdNotSet => 'Təyin edilməyib';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Sinxronlaşdırma alınmadı';
+
+  @override
+  String get syncStatePassword => 'Parol uyğun gəlmir';
+
+  @override
+  String get syncStateUpdate => 'Yeniləmə tələb olunur';
+
+  @override
+  String get syncStateRunning => 'Sinxronlaşdırılır';
 }

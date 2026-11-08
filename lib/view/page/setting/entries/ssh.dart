@@ -324,11 +324,11 @@ extension _SSH on _AppSettingsPageState {
         trailing: StoreSwitch(
           prop: _setting.rememberKeyPassphrase,
           // Off means none kept, not merely none added from now on. Off
-          // before clearing, so no write queued behind the clear keeps one.
-          callback: (on) async {
+          // before clearing, so a sync running now takes none after it.
+          callback: (on) {
             if (on) return;
             _setting.rememberKeyPassphrase.put(false);
-            await KeyPassphrases.clear();
+            KeyPassphrases.clear();
           },
         ),
       ),

@@ -118,7 +118,6 @@ exactly that:
 | Remote desktop, local and dynamic port forwards | `/api/v1/stream/ws` |
 | Remote port forwards | `/api/v1/listen/ws` |
 | The panel's remote desktops (VNC, RDP) | `/api/v1/stream/ws`, `/api/v1/rdp/ws` |
-| Backup sync to this Monitor, the panel's backup page | `/api/v1/backup` |
 
 `/api/v1/stream/ws` relays one TCP connection to an address the app names,
 dialled from this machine as the Monitor's account. `/api/v1/listen/ws` is the

@@ -85,14 +85,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiRiskDestructive => 'Riesgo alto';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Ejecutar automáticamente los comandos de solo lectura';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Solo se ejecuta si el modelo y la comprobación local lo consideran de solo lectura';
-
-  @override
   String get askAiHistory => 'Historial de conversaciones';
 
   @override
@@ -172,10 +164,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authFailTip => 'Fallo de autenticación. Comprueba los datos';
 
   @override
-  String get autoBackupConflict =>
-      'Solo se puede activar una copia de seguridad automática a la vez';
-
-  @override
   String get autoConnect => 'Conexión automática';
 
   @override
@@ -192,14 +180,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backupEncrypted => 'El respaldo está encriptado';
 
   @override
-  String get backupNotEncrypted => 'El respaldo no está encriptado';
-
-  @override
   String get backupPassword => 'Contraseña de respaldo';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Esto elimina la contraseña de respaldo de todos los dispositivos que usan el mismo Llavero de iCloud. Su sincronización se detiene hasta que se vuelva a establecer una contraseña.';
+      'Se eliminará la contraseña de copia de seguridad en todos los dispositivos que usen el mismo Llavero de iCloud. La sincronización se pausará hasta que se configure una nueva contraseña.';
 
   @override
   String get backupPasswordRemoved => 'Contraseña de respaldo eliminada';
@@ -209,7 +194,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Establece una contraseña para encriptar archivos de respaldo. Déjalo vacío para desactivar la encriptación.';
+      'Cifra las copias de seguridad y los datos sincronizados. Todos los dispositivos deben usar la misma contraseña; si la cambias en uno, introduce la nueva en los demás.';
 
   @override
   String get backupPasswordWrong => 'Contraseña de respaldo incorrecta';
@@ -306,40 +291,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Restaurado todo, excepto estos temas. Vuelve a instalarlos desde la tienda de temas o desde el archivo de origen.';
 
   @override
-  String get backupTip =>
-      'Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Estado de la copia de seguridad';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'Cargando el estado de la copia de iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'No se pueden leer los metadatos de la copia de iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Aún no se ha encontrado ningún archivo de copia en iCloud';
-
-  @override
-  String get icloudBackupStateUploading => 'Subiendo';
-
-  @override
   String get icloudBackupStateConflict => 'Conflicto detectado';
-
-  @override
-  String get icloudBackupStateUploaded => 'Subida';
-
-  @override
-  String get icloudBackupStateWaiting => 'Esperando a iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Última copia: $lastModified\nEstado: $remoteState';
-  }
 
   @override
   String get bgRun => 'Ejecución en segundo plano';
@@ -527,27 +479,6 @@ class AppLocalizationsEs extends AppLocalizations {
       '¿Debe habilitarse el modo de pantalla completa cuando el dispositivo se rote al modo horizontal? Esta opción solo se aplica a la pestaña del servidor.';
 
   @override
-  String get githubGistIdOptional => 'ID del Gist (opcional)';
-
-  @override
-  String get githubGistToken => 'Token de GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'El token está vacío';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Esto no es ni un ID de Gist ni un enlace a un Gist. Usa la última parte de la dirección del gist (https://gist.github.com/<user>/<ID>) o déjalo vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub no encontró ningún gist con este ID que este token pueda leer: puede que el ID sea incorrecto, que el gist se haya eliminado o que pertenezca a otra cuenta. Deja el ID vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub rechazó este token: puede ser incorrecto, haber caducado o haberse revocado, o carecer del permiso gist (classic token: el ámbito \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Ir a';
 
   @override
@@ -624,7 +555,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Guarda las frases de contraseña de las claves privadas cifradas en el llavero del sistema de este dispositivo, para no pedirlas tras un reinicio. Las claves siguen cifradas en las copias de seguridad. Al desactivarlo se eliminan las frases guardadas.';
+      'Guarda las frases de contraseña de las claves privadas cifradas para no tener que volver a introducirlas tras reiniciar. Al desactivarlo, se eliminan las frases guardadas en este dispositivo.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1257,11 +1188,28 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sincronizar los ajustes de la app';
+  String get syncedData => 'Datos sincronizados';
 
   @override
-  String get syncAppSettingsTip =>
-      'Incluir el tema, el diseño, el editor, el terminal y otras preferencias del dispositivo en la sincronización automática.';
+  String get syncSecrets => 'Contraseñas sudo y claves API';
+
+  @override
+  String get keyPassphrases => 'Frases de contraseña de claves';
+
+  @override
+  String get syncFiles => 'Fuentes, imágenes y skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Los datos sincronizados provienen de una versión más reciente de ServerBox. Actualiza la aplicación para seguir sincronizando.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Los datos sincronizados están cifrados con otra contraseña de copia de seguridad. Introduce la contraseña que usas en tus otros dispositivos.';
+
+  @override
+  String get syncUnreachable =>
+      'No se pudo conectar con el servicio de sincronización. Comprueba tu conexión de red e inténtalo de nuevo.';
 
   @override
   String get termFontSizeTip =>
@@ -1709,7 +1657,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Deja que el Agent trabaje en la máquina que ejecuta ServerBox. Incluso los comandos de solo lectura se revisan';
+      'Permite que el Agent trabaje en la máquina donde se ejecuta ServerBox. Sus comandos siguen el modo de permisos';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5423,23 +5371,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Usa port=80:proto=tcp:toport=8080, con toport, toaddr o ambos.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Elige el servidor cuyo Monitor guarda la copia de seguridad.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Este Monitor no puede guardar copias de seguridad. Actualiza el Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'La copia de seguridad supera el tamaño que acepta el Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'El Monitor ya guarda tantas copias de seguridad como permite. Elimina una primero.';
-
-  @override
   String get virtCreateVmidInvalid => 'Un VMID entre 100 y 999999999.';
 
   @override
@@ -6682,21 +6613,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Modo de permisos';
-
-  @override
-  String get agentModeAuto => 'Automático';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Permitir todo';
-
-  @override
-  String get agentModeBypassOff => 'Desactivado en este servidor';
-
-  @override
   String get agentModeBypassWarn =>
       'Permitir todo: las eliminaciones, los reinicios y los cambios de configuración se ejecutan sin preguntar.';
 
@@ -7379,4 +7295,53 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Dirección alternativa';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '¿Descartar los cambios sin guardar?';
+
+  @override
+  String get syncAuto => 'Sincronización automática';
+
+  @override
+  String get syncOff => 'Desactivada';
+
+  @override
+  String get syncDone => 'Sincronizado';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Última sincronización $time';
+  }
+
+  @override
+  String get syncNow => 'Sincronizar ahora';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Se desactivará la sincronización automática con $name. Las copias de seguridad existentes se conservarán.';
+  }
+
+  @override
+  String get bakPwdSet => 'Establecida';
+
+  @override
+  String get bakPwdNotSet => 'Sin establecer';
+
+  @override
+  String get syncChannel => 'Canal';
+
+  @override
+  String get syncStateFailed => 'Error de sincronización';
+
+  @override
+  String get syncStatePassword => 'La contraseña no coincide';
+
+  @override
+  String get syncStateUpdate => 'Actualización necesaria';
+
+  @override
+  String get syncStateRunning => 'Sincronizando';
 }

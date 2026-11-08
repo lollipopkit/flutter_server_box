@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
@@ -14,10 +16,8 @@ import 'package:server_box/data/store/sync_themes.dart';
 
 part 'segment.dart';
 
-/// Whether records of collection [c] are synced now: the settings, and the
-/// themes they select, only while the user syncs settings.
-bool syncCarries(String c) =>
-    (c != 'kv:${Stores.setting.name}' && c != SyncThemes.c) || PrefProps.syncAppSettings.get();
+/// Whether records of collection [c] are synced now: see [SyncCategory].
+bool syncCarries(String c) => SyncCategory.carries(c);
 
 /// A record's change as the log carries it: `fl_sync::Op`.
 typedef SyncOp = ({String c, String id, String h, Object? d});
@@ -96,12 +96,6 @@ abstract interface class SyncSeal {
   Future<bool> refresh();
 }
 
-/// A device that leaves records out ([LogSync.carries]) holds less than the
-/// log, so it writes no snapshot, and so cannot replace the key.
-final class SyncLogPartial implements Exception {
-  const SyncLogPartial();
-}
-
 /// What the operation-log syncs share, whatever keeps the log: reading the
 /// records as ops (a large one as a blob), sealing them in batches, and
 /// applying the ops other devices sent that win. State in `sync_state`
@@ -115,8 +109,8 @@ abstract base class SyncEngine {
     bool Function(String c)? carries,
     void Function()? stamp,
   }) : _write = write ?? SyncAnnounce.write,
-       _carries = carries ?? _all,
-       _stamp = stamp ?? SyncThemes.stamp;
+       _carriesNow = carries ?? _all,
+       _stamp = stamp ?? _stampFiles;
 
   final SyncBlobStore _blobs;
 
@@ -124,7 +118,7 @@ abstract base class SyncEngine {
   final String _prefix;
 
   /// Stamps what changed without a write that stamps it (an installed
-  /// theme), before what is pending is read.
+  /// theme, a picked file), before what is pending is read.
   final void Function() _stamp;
 
   final SyncSeal _seal;
@@ -134,9 +128,23 @@ abstract base class SyncEngine {
 
   /// Whether records of collection `c` are sent and taken (the settings only
   /// while the user syncs them).
-  final bool Function(String c) _carries;
+  final bool Function(String c) _carriesNow;
+
+  /// [_carriesNow] as each run first asked it: a category switched during a
+  /// run is taken by the next (a [reset] follows), so a snapshot this one
+  /// writes keeps what it was passing on.
+  Map<String, bool>? _carried;
+
+  bool _carries(String c) => _carried == null ? _carriesNow(c) : _carried!.putIfAbsent(c, () => _carriesNow(c));
 
   static bool _all(String _) => true;
+
+  static void _stampFiles() {
+    SyncThemes.stamp();
+    for (final kind in SyncRecords.kinds.values) {
+      kind.stamp?.call();
+    }
+  }
 
   /// What a batch's sealed bytes may be, under homebase's 256 KiB.
   static const batchMax = 250 << 10;
@@ -152,16 +160,46 @@ abstract base class SyncEngine {
   /// batch being sent now may name it.
   static const _blobGrace = Duration(days: 1);
 
-  static const _version = 1;
+  /// 2: the Agent's stores, the secrets, picked files, skills and
+  /// benchmarks are records too. A build reading 1 only would compact them
+  /// away, so it stops at a 2 instead ([SyncLogTooNew]); 1 is still read.
+  static const _version = 2;
 
-  /// Set once an op was left out ([_carries]): what this device holds is then
-  /// not the whole log, so it writes no snapshot (one would drop those ops).
+  /// Set by builds that dropped what they did not carry, which then wrote no
+  /// snapshot. What is not carried is now kept as it came ([_pass]).
+  /// TODO: remove once no install has the row.
   static const _partialKey = 'partial';
+
+  /// Whether this engine's last read stopped at a newer build's batch: this
+  /// device reads no further until updated. Shown on the backup page; one
+  /// per engine, as LK Cloud's and the files' run apart.
+  ValueNotifier<bool> get _tooNew;
+
+  /// Runs [read], noting whether it stopped at a newer build's batch.
+  Future<void> _reading(Future<void> Function() read) async {
+    try {
+      await read();
+      _tooNew.value = false;
+    } on SyncLogTooNew {
+      _tooNew.value = true;
+      rethrow;
+    }
+    // Read past: what could not be written then is tried again.
+    if (_carries(BenchmarkStore.c)) Stores.benchmark.retry();
+    if (_carries(SyncThemes.c)) await SyncThemes.retry();
+  }
 
   Future<void> _running = Future.value();
 
   Future<void> _serial(Future<void> Function() run) {
-    final next = _running.then((_) => run());
+    final next = _running.then((_) async {
+      _carried = {};
+      try {
+        await run();
+      } finally {
+        _carried = null;
+      }
+    });
     _running = next.catchError((Object _) {});
     return next;
   }
@@ -170,30 +208,37 @@ abstract base class SyncEngine {
   /// be read ([SyncRecords.unread]): the ops are those before it.
   Future<({List<SyncOp> ops, bool complete})> _opsOf(List<({String c, String id, String hlc})> records) async {
     final read = SyncRecords.reader();
+    final send = _sender();
     final ops = <SyncOp>[];
-    Set<String>? there;
     for (final r in records) {
       final d = await read(r.c, r.id);
       if (identical(d, SyncRecords.unread)) return (ops: ops, complete: false);
+      if (identical(d, SyncRecords.silent)) continue;
       // A theme is added only: one removed here says nothing to the others.
       if (d == null && r.c == SyncThemes.c) continue;
-      final json = utf8.encode(jsonEncode(d));
-      if (json.length <= inlineMax) {
-        ops.add((c: r.c, id: r.id, h: r.hlc, d: d));
-        continue;
-      }
+      ops.add(await send((c: r.c, id: r.id, h: r.hlc, d: d)));
+    }
+    return (ops: ops, complete: true);
+  }
+
+  /// An op as it is sent: one larger than [inlineMax] as a blob it names,
+  /// sealed under the key now.
+  Future<SyncOp> Function(SyncOp op) _sender() {
+    Set<String>? there;
+    return (op) async {
+      final json = utf8.encode(jsonEncode(op.d));
+      if (json.length <= inlineMax) return op;
       // Named by the op's stamp alone: a snapshot carrying the same op names
       // the batch's blob, whatever this build makes of the record now, so the
       // sweep keeps what a batch still names.
-      final name = _blobName(r.hlc);
+      final name = _blobName(op.h);
       there ??= {for (final b in await _blobs.blobs(_blobPrefix)) b.name};
-      if (!there.contains(name)) {
+      if (!there!.contains(name)) {
         await _blobs.putBlob(name, await _seal.seal(Uint8List.fromList(gzip.encode(json))));
-        there.add(name);
+        there!.add(name);
       }
-      ops.add((c: r.c, id: r.id, h: r.hlc, d: {_blobKey: name}));
-    }
-    return (ops: ops, complete: true);
+      return (c: op.c, id: op.id, h: op.h, d: {_blobKey: name});
+    };
   }
 
   /// The blob of the op stamped [h]: named by the stamp alone.
@@ -247,11 +292,60 @@ abstract base class SyncEngine {
     return out;
   }
 
+  /// The newest of [ops] for each record: no blob is read for an op a later
+  /// one of the same read replaces.
+  static List<SyncOp> _newest(List<SyncOp> ops) {
+    final newest = <(String, String), SyncOp>{};
+    for (final op in ops) {
+      final had = newest[(op.c, op.id)];
+      if (had == null || op.h.compareTo(had.h) > 0) newest[(op.c, op.id)] = op;
+    }
+    return newest.values.toList();
+  }
+
+  /// [ops] of what this device does not sync now, read in ([_resolve]), the
+  /// newest of each record: a snapshot written here carries them on, so the
+  /// log keeps them whatever this device syncs. Their content, not a blob's
+  /// name: a key rotated here seals them again.
+  void _pass(List<SyncOp> ops) {
+    if (ops.isEmpty) return;
+    SqliteStore.transact(() {
+      for (final op in ops) {
+        SqliteDb.instance.execute(
+          'INSERT INTO sync_passed (e, c, id, h, d) VALUES (?, ?, ?, ?, ?) '
+          'ON CONFLICT (e, c, id) DO UPDATE SET h = excluded.h, d = excluded.d WHERE excluded.h > sync_passed.h;',
+          [_prefix, op.c, op.id, op.h, jsonEncode(op.d)],
+        );
+      }
+    });
+  }
+
+  /// What [_pass] kept and this device still does not sync.
+  List<SyncOp> _passed() => [
+    for (final row in SqliteDb.instance.select('SELECT c, id, h, d FROM sync_passed WHERE e = ?;', [_prefix]))
+      if (!_carries(row['c'] as String))
+        (c: row['c'] as String, id: row['id'] as String, h: row['h'] as String, d: jsonDecode(row['d'] as String)),
+  ];
+
+  /// What this device holds as a snapshot holds it: its records it syncs,
+  /// and what it keeps for the others ([_pass]); null when a record could
+  /// not be read.
+  Future<List<SyncOp>?> _snapshotOps() async {
+    _stamp();
+    final (:ops, :complete) = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
+    if (!complete) return null;
+    final send = _sender();
+    return [...ops, for (final op in _passed()) await send(op)];
+  }
+
+  static void _forgetPassed(String prefix) =>
+      SqliteDb.instance.execute('DELETE FROM sync_passed WHERE e = ?;', [prefix]);
+
   /// The ops that win over what is here, written.
   Future<void> _apply(List<SyncOp>? received, Map<String, String?> state) async {
     if (received == null) return _put(state);
     final carried = [for (final op in received) if (_carries(op.c)) op];
-    if (carried.length < received.length) state = {...state, _partialKey: '1'};
+    _pass(await _resolve(_newest([for (final op in received) if (!_carries(op.c)) op])));
     // Every await before the stamps are read: an edit made meanwhile is then
     // among them, and an older op does not overwrite it.
     final ops = await _resolve(carried);
@@ -265,12 +359,13 @@ abstract base class SyncEngine {
       ),
     ) as List)
         .cast<Map<String, dynamic>>();
-    if (won.isNotEmpty) {
-      await _write([
-        for (final op in won)
-          (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d']),
-      ]);
-    }
+    final winners = [
+      for (final op in won) (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d']),
+    ];
+    // A category turned off while this read: kept for the others, not here.
+    _pass([for (final op in winners) if (!_carries(op.c)) op]);
+    final write = [for (final op in winners) if (_carries(op.c)) op];
+    if (write.isNotEmpty) await _write(write);
     _put(state);
   }
 
@@ -346,7 +441,7 @@ abstract base class SyncEngine {
     final version = json['v'];
     if (version is int && version > _version) throw SyncLogTooNew(version);
     try {
-      if (version != _version) throw FormatException('version $version');
+      if (version is! int || version < 1) throw FormatException('version $version');
       return (
         ops: [
           for (final op in json['ops'] as List)
@@ -399,6 +494,12 @@ final class LogSync extends SyncEngine {
 
   final SyncLogTransport _transport;
 
+  /// [SyncEngine._tooNew] for LK Cloud's log.
+  static final tooNew = ValueNotifier(false);
+
+  @override
+  ValueNotifier<bool> get _tooNew => tooNew;
+
   static String? _state(String k) => SyncEngine._stateAt('log.', k);
 
   static void _setState(Map<String, String?> values) => SyncEngine._setStateAt('log.', values);
@@ -447,7 +548,6 @@ final class LogSync extends SyncEngine {
   /// key until homebase drops them.
   Future<void> rotate(Future<void> Function() rekey) => _serial(() async {
     await _pull();
-    if (_state(SyncEngine._partialKey) != null) throw const SyncLogPartial();
     await rekey();
     // A snapshot goes past the last one: a batch makes room for it.
     await _append((
@@ -459,7 +559,9 @@ final class LogSync extends SyncEngine {
     if (!await _writeSnapshot()) throw StateError('no snapshot written');
   });
 
-  Future<void> _pull() async {
+  Future<void> _pull() => _reading(_read);
+
+  Future<void> _read() async {
     _refreshed = false;
     while (true) {
       final cursor = int.tryParse(_state(_cursorKey) ?? '') ?? 0;
@@ -557,13 +659,8 @@ final class LogSync extends SyncEngine {
   Future<bool> _writeSnapshot() async {
     final cursor = int.tryParse(_state(_cursorKey) ?? '') ?? 0;
     if (cursor == 0) return false;
-    if (_state(SyncEngine._partialKey) != null) {
-      Loggers.app.info('Sync snapshot left to a device holding the whole log');
-      return false;
-    }
-    _stamp();
-    final (:ops, :complete) = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
-    if (!complete) {
+    final ops = await _snapshotOps();
+    if (ops == null) {
       Loggers.app.info('Sync snapshot left: a record could not be read');
       return false;
     }
@@ -578,8 +675,11 @@ final class LogSync extends SyncEngine {
 
   /// Forgets the log: the next sync reads it from its start and joins it
   /// again. For another account, or what is carried changing.
-  static void forget() =>
-      _setState({_logKey: null, _cursorKey: null, _sentKey: null, _joinedKey: null, SyncEngine._partialKey: null});
+  static void forget() {
+    _setState({_logKey: null, _cursorKey: null, _sentKey: null, _joinedKey: null, SyncEngine._partialKey: null});
+    SyncEngine._forgetPassed('log.');
+    tooNew.value = false;
+  }
 
   /// The log of [account] from now on: another account's is forgotten.
   static void bind(String account) {
@@ -591,20 +691,29 @@ final class LogSync extends SyncEngine {
   static const _accountKey = 'account';
 }
 
-/// Writes ops that won ([SyncRecords.write], [SyncThemes.install]) and tells
-/// the app what changed, as a backup's merge does.
+/// Writes ops that won ([SyncRecords.write], [SyncThemes.install],
+/// [SyncRecords.kinds]) and tells the app what changed, as a backup's merge
+/// does.
 abstract final class SyncAnnounce {
   static Future<void> write(List<SyncOp> won) async {
     final keysBefore = [for (final k in Stores.key.fetch()) k.key];
-    final collections = SyncRecords.write([for (final op in won) if (op.c != SyncThemes.c) op]);
+    final kinds = SyncRecords.kinds;
+    final collections = SyncRecords.write([
+      for (final op in won)
+        if (op.c != SyncThemes.c && !kinds.containsKey(op.c)) op,
+    ]);
     final themes = [for (final op in won) if (op.c == SyncThemes.c) op];
     await SyncThemes.install(themes);
+    for (final MapEntry(key: c, value: kind) in kinds.entries) {
+      final ops = [for (final op in won) if (op.c == c) op];
+      if (ops.isNotEmpty) await kind.install(ops);
+    }
     // The preset may have come before or after its theme.
     if (themes.isNotEmpty || collections.contains('kv:${Stores.setting.name}')) SyncThemes.reselect();
     final servers = collections.contains(Stores.server.table);
     if (collections.contains(Stores.key.table)) {
       Stores.key.invalidate();
-      unawaited(KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key)));
+      KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     }
     if (collections.contains(Stores.bmcCredential.table)) {
       Stores.bmcCredential.invalidate();

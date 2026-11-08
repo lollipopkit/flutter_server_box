@@ -11,6 +11,8 @@ import 'package:logging/logging.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/log.dart' show SyncSeal;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
@@ -106,6 +108,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// settings point at. Absent from files written before themes were
     /// carried (#1637), whose theme settings restore onto the default.
     @Default(<String, Object?>{}) Map<String, Object?> themes,
+
+    /// The synced kv stores beside [settings], by name
+    /// (`SyncRecorder.syncedStores`): the Agent's. Absent from files written
+    /// before they synced.
+    @Default(<String, Object?>{}) Map<String, Object?> stores,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -131,12 +138,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// would drift.
   static const formatVer = SchemaVersion.current;
 
-  /// [blobs]: where theme packages are kept apart, when the backup goes
-  /// where they can be (LK Cloud).
+  /// [only]: the categories carried beside the records every backup holds;
+  /// all when null. [blobs]: where theme packages are kept apart, when the
+  /// backup goes where they can be (LK Cloud).
   static Future<BackupV2> loadFromStore({
-    bool includeSettings = true,
+    Set<SyncCategory>? only,
     ThemeBlobStore? blobs,
   }) async {
+    final categories = only ?? SyncCategory.values.toSet();
+    final includeSettings = categories.contains(SyncCategory.settings);
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
@@ -153,14 +163,67 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? _backupStore(Stores.setting)
           : const {},
       themes: includeSettings ? await _themes(blobs) : const {},
+      stores: {
+        for (final MapEntry(key: name, value: store) in _syncedStores.entries)
+          if (_covers(categories, name)) name: _backupStore(store),
+      },
     );
   }
+
+  /// [SyncRecorder.syncedStores] but the settings, which have their own
+  /// section.
+  static Map<String, SqliteStore> get _syncedStores => {
+    for (final MapEntry(:key, :value) in SyncRecorder.syncedStores.entries)
+      if (key != Stores.setting.name) key: value,
+  };
+
+  /// Whether [categories] cover the store [name]: one of no category is in
+  /// every backup.
+  static bool _covers(Set<SyncCategory> categories, String name) =>
+      switch (SyncCategory.of('kv:$name')) {
+        null => true,
+        final c => categories.contains(c),
+      };
+
+  /// This backup holding only what [categories] cover beside the records
+  /// every backup holds: what a device that leaves the rest out takes.
+  BackupV2 only(Set<SyncCategory> categories) => _mix(categories, null);
+
+  /// This backup with what [categories] leave out taken from [from] as it
+  /// is: a device that leaves something out carries the others' on.
+  BackupV2 carrying(BackupV2 from, Set<SyncCategory> categories) =>
+      _mix(categories, from);
+
+  BackupV2 _mix(Set<SyncCategory> categories, BackupV2? from) {
+    final withSettings = categories.contains(SyncCategory.settings);
+    return copyWith(
+      settings: withSettings ? settings : from?.settings ?? const {},
+      themes: withSettings ? themes : from?.themes ?? const {},
+      stores: {
+        for (final e in stores.entries)
+          if (_covers(categories, e.key)) e.key: e.value,
+        if (from != null)
+          for (final e in from.stores.entries)
+            if (!_covers(categories, e.key)) e.key: e.value,
+      },
+    );
+  }
+
+  /// This backup without the stores of [SyncCategory.secrets] and
+  /// [SyncCategory.passphrases]: what a file without a password holds.
+  BackupV2 withoutSecrets() => copyWith(
+    stores: {
+      for (final e in stores.entries)
+        if (!const {SyncCategory.secrets, SyncCategory.passphrases}.contains(SyncCategory.of('kv:${e.key}')))
+          e.key: e.value,
+    },
+  );
 
   /// Whether this file lacks a record this device holds, or holds one older
   /// than this device's, a delete included — see `SyncIface.lacks`. Records
   /// and their stamps only: those converge. The themes do not (they are what
   /// each device could install), so they are left out.
-  bool lacksLocal({required bool includeSettings}) => [
+  bool lacksLocal({required Set<SyncCategory> categories}) => [
     (Stores.server.getAllMap(), spis),
     (Stores.snippet.getAllMap(), snippets),
     (Stores.key.getAllMap(), keys),
@@ -168,8 +231,19 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     (Stores.portForward.getAllMap(), portForwards),
     (Stores.remoteDesktop.getAllMap(), remoteDesktopProfiles),
     (_backupStore(Stores.history), history),
-    if (includeSettings) (_backupStore(Stores.setting), settings),
+    if (categories.contains(SyncCategory.settings))
+      (_backupStore(Stores.setting), settings),
+    for (final MapEntry(key: name, value: store) in _syncedStores.entries)
+      if (_covers(categories, name))
+        (_backupStore(store), _storeRows(name)),
   ].any((pair) => _lacks(pair.$1, pair.$2));
+
+  /// The rows of the store [name] this file holds.
+  Map<String, Object?> _storeRows(String name) => switch (stores[name]) {
+    final Map<String, Object?> rows => rows,
+    final Map rows => rows.cast<String, Object?>(),
+    _ => const {},
+  };
 
   static bool _lacks(Map<String, Object?> local, Map<String, Object?> remote) {
     const tsKey = StoreDefaults.defaultLastUpdateTsKey;
@@ -195,36 +269,53 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return export.entries;
   }
 
-  static Future<String> backup([
+  /// [only] and [blobs] as [loadFromStore]; what [only] leaves out is
+  /// taken from [carry] when given ([carrying]). Sealed to [key] (the sync's,
+  /// `Miscs.bakFileName`), else with [password] (an export `age -d` opens,
+  /// `Miscs.exportBakFileName`); with neither, the secrets are left out: the
+  /// file is readable by whoever holds it.
+  static Future<String> backup(
     String? name,
-    String? password,
-    bool includeSettings = true,
+    String? password, {
+    SyncSeal? key,
+    Set<SyncCategory>? only,
     ThemeBlobStore? blobs,
-  ]) async {
-    final bak = await BackupV2.loadFromStore(
-      includeSettings: includeSettings,
-      blobs: blobs,
-    );
-    var result = bak.toJsonString();
-
-    final encrypted = password != null && password.isNotEmpty;
-    if (encrypted) {
-      // Compressed *inside* the envelope, so what goes over the wire is
-      // roughly an eighth of what it was: this JSON is one shape repeated a
-      // few hundred times, and every key name is spelled out in every record.
-      // The armor then expands it once, rather than once per layer.
-      result = await AgeCryptor.encrypt(
-        compressBackups
-            ? gzip.encode(utf8.encode(result))
-            : utf8.encode(result),
-        password,
-      );
+    BackupV2? carry,
+  }) async {
+    final encrypted = key != null || (password != null && password.isNotEmpty);
+    if (!encrypted) {
+      only = {...only ?? SyncCategory.values}
+        ..remove(SyncCategory.secrets)
+        ..remove(SyncCategory.passphrases);
+    }
+    var bak = await BackupV2.loadFromStore(only: only, blobs: blobs);
+    if (carry != null && only != null) bak = bak.carrying(carry, only);
+    // What was carried too: another device's secrets are no more this
+    // file's to hold in the clear than this one's.
+    if (!encrypted) bak = bak.withoutSecrets();
+    final json = utf8.encode(bak.toJsonString());
+    // Compressed *inside* the envelope, so what goes over the wire is
+    // roughly an eighth of what it was: this JSON is one shape repeated a few
+    // hundred times, and every key name is spelled out in every record. The
+    // armor then expands it once, rather than once per layer.
+    List<int> compressed() => compressBackups ? gzip.encode(json) : json;
+    final Uint8List bytes;
+    if (key != null) {
+      bytes = await key.seal(Uint8List.fromList(compressed()));
+    } else if (encrypted) {
+      bytes = utf8.encode(await AgeCryptor.encrypt(compressed(), password!));
+    } else {
+      bytes = json;
     }
 
     final path = Paths.doc.joinPath(
-      name ?? (encrypted ? Miscs.bakFileName : Miscs.plainBakFileName),
+      name ??
+          (key != null
+              ? Miscs.bakFileName
+              : encrypted
+              ? Miscs.exportBakFileName
+              : Miscs.plainBakFileName),
     );
-    final bytes = utf8.encode(result);
     await const LocalFileBackend().write(
       path,
       () => Stream.value(bytes),
@@ -238,7 +329,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// It was a one-way format change for the v3 sync file: an older build
   /// decrypted the envelope, found gzip where it expected text, and stopped
   /// syncing before it uploaded. The age envelope goes further, under the v4
-  /// name (`Miscs.bakFileName`): a build before it never sees the file.
+  /// name: a build before it never sees the file.
   ///
   /// TODO: remove this constant once no supported build predates it, and
   /// compress unconditionally.

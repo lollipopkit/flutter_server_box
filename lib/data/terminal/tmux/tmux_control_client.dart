@@ -178,17 +178,32 @@ final class TmuxControlClient {
   }
 
   Future<void> selectPane(TmuxPaneId paneId) async {
-    final targetWindowId = _snapshot?.paneWindows[paneId];
-    if (targetWindowId != null && targetWindowId != _snapshot?.activeWindowId) {
-      await runRequired("select-window -t '$targetWindowId'");
+    // `select-pane` never changes the current window, and the snapshot may lag
+    // behind one another client changed, so the pane's window is selected
+    // even when the snapshot says it is current.
+    final windowId = _snapshot?.paneWindows[paneId];
+    if (windowId != null) {
+      await runRequired("select-window -t '$windowId'");
     }
-    final targetWindow = _snapshot?.windows
-        .where((w) => w.id == (targetWindowId ?? _snapshot?.activeWindowId))
-        .firstOrNull;
-    final isZoomed =
-        targetWindow?.zoomed ?? _snapshot?.activeWindow?.zoomed ?? false;
-    final zoomFlag = isZoomed ? ' -Z' : '';
-    await runRequired("select-pane$zoomFlag -t '$paneId'");
+    // `select-pane` unzooms the window; `-Z` (tmux 3.1) keeps it zoomed, and
+    // before that it is zoomed again.
+    final zoomed =
+        _snapshot?.windows
+            .where((w) => w.id == (windowId ?? _snapshot?.activeWindowId))
+            .firstOrNull
+            ?.zoomed ??
+        false;
+    final keepZoom = zoomed && _tmuxVersion >= 301;
+    await runRequired("select-pane${keepZoom ? ' -Z' : ''} -t '$paneId'");
+    if (zoomed && !keepZoom) {
+      // Selecting the pane already active leaves the window zoomed.
+      final now = await runRequired(
+        "display-message -p -t '$paneId' '#{window_zoomed_flag}'",
+      );
+      if (now.output.trim() != '1') {
+        await runRequired("resize-pane -Z -t '$paneId'");
+      }
+    }
     await refreshState(captureActivePane: true);
   }
 

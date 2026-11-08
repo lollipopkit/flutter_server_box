@@ -405,6 +405,8 @@ extension _HomePageNav on _HomePageState {
     // an update notice or the sandbox-import dialog rather than wait for it.
     // Skipping leaves the guide for the next launch.
     if (ModalRoute.of(context)?.isCurrent != true) return;
+    // The bar is under them, not on screen.
+    if (_settingsOpen) return;
 
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;

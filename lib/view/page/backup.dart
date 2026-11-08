@@ -10,16 +10,20 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/monitor/backup_storage.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/failure.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/key.dart';
-import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
+import 'package:server_box/core/sync/log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
+import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -27,7 +31,8 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
-import 'package:webdav_client_plus/webdav_client_plus.dart';
+
+part 'backup/sync.dart';
 
 /// Which half of the page to show.
 ///
@@ -55,16 +60,30 @@ class BackupPage extends ConsumerStatefulWidget {
 
 final class _BackupPageState extends ConsumerState<BackupPage>
     with AutomaticKeepAliveClientMixin {
-  final webdavLoading = false.vn;
-  final gistLoading = false.vn;
-  final monitorLoading = false.vn;
+  /// A restore from or a backup to the remote (WebDAV, iCloud) running.
+  final remoteLoading = false.vn;
   final lkcLoading = false.vn;
-  late Future<_ICloudBackupStatus?> _icloudStatusFuture;
+
+  /// A sync started here running.
+  final _syncing = false.vn;
+
+  /// The WebDAV settings saved here, which name the server shown.
+  final _webdavEdited = 0.vn;
+  late Future<bool> _icloudConflict;
+
+  /// The backup password, read again when it is set or removed here.
+  late Future<String?> _bakPwd = SecureStoreProps.bakPwd.read();
+
+  /// Built once: a new one each build would subscribe again each time.
+  late final _destChanges = Listenable.merge([_SyncDest.changes, _webdavEdited]);
+
+  /// A channel being switched to.
+  bool _selectingDest = false;
 
   @override
   void initState() {
     super.initState();
-    _icloudStatusFuture = Future.value(null);
+    _icloudConflict = Future.value(false);
     if (isICloudSupported) {
       _refreshIcloudStatus(notify: false);
     }
@@ -72,10 +91,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   @override
   void dispose() {
-    webdavLoading.dispose();
-    gistLoading.dispose();
-    monitorLoading.dispose();
+    remoteLoading.dispose();
     lkcLoading.dispose();
+    _syncing.dispose();
+    _webdavEdited.dispose();
     super.dispose();
   }
 
@@ -94,27 +113,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // Shown in the settings content pane, which brings the Scaffold and the
     // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
     // names the group and the bar repeats it, so a third would be one too many.
+    if (section == BackupSection.sync) return _buildSyncSection;
     return ListView(
       padding: context.padBottom(UIs.roundRectCardPadding),
-      children: switch (section) {
-        BackupSection.sync => _syncTiles,
-        BackupSection.import => _importTiles,
-      },
+      children: _importTiles,
     );
   }
-
-  List<Widget> get _syncTiles => [
-    _buildTip,
-    _buildBakPwd,
-    _buildSyncSettings,
-    if (isICloudSupported) _buildIcloud,
-    _buildWebdav,
-    _buildGist,
-    _buildMonitor,
-    if (Lkc.enabled) _buildLkc,
-    _buildFile,
-    _buildClipboard,
-  ];
 
   List<Widget> get _importTiles => [
     _buildImportSharedServer,
@@ -140,109 +144,57 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   Widget get _buildBakPwd {
     return FutureBuilder<String?>(
-      future: SecureStoreProps.bakPwd.read(),
+      future: _bakPwd,
       builder: (context, snapshot) {
         final hasPwd = snapshot.data?.isNotEmpty == true;
-        return CardX(
-          child: ListTile(
-            leading: const Icon(Icons.lock),
-            title: Text(l10n.backupPassword),
-            subtitle: Text(
-              hasPwd ? l10n.backupEncrypted : l10n.backupNotEncrypted,
-              style: UIs.textGrey,
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  onPressed: () async => _onTapSetBakPwd(context),
-                  child: Text(libL10n.setting),
-                ),
-                if (hasPwd) ...[
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async {
-                      if (_hasEnabledRemoteSync) {
-                        Toast.show(l10n.remoteBackupPasswordRequired);
-                        return;
-                      }
-                      // In iCloud Keychain: gone from every device.
-                      if (await SecureStoreProps.bakPwd.inSyncedStore()) {
-                        if (!context.mounted) return;
-                        final ok = await context.showRoundDialog<bool>(
-                          title: libL10n.delete,
-                          child: Text(l10n.backupPasswordRemoveSynced),
-                          actions: Btnx.cancelRedOk,
-                        );
-                        if (ok != true) return;
-                      }
-                      await SecureStoreProps.bakPwd.write(null);
-                      // Same reason as setting one — see `_onTapSetBakPwd`.
-                      await BakSyncer.forgetCheckpoint();
-                      await LkcThemeBlobs.forgetNames();
-                      Toast.show(l10n.backupPasswordRemoved);
-                      setState(() {});
-                    },
-                    child: Text(libL10n.delete),
-                  ),
-                ],
-              ],
-            ),
-            onTap: () async => _onTapSetBakPwd(context),
+        return ListTile(
+          leading: const Icon(Icons.lock),
+          title: Text(l10n.backupPassword),
+          trailing: Text(
+            hasPwd ? l10n.bakPwdSet : l10n.bakPwdNotSet,
+            style: UIs.textGrey,
           ),
+          onTap: () async => _onTapSetBakPwd(context),
         );
       },
     );
   }
 
-  bool get _hasEnabledRemoteSync => _remoteSyncOn();
-
-  /// Whether an automatic sync destination is on, [but] aside. The one rule
-  /// every switch checks, so a new destination cannot be missed by one of them.
-  bool _remoteSyncOn({PrefPropDefault<bool>? but}) {
-    final props = <PrefPropDefault<bool>>[
-      if (isICloudSupported) PrefProps.icloudSync,
-      PrefProps.webdavSync,
-      PrefProps.gistSync,
-      BakSyncer.monitorSync,
-      if (Lkc.enabled) LkcSyncPrefs.enabled,
-    ];
-    return props.any((prop) => prop != but && prop.get());
+  Future<void> _onTapDeleteBakPwd() async {
+    if (_hasEnabledRemoteSync) {
+      Toast.show(l10n.remoteBackupPasswordRequired);
+      return;
+    }
+    // In iCloud Keychain: gone from every device.
+    if (await SecureStoreProps.bakPwd.inSyncedStore()) {
+      if (!mounted) return;
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.delete,
+        child: Text(l10n.backupPasswordRemoveSynced),
+        actions: Btnx.cancelRedOk,
+      );
+      if (ok != true) return;
+    }
+    await SecureStoreProps.bakPwd.write(null);
+    Toast.show(l10n.backupPasswordRemoved);
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
   }
 
-  /// Picks the server whose agent holds the backup, checking first that the
-  /// agent hosts backups for this account. A different server is a different
-  /// remote, so the sync checkpoint is forgotten.
-  Future<void> _onTapMonitorServer(
-    BuildContext context,
-    List<Spi> candidates,
-    Spi? current,
-  ) async {
-    final picked = await context.showPickSingleDialog<Spi>(
-      title: l10n.monitorAgent,
-      items: candidates,
-      display: (e) => e.name,
-      initial: current,
-    );
-    if (picked == null || picked.id == current?.id) return;
-    final monitor = picked.monitorOn;
-    if (monitor == null) return;
+  bool get _hasEnabledRemoteSync => _SyncDest.current != _SyncDest.off;
 
-    monitorLoading.value = true;
-    final probe = MonitorBackupStorage(picked.id, monitor);
-    try {
-      await probe.check();
-    } catch (e, s) {
-      if (context.mounted) context.showErrDialog(e, s, l10n.monitorAgent);
-      return;
-    } finally {
-      probe.close();
-      monitorLoading.value = false;
+  /// Says why the sync just run stopped, when one did ([SyncIface.lastFailure]);
+  /// false then, so the switch stays off.
+  bool _syncWent() {
+    final e = bakSync.lastFailure.value;
+    if (e == null) return true;
+    if (mounted) {
+      context.showRoundDialog(
+        title: libL10n.fail,
+        child: Text(syncFailureText(e) ?? '$e'),
+        actions: Btnx.oks,
+      );
     }
-
-    await BakSyncer.monitorSyncServer.set(picked.id);
-    await BakSyncer.forgetCheckpoint();
-    setState(() {});
+    return false;
   }
 
   Future<bool> _onTapSetBakPwd(
@@ -276,7 +228,17 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           ],
         ),
       ),
-      actions: Btnx.oks,
+      actions: [
+        if (currentPwd?.isNotEmpty ?? false)
+          TextButton(
+            onPressed: () {
+              context.popDialog();
+              unawaited(_onTapDeleteBakPwd());
+            },
+            child: Text(libL10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ...Btnx.oks,
+      ],
     );
     if (result != true) return false;
 
@@ -285,421 +247,26 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       Toast.show(emptyMessage ?? libL10n.empty);
       return false;
     }
-    final previous = await SecureStoreProps.bakPwd.read();
-    await SecureStoreProps.bakPwd.write(pwd);
-    // The password decides what the remote file *is*, and neither side's sync
-    // tag moves when it changes: `lastModTime` is about the user's data and
-    // the remote's ETag is about bytes nobody has rewritten yet. Without this
-    // the shortcut skips every sync from here, so the remote copy stays
-    // readable only with the old password — and the first time data does
-    // change, the merge fails to decrypt it and `_sync` returns before the
-    // upload. Nothing reaches the remote again, and nothing says so.
-    // LK Cloud's theme packages are sealed with it as well, and the log's key.
-    await BakSyncer.forgetPasswordState();
+    final previous = currentPwd;
     if (previous != pwd) {
+      // First: the remotes' keys are still sealed with it, and a restart
+      // before they are sealed again must still open them.
       await SyncKey.passwordChanged(previous);
-      LkcLogSync.reset();
-      FileLogSync.reset();
-      unawaited(LkcLogSync.sync());
-      unawaited(FileLogSync.sync());
+      await SecureStoreProps.bakPwd.write(pwd);
+      // Sealed again now; the syncs then go on with it.
+      unawaited(
+        SyncKey.recheck().whenComplete(() {
+          unawaited(LkcLogSync.sync());
+          unawaited(FileLogSync.sync());
+          // Not to upload (the backup is sealed to the key): to clear what the
+          // last one said of the password.
+          if (_hasEnabledRemoteSync) bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+        }),
+      );
     }
     Toast.show(l10n.backupPasswordSet);
-    setState(() {});
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
     return true;
-  }
-
-  Widget get _buildTip {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.warning),
-        title: Text(libL10n.attention),
-        subtitle: Text(l10n.backupTip, style: UIs.textGrey),
-      ),
-    );
-  }
-
-  Widget get _buildFile {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.file_open),
-        title: Text(libL10n.file),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.backup),
-            trailing: const Icon(Icons.save),
-            onTap: () => BackupService.backup(context, FileBackupSource()),
-          ),
-          ListTile(
-            trailing: const Icon(Icons.restore),
-            title: Text(libL10n.restore),
-            onTap: () => BackupService.restore(context, FileBackupSource()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget get _buildIcloud {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.cloud),
-        title: const Text('iCloud'),
-        initiallyExpanded: false,
-        children: [
-          _buildIcloudStatus,
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: PrefProps.icloudSync,
-              validator: (p0) async {
-                if (p0 && _remoteSyncOn(but: PrefProps.icloudSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (p0) {
-                  final ok = await _ensureBakPwd(context);
-                  if (!ok) return false;
-                }
-                if (p0) {
-                  await bakSync.sync(rs: icloud);
-                  if (mounted) _refreshIcloudStatus();
-                }
-                return true;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget get _buildWebdav {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.storage),
-        title: const Text('WebDAV'),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.setting),
-            trailing: const Icon(Icons.settings),
-            onTap: () async => _onTapWebdavSetting(context),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: PrefProps.webdavSync,
-              validator: (p0) async {
-                if (p0 && _remoteSyncOn(but: PrefProps.webdavSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (p0) {
-                  final ok = await _ensureBakPwd(context);
-                  if (!ok) return false;
-                }
-                if (p0) {
-                  final url = PrefProps.webdavUrl.get();
-                  final user = PrefProps.webdavUser.get();
-                  final pwd = await SecureStoreProps.webdavPwd.read();
-
-                  final anyNull = url == null || user == null || pwd == null;
-                  if (anyNull) {
-                    Toast.show(l10n.webdavSettingEmpty);
-                    return false;
-                  }
-
-                  final anyEmpty = url.isEmpty || user.isEmpty || pwd.isEmpty;
-                  if (anyEmpty) {
-                    Toast.show(l10n.webdavSettingEmpty);
-                    return false;
-                  }
-
-                  webdavLoading.value = true;
-                  await bakSync.sync(rs: Webdav.shared);
-                  webdavLoading.value = false;
-                }
-                return true;
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: webdavLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () async => _onTapWebdavDl(context),
-                    child: Text(libL10n.restore),
-                  ),
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async => _onTapWebdavUp(context),
-                    child: Text(libL10n.backup),
-                  ),
-                ],
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget get _buildGist {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.code),
-        title: const Text('GitHub Gist'),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.setting),
-            trailing: const Icon(Icons.settings),
-            onTap: () async => _onTapGistSetting(context),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: PrefProps.gistSync,
-              validator: (p0) async {
-                if (p0 && _remoteSyncOn(but: PrefProps.gistSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (p0) {
-                  final ok = await _ensureBakPwd(context);
-                  if (!ok) return false;
-                }
-                if (p0) {
-                  final token = await SecureStoreProps.githubToken.read();
-                  // The first upload creates a Gist when no id is stored.
-                  final hasToken = token != null && token.isNotEmpty;
-                  if (!hasToken) {
-                    Toast.show(context.l10n.githubGistTokenEmpty);
-                    return false;
-                  }
-                  gistLoading.value = true;
-                  await bakSync.sync(rs: GistRs.shared);
-                  gistLoading.value = false;
-                }
-                return true;
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: gistLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () async => _onTapGistDl(context),
-                    child: Text(libL10n.restore),
-                  ),
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async => _onTapGistUp(context),
-                    child: Text(libL10n.backup),
-                  ),
-                ],
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The chosen server's monitor agent. Picked from the servers with an agent
-  /// configured rather than typed, so the address and account stay the
-  /// record's own.
-  Widget get _buildMonitor {
-    final candidates = Stores.server
-        .fetch()
-        .where((e) => e.monitorOn != null)
-        .toList();
-    final chosenId = BakSyncer.monitorSyncServer.get();
-    final chosen = candidates.where((e) => e.id == chosenId).firstOrNull;
-
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.monitor_heart),
-        title: Text(l10n.monitorAgent),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.server),
-            subtitle: Text(
-              chosen?.name ??
-                  (candidates.isEmpty
-                      ? l10n.watchNoMonitorServer
-                      : l10n.monitorSyncNeedsServer),
-              style: UIs.textGrey,
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: candidates.isEmpty
-                ? null
-                : () => _onTapMonitorServer(context, candidates, chosen),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: BakSyncer.monitorSync,
-              validator: (p0) async {
-                if (!p0) return true;
-                if (_remoteSyncOn(but: BakSyncer.monitorSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                final storage = bakSync.monitorStorage();
-                if (chosen == null || storage == null) {
-                  Toast.show(l10n.monitorSyncNeedsServer);
-                  return false;
-                }
-                final ok = await _ensureBakPwd(context);
-                if (!ok) return false;
-
-                monitorLoading.value = true;
-                try {
-                  await storage.check();
-                  await bakSync.sync(rs: storage);
-                  return true;
-                } catch (e, s) {
-                  if (mounted) context.showErrDialog(e, s, l10n.monitorAgent);
-                  return false;
-                } finally {
-                  monitorLoading.value = false;
-                }
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: monitorLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () async => _onTapMonitorDl(context),
-                    child: Text(libL10n.restore),
-                  ),
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async => _onTapMonitorUp(context),
-                    child: Text(libL10n.backup),
-                  ),
-                ],
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The signed-in account's LK Cloud: synced in real time, the last few
-  /// versions kept, theme packages beside the backup.
-  Widget get _buildLkc {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.cloud),
-        title: const Text('LK Cloud'),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.lkcAccount),
-            subtitle: Lkc.client.user.listenVal(
-              (user) => Text(
-                user?.name ?? libL10n.lkcNotSignedIn,
-                style: UIs.textGrey,
-              ),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: LkcSyncPrefs.enabled,
-              validator: (p0) async {
-                if (!p0) return true;
-                if (_remoteSyncOn(but: LkcSyncPrefs.enabled)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (!Lkc.client.signedIn) {
-                  Toast.show(libL10n.lkcNotSignedIn);
-                  return false;
-                }
-                final ok = await _ensureBakPwd(context);
-                if (!ok) return false;
-
-                lkcLoading.value = true;
-                try {
-                  final storage = LkcSyncPrefs.storage;
-                  // A checkpoint left from an earlier time on would skip the
-                  // write this needs to see.
-                  await BakSyncer.forgetCheckpoint();
-                  final before = storage.writtenTag(Miscs.bakFileName);
-                  await bakSync.sync(rs: storage, throttleMilli: 0);
-                  // A cycle that could not read the remote returns without
-                  // writing, and says so only in the log.
-                  final after = storage.writtenTag(Miscs.bakFileName);
-                  if (after == null || after == before) {
-                    Toast.show(libL10n.fail);
-                    return false;
-                  }
-                  return true;
-                } catch (e, s) {
-                  if (mounted) _showLkcErr(e, s, libL10n.sync);
-                  return false;
-                } finally {
-                  lkcLoading.value = false;
-                }
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: lkcLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-              return TextButton(
-                onPressed: () async => _onTapLkcRestore(context),
-                child: Text(libL10n.restore),
-              );
-            }),
-          ),
-          // Only where the log is whole here: one that leaves the settings
-          // out writes no snapshot.
-          ListenableBuilder(
-            listenable: Listenable.merge([
-              LkcSyncPrefs.enabled.listenable(),
-              PrefProps.syncAppSettings.listenable(),
-            ]),
-            builder: (_, _) {
-              if (!LkcSyncPrefs.enabled.get() || !PrefProps.syncAppSettings.get()) {
-                return UIs.placeholder;
-              }
-              return ListTile(
-                title: Text(l10n.syncKeyRotate),
-                trailing: const Icon(Icons.key),
-                onTap: () async => _onTapRotateSyncKey(context),
-              );
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   /// A new key and a new backup password together: a device that still knows
@@ -710,7 +277,16 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !context.mounted) return;
-    if (!await _onTapSetBakPwd(context)) return;
+    // Only with the account's key open here: a new one is put beside it.
+    try {
+      await LkcLogSync.key();
+    } on SyncPasswordMismatch catch (e) {
+      return Toast.show(e.toString());
+    } catch (e, s) {
+      if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
+      return;
+    }
+    if (!context.mounted || !await _onTapSetBakPwd(context)) return;
     lkcLoading.value = true;
     try {
       await LkcLogSync.rotateKey();
@@ -718,7 +294,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
     } finally {
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
   }
 
@@ -731,115 +307,19 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  Widget get _buildClipboard {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.content_paste),
-        title: Text(libL10n.clipboard),
-        children: [
-          ListTile(
-            title: Text(libL10n.backup),
-            trailing: const Icon(Icons.save),
-            onTap: () => BackupService.backup(context, ClipboardBackupSource()),
-          ),
-          ListTile(
-            trailing: const Icon(Icons.restore),
-            title: Text(libL10n.restore),
-            onTap: () =>
-                BackupService.restore(context, ClipboardBackupSource()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// One switch for every destination: what the sync carries, not where.
-  Widget get _buildSyncSettings {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.settings),
-        title: Text(l10n.syncAppSettings),
-        subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
-      ),
-    );
-  }
-
   void _refreshIcloudStatus({bool notify = true}) {
-    if (!isICloudSupported) return;
+    // Also after a sync that outlived the page.
+    if (!isICloudSupported || !mounted) return;
 
-    final future = _loadIcloudStatus();
+    final future = _loadIcloudConflict();
     if (!notify) {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
       return;
     }
 
     setState(() {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
     });
-  }
-
-  Widget get _buildIcloudStatus {
-    return FutureBuilder<_ICloudBackupStatus?>(
-      future: _icloudStatusFuture,
-      builder: (context, snapshot) {
-        String subtitle;
-        IconData icon;
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          subtitle = l10n.icloudBackupStatusLoading;
-          icon = Icons.sync;
-        } else if (snapshot.hasError) {
-          subtitle = l10n.icloudBackupStatusError;
-          icon = Icons.error_outline;
-        } else {
-          final status = snapshot.data;
-          if (status == null) {
-            subtitle = l10n.icloudBackupStatusEmpty;
-            icon = Icons.cloud_off;
-          } else {
-            final lastModified = status.lastModified.toLocal().ymdhms();
-            final remoteState = switch ((
-              status.isUploading,
-              status.isUploaded,
-              status.hasConflict,
-            )) {
-              (_, _, true) => l10n.icloudBackupStateConflict,
-              (true, _, _) => l10n.icloudBackupStateUploading,
-              (_, true, _) => l10n.icloudBackupStateUploaded,
-              _ => l10n.icloudBackupStateWaiting,
-            };
-            subtitle = l10n.icloudBackupStatusSummary(
-              lastModified,
-              remoteState,
-            );
-            icon = switch ((
-              status.hasConflict,
-              status.isUploading,
-              status.isUploaded,
-            )) {
-              (true, _, _) => Icons.warning,
-              (_, true, _) => Icons.cloud_upload,
-              (_, _, true) => Icons.cloud_done,
-              _ => Icons.cloud_queue,
-            };
-          }
-        }
-
-        return ListTile(
-          leading: Icon(icon),
-          title: Text(l10n.icloudBackupStatusTitle),
-          subtitle: Text(subtitle, style: UIs.textGrey),
-          trailing: IconButton(
-            onPressed: () {
-              _refreshIcloudStatus();
-            },
-            icon: const Icon(Icons.refresh),
-            tooltip: libL10n.refresh,
-          ),
-        );
-      },
-    );
   }
 
   /// The other half of the share button on a server's page.
@@ -976,34 +456,17 @@ extension on _BackupPageState {
     return false;
   }
 
-  Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
-    if (!isICloudSupported) return null;
-
+  /// Whether iCloud holds versions of the backup it could not reconcile.
+  Future<bool> _loadIcloudConflict() async {
+    if (!isICloudSupported) return false;
     final files = await icloud.list();
-    final matches = files.where(
-      (file) =>
-          file.relativePath == Paths.bakName && file.contentChangeDate != null,
-    );
-    if (matches.isEmpty) return null;
-
-    final file = matches.reduce(
-      (latest, current) =>
-          current.contentChangeDate!.isAfter(latest.contentChangeDate!)
-          ? current
-          : latest,
-    );
-    return _ICloudBackupStatus(
-      lastModified: file.contentChangeDate!,
-      isUploading: file.isUploading,
-      isUploaded: file.isUploaded,
-      hasConflict: file.hasUnresolvedConflicts,
-    );
+    return files.any((file) => file.relativePath == Paths.bakName && file.hasUnresolvedConflicts);
   }
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
-    webdavLoading.value = true;
+    remoteLoading.value = true;
     try {
-      final files = await Webdav.shared.list();
+      final files = await SyncRemotes.webdav.list();
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
@@ -1012,118 +475,33 @@ extension on _BackupPageState {
       );
       if (fileName == null) return;
 
-      await Webdav.shared.download(relativePath: fileName);
+      await SyncRemotes.webdav.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
+      if (!context.mounted) return;
       await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
-      webdavLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
-    webdavLoading.value = true;
+    remoteLoading.value = true;
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
-    final bakName = '$date-${Miscs.bakFileName}';
+    final bakName = '$date-${Miscs.exportBakFileName}';
     try {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
-      await bakSync.writeEncryptedBackup(name: bakName);
-      await Webdav.shared.upload(relativePath: bakName);
+      await BackupV2.backup(bakName, await SecureStoreProps.bakPwd.read());
+      await SyncRemotes.webdav.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
-      webdavLoading.value = false;
-    }
-  }
-
-  Future<void> _onTapGistDl(BuildContext context) async {
-    gistLoading.value = true;
-    try {
-      final files = await GistRs.shared.list();
-      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
-
-      final fileName = await context.showPickSingleDialog(
-        title: libL10n.restore,
-        items: files,
-      );
-      if (fileName == null) return;
-
-      await GistRs.shared.download(relativePath: fileName);
-      final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
-      await BackupService.restoreData(context, dlFile);
-    } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.restore);
-      Loggers.app.warning('Download gist backup failed', e, s);
-    } finally {
-      gistLoading.value = false;
-    }
-  }
-
-  Future<void> _onTapGistUp(BuildContext context) async {
-    gistLoading.value = true;
-    final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
-    final bakName = '$date-${Miscs.bakFileName}';
-    try {
-      final ok = await _ensureBakPwd(context);
-      if (!ok) return;
-      await bakSync.writeEncryptedBackup(name: bakName);
-      await GistRs.shared.upload(relativePath: bakName);
-      Loggers.app.info('Upload gist backup success');
-    } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.upload);
-      Loggers.app.warning('Upload gist backup failed', e, s);
-    } finally {
-      gistLoading.value = false;
-    }
-  }
-
-  Future<void> _onTapMonitorDl(BuildContext context) async {
-    final storage = bakSync.monitorStorage();
-    if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
-    monitorLoading.value = true;
-    try {
-      final files = await storage.list();
-      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
-
-      final fileName = await context.showPickSingleDialog(
-        title: libL10n.restore,
-        items: files,
-      );
-      if (fileName == null) return;
-
-      await storage.download(relativePath: fileName);
-      final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
-      await BackupService.restoreData(context, dlFile);
-    } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.restore);
-      Loggers.app.warning('Download monitor backup failed', e, s);
-    } finally {
-      monitorLoading.value = false;
-    }
-  }
-
-  Future<void> _onTapMonitorUp(BuildContext context) async {
-    final storage = bakSync.monitorStorage();
-    if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
-    monitorLoading.value = true;
-    final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
-    final bakName = '$date-${Miscs.bakFileName}';
-    try {
-      final ok = await _ensureBakPwd(context);
-      if (!ok) return;
-      await bakSync.writeEncryptedBackup(name: bakName);
-      await storage.upload(relativePath: bakName);
-      Loggers.app.info('Upload monitor backup success');
-    } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.upload);
-      Loggers.app.warning('Upload monitor backup failed', e, s);
-    } finally {
-      monitorLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
@@ -1133,6 +511,14 @@ extension on _BackupPageState {
     lkcLoading.value = true;
     Directory? dir;
     try {
+      // First: nothing of the account is listed while the password here does
+      // not open its key.
+      final SyncKey key;
+      try {
+        key = await LkcLogSync.key(create: false);
+      } on SyncKeyNotHere {
+        return Toast.show(l10n.dirEmpty);
+      }
       dir = await Directory.systemTemp.createTemp('sb-lkc-restore-');
       final sync = await Lkc.client.sync(Lkc.app);
       final name = Miscs.bakFileName;
@@ -1159,119 +545,24 @@ extension on _BackupPageState {
           ? await sync.download(name: name, to: path)
           : await sync.downloadVersion(name: name, etag: picked.$1, to: path);
       if (fetched.missing) return Toast.show(l10n.dirEmpty);
-      final bytes = await File(path).readAsBytes();
+      final bytes = await key.openFresh(await File(path).readAsBytes());
       if (context.mounted) await BackupService.restoreData(context, bytes);
+    } on SyncPasswordMismatch catch (e) {
+      // Said as the card above says it: no error to report.
+      Toast.show(e.toString());
     } catch (e, s) {
       if (context.mounted) _showLkcErr(e, s, libL10n.restore);
       Loggers.app.warning('Restore LK Cloud backup failed', e, s);
     } finally {
       await dir?.delete(recursive: true);
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
-  }
-
-  Future<void> _onTapGistSetting(BuildContext context) async {
-    final tokenCtrl = TextEditingController(
-      text: await SecureStoreProps.githubToken.read(),
-    );
-    final gistIdCtrl = TextEditingController(text: PrefProps.gistId.get());
-    final nodeToken = FocusNode();
-    final appL10n = context.l10n;
-    final result = await context.showRoundDialog<bool>(
-      title: 'GitHub Gist',
-      // Disposed by the tree, once the fields have left it: see
-      // `_onTapSetBakPwd`.
-      child: DisposeWith(
-        notifiers: [tokenCtrl, gistIdCtrl, nodeToken],
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Input(
-              label: appL10n.githubGistToken,
-              controller: tokenCtrl,
-              suggestion: false,
-              obscureText: true,
-              node: nodeToken,
-            ),
-            Input(
-              label: appL10n.githubGistIdOptional,
-              controller: gistIdCtrl,
-              suggestion: false,
-              onSubmitted: (_) => context.popDialog(true),
-            ),
-          ],
-        ),
-      ),
-      actions: Btnx.oks,
-    );
-    if (result != true || !context.mounted) return;
-    // Read now: the check below goes to the network, and the fields are gone
-    // by the time it answers.
-    await _saveGistSetting(
-      context,
-      token: tokenCtrl.text.trim(),
-      gistInput: gistIdCtrl.text.trim(),
-    );
-  }
-
-  Future<void> _saveGistSetting(
-    BuildContext context, {
-    required String token,
-    required String gistInput,
-  }) async {
-    final appL10n = context.l10n;
-    if (token.isEmpty) {
-      Toast.show(appL10n.githubGistTokenEmpty);
-      return;
-    }
-    // An id, or the link a browser shows for the gist.
-    final gistId = gistInput.isEmpty ? null : GistRs.idOf(gistInput);
-    if (gistInput.isNotEmpty && gistId == null) {
-      _showGistProblem(context, appL10n.githubGistIdInvalid);
-      return;
-    }
-    try {
-      await GistRs.test(token: token, gistId: gistId);
-
-      await SecureStoreProps.githubToken.write(token);
-      GistRs.shared.token = token;
-      if (gistId == null) {
-        await PrefProps.gistId.remove();
-      } else {
-        await PrefProps.gistId.set(gistId);
-      }
-      // Same reason as WebDAV: a different gist behind the same backend.
-      await BakSyncer.forgetCheckpoint();
-      // Only once all of it is saved: a write that fails is the error below.
-      Toast.success(libL10n.success);
-    } on GistTestException catch (e) {
-      if (!context.mounted) return;
-      _showGistProblem(context, switch (e.reason) {
-        GistTestFailure.badToken => appL10n.githubGistTokenRejected,
-        GistTestFailure.notFound => appL10n.githubGistNotFound,
-      });
-    } catch (e, s) {
-      if (!context.mounted) return;
-      context.showErrDialog(e, s, 'Gist');
-    }
-  }
-
-  /// What was wrong with what the user entered, in words: the response itself
-  /// says only 401 or 404.
-  void _showGistProblem(BuildContext context, String message) {
-    context.showRoundDialog(
-      title: 'GitHub Gist',
-      child: Text(message),
-      actions: Btnx.oks,
-    );
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
-    final url = TextEditingController(text: PrefProps.webdavUrl.get());
-    final user = TextEditingController(text: PrefProps.webdavUser.get());
-    final pwd = TextEditingController(
-      text: await SecureStoreProps.webdavPwd.read(),
-    );
+    final url = TextEditingController(text: SyncRemotes.webdavUrl);
+    final user = TextEditingController(text: SyncRemotes.webdavUser);
+    final pwd = TextEditingController(text: SyncRemotes.webdavPwd);
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -1313,18 +604,13 @@ extension on _BackupPageState {
         await Webdav.test(url_, user_, pwd_);
         Toast.success(libL10n.success);
 
-        Webdav.shared.client = WebdavClient.basicAuth(
-          url: url_,
-          user: user_,
-          pwd: pwd_,
-        );
-        await PrefProps.webdavUrl.set(url_);
-        await PrefProps.webdavUser.set(user_);
-        await SecureStoreProps.webdavPwd.write(pwd_);
+        SyncRemotes.setWebdav(url: url_, user: user_, pwd: pwd_);
         // The sync shortcut remembers a tag from *a* WebDAV server, and the
         // backend's type is the same whichever one it points at. Pointing it
         // somewhere new is exactly when the skip would be wrong.
         await BakSyncer.forgetCheckpoint();
+        // The server it names is shown.
+        _webdavEdited.value++;
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
@@ -1430,18 +716,4 @@ extension on _BackupPageState {
 
     return false;
   }
-}
-
-final class _ICloudBackupStatus {
-  const _ICloudBackupStatus({
-    required this.lastModified,
-    required this.isUploading,
-    required this.isUploaded,
-    required this.hasConflict,
-  });
-
-  final DateTime lastModified;
-  final bool isUploading;
-  final bool isUploaded;
-  final bool hasConflict;
 }

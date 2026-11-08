@@ -265,18 +265,6 @@ abstract class AppLocalizations {
   /// **'High risk'**
   String get askAiRiskDestructive;
 
-  /// User-facing label or message for ask AI auto run safe commands.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-run read-only commands'**
-  String get askAiAutoRunSafeCommands;
-
-  /// Help text for the ask AI auto run safe commands setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs only when both the model and the local check call it read-only'**
-  String get askAiAutoRunSafeCommandsTip;
-
   /// User-facing label or message for ask AI history.
   ///
   /// In en, this message translates to:
@@ -421,12 +409,6 @@ abstract class AppLocalizations {
   /// **'Authentication failed. Check the details'**
   String get authFailTip;
 
-  /// User-facing label or message for auto backup conflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Only one automatic backup can be turned on at the same time.'**
-  String get autoBackupConflict;
-
   /// User-facing label or message for auto connect.
   ///
   /// In en, this message translates to:
@@ -457,12 +439,6 @@ abstract class AppLocalizations {
   /// **'Backup is encrypted'**
   String get backupEncrypted;
 
-  /// User-facing label or message for backup not encrypted.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup is not encrypted'**
-  String get backupNotEncrypted;
-
   /// User-facing label or message for backup password.
   ///
   /// In en, this message translates to:
@@ -472,7 +448,7 @@ abstract class AppLocalizations {
   /// Confirmation before removing the backup password on iOS or macOS, where it is in iCloud Keychain and so removed from the person's other Apple devices too.
   ///
   /// In en, this message translates to:
-  /// **'This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.'**
+  /// **'This will remove the backup password from all devices using the same iCloud Keychain. Sync will pause on those devices until a new password is set.'**
   String get backupPasswordRemoveSynced;
 
   /// User-facing label or message for backup password removed.
@@ -490,7 +466,7 @@ abstract class AppLocalizations {
   /// Help text for the backup password setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Set a password to encrypt backup files. Leave empty to disable encryption.'**
+  /// **'Used to encrypt backups and synced data. All synced devices must use the same password—if you change it on one device, enter the new password on the others.'**
   String get backupPasswordTip;
 
   /// User-facing label or message for backup password wrong.
@@ -649,65 +625,11 @@ abstract class AppLocalizations {
   /// **'Restored, except these themes. Install them again from the theme store or the file they came from.'**
   String get backupThemesNotRestored;
 
-  /// Help text for the backup setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
-  String get backupTip;
-
-  /// Title shown for the iCloud backup status dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup status'**
-  String get icloudBackupStatusTitle;
-
-  /// Status message shown while iCloud backup status loading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading iCloud backup status...'**
-  String get icloudBackupStatusLoading;
-
-  /// Error message shown when iCloud backup status error.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to read iCloud backup metadata'**
-  String get icloudBackupStatusError;
-
-  /// Empty-state message for iCloud backup status empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No iCloud backup file found yet'**
-  String get icloudBackupStatusEmpty;
-
-  /// User-facing label or message for iCloud backup state uploading.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploading'**
-  String get icloudBackupStateUploading;
-
   /// User-facing label or message for iCloud backup state conflict.
   ///
   /// In en, this message translates to:
   /// **'Conflict detected'**
   String get icloudBackupStateConflict;
-
-  /// User-facing label or message for iCloud backup state uploaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploaded'**
-  String get icloudBackupStateUploaded;
-
-  /// User-facing label or message for iCloud backup state waiting.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for iCloud'**
-  String get icloudBackupStateWaiting;
-
-  /// User-facing label or message for iCloud backup status summary.
-  ///
-  /// In en, this message translates to:
-  /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
-  String icloudBackupStatusSummary(String lastModified, String remoteState);
 
   /// User-facing label or message for bg run.
   ///
@@ -1027,42 +949,6 @@ abstract class AppLocalizations {
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
 
-  /// User-facing label or message for github gist id optional.
-  ///
-  /// In en, this message translates to:
-  /// **'Gist ID (optional)'**
-  String get githubGistIdOptional;
-
-  /// User-facing label or message for github gist token.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub Gist token'**
-  String get githubGistToken;
-
-  /// Empty-state message for github gist token empty.
-  ///
-  /// In en, this message translates to:
-  /// **'Token is empty'**
-  String get githubGistTokenEmpty;
-
-  /// Error shown when the Gist ID field holds something that is neither an ID nor a gist URL.
-  ///
-  /// In en, this message translates to:
-  /// **'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.'**
-  String get githubGistIdInvalid;
-
-  /// Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.'**
-  String get githubGistNotFound;
-
-  /// Error shown when GitHub answers 401 or 403 for the token. Keep "gist" and "Gists" as GitHub names them.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).'**
-  String get githubGistTokenRejected;
-
   /// User-facing label or message for goto.
   ///
   /// In en, this message translates to:
@@ -1198,7 +1084,7 @@ abstract class AppLocalizations {
   /// Help text for the rememberKeyPassphrase setting.
   ///
   /// In en, this message translates to:
-  /// **'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.'**
+  /// **'Save passphrases for encrypted private keys so you don\'t need to re-enter them after restarting the app. Turning this off deletes saved passphrases from this device.'**
   String get rememberKeyPassphraseTip;
 
   /// Help text for the SSH key unlock setting or action.
@@ -2232,17 +2118,47 @@ abstract class AppLocalizations {
   /// **'Switch to {val}'**
   String switchTo(String val);
 
-  /// User-facing label or message for sync app settings.
+  /// Title of the list of what sync carries.
   ///
   /// In en, this message translates to:
-  /// **'Sync app settings'**
-  String get syncAppSettings;
+  /// **'Synced data'**
+  String get syncedData;
 
-  /// Help text for the sync app settings setting or action.
+  /// Sync category label.
   ///
   /// In en, this message translates to:
-  /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
-  String get syncAppSettingsTip;
+  /// **'Sudo passwords and API keys'**
+  String get syncSecrets;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Key passphrases'**
+  String get keyPassphrases;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts, images and skills'**
+  String get syncFiles;
+
+  /// Shown on the backup page when this build stops syncing at data a newer build wrote.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced data was created by a newer version of ServerBox. Update the app to continue syncing.'**
+  String get syncRemoteTooNew;
+
+  /// A sync stopped: the remote backup opens with another backup password.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced data is encrypted with a different backup password. Enter the backup password used on your other devices.'**
+  String get syncPasswordMismatch;
+
+  /// A sync stopped: the destination could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the sync service. Check your network connection and try again.'**
+  String get syncUnreachable;
 
   /// Help text for the term font size setting or action.
   ///
@@ -2949,7 +2865,7 @@ abstract class AppLocalizations {
   /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
+  /// **'Allows the Agent to run commands on this device according to the permission mode'**
   String get agentLocalExecTip;
 
   /// Help text for the agent local exec rootfs setting or action.
@@ -9155,30 +9071,6 @@ abstract class AppLocalizations {
   /// **'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.'**
   String get firewallInvalidForwardPort;
 
-  /// Backup sync to a Monitor: no server is chosen yet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick the server whose Monitor stores the backup.'**
-  String get monitorSyncNeedsServer;
-
-  /// Backup sync to a Monitor: the Monitor is too old to store backups.
-  ///
-  /// In en, this message translates to:
-  /// **'This Monitor cannot store backups. Update the Monitor.'**
-  String get monitorBackupUnsupported;
-
-  /// Backup sync to a Monitor: the file exceeds the Monitor's size limit, given as max.
-  ///
-  /// In en, this message translates to:
-  /// **'The backup is larger than the Monitor accepts ({max}).'**
-  String monitorBackupTooLarge(String max);
-
-  /// Backup sync to a Monitor: the Monitor's blob count limit is reached.
-  ///
-  /// In en, this message translates to:
-  /// **'The Monitor already holds as many backups as it allows. Delete one first.'**
-  String get monitorBackupTooMany;
-
   /// Create form: the VMID is outside the range PVE accepts.
   ///
   /// In en, this message translates to:
@@ -11237,36 +11129,6 @@ abstract class AppLocalizations {
   /// **'Ask the agent on {server}, or give it a task.'**
   String agentRemoteNewHint(String server);
 
-  /// Agent: what a server's agent may run in a new task without asking.
-  ///
-  /// In en, this message translates to:
-  /// **'Permission mode'**
-  String get agentPermissionMode;
-
-  /// Agent permission mode: the model allows or refuses each step.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get agentModeAuto;
-
-  /// Agent permission mode: steps go by the server's rules; others wait for confirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual'**
-  String get agentModeManual;
-
-  /// Agent permission mode: every step runs without asking.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow all'**
-  String get agentModeBypass;
-
-  /// Agent: the server's admin turned the allow-all mode off.
-  ///
-  /// In en, this message translates to:
-  /// **'Turned off on this server'**
-  String get agentModeBypassOff;
-
   /// Agent: warning shown while the allow-all mode is picked for a new task.
   ///
   /// In en, this message translates to:
@@ -12388,6 +12250,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alternate address'**
   String get discoveryAlternateAddress;
+
+  /// Agent command permissions: Agent
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentPermsGroup;
+
+  /// Asked before leaving a page with unsaved edits
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get discardUnsaved;
+
+  /// No description provided for @syncAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync'**
+  String get syncAuto;
+
+  /// No description provided for @syncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get syncOff;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncDone;
+
+  /// No description provided for @syncLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {time}'**
+  String syncLastAt(String time);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync with {name} will be turned off. Existing backups on {name} will not be deleted.'**
+  String syncSwitchBody(String name);
+
+  /// No description provided for @bakPwdSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get bakPwdSet;
+
+  /// No description provided for @bakPwdNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get bakPwdNotSet;
+
+  /// No description provided for @syncChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get syncChannel;
+
+  /// No description provided for @syncStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStateFailed;
+
+  /// No description provided for @syncStatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password mismatch'**
+  String get syncStatePassword;
+
+  /// No description provided for @syncStateUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get syncStateUpdate;
+
+  /// No description provided for @syncStateRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStateRunning;
 }
 
 class _AppLocalizationsDelegate

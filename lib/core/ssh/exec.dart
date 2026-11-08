@@ -155,7 +155,7 @@ class SshExec implements CommandByteExec {
 
   /// The account's sudo password, for what a cancelled command left running
   /// as root; null, or a null answer, tries `sudo -n`.
-  final Future<String?> Function()? sudoPassword;
+  final String? Function()? sudoPassword;
 
   /// How long to keep reading once the command itself has finished.
   ///
@@ -172,9 +172,6 @@ class SshExec implements CommandByteExec {
 
   /// How long each of the commands that stop one gets.
   static const _killTimeout = Duration(seconds: 10);
-
-  /// How long [sudoPassword] gets to answer; past it, `sudo -n`.
-  static const _sudoPasswordTimeout = Duration(seconds: 5);
 
   @override
   Future<ExecResult> run(
@@ -398,7 +395,12 @@ class SshExec implements CommandByteExec {
     final goneMark = es.execSessionGone();
     var gone = await _confirms(kill(es.SudoEntry.direct), goneMark);
     if (!gone) {
-      final password = await _sudoPassword();
+      String? password;
+      try {
+        password = sudoPassword?.call();
+      } catch (_) {
+        // Not to be had: `sudo -n` is what is left.
+      }
       gone = password == null
           ? await _confirms(kill(es.SudoEntry.sudoNoPassword), goneMark)
           : await _confirms(
@@ -409,19 +411,6 @@ class SshExec implements CommandByteExec {
     }
     await closed();
     return gone;
-  }
-
-  /// [sudoPassword]'s answer, or null when it has none, fails or takes
-  /// longer than [_sudoPasswordTimeout]: a secure store that never answers
-  /// must not hold the result of a stopped command forever.
-  Future<String?> _sudoPassword() async {
-    final read = sudoPassword;
-    if (read == null) return null;
-    try {
-      return await read().timeout(_sudoPasswordTimeout);
-    } catch (_) {
-      return null;
-    }
   }
 
   /// Whether [command], run on a channel of its own, printed [answer].

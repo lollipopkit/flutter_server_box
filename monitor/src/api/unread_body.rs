@@ -9,8 +9,7 @@
 //! marks the answer `close` only when the body was dropped before the answer
 //! went out (`h1::Dispatcher::send_response`), so a client may also reuse a
 //! connection about to close. A refusal by an extractor (an invalid query, a
-//! JSON 404 under `/api/v1`) did both now and then. `api::backup` reads a
-//! refused upload further itself (`discard`).
+//! JSON 404 under `/api/v1`) did both now and then.
 
 use std::cell::{Cell, RefCell};
 use std::pin::Pin;

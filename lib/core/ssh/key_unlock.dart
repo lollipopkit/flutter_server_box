@@ -159,7 +159,7 @@ abstract final class PrivateKeyUnlock {
     final generation = _generation[cacheKey] ?? 0;
     bool current() => (_generation[cacheKey] ?? 0) == generation;
 
-    final kept = await KeyPassphrases.read(pem);
+    final kept = KeyPassphrases.read(pem);
     if (kept != null) {
       try {
         final opened = await compute(decryptPem, [pem, kept]);
@@ -168,7 +168,7 @@ abstract final class PrivateKeyUnlock {
       } on SSHKeyDecryptError {
         // Not for these bytes after all: asked for instead, and replaced by
         // the answer.
-        unawaited(KeyPassphrases.delete(pem));
+        KeyPassphrases.delete(pem);
       }
     }
 
@@ -203,7 +203,7 @@ abstract final class PrivateKeyUnlock {
         // key that was replaced while this dialog was up.
         if (current()) {
           _opened[cacheKey] = opened;
-          unawaited(KeyPassphrases.write(pem, passphrase));
+          KeyPassphrases.write(pem, passphrase);
         }
         return opened;
       } on SSHKeyDecryptError {

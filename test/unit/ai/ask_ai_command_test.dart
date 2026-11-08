@@ -1,3 +1,4 @@
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmEffect;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 
@@ -52,7 +53,7 @@ void main() {
         'destructive': true,
       });
       expect(call.risk, AskAiCommandRisk.destructive);
-      expect(call.canAutoRun, isFalse);
+      expect(call.claimedEffect, LlmEffect.danger);
     });
   });
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show AttachButton, ComposerBox, ComposerButton, ComposerModelChip, ComposerThinkingChip, MenuBtn, llmL10n;
+    show AttachButton, ComposerBox, ComposerButton, ComposerModelChip, ComposerThinkingChip, LlmPermissionMode, PermissionModeChip, llmL10n;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
@@ -17,7 +17,6 @@ typedef RemoteMessage = ({
   List<String> files,
   MonitorAgentModel? model,
   String? thinkingLevel,
-  AgentPermissionMode? mode,
 });
 
 /// The box a message to a server's Agent mode is written in — a reply to a
@@ -67,8 +66,12 @@ class _RemoteComposerState extends State<RemoteComposer> {
   MonitorAgentModel? _model;
   String? _thinking;
 
-  /// The permission mode picked for a new task; null for the server's.
-  AgentPermissionMode? _mode;
+  /// A mode is being saved: the next waits for it, so two picks cannot
+  /// write over each other.
+  bool _savingMode = false;
+
+  /// A new task waits for the mode being saved: it starts in the one shown.
+  bool get _holdNewTask => widget.flow == null && _savingMode;
 
   /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
   static const _maxFiles = 10;
@@ -86,7 +89,6 @@ class _RemoteComposerState extends State<RemoteComposer> {
       _choices = null;
       _model = null;
       _thinking = null;
-      _mode = null;
       unawaited(_loadChoices());
     }
   }
@@ -112,11 +114,27 @@ class _RemoteComposerState extends State<RemoteComposer> {
 
   String get _effectiveThinking => _thinking ?? widget.flow?.thinkingLevel ?? _choices?.thinkingLevel ?? 'off';
 
-  /// The permission mode a new task starts in: picked, else the server's;
-  /// `bypass` only where the server allows it.
-  AgentPermissionMode _effectiveMode(({AgentPermissionMode defaultMode, bool bypassAllowed})? server) {
-    final m = _mode ?? server?.defaultMode ?? AgentPermissionMode.manual;
-    return m == AgentPermissionMode.bypass && !(server?.bypassAllowed ?? false) ? AgentPermissionMode.manual : m;
+  /// The mode the server's new tasks start in: `bypass` only where the
+  /// server allows it.
+  static LlmPermissionMode _effectiveMode(({LlmPermissionMode defaultMode, bool bypassAllowed}) server) =>
+      server.defaultMode == LlmPermissionMode.bypass && !server.bypassAllowed ? LlmPermissionMode.manual : server.defaultMode;
+
+  /// Makes [mode] the one the server's new tasks start in, as its
+  /// permissions page does.
+  Future<void> _pickMode(LlmPermissionMode mode) async {
+    final serverId = widget.serverId;
+    final client = RemoteAgentTasks.client(serverId);
+    if (client == null || _savingMode) return;
+    setState(() => _savingMode = true);
+    try {
+      final view = await client.agentPermissions();
+      final saved = await client.saveAgentPermissions(view.permissions.copyWith(defaultMode: mode));
+      RemoteAgentTasks.setDefaultMode(serverId, saved.permissions.mode);
+    } catch (e) {
+      if (mounted) context.showErrDialog(e);
+    } finally {
+      if (mounted) setState(() => _savingMode = false);
+    }
   }
 
   Future<void> _pickModel() async {
@@ -148,7 +166,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
   Future<void> _send() async {
     final text = _text.text.trim();
     final client = RemoteAgentTasks.client(widget.serverId);
-    if ((text.isEmpty && _files.isEmpty) || client == null || _sending || widget.blocked) return;
+    if ((text.isEmpty && _files.isEmpty) || client == null || _sending || widget.blocked || _holdNewTask) return;
     setState(() => _sending = true);
     try {
       final ids = [for (final f in _files) await client.agentUpload(File(f))];
@@ -158,7 +176,6 @@ class _RemoteComposerState extends State<RemoteComposer> {
         files: ids,
         model: model != null && !model.same(widget.flow?.model) ? model : null,
         thinkingLevel: _thinking,
-        mode: widget.flow == null ? _effectiveMode(RemoteAgentTasks.modes.value[widget.serverId]) : null,
       ));
       if (sent && mounted) {
         _text.clear();
@@ -166,7 +183,6 @@ class _RemoteComposerState extends State<RemoteComposer> {
           _files = const [];
           _model = null;
           _thinking = null;
-          _mode = null;
         });
       }
     } catch (e) {
@@ -192,13 +208,13 @@ class _RemoteComposerState extends State<RemoteComposer> {
           enabled: !blocked,
           hint: widget.hint,
           onSubmit: () => unawaited(_send()),
-          top: _files.isEmpty && mode != AgentPermissionMode.bypass
+          top: _files.isEmpty && mode != LlmPermissionMode.bypass
               ? null
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (mode == AgentPermissionMode.bypass)
+                    if (mode == LlmPermissionMode.bypass)
                       Padding(
                         padding: const EdgeInsets.only(left: 5, bottom: 5),
                         child: Row(
@@ -231,7 +247,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
             if (!blocked)
               AttachButton(onPicked: (paths) => setState(() => _files = [..._files, ...paths].take(_maxFiles).toList())),
             if (server != null && mode != null)
-              _ModeChip(mode: mode, bypassAllowed: server.bypassAllowed, onPick: (m) => setState(() => _mode = m)),
+              PermissionModeChip(mode: mode, bypassAllowed: server.bypassAllowed, onPick: blocked || _savingMode ? null : _pickMode),
             if (_effectiveModel case final m?) Flexible(child: ComposerModelChip(name: m.label, onTap: blocked ? null : _pickModel)),
             if (_effectiveModel?.reasoning ?? false)
               ComposerThinkingChip(
@@ -244,66 +260,10 @@ class _RemoteComposerState extends State<RemoteComposer> {
               ? const SizedBox(width: 32, height: 32, child: SizedLoading(20, padding: 6, builder: SizedLoading.circularBuilder))
               : widget.onStop != null && empty
               ? ComposerButton.stop(scheme, onTap: widget.onStop)
-              : ComposerButton.send(scheme, onTap: blocked ? null : () => unawaited(_send())),
+              : ComposerButton.send(scheme, onTap: blocked || _holdNewTask ? null : () => unawaited(_send())),
         );
       },
     );
   }
 }
 
-/// The permission mode a new task runs in: what steps it takes without
-/// asking. Rules for `manual` are the server's, in its Agent settings.
-class _ModeChip extends StatelessWidget {
-  const _ModeChip({required this.mode, required this.bypassAllowed, required this.onPick});
-
-  final AgentPermissionMode mode;
-  final bool bypassAllowed;
-  final void Function(AgentPermissionMode mode) onPick;
-
-  static IconData _icon(AgentPermissionMode mode) => switch (mode) {
-    AgentPermissionMode.auto => Icons.auto_mode,
-    AgentPermissionMode.bypass => Icons.bolt,
-    AgentPermissionMode.manual => Icons.rule,
-  };
-
-  static String _label(BuildContext context, AgentPermissionMode mode) => switch (mode) {
-    AgentPermissionMode.auto => context.l10n.agentModeAuto,
-    AgentPermissionMode.bypass => context.l10n.agentModeBypass,
-    AgentPermissionMode.manual => context.l10n.agentModeManual,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    // As the web panel: the default neutral, auto in the accent, allow-all a warning.
-    final color = switch (mode) {
-      AgentPermissionMode.auto => scheme.primary,
-      AgentPermissionMode.bypass => scheme.error,
-      AgentPermissionMode.manual => scheme.onSurfaceVariant,
-    };
-    return MenuBtn(
-      actions: [
-        for (final m in AgentPermissionMode.values)
-          ContextMenuAction(
-            text: _label(context, m),
-            icon: _icon(m),
-            checked: m == mode,
-            enabled: m != AgentPermissionMode.bypass || bypassAllowed,
-            note: m == AgentPermissionMode.bypass && !bypassAllowed ? context.l10n.agentModeBypassOff : null,
-            onTap: () => onPick(m),
-          ),
-      ],
-      builder: (toggle) => Tooltip(
-        message: context.l10n.agentPermissionMode,
-        child: Btn.row(
-          icon: Icon(_icon(mode), size: 16, color: color),
-          text: _label(context, mode),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color),
-          mainAxisSize: MainAxisSize.min,
-          onTap: toggle,
-          padding: const EdgeInsets.all(5),
-        ),
-      ),
-    );
-  }
-}

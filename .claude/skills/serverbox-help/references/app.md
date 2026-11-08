@@ -30,8 +30,7 @@ when the connection fails. Many servers at once: bulk import,
 
 Under **Settings → App → AI**:
 
-- **Providers** — the model services and their API keys (kept in the system
-  keychain), custom OpenAI-compatible, Anthropic or Google endpoints, and the
+- **Providers** — the model services and their API keys, custom OpenAI-compatible, Anthropic or Google endpoints, and the
   default model. A custom provider at plain `http://` on another machine is
   refused unless **Allow plain HTTP** is on for it.
 - **Tools** — which tool groups you may use, the tools allowed without asking,
@@ -40,11 +39,13 @@ Under **Settings → App → AI**:
 - **Skills** — instructions for particular tasks, installed from `owner/repo`,
   a GitHub or GitLab link, a site, a folder or a `.zip`, or a pasted
   `npx skills add …` command; **Check for updates** fetches them again.
-- **Auto-run read-only commands** — off by default; when on, a server command
-  that both you and the app judge read-only runs without asking, at most three
-  times per message. Never for commands on this device.
-- **Run commands on this device** — off by default; every such command is
-  asked about.
+- **Command permissions** — the mode (**Manual**, **Auto**, **Allow all**; also
+  switched under the message box, for every chat), deny / ask / allow command
+  rules and the auto mode judge's rules — the same page and logic as a
+  Monitor's Agent mode. Every action goes by the mode, reads and MCP tools
+  included; one that loses something for good asks unless all is allowed.
+- **Run commands on this device** — off by default; such commands go by the
+  mode.
 
 A terminal's own chat (the AI button in a terminal) sees only that terminal:
 it can read the screen and run commands in that session. The Agent tab
@@ -55,10 +56,19 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
 - **Unlocking with Face ID, Touch ID or a fingerprint**, and on Android
   **Run in background** (keeps connections alive; also allow notifications and
   exempt the app from battery optimisation): **Settings → App → General**.
-- **Backups**: the Backup page — a file, WebDAV, iCloud, a GitHub Gist, or one
-  of your servers' Monitors (the Monitor must be recent enough to list
-  `backup` in its features). A backup has the servers, snippets, keys and settings; the Agent's providers,
-  chats, skills and MCP secrets are not in it.
+- **Backups**: the Backup page — a file, WebDAV or iCloud. A backup includes servers with their SSH passwords, private keys,
+  snippets, remote desktop profiles with their passwords, app settings and Agent settings (encrypted or
+  not); sudo passwords, API keys, MCP headers, WebDAV settings and key passphrases are included only when
+  encrypted. Chats are not included. **Synced
+  data** on that page lets you toggle each category on or off; fonts,
+  images, skills and benchmarks sync only through iCloud, WebDAV and LK Cloud.
+  Versions from before the current sync format continue syncing to the legacy
+  backup file and do not exchange changes with newer versions. If an older version cannot read a
+  newer device's format, it stops importing remote changes and prompts you to update while still uploading local
+  changes. Keep all synced devices updated. All synced devices share the same backup
+  password—if the backup page reports a password mismatch,
+  enter the password used on your other devices (when changing the password on one device, enter the new
+  password on the others); sync remains paused on that device until the password matches.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.

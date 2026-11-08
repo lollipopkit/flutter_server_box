@@ -85,13 +85,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get askAiRiskDestructive => 'خطر بالا';
 
   @override
-  String get askAiAutoRunSafeCommands => 'اجرای خودکار دستورهای فقط‌خواندنی';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'فقط زمانی اجرا می‌شود که هم مدل و هم بررسی محلی آن را فقط‌خواندنی تشخیص دهند';
-
-  @override
   String get askAiHistory => 'تاریخچه گفتگو';
 
   @override
@@ -170,10 +163,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get authFailTip => 'احراز هویت ناموفق بود. مشخصات را بررسی کنید';
 
   @override
-  String get autoBackupConflict =>
-      'هم‌زمان فقط یک پشتیبان‌گیری خودکار می‌تواند فعال باشد.';
-
-  @override
   String get autoConnect => 'اتصال خودکار';
 
   @override
@@ -189,14 +178,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get backupEncrypted => 'نسخه پشتیبان رمزگذاری شده است';
 
   @override
-  String get backupNotEncrypted => 'نسخه پشتیبان رمزگذاری نشده است';
-
-  @override
   String get backupPassword => 'گذرواژه پشتیبان‌گیری';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'این کار گذرواژه پشتیبان‌گیری را از همه دستگاه‌هایی که از همان جاکلیدی iCloud استفاده می‌کنند حذف می‌کند. همگام‌سازی آن‌ها تا تنظیم دوباره گذرواژه متوقف می‌شود.';
+      'گذرواژهٔ پشتیبان از تمام دستگاه‌هایی که از همان iCloud Keychain استفاده می‌کنند حذف خواهد شد. همگام‌سازی در آن دستگاه‌ها تا زمان تنظیم گذرواژهٔ جدید متوقف می‌ماند.';
 
   @override
   String get backupPasswordRemoved => 'گذرواژه پشتیبان‌گیری حذف شد';
@@ -206,7 +192,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'برای رمزگذاری فایل‌های پشتیبان، گذرواژه‌ای تعیین کنید. برای غیرفعال کردن رمزگذاری، آن را خالی بگذارید.';
+      'برای رمزگذاری فایل‌های پشتیبان و داده‌های همگام‌سازی استفاده می‌شود. همهٔ دستگاه‌ها باید از یک گذرواژه استفاده کنند؛ در صورت تغییر آن روی یک دستگاه، گذرواژهٔ جدید را در سایر دستگاه‌ها نیز وارد کنید.';
 
   @override
   String get backupPasswordWrong => 'گذرواژه پشتیبان‌گیری نادرست است';
@@ -304,40 +290,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'بازیابی شد، به‌جز این پوسته‌ها. آن‌ها را مجدداً از فروشگاه پوسته یا فایل مبدأ نصب کنید.';
 
   @override
-  String get backupTip =>
-      'داده‌های خروجی گرفته‌شده می‌توانند با گذرواژه رمزگذاری شوند.\nلطفاً از آن به‌خوبی محافظت کنید.';
-
-  @override
-  String get icloudBackupStatusTitle => 'وضعیت پشتیبان‌گیری';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'در حال بارگیری وضعیت پشتیبان‌گیری iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'امکان خواندن متاداده پشتیبان‌گیری iCloud وجود ندارد';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'هنوز هیچ فایل پشتیبان‌گیری iCloud یافت نشد';
-
-  @override
-  String get icloudBackupStateUploading => 'در حال بارگذاری';
-
-  @override
   String get icloudBackupStateConflict => 'تداخل شناسایی شد';
-
-  @override
-  String get icloudBackupStateUploaded => 'بارگذاری شد';
-
-  @override
-  String get icloudBackupStateWaiting => 'در انتظار iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'آخرین پشتیبان‌گیری: $lastModified\nوضعیت: $remoteState';
-  }
 
   @override
   String get bgRun => 'اجرا در پس‌زمینه';
@@ -524,27 +477,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'آیا با چرخش دستگاه به حالت افقی، حالت تمام‌صفحه فعال شود؟ این گزینه فقط در تب سرورها اعمال می‌شود.';
 
   @override
-  String get githubGistIdOptional => 'شناسه Gist (اختیاری)';
-
-  @override
-  String get githubGistToken => 'توکن GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'توکن خالی است';
-
-  @override
-  String get githubGistIdInvalid =>
-      'این مقدار نه شناسه Gist است و نه پیوند Gist. بخش پایانی نشانی Gist را وارد کنید (https://gist.github.com/<user>/<ID>)، یا آن را خالی بگذارید تا در اولین پشتیبان‌گیری یک Gist خصوصی جدید ایجاد شود.';
-
-  @override
-  String get githubGistNotFound =>
-      'در GitHub هیچ Gist با این شناسه که توسط این توکن قابل خواندن باشد یافت نشد: ممکن است شناسه نادرست باشد، Gist حذف شده باشد، یا به حساب کاربری دیگری تعلق داشته باشد. شناسه را خالی بگذارید تا در اولین پشتیبان‌گیری یک Gist خصوصی جدید ایجاد شود.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'سامانه GitHub این توکن را رد کرد: ممکن است نادرست، منقضی یا باطل شده باشد، یا فاقد مجوز gist باشد (توکن کلاسیک: محدوده «gist»؛ توکن دقیق (Fine-grained): دسترسی خواندن و نوشتن «Gists»).';
-
-  @override
   String get goto => 'رفتن به';
 
   @override
@@ -620,7 +552,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را در Keychain سیستم این دستگاه ذخیره کنید تا پس از راه‌اندازی مجدد درخواست نشوند. کلیدها در فایل‌های پشتیبان رمزگذاری‌شده باقی می‌مانند. غیرفعال کردن این گزینه عبارت‌های عبور ذخیره‌شده را حذف می‌کند.';
+      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را ذخیره می‌کند تا پس از راه‌اندازی مجدد نیازی به وارد کردن دوبارهٔ آن‌ها نباشد. با غیرفعال کردن این گزینه، عبارت‌های عبور ذخیره‌شده در این دستگاه حذف می‌شوند.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1240,11 +1172,28 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'همگام‌سازی تنظیمات برنامه';
+  String get syncedData => 'داده‌های همگام‌شده';
 
   @override
-  String get syncAppSettingsTip =>
-      'گنجاندن پوسته، طرح‌بندی، ویرایشگر، ترمینال و سایر ترجیحات دستگاه در همگام‌سازی خودکار.';
+  String get syncSecrets => 'گذرواژه‌های sudo و کلیدهای API';
+
+  @override
+  String get keyPassphrases => 'عبارت‌های عبور کلید';
+
+  @override
+  String get syncFiles => 'فونت‌ها، تصاویر و Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'داده‌های همگام‌سازی توسط نسخهٔ جدیدتری از ServerBox ایجاد شده‌اند. برای ادامهٔ همگام‌سازی، برنامه را به‌روزرسانی کنید.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'داده‌های همگام‌سازی با گذرواژهٔ پشتیبان دیگری رمزگذاری شده‌اند. گذرواژهٔ مورد استفاده در سایر دستگاه‌های خود را وارد کنید.';
+
+  @override
+  String get syncUnreachable =>
+      'برقراری ارتباط با سرویس همگام‌سازی ممکن نشد. اتصال شبکه را بررسی کرده و دوباره تلاش کنید.';
 
   @override
   String get termFontSizeTip =>
@@ -1686,7 +1635,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'به Agent امکان می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. حتی دستورهای فقط‌خواندنی نیز بررسی می‌شوند';
+      'به Agent اجازه می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. فرمان‌هایش طبق حالت مجوز انجام می‌شوند';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5388,23 +5337,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'از ساختار port=80:proto=tcp:toport=8080 به‌همراه toport،‏ toaddr یا هر دو استفاده کنید.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'سروری را انتخاب کنید که Monitor آن نسخه پشتیبان را ذخیره می‌کند.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'این Monitor نمی‌تواند نسخه‌های پشتیبان را ذخیره کند. Monitor را به‌روزرسانی کنید.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'حجم نسخه پشتیبان بیشتر از حدی است که Monitor می‌پذیرد ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor در حال حاضر حداکثر تعداد مجاز نسخه پشتیبان را نگهداری می‌کند. ابتدا یکی را حذف کنید.';
-
-  @override
   String get virtCreateVmidInvalid => 'شناسه VMID بین ۱۰۰ تا ۹۹۹۹۹۹۹۹۹.';
 
   @override
@@ -6632,21 +6564,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Permission mode';
-
-  @override
-  String get agentModeAuto => 'Auto';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Allow all';
-
-  @override
-  String get agentModeBypassOff => 'Turned off on this server';
-
-  @override
   String get agentModeBypassWarn =>
       'Allow all: deleting, restarting and config changes run directly, without asking.';
 
@@ -7325,4 +7242,53 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'نشانی جایگزین';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'تغییرات ذخیره‌نشده کنار گذاشته شود؟';
+
+  @override
+  String get syncAuto => 'همگام‌سازی خودکار';
+
+  @override
+  String get syncOff => 'خاموش';
+
+  @override
+  String get syncDone => 'همگام شد';
+
+  @override
+  String syncLastAt(String time) {
+    return 'آخرین همگام‌سازی $time';
+  }
+
+  @override
+  String get syncNow => 'همگام‌سازی اکنون';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'همگام‌سازی خودکار با $name غیرفعال می‌شود. نسخه‌های پشتیبان موجود حذف نخواهند شد.';
+  }
+
+  @override
+  String get bakPwdSet => 'تنظیم شده';
+
+  @override
+  String get bakPwdNotSet => 'تنظیم نشده';
+
+  @override
+  String get syncChannel => 'کانال';
+
+  @override
+  String get syncStateFailed => 'همگام‌سازی ناموفق بود';
+
+  @override
+  String get syncStatePassword => 'رمز عبور مطابقت ندارد';
+
+  @override
+  String get syncStateUpdate => 'به‌روزرسانی لازم است';
+
+  @override
+  String get syncStateRunning => 'در حال همگام‌سازی';
 }

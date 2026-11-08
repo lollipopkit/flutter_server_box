@@ -81,6 +81,17 @@ abstract final class MonitorUi {
     );
   }
 
+  /// Whether unsaved edits may be dropped, asked before a page with them is
+  /// left.
+  static Future<bool> confirmDiscard(BuildContext context) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(l10n.discardUnsaved),
+      actions: Btnx.cancelRedOk,
+    );
+    return ok == true;
+  }
+
   /// The server editor's add button — an icon beside the label, rather than a
   /// bare text button, which on a page of cards reads as a link.
   static Widget addBtn(void Function() onTap) {

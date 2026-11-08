@@ -692,6 +692,28 @@ class SyncStates extends Table {
   Set<Column> get primaryKey => {k};
 }
 
+/// What a sync engine (`e`: `log.`, `seg.`) took from the others and this
+/// device does not sync now (a category turned off here): kept as it came,
+/// the newest op of each record, so a snapshot written here carries it on.
+@DataClassName('SyncPassedRow')
+class SyncPassed extends Table {
+  @override
+  String get tableName => 'sync_passed';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get e => text()();
+  TextColumn get c => text()();
+  TextColumn get id => text()();
+  TextColumn get h => text()();
+
+  /// The op's data as JSON: a blob's name for a large one.
+  TextColumn get d => text()();
+
+  @override
+  Set<Column> get primaryKey => {e, c, id};
+}
+
 /// Each synced record's newest stamp (`fl_sync`'s HLC): the last change made
 /// here or applied from elsewhere. `c` is the record's collection (a sync
 /// root's table, or `kv:<store>` for a key of a kv store), `id` its id or key.
@@ -756,6 +778,7 @@ class SyncRecords extends Table {
     Tombstones,
     SyncStates,
     SyncRecords,
+    SyncPassed,
   ],
 )
 class AppDb extends _$AppDb {

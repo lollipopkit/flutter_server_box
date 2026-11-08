@@ -83,12 +83,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiRiskDestructive => '높은 위험';
 
   @override
-  String get askAiAutoRunSafeCommands => '읽기 전용 명령 자동 실행';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '모델과 로컬 검사가 모두 읽기 전용이라고 판단할 때만 실행';
-
-  @override
   String get askAiHistory => '대화 기록';
 
   @override
@@ -161,9 +155,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
 
   @override
-  String get autoBackupConflict => '자동 백업은 한 번에 하나만 활성화할 수 있습니다.';
-
-  @override
   String get autoConnect => '자동 연결';
 
   @override
@@ -179,14 +170,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupEncrypted => '백업이 암호화되어 있습니다';
 
   @override
-  String get backupNotEncrypted => '백업이 암호화되어 있지 않습니다';
-
-  @override
   String get backupPassword => '백업 비밀번호';
 
   @override
   String get backupPasswordRemoveSynced =>
-      '같은 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 비밀번호를 다시 설정할 때까지 해당 기기의 동기화가 중지됩니다.';
+      '동일한 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 새 비밀번호를 설정할 때까지 동기화가 일시 중지됩니다.';
 
   @override
   String get backupPasswordRemoved => '백업 비밀번호가 제거되었습니다';
@@ -196,7 +184,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      '백업 파일을 암호화하기 위한 비밀번호를 설정하세요. 암호화를 비활성화하려면 비워 두세요.';
+      '백업 및 동기화 데이터를 암호화합니다. 모든 기기에서 동일한 비밀번호를 사용하므로, 한 기기에서 변경하면 다른 기기에서도 새 비밀번호를 입력해 주세요.';
 
   @override
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
@@ -290,36 +278,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '복원했지만 다음 테마는 복원되지 않았습니다. 테마 스토어나 원본 파일에서 다시 설치하세요.';
 
   @override
-  String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
-
-  @override
-  String get icloudBackupStatusTitle => '백업 상태';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud 백업 상태를 불러오는 중...';
-
-  @override
-  String get icloudBackupStatusError => 'iCloud 백업 메타데이터를 읽을 수 없습니다';
-
-  @override
-  String get icloudBackupStatusEmpty => '아직 iCloud 백업 파일이 없습니다';
-
-  @override
-  String get icloudBackupStateUploading => '업로드 중';
-
-  @override
   String get icloudBackupStateConflict => '충돌 감지됨';
-
-  @override
-  String get icloudBackupStateUploaded => '업로드됨';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud 대기 중';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '마지막 백업: $lastModified\n상태: $remoteState';
-  }
 
   @override
   String get bgRun => '백그라운드 실행';
@@ -503,27 +462,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (선택 사항)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist 토큰';
-
-  @override
-  String get githubGistTokenEmpty => '토큰이 비어 있습니다';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Gist ID나 Gist 링크가 아닙니다. gist 주소의 마지막 부분(https://gist.github.com/<user>/<ID>)을 사용하거나, 첫 백업 시 새 비밀 gist를 만들려면 비워 두세요.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub에서 이 토큰으로 읽을 수 있는 해당 ID의 gist를 찾지 못했습니다. ID가 잘못되었거나, gist가 삭제되었거나, 다른 계정의 gist일 수 있습니다. 첫 백업 시 새 비밀 gist를 만들려면 ID를 비워 두세요.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub에서 이 토큰을 거부했습니다. 토큰이 잘못되었거나 만료 또는 취소되었거나 gist 권한이 없을 수 있습니다(classic token: \"gist\" scope, fine-grained token: Gists read and write).';
-
-  @override
   String get goto => '이동';
 
   @override
@@ -595,7 +533,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '암호화된 개인 키의 암호 문구를 이 기기의 시스템 키체인에 저장하여 다시 시작한 후에도 묻지 않습니다. 백업의 키는 암호화된 상태로 유지됩니다. 끄면 저장된 암호 문구가 삭제됩니다.';
+      '암호화된 개인 키의 암호를 저장하여 앱을 다시 시작해도 다시 묻지 않습니다. 이 옵션을 끄면 기기에 저장된 암호가 삭제됩니다.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1178,11 +1116,27 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => '앱 설정 동기화';
+  String get syncedData => '동기화 데이터';
 
   @override
-  String get syncAppSettingsTip =>
-      '자동 동기화에 테마, 레이아웃, 편집기, 터미널 등 기타 기기 환경설정을 포함합니다.';
+  String get syncSecrets => 'sudo 비밀번호 및 API 키';
+
+  @override
+  String get keyPassphrases => '키 암호';
+
+  @override
+  String get syncFiles => '글꼴, 이미지 및 Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      '상위 버전의 ServerBox에서 생성된 동기화 데이터입니다. 계속 동기화하려면 앱을 업데이트하세요.';
+
+  @override
+  String get syncPasswordMismatch =>
+      '동기화 데이터가 다른 백업 비밀번호로 암호화되어 있습니다. 다른 기기에서 사용 중인 백업 비밀번호를 입력하세요.';
+
+  @override
+  String get syncUnreachable => '동기화 서버에 연결할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도하세요.';
 
   @override
   String get termFontSizeTip =>
@@ -1583,7 +1537,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다';
+      'ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5099,22 +5053,6 @@ class AppLocalizationsKo extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 형식을 사용하고 toport, toaddr 또는 둘 다 지정하세요.';
 
   @override
-  String get monitorSyncNeedsServer => '백업을 저장할 Monitor가 있는 서버를 선택하세요.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      '이 Monitor는 백업을 저장할 수 없습니다. Monitor를 업데이트하세요.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '백업이 Monitor가 허용하는 크기($max)보다 큽니다.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID는 100부터 999999999까지입니다.';
 
   @override
@@ -6309,21 +6247,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '권한 모드';
-
-  @override
-  String get agentModeAuto => '자동';
-
-  @override
-  String get agentModeManual => '수동';
-
-  @override
-  String get agentModeBypass => '모두 허용';
-
-  @override
-  String get agentModeBypassOff => '이 서버에서 사용 중지됨';
-
-  @override
   String get agentModeBypassWarn => '모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.';
 
   @override
@@ -6981,4 +6904,53 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => '대체 주소';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '저장하지 않은 변경 사항을 버릴까요?';
+
+  @override
+  String get syncAuto => '자동 동기화';
+
+  @override
+  String get syncOff => '끄기';
+
+  @override
+  String get syncDone => '동기화됨';
+
+  @override
+  String syncLastAt(String time) {
+    return '마지막 동기화 $time';
+  }
+
+  @override
+  String get syncNow => '지금 동기화';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name 자동 동기화가 해제됩니다. $name에 저장된 기존 백업은 유지됩니다.';
+  }
+
+  @override
+  String get bakPwdSet => '설정됨';
+
+  @override
+  String get bakPwdNotSet => '설정 안 됨';
+
+  @override
+  String get syncChannel => '채널';
+
+  @override
+  String get syncStateFailed => '동기화 실패';
+
+  @override
+  String get syncStatePassword => '비밀번호 불일치';
+
+  @override
+  String get syncStateUpdate => '업데이트 필요';
+
+  @override
+  String get syncStateRunning => '동기화 중';
 }

@@ -207,7 +207,7 @@ abstract class _LibvirtCore implements VirtBackend {
     Future<CommandByteExec> Function()? byteExec,
     bool Function()? canStream,
     DateTime Function()? now,
-    Future<String?> Function()? knownSudoPassword,
+    String? Function()? knownSudoPassword,
     void Function()? onSudoRejected,
     @visibleForTesting this.seedTools,
     @visibleForTesting this.uploadReadyTimeout = const Duration(seconds: 60),
@@ -244,7 +244,7 @@ abstract class _LibvirtCore implements VirtBackend {
 
   /// The sudo password known before this backend asks: one typed for this
   /// server elsewhere this session, or saved with it (`SudoPassword`).
-  final Future<String?> Function()? _knownSudoPassword;
+  final String? Function()? _knownSudoPassword;
 
   /// Told when sudo refused the password, so it is not offered again.
   final void Function()? _onSudoRejected;
@@ -321,7 +321,7 @@ abstract class _LibvirtCore implements VirtBackend {
     // saved password is behind a rate-limited store.
     if (!_knownSudoRead) {
       _knownSudoRead = true;
-      _sudoPassword ??= await _knownSudoPassword?.call();
+      _sudoPassword ??= _knownSudoPassword?.call();
     }
     final password = _sudoPassword;
     final result = await _exec1(

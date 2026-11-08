@@ -84,6 +84,10 @@ extension _SettingsLayout on _SettingsPageState {
       selectedId: selected.id,
       onTap: _onSelect,
       actions: actions,
+      // Pushed, and with no rail beside them to leave by.
+      leading: (ModalRoute.canPopOf(context) ?? false) && !RailBeside.of(context)
+          ? BackButton(onPressed: () => unawaited(_leave()))
+          : null,
     );
 
     final page = Scaffold(
@@ -116,7 +120,7 @@ extension _SettingsLayout on _SettingsPageState {
                   ? BackButton(
                       onPressed: _searching ? _clearSearch : _onTabBack,
                     )
-                  : BackButton(onPressed: _leave),
+                  : BackButton(onPressed: () => unawaited(_leave())),
               actions: actions,
             ),
       // The same column every other list-beside-content page has, rather than
@@ -207,11 +211,12 @@ extension _SettingsLayout on _SettingsPageState {
       ),
     );
 
-    // Back is this page's while the pane is the one in use. Put away, it lets
-    // back through, or the app would claim every back and the system's own
-    // animation home would never show.
+    // Back leaves the settings, a route like any other, once there is nothing
+    // in them to go back from first: the search, then a level or a page
+    // pushed in the content. While there is, the route refuses the pop and
+    // its swipe, and the level's own route takes the swipe.
     final scaffold = PopScope(
-      canPop: !BackScope.of(context),
+      canPop: !_searching && !_contentCanPop,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBack();
       },
@@ -288,19 +293,35 @@ extension _SettingsLayout on _SettingsPageState {
     ),
   );
 
-  /// Out of the settings, rather than out of the level on screen.
-  void _leave() => unawaited(widget.onLeave());
+  /// Out of the settings, rather than out of the level on screen: what the
+  /// content holds is asked first, then the settings' route goes whatever
+  /// level is open.
+  Future<void> _leave() async {
+    final content = _contentNav.currentState;
+    if (content != null && !await PopGuard.confirmLeave(content)) return;
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  /// What [_contentNav] said it can go back from, kept for the `PopScope`.
+  /// Told after a frame's build, never during one (`Navigator` defers it).
+  void _followContentPop(bool canPop) {
+    if (canPop != _contentCanPop) setState(() => _contentCanPop = canPop);
+  }
 
   /// Back, in the order it means here: the search over everything, then what
-  /// the content can go back from, then out of the settings.
+  /// the content can go back from. Leaving the settings is the route's pop.
   void _onBack() {
     final content = _contentNav.currentState;
     if (_searching) {
       _clearSearch();
-    } else if (content != null && content.canPop()) {
-      unawaited(content.maybePop());
-    } else {
-      _leave();
+    } else if (content != null) {
+      // Also a page there refusing its own pop, which asks. Nothing there to
+      // go back from after all, and back is the settings'.
+      unawaited(
+        content.maybePop().then((handled) {
+          if (!handled && mounted) Navigator.of(context).pop();
+        }),
+      );
     }
   }
 
@@ -387,7 +408,10 @@ extension _SettingsLayout on _SettingsPageState {
     // skipping whichever level or manually pushed page is currently on top.
     return NotificationListener<NavigationNotification>(
       // Answered for the whole page by the `PopScope` around it.
-      onNotification: (_) => true,
+      onNotification: (n) {
+        _followContentPop(n.canHandlePop);
+        return true;
+      },
       // One column keeps the settings' bar over this navigator, so a page with
       // a bar of its own pushed here showed two, and the settings' actions sat
       // over the page's own (#1819). It goes over the whole window instead.

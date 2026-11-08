@@ -61,8 +61,7 @@ final class TmuxWindowBar extends StatelessWidget {
               onNewWindow: onNewWindow,
               onCloseWindow: onCloseWindow,
               onClosePane: onClosePane,
-              onToggleZoom: onToggleZoom ??
-                  () => unawaited(controlClient.toggleZoom()),
+              onToggleZoom: onToggleZoom,
             );
             final status_ = status;
             if (status_ == null) return view();

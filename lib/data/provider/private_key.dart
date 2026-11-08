@@ -81,7 +81,6 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
       state.keys.where((e) => e.id == id).firstOrNull?.key;
 
   /// A passphrase kept for bytes no key holds any more.
-  void _forgetPassphrases(List<String> gone) => unawaited(
-    KeyPassphrases.forgetGone(gone, state.keys.map((e) => e.key)),
-  );
+  void _forgetPassphrases(List<String> gone) =>
+      KeyPassphrases.forgetGone(gone, state.keys.map((e) => e.key));
 }

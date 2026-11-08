@@ -6,8 +6,9 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
 import 'package:fl_tty/fl_tty.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -35,6 +36,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/bmc_credential/list.dart';
@@ -58,6 +60,7 @@ import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/marked_title.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
@@ -82,11 +85,7 @@ part 'menu.dart';
 part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key, required this.onLeave});
-
-  /// Puts the settings away; false when a page in them refused to go. The
-  /// home's: the settings are a pane of it at every width.
-  final Future<bool> Function() onLeave;
+  const SettingsPage({super.key});
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -244,6 +243,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   /// The navigator holding the right-hand side, so a selection can reach it.
   final _contentNav = GlobalKey<NavigatorState>();
+
+  /// Whether [_contentNav] has a page to go back from, as it last said; back
+  /// and the swipe are its until it has none.
+  bool _contentCanPop = false;
 
 
   /// Removes anything pushed on top of the levels [_path] describes, once

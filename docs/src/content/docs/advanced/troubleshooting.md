@@ -67,6 +67,13 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 - Confirm that it was created by a compatible App version.
 - If it contains credentials, check that the App can access the platform's secure storage needed to decrypt them.
 
+**Sync stops on one device:**
+
+- App versions from before the current sync format continue syncing to the legacy backup file and do not exchange changes with newer versions, without showing an error on either side.
+- If a newer device writes data in a format that an older version cannot read, the older device stops importing remote changes and prompts you to update, while still uploading its own local changes.
+- Keep ServerBox updated on all synced devices.
+- If the backup page reports that synced data is encrypted with a different backup password, enter the password used on your other devices. Sync remains paused on this device until the password matches. All synced devices share the same password—after changing it on one device, update it on the others.
+
 ## Widget and Watch App issues
 
 ### Widgets or the Watch App do not update

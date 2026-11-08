@@ -1,7 +1,6 @@
 pub mod backup;
 pub mod bench;
 pub mod bmc;
-pub mod command_risk;
 pub mod container;
 pub mod create;
 pub mod cron;

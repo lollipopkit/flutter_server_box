@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode, LlmPermissions, LlmPermissionsView;
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
@@ -12,7 +13,6 @@ import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
-import 'package:server_box/data/model/server/monitor/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor/monitor_exec_output.dart';
@@ -272,12 +272,15 @@ class MonitorHttpClient {
   Future<Map<String, dynamic>> _object(
     String path, {
     Object? post,
+    Object? put,
     Map<String, dynamic>? query,
   }) async {
     final dio = _session();
-    final resp = post == null
-        ? await dio.get<dynamic>(path, queryParameters: query)
-        : await dio.post<dynamic>(path, data: post, queryParameters: query);
+    final resp = switch ((post, put)) {
+      (final Object post, _) => await dio.post<dynamic>(path, data: post, queryParameters: query),
+      (_, final Object put) => await dio.put<dynamic>(path, data: put, queryParameters: query),
+      _ => await dio.get<dynamic>(path, queryParameters: query),
+    };
     final data = resp.data;
     if (data is Map<String, dynamic>) return data;
     throw MonitorHttpErr(
@@ -733,114 +736,6 @@ class MonitorHttpClient {
     await _session().delete<dynamic>('/api/v1/live/devices/$id');
   });
 
-  // `/api/v1/backup*`: opaque blobs the agent stores for this app's backup
-  // sync. What is sent is already encrypted with the backup password, so the
-  // agent holds bytes it cannot read. Admin accounts only.
-
-  Future<MonitorBackupList> backups() {
-    return _authed(
-      () => _backup(() async {
-        return MonitorBackupList.fromJson(await _object('/api/v1/backup'));
-      }, missing: l10n.monitorBackupUnsupported),
-    );
-  }
-
-  /// One blob's bytes, streamed.
-  Future<Stream<List<int>>> backupRead(String name) {
-    return _authed(
-      () => _backup(() async {
-        final resp = await _session().get<ResponseBody>(
-          '/api/v1/backup/blob',
-          queryParameters: {'name': name},
-          options: Options(responseType: ResponseType.stream),
-        );
-        final body = resp.data;
-        if (body == null) {
-          throw const MonitorHttpErr(
-            type: MonitorHttpErrType.invalidResponse,
-            message: 'Empty /api/v1/backup/blob response',
-          );
-        }
-        return body.stream.map((chunk) => chunk.toList());
-      }, missing: '404 noSuchBlob: $name'),
-    );
-  }
-
-  /// Stores [size] bytes from [open] under [name], replacing a blob of that
-  /// name.
-  ///
-  /// [open] is called once per attempt, so the 401 retry in [_authed] sends a
-  /// fresh stream rather than one the first attempt already consumed. The
-  /// listing first is what refreshes the token, and what lets a file over the
-  /// agent's cap be refused before any of it is sent.
-  Future<void> backupWrite(
-    String name,
-    Stream<List<int>> Function() open, {
-    required int size,
-  }) async {
-    final maxBytes = (await backups()).maxBytes;
-    if (maxBytes != null && size > maxBytes) {
-      throw MonitorHttpErr(
-        type: MonitorHttpErrType.badRequest,
-        message: l10n.monitorBackupTooLarge(maxBytes.bytes2Str),
-      );
-    }
-    await _authed(
-      () => _backup(() async {
-        await _session().put<dynamic>(
-          '/api/v1/backup/blob',
-          queryParameters: {'name': name},
-          data: open(),
-          options: Options(
-            headers: {
-              'content-type': 'application/octet-stream',
-              'content-length': size,
-            },
-          ),
-        );
-      }, maxBytes: maxBytes),
-    );
-  }
-
-  Future<void> backupRemove(String name) {
-    return _authed(
-      () => _backup(() async {
-        await _session().delete<dynamic>(
-          '/api/v1/backup/blob',
-          queryParameters: {'name': name},
-        );
-      }, missing: '404 noSuchBlob: $name'),
-    );
-  }
-
-  /// [fn] with the backup endpoints' refusals typed and worded. A 401 is left
-  /// to [_authed]. [missing] is what a 404 means for this call: no such blob,
-  /// or, for the listing, an agent without the endpoints.
-  Future<T> _backup<T>(
-    Future<T> Function() fn, {
-    String? missing,
-    int? maxBytes,
-  }) async {
-    try {
-      return await fn();
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      final (type, message) = switch (status) {
-        403 => (MonitorHttpErrType.forbidden, l10n.funcNeedsAgentHttps(libL10n.backup)),
-        404 => (MonitorHttpErrType.notFound, missing),
-        409 => (MonitorHttpErrType.conflict, l10n.monitorBackupTooMany),
-        413 => (
-          MonitorHttpErrType.badRequest,
-          l10n.monitorBackupTooLarge(maxBytes?.bytes2Str ?? '?'),
-        ),
-        400 => (MonitorHttpErrType.badRequest, '400 ${e.response?.data}'),
-        _ => (null, null),
-      };
-      if (type == null) rethrow;
-      throw MonitorHttpErr(type: type, message: message);
-    }
-  }
-
   // ------------------------------------------------------------ settings
   //
   // The agent's own configuration, not this app's record of the server. Two
@@ -921,7 +816,7 @@ class MonitorHttpClient {
   /// ([agentUpload]).
   Future<MonitorAgentFlow> agentStart(
     String prompt, {
-    AgentPermissionMode? mode,
+    LlmPermissionMode? mode,
     List<String> files = const [],
     MonitorAgentModel? model,
     String? thinkingLevel,
@@ -966,6 +861,18 @@ class MonitorHttpClient {
   /// What a task may run with: the models and thinking levels there are.
   Future<MonitorAgentChoices> agentChoices() => _authed(
     () async => MonitorAgentChoices.fromJson(await _object('/api/v1/agent/choices')),
+  );
+
+  /// How the server's Agent tasks have their commands approved.
+  Future<LlmPermissionsView> agentPermissions() => _authed(
+    () async => LlmPermissionsView.fromJson(await _object('/api/v1/agent/permissions')),
+  );
+
+  /// Replaces [agentPermissions] with [p]; answers what the agent kept.
+  Future<LlmPermissionsView> saveAgentPermissions(LlmPermissions p) => _authed(
+    () async => LlmPermissionsView.fromJson(
+      await _object('/api/v1/agent/permissions', put: p.toJson()),
+    ),
   );
 
   /// The most one attachment may be, as the agent takes it.
@@ -1338,7 +1245,7 @@ class MonitorHttpClient {
     }
     final status = e.response?.statusCode;
     final data = e.response?.data;
-    final said = data is Map ? data['message'] ?? data['error'] : null;
+    final said = data is Map ? data['message'] ?? data['reason'] ?? data['error'] : null;
     final message = [
       if (status != null) 'HTTP $status',
       if (said is String && said.isNotEmpty) said else ?e.message,

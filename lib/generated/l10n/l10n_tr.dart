@@ -85,14 +85,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksek risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Salt okunur komutları otomatik çalıştır';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnızca hem model hem yerel kontrol salt okunur derse çalışır';
-
-  @override
   String get askAiHistory => 'Konuşma geçmişi';
 
   @override
@@ -169,10 +161,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFailTip => 'Kimlik doğrulama başarısız. Bilgileri kontrol et';
 
   @override
-  String get autoBackupConflict =>
-      'Aynı anda yalnızca bir otomatik yedekleme açık olabilir.';
-
-  @override
   String get autoConnect => 'Otomatik bağlan';
 
   @override
@@ -188,14 +176,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupEncrypted => 'Yedekleme şifrelenmiş';
 
   @override
-  String get backupNotEncrypted => 'Yedekleme şifreli değil';
-
-  @override
   String get backupPassword => 'Yedekleme parolası';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.';
+      'Aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan yedekleme parolası kaldırılır. Yeni bir parola belirlenene kadar eşitleme duraklatılır.';
 
   @override
   String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
@@ -205,7 +190,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.';
+      'Yedekleri ve eşitlenen verileri şifreler. Tüm cihazlarda aynı parola kullanılmalıdır; bir cihazda değiştirdiğinizde diğer cihazlarda da yeni parolayı girin.';
 
   @override
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
@@ -302,40 +287,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu temalar dışında geri yüklendi. Temaları tema mağazasından veya geldikleri dosyadan yeniden yükleyin.';
 
   @override
-  String get backupTip =>
-      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Yedekleme durumu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud yedekleme durumu yükleniyor...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud yedekleme meta verileri okunamıyor';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Henüz bir iCloud yedekleme dosyası bulunamadı';
-
-  @override
-  String get icloudBackupStateUploading => 'Yükleniyor';
-
-  @override
   String get icloudBackupStateConflict => 'Çakışma algılandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Yüklendi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud bekleniyor';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son yedekleme: $lastModified\nDurum: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arka planda çalıştır';
@@ -523,27 +475,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Cihaz yatay moda döndürüldüğünde tam ekran modu etkinleştirilsin mi? Bu seçenek yalnızca sunucu sekmesi için geçerlidir.';
 
   @override
-  String get githubGistIdOptional => 'Gist kimliği (isteğe bağlı)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist belirteci';
-
-  @override
-  String get githubGistTokenEmpty => 'Belirteç boş';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Bu, Gist kimliği de Gist bağlantısı da değil. Gist adresinin son bölümünü kullanın (https://gist.github.com/<user>/<ID>) veya ilk yedeklemede yeni bir gizli gist oluşturulması için boş bırakın.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub, bu tokenin okuyabileceği bu kimliğe sahip bir gist bulamadı: kimlik yanlış olabilir, gist silinmiş olabilir veya başka bir hesaba ait olabilir. İlk yedeklemede yeni bir gizli gist oluşturulması için kimliği boş bırakın.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub bu tokeni reddetti: token yanlış, süresi dolmuş veya iptal edilmiş olabilir ya da gist izni eksik olabilir (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Git';
 
   @override
@@ -618,7 +549,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifreli özel anahtarların parolalarını bu cihazın sistem anahtar zincirinde saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Yedeklerde anahtarlar şifreli kalır. Kapatıldığında kayıtlı parolalar silinir.';
+      'Yeniden başlatma sonrasında tekrar sorulmaması için şifreli özel anahtarların parolalarını kaydeder. Kapatıldığında bu cihazda kayıtlı parolalar silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1241,11 +1172,28 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Uygulama ayarlarını eşitle';
+  String get syncedData => 'Eşitlenen veriler';
 
   @override
-  String get syncAppSettingsTip =>
-      'Tema, düzen, düzenleyici, terminal ve diğer cihaz tercihlerini otomatik eşitlemeye dâhil et.';
+  String get syncSecrets => 'Sudo parolaları ve API anahtarları';
+
+  @override
+  String get keyPassphrases => 'Anahtar parolaları';
+
+  @override
+  String get syncFiles => 'Yazı tipleri, görseller ve Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Eşitlenen veriler daha yeni bir ServerBox sürümüyle oluşturulmuş. Eşitlemeye devam etmek için uygulamayı güncelleyin.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Eşitlenen veriler farklı bir yedekleme parolasıyla şifrelenmiş. Diğer cihazlarınızda kullandığınız yedekleme parolasını girin.';
+
+  @override
+  String get syncUnreachable =>
+      'Eşitleme hizmetine bağlanılamadı. Ağ bağlantınızı kontrol edip tekrar deneyin.';
 
   @override
   String get termFontSizeTip =>
@@ -1680,7 +1628,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agent’ın ServerBox’ın çalıştığı makinede çalışmasına izin verir. Salt okunur komutlar da incelenir';
+      'Agent\'ın ServerBox\'ı çalıştıran makinede çalışmasına izin verir. Komutları izin moduna göre işlenir';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5334,23 +5282,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 biçimini toport, toaddr veya ikisiyle birlikte kullanın.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Yedeği saklayacak Monitor’ün sunucusunu seçin.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Bu Monitor yedek saklayamaz. Monitor’ü güncelleyin.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Yedek, Monitor’ün kabul ettiği boyuttan ($max) büyük.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
-
-  @override
   String get virtCreateVmidInvalid => '100 ile 999999999 arasında bir VMID.';
 
   @override
@@ -6575,21 +6506,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İzin modu';
-
-  @override
-  String get agentModeAuto => 'Otomatik';
-
-  @override
-  String get agentModeManual => 'Manuel';
-
-  @override
-  String get agentModeBypass => 'Tümüne izin ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu sunucuda devre dışı';
-
-  @override
   String get agentModeBypassWarn =>
       'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır.';
 
@@ -7262,4 +7178,53 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Yedek adres';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Kaydedilmemiş değişiklikler atılsın mı?';
+
+  @override
+  String get syncAuto => 'Otomatik eşitleme';
+
+  @override
+  String get syncOff => 'Kapalı';
+
+  @override
+  String get syncDone => 'Eşitlendi';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son eşitleme $time';
+  }
+
+  @override
+  String get syncNow => 'Şimdi eşitle';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ile otomatik eşitleme kapatılacak. Mevcut yedekler silinmeyecek.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ayarlandı';
+
+  @override
+  String get bakPwdNotSet => 'Ayarlanmadı';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Eşitleme başarısız';
+
+  @override
+  String get syncStatePassword => 'Parola eşleşmiyor';
+
+  @override
+  String get syncStateUpdate => 'Güncelleme gerekli';
+
+  @override
+  String get syncStateRunning => 'Eşitleniyor';
 }

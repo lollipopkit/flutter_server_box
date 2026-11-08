@@ -68,11 +68,12 @@ composer. The list shows the models of custom endpoints and of built-in
 providers with a key set. If you change them while a task runs, the change
 applies from the next request to the model.
 
-### Permission mode per task
+### Permission mode
 
-Each task has a permission mode. Choose it in the composer, or press Shift+Tab
-to switch it. The mode applies to the task and is set when the task starts.
-See [Permission modes](#permission-modes).
+The mode new tasks start in is picked in the composer, or switched with
+Shift+Tab; it is the same setting as **Default mode** under the command
+permissions, so the App's composer changes it too. A task keeps the mode it
+started in. See [Permission modes](#permission-modes).
 
 ### Queue
 
@@ -118,6 +119,8 @@ without a question, after the command rules apply.
 | Auto | The model judges each such command against the auto mode rules. An allowed command runs. A refused command stops, and the agent receives the reason. With no verdict, you are asked. |
 | Allow all | Every command runs without a question, including deleting, restarting, and config changes. Deny and ask rules still apply. |
 
+A read-only command follows the mode as any other does.
+
 The default mode for new tasks is set under **Settings → Agent → Command
 permissions → Default mode**.
 
@@ -134,7 +137,7 @@ are three lists: **Deny**, **Ask**, and **Allow**. Write one pattern per line.
 - A trailing `:*` has the same meaning as ` *`.
 - A chained command, such as `a && b`, is checked part by part. Deny and ask
   apply when any part matches. Allow applies only when every part is covered.
-- Rules match the command as written. `/bin/rm` does not match `rm *`.
+- Deny and ask rules also see a command with `env`, `timeout` and the like taken off, and a program named by its path by its name: `/bin/rm` matches `rm *` there. Otherwise rules match the command as written: `sh -c 'rm …'` does not match `rm *`.
 - Rules are not a security boundary.
 
 The rules are checked in this order: deny, then ask, then allow.
@@ -207,8 +210,8 @@ never shows a saved value again.
 
 The status of a server shows **Not connected** when the panel cannot reach it.
 
-A tool that is marked as read-only runs without a question. Any other tool
-follows the task's permission mode, as a command does. In Manual, it waits for
+A tool follows the task's permission mode, as a command does, one marked as
+read-only included. In Manual, it waits for
 your confirmation. In Auto, the model judges it. In Allow all, it runs and is
 recorded in the audit log.
 

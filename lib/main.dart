@@ -4,6 +4,7 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show StoreCredentials;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,10 +28,12 @@ import 'package:server_box/core/ssh/native_crypto.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -41,6 +44,8 @@ import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_skills.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/data/terminal/session_manager.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -209,7 +214,7 @@ Future<void> _initApp(ProviderContainer container) async {
   // iPhone (`UIFileSharingEnabled`), so the app's own data is not there.
   //
   // `bakName` is versioned on purpose. Sync is a single shared file on
-  // iCloud/WebDAV/Gist/a monitor agent, and a build that cannot read the
+  // iCloud/WebDAV/LK Cloud, and a build that cannot read the
   // remote copy must never overwrite it. `SyncIface._sync` returns before
   // uploading when the merge fails, but a release that predates a format has
   // no version check and cannot be given one: the only thing certain to stop
@@ -337,7 +342,6 @@ Future<void> _initData() async {
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await SecureStoreProps.migrateLegacyPrefs();
-  await Future.wait([Webdav.initShared(), GistRs.initShared()]);
 
   // Before a box is opened, because it rewrites the files they are made of.
   // After the preferences, because the data it copies may be encrypted with a
@@ -346,6 +350,8 @@ Future<void> _initData() async {
   await _openStores(fromImport: imported == SandboxImportResult.imported);
 
   await _migrateStorage();
+  await SyncRemotes.adopt();
+  await SyncRemotes.dropRetired();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
@@ -512,7 +518,10 @@ Future<void> _startBackgroundServices() async {
   }
   BakSyncer.watchEdits(() => bakSync.syncSoon());
   FileLogSync.init();
+  SyncSkills.follow();
+  SyncThemes.follow();
   unawaited(KeyPassphrases.init());
+  unawaited(SudoPassword.adoptKeychain());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
@@ -590,6 +599,8 @@ Future<void> _migrateStorage() async {
   await SchemaVersion.migrate(kSchemaMigrations);
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
   SyncRecorder.install();
+  // TODO: remove with `StoreCredentials.adoptKeychain`.
+  StoreCredentials.adopt = SyncRecorder.adopt;
 
   migrateBuildFeatures(BuildData.build);
 

@@ -85,14 +85,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiRiskDestructive => 'Високий ризик';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Автоматично виконувати команди лише для читання';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Виконується, лише коли і модель, і локальна перевірка вважають команду лише для читання';
-
-  @override
   String get askAiHistory => 'Історія розмов';
 
   @override
@@ -170,10 +162,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get authFailTip => 'Не вдалося автентифікуватися. Перевірте дані';
 
   @override
-  String get autoBackupConflict =>
-      'Тільки одне автоматичне резервне копіювання може бути активне одночасно.';
-
-  @override
   String get autoConnect => 'Авто підключення';
 
   @override
@@ -190,14 +178,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get backupEncrypted => 'Резервна копія зашифрована';
 
   @override
-  String get backupNotEncrypted => 'Резервна копія не зашифрована';
-
-  @override
   String get backupPassword => 'Пароль резервного копіювання';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Пароль резервного копіювання буде видалено з усіх пристроїв, що використовують ту саму в\'язку ключів iCloud. Їхня синхронізація зупиниться, доки пароль не буде встановлено знову.';
+      'Пароль резервної копії буде видалено з усіх пристроїв, що використовують ту саму в\'язку ключів iCloud. Синхронізацію на них буде призупинено, доки не буде встановлено новий пароль.';
 
   @override
   String get backupPasswordRemoved => 'Пароль резервного копіювання видалено';
@@ -207,7 +192,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Встановіть пароль для шифрування файлів резервного копіювання. Залиште порожнім для відключення шифрування.';
+      'Використовується для шифрування резервних копій і синхронізованих даних. На всіх пристроях має бути однаковий пароль: після його зміни на одному пристрої введіть новий пароль на інших.';
 
   @override
   String get backupPasswordWrong => 'Неправильний пароль резервного копіювання';
@@ -304,40 +289,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Відновлено, крім цих тем. Встановіть їх знову з магазину тем або з вихідного файлу.';
 
   @override
-  String get backupTip =>
-      'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Стан резервної копії';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'Завантаження стану резервної копії iCloud…';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Не вдалося прочитати метадані резервної копії iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Файл резервної копії в iCloud поки не знайдено';
-
-  @override
-  String get icloudBackupStateUploading => 'Вивантаження';
-
-  @override
   String get icloudBackupStateConflict => 'Виявлено конфлікт';
-
-  @override
-  String get icloudBackupStateUploaded => 'Вивантажено';
-
-  @override
-  String get icloudBackupStateWaiting => 'Очікування iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Остання копія: $lastModified\nСтан: $remoteState';
-  }
 
   @override
   String get bgRun => 'Запуск у фоновому режимі';
@@ -525,27 +477,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Чи слід увімкнути повноекранний режим під час повороту пристрою в горизонтальне положення? Ця опція стосується лише вкладки сервера.';
 
   @override
-  String get githubGistIdOptional => 'ID Gist (необов\'язково)';
-
-  @override
-  String get githubGistToken => 'Токен GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Токен порожній';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Це не ID Gist і не посилання на Gist. Використайте останню частину адреси gist (https://gist.github.com/<user>/<ID>) або залиште поле порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub не знайшов gist із цим ID, який може прочитати цей токен: ID може бути неправильним, gist могли видалити або він може належати іншому обліковому запису. Залиште ID порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub відхилив цей токен: можливо, він неправильний, термін його дії минув або його відкликано, чи йому бракує дозволу gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Перейти до';
 
   @override
@@ -622,7 +553,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Зберігати парольні фрази зашифрованих приватних ключів у системній в\'язці ключів цього пристрою, щоб не запитувати їх після перезапуску. У резервних копіях ключі залишаються зашифрованими. Вимкнення видаляє збережені фрази.';
+      'Зберігає парольні фрази зашифрованих закритих ключів, щоб не вводити їх повторно після перезапуску. У разі вимкнення збережені на цьому пристрої парольні фрази видаляються.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1246,11 +1177,28 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Синхронізувати налаштування застосунку';
+  String get syncedData => 'Дані для синхронізації';
 
   @override
-  String get syncAppSettingsTip =>
-      'Включити тему, компонування, редактор, термінал та інші налаштування пристрою в автоматичну синхронізацію.';
+  String get syncSecrets => 'Паролі sudo та ключі API';
+
+  @override
+  String get keyPassphrases => 'Парольні фрази ключів';
+
+  @override
+  String get syncFiles => 'Шрифти, зображення та Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Синхронізовані дані створено в новішій версії ServerBox. Оновіть застосунок, щоб продовжити синхронізацію.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Синхронізовані дані зашифровано іншим паролем резервної копії. Введіть пароль, який використовується на інших ваших пристроях.';
+
+  @override
+  String get syncUnreachable =>
+      'Не вдалося підключитися до сервісу синхронізації. Перевірте з’єднання з мережею та спробуйте ще раз.';
 
   @override
   String get termFontSizeTip =>
@@ -1699,7 +1647,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Дозволяє агенту працювати на машині, де запущено ServerBox. Навіть команди лише для читання перевіряються';
+      'Дозволяє Agent працювати на машині, де запущено ServerBox. Його команди обробляються за режимом дозволів';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5386,23 +5334,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Використовуйте port=80:proto=tcp:toport=8080, з toport, toaddr або обома.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Виберіть сервер, Monitor якого зберігає резервну копію.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Цей Monitor не може зберігати резервні копії. Оновіть Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Резервна копія більша, ніж приймає Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID від 100 до 999999999.';
 
   @override
@@ -6636,21 +6567,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Режим дозволів';
-
-  @override
-  String get agentModeAuto => 'Авто';
-
-  @override
-  String get agentModeManual => 'Вручну';
-
-  @override
-  String get agentModeBypass => 'Дозволити все';
-
-  @override
-  String get agentModeBypassOff => 'Вимкнено на цьому сервері';
-
-  @override
   String get agentModeBypassWarn =>
       'Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.';
 
@@ -7329,4 +7245,53 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Резервна адреса';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Скасувати незбережені зміни?';
+
+  @override
+  String get syncAuto => 'Автосинхронізація';
+
+  @override
+  String get syncOff => 'Вимкнено';
+
+  @override
+  String get syncDone => 'Синхронізовано';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Остання синхронізація $time';
+  }
+
+  @override
+  String get syncNow => 'Синхронізувати зараз';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Автосинхронізацію з $name буде вимкнено. Уже збережені там резервні копії залишаться.';
+  }
+
+  @override
+  String get bakPwdSet => 'Задано';
+
+  @override
+  String get bakPwdNotSet => 'Не задано';
+
+  @override
+  String get syncChannel => 'Канал';
+
+  @override
+  String get syncStateFailed => 'Помилка синхронізації';
+
+  @override
+  String get syncStatePassword => 'Пароль не збігається';
+
+  @override
+  String get syncStateUpdate => 'Потрібне оновлення';
+
+  @override
+  String get syncStateRunning => 'Синхронізація';
 }

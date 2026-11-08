@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/monitor/http.dart';
@@ -37,7 +38,14 @@ abstract final class RemoteAgentTasks {
 
   /// Per server id, the permission mode a new task runs in unless another is
   /// picked, and whether `bypass` may be, as its list last said.
-  static final modes = ValueNotifier<Map<String, ({AgentPermissionMode defaultMode, bool bypassAllowed})>>(const {});
+  static final modes = ValueNotifier<Map<String, ({LlmPermissionMode defaultMode, bool bypassAllowed})>>(const {});
+
+  /// Server [serverId]'s new tasks now start in [mode].
+  static void setDefaultMode(String serverId, LlmPermissionMode mode) {
+    final m = modes.value[serverId];
+    if (m == null) return;
+    modes.value = {...modes.value, serverId: (defaultMode: mode, bypassAllowed: m.bypassAllowed)};
+  }
 
   /// Per server id, why its list could not be read, for the history to say.
   static final errors = ValueNotifier<Map<String, String>>(const {});

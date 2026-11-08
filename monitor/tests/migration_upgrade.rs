@@ -145,44 +145,38 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
 /// a subset out of the same `Migration` values is what makes the second run
 /// apply only what is left: it re-validates the checksums of what is already
 /// recorded, and those match by construction.
-/// The backups monitor 0.2.0 hosted in the database (migration 015) become
-/// files once migration 020 has run and the agent starts, and the table that
-/// held them goes.
+/// The hosted backup store goes, with the files it named: the app no longer
+/// syncs to an agent. An agent from before migration 020 still held them in
+/// the database (`backup_blob`); that table goes as well.
 #[tokio::test]
-async fn hosted_backups_move_out_of_the_database() {
-    use server_box_monitor::core::blobs::{Blobs, move_database_backups};
+async fn the_hosted_backup_store_goes_with_its_files() {
+    use server_box_monitor::core::blobs::Blobs;
     let pool = pool().await;
     migrator_through(17).run(&pool).await.unwrap();
-    for (name, data) in [("srvbox_bak_v3.json", b"ciphertext".as_slice()), ("panel.json", b"other".as_slice())] {
-        sqlx::query("INSERT INTO backup_blob (name, data, size, updated_at) VALUES (?, ?, ?, '2026-10-01T00:00:00.000Z')")
-            .bind(name)
-            .bind(data)
-            .bind(data.len() as i64)
-            .execute(&pool)
-            .await
-            .unwrap();
-    }
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
-    let blobs = Blobs::temporary();
-    move_database_backups(&pool, &blobs).await.unwrap();
-    // Once: a second start finds nothing to move.
-    move_database_backups(&pool, &blobs).await.unwrap();
-
-    let gone: bool = sqlx::query_scalar("SELECT NOT EXISTS (SELECT 1 FROM sqlite_master WHERE name = 'backup_blob')")
-        .fetch_one(&pool)
+    sqlx::query("INSERT INTO backup_blob (name, data, size, updated_at) VALUES ('old', x'00', 1, '2026-10-01T00:00:00.000Z')")
+        .execute(&pool)
         .await
         .unwrap();
-    assert!(gone);
-    let (sha, size, updated_at): (String, i64, String) =
-        sqlx::query_as("SELECT sha256, size, updated_at FROM backup_file WHERE name = 'srvbox_bak_v3.json'")
+    migrator_through(42).run(&pool).await.unwrap();
+    let blobs = Blobs::temporary();
+    let sha = blobs.put(b"ciphertext").await.unwrap();
+    sqlx::query("INSERT INTO backup_file (name, sha256, size, updated_at) VALUES ('srvbox_bak_v4.age', ?, 10, '2026-10-01T00:00:00.000Z')")
+        .bind(&sha)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    for table in ["backup_file", "backup_blob"] {
+        let gone: bool = sqlx::query_scalar("SELECT NOT EXISTS (SELECT 1 FROM sqlite_master WHERE name = ?)")
+            .bind(table)
             .fetch_one(&pool)
             .await
             .unwrap();
-    assert_eq!((size, updated_at.as_str()), (10, "2026-10-01T00:00:00.000Z"));
-    assert_eq!(blobs.read(&sha).await.unwrap().as_deref(), Some(&b"ciphertext"[..]));
-    // Named by its row, so a collection keeps it.
+        assert!(gone, "{table}");
+    }
     blobs.collect(&pool).await.unwrap();
-    assert!(blobs.read(&sha).await.unwrap().is_some());
+    assert!(blobs.read(&sha).await.unwrap().is_none(), "no row names it any more");
 }
 
 fn migrator_through(through: i64) -> sqlx::migrate::Migrator {
@@ -724,6 +718,7 @@ fn shipped_migrations_keep_their_checksums() {
         (40, "22430e0cf9119a4b9b457ef05a89132824f81875f0201fff0b07d2dfc9f23cb1af7bfa660eb040b4210074140b2ee57c"),
         (41, "cb6babc242c4eb54306867b1b3f19807dac18f1204c8e157a2ef92cbde512a009c3b232660a8ba0080154f288285866d"),
         (42, "36b2573d8254c047f1040c7f34690d139727301bbdae5e5e75e566e6635dbb12b856854233e2de8b30bdbd41dff5b622"),
+        (43, "5228911ff9dd6f666f1448846c68e22e2badfc2ce7b8f775ab9ca6de883069e400998b25b0e39788a1fdf7021a9b7fbf"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();

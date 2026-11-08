@@ -109,7 +109,9 @@ abstract final class SchemaVersion {
   /// v36: `server.monitor_cert_sha256` replaces `monitor_ignore_cert`
   /// v37: `server_custom_cmd` dropped, custom commands living on the server
   /// v38: the terminal and file tabs' saved sessions dropped
-  static const current = 38;
+  /// v39: what is synced by category (`sync_passed`), the secrets and the
+  /// Agent's stores synced, benchmarks a sync root
+  static const current = 39;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

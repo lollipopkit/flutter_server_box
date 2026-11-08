@@ -85,14 +85,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiRiskDestructive => 'Hoog risico';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Alleen-lezen commando\'s automatisch uitvoeren';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Draait alleen als model én lokale controle het alleen-lezen noemen';
-
-  @override
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
@@ -170,10 +162,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get authFailTip => 'Authenticatie mislukt. Controleer de gegevens';
 
   @override
-  String get autoBackupConflict =>
-      'Er kan slechts één automatische back-up tegelijk worden ingeschakeld.';
-
-  @override
   String get autoConnect => 'Automatisch verbinden';
 
   @override
@@ -189,14 +177,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupEncrypted => 'Back-up is versleuteld';
 
   @override
-  String get backupNotEncrypted => 'Back-up is niet versleuteld';
-
-  @override
   String get backupPassword => 'Back-up wachtwoord';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.';
+      'Hiermee wordt het back-upwachtwoord verwijderd op alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. De synchronisatie wordt gepauzeerd totdat er een nieuw wachtwoord wordt ingesteld.';
 
   @override
   String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
@@ -206,7 +191,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Stel een wachtwoord in om back-upbestanden te versleutelen. Laat leeg om versleuteling uit te schakelen.';
+      'Versleutelt back-ups en gesynchroniseerde gegevens. Alle apparaten moeten hetzelfde wachtwoord gebruiken; als je het op één apparaat wijzigt, voer dan op de andere het nieuwe wachtwoord in.';
 
   @override
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
@@ -303,39 +288,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hersteld, behalve deze thema’s. Installeer ze opnieuw vanuit de themastore of het oorspronkelijke bestand.';
 
   @override
-  String get backupTip =>
-      'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Back-upstatus';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud-back-upstatus laden...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Kan de metadata van de iCloud-back-up niet lezen';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Nog geen iCloud-back-upbestand gevonden';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploaden';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict gevonden';
-
-  @override
-  String get icloudBackupStateUploaded => 'Geüpload';
-
-  @override
-  String get icloudBackupStateWaiting => 'Wacht op iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Laatste back-up: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Uitvoeren op de achtergrond';
@@ -523,27 +476,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Moet de volledig schermmodus worden ingeschakeld wanneer het apparaat naar de liggende modus wordt gedraaid? Deze optie is alleen van toepassing op het servertabblad.';
 
   @override
-  String get githubGistIdOptional => 'Gist-ID (optioneel)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist-token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token is leeg';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Dit is geen Gist-ID en ook geen Gist-link. Gebruik het laatste deel van het gist-adres (https://gist.github.com/<user>/<ID>) of laat dit leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub heeft geen gist met deze ID gevonden die dit token kan lezen: de ID is mogelijk onjuist, de gist is verwijderd of hoort bij een ander account. Laat de ID leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub heeft dit token geweigerd: het is mogelijk onjuist, verlopen of ingetrokken, of mist de gist-machtiging (classic token: de scope \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Ga naar';
 
   @override
@@ -620,7 +552,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Bewaar de wachtwoordzinnen van versleutelde privésleutels in de systeemsleutelhanger van dit apparaat, zodat ze na een herstart niet opnieuw worden gevraagd. In back-ups blijven de sleutels versleuteld. Uitschakelen verwijdert de opgeslagen wachtwoordzinnen.';
+      'Slaat wachtwoordzinnen van versleutelde privésleutels op, zodat je ze na het herstarten niet opnieuw hoeft in te voeren. Als je dit uitschakelt, worden de opgeslagen wachtwoordzinnen van dit apparaat verwijderd.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1244,11 +1176,28 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'App-instellingen synchroniseren';
+  String get syncedData => 'Gesynchroniseerde gegevens';
 
   @override
-  String get syncAppSettingsTip =>
-      'Thema, indeling, editor, terminal en andere apparaatvoorkeuren meenemen in de automatische synchronisatie.';
+  String get syncSecrets => 'Sudo-wachtwoorden en API-sleutels';
+
+  @override
+  String get keyPassphrases => 'Wachtwoordzinnen van sleutels';
+
+  @override
+  String get syncFiles => 'Lettertypen, afbeeldingen en skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'De gesynchroniseerde gegevens zijn afkomstig van een nieuwere versie van ServerBox. Werk de app bij om door te gaan met synchroniseren.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Voer het back-upwachtwoord in dat je op je andere apparaten gebruikt.';
+
+  @override
+  String get syncUnreachable =>
+      'Kan geen verbinding maken met de synchronisatiedienst. Controleer je netwerkverbinding en probeer het opnieuw.';
 
   @override
   String get termFontSizeTip =>
@@ -1693,7 +1642,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld';
+      'Laat de Agent werken op de machine waarop ServerBox draait. Zijn commando\'s volgen de toestemmingsmodus';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5392,23 +5341,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Kies de server waarvan Monitor de back-up opslaat.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Deze Monitor kan geen back-ups opslaan. Werk Monitor bij.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'De back-up is groter dan Monitor accepteert ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
-
-  @override
   String get virtCreateVmidInvalid => 'Een VMID van 100 tot 999999999.';
 
   @override
@@ -6649,21 +6581,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Machtigingsmodus';
-
-  @override
-  String get agentModeAuto => 'Automatisch';
-
-  @override
-  String get agentModeManual => 'Handmatig';
-
-  @override
-  String get agentModeBypass => 'Alles toestaan';
-
-  @override
-  String get agentModeBypassOff => 'Uitgeschakeld op deze server';
-
-  @override
   String get agentModeBypassWarn =>
       'Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.';
 
@@ -7345,4 +7262,53 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alternatief adres';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Niet-opgeslagen wijzigingen verwerpen?';
+
+  @override
+  String get syncAuto => 'Automatisch synchroniseren';
+
+  @override
+  String get syncOff => 'Uit';
+
+  @override
+  String get syncDone => 'Gesynchroniseerd';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Laatst gesynchroniseerd $time';
+  }
+
+  @override
+  String get syncNow => 'Nu synchroniseren';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Automatische synchronisatie met $name wordt uitgeschakeld. Bestaande back-ups blijven behouden.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ingesteld';
+
+  @override
+  String get bakPwdNotSet => 'Niet ingesteld';
+
+  @override
+  String get syncChannel => 'Kanaal';
+
+  @override
+  String get syncStateFailed => 'Synchronisatie mislukt';
+
+  @override
+  String get syncStatePassword => 'Wachtwoord komt niet overeen';
+
+  @override
+  String get syncStateUpdate => 'Update vereist';
+
+  @override
+  String get syncStateRunning => 'Bezig met synchroniseren';
 }

@@ -23,9 +23,9 @@ extension _App on _AppSettingsPageState {
         if (isDesktop) _buildHideTitleBar(),
         _buildMotion(),
         if (DmgNotice.applies) _buildDmgNotice(),
-        // Debug only, which is where it was moved to while these rows were
-        // flat. Naming the group does not put it back in a release build.
-        if (kDebugMode) _buildEditRawSettings(),
+        // Not in a release build: debug and profile builds, the ones tested
+        // on a device, can read and edit the raw settings.
+        if (!kReleaseMode) _buildEditRawSettings(),
       ]),
       SettingsGroup(libL10n.reset, [_buildClearSettings()]),
     ];

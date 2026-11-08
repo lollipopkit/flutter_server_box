@@ -262,15 +262,15 @@ const zhCN: Translation = {
     llmapi: {
       title: 'LLM API',
       description:
-        '聚合主流前沿大模型的统一 API 网关，可直接接入 ServerBox AI 运维助手、GPT Box 或你的开发工具。',
+        '聚合主流前沿大模型的统一 API 网关，可直接接入 ServerBox AI 运维助手、LLMBox 或你的开发工具。',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         '轻量可靠的网站、接口与服务器在线率监控服务，支持公开状态页与掉线即时通知。',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         '轻快原生的 OpenAI 及兼容大模型 API 第三方客户端，支持自定义接口、工具调用与本地优先的对话存储。',

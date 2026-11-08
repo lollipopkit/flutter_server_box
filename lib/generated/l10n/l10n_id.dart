@@ -85,14 +85,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiRiskDestructive => 'Risiko tinggi';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Jalankan otomatis perintah hanya-baca';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Hanya jalan jika model dan pemeriksaan lokal sama-sama menyebutnya hanya-baca';
-
-  @override
   String get askAiHistory => 'Riwayat percakapan';
 
   @override
@@ -171,10 +163,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get authFailTip => 'Autentikasi gagal. Periksa datanya';
 
   @override
-  String get autoBackupConflict =>
-      'Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.';
-
-  @override
   String get autoConnect => 'Hubungkan otomatis';
 
   @override
@@ -190,14 +178,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupEncrypted => 'Cadangan telah dienkripsi';
 
   @override
-  String get backupNotEncrypted => 'Cadangan tidak dienkripsi';
-
-  @override
   String get backupPassword => 'Kata sandi cadangan';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.';
+      'Kata sandi cadangan akan dihapus dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasi akan dijeda hingga kata sandi baru diatur.';
 
   @override
   String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
@@ -207,7 +192,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.';
+      'Mengenkripsi cadangan dan data yang disinkronkan. Semua perangkat harus menggunakan kata sandi yang sama—jika diubah di satu perangkat, masukkan kata sandi baru di perangkat lainnya.';
 
   @override
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
@@ -304,39 +289,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Dipulihkan, kecuali tema-tema ini. Instal ulang dari toko tema atau dari file asalnya.';
 
   @override
-  String get backupTip =>
-      'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Status cadangan';
-
-  @override
-  String get icloudBackupStatusLoading => 'Memuat status cadangan iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Tidak dapat membaca metadata cadangan iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Belum ada berkas cadangan iCloud yang ditemukan';
-
-  @override
-  String get icloudBackupStateUploading => 'Mengunggah';
-
-  @override
   String get icloudBackupStateConflict => 'Terdeteksi konflik';
-
-  @override
-  String get icloudBackupStateUploaded => 'Terunggah';
-
-  @override
-  String get icloudBackupStateWaiting => 'Menunggu iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Cadangan terakhir: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Jalankan di Backgroud';
@@ -524,27 +477,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Apakah mode layar penuh diaktifkan ketika perangkat diputar ke modus lanskap? Opsi ini hanya berlaku untuk tab server.';
 
   @override
-  String get githubGistIdOptional => 'ID Gist (opsional)';
-
-  @override
-  String get githubGistToken => 'Token GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Token kosong';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Ini bukan ID Gist maupun tautan Gist. Gunakan bagian terakhir dari alamat gist (https://gist.github.com/<user>/<ID>), atau kosongkan agar gist rahasia baru dibuat saat pencadangan pertama.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub tidak menemukan gist dengan ID ini yang dapat dibaca oleh token ini: ID mungkin salah, gist mungkin telah dihapus, atau gist tersebut milik akun lain. Kosongkan ID agar gist rahasia baru dibuat saat pencadangan pertama.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub menolak token ini: token mungkin salah, kedaluwarsa, atau dicabut, atau tidak memiliki izin gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Pergi ke';
 
   @override
@@ -620,7 +552,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Simpan frasa sandi kunci privat terenkripsi di keychain sistem perangkat ini agar tidak diminta lagi setelah aplikasi dimulai ulang. Kunci tetap terenkripsi di cadangan. Menonaktifkan ini menghapus frasa sandi yang tersimpan.';
+      'Menyimpan frasa sandi kunci privat terenkripsi agar tidak perlu dimasukkan ulang setelah aplikasi dimulai ulang. Menonaktifkan opsi ini akan menghapus frasa sandi yang tersimpan di perangkat ini.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1244,11 +1176,28 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sinkronkan pengaturan aplikasi';
+  String get syncedData => 'Data yang disinkronkan';
 
   @override
-  String get syncAppSettingsTip =>
-      'Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.';
+  String get syncSecrets => 'Kata sandi sudo dan kunci API';
+
+  @override
+  String get keyPassphrases => 'Frasa sandi kunci';
+
+  @override
+  String get syncFiles => 'Font, gambar, dan skill';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Data sinkronisasi dibuat oleh versi ServerBox yang lebih baru. Perbarui aplikasi untuk melanjutkan sinkronisasi.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Data yang disinkronkan dienkripsi dengan kata sandi cadangan yang berbeda. Masukkan kata sandi cadangan yang digunakan di perangkat Anda lainnya.';
+
+  @override
+  String get syncUnreachable =>
+      'Tidak dapat terhubung ke layanan sinkronisasi. Periksa koneksi jaringan Anda lalu coba lagi.';
 
   @override
   String get termFontSizeTip =>
@@ -1686,7 +1635,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Membiarkan Agent bekerja di mesin yang menjalankan ServerBox. Perintah hanya-baca pun ditinjau';
+      'Mengizinkan Agent bekerja di mesin yang menjalankan ServerBox. Perintahnya mengikuti mode izin';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -5343,23 +5292,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya.';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'Pilih server yang Monitor-nya menyimpan cadangan.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Monitor ini tidak dapat menyimpan cadangan. Perbarui Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Cadangan lebih besar dari yang diterima Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID dari 100 sampai 999999999.';
 
   @override
@@ -6590,21 +6522,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Mode izin';
-
-  @override
-  String get agentModeAuto => 'Otomatis';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Izinkan semua';
-
-  @override
-  String get agentModeBypassOff => 'Dinonaktifkan di server ini';
-
-  @override
   String get agentModeBypassWarn =>
       'Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.';
 
@@ -7278,4 +7195,53 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alamat cadangan';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Buang perubahan yang belum disimpan?';
+
+  @override
+  String get syncAuto => 'Sinkronisasi otomatis';
+
+  @override
+  String get syncOff => 'Nonaktif';
+
+  @override
+  String get syncDone => 'Tersinkron';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Sinkronisasi terakhir $time';
+  }
+
+  @override
+  String get syncNow => 'Sinkronkan sekarang';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Sinkronisasi otomatis dengan $name akan dinonaktifkan. Cadangan yang sudah ada tidak akan dihapus.';
+  }
+
+  @override
+  String get bakPwdSet => 'Sudah diatur';
+
+  @override
+  String get bakPwdNotSet => 'Belum diatur';
+
+  @override
+  String get syncChannel => 'Saluran';
+
+  @override
+  String get syncStateFailed => 'Sinkronisasi gagal';
+
+  @override
+  String get syncStatePassword => 'Kata sandi tidak cocok';
+
+  @override
+  String get syncStateUpdate => 'Perlu diperbarui';
+
+  @override
+  String get syncStateRunning => 'Menyinkronkan';
 }

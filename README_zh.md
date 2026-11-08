@@ -6,7 +6,11 @@
   <a href="https://lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
   <img alt="语言" src="https://img.shields.io/badge/语言-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/证书-AGPLv3-yellow">
-  <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+</div>
+<div align="center">
+  <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-群-pink"></a>
+  <a href="https://t.me/lpktg"><img alt="telegram" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
+  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
 <p align="center">
@@ -91,16 +95,10 @@
 **个性化**
 
 - 内置商店里的[主题和图标包](https://serverbox.lollipopkit.com/docs/zh/advanced/theme-packages/)，也可以自己制作。
-- 生物识别应用锁；可将备份保存到 iCloud、WebDAV、GitHub Gist 或 Monitor，并使用你设置的密码加密。
+- 生物识别应用锁；可将备份保存到 iCloud 或 WebDAV，并使用你设置的密码加密。
 - 支持 iOS、Android、macOS、Linux 和 Windows，16 种语言。
 
 ## 帮助
-
-<div align="center">
-  <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-群-pink"></a>
-  <a href="https://t.me/lpktg"><img alt="donate" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
-  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
-</div>
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的服务端组件。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送通知**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。Monitor 还提供网页面板。
 - **Agent skills：** 本仓库包含三份供 AI agent 使用的 skill。使用下面的命令添加：
@@ -131,7 +129,7 @@
 
 ## 我的其他 App
 
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)：OpenAI API 的第三方客户端。
+- [LLMBox](https://github.com/lollipopkit/llmbox)：OpenAI API 的第三方客户端。
 - [MFuse](https://mfuse.lollipopkit.com)：通过 File Provider 把 SFTP、S3、WebDAV 等挂载到 macOS 访达。
 
 ## 证书

@@ -87,6 +87,5 @@ abstract final class MonitorFeature {
   static const live = 'live';
   static const alerts = 'alerts';
   static const update = 'update';
-  static const backup = 'backup';
   static const agentMode = 'agent_mode';
 }

@@ -515,9 +515,36 @@ void main() {
 
       await client.selectPane(TmuxPaneId('%3'));
 
-      expect(shell.writes, contains("select-pane -t '%3'"));
+      // Selected even though the snapshot has it current: it may be stale.
+      final selectWindow = shell.writes.indexOf("select-window -t '@0'");
+      expect(selectWindow, isNonNegative);
+      expect(shell.writes.indexOf("select-pane -t '%3'"), greaterThan(selectWindow));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
+      await client.dispose();
+      shell.close();
+    });
+
+    test('switches window when selecting a pane in an inactive window', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@0'));
+      expect(client.snapshot!.paneWindows[TmuxPaneId('%3')], TmuxWindowId('@1'));
+
+      await client.selectPane(TmuxPaneId('%3'));
+
+      final selectWindowIdx = shell.writes.indexOf("select-window -t '@1'");
+      final selectPaneIdx = shell.writes.indexOf("select-pane -t '%3'");
+      expect(selectWindowIdx, isNonNegative);
+      expect(selectPaneIdx, greaterThan(selectWindowIdx));
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
       await client.dispose();
       shell.close();
@@ -563,6 +590,52 @@ void main() {
 
       expect(shell.writes, contains("select-pane -Z -t '%3'"));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
+      expect(client.snapshot!.activeWindow!.zoomed, isTrue);
+
+      await client.dispose();
+      shell.close();
+    });
+
+    test('before tmux 3.1 a zoomed window is zoomed again after select-pane', () async {
+      final shell = _FakeTmuxShell()..version = '3.0a';
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.splitPanes = true;
+      shell.windowZoomed = true;
+      await client.refreshState();
+
+      await client.selectPane(TmuxPaneId('%3'));
+
+      expect(shell.writes.where((w) => w.startsWith('select-pane -Z')), isEmpty);
+      final select = shell.writes.indexOf("select-pane -t '%3'");
+      expect(select, isNonNegative);
+      expect(shell.writes.indexOf("resize-pane -Z -t '%3'"), greaterThan(select));
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
+      expect(client.snapshot!.activeWindow!.zoomed, isTrue);
+
+      await client.dispose();
+      shell.close();
+    });
+
+    test('before tmux 3.1 selecting the active pane keeps the zoom', () async {
+      final shell = _FakeTmuxShell()..version = '3.0a';
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.splitPanes = true;
+      shell.windowZoomed = true;
+      await client.refreshState();
+
+      await client.selectPane(TmuxPaneId('%0'));
+
+      expect(shell.writes.where((w) => w.startsWith('resize-pane')), isEmpty);
       expect(client.snapshot!.activeWindow!.zoomed, isTrue);
 
       await client.dispose();
@@ -983,6 +1056,10 @@ final class _FakeTmuxShell implements ShellSession {
 
   void _answer(String command) {
     if (command.startsWith('display-message')) {
+      if (command.contains('#{window_zoomed_flag}')) {
+        _result(windowZoomed ? '1' : '0');
+        return;
+      }
       if (command.contains('#{version}')) {
         _result(version);
         return;
@@ -1054,10 +1131,12 @@ final class _FakeTmuxShell implements ShellSession {
       return;
     }
     if (command.startsWith('select-pane')) {
-      activePaneId = command.contains('%3') ? '%3' : '%0';
-      if (!command.contains('-Z')) {
+      final pane = command.contains('%3') ? '%3' : '%0';
+      // tmux leaves the window zoomed when the pane is already active.
+      if (pane != activePaneId && !command.contains('-Z')) {
         windowZoomed = false;
       }
+      activePaneId = pane;
       _result('');
       return;
     }

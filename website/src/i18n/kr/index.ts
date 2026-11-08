@@ -276,15 +276,15 @@ const kr: Translation = {
     llmapi: {
       title: 'LLM API',
       description:
-        '주요 프런티어 LLM을 하나로 묶은 통합 API 게이트웨이로, ServerBox AI 에이전트와 GPT Box 및 개발 도구에 바로 연결됩니다.',
+        '주요 프런티어 LLM을 하나로 묶은 통합 API 게이트웨이로, ServerBox AI 에이전트와 LLMBox 및 개발 도구에 바로 연결됩니다.',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         '웹사이트, API, 서버의 가동 상태를 모니터링하고 상태 페이지와 즉각적인 장애 알림을 제공하는 경량 서비스입니다.',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         'OpenAI 및 호환 LLM API를 위한 빠르고 가벼운 네이티브 클라이언트로, 로컬 대화 보관, 도구 호출, 커스텀 엔드포인트를 지원합니다.',

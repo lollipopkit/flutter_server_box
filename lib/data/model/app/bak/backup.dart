@@ -128,12 +128,7 @@ class BackupV1 implements Mergeable {
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();
-    unawaited(
-      KeyPassphrases.forgetGone(
-        keysBefore,
-        Stores.key.fetch().map((e) => e.key),
-      ),
-    );
+    KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     await Provider.reload();
     await RNodes.app.notify();
 

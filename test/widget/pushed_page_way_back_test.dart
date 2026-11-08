@@ -36,6 +36,7 @@ import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/src/rust/api/users.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
@@ -192,6 +193,10 @@ void main() {
     'KeybindingsPage': (c) => KeybindingsPage.route.go(c),
     'KnownHostsPage': (c) => KnownHostsPage.route.go(c),
     'LocalFilePage': (c) => LocalFilePage.route.go(c),
+    'PermissionsPage': (c) => AgentPermissions.route.go(
+      c,
+      MonitorPermissionsSource(MonitorHttpCredential(addr: 'http://127.0.0.1:9', pwd: 'p')),
+    ),
     'MonitorCorsPage': (c) => MonitorCorsPage.route.go(
       c,
       MonitorCorsArgs(origins: const [], onChanged: (_) {}),

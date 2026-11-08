@@ -769,7 +769,7 @@ type RootTranslation = {
 			 */
 			description: string
 		}
-		gptbox: {
+		llmbox: {
 			/**
 			 * G​P​T​ ​B​o​x
 			 */
@@ -1558,7 +1558,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, GPT Box, or your own tools.
+			 * Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, LLMBox, or your own tools.
 			 */
 			description: () => LocalizedString
 		}
@@ -1572,9 +1572,9 @@ export type TranslationFunctions = {
 			 */
 			description: () => LocalizedString
 		}
-		gptbox: {
+		llmbox: {
 			/**
-			 * GPT Box
+			 * LLMBox
 			 */
 			title: () => LocalizedString
 			/**
