@@ -164,9 +164,14 @@ final class BakSyncer extends SyncIface {
         // Sealed with the password this device changed from: opened with
         // it, and sealed with the new one by this sync's upload (what that
         // change forgot makes it upload).
-        final previous = await SyncKey.previousPassword();
-        if (previous == null) rethrow;
-        return await _read(await BackupV2.unlock(content, previous), pwd);
+        for (final previous in await SyncKey.previousPasswords()) {
+          try {
+            return await _read(await BackupV2.unlock(content, previous), pwd);
+          } on WrongPasswordException {
+            continue;
+          }
+        }
+        rethrow;
       }
       return await _read(plain, pwd);
     } on SchemaTooNewException catch (e) {

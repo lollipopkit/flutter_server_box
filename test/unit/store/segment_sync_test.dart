@@ -442,6 +442,28 @@ void main() {
       expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
     });
 
+    test('a change while an earlier one is still pending opens the file with either', () async {
+      final file = _KeyFile();
+      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'b'});
+      await SyncKey.load(file);
+      final keys = await AgeCryptor.decrypt(file.body!, 'b');
+
+      // Changed from `a` once, and that never done here; now from `b` to `c`.
+      SharedPreferences.setMockInitialValues({});
+      await PrefStore.shared.init();
+      await SyncKey.backupRewrap.set(true);
+      FlutterSecureStorage.setMockInitialValues({
+        SecureStoreProps.bakPwd.key: 'c',
+        'syncIdentity.${file.id}': utf8.decode(keys),
+        'syncKeyPreviousPwd': jsonEncode(['a']),
+      });
+      await SyncKey.passwordChanged('b', lkc: false, files: true, backup: false);
+      await SyncKey.load(file);
+      expect(await AgeCryptor.decrypt(file.body!, 'c'), keys);
+      expect(SyncKey.passwordMismatch.value, isEmpty);
+      expect(await SyncKey.previousPasswords(), ['b', 'a'], reason: 'the backup is still to be sealed again');
+    });
+
     test('a password changed here is taken by the file after a restart too', () async {
       final file = _KeyFile();
       FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'old'});

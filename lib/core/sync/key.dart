@@ -51,10 +51,22 @@ final class SyncKey implements SyncSeal {
 
   static const _rewraps = [lkcRewrap, filesRewrap, backupRewrap];
 
-  /// The password before this device's change, while something is still
-  /// sealed with it; null otherwise.
-  static Future<String?> previousPassword() async =>
-      _rewraps.any((f) => f.get() ?? false) ? await _previous.read() : null;
+  /// How many passwords changed from are kept at most.
+  static const _previousMax = 5;
+
+  /// The passwords this device changed from, the newest first, while
+  /// something may still be sealed with one; empty otherwise.
+  static Future<List<String>> previousPasswords() async {
+    if (!_rewraps.any((f) => f.get() ?? false)) return const [];
+    final raw = await _previous.read();
+    if (raw == null) return const [];
+    try {
+      return [for (final p in jsonDecode(raw) as List) if (p is String && p.isNotEmpty) p];
+    } on FormatException {
+      // As a build of this branch kept it: one password.
+      return [raw];
+    }
+  }
 
   /// The whole backup is sealed with the password here now.
   static Future<void> backupResealed() async {
@@ -76,10 +88,12 @@ final class SyncKey implements SyncSeal {
     legacy: SecureStore.storage,
   );
 
-  /// The password before the change the rewrap flags stand for: what the
-  /// files are still sealed with. Kept on this device (not synced) until
-  /// every file is sealed again, so a restart before then still opens them.
-  /// Key is permanent.
+  /// The passwords before the changes the rewrap flags stand for (JSON, the
+  /// newest first): what the files may still be sealed with, each change
+  /// kept while any is pending, as one sync may be done with the last while
+  /// another is not with the one before. On this device only (not synced)
+  /// until every file is sealed again, so a restart before then still opens
+  /// them. Key is permanent.
   static const _previous = SecureProp('syncKeyPreviousPwd');
 
   /// The key files ([SyncKeyFile.id]) the backup password here does not
@@ -146,10 +160,11 @@ final class SyncKey implements SyncSeal {
   }) async {
     final flags = [if (lkc) lkcRewrap, if (files) filesRewrap, if (backup) backupRewrap];
     if (flags.isEmpty) return;
-    // A change before the last one was done: what is pending is still sealed
-    // with the password before that one.
-    final pending = _rewraps.any((f) => f.get() ?? false);
-    if (!pending || await _previous.read() == null) await _previous.write(previous);
+    // Each one changed from while any is pending: what is still to be sealed
+    // again may be sealed with any of them.
+    final before = await previousPasswords();
+    final kept = [?previous, for (final p in before) if (p != previous) p].take(_previousMax).toList();
+    await _previous.write(kept.isEmpty ? null : jsonEncode(kept));
     for (final flag in flags) {
       await flag.set(true);
     }
@@ -176,7 +191,7 @@ final class SyncKey implements SyncSeal {
   Future<void> _rewrapped() async {
     List<String>? remote;
     var opened = false;
-    for (final pwd in [?await _previous.read(), null]) {
+    for (final pwd in [...await previousPasswords(), null]) {
       try {
         remote = await _fetch(_file, password: pwd);
         opened = true;
