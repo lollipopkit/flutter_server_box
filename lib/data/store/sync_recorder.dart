@@ -310,10 +310,15 @@ abstract final class SyncRecorder {
   static bool wasLost(String c, String id) =>
       _db.select('SELECT 1 FROM sync_state WHERE k = ?;', ['lost:$c:$id']).isNotEmpty;
 
+  /// [c]/[id] is said for again: another device's op, a removal included,
+  /// says what it is now, which [wasLost] no longer stands in for.
+  static void forgetLost(String c, String id) =>
+      _db.execute('DELETE FROM sync_state WHERE k = ?;', ['lost:$c:$id']);
+
   /// Notes [c]/[id] as [fingerprint] (null: not here) for [stampChanged]:
   /// what came from another device, which is not sent back.
   static void see(String c, String id, String? fingerprint) {
-    if (fingerprint != null) _db.execute('DELETE FROM sync_state WHERE k = ?;', ['lost:$c:$id']);
+    if (fingerprint != null) forgetLost(c, id);
     if (fingerprint == null) {
       _db.execute('DELETE FROM sync_state WHERE k = ?;', ['seen:$c:$id']);
     } else {

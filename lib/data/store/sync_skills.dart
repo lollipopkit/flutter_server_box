@@ -49,6 +49,7 @@ abstract final class SyncSkills {
           final Map d => d.cast<String, Object?>(),
           _ => null,
         });
+        SyncRecorder.forgetLost(c, op.id);
         SyncRecorder.see(c, op.id, Skills.fingerprints?[op.id]);
         SyncRecorder.receiving(op.h, () => SyncRecorder.record(c, op.id));
       } catch (e, s) {

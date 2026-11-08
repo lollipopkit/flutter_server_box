@@ -553,6 +553,11 @@ void main() {
     expect(removals, isEmpty);
     // What a send of every record (a snapshot, a log joined anew) reads of it.
     expect(SyncSkills.read('notes'), same(SyncRecords.silent));
+
+    // Removed elsewhere since: a removal, which a snapshot carries on.
+    final h = syncTick(device: BigInt.from(99), last: '', nowMs: BigInt.from(SyncClock.now() + 1000));
+    SyncSkills.install([(c: SyncSkills.c, id: 'notes', h: h, d: null)]);
+    expect(SyncSkills.read('notes'), isNull);
   });
 
   test('the same record under two ids (restored before ids existed) is one record, not two', () async {
