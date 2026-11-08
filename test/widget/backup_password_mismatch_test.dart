@@ -32,7 +32,7 @@ void main() {
 
   tearDown(() async {
     SyncKey.passwordMismatch.value = const {};
-    bakSync.lastFailure.value = null;
+    BakSyncer.passwordRefused.value = false;
     await getIt.reset();
     await SqliteDb.close();
   });
@@ -72,17 +72,17 @@ void main() {
 
     // The backup's own failure, while it syncs somewhere; not once it does not.
     SyncKey.passwordMismatch.value = const {};
-    bakSync.lastFailure.value = const WrongPasswordException();
+    BakSyncer.passwordRefused.value = true;
     await tester.pump();
     expect(said, findsNothing);
     await PrefProps.gistSync.set(true);
     addTearDown(() => PrefProps.gistSync.set(false));
-    bakSync.lastFailure.value = null;
-    bakSync.lastFailure.value = const WrongPasswordException();
+    BakSyncer.passwordRefused.value = false;
+    BakSyncer.passwordRefused.value = true;
     await tester.pump();
     expect(said, findsOneWidget);
 
-    bakSync.lastFailure.value = null;
+    BakSyncer.passwordRefused.value = false;
     await tester.pump();
     expect(said, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());

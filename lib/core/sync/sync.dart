@@ -45,6 +45,11 @@ final class BakSyncer extends SyncIface {
   /// Shown on the backup page: this device stops syncing until updated.
   static final remoteTooNew = ValueNotifier<SchemaTooNewException?>(null);
 
+  /// Whether the last sync that ran ended on a backup the password here
+  /// does not open. As each one ends, unlike [SyncIface.lastFailure], which
+  /// a sync clears as it starts: shown from this, it does not blink.
+  static final passwordRefused = ValueNotifier(false);
+
   /// Set by [backup] while it writes for LK Cloud, where theme packages are
   /// kept apart.
   LkcThemeBlobs? _themeBlobs;
@@ -134,11 +139,15 @@ final class BakSyncer extends SyncIface {
       }
       await _followPassword(pwd);
     }
-    return super.sync(
-      throttleMilli: throttleMilli,
-      rs: rs,
-      milliDelay: milliDelay,
-    );
+    try {
+      return await super.sync(
+        throttleMilli: throttleMilli,
+        rs: rs,
+        milliDelay: milliDelay,
+      );
+    } finally {
+      passwordRefused.value = lastFailure.value is WrongPasswordException;
+    }
   }
 
   @override

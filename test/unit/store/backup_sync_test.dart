@@ -99,12 +99,14 @@ void main() {
     await bakSync.sync(throttleMilli: 0, rs: rs);
 
     expect(bakSync.lastFailure.value, isA<WrongPasswordException>());
+    expect(BakSyncer.passwordRefused.value, isTrue);
     expect(syncFailureText(bakSync.lastFailure.value!), AppLocalizationsEn().syncPasswordMismatch);
     expect(rs.uploads, 0);
 
     FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'remote-password'});
     await bakSync.sync(throttleMilli: 0, rs: rs);
     expect(bakSync.lastFailure.value, isNull);
+    expect(BakSyncer.passwordRefused.value, isFalse);
   });
 
   test('a password changed here seals the remote with it, opened with the one before', () async {

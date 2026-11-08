@@ -366,11 +366,11 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   /// another device wrote: the person enters the one the others use.
   Widget get _buildPasswordMismatch {
     return ListenableBuilder(
-      listenable: Listenable.merge([SyncKey.passwordMismatch, bakSync.lastFailure]),
+      listenable: Listenable.merge([SyncKey.passwordMismatch, BakSyncer.passwordRefused]),
       builder: (context, _) {
         // The backup's own only while a remote sync is on: one turned off
         // keeps its last failure, which says nothing any more.
-        final backup = bakSync.lastFailure.value is WrongPasswordException && _hasEnabledRemoteSync;
+        final backup = BakSyncer.passwordRefused.value && _hasEnabledRemoteSync;
         if (SyncKey.passwordMismatch.value.isEmpty && !backup) {
           return UIs.placeholder;
         }
