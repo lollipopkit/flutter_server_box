@@ -78,6 +78,12 @@ updates:
       web:
         patterns:
           - "*"
+    ignore:
+      # svelte-check (`^5 || ^6`) and typescript-eslint (`<6.1`) do not take
+      # TypeScript 7 yet; with it `npm ci` refuses the peer ranges.
+      # TODO: drop once both accept 7.
+      - dependency-name: typescript
+        versions: [">=6.1"]
 
   # Its own group for the same reason as the three above: the actions in a
   # workflow are bumped for one reason at a time (a runner's Node version, most

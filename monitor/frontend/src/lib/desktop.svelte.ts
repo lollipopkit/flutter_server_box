@@ -129,7 +129,7 @@ export class RelayChannel {
     this.socket.binaryType = value
   }
 
-  send(data: ArrayBufferLike | ArrayBufferView | Blob | string) {
+  send(data: Parameters<WebSocket['send']>[0]) {
     this.socket.send(data)
   }
 
