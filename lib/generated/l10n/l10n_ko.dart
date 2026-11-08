@@ -589,7 +589,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '암호화된 개인 키의 암호 문구를 이 기기의 시스템 키체인에 저장하여 다시 시작한 후에도 묻지 않습니다. 백업의 키는 암호화된 상태로 유지됩니다. 끄면 저장된 암호 문구가 삭제됩니다.';
+      '암호화된 개인 키의 암호를 저장하여 다시 시작한 후 다시 묻지 않습니다. 끄면 이 기기에 저장된 암호가 삭제됩니다.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1172,11 +1172,27 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => '앱 설정 동기화';
+  String get syncedData => '동기화 데이터';
 
   @override
-  String get syncAppSettingsTip =>
-      '자동 동기화에 테마, 레이아웃, 편집기, 터미널 등 기타 기기 환경설정을 포함합니다.';
+  String get syncSecrets => 'sudo 비밀번호 및 API 키';
+
+  @override
+  String get keyPassphrases => '키 암호';
+
+  @override
+  String get syncFiles => '글꼴, 이미지 및 Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      '동기화된 데이터는 더 새로운 버전의 ServerBox에서 작성되었습니다. 계속 동기화하려면 이 앱을 업데이트하세요.';
+
+  @override
+  String get syncPasswordMismatch =>
+      '동기화된 데이터가 다른 백업 비밀번호로 암호화되어 있습니다. 다른 기기와 같은 백업 비밀번호를 설정하세요.';
+
+  @override
+  String get syncUnreachable => '동기화 위치에 연결할 수 없습니다. 네트워크를 확인한 후 다시 시도하세요.';
 
   @override
   String get termFontSizeTip =>

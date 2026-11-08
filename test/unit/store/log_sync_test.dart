@@ -2,18 +2,28 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart' show ThemePackages;
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmApi, LlmCustomProvider;
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores, Skills;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
+import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/picked_files.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
+import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 
 import '../../helpers/fsbt.dart';
@@ -151,6 +161,7 @@ void main() {
   setUpAll(() async {
     final dir = await Directory.systemTemp.createTemp('sbm-log-sync-');
     Paths.doc = dir.path;
+    Paths.img = dir.path.joinPath('img');
     addTearDown(() => dir.delete(recursive: true));
   });
 
@@ -245,6 +256,67 @@ void main() {
     expect(log.batches, hasLength(before + 1), reason: 'the same key is taken once, and nothing sent twice');
   });
 
+  test('a finished benchmark reaches the next device, one running does not', () async {
+    final log = _Log();
+    await _device();
+    final spi = spiFixture(name: 'web', id: 'srv1', ip: '10.0.0.2');
+    Stores.server.put(spi);
+    BenchmarkRun run(String id, BenchmarkStatus status) => BenchmarkRun(
+      id: id,
+      serverId: spi.id,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+      finishedAt: status == BenchmarkStatus.running ? null : DateTime.fromMillisecondsSinceEpoch(2000),
+      status: status,
+      options: const YabsOptions(),
+      runDir: '/tmp/b',
+      resultJson: '{}',
+    );
+    Stores.benchmark.put(run('done', BenchmarkStatus.completed));
+    Stores.benchmark.put(run('going', BenchmarkStatus.running));
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('done')?.resultJson, '{}');
+    expect(Stores.benchmark.get('going'), isNull);
+    Stores.benchmark.remove('done');
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('done'), isNull);
+  });
+
+  test('a benchmark whose server has not come yet is kept, and written once it has', () async {
+    final log = _Log();
+    await _device();
+    final spi = spiFixture(name: 'web', id: 'srv2', ip: '10.0.0.3');
+    Stores.server.put(spi);
+    Stores.benchmark.put(BenchmarkRun(
+      id: 'early',
+      serverId: spi.id,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(1000),
+      finishedAt: DateTime.fromMillisecondsSinceEpoch(2000),
+      status: BenchmarkStatus.completed,
+      options: const YabsOptions(),
+      runDir: '/tmp/b',
+      resultJson: '{}',
+    ));
+    final run = Stores.benchmark.read('early')!;
+    final h = SyncRecorder.stampsOf([(BenchmarkStore.c, 'early')])[(BenchmarkStore.c, 'early')]!;
+    final server = await SyncRecords.read(Stores.server.table, spi.id);
+    final serverH = SyncRecorder.stampsOf([(Stores.server.table, spi.id)])[(Stores.server.table, spi.id)]!;
+
+    // Another device, reading the run before its server.
+    await _device();
+    await SyncAnnounce.write([(c: BenchmarkStore.c, id: 'early', h: h, d: run)]);
+    expect(Stores.benchmark.get('early'), isNull);
+    await SyncAnnounce.write([(c: Stores.server.table, id: spi.id, h: serverH, d: server)]);
+    await _sync(log).sync();
+    expect(Stores.benchmark.get('early')?.resultJson, '{}');
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
+  });
+
   test('a server carries its container host and PVE settings', () async {
     final log = _Log();
     await _device();
@@ -268,6 +340,7 @@ void main() {
     await _sync(log).sync();
     expect(LogSync.behind(1), isFalse);
     expect(log.batches.length, greaterThan(1));
+    expect(LogSync.tooNew.value, isFalse);
 
     final sent = log.batches.length;
     log.batches.add((sent + 1, Uint8List.fromList(gzip.encode('{"v":99,"ops":[]}'.codeUnits))));
@@ -275,6 +348,10 @@ void main() {
     await expectLater(_sync(log).sync(), throwsA(isA<SyncLogTooNew>()));
     expect(log.batches.length, sent + 2, reason: 'the edit is sent all the same');
     expect(LogSync.behind(sent + 1), isTrue);
+    expect(LogSync.tooNew.value, isTrue, reason: 'shown on the backup page');
+
+    LogSync.forget();
+    expect(LogSync.tooNew.value, isFalse);
   });
 
   test('a full log is compacted, then the batch sent', () async {
@@ -289,7 +366,7 @@ void main() {
     expect(log.batches, hasLength(2));
   });
 
-  test('a device that left settings out writes no snapshot', () async {
+  test('a device that left settings out still writes the snapshot when asked', () async {
     final log = _Log();
     await _device();
     Stores.setting.timeout.put(17);
@@ -299,7 +376,13 @@ void main() {
     await _device();
     Stores.snippet.put(snippet);
     await _sync(log, settings: false).sync();
-    expect(log.snap, isNull);
+    expect(log.snap, isNotNull);
+    // With what it took and did not apply: a device reading only it has both.
+    log.floor = log.snap!.seq;
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.timeout.fetch(), 17);
+    expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
   });
 
   test("this device's own append moves the cursor when nothing is between", () async {
@@ -382,14 +465,99 @@ void main() {
     expect(Stores.setting.timeout.fetch(), 21);
   });
 
-  test('a device that leaves records out does not replace the key', () async {
+  test('a device that leaves records out carries them on in its snapshot', () async {
     final log = _Log();
     await _device();
     Stores.setting.timeout.put(17);
     await _sync(log).sync();
+    // Settings off here: taken as they came, not applied, and still in the
+    // snapshot it writes (here as it replaces the key).
     await _device();
-    final sync = _sync(log, settings: false);
-    await expectLater(sync.rotate(() async {}), throwsA(isA<SyncLogPartial>()));
+    await _sync(log, settings: false).rotate(() async {});
+    expect(Stores.setting.timeout.fetch(), isNot(17));
+    // The batches the snapshot covers are gone: a device joining now reads
+    // the snapshot alone, and has the setting.
+    log.floor = log.snap!.seq;
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.timeout.fetch(), 17);
+  });
+
+  test('a large record carried on is sealed again under a key replaced here', () async {
+    final log = _Log();
+    final account = ['k1'];
+    final big = 'x' * (SyncEngine.inlineMax + 1);
+    await _device();
+    Stores.setting.set('bigNote', big);
+    await LogSync(log, _Keyed(account)).sync();
+
+    // Settings off here: kept as they came, and in the snapshot the
+    // replaced key writes.
+    await _device();
+    final b = _Keyed(account);
+    await LogSync(log, b, carries: (c) => c != 'kv:setting' && c != 'theme').rotate(() => b.rotate('k2'));
+    final passed = SqliteDb.instance.select('SELECT d FROM sync_passed;').single['d'] as String;
+    expect(passed, isNot(contains(r'$blob')));
+
+    // A device holding the new key alone reads it from the snapshot.
+    log.floor = log.snap!.seq;
+    await _device();
+    await LogSync(log, _Keyed(['k2'])).sync();
+    expect(Stores.setting.get<String>('bigNote'), big);
+  });
+
+  test('a picked file missing for a while, or an unreadable skills lock, removes nothing elsewhere', () async {
+    final log = _Log();
+    final skills = await Directory.systemTemp.createTemp('sbm-skills-lock-');
+    addTearDown(() => skills.delete(recursive: true));
+    Skills.root = skills.path;
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_2.png'))..writeAsBytesSync([4, 5]);
+    Stores.setting.sshBgImage.put(picked.path);
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await _sync(log).sync();
+    final sent = log.batches.length;
+
+    final lock = File('${skills.path}/.lock.json');
+    final readable = lock.readAsStringSync();
+    picked.deleteSync();
+    lock.writeAsStringSync('{');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    expect(log.batches.length, sent, reason: 'nothing sent as gone');
+
+    // Readable again as it was: nothing in it is a new edit here.
+    lock.writeAsStringSync(readable);
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    expect(log.batches.length, sent, reason: 'nothing sent again');
+
+    // Lost with the lock, and readable again without it: still not removed,
+    // nor read as removed when every record is sent again.
+    lock.writeAsStringSync('{');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    Directory('${skills.path}/notes').deleteSync(recursive: true);
+    lock.writeAsStringSync('{}');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    final removals = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+          if (op['c'] == SyncSkills.c && op['d'] == null) op,
+    ];
+    expect(removals, isEmpty);
+    // What a send of every record (a snapshot, a log joined anew) reads of it.
+    expect(SyncSkills.read('notes'), same(SyncRecords.silent));
+
+    // Removed elsewhere since: a removal, which a snapshot carries on.
+    final h = syncTick(device: BigInt.from(99), last: '', nowMs: BigInt.from(SyncClock.now() + 1000));
+    SyncSkills.install([(c: SyncSkills.c, id: 'notes', h: h, d: null)]);
+    expect(SyncSkills.read('notes'), isNull);
   });
 
   test('the same record under two ids (restored before ids existed) is one record, not two', () async {
@@ -481,6 +649,240 @@ void main() {
     await device('c');
     await _sync(log, settings: false).sync();
     expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root), isNull);
+  });
+
+  test('a store theme the sender could only name is installed from the store, once it answers', () async {
+    final log = _Log();
+    addTearDown(() => SyncThemes.root = null);
+    addTearDown(() => ThemePackages.debugFetch = null);
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-themes-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      SyncThemes.root = dir.path;
+      await _device();
+      initThemeHost();
+    }
+
+    final bytes = fsbtOf('example.piggy', 'Piggy');
+    final digest = sha256.convert(bytes).toString();
+    final listing = 'id = "example.piggy"\nname = "Piggy"\n[[version]]\nversion = "1.0.0"\n'
+        'schema_min = 1\nschema_max = 1\nurl = "https://example.org/piggy.fsbt"\n'
+        'sha256 = "$digest"\nsize = ${bytes.length}\n';
+    final tree = Archive()
+      ..add(ArchiveFile.string('repo.toml', 'schema = 1\nname = "Official"\n'))
+      ..add(ArchiveFile.string('themes/example.piggy.toml', listing));
+    final store = {
+      Urls.themeCatalog: utf8.encode('schema = 1\nname = "Test"\n[[repo]]\nurl = "https://example.org/store.tar.gz"\n'),
+      'https://example.org/store.tar.gz': const GZipEncoder().encode(TarEncoder().encode(tree)),
+      'https://example.org/piggy.fsbt': bytes,
+    };
+    var reachable = false;
+    ThemePackages.debugFetch = (uri) async {
+      if (!reachable) throw HttpException('offline', uri: uri);
+      return Uint8List.fromList(store[uri.toString()] ?? (throw HttpException('404', uri: uri)));
+    };
+
+    // Installed from the store, which keeps no package; the store out of
+    // reach as it is sent, so it goes by name.
+    await device('a');
+    await ThemePackages.install(bytes, rootDirectory: SyncThemes.root);
+    await File('${SyncThemes.root}/.sources/$digest.fsbt').delete();
+    await _sync(log).sync();
+
+    await device('b');
+    await _sync(log).sync();
+    expect(ThemePackages.installed(digest, rootDirectory: SyncThemes.root), isNull);
+
+    // The log is read past it; the next read tries it again.
+    reachable = true;
+    SqliteDb.instance.execute(
+      "UPDATE sync_state SET v = json_set(v, '\$.t', 0) WHERE k = ?;",
+      ['retry:${SyncThemes.c}:$digest'],
+    );
+    await _sync(log).sync();
+    expect(ThemePackages.installed(digest, rootDirectory: SyncThemes.root)?.name, 'Piggy');
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
+
+    // One the store never offers is given up after its tries, and a kept
+    // row nothing reads does not fail the read.
+    SqliteDb.instance.execute(
+      'INSERT INTO sync_state (k, v) VALUES (?, ?), (?, ?);',
+      [
+        'retry:${SyncThemes.c}:${'e' * 64}',
+        jsonEncode({'h': '0' * 32, 'd': {'id': 'example.gone', 'name': 'Gone'}, 't': 0, 'n': 10}),
+        'retry:${SyncThemes.c}:${'f' * 64}',
+        'not json',
+      ],
+    );
+    await _sync(log).sync();
+    expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
+  });
+
+  test('a provider added on each device is on both, the list builds before kept included', () async {
+    final log = _Log();
+    LlmCustomProvider provider(String id) =>
+        LlmCustomProvider(id: id, name: id, api: LlmApi.openaiCompletions, baseUrl: 'https://$id.example/v1');
+
+    await _device();
+    // As builds before kept them: one list, moved in as no edit.
+    LlmStores.llm.set('customProviders', [provider('old').toStoreJson()], updateLastUpdateTsOnSet: false);
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    LlmStores.llm.putCustomProvider(provider('a'));
+    await _sync(log).sync();
+
+    await _device();
+    LlmStores.llm.putCustomProvider(provider('b'));
+    await _sync(log).sync();
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'old']);
+
+    // A list another device sent as builds before kept it is split too.
+    await _device();
+    SyncRecorder.receiving(
+      syncStampOf(ms: BigInt.one, device: SyncRecorder.legacy),
+      () => LlmStores.llm.set('customProviders', [provider('listed').toStoreJson()]),
+    );
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    await _sync(log).sync();
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'listed', 'old']);
+
+    // One deleted since stays deleted, whatever list comes later.
+    LlmStores.llm.removeCustomProvider('old');
+    LlmStores.llm.set('customProviders', [provider('old').toStoreJson()], updateLastUpdateTsOnSet: false);
+    LlmStores.llm.splitLegacyProviders(SyncRecorder.adopt);
+    expect([for (final p in LlmStores.llm.customProviders) p.id], ['a', 'b', 'listed']);
+  });
+
+  test('a run carries what it first asked; a category switched during it is the next run\'s', () async {
+    final log = _Log();
+    await _device();
+    Stores.setting.timeout.put(7);
+    await _sync(log).sync();
+
+    await _device();
+    Stores.setting.serverStatusUpdateInterval.put(11);
+    var settings = true;
+    final sync = LogSync(
+      log,
+      _Clear(),
+      carries: (c) => settings || c != 'kv:setting',
+      write: (won) async {
+        // Switched off while this run reads.
+        settings = false;
+        await SyncAnnounce.write(won);
+      },
+    );
+    await sync.sync();
+
+    final sent = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List) '${op['c']}/${op['id']}',
+    ];
+    expect(sent, contains('kv:setting/${Stores.setting.serverStatusUpdateInterval.key}'));
+  });
+
+  test('a picked file reaches the next device as its own copy, and its removal too', () async {
+    final log = _Log();
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_1.png'))..writeAsBytesSync([1, 2, 3]);
+    Stores.setting.sshBgImage.put(picked.path);
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    final copy = Stores.setting.sshBgImage.fetch();
+    expect(copy, isNot(picked.path));
+    expect(File(copy).readAsBytesSync(), [1, 2, 3]);
+    final batches = log.batches.length;
+    await _sync(log).sync();
+    expect(log.batches.length, batches, reason: 'what came in is not sent back');
+
+    Stores.setting.sshBgImage.put('');
+    await _sync(log).sync();
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.sshBgImage.fetch(), isEmpty);
+  });
+
+  test('a picked file missing here is not sent as removed', () async {
+    final log = _Log();
+    await _device();
+    await Directory(Paths.img).create(recursive: true);
+    final picked = File(Paths.img.joinPath('ssh_bg_2.png'))..writeAsBytesSync([4, 5]);
+    Stores.setting.sshBgImage.put(picked.path);
+    PickedFiles.stamp();
+    picked.deleteSync();
+    await _sync(log).sync();
+
+    final sent = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+          if (op['c'] == PickedFiles.c) op,
+    ];
+    expect(sent, isEmpty);
+    expect(Stores.setting.sshBgImage.fetch(), picked.path);
+  });
+
+  test('a skill installed on one device is installed on the next, and removed', () async {
+    final log = _Log();
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-skills-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      Skills.root = dir.path;
+      await _device();
+    }
+
+    await device('a');
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await _sync(log).sync();
+
+    await device('b');
+    await _sync(log).sync();
+    expect(Skills.byDir('notes')?.description, 'Takes notes.');
+    expect(Skills.filesOf('notes'), ['SKILL.md']);
+    Skills.remove('notes');
+    await _sync(log).sync();
+
+    await device('c');
+    await _sync(log).sync();
+    expect(Skills.byDir('notes'), isNull);
+  });
+
+  test('a skill changed here is sent at once; one a sync installs is not sent back', () async {
+    final dir = await Directory.systemTemp.createTemp('sbm-skills-follow-');
+    addTearDown(() => dir.delete(recursive: true));
+    Skills.root = dir.path;
+    await _device();
+    SyncSkills.follow();
+    var woken = 0;
+    void wake() => woken++;
+    SyncRecorder.onLocal.add(wake);
+    addTearDown(() => SyncRecorder.onLocal.remove(wake));
+
+    Skills.import('notes', {
+      'lock': {'name': 'notes', 'description': 'Takes notes.', 'hash': 'h1'},
+      'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: notes\n---\n'))},
+    });
+    await Future<void>.delayed(Duration.zero);
+    expect(woken, 1);
+    final stamped = SqliteDb.instance.select("SELECT hlc FROM sync_record WHERE c = 'skill' AND id = 'notes';");
+    expect(stamped, hasLength(1));
+
+    woken = 0;
+    SyncSkills.install([
+      (c: SyncSkills.c, id: 'other', h: '${'0' * 12}${'0' * 4}${'1' * 16}', d: {
+        'lock': {'name': 'other', 'description': 'Other.', 'hash': 'h2'},
+        'files': {'SKILL.md': base64Encode(utf8.encode('---\nname: other\n---\n'))},
+      }),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    expect(woken, 0, reason: 'what came from elsewhere is not an edit here');
+    Skills.remove('notes');
+    Skills.remove('other');
   });
 
   test('a theme here at another version is kept, and the selection points at it', () async {

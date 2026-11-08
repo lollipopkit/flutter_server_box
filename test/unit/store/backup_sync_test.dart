@@ -2,12 +2,18 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/failure.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A full `bakSync.sync` cycle against a remote holding [remote], which is
@@ -21,6 +27,7 @@ void main() {
   late File remote;
 
   setUpAll(() async {
+    l10n = AppLocalizationsEn();
     tempDir = await Directory.systemTemp.createTemp('sbm-backup-sync-');
     Paths.doc = tempDir.path;
     Paths.bakName = Miscs.bakFileName;
@@ -38,7 +45,9 @@ void main() {
     });
     SqliteDb.openInMemory();
     await Stores.init();
-    await PrefProps.syncAppSettings.set(true);
+    for (final c in SyncCategory.values) {
+      await c.pref.set(true);
+    }
   });
 
   tearDown(() async {
@@ -79,6 +88,24 @@ void main() {
     );
   });
 
+  test('a remote under another password stops the sync, said in words', () async {
+    Stores.setting.timeout.put(17);
+    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await becomeAnotherDevice();
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'another-password'});
+    final rs = _FileRemote(remote);
+
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+
+    expect(bakSync.lastFailure.value, isA<WrongPasswordException>());
+    expect(syncFailureText(bakSync.lastFailure.value!), AppLocalizationsEn().syncPasswordMismatch);
+    expect(rs.uploads, 0);
+
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'remote-password'});
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+    expect(bakSync.lastFailure.value, isNull);
+  });
+
   test('a synced setting is not applied with the switch off', () async {
     Stores.setting.timeout.put(17);
     await bakSync.writeEncryptedBackup(name: 'remote.json');
@@ -88,6 +115,60 @@ void main() {
     await bakSync.sync(throttleMilli: 0, rs: _FileRemote(remote));
 
     expect(Stores.setting.timeout.fetch(), 5);
+  });
+
+  test('a device that leaves the settings out carries them on', () async {
+    Stores.setting.timeout.put(17);
+    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await becomeAnotherDevice();
+    await PrefProps.syncAppSettings.set(false);
+    // Something of its own to send.
+    Stores.snippet.put(const Snippet(id: 'sn1', name: 'df', script: 'df -h'));
+
+    final rs = _FileRemote(remote);
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+
+    expect(rs.uploads, 1);
+    final uploaded = await BackupV2.open(await remote.readAsBytes(), 'remote-password');
+    expect(uploaded.settings['timeOut'], 17);
+    expect(uploaded.snippets, contains('sn1'));
+    expect(Stores.setting.timeout.fetch(), 5);
+  });
+
+  test("the Agent's settings sync, by their own switch", () async {
+    LlmStores.tool.enabled.put(false);
+    LlmStores.memory.write('MEMORY.md', 'note');
+    await bakSync.writeEncryptedBackup(name: 'remote.json');
+
+    await becomeAnotherDevice();
+    await SyncCategory.ai.pref.set(false);
+    Stores.snippet.put(const Snippet(id: 'sn1', name: 'df', script: 'df -h'));
+    await bakSync.sync(throttleMilli: 0, rs: _FileRemote(remote));
+    expect(LlmStores.tool.enabled.fetch(), isTrue, reason: 'switched off here');
+    final uploaded = await BackupV2.open(await remote.readAsBytes(), 'remote-password');
+    expect((uploaded.stores['tool'] as Map?)?['enabled'], isFalse, reason: 'carried on');
+
+    await SyncCategory.ai.pref.set(true);
+    await bakSync.sync(throttleMilli: 0, rs: _FileRemote(remote));
+    expect(LlmStores.tool.enabled.fetch(), isFalse);
+    expect(LlmStores.memory.read('MEMORY.md'), 'note');
+  });
+
+  test('secrets go only into an encrypted backup', () async {
+    Stores.sudoPassword.set('s1', 'pw');
+    final plain = await BackupV2.backup('plain.json', null);
+    final unencrypted = BackupV2.fromJsonString(await File(plain).readAsString());
+    expect(unencrypted.stores.keys, isNot(contains(Stores.sudoPassword.name)));
+    expect(unencrypted.stores.keys, contains('tool'));
+
+    final sealed = await bakSync.writeEncryptedBackup(name: 'sealed.age');
+    final opened = await BackupV2.open(await File(sealed).readAsBytes(), 'remote-password');
+    expect((opened.stores[Stores.sudoPassword.name] as Map?)?['s1'], 'pw');
+
+    // Nor carried into one from another device's.
+    final carried = await BackupV2.backup('carried.json', null, only: {SyncCategory.ai}, carry: opened);
+    final clear = BackupV2.fromJsonString(await File(carried).readAsString());
+    expect(clear.stores.keys, isNot(contains(Stores.sudoPassword.name)));
   });
 
   test('a sync nobody waits for handles its own network failure', () async {
@@ -142,7 +223,7 @@ void main() {
 
     await bakSync.sync(throttleMilli: 0, rs: rs);
 
-    expect(BakSyncer.remoteTooNew, isNotNull);
+    expect(BakSyncer.remoteTooNew.value, isNotNull);
     expect(rs.uploads, 0);
   });
 }

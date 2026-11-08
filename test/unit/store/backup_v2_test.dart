@@ -23,6 +23,8 @@ import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -293,6 +295,8 @@ void main() {
     late Directory tempDir;
 
     setUpAll(() async {
+      // Restores forget the passphrases of keys they replace (BLAKE3).
+      await initRustLibForTest();
       tempDir = await Directory.systemTemp.createTemp('sbm-backup-v2-');
       Paths.doc = tempDir.path;
     });

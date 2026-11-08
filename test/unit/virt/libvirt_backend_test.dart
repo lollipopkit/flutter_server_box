@@ -193,7 +193,7 @@ void main() {
         serverId: 's',
         exec: () async => exec,
         // One typed for this server elsewhere this session.
-        knownSudoPassword: () async {
+        knownSudoPassword: () {
           reads++;
           return password;
         },
@@ -207,7 +207,7 @@ void main() {
       final wrong = LibvirtBackend(
         serverId: 's',
         exec: () async => exec,
-        knownSudoPassword: () async => 'stale',
+        knownSudoPassword: () => 'stale',
         onSudoRejected: () => forgotten++,
       );
       expect((await _err(wrong.load())).type, VirtErrType.sudoPasswordRejected);

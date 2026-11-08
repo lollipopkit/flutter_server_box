@@ -70,5 +70,6 @@ abstract final class Tables {
     'tombstone',
     'sync_state',
     'sync_record',
+    'sync_passed',
   ];
 }

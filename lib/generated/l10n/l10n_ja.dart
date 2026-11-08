@@ -588,7 +588,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '暗号化された秘密鍵のパスフレーズをこのデバイスのシステムキーチェーンに保存し、再起動後に再入力を求めません。バックアップ内の鍵は暗号化されたままです。オフにすると保存済みのパスフレーズは削除されます。';
+      '暗号化された秘密鍵のパスフレーズを保存し、再起動後に再入力を求めません。オフにすると、この端末に保存されたパスフレーズを削除します。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1169,10 +1169,27 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'アプリ設定を同期';
+  String get syncedData => '同期するデータ';
 
   @override
-  String get syncAppSettingsTip => 'テーマ、レイアウト、エディター、ターミナルなど端末ごとの設定も自動同期に含めます。';
+  String get syncSecrets => 'sudo パスワードと API キー';
+
+  @override
+  String get keyPassphrases => '鍵のパスフレーズ';
+
+  @override
+  String get syncFiles => 'フォント、画像、Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      '同期データは新しいバージョンの ServerBox で書き込まれています。同期を続けるにはこのアプリを更新してください。';
+
+  @override
+  String get syncPasswordMismatch =>
+      '同期データは別のバックアップパスワードで暗号化されています。他の端末と同じバックアップパスワードを設定してください。';
+
+  @override
+  String get syncUnreachable => '同期先に接続できません。ネットワークを確認して再試行してください。';
 
   @override
   String get termFontSizeTip =>

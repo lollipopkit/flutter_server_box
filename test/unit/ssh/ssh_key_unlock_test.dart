@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,8 +7,11 @@ import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/src/rust/api/digest.dart';
 
 import '../../helpers/rust_lib_helper.dart';
+import '../../helpers/test_db.dart';
 
 /// Opening a key that is stored encrypted.
 ///
@@ -37,18 +41,18 @@ void main() {
     ])[0];
   });
 
-  setUp(() {
+  setUp(() async {
+    await openTestDb();
     PrivateKeyUnlock.forgetAll();
-    FlutterSecureStorage.setMockInitialValues({});
-    KeyPassphrases.resetQueue();
     // Off unless a test is about it: the rest is the policy of one run.
     KeyPassphrases.enabled = () => false;
     prompt = ({required keyName, required retry}) async =>
         throw StateError('unexpected passphrase prompt for $keyName');
   });
 
-  tearDown(() {
+  tearDown(() async {
     PrivateKeyUnlock.forgetAll();
+    await closeTestDb();
   });
 
   Future<String> open(
@@ -298,7 +302,7 @@ void main() {
     });
 
     test('one that does not open the key is dropped and asked for', () async {
-      await KeyPassphrases.write(lockedPem, 'not it');
+      KeyPassphrases.write(lockedPem, 'not it');
       var asked = 0;
       prompt = ({required keyName, required retry}) async {
         asked++;
@@ -306,7 +310,7 @@ void main() {
       };
       await open(lockedPem, cacheKey: 'k', keyName: 'k');
       expect(asked, 1);
-      expect(await KeyPassphrases.read(lockedPem), passphrase);
+      expect(KeyPassphrases.read(lockedPem), passphrase);
     });
 
     test('none is kept while the setting is off', () async {
@@ -323,32 +327,35 @@ void main() {
     });
 
     test('only the bytes no key holds any more are forgotten', () async {
-      await KeyPassphrases.write(lockedPem, passphrase);
-      await KeyPassphrases.write(plainPem, 'gone');
+      KeyPassphrases.write(lockedPem, passphrase);
+      KeyPassphrases.write(plainPem, 'gone');
       // A key referred to by path is in neither list, and stays.
-      await KeyPassphrases.write('path key', 'stays');
-      await KeyPassphrases.forgetGone([lockedPem, plainPem], [lockedPem]);
-      expect(await KeyPassphrases.read(lockedPem), passphrase);
-      expect(await KeyPassphrases.read(plainPem), isNull);
-      expect(await KeyPassphrases.read('path key'), 'stays');
+      KeyPassphrases.write('path key', 'stays');
+      KeyPassphrases.forgetGone([lockedPem, plainPem], [lockedPem]);
+      expect(KeyPassphrases.read(lockedPem), passphrase);
+      expect(KeyPassphrases.read(plainPem), isNull);
+      expect(KeyPassphrases.read('path key'), 'stays');
     });
 
-    test('clear drops every one, and nothing else', () async {
-      await KeyPassphrases.write(lockedPem, passphrase);
-      await KeyPassphrases.write(plainPem, 'other');
-      await const FlutterSecureStorage().write(key: 'unrelated', value: 'x');
-      await KeyPassphrases.clear();
-      expect(await KeyPassphrases.read(lockedPem), isNull);
-      expect(await KeyPassphrases.read(plainPem), isNull);
-      expect(await const FlutterSecureStorage().read(key: 'unrelated'), 'x');
+    test('clear drops every one here, and sends no delete', () {
+      KeyPassphrases.write(lockedPem, passphrase);
+      KeyPassphrases.write(plainPem, 'other');
+      SyncRecorder.record('kv:keyPassphrase', 'x');
+      KeyPassphrases.clear();
+      expect(KeyPassphrases.read(lockedPem), isNull);
+      expect(KeyPassphrases.read(plainPem), isNull);
+      expect(SyncRecorder.all().where((r) => r.c == 'kv:keyPassphrase'), isEmpty);
     });
 
-    test('a write queued behind a delete lands after it', () async {
-      await KeyPassphrases.write(lockedPem, 'stale');
-      final delete = KeyPassphrases.delete(lockedPem);
-      final write = KeyPassphrases.write(lockedPem, passphrase);
-      await Future.wait([delete, write]);
-      expect(await KeyPassphrases.read(lockedPem), passphrase);
+    test('the ones the keychain held are moved into the store', () async {
+      final name = 'sshKeyPassphrase.${blake3Hex(data: utf8.encode(lockedPem))}';
+      FlutterSecureStorage.setMockInitialValues({
+        'sshKeyPassphrases': jsonEncode([name]),
+        name: passphrase,
+      });
+      await KeyPassphrases.init();
+      expect(KeyPassphrases.read(lockedPem), passphrase);
+      expect(await const FlutterSecureStorage().readAll(), isEmpty);
     });
   });
 

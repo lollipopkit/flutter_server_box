@@ -613,7 +613,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را در Keychain سیستم این دستگاه ذخیره کنید تا پس از راه‌اندازی مجدد درخواست نشوند. کلیدها در فایل‌های پشتیبان رمزگذاری‌شده باقی می‌مانند. غیرفعال کردن این گزینه عبارت‌های عبور ذخیره‌شده را حذف می‌کند.';
+      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را نگه می‌دارد تا پس از راه‌اندازی مجدد دوباره پرسیده نشوند. خاموش کردن، موارد ذخیره‌شده در این دستگاه را حذف می‌کند.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1233,11 +1233,28 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'همگام‌سازی تنظیمات برنامه';
+  String get syncedData => 'داده‌های همگام‌شده';
 
   @override
-  String get syncAppSettingsTip =>
-      'گنجاندن پوسته، طرح‌بندی، ویرایشگر، ترمینال و سایر ترجیحات دستگاه در همگام‌سازی خودکار.';
+  String get syncSecrets => 'گذرواژه‌های sudo و کلیدهای API';
+
+  @override
+  String get keyPassphrases => 'عبارت‌های عبور کلید';
+
+  @override
+  String get syncFiles => 'فونت‌ها، تصاویر و مهارت‌ها';
+
+  @override
+  String get syncRemoteTooNew =>
+      'داده‌های همگام‌شده با نسخهٔ جدیدتری از ServerBox نوشته شده‌اند. برای ادامهٔ همگام‌سازی این برنامه را به‌روز کنید.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'داده‌های همگام‌شده با گذرواژهٔ پشتیبان دیگری رمزگذاری شده‌اند. همان گذرواژهٔ دستگاه‌های دیگرتان را تنظیم کنید.';
+
+  @override
+  String get syncUnreachable =>
+      'دسترسی به مقصد همگام‌سازی ممکن نیست. شبکه را بررسی کرده و دوباره تلاش کنید.';
 
   @override
   String get termFontSizeTip =>

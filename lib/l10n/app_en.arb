@@ -760,7 +760,7 @@
   "@rememberKeyPassphrase": {
     "description": "Setting: keep SSH key passphrases in the system keychain."
   },
-  "rememberKeyPassphraseTip": "Keep the passphrases of encrypted private keys in this device's system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.",
+  "rememberKeyPassphraseTip": "Keep the passphrases of encrypted private keys, so they are not asked for after a restart. Turning this off removes the ones kept on this device.",
   "@rememberKeyPassphraseTip": {
     "description": "Help text for the rememberKeyPassphrase setting."
   },
@@ -1563,13 +1563,33 @@
       }
     }
   },
-  "syncAppSettings": "Sync app settings",
-  "@syncAppSettings": {
-    "description": "User-facing label or message for sync app settings."
+  "syncedData": "Synced data",
+  "@syncedData": {
+    "description": "Title of the list of what sync carries."
   },
-  "syncAppSettingsTip": "Include theme, layout, editor, terminal and other device preferences in automatic sync.",
-  "@syncAppSettingsTip": {
-    "description": "Help text for the sync app settings setting or action."
+  "syncSecrets": "Sudo passwords and API keys",
+  "@syncSecrets": {
+    "description": "Sync category label."
+  },
+  "keyPassphrases": "Key passphrases",
+  "@keyPassphrases": {
+    "description": "Sync category label."
+  },
+  "syncFiles": "Fonts, images and skills",
+  "@syncFiles": {
+    "description": "Sync category label."
+  },
+  "syncRemoteTooNew": "The synced data was written by a newer version of ServerBox. Update this app to keep syncing.",
+  "@syncRemoteTooNew": {
+    "description": "Shown on the backup page when this build stops syncing at data a newer build wrote."
+  },
+  "syncPasswordMismatch": "The synced data is encrypted with a different backup password. Set the backup password your other devices use.",
+  "@syncPasswordMismatch": {
+    "description": "A sync stopped: the remote backup opens with another backup password."
+  },
+  "syncUnreachable": "Could not reach the sync destination. Check the network and try again.",
+  "@syncUnreachable": {
+    "description": "A sync stopped: the destination could not be reached."
   },
   "termFontSizeTip": "This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.",
   "@termFontSizeTip": {

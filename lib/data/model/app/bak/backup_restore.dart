@@ -117,6 +117,19 @@ extension BackupV2Restore on BackupV2 {
               _mergeDataForStore(Stores.setting, settings),
               force: force,
             );
+      final storeNotifications = <SqliteStore, Set<String>>{
+        for (final MapEntry(key: name, value: store)
+            in BackupV2._syncedStores.entries)
+          // Not kept by a device that keeps none.
+          if (stores.containsKey(name) &&
+              (store != Stores.keyPassphrase ||
+                  Stores.setting.rememberKeyPassphrase.fetch()))
+            store: _mergeSqliteStore(
+              store,
+              _mergeDataForStore(store, _storeRows(name)),
+              force: force,
+            ),
+      };
       // Restoring does not run the schema migrator. Convert legacy setting
       // shapes in version order before this transaction can commit, so a
       // failed conversion rolls the entire restore back with it.
@@ -135,6 +148,7 @@ extension BackupV2Restore on BackupV2 {
         container: containerChanged,
         history: historyNotifications,
         settings: settingNotifications,
+        stores: storeNotifications,
       );
     }));
 
@@ -145,12 +159,7 @@ extension BackupV2Restore on BackupV2 {
       Stores.key.invalidate();
       PrivateKeyUnlock.forgetAll();
       forgetParsedIdentities();
-      unawaited(
-        KeyPassphrases.forgetGone(
-          keysBefore,
-          Stores.key.fetch().map((e) => e.key),
-        ),
-      );
+      KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     }
     if (changed.creds) Stores.bmcCredential.invalidate();
     if (changed.servers) {
@@ -171,6 +180,9 @@ extension BackupV2Restore on BackupV2 {
     }
     _notifySqliteStore(Stores.history, changed.history);
     _notifySqliteStore(Stores.setting, changed.settings);
+    for (final MapEntry(key: store, value: keys) in changed.stores.entries) {
+      _notifySqliteStore(store, keys);
+    }
 
     StoreReload.after({
       if (changed.servers) ReloadedStore.servers,
@@ -655,7 +667,7 @@ void _deleteKv(SqliteStore store, String key, {int? at}) {
 }
 
 void _recordKv(SqliteStore store, String key, int? at) {
-  if (!SyncRecorder.syncedStores.contains(store.name)) return;
+  if (!SyncRecorder.syncedStores.containsKey(store.name)) return;
   if (store.isInternalKey(key) || store.isDeviceLocalKey(key)) return;
   SyncRecorder.record('kv:${store.name}', key, at: at);
 }

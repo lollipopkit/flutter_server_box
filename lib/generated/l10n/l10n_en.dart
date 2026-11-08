@@ -608,7 +608,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.';
+      'Keep the passphrases of encrypted private keys, so they are not asked for after a restart. Turning this off removes the ones kept on this device.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1224,11 +1224,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncedData => 'Synced data';
 
   @override
-  String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+  String get syncSecrets => 'Sudo passwords and API keys';
+
+  @override
+  String get keyPassphrases => 'Key passphrases';
+
+  @override
+  String get syncFiles => 'Fonts, images and skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'The synced data was written by a newer version of ServerBox. Update this app to keep syncing.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'The synced data is encrypted with a different backup password. Set the backup password your other devices use.';
+
+  @override
+  String get syncUnreachable =>
+      'Could not reach the sync destination. Check the network and try again.';
 
   @override
   String get termFontSizeTip =>

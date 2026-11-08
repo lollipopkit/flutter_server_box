@@ -30,8 +30,7 @@ when the connection fails. Many servers at once: bulk import,
 
 Under **Settings → App → AI**:
 
-- **Providers** — the model services and their API keys (kept in the system
-  keychain), custom OpenAI-compatible, Anthropic or Google endpoints, and the
+- **Providers** — the model services and their API keys, custom OpenAI-compatible, Anthropic or Google endpoints, and the
   default model. A custom provider at plain `http://` on another machine is
   refused unless **Allow plain HTTP** is on for it.
 - **Tools** — which tool groups you may use, the tools allowed without asking,
@@ -59,8 +58,16 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
   exempt the app from battery optimisation): **Settings → App → General**.
 - **Backups**: the Backup page — a file, WebDAV, iCloud, a GitHub Gist, or one
   of your servers' Monitors (the Monitor must be recent enough to list
-  `backup` in its features). A backup has the servers, snippets, keys and settings; the Agent's providers,
-  chats, skills and MCP secrets are not in it.
+  `backup` in its features). A backup has the servers with their SSH passwords, private keys,
+  snippets, remote desktop profiles with their passwords, settings and the Agent's settings, encrypted or
+  not; sudo passwords, API keys, MCP headers, the WebDAV and Gist settings and key passphrases only when
+  encrypted. Chats are not in it. **Synced
+  data** on that page switches each kind of data in or out of sync; fonts,
+  images, skills and benchmarks sync only through iCloud, WebDAV and LK Cloud.
+  A version from before the current sync format keeps syncing to its old
+  backup file, silently apart from the newer devices. One that cannot read a
+  newer device's format stops reading, says to update, and still sends its own
+  changes. Update every device.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.

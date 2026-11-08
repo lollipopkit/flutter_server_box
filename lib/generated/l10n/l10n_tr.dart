@@ -610,7 +610,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifreli özel anahtarların parolalarını bu cihazın sistem anahtar zincirinde saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Yedeklerde anahtarlar şifreli kalır. Kapatıldığında kayıtlı parolalar silinir.';
+      'Şifreli özel anahtarların parolalarını saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Kapatmak bu cihazda saklananları siler.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1233,11 +1233,28 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Uygulama ayarlarını eşitle';
+  String get syncedData => 'Eşitlenen veriler';
 
   @override
-  String get syncAppSettingsTip =>
-      'Tema, düzen, düzenleyici, terminal ve diğer cihaz tercihlerini otomatik eşitlemeye dâhil et.';
+  String get syncSecrets => 'Sudo parolaları ve API anahtarları';
+
+  @override
+  String get keyPassphrases => 'Anahtar parolaları';
+
+  @override
+  String get syncFiles => 'Yazı tipleri, görseller ve Skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Eşitlenen veriler ServerBox\'ın daha yeni bir sürümüyle yazıldı. Eşitlemeye devam etmek için bu uygulamayı güncelleyin.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Eşitlenen veriler farklı bir yedek parolasıyla şifrelenmiş. Diğer cihazlarınızın kullandığı yedek parolasını ayarlayın.';
+
+  @override
+  String get syncUnreachable =>
+      'Eşitleme hedefine ulaşılamıyor. Ağı kontrol edip yeniden deneyin.';
 
   @override
   String get termFontSizeTip =>

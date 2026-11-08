@@ -8,8 +8,10 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/monitor/backup_storage.dart';
 import 'package:server_box/core/service/report_filter.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
+import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
@@ -18,6 +20,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 
 final bakSync = BakSyncer._();
 
@@ -38,22 +41,26 @@ final class BakSyncer extends SyncIface {
   /// whole cycle.
   ///
   /// Static because the syncer is a single instance shared by every caller.
-  static SchemaTooNewException? _remoteTooNew;
-
-  /// Whether the last sync attempt aborted because the remote data is newer
-  /// than this build understands.
-  static SchemaTooNewException? get remoteTooNew => _remoteTooNew;
+  /// Shown on the backup page: this device stops syncing until updated.
+  static final remoteTooNew = ValueNotifier<SchemaTooNewException?>(null);
 
   /// Set by [backup] while it writes for LK Cloud, where theme packages are
   /// kept apart.
   LkcThemeBlobs? _themeBlobs;
 
+  /// The sections of the remote backup [fromFile] last read that a category
+  /// covers: what this device leaves out of its own is carried on from them.
+  BackupV2? _remote;
+
   @override
   Future<void> saveToFile() async {
-    await writeEncryptedBackup(
-      includeSettings: PrefProps.syncAppSettings.get(),
-      blobs: _themeBlobs,
-    );
+    final remote = _remote;
+    final only = SyncCategory.onNow;
+    if (remote != null && !only.contains(SyncCategory.settings)) {
+      // Carried as they are: the packages they name stay.
+      _themeBlobs?.keep(LkcThemeBlobs.namedBy(remote));
+    }
+    await writeEncryptedBackup(only: only, blobs: _themeBlobs, carry: remote);
   }
 
   /// Writes a backup that is safe to upload to remote storage.
@@ -61,14 +68,17 @@ final class BakSyncer extends SyncIface {
   /// Remote writes are always encrypted. Reading remains backwards-compatible
   /// in [fromFile] so a plaintext backup created before this requirement can be
   /// merged and replaced by an encrypted backup on the next upload.
+  ///
+  /// [only], [blobs] and [carry] as [BackupV2.backup].
   Future<String> writeEncryptedBackup({
     String? name,
-    bool includeSettings = true,
+    Set<SyncCategory>? only,
     ThemeBlobStore? blobs,
+    BackupV2? carry,
   }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
     if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
-    return BackupV2.backup(name, pwd, includeSettings, blobs);
+    return BackupV2.backup(name, pwd, only: only, blobs: blobs, carry: carry);
   }
 
   /// The sync an edit starts, which nobody waits for.
@@ -132,14 +142,14 @@ final class BakSyncer extends SyncIface {
 
   @override
   Future<Mergeable> fromFile(String path) async {
-    _remoteTooNew = null;
+    remoteTooNew.value = null;
+    _remote = null;
     final content = await File(path).readAsBytes();
     final pwd = await SecureStoreProps.bakPwd.read();
-    final includeSettings = PrefProps.syncAppSettings.get();
     try {
       // Only decrypting (in rage's isolate) and decoding leave this isolate:
       // they read nothing but their arguments. Prefs, secure storage and
-      // [_remoteTooNew] belong to this one — in a worker the pref answered
+      // [remoteTooNew] belong to this one — in a worker the pref answered
       // its default and dropped every synced setting, with no error anywhere
       // (#1562).
       //
@@ -160,11 +170,24 @@ final class BakSyncer extends SyncIface {
         }
       }
       final mergeable = await compute(_parse, plain);
-      return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
+      if (mergeable is BackupV2) {
+        _remote = mergeable.copyWith(
+          spis: const {},
+          snippets: const {},
+          keys: const {},
+          container: const {},
+          history: const {},
+          portForwards: const {},
+          remoteDesktopProfiles: const {},
+          bmcCredentials: const {},
+          pve: const {},
+        );
+      }
+      return _normalizeSyncPayload(mergeable);
     } on SchemaTooNewException catch (e) {
       // Recorded so `backup` refuses to upload over data this build cannot
       // read.
-      _remoteTooNew = e;
+      remoteTooNew.value = e;
       rethrow;
     }
   }
@@ -172,19 +195,11 @@ final class BakSyncer extends SyncIface {
   static Mergeable _parse(Uint8List plain) =>
       BackupReader.fromBytes(plain).$1;
 
-  Mergeable _normalizeSyncPayload(
-    Mergeable mergeable, {
-    required bool includeSettings,
-  }) {
-    if (includeSettings) return mergeable;
-
+  /// [mergeable] without what this device does not sync.
+  static Mergeable _normalizeSyncPayload(Mergeable mergeable) {
     return switch (mergeable) {
-      // The themes go with the settings: they are what the settings select.
-      final BackupV2 backup => backup.copyWith(
-        settings: const {},
-        themes: const {},
-      ),
-      final BackupV1 backup => BackupV1(
+      final BackupV2 backup => backup.only(SyncCategory.onNow),
+      final BackupV1 backup when !SyncCategory.settings.on => BackupV1(
         version: backup.version,
         date: backup.date,
         spis: backup.spis,
@@ -199,28 +214,31 @@ final class BakSyncer extends SyncIface {
     };
   }
 
-  /// Calls [onEdit] on each edit to a synced setting, which no provider syncs
-  /// on as the entity stores' do. Every such edit stamps the store, so what is
-  /// watched is the stamps' row: device-local settings and internal keys stamp
-  /// nothing. Only while settings are synced.
+  /// Calls [onEdit] on each edit to a synced setting or other synced kv store
+  /// (`SyncRecorder.syncedStores`), which no provider syncs on as the entity
+  /// stores' do. Every such edit stamps the store, so what is watched is the
+  /// stamps' row: device-local keys and internal keys stamp nothing. Only
+  /// while the store's category is synced.
   ///
   /// Not the history: tabs, workspaces and the last SFTP path change with
   /// every move, and each would be an upload and a merge on every device
   /// listening. It goes with the next sync.
-  static StreamSubscription<String> watchEdits(VoidCallback onEdit) =>
-      Stores.setting.watch().listen((key) {
-        if (key == Stores.setting.lastUpdateTsKey &&
-            PrefProps.syncAppSettings.get()) {
+  static List<StreamSubscription<String>> watchEdits(VoidCallback onEdit) => [
+    for (final store in SyncRecorder.syncedStores.values)
+      store.watch().listen((key) {
+        if (key == store.lastUpdateTsKey &&
+            SyncCategory.carries('kv:${store.name}')) {
           onEdit();
         }
-      });
+      }),
+  ];
 
   /// See [SyncIface.lacks] and [BackupV2.lacksLocal]; an older format is
   /// always written over.
   @override
   bool lacks(Mergeable downloaded) =>
       downloaded is! BackupV2 ||
-      downloaded.lacksLocal(includeSettings: PrefProps.syncAppSettings.get());
+      downloaded.lacksLocal(categories: SyncCategory.onNow);
 
   /// The password this device last synced with, kept on this device only.
   ///
@@ -265,7 +283,7 @@ final class BakSyncer extends SyncIface {
       await inheriting.timeout(const Duration(seconds: 30), onTimeout: () {});
     }
 
-    final tooNew = _remoteTooNew;
+    final tooNew = remoteTooNew.value;
     if (tooNew != null) {
       // Its own outcome, not a failure: the upload was refused because the
       // remote is newer than what this device last read. It is the one that
@@ -373,7 +391,12 @@ final class BakSyncer extends SyncIface {
   /// backend's runtime type, which does not change when a WebDAV URL is
   /// pointed at a different server — and pointing it somewhere new is exactly
   /// when the shortcut would skip the sync that had everything to do.
-  static Future<void> forgetCheckpoint() => _checkpoint.remove();
+  /// The remote read last is another's then too.
+  static Future<void> forgetCheckpoint() {
+    bakSync._remote = null;
+    remoteTooNew.value = null;
+    return _checkpoint.remove();
+  }
 
   /// When the user last changed anything that gets synced.
   ///
@@ -389,10 +412,10 @@ final class BakSyncer extends SyncIface {
   String? get localVersionTag {
     final ts = Stores.lastModTime;
     if (ts == 0) return null;
-    // The switch changes *what* the payload contains without touching any
+    // The switches change *what* the payload contains without touching any
     // store, so a tag keyed on modification time alone would skip the upload
-    // that was supposed to add the settings or take them away.
-    return '$ts/${PrefProps.syncAppSettings.get()}';
+    // that was supposed to add a category or take it away.
+    return '$ts/${[for (final c in SyncCategory.onNow) c.name].join(',')}';
   }
 
   @override
@@ -401,10 +424,10 @@ final class BakSyncer extends SyncIface {
     if (icloudEnabled && isICloudSupported) return icloud;
 
     final webdavEnabled = PrefProps.webdavSync.get();
-    if (webdavEnabled) return Webdav.shared;
+    if (webdavEnabled) return SyncRemotes.webdav;
 
     final gistEnabled = PrefProps.gistSync.get();
-    if (gistEnabled) return GistRs.shared;
+    if (gistEnabled) return SyncRemotes.gist;
 
     if (monitorSync.get()) return monitorStorage();
 

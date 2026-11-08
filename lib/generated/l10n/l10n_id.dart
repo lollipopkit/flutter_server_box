@@ -612,7 +612,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Simpan frasa sandi kunci privat terenkripsi di keychain sistem perangkat ini agar tidak diminta lagi setelah aplikasi dimulai ulang. Kunci tetap terenkripsi di cadangan. Menonaktifkan ini menghapus frasa sandi yang tersimpan.';
+      'Simpan frasa sandi kunci privat terenkripsi agar tidak ditanyakan lagi setelah dimulai ulang. Menonaktifkannya menghapus yang disimpan di perangkat ini.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1236,11 +1236,28 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sinkronkan pengaturan aplikasi';
+  String get syncedData => 'Data yang disinkronkan';
 
   @override
-  String get syncAppSettingsTip =>
-      'Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.';
+  String get syncSecrets => 'Kata sandi sudo dan kunci API';
+
+  @override
+  String get keyPassphrases => 'Frasa sandi kunci';
+
+  @override
+  String get syncFiles => 'Font, gambar, dan skill';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Data yang disinkronkan ditulis oleh versi ServerBox yang lebih baru. Perbarui aplikasi ini untuk melanjutkan sinkronisasi.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Data yang disinkronkan dienkripsi dengan kata sandi cadangan lain. Atur kata sandi cadangan yang dipakai perangkat Anda yang lain.';
+
+  @override
+  String get syncUnreachable =>
+      'Tidak dapat menjangkau tujuan sinkronisasi. Periksa jaringan lalu coba lagi.';
 
   @override
   String get termFontSizeTip =>

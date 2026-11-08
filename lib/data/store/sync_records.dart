@@ -2,11 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/picked_files.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 import 'package:sqlite3/sqlite3.dart';
+
+/// A record kind kept outside the stores ([SyncRecords.kinds]).
+typedef SyncKind = ({
+  FutureOr<Object?> Function(String id) read,
+  void Function()? stamp,
+  FutureOr<void> Function(List<({String c, String id, String h, Object? d})> ops) install,
+});
 
 /// A synced record as an op carries it: read from the
 /// stores to send, and written back when another device's op wins.
@@ -17,9 +27,24 @@ import 'package:sqlite3/sqlite3.dart';
 abstract final class SyncRecords {
   static const _kvPrefix = 'kv:';
 
+  /// The records kept outside the stores, by kind: each read, stamped where
+  /// it changed ([SyncRecorder.stampChanged]) and written by its owner,
+  /// after the stores. The themes are apart from these: what they install
+  /// moves the selection.
+  static final kinds = <String, SyncKind>{
+    PickedFiles.c: (read: PickedFiles.read, stamp: PickedFiles.stamp, install: PickedFiles.install),
+    SyncSkills.c: (read: SyncSkills.read, stamp: SyncSkills.stamp, install: SyncSkills.install),
+    BenchmarkStore.c: (read: (id) => Stores.benchmark.read(id), stamp: null, install: (ops) => Stores.benchmark.install(ops)),
+  };
+
   /// What [read] answers for a record it could not read now (the themes'
   /// files), as against null for one that is not here.
   static const unread = Object();
+
+  /// What [read] answers for a record with nothing to say now: not sent,
+  /// and nothing after it held back (a picked file missing under a path
+  /// still set). It is stamped again once there is.
+  static const silent = Object();
 
   /// [c]/[id] as it is now, JSON; null when it is not here (deleted).
   static FutureOr<Object?> read(String c, String id) => reader()(c, id);
@@ -33,6 +58,7 @@ abstract final class SyncRecords {
     Future<Map<String, Object?>?>? themes;
     return (c, id) {
       if (c == SyncThemes.c) return (themes ??= SyncThemes.read()).then((t) => t == null ? unread : t[id]);
+      if (kinds[c] case final kind?) return kind.read(id);
       if (c.startsWith(_kvPrefix)) {
         final store = _kvStore(c);
         if (store == null || !_syncedKey(store, id)) return null;
@@ -221,11 +247,7 @@ abstract final class SyncRecords {
     return '$name ($id)';
   }
 
-  static SqliteStore? _kvStore(String c) {
-    final name = c.substring(_kvPrefix.length);
-    if (!SyncRecorder.syncedStores.contains(name)) return null;
-    return name == Stores.setting.name ? Stores.setting : null;
-  }
+  static SqliteStore? _kvStore(String c) => SyncRecorder.syncedStores[c.substring(_kvPrefix.length)];
 
   static bool _syncedKey(SqliteStore store, String key) => !store.isInternalKey(key) && !store.isDeviceLocalKey(key);
 

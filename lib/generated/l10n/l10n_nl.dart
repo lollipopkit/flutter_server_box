@@ -612,7 +612,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Bewaar de wachtwoordzinnen van versleutelde privésleutels in de systeemsleutelhanger van dit apparaat, zodat ze na een herstart niet opnieuw worden gevraagd. In back-ups blijven de sleutels versleuteld. Uitschakelen verwijdert de opgeslagen wachtwoordzinnen.';
+      'Bewaart de wachtwoordzinnen van versleutelde privésleutels, zodat ze na een herstart niet opnieuw worden gevraagd. Uitschakelen verwijdert de op dit apparaat bewaarde.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1236,11 +1236,28 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'App-instellingen synchroniseren';
+  String get syncedData => 'Gesynchroniseerde gegevens';
 
   @override
-  String get syncAppSettingsTip =>
-      'Thema, indeling, editor, terminal en andere apparaatvoorkeuren meenemen in de automatische synchronisatie.';
+  String get syncSecrets => 'Sudo-wachtwoorden en API-sleutels';
+
+  @override
+  String get keyPassphrases => 'Wachtwoordzinnen van sleutels';
+
+  @override
+  String get syncFiles => 'Lettertypen, afbeeldingen en skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'De gesynchroniseerde gegevens zijn geschreven door een nieuwere versie van ServerBox. Werk deze app bij om te blijven synchroniseren.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Stel het wachtwoord van je andere apparaten in.';
+
+  @override
+  String get syncUnreachable =>
+      'Het synchronisatiedoel is niet bereikbaar. Controleer het netwerk en probeer het opnieuw.';
 
   @override
   String get termFontSizeTip =>

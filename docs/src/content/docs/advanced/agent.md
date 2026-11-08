@@ -10,8 +10,8 @@ Before the first message, add a provider at **Settings → Application → AI �
 Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
 others from the model catalog) and enter its API key, or add a custom
 OpenAI-compatible, Anthropic or Google endpoint. The same page chooses the
-model a new chat uses. API keys are stored in the system keychain, not in the
-App's database, and are sent only to their own provider. A request is sent only
+model a new chat uses. API keys are stored in the App's encrypted database and
+are sent only to their own provider. A request is sent only
 when you send a message.
 
 ## Choose an Agent
@@ -61,7 +61,7 @@ any provider. This is for a desktop App started from a shell: on macOS, an App
 opened from Finder or the Dock does not see what your shell profile exports.
 
 Settings from an earlier version — endpoint, model, protocol and key — were
-moved to a custom provider when you updated, and the key to the keychain.
+moved to a custom provider when you updated.
 
 ## What Agent can do
 
@@ -91,8 +91,9 @@ tools the Agent tab then offers too.
 Tap a server to edit it. One (Streamable HTTP) that wants a key takes it as
 headers, a name and a value each, such as `Authorization` with
 `Bearer <token>`. One that uses OAuth shows **Sign-in required**; **Log in**
-opens the browser, and the App keeps the token and renews it. Headers and tokens stay on this device and are not backed up, and
-are sent only over `https` unless the server is on this device.
+opens the browser, and the App keeps the token and renews it. Headers sync with
+the sudo passwords and API keys; a sign-in stays on this device. Both are sent only over
+`https` unless the server is on this device.
 
 ## Skills
 
@@ -194,8 +195,9 @@ build without the Linux engine cannot provide local command execution either.
 
 Chats are stored on the device, in the App's encrypted database, and long ones
 are summarised as they grow. You can reopen, rename and delete them from the
-history list. They are not included in backups or synced, and neither are your
-providers, tool settings and memory notes. Messages and tool results can
+history list. They are not included in backups or synced. Providers, tool
+settings, permissions and memory notes sync under **AI** in **Backup → Synced
+data**, the API keys under **Sudo passwords and API keys**. Messages and tool results can
 contain command output, file contents and any terminal text you pasted; they
 are sent to the provider when used in a chat.
 

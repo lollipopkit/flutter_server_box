@@ -77,7 +77,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   /// shared with the rest of the app), else asked for — as [userName]'s, the
   /// label under the field.
   Future<String?> _getSudoPassword() async {
-    if (await SudoPassword.known(hostId) case final pwd?) return pwd;
+    if (SudoPassword.known(hostId) case final pwd?) return pwd;
     if (!context.mounted) return null;
     return SudoPassword.ask(context, hostId, label: userName);
   }

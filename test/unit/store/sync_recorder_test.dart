@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -52,6 +53,14 @@ void main() {
     final pending = SyncRecorder.pending('').map((p) => p.c).toSet();
     expect(pending, {'kv:setting'});
     expect(SyncRecorder.pending('').map((p) => p.id), [Stores.setting.timeout.key]);
+  });
+
+  test("the Agent's settings and memory sync, its chats do not", () {
+    LlmStores.tool.enabled.put(false);
+    LlmStores.memory.write('MEMORY.md', 'note');
+    LlmStores.chat.set('c1', const {'id': 'c1'});
+    final pending = {for (final p in SyncRecorder.pending('')) (p.c, p.id)};
+    expect(pending, {('kv:tool', 'enabled'), ('kv:memory', 'MEMORY.md')});
   });
 
   test("another device's change is held, and never pending", () {

@@ -616,7 +616,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Guarda las frases de contraseña de las claves privadas cifradas en el llavero del sistema de este dispositivo, para no pedirlas tras un reinicio. Las claves siguen cifradas en las copias de seguridad. Al desactivarlo se eliminan las frases guardadas.';
+      'Guarda las frases de contraseña de las claves privadas cifradas para no pedirlas tras reiniciar. Al desactivarlo se eliminan las guardadas en este dispositivo.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1249,11 +1249,28 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sincronizar los ajustes de la app';
+  String get syncedData => 'Datos sincronizados';
 
   @override
-  String get syncAppSettingsTip =>
-      'Incluir el tema, el diseño, el editor, el terminal y otras preferencias del dispositivo en la sincronización automática.';
+  String get syncSecrets => 'Contraseñas sudo y claves API';
+
+  @override
+  String get keyPassphrases => 'Frases de contraseña de claves';
+
+  @override
+  String get syncFiles => 'Fuentes, imágenes y skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Los datos sincronizados los escribió una versión más reciente de ServerBox. Actualiza esta app para seguir sincronizando.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Los datos sincronizados están cifrados con otra contraseña de copia de seguridad. Establece la que usan tus otros dispositivos.';
+
+  @override
+  String get syncUnreachable =>
+      'No se puede acceder al destino de sincronización. Revisa la red e inténtalo de nuevo.';
 
   @override
   String get termFontSizeTip =>

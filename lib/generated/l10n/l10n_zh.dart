@@ -573,8 +573,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rememberKeyPassphrase => '记住私钥口令';
 
   @override
-  String get rememberKeyPassphraseTip =>
-      '将加密私钥的口令保存在本设备的系统钥匙串中，重启后无需再次输入。备份中的私钥仍保持加密。关闭后会删除已保存的口令。';
+  String get rememberKeyPassphraseTip => '保存加密私钥的口令，重启后无需再次输入。关闭后会删除本设备保存的口令。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1149,10 +1148,25 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => '同步应用设置';
+  String get syncedData => '同步内容';
 
   @override
-  String get syncAppSettingsTip => '在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。';
+  String get syncSecrets => 'sudo 密码与 API 密钥';
+
+  @override
+  String get keyPassphrases => '私钥口令';
+
+  @override
+  String get syncFiles => '字体、图片和 Skills';
+
+  @override
+  String get syncRemoteTooNew => '同步的数据由更新版本的 ServerBox 写入。更新本应用后才能继续同步。';
+
+  @override
+  String get syncPasswordMismatch => '同步的数据使用了不同的备份密码加密。请设置为与其他设备相同的备份密码。';
+
+  @override
+  String get syncUnreachable => '无法连接到同步位置。请检查网络后重试。';
 
   @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
@@ -7426,7 +7440,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '將加密私鑰的密語保存在本裝置的系統鑰匙圈中，重新啟動後無需再次輸入。備份中的私鑰仍保持加密。關閉後會刪除已保存的密語。';
+      '儲存加密私密金鑰的通行密碼，重新啟動後無需再次輸入。關閉後會刪除此裝置儲存的通行密碼。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -8001,10 +8015,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get syncAppSettings => '同步 App 設定';
+  String get syncedData => '同步內容';
 
   @override
-  String get syncAppSettingsTip => '將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。';
+  String get syncSecrets => 'sudo 密碼與 API 金鑰';
+
+  @override
+  String get keyPassphrases => '私密金鑰通行密碼';
+
+  @override
+  String get syncFiles => '字型、圖片與 Skills';
+
+  @override
+  String get syncRemoteTooNew => '同步的資料由較新版本的 ServerBox 寫入。更新此應用程式後才能繼續同步。';
+
+  @override
+  String get syncPasswordMismatch => '同步的資料使用了不同的備份密碼加密。請設定為與其他裝置相同的備份密碼。';
+
+  @override
+  String get syncUnreachable => '無法連線到同步位置。請檢查網路後重試。';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';

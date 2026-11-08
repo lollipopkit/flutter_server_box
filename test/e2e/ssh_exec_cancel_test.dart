@@ -242,7 +242,7 @@ Future<void> main() async {
         "sudo -S -p '' sleep $s",
         s,
         stdin: '$sudoPassword\n',
-        exec: SshExec(client, sudoPassword: () async => sudoPassword),
+        exec: SshExec(client, sudoPassword: () => sudoPassword),
       );
       expect(r.result.mayStillRun, isFalse);
       expect(await running(s), isFalse);

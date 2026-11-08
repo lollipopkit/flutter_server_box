@@ -13,11 +13,13 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/secret.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/tables.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -65,6 +67,12 @@ abstract final class Stores {
   /// here can work it out again.
   static SelfAddrStore get selfAddr => getIt<SelfAddrStore>();
   static BenchmarkStore get benchmark => getIt<BenchmarkStore>();
+
+  /// Saved sudo passwords, key passphrases and where the backup syncs to:
+  /// the secrets this app keeps beside the data they open.
+  static SudoPasswordStore get sudoPassword => SudoPasswordStore.instance;
+  static KeyPassphraseStore get keyPassphrase => KeyPassphraseStore.instance;
+  static SyncRemoteStore get syncRemote => SyncRemoteStore.instance;
 
   /// What each server was last seen running. A cache of an observation, not a
   /// record anyone edits — see [ServerDistStore].
@@ -158,10 +166,16 @@ abstract final class Stores {
       // reads.
       selfAddr.init(),
       // The Agent's: its chats, providers, tool switches and memory. Not in
-      // `_kvStores` either — a conversation is a record of what was said, not
-      // an edit, and like the conversations before them they stay on this
-      // device.
+      // `_kvStores`: a conversation is a record of what was said, not an
+      // edit, and stays on this device; the rest syncs as
+      // `SyncRecorder.syncedStores` says.
       ...LlmStores.all.map((store) => store.init()),
+      // The secrets, a sync category of their own.
+      LlmStores.mcpSecret.init(),
+      LlmStores.credential.init(),
+      sudoPassword.init(),
+      keyPassphrase.init(),
+      syncRemote.init(),
     ]);
 
     // Refused here, once, before anything below writes: the stored version is
@@ -188,7 +202,7 @@ abstract final class Stores {
 
   static int get lastModTime {
     var lastModTime = 0;
-    for (final store in _kvStores) {
+    for (final store in {..._kvStores, ...SyncRecorder.syncedStores.values}) {
       final last = store.lastUpdateTs;
       if (last == null) continue;
       for (final ts in last.values) {

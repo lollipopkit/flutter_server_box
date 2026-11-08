@@ -3,8 +3,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmApprovals;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -185,6 +188,43 @@ void main() {
     await _sync(folder).sync();
     expect(Stores.snippet.fetchOneRaw(snippet.id), isNull);
     expect(Stores.setting.timeout.fetch(), 30);
+  });
+
+  test('a category turned on again takes what came while it was off', () async {
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
+    final folder = _Folder();
+    await _device();
+    LlmApprovals.pickMode(LlmPermissionMode.auto);
+    await _sync(folder).sync();
+
+    await _device();
+    await SyncCategory.ai.pref.set(false);
+    final b = SegmentSync(folder, _Clear(), carries: SyncCategory.carries);
+    await b.sync();
+    expect(LlmApprovals.stored.defaultMode, isNot(LlmPermissionMode.auto));
+
+    await SyncCategory.ai.pref.set(true);
+    await b.reset();
+    await b.sync();
+    expect(LlmApprovals.stored.defaultMode, LlmPermissionMode.auto);
+  });
+
+  test('a newer format stops the read and is shown, for this engine only', () async {
+    final folder = _Folder();
+    final a = await _device();
+    Stores.snippet.put(snippet);
+    await _sync(folder).sync();
+    final name = folder.segmentsOf(a).single;
+    folder.files[name] = (body: Uint8List.fromList(gzip.encode(utf8.encode('{"v":99,"ops":[]}'))), at: DateTime.now());
+
+    await _device();
+    await expectLater(_sync(folder).sync(), throwsA(isA<SyncLogTooNew>()));
+    expect(SegmentSync.tooNew.value, isTrue);
+    expect(LogSync.tooNew.value, isFalse, reason: "LK Cloud's log is apart");
+
+    SegmentSync.forget();
+    expect(SegmentSync.tooNew.value, isFalse);
   });
 
   test('a number once taken is not written again, though what was sent is forgotten', () async {

@@ -117,6 +117,16 @@ final class LkcThemeBlobs implements ThemeBlobStore {
     }
   }
 
+  /// Marks [names] named by the backup being written: carried from another
+  /// device's ([BakSyncer] leaving the themes out).
+  void keep(Iterable<String> names) => _used.addAll(names);
+
+  /// The packages [backup]'s themes name.
+  static Iterable<String> namedBy(BackupV2 backup) => [
+    for (final entry in backup.themes.values)
+      if (entry case {'blob': final String name}) name,
+  ];
+
   /// Once the backup naming [_used] is written: the blobs no backup names
   /// any more, past [_grace]. Best effort, the next backup tries again.
   Future<void> sweep() async {
@@ -159,9 +169,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
         final plain = await BackupV2.unlock(await File(path).readAsBytes(), pwd);
         final (backup, _) = BackupReader.fromBytes(plain);
         if (backup is! BackupV2) continue;
-        for (final entry in backup.themes.values) {
-          if (entry case {'blob': final String name}) names.add(name);
-        }
+        names.addAll(namedBy(backup));
       }
     } finally {
       await dir.delete(recursive: true);

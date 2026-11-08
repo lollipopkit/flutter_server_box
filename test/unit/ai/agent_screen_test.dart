@@ -143,10 +143,14 @@ void main() {
     await settle();
     expect(at(), 'On screen: Server tab, the list of servers.');
 
-    // In place of the tabs, in a wide window.
-    AgentScreen.settingsOpen = true;
+    // Pushed over the tabs.
+    final settings = AppPageRoute<void>(
+      settings: const RouteSettings(name: AgentScreen.settingsRoute),
+      builder: (_) => const SizedBox(),
+    );
+    AgentScreen.settingsObserver.didPush(settings, null);
     expect(at(), 'On screen: Settings.');
-    AgentScreen.settingsOpen = false;
+    AgentScreen.settingsObserver.didPop(settings, null);
 
     go(AppTab.ssh);
     expect(at(), 'On screen: Terminal tab, picking a server to open.');
