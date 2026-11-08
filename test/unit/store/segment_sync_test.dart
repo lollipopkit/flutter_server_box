@@ -416,9 +416,10 @@ void main() {
       await SyncKey.load(file);
       expect(SyncKey.passwordMismatch.value, isEmpty);
 
-      // The others changed it to `new`; this device still has `old`.
+      // The others changed it to `new`; a device with `old` and no key kept.
       final keys = await AgeCryptor.decrypt(file.body!, 'old');
       file.body = utf8.encode(await AgeCryptor.encrypt(keys, 'new'));
+      password('old');
       await expectLater(SyncKey.load(file), throwsA(isA<WrongPasswordException>()));
       expect(SyncKey.passwordMismatch.value, {file.id});
 
