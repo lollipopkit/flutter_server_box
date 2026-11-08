@@ -56,28 +56,27 @@ void main() {
   });
 
   group('the key file', () {
-    test('a replace names the version it read', () async {
-      final sync = _Sync(etag: 'v1');
-      expect(await LkcKeyFile(sync, 'acct').write(body, replace: true), isTrue);
+    test('a write names the version it read, and gives the new one', () async {
+      final sync = _Sync();
+      expect(await LkcKeyFile(sync, 'acct').write(body, ifVersion: 'v1'), 'etag');
       expect(sync.ifMatch, 'v1');
     });
 
-    test('changed meanwhile is false, for the caller to read again', () async {
-      expect(await LkcKeyFile(_Sync(throws: changed), 'acct').write(body, replace: false), isFalse);
+    test('changed meanwhile is null, for the caller to read again', () async {
+      expect(await LkcKeyFile(_Sync(throws: changed), 'acct').write(body, ifVersion: null), isNull);
     });
 
     test('any other refusal is rethrown', () async {
-      await expectLater(LkcKeyFile(_Sync(throws: quota), 'acct').write(body, replace: false), throwsA(quota));
+      await expectLater(LkcKeyFile(_Sync(throws: quota), 'acct').write(body, ifVersion: null), throwsA(quota));
     });
   });
 }
 
 /// Answers the writes the adapter makes, or throws [throws] from each.
 final class _Sync implements LkcSync {
-  _Sync({this.throws, this.etag});
+  _Sync({this.throws});
 
   final LkcSyncError? throws;
-  final String? etag;
   String? ifMatch;
 
   @override
@@ -91,9 +90,6 @@ final class _Sync implements LkcSync {
     if (throws case final e?) throw e;
     return 'etag';
   }
-
-  @override
-  Future<String?> head({required String name}) async => etag;
 
   @override
   Future<String> upload({required String name, required String from, String? ifMatch}) async {

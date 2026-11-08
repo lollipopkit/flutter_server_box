@@ -1,6 +1,7 @@
 //! `GET /api/v1/backup` and `GET/PUT/DELETE /api/v1/backup/blob?name=` — the
-//! backups this agent hosts: the app's sync file, as a fourth remote storage
-//! beside WebDAV, iCloud and Gist, and what an operator uploads from the panel.
+//! backups this agent hosts: what an operator uploads from the panel, and the
+//! sync file of app releases that synced to an agent (later ones do not;
+//! TODO: drop that use once no such release is in use).
 //!
 //! # What a blob is
 //!

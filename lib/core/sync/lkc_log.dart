@@ -9,6 +9,7 @@ import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/core/utils/temp_file.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 
 /// [LogSync] on LK Cloud: homebase's log (`/v2/sync/serverbox/log`).
@@ -91,26 +92,28 @@ final class LkcKeyFile implements SyncKeyFile {
   @override
   final String id;
 
-  static const _name = 'identity.age';
+  static const name = 'identity.age';
 
   @override
-  PrefProp<bool> get rewrap => SyncKey.lkcRewrap;
-
-  @override
-  Future<Uint8List?> read() => withTempFile('key', (path) async {
-    final fetched = await _sync.download(name: _name, to: path);
-    return fetched.missing ? null : File(path).readAsBytes();
+  Future<({Uint8List body, String version})?> read() => withTempFile('key', (path) async {
+    final fetched = await _sync.download(name: name, to: path);
+    if (fetched.missing) return null;
+    final etag = fetched.etag;
+    if (etag == null) throw StateError('identity.age came without its version');
+    return (body: await File(path).readAsBytes(), version: etag);
   });
 
+  /// Writes are ordered: none read is none there.
   @override
-  Future<bool> write(Uint8List body, {required bool replace}) => withTempFile('key', (path) async {
+  Future<bool> canCreate() async => true;
+
+  @override
+  Future<String?> write(Uint8List body, {required String? ifVersion}) => withTempFile('key', (path) async {
     await File(path).writeAsBytes(body, flush: true);
-    final ifMatch = replace ? await _sync.head(name: _name) : null;
     try {
-      await _sync.upload(name: _name, from: path, ifMatch: ifMatch);
-      return true;
+      return await _sync.upload(name: name, from: path, ifMatch: ifVersion);
     } on LkcSyncError catch (e) {
-      if (e.kind == LkcSyncErrorKind.changed) return false;
+      if (e.kind == LkcSyncErrorKind.changed) return null;
       rethrow;
     }
   });
@@ -123,7 +126,6 @@ abstract final class LkcLogSync {
   static const _debounce = Duration(milliseconds: 500);
 
   static Future<LogSync>? _opening;
-  static SyncKey? _key;
   static Timer? _soon;
 
   static bool get _wanted =>
@@ -143,14 +145,20 @@ abstract final class LkcLogSync {
       if (opening == null) return LogSync.forget();
       unawaited(opening.then((s) => s.reset()).then((_) => sync(), onError: (Object _) => LogSync.forget()));
     });
-    // Signed out, or in as someone else: the next run opens anew.
+    // Signed out, or in as someone else: the next run opens anew, and what
+    // this device knew of the account before goes.
     Lkc.client.user.addListener(() {
+      final was = _account;
+      if (was != null && was != Lkc.client.user.value?.id) unawaited(SyncKey.forget(was));
       reset();
       unawaited(sync());
     });
     // Not only on the event stream connecting: a device whose network keeps
     // it from listening still sends what was edited while sync was off.
-    LkcSyncPrefs.enabled.listenable().addListener(() => unawaited(sync()));
+    LkcSyncPrefs.enabled.listenable().addListener(() {
+      if (!LkcSyncPrefs.enabled.get()) reset();
+      unawaited(sync());
+    });
     unawaited(sync());
   }
 
@@ -163,16 +171,32 @@ abstract final class LkcLogSync {
     if (LogSync.behind(seq)) await s.pull();
   });
 
+  /// Another device wrote the account's key file: checked again now.
+  static Future<void> keyChanged() async {
+    if (!_wanted) return;
+    try {
+      await (await key()).check(force: true);
+    } catch (e, s) {
+      if (e is! SyncPasswordMismatch) Loggers.app.warning('LK Cloud sync key', e, s);
+      return;
+    }
+    await sync();
+  }
+
   static Future<void> _run(Future<void> Function(LogSync) run) async {
     if (!_wanted) return;
     final LogSync sync;
     try {
       sync = await (_opening ??= _open());
+      // The password still opens the key: nothing syncs while it does not.
+      await key();
     } catch (e, s) {
       // Opened again next time: the key, the password or the network may be
       // there by then.
       _opening = null;
-      Loggers.app.warning('LK Cloud log sync: opening', e, s);
+      if (e is! SyncPasswordMismatch && e is! RemoteBackupPasswordMissing) {
+        Loggers.app.warning('LK Cloud log sync: opening', e, s);
+      }
       return;
     }
     try {
@@ -182,29 +206,23 @@ abstract final class LkcLogSync {
     }
   }
 
-  static Future<LogSync> _open() => _openOnce().catchError((Object e) {
-    _opening = null;
-    throw e;
-  });
-
-  static Future<LogSync> _openOnce() async {
+  static Future<LogSync> _open() async {
     final user = Lkc.client.user.value;
-    if (user == null) throw StateError('signed out');
+    if (user == null) throw const LkcException(code: LkcCode.perm, reason: 'signed_out');
     final sync = await Lkc.client.sync(Lkc.app);
-    final key = _key = await SyncKey.load(LkcKeyFile(sync, user.id));
+    final key = await LkcLogSync.key();
     LogSync.bind(user.id);
-    return LogSync(
-      LkcLogTransport(sync),
-      key,
-      carries: syncCarries,
-    );
+    return LogSync(LkcLogTransport(sync), key, carries: syncCarries);
   }
 
-  /// The account's sync key, as the log sync holds it: loaded (and sealed
-  /// again after a password change) in one place.
-  static Future<SyncKey> key() async {
-    await (_opening ??= _open());
-    return _key!;
+  /// The account's sync key, opened with the password here ([SyncKey.of]):
+  /// what the log, the backup and the theme packages are sealed with.
+  /// Without [create], as [SyncKey.of].
+  static Future<SyncKey> key({bool create = true}) async {
+    final user = Lkc.client.user.value;
+    if (user == null) throw const LkcException(code: LkcCode.perm, reason: 'signed_out');
+    _account = user.id;
+    return SyncKey.of(LkcKeyFile(await Lkc.client.sync(Lkc.app), user.id), create: create);
   }
 
   /// Replaces the account's sync key (a device that held it is gone):
@@ -214,13 +232,18 @@ abstract final class LkcLogSync {
   static Future<void> rotateKey() async {
     if (!_wanted) throw StateError('LK Cloud sync is off');
     final sync = await (_opening ??= _open());
-    await sync.rotate(() => _key!.rotate());
+    final key = await LkcLogSync.key();
+    await sync.rotate(key.rotate);
   }
 
-  /// Signed out or in as someone else: opened again for the next.
+  /// Off, signed out or in as someone else: opened again for the next.
   static void reset() {
     _soon?.cancel();
     _opening = null;
-    _key = null;
+    if (_account case final id?) SyncKey.release(id);
+    _account = null;
   }
+
+  /// The account whose key was read last.
+  static String? _account;
 }

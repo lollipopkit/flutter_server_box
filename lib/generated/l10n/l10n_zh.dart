@@ -186,7 +186,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordSet => '备份密码已设置';
 
   @override
-  String get backupPasswordTip => '设置密码以加密备份文件。留空则禁用加密。';
+  String get backupPasswordTip =>
+      '用于加密备份和同步。所有参与同步的设备使用同一个密码：在一台设备上修改后，需在其他设备上输入新密码。';
 
   @override
   String get backupPasswordWrong => '备份密码错误';
@@ -481,27 +482,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID（可选）';
-
-  @override
-  String get githubGistToken => 'GitHub Gist Token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token 为空';
-
-  @override
-  String get githubGistIdInvalid =>
-      '请输入有效的 Gist ID 或 Gist 链接（如 https://gist.github.com/<user>/<ID>），或直接留空，在首次备份时自动创建私密 Gist。';
-
-  @override
-  String get githubGistNotFound =>
-      '无法通过当前 Token 找到该 Gist：请检查 ID 是否正确、Gist 是否已删除或属于其他账号。也可将 ID 留空，在首次备份时自动创建新的私密 Gist。';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub 拒绝了此 Token：请检查是否已过期、被撤销，或缺少 Gist 读写权限（Classic Token 需勾选 \"gist\"，Fine-grained Token 需开启 Gists 读写权限）。';
 
   @override
   String get goto => '前往';
@@ -5014,20 +4994,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
 
   @override
-  String get monitorSyncNeedsServer => '请选择用于存放备份的 Monitor 服务器。';
-
-  @override
-  String get monitorBackupUnsupported => '此 Monitor 不支持存放备份，请更新 Monitor。';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '备份超过了 Monitor 允许的大小（$max）。';
-  }
-
-  @override
-  String get monitorBackupTooMany => 'Monitor 存放的备份数量已达上限，请先删除一个。';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID 须在 100 到 999999999 之间。';
 
   @override
@@ -7052,7 +7018,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupPasswordSet => '備份密碼已設定';
 
   @override
-  String get backupPasswordTip => '設定密碼來加密備份檔案。留空則停用加密。';
+  String get backupPasswordTip =>
+      '用於加密備份與同步。所有參與同步的裝置使用同一個密碼：在一台裝置上修改後，需在其他裝置上輸入新密碼。';
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';
@@ -7347,27 +7314,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID（選填）';
-
-  @override
-  String get githubGistToken => 'GitHub Gist Token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token 為空';
-
-  @override
-  String get githubGistIdInvalid =>
-      '這既不是 Gist ID，也不是 Gist 連結。請使用 gist 位址的最後一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次備份時建立新的私人 gist。';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub 找不到此 token 可讀取的該 ID 對應 gist：ID 可能有誤、gist 可能已遭刪除，或屬於其他帳戶。請將 ID 留空，以便在首次備份時建立新的私人 gist。';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub 拒絕了此 token：它可能有誤、已過期或已撤銷，也可能缺少 gist 權限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '前往';
@@ -11877,20 +11823,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get firewallInvalidForwardPort =>
       '格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。';
-
-  @override
-  String get monitorSyncNeedsServer => '請選擇由其 Monitor 存放備份的伺服器。';
-
-  @override
-  String get monitorBackupUnsupported => '此 Monitor 不支援存放備份，請更新 Monitor。';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '備份超過了 Monitor 允許的大小（$max）。';
-  }
-
-  @override
-  String get monitorBackupTooMany => 'Monitor 存放的備份數量已達上限，請先刪除一個。';
 
   @override
   String get virtCreateVmidInvalid => 'VMID 須介於 100 到 999999999。';

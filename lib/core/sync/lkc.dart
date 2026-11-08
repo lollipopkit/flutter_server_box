@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -12,15 +11,13 @@ import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
-import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/misc.dart';
 
 /// Theme packages kept apart from the backup on LK Cloud: `blob-<name>.age`
-/// each, sealed with the backup password as the backup is. The name is the
-/// package keyed by the account's sync key and the password
-/// (`fl_sync::blob_name`): equal packages are kept once, homebase never
-/// learns which theme it holds, and a package sealed again with a new
-/// password is a new blob. The backup's entry names it.
+/// each, sealed to the account's sync key as the backup is. The name is the
+/// package keyed by that key (`fl_sync::blob_name`): equal packages are kept
+/// once, and homebase never learns which theme it holds. The backup's entry
+/// names it.
 final class LkcThemeBlobs implements ThemeBlobStore {
   LkcThemeBlobs._();
 
@@ -38,10 +35,6 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   /// come.
   static const _grace = Duration(days: 1);
 
-  /// Installation id to the blob it is kept as, from when names were random.
-  /// TODO: rm with [forgetNames] once no install can still hold it.
-  static const _names = PrefProp<String>('lkc_theme_blobs');
-
   LkcSync? _sync;
 
   /// The blobs on homebase and when each was written, read once per backup.
@@ -51,9 +44,6 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   final _used = <String>{};
 
   Future<LkcSync> get _client async => _sync ??= await Lkc.client.sync(Lkc.app);
-
-  /// Removes what names were kept by before they were derived.
-  static Future<void> forgetNames() => _names.remove();
 
   /// Before a backup is written.
   void begin() {
@@ -70,26 +60,19 @@ final class LkcThemeBlobs implements ThemeBlobStore {
     };
   }
 
-  static Future<String> _password() async {
-    final pwd = await SecureStoreProps.bakPwd.read();
-    if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
-    return pwd;
-  }
-
   @override
   Future<String> put(String id, Uint8List bytes) async {
     final listed = _listed ??= await _list();
     final client = await _client;
-    final pwd = await _password();
     final key = await LkcLogSync.key();
-    final name = '$_prefix${key.nameOf([...utf8.encode(pwd), 0, ...bytes])}.age';
+    final name = '$_prefix${key.nameOf(bytes)}.age';
     _used.add(name);
     if (listed.containsKey(name)) return name;
-    final sealed = await AgeCryptor.encrypt(bytes, pwd);
+    final sealed = await key.seal(bytes);
     final dir = await Directory.systemTemp.createTemp('sb-theme-blob-');
     try {
       final file = File('${dir.path}/$name');
-      await file.writeAsString(sealed);
+      await file.writeAsBytes(sealed, flush: true);
       await client.upload(name: name, from: file.path);
     } on LkcSyncError catch (e) {
       // Put there meanwhile by another device: the same package.
@@ -108,10 +91,8 @@ final class LkcThemeBlobs implements ThemeBlobStore {
       final path = '${dir.path}/$name';
       final fetched = await (await _client).download(name: name, to: path);
       if (fetched.missing) throw StateError('Theme package $name is gone');
-      return await AgeCryptor.decrypt(
-        await File(path).readAsBytes(),
-        await _password(),
-      );
+      // A restore: a key file is not made for it on an account that never synced.
+      return await (await LkcLogSync.key(create: false)).openFresh(await File(path).readAsBytes());
     } finally {
       await dir.delete(recursive: true);
     }
@@ -154,7 +135,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   /// be read, so nothing is removed that one of them might name.
   Future<Set<String>> _keptByVersions(LkcSync sync) async {
     final names = <String>{};
-    final pwd = await _password();
+    final key = await LkcLogSync.key();
     final dir = await Directory.systemTemp.createTemp('sb-theme-blob-');
     try {
       final path = '${dir.path}/version';
@@ -166,7 +147,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
         );
         // Gone since it was listed: nothing to restore from it.
         if (fetched.missing) continue;
-        final plain = await BackupV2.unlock(await File(path).readAsBytes(), pwd);
+        final plain = await key.openFresh(await File(path).readAsBytes());
         final (backup, _) = BackupReader.fromBytes(plain);
         if (backup is! BackupV2) continue;
         names.addAll(namedBy(backup));
@@ -193,6 +174,7 @@ final class LkcSyncWatch {
     required ValueListenable<bool> toggle,
     required VoidCallback onRemoteChange,
     void Function(int? seq)? onLog,
+    VoidCallback? onKey,
     Duration retryAfter = const Duration(seconds: 30),
     bool inBackground = false,
   }) : _user = user,
@@ -201,6 +183,7 @@ final class LkcSyncWatch {
        _toggle = toggle,
        _onRemoteChange = onRemoteChange,
        _onLog = onLog,
+       _onKey = onKey,
        _retryAfter = retryAfter,
        _inBackground = inBackground;
 
@@ -213,6 +196,9 @@ final class LkcSyncWatch {
   /// The log reached a seq, or (null) listening began again and may have
   /// missed some.
   final void Function(int? seq)? _onLog;
+
+  /// Another device wrote the account's sync key file.
+  final VoidCallback? _onKey;
 
   /// After listening could not start, or ended while still signed in; twice
   /// as long after each failure in a row, up to 32 times, until connected.
@@ -248,6 +234,7 @@ final class LkcSyncWatch {
       // Cloud is where the backup syncs: another remote ranks above it.
       onRemoteChange: onRemoteChange,
       onLog: (seq) => unawaited(seq == null ? LkcLogSync.sync() : LkcLogSync.pull(seq)),
+      onKey: () => unawaited(LkcLogSync.keyChanged()),
       inBackground: isDesktop,
     )..start();
   }
@@ -338,6 +325,7 @@ final class LkcSyncWatch {
     if (event.connected) _failures = 0;
     if (event.connected || event.name == Miscs.bakFileName) _onRemoteChange();
     if (event.connected) _onLog?.call(null);
+    if (event.name == LkcKeyFile.name) _onKey?.call();
     if (event.logSeq case final seq?) _onLog?.call(seq);
   }
 }

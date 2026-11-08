@@ -12,6 +12,7 @@ import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/log.dart' show SyncSeal;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
@@ -269,16 +270,19 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   }
 
   /// [only] and [blobs] as [loadFromStore]; what [only] leaves out is
-  /// taken from [carry] when given ([carrying]). Without a [password], the
-  /// secrets are left out: the file is readable by whoever holds it.
+  /// taken from [carry] when given ([carrying]). Sealed to [key] (the sync's,
+  /// `Miscs.bakFileName`), else with [password] (an export `age -d` opens,
+  /// `Miscs.exportBakFileName`); with neither, the secrets are left out: the
+  /// file is readable by whoever holds it.
   static Future<String> backup(
     String? name,
     String? password, {
+    SyncSeal? key,
     Set<SyncCategory>? only,
     ThemeBlobStore? blobs,
     BackupV2? carry,
   }) async {
-    final encrypted = password != null && password.isNotEmpty;
+    final encrypted = key != null || (password != null && password.isNotEmpty);
     if (!encrypted) {
       only = {...only ?? SyncCategory.values}
         ..remove(SyncCategory.secrets)
@@ -289,25 +293,29 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // What was carried too: another device's secrets are no more this
     // file's to hold in the clear than this one's.
     if (!encrypted) bak = bak.withoutSecrets();
-    var result = bak.toJsonString();
-
-    if (encrypted) {
-      // Compressed *inside* the envelope, so what goes over the wire is
-      // roughly an eighth of what it was: this JSON is one shape repeated a
-      // few hundred times, and every key name is spelled out in every record.
-      // The armor then expands it once, rather than once per layer.
-      result = await AgeCryptor.encrypt(
-        compressBackups
-            ? gzip.encode(utf8.encode(result))
-            : utf8.encode(result),
-        password,
-      );
+    final json = utf8.encode(bak.toJsonString());
+    // Compressed *inside* the envelope, so what goes over the wire is
+    // roughly an eighth of what it was: this JSON is one shape repeated a few
+    // hundred times, and every key name is spelled out in every record. The
+    // armor then expands it once, rather than once per layer.
+    List<int> compressed() => compressBackups ? gzip.encode(json) : json;
+    final Uint8List bytes;
+    if (key != null) {
+      bytes = await key.seal(Uint8List.fromList(compressed()));
+    } else if (encrypted) {
+      bytes = utf8.encode(await AgeCryptor.encrypt(compressed(), password!));
+    } else {
+      bytes = json;
     }
 
     final path = Paths.doc.joinPath(
-      name ?? (encrypted ? Miscs.bakFileName : Miscs.plainBakFileName),
+      name ??
+          (key != null
+              ? Miscs.bakFileName
+              : encrypted
+              ? Miscs.exportBakFileName
+              : Miscs.plainBakFileName),
     );
-    final bytes = utf8.encode(result);
     await const LocalFileBackend().write(
       path,
       () => Stream.value(bytes),
@@ -321,7 +329,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// It was a one-way format change for the v3 sync file: an older build
   /// decrypted the envelope, found gzip where it expected text, and stopped
   /// syncing before it uploaded. The age envelope goes further, under the v4
-  /// name (`Miscs.bakFileName`): a build before it never sees the file.
+  /// name: a build before it never sees the file.
   ///
   /// TODO: remove this constant once no supported build predates it, and
   /// compress unconditionally.

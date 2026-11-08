@@ -6,10 +6,15 @@ library;
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/sync_key.dart';
 
 void main() {
   const password = 'fixture-password';
@@ -45,6 +50,21 @@ void main() {
     () => restores('age_binary.age'),
   );
 
+  test('v5, as the age CLI writes it: the sync key opened with the password, the backup with the key', () async {
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: password});
+    addTearDown(SyncKey.resetForTest);
+    final file = MemoryKeyFile()..put(File('$dir/sync_key_v5.txt').readAsBytesSync());
+    final key = await SyncKey.of(file);
+    expect(file.writes, 0, reason: 'opened as it is');
+
+    final data = File('$dir/sync_v5.age').readAsBytesSync();
+    expect(SyncKey.sealedToKey(data), isTrue);
+    final (mergeable, _) = BackupReader.fromBytes(await key.open(data));
+    expect((mergeable as BackupV2).toJson(), expected.toJson());
+  });
+
   test('a wrong password is said as one for each', () async {
     for (final file in ['lkfl_enc_v01.txt', 'age_armored.txt']) {
       await expectLater(
@@ -55,9 +75,10 @@ void main() {
     }
   });
 
-  test('the sync file is v4; the older names are read, never written', () {
-    expect(Miscs.bakFileName, 'srvbox_bak_v4.age');
+  test('the sync file is v5; the older names are read, never written', () {
+    expect(Miscs.bakFileName, 'srvbox_bak_v5.age');
+    expect(Miscs.exportBakFileName, 'srvbox_bak_v4.age');
     expect(Miscs.plainBakFileName, 'srvbox_bak_v4.json');
-    expect(Miscs.legacyBakFileNames, ['srvbox_bak_v3.json', 'srvbox_bak.json']);
+    expect(Miscs.legacyBakFileNames, ['srvbox_bak_v4.age', 'srvbox_bak_v3.json', 'srvbox_bak.json']);
   });
 }

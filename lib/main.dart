@@ -214,7 +214,7 @@ Future<void> _initApp(ProviderContainer container) async {
   // iPhone (`UIFileSharingEnabled`), so the app's own data is not there.
   //
   // `bakName` is versioned on purpose. Sync is a single shared file on
-  // iCloud/WebDAV/Gist/a monitor agent, and a build that cannot read the
+  // iCloud/WebDAV/LK Cloud, and a build that cannot read the
   // remote copy must never overwrite it. `SyncIface._sync` returns before
   // uploading when the merge fails, but a release that predates a format has
   // no version check and cannot be given one: the only thing certain to stop
@@ -351,6 +351,7 @@ Future<void> _initData() async {
 
   await _migrateStorage();
   await SyncRemotes.adopt();
+  await SyncRemotes.dropRetired();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 

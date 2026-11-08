@@ -5,10 +5,8 @@ import 'dart:typed_data';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmApprovals;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/sync/category.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -98,29 +96,6 @@ final class _Keyed implements SyncSeal {
   Future<bool> refresh() async {
     if (remote.every(held.contains)) return false;
     held = {...held, ...remote}.toList();
-    return true;
-  }
-}
-
-/// [SyncKey]'s file, in memory; while [blind], a device that does not see
-/// the one there yet (iCloud's delivery, a write at the same time).
-final class _KeyFile implements SyncKeyFile {
-  Uint8List? body;
-  var blind = false;
-
-  @override
-  String get id => 'test';
-
-  @override
-  PrefProp<bool> get rewrap => SyncKey.filesRewrap;
-
-  @override
-  Future<Uint8List?> read() async => blind ? null : body;
-
-  @override
-  Future<bool> write(Uint8List body, {required bool replace}) async {
-    if (!replace && this.body != null && !blind) return false;
-    this.body = body;
     return true;
   }
 }
@@ -371,35 +346,5 @@ void main() {
     await _device();
     await _sync(folder).sync();
     expect(Stores.setting.get<String>('bigNote'), big);
-  });
-
-  group('SyncKey', () {
-    setUp(() async {
-      SharedPreferences.setMockInitialValues({});
-      await PrefStore.shared.init();
-    });
-
-    test('two devices that made a key at once end with both, sealing with one', () async {
-      final file = _KeyFile();
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'pwd'});
-      final a = await SyncKey.load(file);
-      final sealedByA = await a.seal(Uint8List.fromList([1]));
-
-      // B did not see A's file yet, and wrote over it.
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'pwd'});
-      file.blind = true;
-      final b = await SyncKey.load(file);
-      file.blind = false;
-      final sealedByB = await b.seal(Uint8List.fromList([2]));
-      await expectLater(a.open(sealedByB), throwsFormatException);
-
-      // A, on its keys, meets B's file: puts its own back beside B's.
-      expect(await a.refresh(), isTrue);
-      expect(await a.open(sealedByB), [2]);
-      expect(await b.refresh(), isTrue);
-      expect(await b.open(sealedByA), [1]);
-      expect(a.nameOf([0]), b.nameOf([0]), reason: 'both seal with the same key now');
-      expect(await a.refresh(), isFalse);
-    });
   });
 }

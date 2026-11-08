@@ -50,7 +50,9 @@ wait_for() { # url
 echo "== WebDAV servers"
 mkdir -p "$WORK/rclone"
 printf '%s' "$SBM_E2E_WEBDAV_PASSWORD" | htpasswd -iBc "$WORK/htpasswd" "$SBM_E2E_WEBDAV_USER" 2>/dev/null
-rclone serve webdav --addr "127.0.0.1:$RCLONE_PORT" --htpasswd "$WORK/htpasswd" "$WORK/rclone" >"$WORK/rclone.log" 2>&1 &
+# An empty config: the user's own may be encrypted and ask for its password.
+: >"$WORK/rclone.conf"
+rclone --config "$WORK/rclone.conf" serve webdav --addr "127.0.0.1:$RCLONE_PORT" --htpasswd "$WORK/htpasswd" "$WORK/rclone" >"$WORK/rclone.log" 2>&1 &
 PIDS="$PIDS $!"
 wait_for "http://127.0.0.1:$RCLONE_PORT/"
 

@@ -276,15 +276,15 @@ const ja: Translation = {
     llmapi: {
       title: 'LLM API',
       description:
-        '主要 LLM を束ねる統合 API ゲートウェイ。ServerBox の AI エージェントや GPT Box、各種開発ツールにそのまま接続できます。',
+        '主要 LLM を束ねる統合 API ゲートウェイ。ServerBox の AI エージェントや LLMBox、各種開発ツールにそのまま接続できます。',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         'Web サイト、API、サーバーの稼働監視と公開ステータスページを提供する軽量モニタリングサービス。',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         'OpenAI および互換 LLM API 向けの高速なネイティブクライアント。ローカル履歴保存、ツール呼び出し、カスタムエンドポイントに対応。',

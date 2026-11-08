@@ -202,7 +202,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Définissez un mot de passe pour chiffrer les fichiers de sauvegarde. Laissez vide pour désactiver le chiffrement.';
+      'Chiffre les sauvegardes et la synchronisation. Tous les appareils synchronisés utilisent le même mot de passe : après l\'avoir changé sur l\'un, saisissez le nouveau sur les autres.';
 
   @override
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
@@ -519,27 +519,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Le mode plein écran doit-il être activé lorsque l\'appareil est orienté en mode paysage ? Cette option s\'applique uniquement à l\'onglet serveur.';
-
-  @override
-  String get githubGistIdOptional => 'ID du Gist (facultatif)';
-
-  @override
-  String get githubGistToken => 'Jeton GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Le jeton est vide';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Ce n\'est ni un ID de Gist ni un lien vers un Gist. Utilisez la dernière partie de l\'adresse du gist (https://gist.github.com/<user>/<ID>) ou laissez le champ vide pour qu\'un nouveau gist secret soit créé lors de la première sauvegarde.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub n\'a trouvé aucun gist avec cet ID que ce jeton puisse lire : l\'ID est peut-être incorrect, le gist a peut-être été supprimé ou appartient à un autre compte. Laissez l\'ID vide pour qu\'un nouveau gist secret soit créé lors de la première sauvegarde.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub a rejeté ce jeton : il est peut-être incorrect, expiré ou révoqué, ou il ne dispose pas de la permission gist (classic token : le scope \"gist\" ; fine-grained token : Gists read and write).';
 
   @override
   String get goto => 'Aller à';
@@ -5441,23 +5420,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Utilisez port=80:proto=tcp:toport=8080, avec toport, toaddr ou les deux.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Choisissez le serveur dont le Monitor stocke la sauvegarde.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Ce Monitor ne peut pas stocker de sauvegardes. Mettez le Monitor à jour.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'La sauvegarde dépasse la taille acceptée par le Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Le Monitor contient déjà le nombre maximal de sauvegardes autorisé. Supprimez-en une d\'abord.';
 
   @override
   String get virtCreateVmidInvalid => 'Un VMID de 100 à 999999999.';

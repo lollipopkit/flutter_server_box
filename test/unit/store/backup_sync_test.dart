@@ -8,13 +8,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/failure.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/sync_key.dart';
 
 /// A full `bakSync.sync` cycle against a remote holding [remote], which is
 /// where #1562 lived: `fromFile` used to run inside `compute`, so the
@@ -25,6 +29,16 @@ void main() {
 
   late Directory tempDir;
   late File remote;
+
+  /// The remote's `identity.age`.
+  late MemoryKeyFile keyFile;
+
+  /// The backup as the sync writes it, sealed to the remote's key.
+  Future<String> write(String name) async => BackupV2.backup(name, null, key: await SyncKey.of(keyFile));
+
+  /// [remote] opened as a device holding the key does.
+  Future<BackupV2> uploaded() async =>
+      BackupV2.fromPlainBytes(await (await SyncKey.of(keyFile)).open(await remote.readAsBytes()));
 
   setUpAll(() async {
     l10n = AppLocalizationsEn();
@@ -43,6 +57,11 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
+    SecureProp.resetRateLimits();
+    // The mock keeps one map whatever the store's options: one store here.
+    SecureProp.legacyApart = false;
+    keyFile = MemoryKeyFile();
+    BakSyncer.keyForTest = (_) => SyncKey.of(keyFile);
     SqliteDb.openInMemory();
     await Stores.init();
     for (final c in SyncCategory.values) {
@@ -51,6 +70,9 @@ void main() {
   });
 
   tearDown(() async {
+    BakSyncer.keyForTest = null;
+    SecureProp.legacyApart = null;
+    SyncKey.resetForTest();
     await PrefProps.syncAppSettings.set(false);
     await getIt.reset();
     await SqliteDb.close();
@@ -67,7 +89,7 @@ void main() {
 
   test('a synced setting from another device is applied', () async {
     Stores.setting.timeout.put(17);
-    final written = await bakSync.writeEncryptedBackup(name: 'remote.json');
+    final written = await write('remote.json');
     expect(written, remote.path);
     await becomeAnotherDevice();
     expect(Stores.setting.timeout.fetch(), 5);
@@ -77,38 +99,65 @@ void main() {
 
     expect(Stores.setting.timeout.fetch(), 17);
     expect(rs.uploads, 1);
-    final uploaded = await BackupV2.open(
-      await remote.readAsBytes(),
-      'remote-password',
-    );
     expect(
-      uploaded.settings['timeOut'],
+      (await uploaded()).settings['timeOut'],
       17,
       reason: 'the upload must carry the settings it merged',
     );
   });
 
-  test('a remote under another password stops the sync, said in words', () async {
+  test("a password that does not open the remote's key syncs nothing, said in words", () async {
     Stores.setting.timeout.put(17);
-    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await write('remote.json');
     await becomeAnotherDevice();
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'another-password'});
+    SyncKey.resetForTest();
+    await SecureStoreProps.bakPwd.write('another-password');
     final rs = _FileRemote(remote);
 
     await bakSync.sync(throttleMilli: 0, rs: rs);
 
-    expect(bakSync.lastFailure.value, isA<WrongPasswordException>());
+    expect(bakSync.lastFailure.value, isA<SyncPasswordMismatch>());
     expect(syncFailureText(bakSync.lastFailure.value!), AppLocalizationsEn().syncPasswordMismatch);
+    expect(rs.downloads, 0);
     expect(rs.uploads, 0);
 
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'remote-password'});
+    await SecureStoreProps.bakPwd.write('remote-password');
+    await SyncKey.recheck();
     await bakSync.sync(throttleMilli: 0, rs: rs);
     expect(bakSync.lastFailure.value, isNull);
+    expect(Stores.setting.timeout.fetch(), 17);
+  });
+
+  test('a password changed here seals the key again; the backup stays sealed to it', () async {
+    Stores.setting.timeout.put(17);
+    await write('remote.json');
+    final rs = _FileRemote(remote);
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+
+    // As the backup page does.
+    await SyncKey.passwordChanged('remote-password');
+    await SecureStoreProps.bakPwd.write('changed-here');
+    await SyncKey.recheck();
+    Stores.setting.timeout.put(18);
+
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+    expect(bakSync.lastFailure.value, isNull);
+    expect((await uploaded()).settings['timeOut'], 18);
+    expect(SyncKey.sealedToKey(await remote.readAsBytes()), isTrue);
+    await expectLater(AgeCryptor.decrypt(keyFile.body!, 'remote-password'), throwsA(isA<WrongPasswordException>()));
+    expect(await AgeCryptor.decrypt(keyFile.body!, 'changed-here'), isNotEmpty);
+
+    // Another device still on the one before syncs nothing.
+    await becomeAnotherDevice();
+    SyncKey.resetForTest();
+    await SecureStoreProps.bakPwd.write('remote-password');
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+    expect(bakSync.lastFailure.value, isA<SyncPasswordMismatch>());
   });
 
   test('a synced setting is not applied with the switch off', () async {
     Stores.setting.timeout.put(17);
-    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await write('remote.json');
     await becomeAnotherDevice();
     await PrefProps.syncAppSettings.set(false);
 
@@ -119,7 +168,7 @@ void main() {
 
   test('a device that leaves the settings out carries them on', () async {
     Stores.setting.timeout.put(17);
-    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await write('remote.json');
     await becomeAnotherDevice();
     await PrefProps.syncAppSettings.set(false);
     // Something of its own to send.
@@ -129,24 +178,23 @@ void main() {
     await bakSync.sync(throttleMilli: 0, rs: rs);
 
     expect(rs.uploads, 1);
-    final uploaded = await BackupV2.open(await remote.readAsBytes(), 'remote-password');
-    expect(uploaded.settings['timeOut'], 17);
-    expect(uploaded.snippets, contains('sn1'));
+    final carried = await uploaded();
+    expect(carried.settings['timeOut'], 17);
+    expect(carried.snippets, contains('sn1'));
     expect(Stores.setting.timeout.fetch(), 5);
   });
 
   test("the Agent's settings sync, by their own switch", () async {
     LlmStores.tool.enabled.put(false);
     LlmStores.memory.write('MEMORY.md', 'note');
-    await bakSync.writeEncryptedBackup(name: 'remote.json');
+    await write('remote.json');
 
     await becomeAnotherDevice();
     await SyncCategory.ai.pref.set(false);
     Stores.snippet.put(const Snippet(id: 'sn1', name: 'df', script: 'df -h'));
     await bakSync.sync(throttleMilli: 0, rs: _FileRemote(remote));
     expect(LlmStores.tool.enabled.fetch(), isTrue, reason: 'switched off here');
-    final uploaded = await BackupV2.open(await remote.readAsBytes(), 'remote-password');
-    expect((uploaded.stores['tool'] as Map?)?['enabled'], isFalse, reason: 'carried on');
+    expect(((await uploaded()).stores['tool'] as Map?)?['enabled'], isFalse, reason: 'carried on');
 
     await SyncCategory.ai.pref.set(true);
     await bakSync.sync(throttleMilli: 0, rs: _FileRemote(remote));
@@ -161,8 +209,12 @@ void main() {
     expect(unencrypted.stores.keys, isNot(contains(Stores.sudoPassword.name)));
     expect(unencrypted.stores.keys, contains('tool'));
 
-    final sealed = await bakSync.writeEncryptedBackup(name: 'sealed.age');
+    final sealed = await BackupV2.backup('sealed.age', 'remote-password');
     final opened = await BackupV2.open(await File(sealed).readAsBytes(), 'remote-password');
+    final synced = await write('synced.age');
+    final key = await SyncKey.of(keyFile);
+    final fromSync = BackupV2.fromPlainBytes(await key.open(await File(synced).readAsBytes()));
+    expect((fromSync.stores[Stores.sudoPassword.name] as Map?)?['s1'], 'pw');
     expect((opened.stores[Stores.sudoPassword.name] as Map?)?['s1'], 'pw');
 
     // Nor carried into one from another device's.

@@ -200,7 +200,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Установите пароль для шифрования файлов резервных копий. Оставьте пустым, чтобы отключить шифрование.';
+      'Шифрует резервные копии и синхронизацию. Все синхронизируемые устройства используют один пароль: изменив его на одном, введите новый на остальных.';
 
   @override
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
@@ -515,27 +515,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Следует ли включить полноэкранный режим, когда устройство поворачивается в альбомный режим? Эта опция применяется только к вкладке сервера.';
-
-  @override
-  String get githubGistIdOptional => 'ID Gist (необязательно)';
-
-  @override
-  String get githubGistToken => 'Токен GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Токен пуст';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Это не ID Gist и не ссылка на Gist. Используйте последнюю часть адреса gist (https://gist.github.com/<user>/<ID>) или оставьте поле пустым, чтобы при первом резервном копировании создать новый секретный gist.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub не нашёл gist с этим ID, который может прочитать этот токен: возможно, ID указан неверно, gist удалён или принадлежит другому аккаунту. Оставьте ID пустым, чтобы при первом резервном копировании создать новый секретный gist.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub отклонил этот токен: возможно, он неверный, срок его действия истёк или он отозван, либо ему не хватает разрешения gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Перейти к';
@@ -5386,23 +5365,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Используйте port=80:proto=tcp:toport=8080, с toport, toaddr или обоими.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Выберите сервер, Monitor которого хранит резервную копию.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Этот Monitor не может хранить резервные копии. Обновите Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Резервная копия больше, чем принимает Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID от 100 до 999999999.';

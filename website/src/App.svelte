@@ -97,7 +97,7 @@
     { key: 'uptimer', href: 'https://up.lolli.tech' },
   ]
   const otherAppList = [
-    { key: 'gptbox', href: 'https://github.com/lollipopkit/flutter_gpt_box' },
+    { key: 'llmbox', href: 'https://github.com/lollipopkit/llmbox' },
     { key: 'mfuse', href: 'https://mfuse.lollipopkit.com' },
   ]
 

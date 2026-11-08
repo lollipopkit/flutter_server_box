@@ -18,8 +18,8 @@ enum SyncCategory {
   /// The Agent's providers, tool switches, permissions and memory.
   ai,
 
-  /// Saved sudo passwords, AI provider keys, MCP headers, and the WebDAV and
-  /// Gist the backup syncs to.
+  /// Saved sudo passwords, AI provider keys, MCP headers, and the WebDAV the
+  /// backup syncs to.
   secrets,
 
   /// SSH key passphrases. Apart from [secrets]: a device that keeps none

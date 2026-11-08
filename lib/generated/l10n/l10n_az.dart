@@ -199,7 +199,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Ehtiyat nüsxə fayllarını şifrələmək üçün parol təyin et. Şifrələməni söndürmək üçün boş saxla.';
+      'Ehtiyat nüsxələri və sinxronizasiyanı şifrələyir. Sinxronlaşan bütün cihazlar eyni paroldan istifadə edir: birində dəyişdikdən sonra yenisini digərlərinə daxil edin.';
 
   @override
   String get backupPasswordWrong => 'Ehtiyat nüsxə parolu yanlışdır';
@@ -515,27 +515,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Cihaz üfüqi vəziyyətə çevrildikdə tam ekran rejimi aktivləşdirilsin? Bu seçim yalnız server vərəqinə aiddir.';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID (istəyə bağlı)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist tokeni';
-
-  @override
-  String get githubGistTokenEmpty => 'Token boşdur';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Bu, nə Gist ID-dir, nə də Gist linkidir. Gist ünvanının son hissəsini istifadə edin (https://gist.github.com/<user>/<ID>) və ya ilk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün boş saxlayın.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub bu ID ilə tokenin oxuya biləcəyi gist tapmadı: ID səhv ola, gist silinmiş ola və ya başqa hesaba aid ola bilər. İlk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün ID-ni boş saxlayın.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub bu tokeni rədd etdi: token səhv, vaxtı bitmiş və ya ləğv edilmiş ola bilər, yaxud gist icazəsi çatışmır (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Keç';
@@ -5348,23 +5327,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 formatından toport, toaddr və ya hər ikisi ilə istifadə edin.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Ehtiyat nüsxəni saxlayacaq Monitor-un serverini seçin.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Bu Monitor ehtiyat nüsxə saxlaya bilmir. Monitor-u yeniləyin.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Ehtiyat nüsxə Monitor-un qəbul etdiyi ölçüdən ($max) böyükdür.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
 
   @override
   String get virtCreateVmidInvalid => '100 ilə 999999999 arasında VMID.';

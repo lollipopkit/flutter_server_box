@@ -229,7 +229,7 @@
   "@backupPasswordSet": {
     "description": "User-facing label or message for backup password set."
   },
-  "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
+  "backupPasswordTip": "Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.",
   "@backupPasswordTip": {
     "description": "Help text for the backup password setting or action."
   },
@@ -642,30 +642,6 @@
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
   "@fullScreenTip": {
     "description": "Help text for the full screen setting or action."
-  },
-  "githubGistIdOptional": "Gist ID (optional)",
-  "@githubGistIdOptional": {
-    "description": "User-facing label or message for github gist id optional."
-  },
-  "githubGistToken": "GitHub Gist token",
-  "@githubGistToken": {
-    "description": "User-facing label or message for github gist token."
-  },
-  "githubGistTokenEmpty": "Token is empty",
-  "@githubGistTokenEmpty": {
-    "description": "Empty-state message for github gist token empty."
-  },
-  "githubGistIdInvalid": "This is neither a Gist ID nor a Gist link. Use the last part of the gist's address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.",
-  "@githubGistIdInvalid": {
-    "description": "Error shown when the Gist ID field holds something that is neither an ID nor a gist URL."
-  },
-  "githubGistNotFound": "GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.",
-  "@githubGistNotFound": {
-    "description": "Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist."
-  },
-  "githubGistTokenRejected": "GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).",
-  "@githubGistTokenRejected": {
-    "description": "Error shown when GitHub answers 401 or 403 for the token. Keep \"gist\" and \"Gists\" as GitHub names them."
   },
   "goto": "Go to",
   "@goto": {
@@ -6933,27 +6909,6 @@
   "firewallInvalidForwardPort": "Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.",
   "@firewallInvalidForwardPort": {
     "description": "Validation error for a firewalld forwarded port."
-  },
-  "monitorSyncNeedsServer": "Pick the server whose Monitor stores the backup.",
-  "@monitorSyncNeedsServer": {
-    "description": "Backup sync to a Monitor: no server is chosen yet."
-  },
-  "monitorBackupUnsupported": "This Monitor cannot store backups. Update the Monitor.",
-  "@monitorBackupUnsupported": {
-    "description": "Backup sync to a Monitor: the Monitor is too old to store backups."
-  },
-  "monitorBackupTooLarge": "The backup is larger than the Monitor accepts ({max}).",
-  "@monitorBackupTooLarge": {
-    "description": "Backup sync to a Monitor: the file exceeds the Monitor's size limit, given as max.",
-    "placeholders": {
-      "max": {
-        "type": "String"
-      }
-    }
-  },
-  "monitorBackupTooMany": "The Monitor already holds as many backups as it allows. Delete one first.",
-  "@monitorBackupTooMany": {
-    "description": "Backup sync to a Monitor: the Monitor's blob count limit is reached."
   },
   "virtCreateVmidInvalid": "A VMID from 100 to 999999999.",
   "@virtCreateVmidInvalid": {

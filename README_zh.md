@@ -95,7 +95,7 @@
 **个性化**
 
 - 内置商店里的[主题和图标包](https://serverbox.lollipopkit.com/docs/zh/advanced/theme-packages/)，也可以自己制作。
-- 生物识别应用锁；可将备份保存到 iCloud、WebDAV、GitHub Gist 或 Monitor，并使用你设置的密码加密。
+- 生物识别应用锁；可将备份保存到 iCloud 或 WebDAV，并使用你设置的密码加密。
 - 支持 iOS、Android、macOS、Linux 和 Windows，16 种语言。
 
 ## 帮助
@@ -129,7 +129,7 @@
 
 ## 我的其他 App
 
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)：OpenAI API 的第三方客户端。
+- [LLMBox](https://github.com/lollipopkit/llmbox)：OpenAI API 的第三方客户端。
 - [MFuse](https://mfuse.lollipopkit.com)：通过 File Provider 把 SFTP、S3、WebDAV 等挂载到 macOS 访达。
 
 ## 证书

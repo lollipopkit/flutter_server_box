@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
@@ -77,6 +78,14 @@ class BackupService {
   /// without saying so: it is only out of date. A typed one that is wrong asks
   /// whether to try again.
   static Future<void> restoreData(BuildContext context, List<int> data) async {
+    // A synced backup, sealed to a sync key this device keeps.
+    if (SyncKey.sealedToKey(data)) {
+      final (plain, err) = await context.showLoadingDialog(
+        fn: () => SyncKey.openKept(Uint8List.fromList(data)),
+      );
+      if (plain == null || err != null || !context.mounted) return;
+      data = plain;
+    }
     if (!AgeCryptor.isEncrypted(data)) {
       await _open(context, data, null);
       return;

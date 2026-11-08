@@ -16,7 +16,7 @@ final class KeyPassphraseStore extends SqliteStore {
 }
 
 /// Where the backup syncs to besides iCloud and LK Cloud: WebDAV's address,
-/// user and password, the gist's id and the GitHub token (`SyncRemotes`).
+/// user and password (`SyncRemotes`).
 final class SyncRemoteStore extends SqliteStore {
   SyncRemoteStore._() : super('syncRemote');
 

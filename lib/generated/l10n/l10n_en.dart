@@ -198,7 +198,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Set a password to encrypt backup files. Leave empty to disable encryption.';
+      'Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.';
 
   @override
   String get backupPasswordWrong => 'Incorrect backup password';
@@ -510,27 +510,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token is empty';
-
-  @override
-  String get githubGistIdInvalid =>
-      'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Go to';
@@ -5357,23 +5336,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Pick the server whose Monitor stores the backup.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'This Monitor cannot store backups. Update the Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'The backup is larger than the Monitor accepts ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'The Monitor already holds as many backups as it allows. Delete one first.';
 
   @override
   String get virtCreateVmidInvalid => 'A VMID from 100 to 999999999.';

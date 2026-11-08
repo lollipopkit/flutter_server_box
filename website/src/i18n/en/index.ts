@@ -278,15 +278,15 @@ const en: BaseTranslation = {
     llmapi: {
       title: 'LLM API',
       description:
-        'Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, GPT Box, or your own tools.',
+        'Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, LLMBox, or your own tools.',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         'Lightweight uptime monitoring and status pages for your websites, APIs, and servers with instant alerts.',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         'A fast, native third-party client for OpenAI and compatible LLM APIs, featuring local-first chat history, tool calling, and custom endpoints.',

@@ -197,7 +197,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.';
+      'Yedekleri ve eşitlemeyi şifreler. Eşitlenen tüm cihazlar aynı parolayı kullanır: birinde değiştirdikten sonra yenisini diğerlerine girin.';
 
   @override
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
@@ -513,27 +513,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Cihaz yatay moda döndürüldüğünde tam ekran modu etkinleştirilsin mi? Bu seçenek yalnızca sunucu sekmesi için geçerlidir.';
-
-  @override
-  String get githubGistIdOptional => 'Gist kimliği (isteğe bağlı)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist belirteci';
-
-  @override
-  String get githubGistTokenEmpty => 'Belirteç boş';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Bu, Gist kimliği de Gist bağlantısı da değil. Gist adresinin son bölümünü kullanın (https://gist.github.com/<user>/<ID>) veya ilk yedeklemede yeni bir gizli gist oluşturulması için boş bırakın.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub, bu tokenin okuyabileceği bu kimliğe sahip bir gist bulamadı: kimlik yanlış olabilir, gist silinmiş olabilir veya başka bir hesaba ait olabilir. İlk yedeklemede yeni bir gizli gist oluşturulması için kimliği boş bırakın.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub bu tokeni reddetti: token yanlış, süresi dolmuş veya iptal edilmiş olabilir ya da gist izni eksik olabilir (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Git';
@@ -5341,23 +5320,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 biçimini toport, toaddr veya ikisiyle birlikte kullanın.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Yedeği saklayacak Monitor’ün sunucusunu seçin.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Bu Monitor yedek saklayamaz. Monitor’ü güncelleyin.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Yedek, Monitor’ün kabul ettiği boyuttan ($max) büyük.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
 
   @override
   String get virtCreateVmidInvalid => '100 ile 999999999 arasında bir VMID.';

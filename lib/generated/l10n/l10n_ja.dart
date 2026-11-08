@@ -189,7 +189,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'バックアップファイルを暗号化するためのパスワードを設定してください。暗号化を無効にするには空白のままにしてください。';
+      'バックアップと同期を暗号化します。同期するすべてのデバイスで同じパスワードを使います。1 台で変更したら、他のデバイスにも新しいパスワードを入力してください。';
 
   @override
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
@@ -493,27 +493,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'デバイスが横向きに回転したときにフルスクリーンモードを有効にしますか？このオプションはサーバータブにのみ適用されます。';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID（任意）';
-
-  @override
-  String get githubGistToken => 'GitHub Gist トークン';
-
-  @override
-  String get githubGistTokenEmpty => 'トークンが空です';
-
-  @override
-  String get githubGistIdInvalid =>
-      'これは Gist ID でも Gist のリンクでもありません。gist のアドレスの末尾 (https://gist.github.com/<user>/<ID>) を使用するか、最初のバックアップ時に新しい secret gist を作成するには空欄にしてください。';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub で、この ID の gist のうちこのトークンで読み取れるものが見つかりませんでした。ID が間違っている、gist が削除された、または別のアカウントに属している可能性があります。最初のバックアップ時に新しい secret gist を作成するには、ID を空欄にしてください。';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub がこのトークンを拒否しました。トークンが間違っている、期限切れ、または取り消されているか、gist 権限がない可能性があります (classic token: \"gist\" scope; fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '移動';
@@ -5100,22 +5079,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。';
-
-  @override
-  String get monitorSyncNeedsServer => 'バックアップを保存する Monitor のサーバーを選択してください。';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'この Monitor はバックアップを保存できません。Monitor を更新してください。';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'バックアップが Monitor の上限サイズ（$max）を超えています。';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor のバックアップ数が上限に達しています。先に 1 つ削除してください。';
 
   @override
   String get virtCreateVmidInvalid => 'VMID は 100 から 999999999 までです。';

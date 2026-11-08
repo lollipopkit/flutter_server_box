@@ -198,7 +198,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Stel een wachtwoord in om back-upbestanden te versleutelen. Laat leeg om versleuteling uit te schakelen.';
+      'Versleutelt back-ups en synchronisatie. Alle apparaten die synchroniseren gebruiken hetzelfde wachtwoord: wijzig je het op één, voer het nieuwe dan in op de andere.';
 
   @override
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
@@ -513,27 +513,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get fullScreenTip =>
       'Moet de volledig schermmodus worden ingeschakeld wanneer het apparaat naar de liggende modus wordt gedraaid? Deze optie is alleen van toepassing op het servertabblad.';
-
-  @override
-  String get githubGistIdOptional => 'Gist-ID (optioneel)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist-token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token is leeg';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Dit is geen Gist-ID en ook geen Gist-link. Gebruik het laatste deel van het gist-adres (https://gist.github.com/<user>/<ID>) of laat dit leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub heeft geen gist met deze ID gevonden die dit token kan lezen: de ID is mogelijk onjuist, de gist is verwijderd of hoort bij een ander account. Laat de ID leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub heeft dit token geweigerd: het is mogelijk onjuist, verlopen of ingetrokken, of mist de gist-machtiging (classic token: de scope \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Ga naar';
@@ -5399,23 +5378,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Gebruik port=80:proto=tcp:toport=8080, met toport, toaddr of beide.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Kies de server waarvan Monitor de back-up opslaat.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Deze Monitor kan geen back-ups opslaan. Werk Monitor bij.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'De back-up is groter dan Monitor accepteert ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
 
   @override
   String get virtCreateVmidInvalid => 'Een VMID van 100 tot 999999999.';

@@ -45,21 +45,15 @@ void main() {
   test('what builds before kept is moved in once, as no device\'s edit at no time, and removed there', () async {
     await PrefProps.webdavUrl.set('https://dav.example/');
     await PrefProps.webdavUser.set('u');
-    await PrefProps.gistId.set('g1');
     await SecureStoreProps.webdavPwd.write('pw');
-    await SecureStoreProps.githubToken.write('tok');
 
     await SyncRemotes.adopt();
 
     expect(SyncRemotes.webdavUrl, 'https://dav.example/');
     expect(SyncRemotes.webdavUser, 'u');
     expect(SyncRemotes.webdavPwd, 'pw');
-    expect(SyncRemotes.gistId, 'g1');
-    expect(SyncRemotes.githubToken, 'tok');
     expect(PrefProps.webdavUrl.get(), isNull);
-    expect(PrefProps.gistId.get(), isNull);
     expect(await SecureStoreProps.webdavPwd.read(), isNull);
-    expect(await SecureStoreProps.githubToken.read(), isNull);
 
     final adopted = _stampOf('webdavPwd')!;
     expect(SyncRecorder.msOf(adopted), 0, reason: 'any edit made anywhere wins over it');
@@ -85,13 +79,25 @@ void main() {
     expect(SyncRemotes.webdav.client!.url, 'https://b.example/');
   });
 
-  test('the gist the first upload made is kept', () async {
-    SyncRemotes.setGist(token: 'tok', id: null);
-    final gist = SyncRemotes.gist;
-    expect(gist.token, 'tok');
-    await gist.onCreated!('new-id');
-    expect(SyncRemotes.gistId, 'new-id');
-    expect(PrefProps.gistId.get(), isNull);
-    expect(SyncRemotes.gist.gistId, 'new-id');
+  test('what the retired Gist and monitor syncs left is removed, everywhere', () async {
+    Stores.syncRemote.set('gistId', 'g1');
+    Stores.syncRemote.set('githubToken', 'tok');
+    await PrefProps.gistSync.set(true);
+    await const PrefPropDefault('monitor_sync', false).set(true);
+    await SecureStoreProps.githubToken.write('tok');
+
+    await SyncRemotes.dropRetired();
+
+    expect(Stores.syncRemote.get<String>('gistId'), isNull);
+    expect(Stores.syncRemote.get<String>('githubToken'), isNull);
+    expect(_stampOf('githubToken'), isNotNull, reason: 'a removal other devices take too');
+    expect(PrefProps.gistSync.get(), isFalse);
+    expect(const PrefPropDefault('monitor_sync', false).get(), isFalse);
+    expect(await SecureStoreProps.githubToken.read(), isNull);
+
+    // Brought back by a restore or another device: removed again.
+    Stores.syncRemote.set('githubToken', 'tok');
+    await Future<void>.delayed(Duration.zero);
+    expect(Stores.syncRemote.get<String>('githubToken'), isNull);
   });
 }
