@@ -535,7 +535,24 @@ void main() {
     Skills.root = skills.path;
     await _sync(log).sync();
     expect(log.batches.length, sent, reason: 'nothing sent again');
-    Skills.remove('notes');
+
+    // Lost with the lock, and readable again without it: still not removed,
+    // nor read as removed when every record is sent again.
+    lock.writeAsStringSync('{');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    Directory('${skills.path}/notes').deleteSync(recursive: true);
+    lock.writeAsStringSync('{}');
+    Skills.root = skills.path;
+    await _sync(log).sync();
+    final removals = [
+      for (final (_, body) in log.batches)
+        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+          if (op['c'] == SyncSkills.c && op['d'] == null) op,
+    ];
+    expect(removals, isEmpty);
+    // What a send of every record (a snapshot, a log joined anew) reads of it.
+    expect(SyncSkills.read('notes'), same(SyncRecords.silent));
   });
 
   test('the same record under two ids (restored before ids existed) is one record, not two', () async {

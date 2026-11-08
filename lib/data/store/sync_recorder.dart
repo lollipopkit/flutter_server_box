@@ -271,6 +271,8 @@ abstract final class SyncRecorder {
       if (now[id] == seen[id] || unknown.contains(id)) continue;
       if (lost && !now.containsKey(id)) {
         see(c, id, null);
+        // Until it is here again: its record says nothing of it till then.
+        _db.execute('INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO NOTHING;', ['lost:$c:$id', '1']);
         continue;
       }
       record(c, id, notify: notify);
@@ -303,9 +305,15 @@ abstract final class SyncRecorder {
     ['lost:$c', '1'],
   );
 
+  /// Whether [c]/[id] went with what [loseSeen] lost and has not been seen
+  /// since: not here, and not removed by anyone either.
+  static bool wasLost(String c, String id) =>
+      _db.select('SELECT 1 FROM sync_state WHERE k = ?;', ['lost:$c:$id']).isNotEmpty;
+
   /// Notes [c]/[id] as [fingerprint] (null: not here) for [stampChanged]:
   /// what came from another device, which is not sent back.
   static void see(String c, String id, String? fingerprint) {
+    if (fingerprint != null) _db.execute('DELETE FROM sync_state WHERE k = ?;', ['lost:$c:$id']);
     if (fingerprint == null) {
       _db.execute('DELETE FROM sync_state WHERE k = ?;', ['seen:$c:$id']);
     } else {

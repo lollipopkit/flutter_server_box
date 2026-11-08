@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Skills;
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_records.dart';
 
 /// The Agent's skills, synced as records of their own (`skill`, by
 /// directory): files and all, so one installed from a folder or a file
@@ -28,7 +29,16 @@ abstract final class SyncSkills {
     SyncRecorder.follow(Skills.changes, () => stamp(notify: true));
   }
 
-  static Object? read(String dir) => Skills.export(dir);
+  /// [dir]'s skill as an op carries it, null when it was removed;
+  /// [SyncRecords.unread] while the skills cannot be read, and
+  /// [SyncRecords.silent] for one that went with what was lost
+  /// ([SyncRecorder.wasLost]): neither is a removal.
+  static Object? read(String dir) {
+    if (Skills.fingerprints == null) return SyncRecords.unread;
+    final skill = Skills.export(dir);
+    if (skill == null && SyncRecorder.wasLost(c, dir)) return SyncRecords.silent;
+    return skill;
+  }
 
   /// Puts the skills [ops] carry here, or removes them; each recorded at its
   /// op's stamp.
