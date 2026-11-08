@@ -265,7 +265,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       );
     }
     Toast.show(l10n.backupPasswordSet);
-    setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
     return true;
   }
 

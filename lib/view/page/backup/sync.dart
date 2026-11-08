@@ -453,7 +453,10 @@ extension _SyncActions on _BackupPageState {
         _refreshIcloudStatus();
         return _syncWent();
       case _SyncDest.webdav:
-        if (!_webdavSet) await _onTapWebdavSetting(context);
+        if (!_webdavSet) {
+          await _onTapWebdavSetting(context);
+          if (!mounted) return false;
+        }
         if (!_webdavSet) {
           Toast.show(l10n.webdavSettingEmpty);
           return false;
