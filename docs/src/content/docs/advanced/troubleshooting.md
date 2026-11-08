@@ -69,10 +69,10 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 
 **Sync stops on one device:**
 
-- A version from before the current sync format keeps syncing to the backup file it knows and does not see the newer devices' changes, nor they its own; nothing says so on either side.
-- A newer device's changes in a format an older version cannot read stop that version reading them, and it asks to be updated. It still sends its own changes.
-- Update every device that syncs.
-- When the backup page says the synced data is encrypted with a different backup password, enter the password your other devices use; until then this device syncs nothing. Every device that syncs uses the same one: after changing it on one, enter the new one on the others.
+- App versions from before the current sync format continue syncing to the legacy backup file and do not exchange changes with newer versions, without showing an error on either side.
+- If a newer device writes data in a format that an older version cannot read, the older device stops importing remote changes and prompts you to update, while still uploading its own local changes.
+- Keep ServerBox updated on all synced devices.
+- If the backup page reports that synced data is encrypted with a different backup password, enter the password used on your other devices. Sync remains paused on this device until the password matches. All synced devices share the same password—after changing it on one device, update it on the others.
 
 ## Widget and Watch App issues
 

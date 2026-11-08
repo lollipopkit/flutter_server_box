@@ -186,7 +186,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Isso remove a senha de backup de todos os dispositivos que usam o mesmo Porta-chaves do iCloud. A sincronização deles para até que uma senha seja definida novamente.';
+      'A senha de backup será removida de todos os dispositivos que usam as mesmas Chaves do iCloud. A sincronização ficará pausada até que uma nova senha seja definida.';
 
   @override
   String get backupPasswordRemoved => 'Senha de backup removida';
@@ -196,7 +196,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Criptografa backups e sincronização. Todos os dispositivos sincronizados usam a mesma senha: depois de alterá-la em um, digite a nova nos outros.';
+      'Criptografa backups e dados sincronizados. Todos os dispositivos devem usar a mesma senha; se você alterá-la em um dispositivo, insira a nova senha nos demais.';
 
   @override
   String get backupPasswordWrong => 'Senha de backup incorreta';
@@ -589,7 +589,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Guarda as frases-senha das chaves privadas criptografadas para não pedi-las após reiniciar. Desativar remove as guardadas neste dispositivo.';
+      'Salva as frases-senha das chaves privadas criptografadas para não precisar digitá-las novamente após reiniciar. Ao desativar, as frases-senha salvas neste dispositivo são removidas.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1223,15 +1223,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Os dados sincronizados foram gravados por uma versão mais recente do ServerBox. Atualize este app para continuar sincronizando.';
+      'Os dados sincronizados foram criados por uma versão mais recente do ServerBox. Atualize o aplicativo para continuar sincronizando.';
 
   @override
   String get syncPasswordMismatch =>
-      'Os dados sincronizados estão criptografados com outra senha de backup. Defina a senha usada nos seus outros dispositivos.';
+      'Os dados sincronizados estão criptografados com outra senha de backup. Insira a senha de backup usada nos seus outros dispositivos.';
 
   @override
   String get syncUnreachable =>
-      'Não foi possível acessar o destino de sincronização. Verifique a rede e tente novamente.';
+      'Não foi possível conectar ao serviço de sincronização. Verifique sua conexão de rede e tente novamente.';
 
   @override
   String get termFontSizeTip =>
@@ -7326,7 +7326,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return 'A sincronização automática com $name para. O backup que já está lá é mantido.';
+    return 'A sincronização automática com $name será desativada. Os backups existentes serão mantidos.';
   }
 
   @override

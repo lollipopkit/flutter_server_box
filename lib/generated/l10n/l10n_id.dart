@@ -186,7 +186,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.';
+      'Kata sandi cadangan akan dihapus dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasi akan dijeda hingga kata sandi baru diatur.';
 
   @override
   String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
@@ -196,7 +196,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Mengenkripsi cadangan dan sinkronisasi. Semua perangkat yang disinkronkan memakai kata sandi yang sama: setelah mengubahnya di satu perangkat, masukkan yang baru di perangkat lain.';
+      'Mengenkripsi cadangan dan data yang disinkronkan. Semua perangkat harus menggunakan kata sandi yang sama—jika diubah di satu perangkat, masukkan kata sandi baru di perangkat lainnya.';
 
   @override
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
@@ -588,7 +588,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Simpan frasa sandi kunci privat terenkripsi agar tidak ditanyakan lagi setelah dimulai ulang. Menonaktifkannya menghapus yang disimpan di perangkat ini.';
+      'Menyimpan frasa sandi kunci privat terenkripsi agar tidak perlu dimasukkan ulang setelah aplikasi dimulai ulang. Menonaktifkan opsi ini akan menghapus frasa sandi yang tersimpan di perangkat ini.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1225,15 +1225,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Data yang disinkronkan ditulis oleh versi ServerBox yang lebih baru. Perbarui aplikasi ini untuk melanjutkan sinkronisasi.';
+      'Data sinkronisasi dibuat oleh versi ServerBox yang lebih baru. Perbarui aplikasi untuk melanjutkan sinkronisasi.';
 
   @override
   String get syncPasswordMismatch =>
-      'Data yang disinkronkan dienkripsi dengan kata sandi cadangan lain. Atur kata sandi cadangan yang dipakai perangkat Anda yang lain.';
+      'Data yang disinkronkan dienkripsi dengan kata sandi cadangan yang berbeda. Masukkan kata sandi cadangan yang digunakan di perangkat Anda lainnya.';
 
   @override
   String get syncUnreachable =>
-      'Tidak dapat menjangkau tujuan sinkronisasi. Periksa jaringan lalu coba lagi.';
+      'Tidak dapat terhubung ke layanan sinkronisasi. Periksa koneksi jaringan Anda lalu coba lagi.';
 
   @override
   String get termFontSizeTip =>
@@ -7257,7 +7257,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return 'Sinkronisasi otomatis ke $name berhenti. Cadangan yang sudah ada di sana tetap tersimpan.';
+    return 'Sinkronisasi otomatis dengan $name akan dinonaktifkan. Cadangan yang sudah ada tidak akan dihapus.';
   }
 
   @override

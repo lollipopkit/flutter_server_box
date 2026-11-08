@@ -189,7 +189,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Cela supprime le mot de passe de sauvegarde de tous les appareils utilisant le même trousseau iCloud. Leur synchronisation s\'arrête jusqu\'à ce qu\'un mot de passe soit de nouveau défini.';
+      'Le mot de passe de sauvegarde sera supprimé de tous les appareils utilisant le même trousseau iCloud. La synchronisation sera suspendue jusqu\'à ce qu\'un nouveau mot de passe soit défini.';
 
   @override
   String get backupPasswordRemoved => 'Mot de passe de sauvegarde supprimé';
@@ -199,7 +199,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Chiffre les sauvegardes et la synchronisation. Tous les appareils synchronisés utilisent le même mot de passe : après l\'avoir changé sur l\'un, saisissez le nouveau sur les autres.';
+      'Chiffre les sauvegardes et les données synchronisées. Tous les appareils doivent utiliser le même mot de passe ; si vous le modifiez sur l\'un d\'eux, saisissez le nouveau sur les autres.';
 
   @override
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
@@ -594,7 +594,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Conserve les phrases secrètes des clés privées chiffrées, pour ne pas les redemander après un redémarrage. Désactiver supprime celles conservées sur cet appareil.';
+      'Enregistre les phrases secrètes des clés privées chiffrées afin de ne pas les redemander après un redémarrage. La désactivation supprime les phrases enregistrées sur cet appareil.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1234,15 +1234,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Les données synchronisées ont été écrites par une version plus récente de ServerBox. Mettez à jour cette app pour continuer à synchroniser.';
+      'Les données synchronisées proviennent d\'une version plus récente de ServerBox. Mettez à jour l\'application pour continuer la synchronisation.';
 
   @override
   String get syncPasswordMismatch =>
-      'Les données synchronisées sont chiffrées avec un autre mot de passe de sauvegarde. Définissez celui de vos autres appareils.';
+      'Les données synchronisées sont chiffrées avec un autre mot de passe de sauvegarde. Saisissez le mot de passe utilisé sur vos autres appareils.';
 
   @override
   String get syncUnreachable =>
-      'Impossible d\'atteindre la destination de synchronisation. Vérifiez le réseau et réessayez.';
+      'Impossible de se connecter au service de synchronisation. Vérifiez votre connexion réseau et réessayez.';
 
   @override
   String get termFontSizeTip =>
@@ -7372,7 +7372,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return 'La synchronisation automatique vers $name s’arrête. La sauvegarde qui s’y trouve est conservée.';
+    return 'La synchronisation automatique avec $name sera désactivée. Les sauvegardes existantes seront conservées.';
   }
 
   @override

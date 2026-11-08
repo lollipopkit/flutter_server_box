@@ -176,7 +176,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      '同じ iCloud キーチェーンを使用しているすべてのデバイスからバックアップパスワードが削除されます。パスワードを再設定するまで、それらのデバイスの同期は停止します。';
+      '同じ iCloud キーチェーンを使用しているすべての端末からバックアップパスワードを削除します。パスワードを再設定するまで同期は一時停止されます。';
 
   @override
   String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
@@ -186,7 +186,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'バックアップと同期を暗号化します。同期するすべてのデバイスで同じパスワードを使います。1 台で変更したら、他のデバイスにも新しいパスワードを入力してください。';
+      'バックアップと同期データの暗号化に使用します。すべての端末で同じパスワードを使用するため、変更した場合は他の端末でも新しいパスワードを入力してください。';
 
   @override
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
@@ -564,7 +564,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '暗号化された秘密鍵のパスフレーズを保存し、再起動後に再入力を求めません。オフにすると、この端末に保存されたパスフレーズを削除します。';
+      '暗号化された秘密鍵のパスフレーズを保存し、再起動時の再入力を省略します。オフにすると、この端末に保存されているパスフレーズが削除されます。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1158,14 +1158,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      '同期データは新しいバージョンの ServerBox で書き込まれています。同期を続けるにはこのアプリを更新してください。';
+      'より新しいバージョンの ServerBox で作成された同期データです。同期を続けるにはアプリをアップデートしてください。';
 
   @override
   String get syncPasswordMismatch =>
-      '同期データは別のバックアップパスワードで暗号化されています。他の端末と同じバックアップパスワードを設定してください。';
+      '同期データが別のバックアップパスワードで暗号化されています。他の端末で使用しているバックアップパスワードを入力してください。';
 
   @override
-  String get syncUnreachable => '同期先に接続できません。ネットワークを確認して再試行してください。';
+  String get syncUnreachable => '同期サーバーに接続できませんでした。ネットワーク接続を確認してもう一度お試しください。';
 
   @override
   String get termFontSizeTip =>
@@ -6961,7 +6961,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return '$name への自動同期を停止します。そこにある既存のバックアップは残ります。';
+    return '$name との自動同期をオフにします。$name に保存済みのバックアップは削除されません。';
   }
 
   @override

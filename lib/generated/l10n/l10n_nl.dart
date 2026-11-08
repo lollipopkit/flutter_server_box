@@ -185,7 +185,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.';
+      'Hiermee wordt het back-upwachtwoord verwijderd op alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. De synchronisatie wordt gepauzeerd totdat er een nieuw wachtwoord wordt ingesteld.';
 
   @override
   String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
@@ -195,7 +195,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Versleutelt back-ups en synchronisatie. Alle apparaten die synchroniseren gebruiken hetzelfde wachtwoord: wijzig je het op één, voer het nieuwe dan in op de andere.';
+      'Versleutelt back-ups en gesynchroniseerde gegevens. Alle apparaten moeten hetzelfde wachtwoord gebruiken; als je het op één apparaat wijzigt, voer dan op de andere het nieuwe wachtwoord in.';
 
   @override
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
@@ -588,7 +588,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Bewaart de wachtwoordzinnen van versleutelde privésleutels, zodat ze na een herstart niet opnieuw worden gevraagd. Uitschakelen verwijdert de op dit apparaat bewaarde.';
+      'Slaat wachtwoordzinnen van versleutelde privésleutels op, zodat je ze na het herstarten niet opnieuw hoeft in te voeren. Als je dit uitschakelt, worden de opgeslagen wachtwoordzinnen van dit apparaat verwijderd.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1225,15 +1225,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'De gesynchroniseerde gegevens zijn geschreven door een nieuwere versie van ServerBox. Werk deze app bij om te blijven synchroniseren.';
+      'De gesynchroniseerde gegevens zijn afkomstig van een nieuwere versie van ServerBox. Werk de app bij om door te gaan met synchroniseren.';
 
   @override
   String get syncPasswordMismatch =>
-      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Stel het wachtwoord van je andere apparaten in.';
+      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Voer het back-upwachtwoord in dat je op je andere apparaten gebruikt.';
 
   @override
   String get syncUnreachable =>
-      'Het synchronisatiedoel is niet bereikbaar. Controleer het netwerk en probeer het opnieuw.';
+      'Kan geen verbinding maken met de synchronisatiedienst. Controleer je netwerkverbinding en probeer het opnieuw.';
 
   @override
   String get termFontSizeTip =>
@@ -7324,7 +7324,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return 'Automatisch synchroniseren naar $name stopt. De back-up die daar al staat, blijft bewaard.';
+    return 'Automatische synchronisatie met $name wordt uitgeschakeld. Bestaande back-ups blijven behouden.';
   }
 
   @override

@@ -186,7 +186,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.';
+      'Eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan ehtiyat nüsxə parolu silinəcək. Yeni parol təyin edilənə qədər sinxronlaşdırma dayandırılacaq.';
 
   @override
   String get backupPasswordRemoved => 'Ehtiyat nüsxə parolu silindi';
@@ -196,7 +196,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Ehtiyat nüsxələri və sinxronizasiyanı şifrələyir. Sinxronlaşan bütün cihazlar eyni paroldan istifadə edir: birində dəyişdikdən sonra yenisini digərlərinə daxil edin.';
+      'Ehtiyat nüsxələri və sinxronlaşdırılan məlumatları şifrələyir. Bütün cihazlarda eyni parol istifadə olunmalıdır; bir cihazda dəyişdirdikdə digər cihazlarda da yeni parolu daxil edin.';
 
   @override
   String get backupPasswordWrong => 'Ehtiyat nüsxə parolu yanlışdır';
@@ -590,7 +590,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifrələnmiş şəxsi açarların parol ifadələrini saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Söndürmək bu cihazda saxlananları silir.';
+      'Yenidən başlatmadan sonra təkrar soruşulmaması üçün şifrələnmiş məxfi açarların parol ifadələrini yadda saxlayır. Söndürüldükdə bu cihazda saxlanılmış parol ifadələri silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1222,15 +1222,15 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyası tərəfindən yazılıb. Sinxronlaşdırmanı davam etdirmək üçün bu tətbiqi yeniləyin.';
+      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyasında yaradılıb. Sinxronlaşdırmanı davam etdirmək üçün tətbiqi yeniləyin.';
 
   @override
   String get syncPasswordMismatch =>
-      'Sinxronlaşdırılan məlumatlar başqa ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızın istifadə etdiyi parolu təyin edin.';
+      'Sinxronlaşdırılan məlumatlar fərqli ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızda istifadə etdiyiniz parolu daxil edin.';
 
   @override
   String get syncUnreachable =>
-      'Sinxronlaşdırma yerinə qoşulmaq mümkün deyil. Şəbəkəni yoxlayıb yenidən cəhd edin.';
+      'Sinxronizasiya xidmətinə qoşulmaq mümkün olmadı. Şəbəkə bağlantısını yoxlayıb yenidən cəhd edin.';
 
   @override
   String get termFontSizeTip =>
@@ -7247,7 +7247,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return '$name ilə avtomatik sinxronlaşdırma dayanır. Orada artıq olan ehtiyat nüsxə qalır.';
+    return '$name ilə avtomatik sinxronlaşdırma söndürüləcək. Mövcud ehtiyat nüsxələr silinməyəcək.';
   }
 
   @override

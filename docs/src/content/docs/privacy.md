@@ -50,13 +50,14 @@ A local backup may be unencrypted when no backup password is set. When you set a
 backup password, an exported backup is encrypted before it is written or
 uploaded, as an [age](https://age-encryption.org) file in passphrase mode:
 `age -d` and the backup password open it without ServerBox.
-Automatic sync requires a non-empty backup password. What it sends is encrypted
-to a sync key, and the sync key, stored beside it as `identity.age`, is the one
-file encrypted with the backup password: `age -d` and the password open the key,
-and `age -d -i` with the key opens the rest. A device whose backup password does
-not open that key syncs nothing there until it is given the password the other
-devices use. After a backup is sent to iCloud, WebDAV or LK Cloud, that
-provider's storage, access and retention rules also apply.
+Automatic sync requires a non-empty backup password. Synced data is encrypted
+with a sync key, while the sync key itself is stored alongside it as
+`identity.age` and is the only file encrypted directly with the backup password
+(`age -d` with the backup password decrypts the key, and `age -d -i` with the
+key decrypts the remaining files). If a device's backup password cannot unlock
+that key, sync pauses on that device until you enter the password used by your
+other devices. After data is uploaded to iCloud, WebDAV or LK Cloud, that
+provider's storage, access and retention policies also apply.
 
 ## Automatic diagnostic data
 

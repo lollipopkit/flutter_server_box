@@ -184,7 +184,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.';
+      'Aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan yedekleme parolası kaldırılır. Yeni bir parola belirlenene kadar eşitleme duraklatılır.';
 
   @override
   String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
@@ -194,7 +194,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Yedekleri ve eşitlemeyi şifreler. Eşitlenen tüm cihazlar aynı parolayı kullanır: birinde değiştirdikten sonra yenisini diğerlerine girin.';
+      'Yedekleri ve eşitlenen verileri şifreler. Tüm cihazlarda aynı parola kullanılmalıdır; bir cihazda değiştirdiğinizde diğer cihazlarda da yeni parolayı girin.';
 
   @override
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
@@ -586,7 +586,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifreli özel anahtarların parolalarını saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Kapatmak bu cihazda saklananları siler.';
+      'Yeniden başlatma sonrasında tekrar sorulmaması için şifreli özel anahtarların parolalarını kaydeder. Kapatıldığında bu cihazda kayıtlı parolalar silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1222,15 +1222,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Eşitlenen veriler ServerBox\'ın daha yeni bir sürümüyle yazıldı. Eşitlemeye devam etmek için bu uygulamayı güncelleyin.';
+      'Eşitlenen veriler daha yeni bir ServerBox sürümüyle oluşturulmuş. Eşitlemeye devam etmek için uygulamayı güncelleyin.';
 
   @override
   String get syncPasswordMismatch =>
-      'Eşitlenen veriler farklı bir yedek parolasıyla şifrelenmiş. Diğer cihazlarınızın kullandığı yedek parolasını ayarlayın.';
+      'Eşitlenen veriler farklı bir yedekleme parolasıyla şifrelenmiş. Diğer cihazlarınızda kullandığınız yedekleme parolasını girin.';
 
   @override
   String get syncUnreachable =>
-      'Eşitleme hedefine ulaşılamıyor. Ağı kontrol edip yeniden deneyin.';
+      'Eşitleme hizmetine bağlanılamadı. Ağ bağlantınızı kontrol edip tekrar deneyin.';
 
   @override
   String get termFontSizeTip =>
@@ -7241,7 +7241,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String syncSwitchBody(String name) {
-    return '$name ile otomatik eşitleme durur. Orada zaten bulunan yedek kalır.';
+    return '$name ile otomatik eşitleme kapatılacak. Mevcut yedekler silinmeyecek.';
   }
 
   @override
