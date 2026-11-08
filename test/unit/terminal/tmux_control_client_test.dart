@@ -515,9 +515,36 @@ void main() {
 
       await client.selectPane(TmuxPaneId('%3'));
 
-      expect(shell.writes, contains("select-pane -t '%3'"));
+      // Selected even though the snapshot has it current: it may be stale.
+      final selectWindow = shell.writes.indexOf("select-window -t '@0'");
+      expect(selectWindow, isNonNegative);
+      expect(shell.writes.indexOf("select-pane -t '%3'"), greaterThan(selectWindow));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
+      expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
+      await client.dispose();
+      shell.close();
+    });
+
+    test('switches window when selecting a pane in an inactive window', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@0'));
+      expect(client.snapshot!.paneWindows[TmuxPaneId('%3')], TmuxWindowId('@1'));
+
+      await client.selectPane(TmuxPaneId('%3'));
+
+      final selectWindowIdx = shell.writes.indexOf("select-window -t '@1'");
+      final selectPaneIdx = shell.writes.indexOf("select-pane -t '%3'");
+      expect(selectWindowIdx, isNonNegative);
+      expect(selectPaneIdx, greaterThan(selectWindowIdx));
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
       await client.dispose();
       shell.close();

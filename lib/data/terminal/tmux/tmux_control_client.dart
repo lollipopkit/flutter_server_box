@@ -178,6 +178,13 @@ final class TmuxControlClient {
   }
 
   Future<void> selectPane(TmuxPaneId paneId) async {
+    // `select-pane` never changes the current window, and the snapshot may lag
+    // behind one another client changed, so the pane's window is selected
+    // even when the snapshot says it is current.
+    final targetWindow = _snapshot?.paneWindows[paneId];
+    if (targetWindow != null) {
+      await runRequired("select-window -t '$targetWindow'");
+    }
     await runRequired("select-pane -t '$paneId'");
     await refreshState(captureActivePane: true);
   }
