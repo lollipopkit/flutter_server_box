@@ -478,7 +478,7 @@ abstract class AppLocalizations {
   /// Help text for the backup password setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Set a password to encrypt backup files. Leave empty to disable encryption.'**
+  /// **'Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.'**
   String get backupPasswordTip;
 
   /// User-facing label or message for backup password wrong.

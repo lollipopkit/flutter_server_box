@@ -150,7 +150,13 @@ abstract final class LkcLogSync {
     });
     // Not only on the event stream connecting: a device whose network keeps
     // it from listening still sends what was edited while sync was off.
-    LkcSyncPrefs.enabled.listenable().addListener(() => unawaited(sync()));
+    LkcSyncPrefs.enabled.listenable().addListener(() {
+      // Off: what was said of its key goes with it.
+      if (!LkcSyncPrefs.enabled.get()) {
+        if (_keyOf case final id?) SyncKey.forgetMismatch(id);
+      }
+      unawaited(sync());
+    });
     unawaited(sync());
   }
 
@@ -191,6 +197,7 @@ abstract final class LkcLogSync {
     final user = Lkc.client.user.value;
     if (user == null) throw StateError('signed out');
     final sync = await Lkc.client.sync(Lkc.app);
+    _keyOf = user.id;
     final key = _key = await SyncKey.load(LkcKeyFile(sync, user.id));
     LogSync.bind(user.id);
     return LogSync(
@@ -222,5 +229,10 @@ abstract final class LkcLogSync {
     _soon?.cancel();
     _opening = null;
     _key = null;
+    if (_keyOf case final id?) SyncKey.forgetMismatch(id);
+    _keyOf = null;
   }
+
+  /// The account whose key file [_opening] read.
+  static String? _keyOf;
 }

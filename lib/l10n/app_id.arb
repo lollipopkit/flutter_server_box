@@ -30,7 +30,7 @@
   "backupPasswordRemoveSynced": "Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.",
   "backupPasswordRemoved": "Kata sandi cadangan dihapus",
   "backupPasswordSet": "Kata sandi cadangan ditetapkan",
-  "backupPasswordTip": "Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.",
+  "backupPasswordTip": "Mengenkripsi cadangan dan sinkronisasi. Semua perangkat yang disinkronkan memakai kata sandi yang sama: setelah mengubahnya di satu perangkat, masukkan yang baru di perangkat lain.",
   "backupPasswordWrong": "Kata sandi cadangan salah",
   "connectAll": "Hubungkan semua",
   "disconnectAll": "Putuskan semua",

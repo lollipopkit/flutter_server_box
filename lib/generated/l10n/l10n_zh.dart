@@ -186,7 +186,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordSet => '备份密码已设置';
 
   @override
-  String get backupPasswordTip => '设置密码以加密备份文件。留空则禁用加密。';
+  String get backupPasswordTip =>
+      '用于加密备份和同步。所有参与同步的设备使用同一个密码：在一台设备上修改后，需在其他设备上输入新密码。';
 
   @override
   String get backupPasswordWrong => '备份密码错误';
@@ -7052,7 +7053,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupPasswordSet => '備份密碼已設定';
 
   @override
-  String get backupPasswordTip => '設定密碼來加密備份檔案。留空則停用加密。';
+  String get backupPasswordTip =>
+      '用於加密備份與同步。所有參與同步的裝置使用同一個密碼：在一台裝置上修改後，需在其他裝置上輸入新密碼。';
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';

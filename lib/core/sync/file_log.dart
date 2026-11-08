@@ -218,13 +218,15 @@ abstract final class FileLogSync {
 
   /// Reads what other devices wrote, then writes what this one has.
   static Future<void> sync() async {
-    if (!_on || !SqliteDb.isOpen) return;
-    final store = _store();
-    if (store == null) return;
-    if (store.id != _openedFor) {
+    if (!SqliteDb.isOpen) return;
+    final store = _on ? _store() : null;
+    if (store?.id != _openedFor) {
+      // Not this device's to sync any more: what was said of its key goes.
+      if (_openedFor case final was?) SyncKey.forgetMismatch(was);
       _opening = null;
-      _openedFor = store.id;
+      _openedFor = store?.id;
     }
+    if (store == null) return;
     final SegmentSync sync;
     try {
       sync = await (_opening ??= _open(store));

@@ -109,6 +109,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   List<Widget> get _syncTiles => [
     _buildTip,
     _buildTooNew,
+    _buildPasswordMismatch,
     _buildBakPwd,
     _buildSyncSettings,
     if (isICloudSupported) _buildIcloud,
@@ -315,6 +316,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // upload. Nothing reaches the remote again, and nothing says so.
     // LK Cloud's theme packages are sealed with it as well, and the log's key.
     await BakSyncer.forgetPasswordState();
+    // Tried with it now: what it says replaces what the last one said.
+    if (_hasEnabledRemoteSync) unawaited(bakSync.sync(throttleMilli: 0));
     if (previous != pwd) {
       await SyncKey.passwordChanged(previous);
       LkcLogSync.reset();
@@ -348,6 +351,30 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           child: ListTile(
             leading: const Icon(Icons.system_update),
             title: Text(l10n.syncRemoteTooNew),
+          ),
+        );
+      },
+    );
+  }
+
+  /// The backup password here opens neither the synced key nor the backup
+  /// another device wrote: the person enters the one the others use.
+  Widget get _buildPasswordMismatch {
+    return ListenableBuilder(
+      listenable: Listenable.merge([SyncKey.passwordMismatch, bakSync.lastFailure]),
+      builder: (context, _) {
+        if (SyncKey.passwordMismatch.value.isEmpty && bakSync.lastFailure.value is! WrongPasswordException) {
+          return UIs.placeholder;
+        }
+        return CardX(
+          child: ListTile(
+            leading: const Icon(Icons.key_off),
+            title: Text(l10n.syncPasswordMismatch),
+            trailing: TextButton(
+              onPressed: () => _onTapSetBakPwd(context),
+              child: Text(libL10n.setting),
+            ),
+            onTap: () => _onTapSetBakPwd(context),
           ),
         );
       },

@@ -198,7 +198,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Set a password to encrypt backup files. Leave empty to disable encryption.';
+      'Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.';
 
   @override
   String get backupPasswordWrong => 'Incorrect backup password';

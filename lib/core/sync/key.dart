@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/app/error.dart';
 
@@ -54,18 +54,49 @@ final class SyncKey implements SyncSeal {
     legacy: SecureStore.storage,
   );
 
-  /// The password before the change the rewrap flags stand for, while this
-  /// run lasts: what the files are still sealed with. Memory only.
-  static String? _previous;
+  /// The password before the change the rewrap flags stand for: what the
+  /// files are still sealed with. Kept on this device (not synced) until
+  /// every file is sealed again, so a restart before then still opens them.
+  /// Key is permanent.
+  static const _previous = SecureProp('syncKeyPreviousPwd');
+
+  /// The key files ([SyncKeyFile.id]) the backup password here does not
+  /// open: another device sealed them with another one, or changed it. The
+  /// keys kept here still read and seal; nothing is written to such a file
+  /// until the password here opens it.
+  static final passwordMismatch = ValueNotifier<Set<String>>(const {});
+
+  /// [id]'s key file is no longer this device's to sync (the store changed,
+  /// the sync was turned off, signed out): nothing to say of it.
+  static void forgetMismatch(String id) => _opened(id, opened: true);
+
+  @visibleForTesting
+  static Future<void> resetForTest() async {
+    passwordMismatch.value = const {};
+    await lkcRewrap.remove();
+    await filesRewrap.remove();
+    await _previous.write(null);
+  }
+
+  static void _opened(String id, {required bool opened}) {
+    final now = passwordMismatch.value;
+    if (opened ? !now.contains(id) : now.contains(id)) return;
+    passwordMismatch.value = opened ? ({...now}..remove(id)) : {...now, id};
+  }
 
   /// The key: kept here, else the file's, else a new one put there (only one
   /// device's new key is taken where the store orders writes; where it does
-  /// not, the keys are merged when one meets the other's: [refresh]).
+  /// not, the keys are merged when one meets the other's: [refresh]). Kept
+  /// keys are used whether the password here opens the file or not.
   static Future<SyncKey> load(SyncKeyFile file) async {
     final kept = _lines(await _kept(file.id).read());
     if (kept.isNotEmpty) {
       final key = SyncKey._(file, kept, await AgeCryptor.recipientOf(kept.first));
-      if (file.rewrap.get() ?? false) await key._rewrapped();
+      if (file.rewrap.get() ?? false) {
+        await key._rewrapped();
+      } else {
+        await _check(file);
+      }
       return key;
     }
     while (true) {
@@ -84,28 +115,51 @@ final class SyncKey implements SyncSeal {
   /// [load]. Only here: the other devices take the new password and find it
   /// done.
   static Future<void> passwordChanged(String? previous) async {
-    _previous = previous;
+    // A change before the last one was done: the files are still sealed
+    // with the password before that one.
+    final pending = (lkcRewrap.get() ?? false) || (filesRewrap.get() ?? false);
+    if (!pending || await _previous.read() == null) await _previous.write(previous);
     await lkcRewrap.set(true);
     await filesRewrap.set(true);
   }
 
+  /// Whether the password here still opens [file], said through
+  /// [passwordMismatch]; the keys kept here are used either way. Read once a
+  /// launch, as the key is: a password changed on another device shows here
+  /// before anything needs the file.
+  static Future<void> _check(SyncKeyFile file) async {
+    try {
+      await _fetch(file);
+    } on WrongPasswordException {
+      // Said; the kept keys go on.
+    } catch (e, s) {
+      Loggers.app.warning('Read ${file.id} to check the backup password', e, s);
+    }
+  }
+
   /// The file sealed with the new password, holding the keys it held (read
   /// with the old one, or the new if another device was first) and these.
+  /// Neither opening it, it is another password's: left as it is, said
+  /// ([passwordMismatch]), the flag kept for when the right one is entered.
   Future<void> _rewrapped() async {
     List<String>? remote;
-    for (final pwd in [?_previous, null]) {
+    var opened = false;
+    for (final pwd in [?await _previous.read(), null]) {
       try {
         remote = await _fetch(_file, password: pwd);
+        opened = true;
         break;
       } on WrongPasswordException {
         continue;
       }
     }
+    if (!opened) return;
     final identities = remote == null ? _identities : _merged(remote, newest: false);
     if (!await _put(_file, identities, replace: true)) throw StateError('identity.age changed meanwhile');
+    _opened(_file.id, opened: true);
     await _adopt(identities);
     await _file.rewrap.remove();
-    if (!(lkcRewrap.get() ?? false) && !(filesRewrap.get() ?? false)) _previous = null;
+    if (!(lkcRewrap.get() ?? false) && !(filesRewrap.get() ?? false)) await _previous.write(null);
   }
 
   /// A new key in place of this one, put in the file first, so a device that
@@ -167,7 +221,16 @@ final class SyncKey implements SyncSeal {
   static Future<List<String>?> _fetch(SyncKeyFile file, {String? password}) async {
     final sealed = await file.read();
     if (sealed == null) return null;
-    final keys = _lines(utf8.decode(await AgeCryptor.decrypt(sealed, password ?? await _password())));
+    final Uint8List plain;
+    try {
+      plain = await AgeCryptor.decrypt(sealed, password ?? await _password());
+    } on WrongPasswordException {
+      // With an earlier password only says nothing of the one here now.
+      if (password == null) _opened(file.id, opened: false);
+      rethrow;
+    }
+    if (password == null) _opened(file.id, opened: true);
+    final keys = _lines(utf8.decode(plain));
     return keys.isEmpty ? null : keys;
   }
 

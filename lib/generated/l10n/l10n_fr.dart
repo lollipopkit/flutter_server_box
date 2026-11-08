@@ -202,7 +202,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Définissez un mot de passe pour chiffrer les fichiers de sauvegarde. Laissez vide pour désactiver le chiffrement.';
+      'Chiffre les sauvegardes et la synchronisation. Tous les appareils synchronisés utilisent le même mot de passe : après l\'avoir changé sur l\'un, saisissez le nouveau sur les autres.';
 
   @override
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';

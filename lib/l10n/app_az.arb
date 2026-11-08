@@ -57,7 +57,7 @@
   "backupPasswordRemoveSynced": "Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.",
   "backupPasswordRemoved": "Ehtiyat nüsxə parolu silindi",
   "backupPasswordSet": "Ehtiyat nüsxə parolu təyin edildi",
-  "backupPasswordTip": "Ehtiyat nüsxə fayllarını şifrələmək üçün parol təyin et. Şifrələməni söndürmək üçün boş saxla.",
+  "backupPasswordTip": "Ehtiyat nüsxələri və sinxronizasiyanı şifrələyir. Sinxronlaşan bütün cihazlar eyni paroldan istifadə edir: birində dəyişdikdən sonra yenisini digərlərinə daxil edin.",
   "backupPasswordWrong": "Ehtiyat nüsxə parolu yanlışdır",
   "connectAll": "Hamısı ilə əlaqə qur",
   "disconnectAll": "Bütün əlaqələri kəs",

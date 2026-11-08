@@ -199,7 +199,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Setzen Sie ein Passwort, um Backup-Dateien zu verschlüsseln. Leer lassen, um Verschlüsselung zu deaktivieren.';
+      'Verschlüsselt Backups und Synchronisierung. Alle synchronisierenden Geräte verwenden dasselbe Passwort: Nach einer Änderung auf einem Gerät das neue auf den anderen eingeben.';
 
   @override
   String get backupPasswordWrong => 'Falsches Backup-Passwort';

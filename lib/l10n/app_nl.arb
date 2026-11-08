@@ -30,7 +30,7 @@
   "backupPasswordRemoveSynced": "Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.",
   "backupPasswordRemoved": "Back-up wachtwoord verwijderd",
   "backupPasswordSet": "Back-up wachtwoord ingesteld",
-  "backupPasswordTip": "Stel een wachtwoord in om back-upbestanden te versleutelen. Laat leeg om versleuteling uit te schakelen.",
+  "backupPasswordTip": "Versleutelt back-ups en synchronisatie. Alle apparaten die synchroniseren gebruiken hetzelfde wachtwoord: wijzig je het op één, voer het nieuwe dan in op de andere.",
   "backupPasswordWrong": "Onjuist back-up wachtwoord",
   "connectAll": "Alles verbinden",
   "disconnectAll": "Alles verbreken",

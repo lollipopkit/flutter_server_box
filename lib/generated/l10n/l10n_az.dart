@@ -199,7 +199,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Ehtiyat nüsxə fayllarını şifrələmək üçün parol təyin et. Şifrələməni söndürmək üçün boş saxla.';
+      'Ehtiyat nüsxələri və sinxronizasiyanı şifrələyir. Sinxronlaşan bütün cihazlar eyni paroldan istifadə edir: birində dəyişdikdən sonra yenisini digərlərinə daxil edin.';
 
   @override
   String get backupPasswordWrong => 'Ehtiyat nüsxə parolu yanlışdır';

@@ -200,7 +200,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Imposta una password per crittografare i file di backup. Lascia vuoto per disabilitare la crittografia.';
+      'Cifra backup e sincronizzazione. Tutti i dispositivi sincronizzati usano la stessa password: dopo averla cambiata su uno, inserisci la nuova sugli altri.';
 
   @override
   String get backupPasswordWrong => 'Password di backup errata';

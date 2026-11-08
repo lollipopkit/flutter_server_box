@@ -30,7 +30,7 @@
   "backupPasswordRemoveSynced": "Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.",
   "backupPasswordRemoved": "Yedekleme parolası kaldırıldı",
   "backupPasswordSet": "Yedekleme parolası ayarlandı",
-  "backupPasswordTip": "Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.",
+  "backupPasswordTip": "Yedekleri ve eşitlemeyi şifreler. Eşitlenen tüm cihazlar aynı parolayı kullanır: birinde değiştirdikten sonra yenisini diğerlerine girin.",
   "backupPasswordWrong": "Yanlış yedekleme parolası",
   "connectAll": "Tümünü bağla",
   "disconnectAll": "Tümünün bağlantısını kes",

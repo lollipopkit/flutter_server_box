@@ -67,7 +67,10 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
   A version from before the current sync format keeps syncing to its old
   backup file, silently apart from the newer devices. One that cannot read a
   newer device's format stops reading, says to update, and still sends its own
-  changes. Update every device.
+  changes. Update every device. Every device that syncs uses the same backup
+  password; when the backup page says the synced data uses a different one,
+  enter the others' password (after a change on one device, enter the new
+  one on the rest).
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.

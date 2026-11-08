@@ -197,7 +197,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.';
+      'Yedekleri ve eşitlemeyi şifreler. Eşitlenen tüm cihazlar aynı parolayı kullanır: birinde değiştirdikten sonra yenisini diğerlerine girin.';
 
   @override
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';

@@ -198,7 +198,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Stel een wachtwoord in om back-upbestanden te versleutelen. Laat leeg om versleuteling uit te schakelen.';
+      'Versleutelt back-ups en synchronisatie. Alle apparaten die synchroniseren gebruiken hetzelfde wachtwoord: wijzig je het op één, voer het nieuwe dan in op de andere.';
 
   @override
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';

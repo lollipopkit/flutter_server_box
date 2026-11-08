@@ -201,7 +201,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Establece una contraseña para encriptar archivos de respaldo. Déjalo vacío para desactivar la encriptación.';
+      'Cifra las copias de seguridad y la sincronización. Todos los dispositivos que sincronizan usan la misma contraseña: si la cambias en uno, introduce la nueva en los demás.';
 
   @override
   String get backupPasswordWrong => 'Contraseña de respaldo incorrecta';

@@ -377,7 +377,9 @@ void main() {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await PrefStore.shared.init();
+      SecureProp.resetRateLimits();
     });
+    tearDown(SyncKey.resetForTest);
 
     test('two devices that made a key at once end with both, sealing with one', () async {
       final file = _KeyFile();
@@ -400,6 +402,62 @@ void main() {
       expect(await b.open(sealedByA), [1]);
       expect(a.nameOf([0]), b.nameOf([0]), reason: 'both seal with the same key now');
       expect(await a.refresh(), isFalse);
+    });
+
+    test("another device's password is said, and a change here to a third one writes nothing", () async {
+      final file = _KeyFile();
+      // With the keys a device keeps once it has read them, when [kept].
+      void password(String pwd, {List<int>? kept, String? previous}) => FlutterSecureStorage.setMockInitialValues({
+        SecureStoreProps.bakPwd.key: pwd,
+        if (kept != null) 'syncIdentity.${file.id}': utf8.decode(kept),
+        'syncKeyPreviousPwd': ?previous,
+      });
+      password('old');
+      await SyncKey.load(file);
+      expect(SyncKey.passwordMismatch.value, isEmpty);
+
+      // The others changed it to `new`; this device still has `old`.
+      final keys = await AgeCryptor.decrypt(file.body!, 'old');
+      file.body = utf8.encode(await AgeCryptor.encrypt(keys, 'new'));
+      await expectLater(SyncKey.load(file), throwsA(isA<WrongPasswordException>()));
+      expect(SyncKey.passwordMismatch.value, {file.id});
+
+      // A device that kept the keys, changing its password to a third one
+      // that opens neither: the file is left as the others sealed it, and the
+      // kept keys go on syncing.
+      final before = file.body;
+      password('third', kept: keys);
+      await SyncKey.passwordChanged('old');
+      final key = await SyncKey.load(file);
+      expect(await key.open(await key.seal(Uint8List.fromList([7]))), [7]);
+      expect(file.body, same(before));
+      expect(SyncKey.passwordMismatch.value, {file.id});
+
+      // The others' password: taken, and nothing to say any more.
+      password('new', kept: keys, previous: 'old');
+      await SyncKey.passwordChanged('third');
+      await SyncKey.load(file);
+      expect(SyncKey.passwordMismatch.value, isEmpty);
+      expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
+    });
+
+    test('a password changed here is taken by the file after a restart too', () async {
+      final file = _KeyFile();
+      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'old'});
+      await SyncKey.load(file);
+      final keys = await AgeCryptor.decrypt(file.body!, 'old');
+
+      // Changed to `new`, and the app ended before any sync sealed it again.
+      await SyncKey.passwordChanged('old');
+      FlutterSecureStorage.setMockInitialValues({
+        SecureStoreProps.bakPwd.key: 'new',
+        'syncIdentity.${file.id}': utf8.decode(keys),
+        'syncKeyPreviousPwd': 'old',
+      });
+      await SyncKey.load(file);
+      expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
+      expect(SyncKey.passwordMismatch.value, isEmpty);
+      expect(SyncKey.filesRewrap.get() ?? false, isFalse);
     });
   });
 }

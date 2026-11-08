@@ -199,7 +199,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.';
+      'Mengenkripsi cadangan dan sinkronisasi. Semua perangkat yang disinkronkan memakai kata sandi yang sama: setelah mengubahnya di satu perangkat, masukkan yang baru di perangkat lain.';
 
   @override
   String get backupPasswordWrong => 'Kata sandi cadangan salah';

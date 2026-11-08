@@ -190,7 +190,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      '백업 파일을 암호화하기 위한 비밀번호를 설정하세요. 암호화를 비활성화하려면 비워 두세요.';
+      '백업과 동기화를 암호화합니다. 동기화하는 모든 기기는 같은 비밀번호를 사용합니다. 한 기기에서 변경했다면 다른 기기에도 새 비밀번호를 입력하세요.';
 
   @override
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';

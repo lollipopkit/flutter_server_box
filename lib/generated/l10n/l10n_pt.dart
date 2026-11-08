@@ -199,7 +199,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Defina uma senha para criptografar arquivos de backup. Deixe vazio para desabilitar a criptografia.';
+      'Criptografa backups e sincronização. Todos os dispositivos sincronizados usam a mesma senha: depois de alterá-la em um, digite a nova nos outros.';
 
   @override
   String get backupPasswordWrong => 'Senha de backup incorreta';

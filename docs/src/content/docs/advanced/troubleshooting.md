@@ -72,6 +72,7 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 - A version from before the current sync format keeps syncing to the backup file it knows and does not see the newer devices' changes, nor they its own; nothing says so on either side.
 - A newer device's changes in a format an older version cannot read stop that version reading them, and it asks to be updated. It still sends its own changes.
 - Update every device that syncs.
+- When the backup page says the synced data is encrypted with a different backup password, enter the password your other devices use. Every device that syncs uses the same one: after changing it on one, enter the new one on the others.
 
 ## Widget and Watch App issues
 

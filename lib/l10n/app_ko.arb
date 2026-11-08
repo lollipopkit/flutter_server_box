@@ -30,7 +30,7 @@
   "backupPasswordRemoveSynced": "같은 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 비밀번호를 다시 설정할 때까지 해당 기기의 동기화가 중지됩니다.",
   "backupPasswordRemoved": "백업 비밀번호가 제거되었습니다",
   "backupPasswordSet": "백업 비밀번호가 설정되었습니다",
-  "backupPasswordTip": "백업 파일을 암호화하기 위한 비밀번호를 설정하세요. 암호화를 비활성화하려면 비워 두세요.",
+  "backupPasswordTip": "백업과 동기화를 암호화합니다. 동기화하는 모든 기기는 같은 비밀번호를 사용합니다. 한 기기에서 변경했다면 다른 기기에도 새 비밀번호를 입력하세요.",
   "backupPasswordWrong": "백업 비밀번호가 올바르지 않습니다",
   "connectAll": "모두 연결",
   "disconnectAll": "모두 연결 해제",

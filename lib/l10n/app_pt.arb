@@ -30,7 +30,7 @@
   "backupPasswordRemoveSynced": "Isso remove a senha de backup de todos os dispositivos que usam o mesmo Porta-chaves do iCloud. A sincronização deles para até que uma senha seja definida novamente.",
   "backupPasswordRemoved": "Senha de backup removida",
   "backupPasswordSet": "Senha de backup definida",
-  "backupPasswordTip": "Defina uma senha para criptografar arquivos de backup. Deixe vazio para desabilitar a criptografia.",
+  "backupPasswordTip": "Criptografa backups e sincronização. Todos os dispositivos sincronizados usam a mesma senha: depois de alterá-la em um, digite a nova nos outros.",
   "backupPasswordWrong": "Senha de backup incorreta",
   "connectAll": "Conectar tudo",
   "disconnectAll": "Desconectar tudo",

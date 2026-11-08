@@ -189,7 +189,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'バックアップファイルを暗号化するためのパスワードを設定してください。暗号化を無効にするには空白のままにしてください。';
+      'バックアップと同期を暗号化します。同期するすべてのデバイスで同じパスワードを使います。1 台で変更したら、他のデバイスにも新しいパスワードを入力してください。';
 
   @override
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
