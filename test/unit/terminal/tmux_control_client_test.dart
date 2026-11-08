@@ -515,7 +515,10 @@ void main() {
 
       await client.selectPane(TmuxPaneId('%3'));
 
-      expect(shell.writes, contains("select-pane -t '%3'"));
+      // Selected even though the snapshot has it current: it may be stale.
+      final selectWindow = shell.writes.indexOf("select-window -t '@0'");
+      expect(selectWindow, isNonNegative);
+      expect(shell.writes.indexOf("select-pane -t '%3'"), greaterThan(selectWindow));
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
