@@ -70,7 +70,14 @@ void main() {
     await tester.pump();
     expect(said, findsOneWidget);
 
+    // The backup's own failure, while it syncs somewhere; not once it does not.
     SyncKey.passwordMismatch.value = const {};
+    bakSync.lastFailure.value = const WrongPasswordException();
+    await tester.pump();
+    expect(said, findsNothing);
+    await PrefProps.gistSync.set(true);
+    addTearDown(() => PrefProps.gistSync.set(false));
+    bakSync.lastFailure.value = null;
     bakSync.lastFailure.value = const WrongPasswordException();
     await tester.pump();
     expect(said, findsOneWidget);

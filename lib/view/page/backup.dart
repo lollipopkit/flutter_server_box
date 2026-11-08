@@ -368,7 +368,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     return ListenableBuilder(
       listenable: Listenable.merge([SyncKey.passwordMismatch, bakSync.lastFailure]),
       builder: (context, _) {
-        if (SyncKey.passwordMismatch.value.isEmpty && bakSync.lastFailure.value is! WrongPasswordException) {
+        // The backup's own only while a remote sync is on: one turned off
+        // keeps its last failure, which says nothing any more.
+        final backup = bakSync.lastFailure.value is WrongPasswordException && _hasEnabledRemoteSync;
+        if (SyncKey.passwordMismatch.value.isEmpty && !backup) {
           return UIs.placeholder;
         }
         return CardX(
