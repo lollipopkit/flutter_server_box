@@ -162,10 +162,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFailTip => 'Authentication failed. Check the details';
 
   @override
-  String get autoBackupConflict =>
-      'Only one automatic backup can be turned on at the same time.';
-
-  @override
   String get autoConnect => 'Auto connect';
 
   @override
@@ -292,37 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Restored, except these themes. Install them again from the theme store or the file they came from.';
 
   @override
-  String get backupTip =>
-      'The exported data can be encrypted with password. \nPlease keep it safe.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Backup status';
-
-  @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
-
-  @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
-
-  @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploading';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict detected';
-
-  @override
-  String get icloudBackupStateUploaded => 'Uploaded';
-
-  @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Run in background';

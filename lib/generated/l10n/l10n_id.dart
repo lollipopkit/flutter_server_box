@@ -163,10 +163,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get authFailTip => 'Autentikasi gagal. Periksa datanya';
 
   @override
-  String get autoBackupConflict =>
-      'Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.';
-
-  @override
   String get autoConnect => 'Hubungkan otomatis';
 
   @override
@@ -293,39 +289,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Dipulihkan, kecuali tema-tema ini. Instal ulang dari toko tema atau dari file asalnya.';
 
   @override
-  String get backupTip =>
-      'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Status cadangan';
-
-  @override
-  String get icloudBackupStatusLoading => 'Memuat status cadangan iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Tidak dapat membaca metadata cadangan iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Belum ada berkas cadangan iCloud yang ditemukan';
-
-  @override
-  String get icloudBackupStateUploading => 'Mengunggah';
-
-  @override
   String get icloudBackupStateConflict => 'Terdeteksi konflik';
-
-  @override
-  String get icloudBackupStateUploaded => 'Terunggah';
-
-  @override
-  String get icloudBackupStateWaiting => 'Menunggu iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Cadangan terakhir: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Jalankan di Backgroud';

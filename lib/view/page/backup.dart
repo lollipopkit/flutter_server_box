@@ -69,12 +69,21 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   /// The WebDAV settings saved here, which name the server shown.
   final _webdavEdited = 0.vn;
-  late Future<_ICloudBackupStatus?> _icloudStatusFuture;
+  late Future<bool> _icloudConflict;
+
+  /// The backup password, read again when it is set or removed here.
+  late Future<String?> _bakPwd = SecureStoreProps.bakPwd.read();
+
+  /// Built once: a new one each build would subscribe again each time.
+  late final _destChanges = Listenable.merge([_SyncDest.changes, _webdavEdited]);
+
+  /// A channel being switched to.
+  bool _selectingDest = false;
 
   @override
   void initState() {
     super.initState();
-    _icloudStatusFuture = Future.value(null);
+    _icloudConflict = Future.value(false);
     if (isICloudSupported) {
       _refreshIcloudStatus(notify: false);
     }
@@ -107,9 +116,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (section == BackupSection.sync) return _buildSyncSection;
     return ListView(
       padding: context.padBottom(UIs.roundRectCardPadding),
-      children: switch (section) {
-        BackupSection.sync || BackupSection.import => _importTiles,
-      },
+      children: _importTiles,
     );
   }
 
@@ -137,7 +144,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   Widget get _buildBakPwd {
     return FutureBuilder<String?>(
-      future: SecureStoreProps.bakPwd.read(),
+      future: _bakPwd,
       builder: (context, snapshot) {
         final hasPwd = snapshot.data?.isNotEmpty == true;
         return ListTile(
@@ -170,10 +177,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     }
     await SecureStoreProps.bakPwd.write(null);
     Toast.show(l10n.backupPasswordRemoved);
-    if (mounted) setState(() {});
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
   }
 
-  bool get _hasEnabledRemoteSync => _remoteSyncOn();
+  bool get _hasEnabledRemoteSync => _SyncDest.current != _SyncDest.off;
 
   /// Says why the sync just run stopped, when one did ([SyncIface.lastFailure]);
   /// false then, so the switch stays off.
@@ -188,17 +195,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       );
     }
     return false;
-  }
-
-  /// Whether an automatic sync destination is on, [but] aside. The one rule
-  /// every switch checks, so a new destination cannot be missed by one of them.
-  bool _remoteSyncOn({PrefPropDefault<bool>? but}) {
-    final props = <PrefPropDefault<bool>>[
-      if (isICloudSupported) PrefProps.icloudSync,
-      PrefProps.webdavSync,
-      if (Lkc.enabled) LkcSyncPrefs.enabled,
-    ];
-    return props.any((prop) => prop != but && prop.get());
   }
 
   Future<bool> _onTapSetBakPwd(
@@ -269,7 +265,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       );
     }
     Toast.show(l10n.backupPasswordSet);
-    setState(() {});
+    setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
     return true;
   }
 
@@ -298,7 +294,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
     } finally {
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
   }
 
@@ -312,16 +308,17 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   }
 
   void _refreshIcloudStatus({bool notify = true}) {
-    if (!isICloudSupported) return;
+    // Also after a sync that outlived the page.
+    if (!isICloudSupported || !mounted) return;
 
-    final future = _loadIcloudStatus();
+    final future = _loadIcloudConflict();
     if (!notify) {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
       return;
     }
 
     setState(() {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
     });
   }
 
@@ -459,28 +456,11 @@ extension on _BackupPageState {
     return false;
   }
 
-  Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
-    if (!isICloudSupported) return null;
-
+  /// Whether iCloud holds versions of the backup it could not reconcile.
+  Future<bool> _loadIcloudConflict() async {
+    if (!isICloudSupported) return false;
     final files = await icloud.list();
-    final matches = files.where(
-      (file) =>
-          file.relativePath == Paths.bakName && file.contentChangeDate != null,
-    );
-    if (matches.isEmpty) return null;
-
-    final file = matches.reduce(
-      (latest, current) =>
-          current.contentChangeDate!.isAfter(latest.contentChangeDate!)
-          ? current
-          : latest,
-    );
-    return _ICloudBackupStatus(
-      lastModified: file.contentChangeDate!,
-      isUploading: file.isUploading,
-      isUploaded: file.isUploaded,
-      hasConflict: file.hasUnresolvedConflicts,
-    );
+    return files.any((file) => file.relativePath == Paths.bakName && file.hasUnresolvedConflicts);
   }
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
@@ -503,7 +483,7 @@ extension on _BackupPageState {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
-      remoteLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
@@ -521,7 +501,7 @@ extension on _BackupPageState {
       context.showErrDialog(e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
-      remoteLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
@@ -575,7 +555,7 @@ extension on _BackupPageState {
       Loggers.app.warning('Restore LK Cloud backup failed', e, s);
     } finally {
       await dir?.delete(recursive: true);
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
   }
 
@@ -736,18 +716,4 @@ extension on _BackupPageState {
 
     return false;
   }
-}
-
-final class _ICloudBackupStatus {
-  const _ICloudBackupStatus({
-    required this.lastModified,
-    required this.isUploading,
-    required this.isUploaded,
-    required this.hasConflict,
-  });
-
-  final DateTime lastModified;
-  final bool isUploading;
-  final bool isUploaded;
-  final bool hasConflict;
 }

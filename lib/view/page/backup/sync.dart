@@ -95,7 +95,7 @@ extension _SyncWidgets on _BackupPageState {
   List<Widget> get _syncAutoTiles => [
     CenterGreyTitle(l10n.syncAuto),
     ListenableBuilder(
-      listenable: Listenable.merge([_SyncDest.changes, _webdavEdited]),
+      listenable: _destChanges,
       builder: (context, _) {
         final dest = _SyncDest.current;
         return Column(
@@ -119,7 +119,16 @@ extension _SyncWidgets on _BackupPageState {
       ),
     ),
     CenterGreyTitle(libL10n.manual),
-    CardX(
+    ListenableBuilder(
+      listenable: Listenable.merge([_destChanges, remoteLoading, lkcLoading]),
+      builder: (context, _) => _buildManual(_SyncDest.current),
+    ),
+  ];
+
+  /// A file, the clipboard, and the remotes that are not the channel: one
+  /// copy, either way, whatever syncs on its own.
+  Widget _buildManual(_SyncDest channel) {
+    return CardX(
       child: Column(
         children: [
           _manualRow(
@@ -136,10 +145,33 @@ extension _SyncWidgets on _BackupPageState {
             action: libL10n.copy,
             onAction: () => BackupService.backup(context, ClipboardBackupSource()),
           ),
+          if (isICloudSupported && channel != _SyncDest.icloud)
+            _manualRow(
+              _SyncDest.icloud.icon,
+              _SyncDest.icloud.name,
+              busy: remoteLoading.value,
+              onRestore: _onTapIcloudRestore,
+            ),
+          if (_webdavSet && channel != _SyncDest.webdav)
+            _manualRow(
+              _SyncDest.webdav.icon,
+              _SyncDest.webdav.name,
+              busy: remoteLoading.value,
+              onRestore: () => _onTapWebdavDl(context),
+              action: libL10n.backup,
+              onAction: () => _onTapWebdavUp(context),
+            ),
+          if (Lkc.enabled && Lkc.client.signedIn && channel != _SyncDest.lkc)
+            _manualRow(
+              _SyncDest.lkc.icon,
+              _SyncDest.lkc.name,
+              busy: lkcLoading.value,
+              onRestore: () => _onTapLkcRestore(context),
+            ),
         ],
       ),
-    ),
-  ];
+    );
+  }
 
   Widget _buildDestPicker(_SyncDest dest) {
     final primary = Theme.of(context).colorScheme.primary;
@@ -241,8 +273,8 @@ extension _SyncWidgets on _BackupPageState {
         SegmentSync.tooNew,
       ]),
       builder: (context, _) {
-        return FutureBuilder<_ICloudBackupStatus?>(
-          future: dest == _SyncDest.icloud ? _icloudStatusFuture : null,
+        return FutureBuilder<bool>(
+          future: dest == _SyncDest.icloud ? _icloudConflict : null,
           builder: (context, icloudStatus) {
             final scheme = Theme.of(context).colorScheme;
             final failure = bakSync.lastFailure.value;
@@ -281,14 +313,16 @@ extension _SyncWidgets on _BackupPageState {
                 syncFailureText(failure) ?? '$failure',
                 null,
               ),
-              _ when icloudStatus.data?.hasConflict ?? false => (
+              _ when icloudStatus.data ?? false => (
                 Icons.warning_rounded,
                 Colors.orange,
                 l10n.icloudBackupStateConflict,
                 last,
                 null,
               ),
-              _ => (Icons.check_circle, Colors.green, l10n.syncDone, last, null),
+              _ when last != null => (Icons.check_circle, Colors.green, l10n.syncDone, last, null),
+              // Nothing synced yet, nor failed.
+              _ => (Icons.sync, scheme.onSurfaceVariant, l10n.syncNow, null, _syncNow),
             };
             return ListTile(
               leading: Icon(icon, color: color),
@@ -348,19 +382,22 @@ extension _SyncWidgets on _BackupPageState {
     IconData icon,
     String title, {
     required VoidCallback onRestore,
-    required String action,
-    required VoidCallback onAction,
+    String? action,
+    VoidCallback? onAction,
+    bool busy = false,
   }) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton(onPressed: onRestore, child: Text(libL10n.restore)),
-          TextButton(onPressed: onAction, child: Text(action)),
-        ],
-      ),
+      trailing: busy
+          ? SizedLoading.small
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(onPressed: onRestore, child: Text(libL10n.restore)),
+                if (action != null && onAction != null) TextButton(onPressed: onAction, child: Text(action)),
+              ],
+            ),
     );
   }
 }
@@ -370,6 +407,16 @@ extension _SyncActions on _BackupPageState {
   /// cannot be reached, or whose key the password here does not open, is not
   /// switched to. Switching between two asks first.
   Future<void> _selectDest(_SyncDest to) async {
+    if (_selectingDest) return;
+    _selectingDest = true;
+    try {
+      await _switchDest(to);
+    } finally {
+      _selectingDest = false;
+    }
+  }
+
+  Future<void> _switchDest(_SyncDest to) async {
     final from = _SyncDest.current;
     if (to == from) return;
     if (from != _SyncDest.off && to != _SyncDest.off) {
@@ -381,6 +428,7 @@ extension _SyncActions on _BackupPageState {
       if (ok != true || !mounted) return;
     }
     if (to != _SyncDest.off && !await _enable(to)) return;
+    // The page may be gone; the choice stands.
     for (final d in _SyncDest.offered) {
       final p = d.pref;
       if (p != null && d != to) await p.set(false);
@@ -400,7 +448,7 @@ extension _SyncActions on _BackupPageState {
         try {
           await bakSync.sync(rs: icloud, throttleMilli: 0);
         } finally {
-          _syncing.value = false;
+          if (mounted) _syncing.value = false;
         }
         _refreshIcloudStatus();
         return _syncWent();
@@ -414,7 +462,7 @@ extension _SyncActions on _BackupPageState {
         try {
           await bakSync.sync(rs: SyncRemotes.webdav, throttleMilli: 0);
         } finally {
-          remoteLoading.value = false;
+          if (mounted) remoteLoading.value = false;
         }
         return _syncWent();
       case _SyncDest.lkc:
@@ -442,7 +490,7 @@ extension _SyncActions on _BackupPageState {
           if (mounted) _showLkcErr(e, s, libL10n.sync);
           return false;
         } finally {
-          lkcLoading.value = false;
+          if (mounted) lkcLoading.value = false;
         }
     }
   }
@@ -460,7 +508,7 @@ extension _SyncActions on _BackupPageState {
     } catch (e, s) {
       Loggers.app.warning('Sync now', e, s);
     } finally {
-      _syncing.value = false;
+      if (mounted) _syncing.value = false;
       _refreshIcloudStatus();
     }
   }
@@ -488,7 +536,7 @@ extension _SyncActions on _BackupPageState {
       Loggers.app.warning('Restore iCloud backup failed', e, s);
     } finally {
       await dir?.delete(recursive: true);
-      remoteLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 }

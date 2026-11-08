@@ -162,10 +162,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get authFailTip => 'Autentifikasiya uğursuz oldu. Məlumatları yoxla';
 
   @override
-  String get autoBackupConflict =>
-      'Eyni vaxtda yalnız bir avtomatik ehtiyat nüsxə funksiyası aktivləşdirilə bilər.';
-
-  @override
   String get autoConnect => 'Avtomatik əlaqə qur';
 
   @override
@@ -293,40 +289,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bərpa edildi, bu mövzular istisna olmaqla. Onları mövzu mağazasından və ya gəldikləri fayldan yenidən quraşdırın.';
 
   @override
-  String get backupTip =>
-      'İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Ehtiyat nüsxənin statusu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud ehtiyat nüsxəsinin statusu yüklənir...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud ehtiyat nüsxəsinin metaməlumatlarını oxumaq mümkün olmadı';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Hələ iCloud ehtiyat nüsxə faylı tapılmayıb';
-
-  @override
-  String get icloudBackupStateUploading => 'Göndərilir';
-
-  @override
   String get icloudBackupStateConflict => 'Ziddiyyət aşkarlandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Göndərildi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud gözlənilir';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son ehtiyat nüsxə: $lastModified\nVəziyyət: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arxa planda işlət';

@@ -409,12 +409,6 @@ abstract class AppLocalizations {
   /// **'Authentication failed. Check the details'**
   String get authFailTip;
 
-  /// User-facing label or message for auto backup conflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Only one automatic backup can be turned on at the same time.'**
-  String get autoBackupConflict;
-
   /// User-facing label or message for auto connect.
   ///
   /// In en, this message translates to:
@@ -631,65 +625,11 @@ abstract class AppLocalizations {
   /// **'Restored, except these themes. Install them again from the theme store or the file they came from.'**
   String get backupThemesNotRestored;
 
-  /// Help text for the backup setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
-  String get backupTip;
-
-  /// Title shown for the iCloud backup status dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup status'**
-  String get icloudBackupStatusTitle;
-
-  /// Status message shown while iCloud backup status loading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading iCloud backup status...'**
-  String get icloudBackupStatusLoading;
-
-  /// Error message shown when iCloud backup status error.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to read iCloud backup metadata'**
-  String get icloudBackupStatusError;
-
-  /// Empty-state message for iCloud backup status empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No iCloud backup file found yet'**
-  String get icloudBackupStatusEmpty;
-
-  /// User-facing label or message for iCloud backup state uploading.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploading'**
-  String get icloudBackupStateUploading;
-
   /// User-facing label or message for iCloud backup state conflict.
   ///
   /// In en, this message translates to:
   /// **'Conflict detected'**
   String get icloudBackupStateConflict;
-
-  /// User-facing label or message for iCloud backup state uploaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploaded'**
-  String get icloudBackupStateUploaded;
-
-  /// User-facing label or message for iCloud backup state waiting.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for iCloud'**
-  String get icloudBackupStateWaiting;
-
-  /// User-facing label or message for iCloud backup status summary.
-  ///
-  /// In en, this message translates to:
-  /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
-  String icloudBackupStatusSummary(String lastModified, String remoteState);
 
   /// User-facing label or message for bg run.
   ///

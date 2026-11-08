@@ -185,10 +185,6 @@
   "@authFailTip": {
     "description": "Help text for the auth fail setting or action."
   },
-  "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
-  "@autoBackupConflict": {
-    "description": "User-facing label or message for auto backup conflict."
-  },
   "autoConnect": "Auto connect",
   "@autoConnect": {
     "description": "User-facing label or message for auto connect."
@@ -343,53 +339,9 @@
   "@backupThemesNotRestored": {
     "description": "Toast after a restore: the backup was restored, but the themes named below it could not be installed — not in the theme store or not carried by the backup (installed from a folder, or imported with an older version of the app)."
   },
-  "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
-  "@backupTip": {
-    "description": "Help text for the backup setting or action."
-  },
-  "icloudBackupStatusTitle": "Backup status",
-  "@icloudBackupStatusTitle": {
-    "description": "Title shown for the iCloud backup status dialog or section."
-  },
-  "icloudBackupStatusLoading": "Loading iCloud backup status...",
-  "@icloudBackupStatusLoading": {
-    "description": "Status message shown while iCloud backup status loading."
-  },
-  "icloudBackupStatusError": "Unable to read iCloud backup metadata",
-  "@icloudBackupStatusError": {
-    "description": "Error message shown when iCloud backup status error."
-  },
-  "icloudBackupStatusEmpty": "No iCloud backup file found yet",
-  "@icloudBackupStatusEmpty": {
-    "description": "Empty-state message for iCloud backup status empty."
-  },
-  "icloudBackupStateUploading": "Uploading",
-  "@icloudBackupStateUploading": {
-    "description": "User-facing label or message for iCloud backup state uploading."
-  },
   "icloudBackupStateConflict": "Conflict detected",
   "@icloudBackupStateConflict": {
     "description": "User-facing label or message for iCloud backup state conflict."
-  },
-  "icloudBackupStateUploaded": "Uploaded",
-  "@icloudBackupStateUploaded": {
-    "description": "User-facing label or message for iCloud backup state uploaded."
-  },
-  "icloudBackupStateWaiting": "Waiting for iCloud",
-  "@icloudBackupStateWaiting": {
-    "description": "User-facing label or message for iCloud backup state waiting."
-  },
-  "icloudBackupStatusSummary": "Last backup: {lastModified}\nStatus: {remoteState}",
-  "@icloudBackupStatusSummary": {
-    "description": "User-facing label or message for iCloud backup status summary.",
-    "placeholders": {
-      "lastModified": {
-        "type": "String"
-      },
-      "remoteState": {
-        "type": "String"
-      }
-    }
   },
   "bgRun": "Run in background",
   "@bgRun": {

@@ -163,10 +163,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get authFailTip => 'احراز هویت ناموفق بود. مشخصات را بررسی کنید';
 
   @override
-  String get autoBackupConflict =>
-      'هم‌زمان فقط یک پشتیبان‌گیری خودکار می‌تواند فعال باشد.';
-
-  @override
   String get autoConnect => 'اتصال خودکار';
 
   @override
@@ -294,40 +290,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'بازیابی شد، به‌جز این پوسته‌ها. آن‌ها را مجدداً از فروشگاه پوسته یا فایل مبدأ نصب کنید.';
 
   @override
-  String get backupTip =>
-      'داده‌های خروجی گرفته‌شده می‌توانند با گذرواژه رمزگذاری شوند.\nلطفاً از آن به‌خوبی محافظت کنید.';
-
-  @override
-  String get icloudBackupStatusTitle => 'وضعیت پشتیبان‌گیری';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'در حال بارگیری وضعیت پشتیبان‌گیری iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'امکان خواندن متاداده پشتیبان‌گیری iCloud وجود ندارد';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'هنوز هیچ فایل پشتیبان‌گیری iCloud یافت نشد';
-
-  @override
-  String get icloudBackupStateUploading => 'در حال بارگذاری';
-
-  @override
   String get icloudBackupStateConflict => 'تداخل شناسایی شد';
-
-  @override
-  String get icloudBackupStateUploaded => 'بارگذاری شد';
-
-  @override
-  String get icloudBackupStateWaiting => 'در انتظار iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'آخرین پشتیبان‌گیری: $lastModified\nوضعیت: $remoteState';
-  }
 
   @override
   String get bgRun => 'اجرا در پس‌زمینه';

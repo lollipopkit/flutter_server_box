@@ -162,10 +162,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get authFailTip => 'Не вдалося автентифікуватися. Перевірте дані';
 
   @override
-  String get autoBackupConflict =>
-      'Тільки одне автоматичне резервне копіювання може бути активне одночасно.';
-
-  @override
   String get autoConnect => 'Авто підключення';
 
   @override
@@ -293,40 +289,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Відновлено, крім цих тем. Встановіть їх знову з магазину тем або з вихідного файлу.';
 
   @override
-  String get backupTip =>
-      'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Стан резервної копії';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'Завантаження стану резервної копії iCloud…';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Не вдалося прочитати метадані резервної копії iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Файл резервної копії в iCloud поки не знайдено';
-
-  @override
-  String get icloudBackupStateUploading => 'Вивантаження';
-
-  @override
   String get icloudBackupStateConflict => 'Виявлено конфлікт';
-
-  @override
-  String get icloudBackupStateUploaded => 'Вивантажено';
-
-  @override
-  String get icloudBackupStateWaiting => 'Очікування iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Остання копія: $lastModified\nСтан: $remoteState';
-  }
 
   @override
   String get bgRun => 'Запуск у фоновому режимі';

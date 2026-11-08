@@ -161,10 +161,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFailTip => 'Kimlik doğrulama başarısız. Bilgileri kontrol et';
 
   @override
-  String get autoBackupConflict =>
-      'Aynı anda yalnızca bir otomatik yedekleme açık olabilir.';
-
-  @override
   String get autoConnect => 'Otomatik bağlan';
 
   @override
@@ -291,40 +287,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu temalar dışında geri yüklendi. Temaları tema mağazasından veya geldikleri dosyadan yeniden yükleyin.';
 
   @override
-  String get backupTip =>
-      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Yedekleme durumu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud yedekleme durumu yükleniyor...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud yedekleme meta verileri okunamıyor';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Henüz bir iCloud yedekleme dosyası bulunamadı';
-
-  @override
-  String get icloudBackupStateUploading => 'Yükleniyor';
-
-  @override
   String get icloudBackupStateConflict => 'Çakışma algılandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Yüklendi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud bekleniyor';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son yedekleme: $lastModified\nDurum: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arka planda çalıştır';

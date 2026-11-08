@@ -152,9 +152,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authFailTip => '认证失败，请检查信息是否正确';
 
   @override
-  String get autoBackupConflict => '仅可启用一个自动备份任务';
-
-  @override
   String get autoConnect => '自动连接';
 
   @override
@@ -273,36 +270,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupThemesNotRestored => '已恢复，但以下主题除外。请从主题商店或原始文件重新安装。';
 
   @override
-  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '备份状态';
-
-  @override
-  String get icloudBackupStatusLoading => '正在读取 iCloud 备份状态...';
-
-  @override
-  String get icloudBackupStatusError => '无法读取 iCloud 备份元数据';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未发现 iCloud 备份文件';
-
-  @override
-  String get icloudBackupStateUploading => '上传中';
-
-  @override
   String get icloudBackupStateConflict => '检测到冲突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上传';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最后备份：$lastModified\n状态：$remoteState';
-  }
 
   @override
   String get bgRun => '后台运行';
@@ -7025,9 +6993,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authFailTip => '認證失敗，請檢查資訊是否正確';
 
   @override
-  String get autoBackupConflict => '僅能啟用一項自動備份任務';
-
-  @override
   String get autoConnect => '自動連線';
 
   @override
@@ -7146,36 +7111,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupThemesNotRestored => '已還原，但以下主題除外。請從主題商店或原始檔案重新安裝。';
 
   @override
-  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '備份狀態';
-
-  @override
-  String get icloudBackupStatusLoading => '正在讀取 iCloud 備份狀態...';
-
-  @override
-  String get icloudBackupStatusError => '無法讀取 iCloud 備份中繼資料';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未找到 iCloud 備份檔案';
-
-  @override
-  String get icloudBackupStateUploading => '上傳中';
-
-  @override
   String get icloudBackupStateConflict => '偵測到衝突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上傳';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最後備份：$lastModified\n狀態：$remoteState';
-  }
 
   @override
   String get bgRun => '背景執行';

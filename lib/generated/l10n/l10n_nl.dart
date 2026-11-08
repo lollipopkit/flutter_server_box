@@ -162,10 +162,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get authFailTip => 'Authenticatie mislukt. Controleer de gegevens';
 
   @override
-  String get autoBackupConflict =>
-      'Er kan slechts één automatische back-up tegelijk worden ingeschakeld.';
-
-  @override
   String get autoConnect => 'Automatisch verbinden';
 
   @override
@@ -292,39 +288,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hersteld, behalve deze thema’s. Installeer ze opnieuw vanuit de themastore of het oorspronkelijke bestand.';
 
   @override
-  String get backupTip =>
-      'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Back-upstatus';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud-back-upstatus laden...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Kan de metadata van de iCloud-back-up niet lezen';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Nog geen iCloud-back-upbestand gevonden';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploaden';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict gevonden';
-
-  @override
-  String get icloudBackupStateUploaded => 'Geüpload';
-
-  @override
-  String get icloudBackupStateWaiting => 'Wacht op iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Laatste back-up: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Uitvoeren op de achtergrond';

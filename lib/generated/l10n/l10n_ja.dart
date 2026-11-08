@@ -154,9 +154,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authFailTip => '認証に失敗しました。情報を確認してください';
 
   @override
-  String get autoBackupConflict => '自動バックアップは一度に一つしか開始できません';
-
-  @override
   String get autoConnect => '自動接続';
 
   @override
@@ -279,36 +276,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '復元しましたが、これらのテーマは復元されませんでした。テーマストアまたは元のファイルから再インストールしてください。';
 
   @override
-  String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
-
-  @override
-  String get icloudBackupStatusTitle => 'バックアップの状態';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud バックアップの状態を読み込み中…';
-
-  @override
-  String get icloudBackupStatusError => 'iCloud バックアップのメタデータを読み取れません';
-
-  @override
-  String get icloudBackupStatusEmpty => 'iCloud のバックアップファイルはまだ見つかりません';
-
-  @override
-  String get icloudBackupStateUploading => 'アップロード中';
-
-  @override
   String get icloudBackupStateConflict => '競合を検出';
-
-  @override
-  String get icloudBackupStateUploaded => 'アップロード済み';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud を待機中';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最終バックアップ: $lastModified\n状態: $remoteState';
-  }
 
   @override
   String get bgRun => 'バックグラウンド実行';

@@ -155,9 +155,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
 
   @override
-  String get autoBackupConflict => '자동 백업은 한 번에 하나만 활성화할 수 있습니다.';
-
-  @override
   String get autoConnect => '자동 연결';
 
   @override
@@ -281,36 +278,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '복원했지만 다음 테마는 복원되지 않았습니다. 테마 스토어나 원본 파일에서 다시 설치하세요.';
 
   @override
-  String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
-
-  @override
-  String get icloudBackupStatusTitle => '백업 상태';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud 백업 상태를 불러오는 중...';
-
-  @override
-  String get icloudBackupStatusError => 'iCloud 백업 메타데이터를 읽을 수 없습니다';
-
-  @override
-  String get icloudBackupStatusEmpty => '아직 iCloud 백업 파일이 없습니다';
-
-  @override
-  String get icloudBackupStateUploading => '업로드 중';
-
-  @override
   String get icloudBackupStateConflict => '충돌 감지됨';
-
-  @override
-  String get icloudBackupStateUploaded => '업로드됨';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud 대기 중';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '마지막 백업: $lastModified\n상태: $remoteState';
-  }
 
   @override
   String get bgRun => '백그라운드 실행';
