@@ -98,7 +98,7 @@
   async function attachTerminal(ws: WebSocket, gone: () => boolean) {
     if (!host) return
     const encoder = new TextEncoder()
-    const send = (data: Uint8Array | string) => {
+    const send = (data: Uint8Array<ArrayBuffer> | string) => {
       if (ws.readyState === WebSocket.OPEN) ws.send(data)
     }
     const handle = await mountTerminal(host, {
