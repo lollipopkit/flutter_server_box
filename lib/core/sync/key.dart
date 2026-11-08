@@ -60,12 +60,16 @@ final class SyncKey implements SyncSeal {
     if (!_rewraps.any((f) => f.get() ?? false)) return const [];
     final raw = await _previous.read();
     if (raw == null) return const [];
+    Object? decoded;
     try {
-      return [for (final p in jsonDecode(raw) as List) if (p is String && p.isNotEmpty) p];
+      decoded = jsonDecode(raw);
     } on FormatException {
-      // As a build of this branch kept it: one password.
-      return [raw];
+      decoded = null;
     }
+    // Anything but a list is one password as it is, as a build of this
+    // branch kept it: one of digits alone decodes as a number.
+    if (decoded is! List) return [raw];
+    return [for (final p in decoded) if (p is String && p.isNotEmpty) p];
   }
 
   /// The whole backup is sealed with the password here now.
