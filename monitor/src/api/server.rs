@@ -196,15 +196,6 @@ pub fn configure_api(cfg: &mut web::ServiceConfig<Agent>) {
                 web::resource("/bmc/{id}/power").route(web::post().to(crate::api::bmc::power)),
             )
             .service(
-                web::resource("/backup").route(web::get().to(crate::api::backup::list)),
-            )
-            .service(
-                web::resource("/backup/blob")
-                    .route(web::get().to(crate::api::backup::download))
-                    .route(web::put().to(crate::api::backup::upload))
-                    .route(web::delete().to(crate::api::backup::remove)),
-            )
-            .service(
                 web::resource("/desktops")
                     .route(web::get().to(crate::api::desktops::list))
                     .route(web::put().to(crate::api::desktops::replace)),

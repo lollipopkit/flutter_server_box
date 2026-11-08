@@ -79,7 +79,6 @@ import type {
   SnippetPlan,
   SnippetsView,
   Desktop,
-  BackupView,
   BmcCertInfo,
   BmcIntent,
   BmcList,
@@ -1028,27 +1027,6 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  getBackups: () => request<BackupView>('/backup', {}),
-  /// The blob's bytes, as stored. The panel has no key for what is in them.
-  downloadBackup: async (name: string): Promise<Blob> => {
-    const res = await fsBytes(
-      `/backup/blob?name=${encodeURIComponent(name)}`,
-      {},
-    )
-    return res.blob()
-  },
-  uploadBackup: async (name: string, body: Blob): Promise<void> => {
-    await fsBytes(
-      `/backup/blob?name=${encodeURIComponent(name)}`,
-      { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
-    )
-  },
-  deleteBackup: async (name: string): Promise<void> => {
-    await fsBytes(
-      `/backup/blob?name=${encodeURIComponent(name)}`,
-      { method: 'DELETE' },
-    )
-  },
   getDesktops: () => request<DesktopsView>('/desktops', {}),
   /// Replaces the whole set, in order. A refusal arrives with its code as
   /// `ApiError.message` and the row as `body.index`.

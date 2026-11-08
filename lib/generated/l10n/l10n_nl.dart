@@ -162,10 +162,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get authFailTip => 'Authenticatie mislukt. Controleer de gegevens';
 
   @override
-  String get autoBackupConflict =>
-      'Er kan slechts één automatische back-up tegelijk worden ingeschakeld.';
-
-  @override
   String get autoConnect => 'Automatisch verbinden';
 
   @override
@@ -181,14 +177,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupEncrypted => 'Back-up is versleuteld';
 
   @override
-  String get backupNotEncrypted => 'Back-up is niet versleuteld';
-
-  @override
   String get backupPassword => 'Back-up wachtwoord';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.';
+      'Hiermee wordt het back-upwachtwoord verwijderd op alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. De synchronisatie wordt gepauzeerd totdat er een nieuw wachtwoord wordt ingesteld.';
 
   @override
   String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
@@ -198,7 +191,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Versleutelt back-ups en synchronisatie. Alle apparaten die synchroniseren gebruiken hetzelfde wachtwoord: wijzig je het op één, voer het nieuwe dan in op de andere.';
+      'Versleutelt back-ups en gesynchroniseerde gegevens. Alle apparaten moeten hetzelfde wachtwoord gebruiken; als je het op één apparaat wijzigt, voer dan op de andere het nieuwe wachtwoord in.';
 
   @override
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
@@ -295,39 +288,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Hersteld, behalve deze thema’s. Installeer ze opnieuw vanuit de themastore of het oorspronkelijke bestand.';
 
   @override
-  String get backupTip =>
-      'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Back-upstatus';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud-back-upstatus laden...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Kan de metadata van de iCloud-back-up niet lezen';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Nog geen iCloud-back-upbestand gevonden';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploaden';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict gevonden';
-
-  @override
-  String get icloudBackupStateUploaded => 'Geüpload';
-
-  @override
-  String get icloudBackupStateWaiting => 'Wacht op iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Laatste back-up: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Uitvoeren op de achtergrond';
@@ -591,7 +552,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Bewaart de wachtwoordzinnen van versleutelde privésleutels, zodat ze na een herstart niet opnieuw worden gevraagd. Uitschakelen verwijdert de op dit apparaat bewaarde.';
+      'Slaat wachtwoordzinnen van versleutelde privésleutels op, zodat je ze na het herstarten niet opnieuw hoeft in te voeren. Als je dit uitschakelt, worden de opgeslagen wachtwoordzinnen van dit apparaat verwijderd.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1228,15 +1189,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'De gesynchroniseerde gegevens zijn geschreven door een nieuwere versie van ServerBox. Werk deze app bij om te blijven synchroniseren.';
+      'De gesynchroniseerde gegevens zijn afkomstig van een nieuwere versie van ServerBox. Werk de app bij om door te gaan met synchroniseren.';
 
   @override
   String get syncPasswordMismatch =>
-      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Stel het wachtwoord van je andere apparaten in.';
+      'De gesynchroniseerde gegevens zijn versleuteld met een ander back-upwachtwoord. Voer het back-upwachtwoord in dat je op je andere apparaten gebruikt.';
 
   @override
   String get syncUnreachable =>
-      'Het synchronisatiedoel is niet bereikbaar. Controleer het netwerk en probeer het opnieuw.';
+      'Kan geen verbinding maken met de synchronisatiedienst. Controleer je netwerkverbinding en probeer het opnieuw.';
 
   @override
   String get termFontSizeTip =>
@@ -7307,4 +7268,47 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Niet-opgeslagen wijzigingen verwerpen?';
+
+  @override
+  String get syncAuto => 'Automatisch synchroniseren';
+
+  @override
+  String get syncOff => 'Uit';
+
+  @override
+  String get syncDone => 'Gesynchroniseerd';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Laatst gesynchroniseerd $time';
+  }
+
+  @override
+  String get syncNow => 'Nu synchroniseren';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Automatische synchronisatie met $name wordt uitgeschakeld. Bestaande back-ups blijven behouden.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ingesteld';
+
+  @override
+  String get bakPwdNotSet => 'Niet ingesteld';
+
+  @override
+  String get syncChannel => 'Kanaal';
+
+  @override
+  String get syncStateFailed => 'Synchronisatie mislukt';
+
+  @override
+  String get syncStatePassword => 'Wachtwoord komt niet overeen';
+
+  @override
+  String get syncStateUpdate => 'Update vereist';
+
+  @override
+  String get syncStateRunning => 'Bezig met synchroniseren';
 }

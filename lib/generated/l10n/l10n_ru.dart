@@ -163,10 +163,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось пройти аутентификацию. Проверьте данные';
 
   @override
-  String get autoBackupConflict =>
-      'Может быть включено только одно автоматическое резервное копирование';
-
-  @override
   String get autoConnect => 'Автоматическое подключение';
 
   @override
@@ -183,14 +179,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupEncrypted => 'Резервная копия зашифрована';
 
   @override
-  String get backupNotEncrypted => 'Резервная копия не зашифрована';
-
-  @override
   String get backupPassword => 'Пароль резервной копии';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Пароль резервной копии будет удалён со всех устройств, использующих ту же связку ключей iCloud. Их синхронизация остановится, пока пароль не будет задан снова.';
+      'Пароль резервной копии будет удалён со всех устройств, использующих ту же связку ключей iCloud. Синхронизация на них приостановится, пока вы не зададите новый пароль.';
 
   @override
   String get backupPasswordRemoved => 'Пароль резервной копии удален';
@@ -200,7 +193,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Шифрует резервные копии и синхронизацию. Все синхронизируемые устройства используют один пароль: изменив его на одном, введите новый на остальных.';
+      'Используется для шифрования резервных копий и синхронизируемых данных. На всех устройствах должен быть указан один и тот же пароль: после его смены на одном устройстве введите новый пароль на остальных.';
 
   @override
   String get backupPasswordWrong => 'Неверный пароль резервной копии';
@@ -297,40 +290,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Восстановлено, кроме этих тем. Установите их снова из магазина тем или из исходного файла.';
 
   @override
-  String get backupTip =>
-      'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Состояние резервной копии';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'Загрузка состояния резервной копии iCloud…';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Не удалось прочитать метаданные резервной копии iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Файл резервной копии в iCloud пока не найден';
-
-  @override
-  String get icloudBackupStateUploading => 'Выгружается';
-
-  @override
   String get icloudBackupStateConflict => 'Обнаружен конфликт';
-
-  @override
-  String get icloudBackupStateUploaded => 'Выгружено';
-
-  @override
-  String get icloudBackupStateWaiting => 'Ожидание iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Последняя копия: $lastModified\nСостояние: $remoteState';
-  }
 
   @override
   String get bgRun => 'Работа в фоновом режиме';
@@ -593,7 +553,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Сохранять парольные фразы зашифрованных закрытых ключей, чтобы не запрашивать их после перезапуска. При отключении сохранённые на этом устройстве удаляются.';
+      'Сохраняет парольные фразы зашифрованных закрытых ключей, чтобы не вводить их заново после перезапуска. При отключении сохранённые на этом устройстве парольные фразы удаляются.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1230,15 +1190,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Синхронизируемые данные записаны более новой версией ServerBox. Обновите приложение, чтобы продолжить синхронизацию.';
+      'Синхронизируемые данные созданы в более новой версии ServerBox. Обновите приложение, чтобы продолжить синхронизацию.';
 
   @override
   String get syncPasswordMismatch =>
-      'Синхронизированные данные зашифрованы другим паролем резервной копии. Установите тот же пароль, что на других устройствах.';
+      'Синхронизированные данные зашифрованы другим паролем резервной копии. Введите пароль, используемый на других ваших устройствах.';
 
   @override
   String get syncUnreachable =>
-      'Не удаётся подключиться к месту синхронизации. Проверьте сеть и повторите попытку.';
+      'Не удалось подключиться к сервису синхронизации. Проверьте подключение к сети и повторите попытку.';
 
   @override
   String get termFontSizeTip =>
@@ -1687,7 +1647,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Позволяет Agent работать на машине, где запущен ServerBox. Его команды идут по режиму разрешений';
+      'Позволяет Agent выполнять команды на этом устройстве в соответствии с выбранным режимом разрешений';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -7291,4 +7251,47 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Отменить несохранённые изменения?';
+
+  @override
+  String get syncAuto => 'Автосинхронизация';
+
+  @override
+  String get syncOff => 'Выключена';
+
+  @override
+  String get syncDone => 'Синхронизировано';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Последняя синхронизация $time';
+  }
+
+  @override
+  String get syncNow => 'Синхронизировать сейчас';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Автосинхронизация с $name будет отключена. Уже сохранённые там резервные копии останутся.';
+  }
+
+  @override
+  String get bakPwdSet => 'Задан';
+
+  @override
+  String get bakPwdNotSet => 'Не задан';
+
+  @override
+  String get syncChannel => 'Канал';
+
+  @override
+  String get syncStateFailed => 'Ошибка синхронизации';
+
+  @override
+  String get syncStatePassword => 'Пароль не совпадает';
+
+  @override
+  String get syncStateUpdate => 'Требуется обновление';
+
+  @override
+  String get syncStateRunning => 'Синхронизация';
 }

@@ -83,8 +83,6 @@ pub const LEFT_OUT: &[&str] = &[
     "performance_metrics",
     "access_log",
     "benchmark_run",
-    "backup_blob",
-    "backup_file",
     "desk_session",
     "desk_window",
     "desk_notification",

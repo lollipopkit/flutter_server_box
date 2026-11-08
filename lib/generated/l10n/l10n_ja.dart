@@ -154,9 +154,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authFailTip => '認証に失敗しました。情報を確認してください';
 
   @override
-  String get autoBackupConflict => '自動バックアップは一度に一つしか開始できません';
-
-  @override
   String get autoConnect => '自動接続';
 
   @override
@@ -172,14 +169,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupEncrypted => 'バックアップは暗号化されています';
 
   @override
-  String get backupNotEncrypted => 'バックアップは暗号化されていません';
-
-  @override
   String get backupPassword => 'バックアップパスワード';
 
   @override
   String get backupPasswordRemoveSynced =>
-      '同じ iCloud キーチェーンを使用しているすべてのデバイスからバックアップパスワードが削除されます。パスワードを再設定するまで、それらのデバイスの同期は停止します。';
+      '同じ iCloud キーチェーンを使用しているすべての端末からバックアップパスワードを削除します。パスワードを再設定するまで同期は一時停止されます。';
 
   @override
   String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
@@ -189,7 +183,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'バックアップと同期を暗号化します。同期するすべてのデバイスで同じパスワードを使います。1 台で変更したら、他のデバイスにも新しいパスワードを入力してください。';
+      'バックアップと同期データの暗号化に使用します。すべての端末で同じパスワードを使用するため、変更した場合は他の端末でも新しいパスワードを入力してください。';
 
   @override
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
@@ -282,36 +276,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '復元しましたが、これらのテーマは復元されませんでした。テーマストアまたは元のファイルから再インストールしてください。';
 
   @override
-  String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
-
-  @override
-  String get icloudBackupStatusTitle => 'バックアップの状態';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud バックアップの状態を読み込み中…';
-
-  @override
-  String get icloudBackupStatusError => 'iCloud バックアップのメタデータを読み取れません';
-
-  @override
-  String get icloudBackupStatusEmpty => 'iCloud のバックアップファイルはまだ見つかりません';
-
-  @override
-  String get icloudBackupStateUploading => 'アップロード中';
-
-  @override
   String get icloudBackupStateConflict => '競合を検出';
-
-  @override
-  String get icloudBackupStateUploaded => 'アップロード済み';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud を待機中';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最終バックアップ: $lastModified\n状態: $remoteState';
-  }
 
   @override
   String get bgRun => 'バックグラウンド実行';
@@ -567,7 +532,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '暗号化された秘密鍵のパスフレーズを保存し、再起動後に再入力を求めません。オフにすると、この端末に保存されたパスフレーズを削除します。';
+      '暗号化された秘密鍵のパスフレーズを保存し、再起動時の再入力を省略します。オフにすると、この端末に保存されているパスフレーズが削除されます。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1161,14 +1126,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      '同期データは新しいバージョンの ServerBox で書き込まれています。同期を続けるにはこのアプリを更新してください。';
+      'より新しいバージョンの ServerBox で作成された同期データです。同期を続けるにはアプリをアップデートしてください。';
 
   @override
   String get syncPasswordMismatch =>
-      '同期データは別のバックアップパスワードで暗号化されています。他の端末と同じバックアップパスワードを設定してください。';
+      '同期データが別のバックアップパスワードで暗号化されています。他の端末で使用しているバックアップパスワードを入力してください。';
 
   @override
-  String get syncUnreachable => '同期先に接続できません。ネットワークを確認して再試行してください。';
+  String get syncUnreachable => '同期サーバーに接続できませんでした。ネットワーク接続を確認してもう一度お試しください。';
 
   @override
   String get termFontSizeTip =>
@@ -6944,4 +6909,47 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get discardUnsaved => '保存していない変更を破棄しますか？';
+
+  @override
+  String get syncAuto => '自動同期';
+
+  @override
+  String get syncOff => 'オフ';
+
+  @override
+  String get syncDone => '同期済み';
+
+  @override
+  String syncLastAt(String time) {
+    return '最終同期 $time';
+  }
+
+  @override
+  String get syncNow => '今すぐ同期';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name との自動同期をオフにします。$name に保存済みのバックアップは削除されません。';
+  }
+
+  @override
+  String get bakPwdSet => '設定済み';
+
+  @override
+  String get bakPwdNotSet => '未設定';
+
+  @override
+  String get syncChannel => 'チャネル';
+
+  @override
+  String get syncStateFailed => '同期に失敗しました';
+
+  @override
+  String get syncStatePassword => 'パスワードが一致しません';
+
+  @override
+  String get syncStateUpdate => 'アップデートが必要です';
+
+  @override
+  String get syncStateRunning => '同期中';
 }

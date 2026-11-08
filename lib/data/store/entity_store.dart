@@ -331,11 +331,15 @@ abstract class EntityStore<T extends Object> {
   /// reload. [appliedIds] collects the ids the backup won — the ones written or
   /// deleted here — for a caller that has to apply something of its own to the
   /// same records and must not apply it to the ones this device kept.
+  ///
+  /// Without [byName], no record is matched to this device's by name
+  /// ([reconcile]): the caller decided each one's id already.
   bool merge(
     Map<String, Object?> backupData, {
     required bool force,
     bool notify = true,
     Set<String>? appliedIds,
+    bool byName = true,
   }) {
     final incoming = _timestampsOf(backupData[lastModKey]);
     final current = timestamps;
@@ -421,7 +425,7 @@ abstract class EntityStore<T extends Object> {
           // another device's record of the same name is another record, as
           // the operation log has it (`SyncRecords`); taking it for this
           // one's overwrote it.
-          final resolved = force || idLess ? reconcile(item) : item;
+          final resolved = byName && (force || idLess) ? reconcile(item) : item;
           write(resolved);
           written.add(resolved);
           synced.stamp(idOf(resolved), at: at);

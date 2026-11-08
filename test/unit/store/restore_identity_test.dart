@@ -83,6 +83,41 @@ void main() {
       expect(Stores.server.fetchOneRaw('srv-b')?.ssh?.ip, '10.0.0.2');
     });
 
+    BackupV2 holding(List<Spi> servers) => BackupV2(
+      version: BackupV2.formatVer,
+      date: DateTime.now().millisecondsSinceEpoch,
+      spis: {for (final s in servers) s.id: encoded(s)},
+      snippets: const {},
+      keys: const {},
+      container: const {},
+      history: const {},
+      settings: const {},
+    );
+
+    test('two of the same name, one of them here: both are restored, as themselves', () async {
+      const a = Spi(id: 'srv-a', name: 'web', ssh: SshCredential(ip: '10.0.0.1'));
+      const b = Spi(id: 'srv-b', name: 'web', ssh: SshCredential(ip: '10.0.0.2'));
+      Stores.server.put(b);
+
+      // `a` matched by name onto `b`, which the backup also holds: both
+      // restored to one id, refused as a malformed backup.
+      await holding([a, b]).merge(force: true);
+      Stores.server.dropCache();
+      expect(Stores.server.fetchOneRaw('srv-a')?.ssh?.ip, '10.0.0.1');
+      expect(Stores.server.fetchOneRaw('srv-b')?.ssh?.ip, '10.0.0.2');
+    });
+
+    test("in a sync, another device's server of the same name is another server", () async {
+      const here = Spi(id: 'srv-here', name: 'web', ssh: SshCredential(ip: '10.0.0.1'));
+      const there = Spi(id: 'srv-there', name: 'web', ssh: SshCredential(ip: '10.0.0.2'));
+      Stores.server.put(here);
+
+      await holding([there]).merge();
+      Stores.server.dropCache();
+      expect(Stores.server.fetchOneRaw('srv-here')?.ssh?.ip, '10.0.0.1');
+      expect(Stores.server.fetchOneRaw('srv-there')?.ssh?.ip, '10.0.0.2');
+    });
+
     test('an ambiguous name resolves to nothing rather than to one of them', () {
       Stores.server.put(
         const Spi(id: 'srv-a', name: 'web', ssh: SshCredential(ip: '10.0.0.1')),

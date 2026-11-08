@@ -56,9 +56,9 @@ pub enum Kind {
     /// `process stop 1234`), and never carries a password or a command's
     /// output.
     Machine,
-    /// A blob hosted by `api::backup` written or removed. The subject is the
-    /// account; the detail the verb, the blob's name and its size — never its
-    /// contents.
+    /// A blob of the hosted backup store written or removed, which the agent
+    /// no longer has: past events, still filtered by. TODO: remove once the
+    /// audit log's retention has aged them out.
     Backup,
     /// Agent mode (`agent_mode`): a task started, a command it ran, an answer
     /// given, the configuration changed. The subject is the account; the

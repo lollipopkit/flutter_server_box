@@ -409,12 +409,6 @@ abstract class AppLocalizations {
   /// **'Authentication failed. Check the details'**
   String get authFailTip;
 
-  /// User-facing label or message for auto backup conflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Only one automatic backup can be turned on at the same time.'**
-  String get autoBackupConflict;
-
   /// User-facing label or message for auto connect.
   ///
   /// In en, this message translates to:
@@ -445,12 +439,6 @@ abstract class AppLocalizations {
   /// **'Backup is encrypted'**
   String get backupEncrypted;
 
-  /// User-facing label or message for backup not encrypted.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup is not encrypted'**
-  String get backupNotEncrypted;
-
   /// User-facing label or message for backup password.
   ///
   /// In en, this message translates to:
@@ -460,7 +448,7 @@ abstract class AppLocalizations {
   /// Confirmation before removing the backup password on iOS or macOS, where it is in iCloud Keychain and so removed from the person's other Apple devices too.
   ///
   /// In en, this message translates to:
-  /// **'This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.'**
+  /// **'This will remove the backup password from all devices using the same iCloud Keychain. Sync will pause on those devices until a new password is set.'**
   String get backupPasswordRemoveSynced;
 
   /// User-facing label or message for backup password removed.
@@ -478,7 +466,7 @@ abstract class AppLocalizations {
   /// Help text for the backup password setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.'**
+  /// **'Used to encrypt backups and synced data. All synced devices must use the same password—if you change it on one device, enter the new password on the others.'**
   String get backupPasswordTip;
 
   /// User-facing label or message for backup password wrong.
@@ -637,65 +625,11 @@ abstract class AppLocalizations {
   /// **'Restored, except these themes. Install them again from the theme store or the file they came from.'**
   String get backupThemesNotRestored;
 
-  /// Help text for the backup setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
-  String get backupTip;
-
-  /// Title shown for the iCloud backup status dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup status'**
-  String get icloudBackupStatusTitle;
-
-  /// Status message shown while iCloud backup status loading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading iCloud backup status...'**
-  String get icloudBackupStatusLoading;
-
-  /// Error message shown when iCloud backup status error.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to read iCloud backup metadata'**
-  String get icloudBackupStatusError;
-
-  /// Empty-state message for iCloud backup status empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No iCloud backup file found yet'**
-  String get icloudBackupStatusEmpty;
-
-  /// User-facing label or message for iCloud backup state uploading.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploading'**
-  String get icloudBackupStateUploading;
-
   /// User-facing label or message for iCloud backup state conflict.
   ///
   /// In en, this message translates to:
   /// **'Conflict detected'**
   String get icloudBackupStateConflict;
-
-  /// User-facing label or message for iCloud backup state uploaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploaded'**
-  String get icloudBackupStateUploaded;
-
-  /// User-facing label or message for iCloud backup state waiting.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for iCloud'**
-  String get icloudBackupStateWaiting;
-
-  /// User-facing label or message for iCloud backup status summary.
-  ///
-  /// In en, this message translates to:
-  /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
-  String icloudBackupStatusSummary(String lastModified, String remoteState);
 
   /// User-facing label or message for bg run.
   ///
@@ -1150,7 +1084,7 @@ abstract class AppLocalizations {
   /// Help text for the rememberKeyPassphrase setting.
   ///
   /// In en, this message translates to:
-  /// **'Keep the passphrases of encrypted private keys, so they are not asked for after a restart. Turning this off removes the ones kept on this device.'**
+  /// **'Save passphrases for encrypted private keys so you don\'t need to re-enter them after restarting the app. Turning this off deletes saved passphrases from this device.'**
   String get rememberKeyPassphraseTip;
 
   /// Help text for the SSH key unlock setting or action.
@@ -2211,19 +2145,19 @@ abstract class AppLocalizations {
   /// Shown on the backup page when this build stops syncing at data a newer build wrote.
   ///
   /// In en, this message translates to:
-  /// **'The synced data was written by a newer version of ServerBox. Update this app to keep syncing.'**
+  /// **'Synced data was created by a newer version of ServerBox. Update the app to continue syncing.'**
   String get syncRemoteTooNew;
 
   /// A sync stopped: the remote backup opens with another backup password.
   ///
   /// In en, this message translates to:
-  /// **'The synced data is encrypted with a different backup password. Set the backup password your other devices use.'**
+  /// **'Synced data is encrypted with a different backup password. Enter the backup password used on your other devices.'**
   String get syncPasswordMismatch;
 
   /// A sync stopped: the destination could not be reached.
   ///
   /// In en, this message translates to:
-  /// **'Could not reach the sync destination. Check the network and try again.'**
+  /// **'Could not connect to the sync service. Check your network connection and try again.'**
   String get syncUnreachable;
 
   /// Help text for the term font size setting or action.
@@ -2931,7 +2865,7 @@ abstract class AppLocalizations {
   /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode'**
+  /// **'Allows the Agent to run commands on this device according to the permission mode'**
   String get agentLocalExecTip;
 
   /// Help text for the agent local exec rootfs setting or action.
@@ -12328,6 +12262,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard unsaved changes?'**
   String get discardUnsaved;
+
+  /// No description provided for @syncAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync'**
+  String get syncAuto;
+
+  /// No description provided for @syncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get syncOff;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncDone;
+
+  /// No description provided for @syncLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {time}'**
+  String syncLastAt(String time);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync with {name} will be turned off. Existing backups on {name} will not be deleted.'**
+  String syncSwitchBody(String name);
+
+  /// No description provided for @bakPwdSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get bakPwdSet;
+
+  /// No description provided for @bakPwdNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get bakPwdNotSet;
+
+  /// No description provided for @syncChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get syncChannel;
+
+  /// No description provided for @syncStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStateFailed;
+
+  /// No description provided for @syncStatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password mismatch'**
+  String get syncStatePassword;
+
+  /// No description provided for @syncStateUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get syncStateUpdate;
+
+  /// No description provided for @syncStateRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStateRunning;
 }
 
 class _AppLocalizationsDelegate

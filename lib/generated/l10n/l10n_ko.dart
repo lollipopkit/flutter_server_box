@@ -155,9 +155,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
 
   @override
-  String get autoBackupConflict => '자동 백업은 한 번에 하나만 활성화할 수 있습니다.';
-
-  @override
   String get autoConnect => '자동 연결';
 
   @override
@@ -173,14 +170,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupEncrypted => '백업이 암호화되어 있습니다';
 
   @override
-  String get backupNotEncrypted => '백업이 암호화되어 있지 않습니다';
-
-  @override
   String get backupPassword => '백업 비밀번호';
 
   @override
   String get backupPasswordRemoveSynced =>
-      '같은 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 비밀번호를 다시 설정할 때까지 해당 기기의 동기화가 중지됩니다.';
+      '동일한 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 새 비밀번호를 설정할 때까지 동기화가 일시 중지됩니다.';
 
   @override
   String get backupPasswordRemoved => '백업 비밀번호가 제거되었습니다';
@@ -190,7 +184,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      '백업과 동기화를 암호화합니다. 동기화하는 모든 기기는 같은 비밀번호를 사용합니다. 한 기기에서 변경했다면 다른 기기에도 새 비밀번호를 입력하세요.';
+      '백업 및 동기화 데이터를 암호화합니다. 모든 기기에서 동일한 비밀번호를 사용하므로, 한 기기에서 변경하면 다른 기기에서도 새 비밀번호를 입력해 주세요.';
 
   @override
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
@@ -284,36 +278,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '복원했지만 다음 테마는 복원되지 않았습니다. 테마 스토어나 원본 파일에서 다시 설치하세요.';
 
   @override
-  String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
-
-  @override
-  String get icloudBackupStatusTitle => '백업 상태';
-
-  @override
-  String get icloudBackupStatusLoading => 'iCloud 백업 상태를 불러오는 중...';
-
-  @override
-  String get icloudBackupStatusError => 'iCloud 백업 메타데이터를 읽을 수 없습니다';
-
-  @override
-  String get icloudBackupStatusEmpty => '아직 iCloud 백업 파일이 없습니다';
-
-  @override
-  String get icloudBackupStateUploading => '업로드 중';
-
-  @override
   String get icloudBackupStateConflict => '충돌 감지됨';
-
-  @override
-  String get icloudBackupStateUploaded => '업로드됨';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud 대기 중';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '마지막 백업: $lastModified\n상태: $remoteState';
-  }
 
   @override
   String get bgRun => '백그라운드 실행';
@@ -568,7 +533,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '암호화된 개인 키의 암호를 저장하여 다시 시작한 후 다시 묻지 않습니다. 끄면 이 기기에 저장된 암호가 삭제됩니다.';
+      '암호화된 개인 키의 암호를 저장하여 앱을 다시 시작해도 다시 묻지 않습니다. 이 옵션을 끄면 기기에 저장된 암호가 삭제됩니다.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1164,14 +1129,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      '동기화된 데이터는 더 새로운 버전의 ServerBox에서 작성되었습니다. 계속 동기화하려면 이 앱을 업데이트하세요.';
+      '상위 버전의 ServerBox에서 생성된 동기화 데이터입니다. 계속 동기화하려면 앱을 업데이트하세요.';
 
   @override
   String get syncPasswordMismatch =>
-      '동기화된 데이터가 다른 백업 비밀번호로 암호화되어 있습니다. 다른 기기와 같은 백업 비밀번호를 설정하세요.';
+      '동기화 데이터가 다른 백업 비밀번호로 암호화되어 있습니다. 다른 기기에서 사용 중인 백업 비밀번호를 입력하세요.';
 
   @override
-  String get syncUnreachable => '동기화 위치에 연결할 수 없습니다. 네트워크를 확인한 후 다시 시도하세요.';
+  String get syncUnreachable => '동기화 서버에 연결할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도하세요.';
 
   @override
   String get termFontSizeTip =>
@@ -6945,4 +6910,47 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discardUnsaved => '저장하지 않은 변경 사항을 버릴까요?';
+
+  @override
+  String get syncAuto => '자동 동기화';
+
+  @override
+  String get syncOff => '끄기';
+
+  @override
+  String get syncDone => '동기화됨';
+
+  @override
+  String syncLastAt(String time) {
+    return '마지막 동기화 $time';
+  }
+
+  @override
+  String get syncNow => '지금 동기화';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name 자동 동기화가 해제됩니다. $name에 저장된 기존 백업은 유지됩니다.';
+  }
+
+  @override
+  String get bakPwdSet => '설정됨';
+
+  @override
+  String get bakPwdNotSet => '설정 안 됨';
+
+  @override
+  String get syncChannel => '채널';
+
+  @override
+  String get syncStateFailed => '동기화 실패';
+
+  @override
+  String get syncStatePassword => '비밀번호 불일치';
+
+  @override
+  String get syncStateUpdate => '업데이트 필요';
+
+  @override
+  String get syncStateRunning => '동기화 중';
 }

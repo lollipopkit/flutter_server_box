@@ -56,19 +56,19 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
 - **Unlocking with Face ID, Touch ID or a fingerprint**, and on Android
   **Run in background** (keeps connections alive; also allow notifications and
   exempt the app from battery optimisation): **Settings → App → General**.
-- **Backups**: the Backup page — a file, WebDAV or iCloud. A backup has the servers with their SSH passwords, private keys,
-  snippets, remote desktop profiles with their passwords, settings and the Agent's settings, encrypted or
-  not; sudo passwords, API keys, MCP headers, the WebDAV settings and key passphrases only when
-  encrypted. Chats are not in it. **Synced
-  data** on that page switches each kind of data in or out of sync; fonts,
+- **Backups**: the Backup page — a file, WebDAV or iCloud. A backup includes servers with their SSH passwords, private keys,
+  snippets, remote desktop profiles with their passwords, app settings and Agent settings (encrypted or
+  not); sudo passwords, API keys, MCP headers, WebDAV settings and key passphrases are included only when
+  encrypted. Chats are not included. **Synced
+  data** on that page lets you toggle each category on or off; fonts,
   images, skills and benchmarks sync only through iCloud, WebDAV and LK Cloud.
-  A version from before the current sync format keeps syncing to its old
-  backup file, silently apart from the newer devices. One that cannot read a
-  newer device's format stops reading, says to update, and still sends its own
-  changes. Update every device. Every device that syncs uses the same backup
-  password; when the backup page says the synced data uses a different one,
-  enter the others' password (after a change on one device, enter the new
-  one on the rest); until then that device syncs nothing.
+  Versions from before the current sync format continue syncing to the legacy
+  backup file and do not exchange changes with newer versions. If an older version cannot read a
+  newer device's format, it stops importing remote changes and prompts you to update while still uploading local
+  changes. Keep all synced devices updated. All synced devices share the same backup
+  password—if the backup page reports a password mismatch,
+  enter the password used on your other devices (when changing the password on one device, enter the new
+  password on the others); sync remains paused on that device until the password matches.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.

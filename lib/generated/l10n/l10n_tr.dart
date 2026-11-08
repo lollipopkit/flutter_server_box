@@ -161,10 +161,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFailTip => 'Kimlik doğrulama başarısız. Bilgileri kontrol et';
 
   @override
-  String get autoBackupConflict =>
-      'Aynı anda yalnızca bir otomatik yedekleme açık olabilir.';
-
-  @override
   String get autoConnect => 'Otomatik bağlan';
 
   @override
@@ -180,14 +176,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupEncrypted => 'Yedekleme şifrelenmiş';
 
   @override
-  String get backupNotEncrypted => 'Yedekleme şifreli değil';
-
-  @override
   String get backupPassword => 'Yedekleme parolası';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.';
+      'Aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan yedekleme parolası kaldırılır. Yeni bir parola belirlenene kadar eşitleme duraklatılır.';
 
   @override
   String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
@@ -197,7 +190,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Yedekleri ve eşitlemeyi şifreler. Eşitlenen tüm cihazlar aynı parolayı kullanır: birinde değiştirdikten sonra yenisini diğerlerine girin.';
+      'Yedekleri ve eşitlenen verileri şifreler. Tüm cihazlarda aynı parola kullanılmalıdır; bir cihazda değiştirdiğinizde diğer cihazlarda da yeni parolayı girin.';
 
   @override
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
@@ -294,40 +287,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu temalar dışında geri yüklendi. Temaları tema mağazasından veya geldikleri dosyadan yeniden yükleyin.';
 
   @override
-  String get backupTip =>
-      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Yedekleme durumu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud yedekleme durumu yükleniyor...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud yedekleme meta verileri okunamıyor';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Henüz bir iCloud yedekleme dosyası bulunamadı';
-
-  @override
-  String get icloudBackupStateUploading => 'Yükleniyor';
-
-  @override
   String get icloudBackupStateConflict => 'Çakışma algılandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Yüklendi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud bekleniyor';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son yedekleme: $lastModified\nDurum: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arka planda çalıştır';
@@ -589,7 +549,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifreli özel anahtarların parolalarını saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Kapatmak bu cihazda saklananları siler.';
+      'Yeniden başlatma sonrasında tekrar sorulmaması için şifreli özel anahtarların parolalarını kaydeder. Kapatıldığında bu cihazda kayıtlı parolalar silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1225,15 +1185,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Eşitlenen veriler ServerBox\'ın daha yeni bir sürümüyle yazıldı. Eşitlemeye devam etmek için bu uygulamayı güncelleyin.';
+      'Eşitlenen veriler daha yeni bir ServerBox sürümüyle oluşturulmuş. Eşitlemeye devam etmek için uygulamayı güncelleyin.';
 
   @override
   String get syncPasswordMismatch =>
-      'Eşitlenen veriler farklı bir yedek parolasıyla şifrelenmiş. Diğer cihazlarınızın kullandığı yedek parolasını ayarlayın.';
+      'Eşitlenen veriler farklı bir yedekleme parolasıyla şifrelenmiş. Diğer cihazlarınızda kullandığınız yedekleme parolasını girin.';
 
   @override
   String get syncUnreachable =>
-      'Eşitleme hedefine ulaşılamıyor. Ağı kontrol edip yeniden deneyin.';
+      'Eşitleme hizmetine bağlanılamadı. Ağ bağlantınızı kontrol edip tekrar deneyin.';
 
   @override
   String get termFontSizeTip =>
@@ -7224,4 +7184,47 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Kaydedilmemiş değişiklikler atılsın mı?';
+
+  @override
+  String get syncAuto => 'Otomatik eşitleme';
+
+  @override
+  String get syncOff => 'Kapalı';
+
+  @override
+  String get syncDone => 'Eşitlendi';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son eşitleme $time';
+  }
+
+  @override
+  String get syncNow => 'Şimdi eşitle';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ile otomatik eşitleme kapatılacak. Mevcut yedekler silinmeyecek.';
+  }
+
+  @override
+  String get bakPwdSet => 'Ayarlandı';
+
+  @override
+  String get bakPwdNotSet => 'Ayarlanmadı';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Eşitleme başarısız';
+
+  @override
+  String get syncStatePassword => 'Parola eşleşmiyor';
+
+  @override
+  String get syncStateUpdate => 'Güncelleme gerekli';
+
+  @override
+  String get syncStateRunning => 'Eşitleniyor';
 }

@@ -162,10 +162,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get authFailTip => 'Autentifikasiya uğursuz oldu. Məlumatları yoxla';
 
   @override
-  String get autoBackupConflict =>
-      'Eyni vaxtda yalnız bir avtomatik ehtiyat nüsxə funksiyası aktivləşdirilə bilər.';
-
-  @override
   String get autoConnect => 'Avtomatik əlaqə qur';
 
   @override
@@ -182,14 +178,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get backupEncrypted => 'Ehtiyat nüsxə şifrələnib';
 
   @override
-  String get backupNotEncrypted => 'Ehtiyat nüsxə şifrələnməyib';
-
-  @override
   String get backupPassword => 'Ehtiyat nüsxə parolu';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.';
+      'Eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan ehtiyat nüsxə parolu silinəcək. Yeni parol təyin edilənə qədər sinxronlaşdırma dayandırılacaq.';
 
   @override
   String get backupPasswordRemoved => 'Ehtiyat nüsxə parolu silindi';
@@ -199,7 +192,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Ehtiyat nüsxələri və sinxronizasiyanı şifrələyir. Sinxronlaşan bütün cihazlar eyni paroldan istifadə edir: birində dəyişdikdən sonra yenisini digərlərinə daxil edin.';
+      'Ehtiyat nüsxələri və sinxronlaşdırılan məlumatları şifrələyir. Bütün cihazlarda eyni parol istifadə olunmalıdır; bir cihazda dəyişdirdikdə digər cihazlarda da yeni parolu daxil edin.';
 
   @override
   String get backupPasswordWrong => 'Ehtiyat nüsxə parolu yanlışdır';
@@ -296,40 +289,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bərpa edildi, bu mövzular istisna olmaqla. Onları mövzu mağazasından və ya gəldikləri fayldan yenidən quraşdırın.';
 
   @override
-  String get backupTip =>
-      'İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Ehtiyat nüsxənin statusu';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'iCloud ehtiyat nüsxəsinin statusu yüklənir...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'iCloud ehtiyat nüsxəsinin metaməlumatlarını oxumaq mümkün olmadı';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Hələ iCloud ehtiyat nüsxə faylı tapılmayıb';
-
-  @override
-  String get icloudBackupStateUploading => 'Göndərilir';
-
-  @override
   String get icloudBackupStateConflict => 'Ziddiyyət aşkarlandı';
-
-  @override
-  String get icloudBackupStateUploaded => 'Göndərildi';
-
-  @override
-  String get icloudBackupStateWaiting => 'iCloud gözlənilir';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Son ehtiyat nüsxə: $lastModified\nVəziyyət: $remoteState';
-  }
 
   @override
   String get bgRun => 'Arxa planda işlət';
@@ -593,7 +553,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Şifrələnmiş şəxsi açarların parol ifadələrini saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Söndürmək bu cihazda saxlananları silir.';
+      'Yenidən başlatmadan sonra təkrar soruşulmaması üçün şifrələnmiş məxfi açarların parol ifadələrini yadda saxlayır. Söndürüldükdə bu cihazda saxlanılmış parol ifadələri silinir.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1225,15 +1185,15 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyası tərəfindən yazılıb. Sinxronlaşdırmanı davam etdirmək üçün bu tətbiqi yeniləyin.';
+      'Sinxronlaşdırılan məlumatlar ServerBox-un daha yeni versiyasında yaradılıb. Sinxronlaşdırmanı davam etdirmək üçün tətbiqi yeniləyin.';
 
   @override
   String get syncPasswordMismatch =>
-      'Sinxronlaşdırılan məlumatlar başqa ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızın istifadə etdiyi parolu təyin edin.';
+      'Sinxronlaşdırılan məlumatlar fərqli ehtiyat nüsxə parolu ilə şifrələnib. Digər cihazlarınızda istifadə etdiyiniz parolu daxil edin.';
 
   @override
   String get syncUnreachable =>
-      'Sinxronlaşdırma yerinə qoşulmaq mümkün deyil. Şəbəkəni yoxlayıb yenidən cəhd edin.';
+      'Sinxronizasiya xidmətinə qoşulmaq mümkün olmadı. Şəbəkə bağlantısını yoxlayıb yenidən cəhd edin.';
 
   @override
   String get termFontSizeTip =>
@@ -7230,4 +7190,47 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Yadda saxlanmamış dəyişikliklər atılsın?';
+
+  @override
+  String get syncAuto => 'Avtomatik sinxronlaşdırma';
+
+  @override
+  String get syncOff => 'Söndürülüb';
+
+  @override
+  String get syncDone => 'Sinxronlaşdırılıb';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Son sinxronlaşdırma $time';
+  }
+
+  @override
+  String get syncNow => 'İndi sinxronlaşdır';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '$name ilə avtomatik sinxronlaşdırma söndürüləcək. Mövcud ehtiyat nüsxələr silinməyəcək.';
+  }
+
+  @override
+  String get bakPwdSet => 'Təyin edilib';
+
+  @override
+  String get bakPwdNotSet => 'Təyin edilməyib';
+
+  @override
+  String get syncChannel => 'Kanal';
+
+  @override
+  String get syncStateFailed => 'Sinxronlaşdırma alınmadı';
+
+  @override
+  String get syncStatePassword => 'Parol uyğun gəlmir';
+
+  @override
+  String get syncStateUpdate => 'Yeniləmə tələb olunur';
+
+  @override
+  String get syncStateRunning => 'Sinxronlaşdırılır';
 }

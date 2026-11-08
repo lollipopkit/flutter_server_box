@@ -162,10 +162,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFailTip => 'Authentication failed. Check the details';
 
   @override
-  String get autoBackupConflict =>
-      'Only one automatic backup can be turned on at the same time.';
-
-  @override
   String get autoConnect => 'Auto connect';
 
   @override
@@ -181,14 +177,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupEncrypted => 'Backup is encrypted';
 
   @override
-  String get backupNotEncrypted => 'Backup is not encrypted';
-
-  @override
   String get backupPassword => 'Backup password';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.';
+      'This will remove the backup password from all devices using the same iCloud Keychain. Sync will pause on those devices until a new password is set.';
 
   @override
   String get backupPasswordRemoved => 'Backup password removed';
@@ -198,7 +191,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Encrypts backups and sync. Every device that syncs uses the same password: after changing it on one, enter the new one on the others.';
+      'Used to encrypt backups and synced data. All synced devices must use the same password—if you change it on one device, enter the new password on the others.';
 
   @override
   String get backupPasswordWrong => 'Incorrect backup password';
@@ -295,37 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Restored, except these themes. Install them again from the theme store or the file they came from.';
 
   @override
-  String get backupTip =>
-      'The exported data can be encrypted with password. \nPlease keep it safe.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Backup status';
-
-  @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
-
-  @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
-
-  @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploading';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict detected';
-
-  @override
-  String get icloudBackupStateUploaded => 'Uploaded';
-
-  @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Run in background';
@@ -587,7 +550,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Keep the passphrases of encrypted private keys, so they are not asked for after a restart. Turning this off removes the ones kept on this device.';
+      'Save passphrases for encrypted private keys so you don\'t need to re-enter them after restarting the app. Turning this off deletes saved passphrases from this device.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1216,15 +1179,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'The synced data was written by a newer version of ServerBox. Update this app to keep syncing.';
+      'Synced data was created by a newer version of ServerBox. Update the app to continue syncing.';
 
   @override
   String get syncPasswordMismatch =>
-      'The synced data is encrypted with a different backup password. Set the backup password your other devices use.';
+      'Synced data is encrypted with a different backup password. Enter the backup password used on your other devices.';
 
   @override
   String get syncUnreachable =>
-      'Could not reach the sync destination. Check the network and try again.';
+      'Could not connect to the sync service. Check your network connection and try again.';
 
   @override
   String get termFontSizeTip =>
@@ -1667,7 +1630,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode';
+      'Allows the Agent to run commands on this device according to the permission mode';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -7242,4 +7205,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'Discard unsaved changes?';
+
+  @override
+  String get syncAuto => 'Auto sync';
+
+  @override
+  String get syncOff => 'Off';
+
+  @override
+  String get syncDone => 'Synced';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Last sync $time';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Auto sync with $name will be turned off. Existing backups on $name will not be deleted.';
+  }
+
+  @override
+  String get bakPwdSet => 'Set';
+
+  @override
+  String get bakPwdNotSet => 'Not set';
+
+  @override
+  String get syncChannel => 'Channel';
+
+  @override
+  String get syncStateFailed => 'Sync failed';
+
+  @override
+  String get syncStatePassword => 'Password mismatch';
+
+  @override
+  String get syncStateUpdate => 'Update required';
+
+  @override
+  String get syncStateRunning => 'Syncing';
 }

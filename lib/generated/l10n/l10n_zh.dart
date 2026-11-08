@@ -152,9 +152,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authFailTip => '认证失败，请检查信息是否正确';
 
   @override
-  String get autoBackupConflict => '仅可启用一个自动备份任务';
-
-  @override
   String get autoConnect => '自动连接';
 
   @override
@@ -170,14 +167,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupEncrypted => '备份已加密';
 
   @override
-  String get backupNotEncrypted => '备份未加密';
-
-  @override
   String get backupPassword => '备份密码';
 
   @override
   String get backupPasswordRemoveSynced =>
-      '这会从使用同一 iCloud 钥匙串的所有设备上移除备份密码。重新设置密码之前，这些设备的同步会停止。';
+      '这将移除同一 iCloud 钥匙串下所有设备的备份密码。重新设置密码前，这些设备将暂停同步。';
 
   @override
   String get backupPasswordRemoved => '备份密码已移除';
@@ -187,7 +181,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      '用于加密备份和同步。所有参与同步的设备使用同一个密码：在一台设备上修改后，需在其他设备上输入新密码。';
+      '用于加密备份与同步数据。各设备需使用相同密码，在一台设备上修改后，请在其他设备上输入新密码。';
 
   @override
   String get backupPasswordWrong => '备份密码错误';
@@ -276,36 +270,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupThemesNotRestored => '已恢复，但以下主题除外。请从主题商店或原始文件重新安装。';
 
   @override
-  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '备份状态';
-
-  @override
-  String get icloudBackupStatusLoading => '正在读取 iCloud 备份状态...';
-
-  @override
-  String get icloudBackupStatusError => '无法读取 iCloud 备份元数据';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未发现 iCloud 备份文件';
-
-  @override
-  String get icloudBackupStateUploading => '上传中';
-
-  @override
   String get icloudBackupStateConflict => '检测到冲突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上传';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最后备份：$lastModified\n状态：$remoteState';
-  }
 
   @override
   String get bgRun => '后台运行';
@@ -553,7 +518,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rememberKeyPassphrase => '记住私钥口令';
 
   @override
-  String get rememberKeyPassphraseTip => '保存加密私钥的口令，重启后无需再次输入。关闭后会删除本设备保存的口令。';
+  String get rememberKeyPassphraseTip =>
+      '保存加密私钥的口令，重启应用后无需再次输入。关闭后将删除本机已保存的口令。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1137,16 +1103,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyPassphrases => '私钥口令';
 
   @override
-  String get syncFiles => '字体、图片和 Skills';
+  String get syncFiles => '字体、图片与 Skills';
 
   @override
-  String get syncRemoteTooNew => '同步的数据由更新版本的 ServerBox 写入。更新本应用后才能继续同步。';
+  String get syncRemoteTooNew => '同步数据来自更高版本的 ServerBox，请更新应用后继续同步。';
 
   @override
-  String get syncPasswordMismatch => '同步的数据使用了不同的备份密码加密。请设置为与其他设备相同的备份密码。';
+  String get syncPasswordMismatch => '同步数据使用了其他备份密码加密，请输入与其他设备一致的备份密码。';
 
   @override
-  String get syncUnreachable => '无法连接到同步位置。请检查网络后重试。';
+  String get syncUnreachable => '无法连接同步服务，请检查网络后重试。';
 
   @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
@@ -1533,7 +1499,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令，命令按权限模式处理';
+  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本地命令，并受权限模式控制';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -6833,6 +6799,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get discardUnsaved => '放弃未保存的修改？';
+
+  @override
+  String get syncAuto => '自动同步';
+
+  @override
+  String get syncOff => '关闭';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '将停止与 $name 自动同步，已保存在 $name 的备份不会删除。';
+  }
+
+  @override
+  String get bakPwdSet => '已设置';
+
+  @override
+  String get bakPwdNotSet => '未设置';
+
+  @override
+  String get syncChannel => '渠道';
+
+  @override
+  String get syncStateFailed => '同步失败';
+
+  @override
+  String get syncStatePassword => '密码不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6984,9 +6993,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authFailTip => '認證失敗，請檢查資訊是否正確';
 
   @override
-  String get autoBackupConflict => '僅能啟用一項自動備份任務';
-
-  @override
   String get autoConnect => '自動連線';
 
   @override
@@ -7002,14 +7008,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupEncrypted => '備份已加密';
 
   @override
-  String get backupNotEncrypted => '備份未加密';
-
-  @override
   String get backupPassword => '備份密碼';
 
   @override
   String get backupPasswordRemoveSynced =>
-      '這會從使用同一 iCloud 鑰匙圈的所有裝置上移除備份密碼。重新設定密碼之前，這些裝置的同步會停止。';
+      '這將移除同一 iCloud 鑰匙圈下所有裝置的備份密碼。重新設定密碼前，這些裝置將暫停同步。';
 
   @override
   String get backupPasswordRemoved => '備份密碼已移除';
@@ -7019,7 +7022,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupPasswordTip =>
-      '用於加密備份與同步。所有參與同步的裝置使用同一個密碼：在一台裝置上修改後，需在其他裝置上輸入新密碼。';
+      '用於加密備份與同步資料。各裝置需使用相同密碼，在一台裝置上修改後，請在其他裝置上輸入新密碼。';
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';
@@ -7108,36 +7111,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupThemesNotRestored => '已還原，但以下主題除外。請從主題商店或原始檔案重新安裝。';
 
   @override
-  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '備份狀態';
-
-  @override
-  String get icloudBackupStatusLoading => '正在讀取 iCloud 備份狀態...';
-
-  @override
-  String get icloudBackupStatusError => '無法讀取 iCloud 備份中繼資料';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未找到 iCloud 備份檔案';
-
-  @override
-  String get icloudBackupStateUploading => '上傳中';
-
-  @override
   String get icloudBackupStateConflict => '偵測到衝突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上傳';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最後備份：$lastModified\n狀態：$remoteState';
-  }
 
   @override
   String get bgRun => '背景執行';
@@ -7382,15 +7356,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshKeyRecommended => '推薦';
 
   @override
-  String get rememberKeyPassphrase => '記住私鑰密語';
+  String get rememberKeyPassphrase => '記住私鑰通行密碼';
 
   @override
   String get rememberKeyPassphraseTip =>
-      '儲存加密私密金鑰的通行密碼，重新啟動後無需再次輸入。關閉後會刪除此裝置儲存的通行密碼。';
+      '儲存加密私鑰的通行密碼，重新啟動應用程式後無需再次輸入。關閉後將刪除此裝置已儲存的通行密碼。';
 
   @override
   String sshKeyUnlockTip(String name) {
-    return '請輸入私密金鑰 [$name] 的通行密碼。';
+    return '請輸入私鑰 [$name] 的通行密碼。';
   }
 
   @override
@@ -7967,19 +7941,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncSecrets => 'sudo 密碼與 API 金鑰';
 
   @override
-  String get keyPassphrases => '私密金鑰通行密碼';
+  String get keyPassphrases => '私鑰通行密碼';
 
   @override
   String get syncFiles => '字型、圖片與 Skills';
 
   @override
-  String get syncRemoteTooNew => '同步的資料由較新版本的 ServerBox 寫入。更新此應用程式後才能繼續同步。';
+  String get syncRemoteTooNew => '同步資料來自較新版本的 ServerBox，請更新應用程式以繼續同步。';
 
   @override
-  String get syncPasswordMismatch => '同步的資料使用了不同的備份密碼加密。請設定為與其他裝置相同的備份密碼。';
+  String get syncPasswordMismatch => '同步資料使用了其他備份密碼加密，請輸入與其他裝置一致的備份密碼。';
 
   @override
-  String get syncUnreachable => '無法連線到同步位置。請檢查網路後重試。';
+  String get syncUnreachable => '無法連線至同步服務，請檢查網路後重試。';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
@@ -8365,7 +8339,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentLocalExec => '在本機執行命令';
 
   @override
-  String get agentLocalExecTip => '允許 Agent 在目前裝置上執行本機指令，指令依權限模式處理';
+  String get agentLocalExecTip => '允許 Agent 在目前裝置上執行本機指令，並受權限模式控制';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -13669,4 +13643,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get discardUnsaved => '放棄未儲存的修改？';
+
+  @override
+  String get syncAuto => '自動同步';
+
+  @override
+  String get syncOff => '關閉';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '將停止與 $name 自動同步，已儲存在 $name 的備份不會刪除。';
+  }
+
+  @override
+  String get bakPwdSet => '已設定';
+
+  @override
+  String get bakPwdNotSet => '未設定';
+
+  @override
+  String get syncChannel => '管道';
+
+  @override
+  String get syncStateFailed => '同步失敗';
+
+  @override
+  String get syncStatePassword => '密碼不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }

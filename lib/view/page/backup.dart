@@ -32,6 +32,8 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 
+part 'backup/sync.dart';
+
 /// Which half of the page to show.
 ///
 /// The two halves answer different questions — "keep this somewhere else" and
@@ -58,14 +60,30 @@ class BackupPage extends ConsumerStatefulWidget {
 
 final class _BackupPageState extends ConsumerState<BackupPage>
     with AutomaticKeepAliveClientMixin {
-  final webdavLoading = false.vn;
+  /// A restore from or a backup to the remote (WebDAV, iCloud) running.
+  final remoteLoading = false.vn;
   final lkcLoading = false.vn;
-  late Future<_ICloudBackupStatus?> _icloudStatusFuture;
+
+  /// A sync started here running.
+  final _syncing = false.vn;
+
+  /// The WebDAV settings saved here, which name the server shown.
+  final _webdavEdited = 0.vn;
+  late Future<bool> _icloudConflict;
+
+  /// The backup password, read again when it is set or removed here.
+  late Future<String?> _bakPwd = SecureStoreProps.bakPwd.read();
+
+  /// Built once: a new one each build would subscribe again each time.
+  late final _destChanges = Listenable.merge([_SyncDest.changes, _webdavEdited]);
+
+  /// A channel being switched to.
+  bool _selectingDest = false;
 
   @override
   void initState() {
     super.initState();
-    _icloudStatusFuture = Future.value(null);
+    _icloudConflict = Future.value(false);
     if (isICloudSupported) {
       _refreshIcloudStatus(notify: false);
     }
@@ -73,8 +91,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   @override
   void dispose() {
-    webdavLoading.dispose();
+    remoteLoading.dispose();
     lkcLoading.dispose();
+    _syncing.dispose();
+    _webdavEdited.dispose();
     super.dispose();
   }
 
@@ -93,27 +113,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // Shown in the settings content pane, which brings the Scaffold and the
     // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
     // names the group and the bar repeats it, so a third would be one too many.
+    if (section == BackupSection.sync) return _buildSyncSection;
     return ListView(
       padding: context.padBottom(UIs.roundRectCardPadding),
-      children: switch (section) {
-        BackupSection.sync => _syncTiles,
-        BackupSection.import => _importTiles,
-      },
+      children: _importTiles,
     );
   }
-
-  List<Widget> get _syncTiles => [
-    _buildTip,
-    _buildTooNew,
-    _buildPasswordMismatch,
-    _buildBakPwd,
-    _buildSyncSettings,
-    if (isICloudSupported) _buildIcloud,
-    _buildWebdav,
-    if (Lkc.enabled) _buildLkc,
-    _buildFile,
-    _buildClipboard,
-  ];
 
   List<Widget> get _importTiles => [
     _buildImportSharedServer,
@@ -139,59 +144,43 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   Widget get _buildBakPwd {
     return FutureBuilder<String?>(
-      future: SecureStoreProps.bakPwd.read(),
+      future: _bakPwd,
       builder: (context, snapshot) {
         final hasPwd = snapshot.data?.isNotEmpty == true;
-        return CardX(
-          child: ListTile(
-            leading: const Icon(Icons.lock),
-            title: Text(l10n.backupPassword),
-            subtitle: Text(
-              hasPwd ? l10n.backupEncrypted : l10n.backupNotEncrypted,
-              style: UIs.textGrey,
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  onPressed: () async => _onTapSetBakPwd(context),
-                  child: Text(libL10n.setting),
-                ),
-                if (hasPwd) ...[
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async {
-                      if (_hasEnabledRemoteSync) {
-                        Toast.show(l10n.remoteBackupPasswordRequired);
-                        return;
-                      }
-                      // In iCloud Keychain: gone from every device.
-                      if (await SecureStoreProps.bakPwd.inSyncedStore()) {
-                        if (!context.mounted) return;
-                        final ok = await context.showRoundDialog<bool>(
-                          title: libL10n.delete,
-                          child: Text(l10n.backupPasswordRemoveSynced),
-                          actions: Btnx.cancelRedOk,
-                        );
-                        if (ok != true) return;
-                      }
-                      await SecureStoreProps.bakPwd.write(null);
-                      Toast.show(l10n.backupPasswordRemoved);
-                      setState(() {});
-                    },
-                    child: Text(libL10n.delete),
-                  ),
-                ],
-              ],
-            ),
-            onTap: () async => _onTapSetBakPwd(context),
+        return ListTile(
+          leading: const Icon(Icons.lock),
+          title: Text(l10n.backupPassword),
+          trailing: Text(
+            hasPwd ? l10n.bakPwdSet : l10n.bakPwdNotSet,
+            style: UIs.textGrey,
           ),
+          onTap: () async => _onTapSetBakPwd(context),
         );
       },
     );
   }
 
-  bool get _hasEnabledRemoteSync => _remoteSyncOn();
+  Future<void> _onTapDeleteBakPwd() async {
+    if (_hasEnabledRemoteSync) {
+      Toast.show(l10n.remoteBackupPasswordRequired);
+      return;
+    }
+    // In iCloud Keychain: gone from every device.
+    if (await SecureStoreProps.bakPwd.inSyncedStore()) {
+      if (!mounted) return;
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.delete,
+        child: Text(l10n.backupPasswordRemoveSynced),
+        actions: Btnx.cancelRedOk,
+      );
+      if (ok != true) return;
+    }
+    await SecureStoreProps.bakPwd.write(null);
+    Toast.show(l10n.backupPasswordRemoved);
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
+  }
+
+  bool get _hasEnabledRemoteSync => _SyncDest.current != _SyncDest.off;
 
   /// Says why the sync just run stopped, when one did ([SyncIface.lastFailure]);
   /// false then, so the switch stays off.
@@ -206,17 +195,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       );
     }
     return false;
-  }
-
-  /// Whether an automatic sync destination is on, [but] aside. The one rule
-  /// every switch checks, so a new destination cannot be missed by one of them.
-  bool _remoteSyncOn({PrefPropDefault<bool>? but}) {
-    final props = <PrefPropDefault<bool>>[
-      if (isICloudSupported) PrefProps.icloudSync,
-      PrefProps.webdavSync,
-      if (Lkc.enabled) LkcSyncPrefs.enabled,
-    ];
-    return props.any((prop) => prop != but && prop.get());
   }
 
   Future<bool> _onTapSetBakPwd(
@@ -250,7 +228,17 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           ],
         ),
       ),
-      actions: Btnx.oks,
+      actions: [
+        if (currentPwd?.isNotEmpty ?? false)
+          TextButton(
+            onPressed: () {
+              context.popDialog();
+              unawaited(_onTapDeleteBakPwd());
+            },
+            child: Text(libL10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ...Btnx.oks,
+      ],
     );
     if (result != true) return false;
 
@@ -277,268 +265,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       );
     }
     Toast.show(l10n.backupPasswordSet);
-    setState(() {});
+    if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
     return true;
-  }
-
-  Widget get _buildTip {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.warning),
-        title: Text(libL10n.attention),
-        subtitle: Text(l10n.backupTip, style: UIs.textGrey),
-      ),
-    );
-  }
-
-  Widget get _buildTooNew {
-    return ListenableBuilder(
-      listenable: Listenable.merge([BakSyncer.remoteTooNew, LogSync.tooNew, SegmentSync.tooNew]),
-      builder: (context, _) {
-        if (BakSyncer.remoteTooNew.value == null && !LogSync.tooNew.value && !SegmentSync.tooNew.value) {
-          return UIs.placeholder;
-        }
-        return CardX(
-          child: ListTile(
-            leading: const Icon(Icons.system_update),
-            title: Text(l10n.syncRemoteTooNew),
-          ),
-        );
-      },
-    );
-  }
-
-  /// The backup password here does not open the remote's sync key: nothing
-  /// syncs until the person enters the one the other devices use.
-  Widget get _buildPasswordMismatch {
-    return ValueListenableBuilder(
-      valueListenable: SyncKey.passwordMismatch,
-      builder: (context, mismatch, _) {
-        if (mismatch.isEmpty) return UIs.placeholder;
-        return CardX(
-          child: ListTile(
-            leading: const Icon(Icons.key_off),
-            title: Text(l10n.syncPasswordMismatch),
-            trailing: TextButton(
-              onPressed: () => _onTapSetBakPwd(context),
-              child: Text(libL10n.setting),
-            ),
-            onTap: () => _onTapSetBakPwd(context),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget get _buildFile {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.file_open),
-        title: Text(libL10n.file),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.backup),
-            trailing: const Icon(Icons.save),
-            onTap: () => BackupService.backup(context, FileBackupSource()),
-          ),
-          ListTile(
-            trailing: const Icon(Icons.restore),
-            title: Text(libL10n.restore),
-            onTap: () => BackupService.restore(context, FileBackupSource()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget get _buildIcloud {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.cloud),
-        title: const Text('iCloud'),
-        initiallyExpanded: false,
-        children: [
-          _buildIcloudStatus,
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: PrefProps.icloudSync,
-              validator: (p0) async {
-                if (p0 && _remoteSyncOn(but: PrefProps.icloudSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (p0) {
-                  final ok = await _ensureBakPwd(context);
-                  if (!ok) return false;
-                }
-                if (p0) {
-                  await bakSync.sync(rs: icloud);
-                  if (mounted) _refreshIcloudStatus();
-                  return _syncWent();
-                }
-                return true;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget get _buildWebdav {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.storage),
-        title: const Text('WebDAV'),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.setting),
-            trailing: const Icon(Icons.settings),
-            onTap: () async => _onTapWebdavSetting(context),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: PrefProps.webdavSync,
-              validator: (p0) async {
-                if (p0 && _remoteSyncOn(but: PrefProps.webdavSync)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (p0) {
-                  final ok = await _ensureBakPwd(context);
-                  if (!ok) return false;
-                }
-                if (p0) {
-                  if (SyncRemotes.webdavUrl == null ||
-                      SyncRemotes.webdavUser == null ||
-                      SyncRemotes.webdavPwd == null) {
-                    Toast.show(l10n.webdavSettingEmpty);
-                    return false;
-                  }
-
-                  webdavLoading.value = true;
-                  await bakSync.sync(rs: SyncRemotes.webdav);
-                  webdavLoading.value = false;
-                  return _syncWent();
-                }
-                return true;
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: webdavLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () async => _onTapWebdavDl(context),
-                    child: Text(libL10n.restore),
-                  ),
-                  UIs.width7,
-                  TextButton(
-                    onPressed: () async => _onTapWebdavUp(context),
-                    child: Text(libL10n.backup),
-                  ),
-                ],
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// The signed-in account's LK Cloud: synced in real time, the last few
-  /// versions kept, theme packages beside the backup.
-  Widget get _buildLkc {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.cloud),
-        title: const Text('LK Cloud'),
-        initiallyExpanded: false,
-        children: [
-          ListTile(
-            title: Text(libL10n.lkcAccount),
-            subtitle: Lkc.client.user.listenVal(
-              (user) => Text(
-                user?.name ?? libL10n.lkcNotSignedIn,
-                style: UIs.textGrey,
-              ),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
-          ),
-          ListTile(
-            title: Text(libL10n.auto),
-            trailing: StoreSwitch(
-              prop: LkcSyncPrefs.enabled,
-              validator: (p0) async {
-                if (!p0) return true;
-                if (_remoteSyncOn(but: LkcSyncPrefs.enabled)) {
-                  Toast.show(l10n.autoBackupConflict);
-                  return false;
-                }
-                if (!Lkc.client.signedIn) {
-                  Toast.show(libL10n.lkcNotSignedIn);
-                  return false;
-                }
-                final ok = await _ensureBakPwd(context);
-                if (!ok) return false;
-
-                lkcLoading.value = true;
-                try {
-                  final storage = LkcSyncPrefs.storage;
-                  // A checkpoint left from an earlier time on would skip the
-                  // write this needs to see.
-                  await BakSyncer.forgetCheckpoint();
-                  final before = storage.writtenTag(Miscs.bakFileName);
-                  await bakSync.sync(rs: storage, throttleMilli: 0);
-                  // A cycle that could not read the remote returns without
-                  // writing, and says so only in the log.
-                  final after = storage.writtenTag(Miscs.bakFileName);
-                  if (after == null || after == before) {
-                    if (_syncWent()) Toast.show(libL10n.fail);
-                    return false;
-                  }
-                  return true;
-                } catch (e, s) {
-                  if (mounted) _showLkcErr(e, s, libL10n.sync);
-                  return false;
-                } finally {
-                  lkcLoading.value = false;
-                }
-              },
-            ),
-          ),
-          ListTile(
-            title: Text(libL10n.manual),
-            trailing: lkcLoading.listenVal((loading) {
-              if (loading) return SizedLoading.small;
-              return TextButton(
-                onPressed: () async => _onTapLkcRestore(context),
-                child: Text(libL10n.restore),
-              );
-            }),
-          ),
-          LkcSyncPrefs.enabled.listenable().listenVal((on) {
-            if (!on) return UIs.placeholder;
-            return ListTile(
-              title: Text(l10n.syncKeyRotate),
-              trailing: const Icon(Icons.key),
-              onTap: () async => _onTapRotateSyncKey(context),
-            );
-          }),
-        ],
-      ),
-    );
   }
 
   /// A new key and a new backup password together: a device that still knows
@@ -566,7 +294,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
     } finally {
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
   }
 
@@ -579,139 +307,19 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  Widget get _buildClipboard {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.content_paste),
-        title: Text(libL10n.clipboard),
-        children: [
-          ListTile(
-            title: Text(libL10n.backup),
-            trailing: const Icon(Icons.save),
-            onTap: () => BackupService.backup(context, ClipboardBackupSource()),
-          ),
-          ListTile(
-            trailing: const Icon(Icons.restore),
-            title: Text(libL10n.restore),
-            onTap: () =>
-                BackupService.restore(context, ClipboardBackupSource()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// One switch per category for every destination: what the sync
-  /// carries, not where.
-  Widget get _buildSyncSettings {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.sync),
-        title: Text(l10n.syncedData),
-        children: [
-          for (final c in SyncCategory.values)
-            if (c == SyncCategory.passphrases)
-              Stores.setting.rememberKeyPassphrase.listenable().listenVal(
-                (remember) => remember ? _syncCategoryTile(c) : UIs.placeholder,
-              )
-            else
-              _syncCategoryTile(c),
-        ],
-      ),
-    );
-  }
-
-  Widget _syncCategoryTile(SyncCategory c) {
-    final (icon, label) = switch (c) {
-      SyncCategory.settings => (Icons.settings, libL10n.setting),
-      SyncCategory.ai => (Icons.auto_awesome, libL10n.ai),
-      SyncCategory.secrets => (Icons.password, l10n.syncSecrets),
-      SyncCategory.passphrases => (Icons.key, l10n.keyPassphrases),
-      SyncCategory.files => (Icons.folder, l10n.syncFiles),
-      SyncCategory.benchmarks => (Icons.speed, l10n.benchmark),
-    };
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
-      trailing: StoreSwitch(prop: c.pref),
-    );
-  }
-
   void _refreshIcloudStatus({bool notify = true}) {
-    if (!isICloudSupported) return;
+    // Also after a sync that outlived the page.
+    if (!isICloudSupported || !mounted) return;
 
-    final future = _loadIcloudStatus();
+    final future = _loadIcloudConflict();
     if (!notify) {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
       return;
     }
 
     setState(() {
-      _icloudStatusFuture = future;
+      _icloudConflict = future;
     });
-  }
-
-  Widget get _buildIcloudStatus {
-    return FutureBuilder<_ICloudBackupStatus?>(
-      future: _icloudStatusFuture,
-      builder: (context, snapshot) {
-        String subtitle;
-        IconData icon;
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          subtitle = l10n.icloudBackupStatusLoading;
-          icon = Icons.sync;
-        } else if (snapshot.hasError) {
-          subtitle = l10n.icloudBackupStatusError;
-          icon = Icons.error_outline;
-        } else {
-          final status = snapshot.data;
-          if (status == null) {
-            subtitle = l10n.icloudBackupStatusEmpty;
-            icon = Icons.cloud_off;
-          } else {
-            final lastModified = status.lastModified.toLocal().ymdhms();
-            final remoteState = switch ((
-              status.isUploading,
-              status.isUploaded,
-              status.hasConflict,
-            )) {
-              (_, _, true) => l10n.icloudBackupStateConflict,
-              (true, _, _) => l10n.icloudBackupStateUploading,
-              (_, true, _) => l10n.icloudBackupStateUploaded,
-              _ => l10n.icloudBackupStateWaiting,
-            };
-            subtitle = l10n.icloudBackupStatusSummary(
-              lastModified,
-              remoteState,
-            );
-            icon = switch ((
-              status.hasConflict,
-              status.isUploading,
-              status.isUploaded,
-            )) {
-              (true, _, _) => Icons.warning,
-              (_, true, _) => Icons.cloud_upload,
-              (_, _, true) => Icons.cloud_done,
-              _ => Icons.cloud_queue,
-            };
-          }
-        }
-
-        return ListTile(
-          leading: Icon(icon),
-          title: Text(l10n.icloudBackupStatusTitle),
-          subtitle: Text(subtitle, style: UIs.textGrey),
-          trailing: IconButton(
-            onPressed: () {
-              _refreshIcloudStatus();
-            },
-            icon: const Icon(Icons.refresh),
-            tooltip: libL10n.refresh,
-          ),
-        );
-      },
-    );
   }
 
   /// The other half of the share button on a server's page.
@@ -848,32 +456,15 @@ extension on _BackupPageState {
     return false;
   }
 
-  Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
-    if (!isICloudSupported) return null;
-
+  /// Whether iCloud holds versions of the backup it could not reconcile.
+  Future<bool> _loadIcloudConflict() async {
+    if (!isICloudSupported) return false;
     final files = await icloud.list();
-    final matches = files.where(
-      (file) =>
-          file.relativePath == Paths.bakName && file.contentChangeDate != null,
-    );
-    if (matches.isEmpty) return null;
-
-    final file = matches.reduce(
-      (latest, current) =>
-          current.contentChangeDate!.isAfter(latest.contentChangeDate!)
-          ? current
-          : latest,
-    );
-    return _ICloudBackupStatus(
-      lastModified: file.contentChangeDate!,
-      isUploading: file.isUploading,
-      isUploaded: file.isUploaded,
-      hasConflict: file.hasUnresolvedConflicts,
-    );
+    return files.any((file) => file.relativePath == Paths.bakName && file.hasUnresolvedConflicts);
   }
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
-    webdavLoading.value = true;
+    remoteLoading.value = true;
     try {
       final files = await SyncRemotes.webdav.list();
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
@@ -892,12 +483,12 @@ extension on _BackupPageState {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
-      webdavLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
-    webdavLoading.value = true;
+    remoteLoading.value = true;
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.exportBakFileName}';
     try {
@@ -910,7 +501,7 @@ extension on _BackupPageState {
       context.showErrDialog(e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
-      webdavLoading.value = false;
+      if (mounted) remoteLoading.value = false;
     }
   }
 
@@ -964,7 +555,7 @@ extension on _BackupPageState {
       Loggers.app.warning('Restore LK Cloud backup failed', e, s);
     } finally {
       await dir?.delete(recursive: true);
-      lkcLoading.value = false;
+      if (mounted) lkcLoading.value = false;
     }
   }
 
@@ -1018,6 +609,8 @@ extension on _BackupPageState {
         // backend's type is the same whichever one it points at. Pointing it
         // somewhere new is exactly when the skip would be wrong.
         await BakSyncer.forgetCheckpoint();
+        // The server it names is shown.
+        _webdavEdited.value++;
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
@@ -1123,18 +716,4 @@ extension on _BackupPageState {
 
     return false;
   }
-}
-
-final class _ICloudBackupStatus {
-  const _ICloudBackupStatus({
-    required this.lastModified,
-    required this.isUploading,
-    required this.isUploaded,
-    required this.hasConflict,
-  });
-
-  final DateTime lastModified;
-  final bool isUploading;
-  final bool isUploaded;
-  final bool hasConflict;
 }

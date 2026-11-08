@@ -163,10 +163,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get authFailTip => 'احراز هویت ناموفق بود. مشخصات را بررسی کنید';
 
   @override
-  String get autoBackupConflict =>
-      'هم‌زمان فقط یک پشتیبان‌گیری خودکار می‌تواند فعال باشد.';
-
-  @override
   String get autoConnect => 'اتصال خودکار';
 
   @override
@@ -182,14 +178,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get backupEncrypted => 'نسخه پشتیبان رمزگذاری شده است';
 
   @override
-  String get backupNotEncrypted => 'نسخه پشتیبان رمزگذاری نشده است';
-
-  @override
   String get backupPassword => 'گذرواژه پشتیبان‌گیری';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'این کار گذرواژه پشتیبان‌گیری را از همه دستگاه‌هایی که از همان جاکلیدی iCloud استفاده می‌کنند حذف می‌کند. همگام‌سازی آن‌ها تا تنظیم دوباره گذرواژه متوقف می‌شود.';
+      'گذرواژهٔ پشتیبان از تمام دستگاه‌هایی که از همان iCloud Keychain استفاده می‌کنند حذف خواهد شد. همگام‌سازی در آن دستگاه‌ها تا زمان تنظیم گذرواژهٔ جدید متوقف می‌ماند.';
 
   @override
   String get backupPasswordRemoved => 'گذرواژه پشتیبان‌گیری حذف شد';
@@ -199,7 +192,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'پشتیبان‌ها و همگام‌سازی را رمزگذاری می‌کند. همهٔ دستگاه‌های همگام‌شده از یک گذرواژه استفاده می‌کنند: پس از تغییر آن در یک دستگاه، گذرواژهٔ جدید را در بقیه وارد کنید.';
+      'برای رمزگذاری فایل‌های پشتیبان و داده‌های همگام‌سازی استفاده می‌شود. همهٔ دستگاه‌ها باید از یک گذرواژه استفاده کنند؛ در صورت تغییر آن روی یک دستگاه، گذرواژهٔ جدید را در سایر دستگاه‌ها نیز وارد کنید.';
 
   @override
   String get backupPasswordWrong => 'گذرواژه پشتیبان‌گیری نادرست است';
@@ -297,40 +290,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'بازیابی شد، به‌جز این پوسته‌ها. آن‌ها را مجدداً از فروشگاه پوسته یا فایل مبدأ نصب کنید.';
 
   @override
-  String get backupTip =>
-      'داده‌های خروجی گرفته‌شده می‌توانند با گذرواژه رمزگذاری شوند.\nلطفاً از آن به‌خوبی محافظت کنید.';
-
-  @override
-  String get icloudBackupStatusTitle => 'وضعیت پشتیبان‌گیری';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'در حال بارگیری وضعیت پشتیبان‌گیری iCloud...';
-
-  @override
-  String get icloudBackupStatusError =>
-      'امکان خواندن متاداده پشتیبان‌گیری iCloud وجود ندارد';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'هنوز هیچ فایل پشتیبان‌گیری iCloud یافت نشد';
-
-  @override
-  String get icloudBackupStateUploading => 'در حال بارگذاری';
-
-  @override
   String get icloudBackupStateConflict => 'تداخل شناسایی شد';
-
-  @override
-  String get icloudBackupStateUploaded => 'بارگذاری شد';
-
-  @override
-  String get icloudBackupStateWaiting => 'در انتظار iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'آخرین پشتیبان‌گیری: $lastModified\nوضعیت: $remoteState';
-  }
 
   @override
   String get bgRun => 'اجرا در پس‌زمینه';
@@ -592,7 +552,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را نگه می‌دارد تا پس از راه‌اندازی مجدد دوباره پرسیده نشوند. خاموش کردن، موارد ذخیره‌شده در این دستگاه را حذف می‌کند.';
+      'عبارت‌های عبور کلیدهای خصوصی رمزگذاری‌شده را ذخیره می‌کند تا پس از راه‌اندازی مجدد نیازی به وارد کردن دوبارهٔ آن‌ها نباشد. با غیرفعال کردن این گزینه، عبارت‌های عبور ذخیره‌شده در این دستگاه حذف می‌شوند.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1221,19 +1181,19 @@ class AppLocalizationsFa extends AppLocalizations {
   String get keyPassphrases => 'عبارت‌های عبور کلید';
 
   @override
-  String get syncFiles => 'فونت‌ها، تصاویر و مهارت‌ها';
+  String get syncFiles => 'فونت‌ها، تصاویر و Skills';
 
   @override
   String get syncRemoteTooNew =>
-      'داده‌های همگام‌شده با نسخهٔ جدیدتری از ServerBox نوشته شده‌اند. برای ادامهٔ همگام‌سازی این برنامه را به‌روز کنید.';
+      'داده‌های همگام‌سازی توسط نسخهٔ جدیدتری از ServerBox ایجاد شده‌اند. برای ادامهٔ همگام‌سازی، برنامه را به‌روزرسانی کنید.';
 
   @override
   String get syncPasswordMismatch =>
-      'داده‌های همگام‌شده با گذرواژهٔ پشتیبان دیگری رمزگذاری شده‌اند. همان گذرواژهٔ دستگاه‌های دیگرتان را تنظیم کنید.';
+      'داده‌های همگام‌سازی با گذرواژهٔ پشتیبان دیگری رمزگذاری شده‌اند. گذرواژهٔ مورد استفاده در سایر دستگاه‌های خود را وارد کنید.';
 
   @override
   String get syncUnreachable =>
-      'دسترسی به مقصد همگام‌سازی ممکن نیست. شبکه را بررسی کرده و دوباره تلاش کنید.';
+      'برقراری ارتباط با سرویس همگام‌سازی ممکن نشد. اتصال شبکه را بررسی کرده و دوباره تلاش کنید.';
 
   @override
   String get termFontSizeTip =>
@@ -7288,4 +7248,47 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get discardUnsaved => 'تغییرات ذخیره‌نشده کنار گذاشته شود؟';
+
+  @override
+  String get syncAuto => 'همگام‌سازی خودکار';
+
+  @override
+  String get syncOff => 'خاموش';
+
+  @override
+  String get syncDone => 'همگام شد';
+
+  @override
+  String syncLastAt(String time) {
+    return 'آخرین همگام‌سازی $time';
+  }
+
+  @override
+  String get syncNow => 'همگام‌سازی اکنون';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'همگام‌سازی خودکار با $name غیرفعال می‌شود. نسخه‌های پشتیبان موجود حذف نخواهند شد.';
+  }
+
+  @override
+  String get bakPwdSet => 'تنظیم شده';
+
+  @override
+  String get bakPwdNotSet => 'تنظیم نشده';
+
+  @override
+  String get syncChannel => 'کانال';
+
+  @override
+  String get syncStateFailed => 'همگام‌سازی ناموفق بود';
+
+  @override
+  String get syncStatePassword => 'رمز عبور مطابقت ندارد';
+
+  @override
+  String get syncStateUpdate => 'به‌روزرسانی لازم است';
+
+  @override
+  String get syncStateRunning => 'در حال همگام‌سازی';
 }

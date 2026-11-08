@@ -50,7 +50,7 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
-              return const BackupPage();
+              return const BackupPage(section: BackupSection.sync);
             },
           ),
         ),
@@ -64,6 +64,9 @@ void main() {
     final said = find.text(AppLocalizationsEn().syncPasswordMismatch);
     expect(said, findsNothing);
 
+    // Said where the sync's status is: with a destination on.
+    await PrefProps.webdavSync.set(true);
+    addTearDown(() => PrefProps.webdavSync.set(false));
     SyncKey.passwordMismatch.value = {'webdav:x'};
     await tester.pump();
     expect(said, findsOneWidget);

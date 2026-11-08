@@ -165,10 +165,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de l’authentification. Vérifie les informations';
 
   @override
-  String get autoBackupConflict =>
-      'Un seul sauvegarde automatique peut être activé en même temps.';
-
-  @override
   String get autoConnect => 'Connexion automatique';
 
   @override
@@ -185,14 +181,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupEncrypted => 'La sauvegarde est chiffrée';
 
   @override
-  String get backupNotEncrypted => 'La sauvegarde n\'est pas chiffrée';
-
-  @override
   String get backupPassword => 'Mot de passe de sauvegarde';
 
   @override
   String get backupPasswordRemoveSynced =>
-      'Cela supprime le mot de passe de sauvegarde de tous les appareils utilisant le même trousseau iCloud. Leur synchronisation s\'arrête jusqu\'à ce qu\'un mot de passe soit de nouveau défini.';
+      'Le mot de passe de sauvegarde sera supprimé de tous les appareils utilisant le même trousseau iCloud. La synchronisation sera suspendue jusqu\'à ce qu\'un nouveau mot de passe soit défini.';
 
   @override
   String get backupPasswordRemoved => 'Mot de passe de sauvegarde supprimé';
@@ -202,7 +195,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Chiffre les sauvegardes et la synchronisation. Tous les appareils synchronisés utilisent le même mot de passe : après l\'avoir changé sur l\'un, saisissez le nouveau sur les autres.';
+      'Chiffre les sauvegardes et les données synchronisées. Tous les appareils doivent utiliser le même mot de passe ; si vous le modifiez sur l\'un d\'eux, saisissez le nouveau sur les autres.';
 
   @override
   String get backupPasswordWrong => 'Mot de passe de sauvegarde incorrect';
@@ -299,40 +292,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Restauration effectuée, sauf pour ces thèmes. Réinstallez-les depuis la boutique de thèmes ou depuis le fichier d’origine.';
 
   @override
-  String get backupTip =>
-      'Les données exportées peuvent être chiffrées avec un mot de passe. \nVeuillez les garder en sécurité.';
-
-  @override
-  String get icloudBackupStatusTitle => 'État de la sauvegarde';
-
-  @override
-  String get icloudBackupStatusLoading =>
-      'Chargement de l\'état de la sauvegarde iCloud…';
-
-  @override
-  String get icloudBackupStatusError =>
-      'Impossible de lire les métadonnées de la sauvegarde iCloud';
-
-  @override
-  String get icloudBackupStatusEmpty =>
-      'Aucun fichier de sauvegarde iCloud trouvé pour l\'instant';
-
-  @override
-  String get icloudBackupStateUploading => 'Envoi en cours';
-
-  @override
   String get icloudBackupStateConflict => 'Conflit détecté';
-
-  @override
-  String get icloudBackupStateUploaded => 'Envoyée';
-
-  @override
-  String get icloudBackupStateWaiting => 'En attente d\'iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Dernière sauvegarde : $lastModified\nÉtat : $remoteState';
-  }
 
   @override
   String get bgRun => 'Exécution en arrière-plan';
@@ -597,7 +557,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Conserve les phrases secrètes des clés privées chiffrées, pour ne pas les redemander après un redémarrage. Désactiver supprime celles conservées sur cet appareil.';
+      'Enregistre les phrases secrètes des clés privées chiffrées afin de ne pas les redemander après un redémarrage. La désactivation supprime les phrases enregistrées sur cet appareil.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -1237,15 +1197,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncRemoteTooNew =>
-      'Les données synchronisées ont été écrites par une version plus récente de ServerBox. Mettez à jour cette app pour continuer à synchroniser.';
+      'Les données synchronisées proviennent d\'une version plus récente de ServerBox. Mettez à jour l\'application pour continuer la synchronisation.';
 
   @override
   String get syncPasswordMismatch =>
-      'Les données synchronisées sont chiffrées avec un autre mot de passe de sauvegarde. Définissez celui de vos autres appareils.';
+      'Les données synchronisées sont chiffrées avec un autre mot de passe de sauvegarde. Saisissez le mot de passe utilisé sur vos autres appareils.';
 
   @override
   String get syncUnreachable =>
-      'Impossible d\'atteindre la destination de synchronisation. Vérifiez le réseau et réessayez.';
+      'Impossible de se connecter au service de synchronisation. Vérifiez votre connexion réseau et réessayez.';
 
   @override
   String get termFontSizeTip =>
@@ -7355,4 +7315,47 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get discardUnsaved =>
       'Abandonner les modifications non enregistrées ?';
+
+  @override
+  String get syncAuto => 'Synchronisation automatique';
+
+  @override
+  String get syncOff => 'Désactivée';
+
+  @override
+  String get syncDone => 'Synchronisé';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Dernière synchronisation $time';
+  }
+
+  @override
+  String get syncNow => 'Synchroniser maintenant';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'La synchronisation automatique avec $name sera désactivée. Les sauvegardes existantes seront conservées.';
+  }
+
+  @override
+  String get bakPwdSet => 'Défini';
+
+  @override
+  String get bakPwdNotSet => 'Non défini';
+
+  @override
+  String get syncChannel => 'Canal';
+
+  @override
+  String get syncStateFailed => 'Échec de la synchronisation';
+
+  @override
+  String get syncStatePassword => 'Mot de passe différent';
+
+  @override
+  String get syncStateUpdate => 'Mise à jour requise';
+
+  @override
+  String get syncStateRunning => 'Synchronisation…';
 }
