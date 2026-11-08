@@ -946,6 +946,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           onNewWindow: _createTmuxWindow,
           onCloseWindow: (window) => unawaited(_closeTmuxWindow(window.id)),
           onClosePane: (pane) => unawaited(_closeTmuxPane(pane.id)),
+          onToggleZoom: _toggleTmuxZoom,
         ),
         Expanded(child: terminalContent),
         // Under the terminal and above the keys, which are the `Scaffold`'s

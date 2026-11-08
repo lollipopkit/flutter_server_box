@@ -181,11 +181,36 @@ final class TmuxControlClient {
     // `select-pane` never changes the current window, and the snapshot may lag
     // behind one another client changed, so the pane's window is selected
     // even when the snapshot says it is current.
-    final targetWindow = _snapshot?.paneWindows[paneId];
-    if (targetWindow != null) {
-      await runRequired("select-window -t '$targetWindow'");
+    final windowId = _snapshot?.paneWindows[paneId];
+    if (windowId != null) {
+      await runRequired("select-window -t '$windowId'");
     }
-    await runRequired("select-pane -t '$paneId'");
+    // `select-pane` unzooms the window; `-Z` (tmux 3.1) keeps it zoomed, and
+    // before that it is zoomed again.
+    final zoomed =
+        _snapshot?.windows
+            .where((w) => w.id == (windowId ?? _snapshot?.activeWindowId))
+            .firstOrNull
+            ?.zoomed ??
+        false;
+    final keepZoom = zoomed && _tmuxVersion >= 301;
+    await runRequired("select-pane${keepZoom ? ' -Z' : ''} -t '$paneId'");
+    if (zoomed && !keepZoom) {
+      // Selecting the pane already active leaves the window zoomed.
+      final now = await runRequired(
+        "display-message -p -t '$paneId' '#{window_zoomed_flag}'",
+      );
+      if (now.output.trim() != '1') {
+        await runRequired("resize-pane -Z -t '$paneId'");
+      }
+    }
+    await refreshState(captureActivePane: true);
+  }
+
+  Future<void> toggleZoom({TmuxPaneId? paneId}) async {
+    final target = paneId ?? _snapshot?.activePaneId;
+    if (target == null) return;
+    await runRequired("resize-pane -Z -t '$target'");
     await refreshState(captureActivePane: true);
   }
 
@@ -416,7 +441,7 @@ final class TmuxControlClient {
       ),
       runRequired(
         "list-windows -F '#{window_id}\t#{window_index}"
-        "\t#{q:window_name}\t#{window_active}'",
+        "\t#{q:window_name}\t#{window_active}\t#{window_zoomed_flag}'",
       ),
       // Panes only of the active window: they exist to make splits
       // addressable in the UI, and inactive windows stay summaries until
@@ -513,6 +538,7 @@ final class TmuxControlClient {
       index: activeWindow.index,
       name: activeWindow.name,
       active: true,
+      zoomed: activeWindow.zoomed,
       panes: panes,
     );
     final windowsWithPanes = [
@@ -659,11 +685,14 @@ final class TmuxControlClient {
     final index = int.tryParse(unescapeTmuxField(fields[1]));
     final active = int.tryParse(unescapeTmuxField(fields[3]));
     if (id == null || index == null || active == null) return null;
+    final zoomed = fields.length > 4 &&
+        (int.tryParse(unescapeTmuxField(fields[4])) ?? 0) > 0;
     return TmuxControlWindow(
       id: id,
       index: index,
       name: unescapeTmuxField(fields[2]),
       active: active > 0,
+      zoomed: zoomed,
     );
   }
 

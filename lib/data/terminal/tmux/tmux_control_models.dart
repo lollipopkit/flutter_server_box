@@ -25,6 +25,7 @@ final class TmuxControlWindow {
   final int index;
   final String name;
   final bool active;
+  final bool zoomed;
   final List<TmuxControlPane> panes;
 
   const TmuxControlWindow({
@@ -32,6 +33,7 @@ final class TmuxControlWindow {
     required this.index,
     required this.name,
     required this.active,
+    this.zoomed = false,
     this.panes = const <TmuxControlPane>[],
   });
 
