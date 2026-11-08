@@ -71,9 +71,15 @@ final class _AppAboutPageState extends State<_AppAboutPage>
             data:
                 '''
 #### My other apps
-[GPT Box](https://github.com/lollipopkit/flutter_gpt_box) · [MFuse](https://mfuse.lollipopkit.com)
+[LLMBox](https://github.com/lollipopkit/llmbox) · [MFuse](https://mfuse.lollipopkit.com)
 
 ${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
+
+#### Contributors
+${GithubIds.contributors.map((e) => e.prsMarkdownLink).join(' ')}
+
+#### Participants
+${GithubIds.participants.map((e) => e.issuesMarkdownLink).join(' ')}
 
 #### Map data
 IP geolocation by [DB-IP](https://db-ip.com), used under
@@ -83,12 +89,6 @@ IP geolocation by [DB-IP](https://db-ip.com), used under
 Coastlines from [Natural Earth](https://www.naturalearthdata.com/), which is
 in the public domain. Named as a source, not as an endorsement — the project
 asks that none be implied.
-
-#### Contributors
-${GithubIds.contributors.map((e) => e.prsMarkdownLink).join(' ')}
-
-#### Participants
-${GithubIds.participants.map((e) => e.issuesMarkdownLink).join(' ')}
 ''',
           ).paddingAll(13).cardx,
         ],

@@ -517,27 +517,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'آیا با چرخش دستگاه به حالت افقی، حالت تمام‌صفحه فعال شود؟ این گزینه فقط در تب سرورها اعمال می‌شود.';
 
   @override
-  String get githubGistIdOptional => 'شناسه Gist (اختیاری)';
-
-  @override
-  String get githubGistToken => 'توکن GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'توکن خالی است';
-
-  @override
-  String get githubGistIdInvalid =>
-      'این مقدار نه شناسه Gist است و نه پیوند Gist. بخش پایانی نشانی Gist را وارد کنید (https://gist.github.com/<user>/<ID>)، یا آن را خالی بگذارید تا در اولین پشتیبان‌گیری یک Gist خصوصی جدید ایجاد شود.';
-
-  @override
-  String get githubGistNotFound =>
-      'در GitHub هیچ Gist با این شناسه که توسط این توکن قابل خواندن باشد یافت نشد: ممکن است شناسه نادرست باشد، Gist حذف شده باشد، یا به حساب کاربری دیگری تعلق داشته باشد. شناسه را خالی بگذارید تا در اولین پشتیبان‌گیری یک Gist خصوصی جدید ایجاد شود.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'سامانه GitHub این توکن را رد کرد: ممکن است نادرست، منقضی یا باطل شده باشد، یا فاقد مجوز gist باشد (توکن کلاسیک: محدوده «gist»؛ توکن دقیق (Fine-grained): دسترسی خواندن و نوشتن «Gists»).';
-
-  @override
   String get goto => 'رفتن به';
 
   @override
@@ -5396,23 +5375,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'از ساختار port=80:proto=tcp:toport=8080 به‌همراه toport،‏ toaddr یا هر دو استفاده کنید.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'سروری را انتخاب کنید که Monitor آن نسخه پشتیبان را ذخیره می‌کند.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'این Monitor نمی‌تواند نسخه‌های پشتیبان را ذخیره کند. Monitor را به‌روزرسانی کنید.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'حجم نسخه پشتیبان بیشتر از حدی است که Monitor می‌پذیرد ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor در حال حاضر حداکثر تعداد مجاز نسخه پشتیبان را نگهداری می‌کند. ابتدا یکی را حذف کنید.';
 
   @override
   String get virtCreateVmidInvalid => 'شناسه VMID بین ۱۰۰ تا ۹۹۹۹۹۹۹۹۹.';

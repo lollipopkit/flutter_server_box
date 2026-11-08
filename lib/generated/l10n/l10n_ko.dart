@@ -497,27 +497,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (선택 사항)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist 토큰';
-
-  @override
-  String get githubGistTokenEmpty => '토큰이 비어 있습니다';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Gist ID나 Gist 링크가 아닙니다. gist 주소의 마지막 부분(https://gist.github.com/<user>/<ID>)을 사용하거나, 첫 백업 시 새 비밀 gist를 만들려면 비워 두세요.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub에서 이 토큰으로 읽을 수 있는 해당 ID의 gist를 찾지 못했습니다. ID가 잘못되었거나, gist가 삭제되었거나, 다른 계정의 gist일 수 있습니다. 첫 백업 시 새 비밀 gist를 만들려면 ID를 비워 두세요.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub에서 이 토큰을 거부했습니다. 토큰이 잘못되었거나 만료 또는 취소되었거나 gist 권한이 없을 수 있습니다(classic token: \"gist\" scope, fine-grained token: Gists read and write).';
-
-  @override
   String get goto => '이동';
 
   @override
@@ -5107,22 +5086,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'port=80:proto=tcp:toport=8080 형식을 사용하고 toport, toaddr 또는 둘 다 지정하세요.';
-
-  @override
-  String get monitorSyncNeedsServer => '백업을 저장할 Monitor가 있는 서버를 선택하세요.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      '이 Monitor는 백업을 저장할 수 없습니다. Monitor를 업데이트하세요.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '백업이 Monitor가 허용하는 크기($max)보다 큽니다.';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID는 100부터 999999999까지입니다.';

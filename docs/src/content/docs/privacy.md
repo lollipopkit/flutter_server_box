@@ -18,7 +18,7 @@ ads, advertising identifiers, or cross-app tracking.
 | Data | Storage and behavior |
 |---|---|
 | Server names, addresses, ports, usernames and settings | Encrypted SQLite database |
-| SSH passwords, private keys, Monitor and BMC credentials, saved sudo passwords, key passphrases, AI provider API keys, MCP headers, and the WebDAV and Gist settings with their password and token | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
+| SSH passwords, private keys, Monitor and BMC credentials, saved sudo passwords, key passphrases, AI provider API keys, MCP headers, and the WebDAV settings with their password | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
 | Backup password and sync key | Platform secure storage |
 | App logs | Local log files only; the current and previous run are retained for troubleshooting |
 | Agent conversations, memory notes, AI providers and tool settings | Local encrypted database; conversations may contain prompts, model responses, command output, terminal text, file content and fetched pages |
@@ -30,7 +30,7 @@ Agent conversations are excluded from backups and device sync. They remain on
 this device until you delete them from the conversation history.
 **Backup → Synced data** chooses what else sync carries, one switch per kind:
 settings, AI (providers, tool settings, permissions and memory notes),
-sudo passwords and API keys (with MCP headers and the WebDAV and Gist settings), key passphrases (only on a device that remembers them),
+sudo passwords and API keys (with MCP headers and the WebDAV settings), key passphrases (only on a device that remembers them),
 fonts, images and skills, and benchmarks. An Agent
 conversation can still be sent to the AI provider you configured; see
 [AI requests](#ai-requests).
@@ -40,19 +40,23 @@ backup format, a backup can contain server settings with their SSH passwords,
 private keys, snippets, port forwards, remote desktop profiles with their saved
 passwords, container settings, connection history, app settings and AI
 settings, encrypted or not. Only an encrypted backup also holds saved sudo
-passwords, API keys, MCP headers, the WebDAV and Gist settings, and key
+passwords, API keys, MCP headers, the WebDAV settings, and key
 passphrases. Agent conversations, sign-ins to AI providers and MCP
 servers, and device-local state are not included. Fonts, images, skills and
 benchmarks are synced through iCloud, WebDAV and LK Cloud, not in a backup
 file.
 
 A local backup may be unencrypted when no backup password is set. When you set a
-backup password, the backup is encrypted before it is written or uploaded, as an
-[age](https://age-encryption.org) file in passphrase mode: `age -d` and the
-backup password open it without ServerBox.
-Automatic remote backup requires a non-empty backup password. After a backup is
-sent to iCloud, WebDAV, GitHub Gist or one of your Monitors, that provider's storage, access and
-retention rules also apply.
+backup password, an exported backup is encrypted before it is written or
+uploaded, as an [age](https://age-encryption.org) file in passphrase mode:
+`age -d` and the backup password open it without ServerBox.
+Automatic sync requires a non-empty backup password. What it sends is encrypted
+to a sync key, and the sync key, stored beside it as `identity.age`, is the one
+file encrypted with the backup password: `age -d` and the password open the key,
+and `age -d -i` with the key opens the rest. A device whose backup password does
+not open that key syncs nothing there until it is given the password the other
+devices use. After a backup is sent to iCloud, WebDAV or LK Cloud, that
+provider's storage, access and retention rules also apply.
 
 ## Automatic diagnostic data
 
@@ -232,7 +236,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your Monitor | When you upload, download or sync a backup; the selected backup file, which may be encrypted. With iCloud or WebDAV, also each device's changes, encrypted to a sync key, and that key, encrypted with the backup password |
+| Backup or sync | iCloud or your WebDAV server | When you upload, download or sync a backup; an uploaded backup file, which may be encrypted. Sync sends the backup and each device's changes, encrypted to a sync key, and that key, encrypted with the backup password |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |

@@ -2,22 +2,21 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/theme.dart' show ThemeBlobStore;
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/monitor/backup_storage.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc.dart';
+import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -45,11 +44,6 @@ final class BakSyncer extends SyncIface {
   /// Shown on the backup page: this device stops syncing until updated.
   static final remoteTooNew = ValueNotifier<SchemaTooNewException?>(null);
 
-  /// Whether the last sync that ran ended on a backup the password here
-  /// does not open. As each one ends, unlike [SyncIface.lastFailure], which
-  /// a sync clears as it starts: shown from this, it does not blink.
-  static final passwordRefused = ValueNotifier(false);
-
   /// Set by [backup] while it writes for LK Cloud, where theme packages are
   /// kept apart.
   LkcThemeBlobs? _themeBlobs;
@@ -57,6 +51,23 @@ final class BakSyncer extends SyncIface {
   /// The sections of the remote backup [fromFile] last read that a category
   /// covers: what this device leaves out of its own is carried on from them.
   BackupV2? _remote;
+
+  /// The key of the remote [backup] is writing to, which seals the backup
+  /// there: resolved for the remote of that cycle, not the one [sync] was
+  /// asked for, which a throttled or queued sync may not be.
+  SyncKey? _key;
+
+  /// [rs]'s sync key, opened with the password here: throws
+  /// [SyncPasswordMismatch] while it does not open it.
+  static Future<SyncKey> keyOf(RemoteStorage rs) => switch (rs) {
+    _ when keyForTest != null => keyForTest!(rs),
+    LkcRemoteStorage() => LkcLogSync.key(),
+    _ => FileLogSync.keyOf(rs),
+  };
+
+  /// [keyOf] for a remote a test made.
+  @visibleForTesting
+  static Future<SyncKey> Function(RemoteStorage rs)? keyForTest;
 
   @override
   Future<void> saveToFile() async {
@@ -66,25 +77,8 @@ final class BakSyncer extends SyncIface {
       // Carried as they are: the packages they name stay.
       _themeBlobs?.keep(LkcThemeBlobs.namedBy(remote));
     }
-    await writeEncryptedBackup(only: only, blobs: _themeBlobs, carry: remote);
-  }
-
-  /// Writes a backup that is safe to upload to remote storage.
-  ///
-  /// Remote writes are always encrypted. Reading remains backwards-compatible
-  /// in [fromFile] so a plaintext backup created before this requirement can be
-  /// merged and replaced by an encrypted backup on the next upload.
-  ///
-  /// [only], [blobs] and [carry] as [BackupV2.backup].
-  Future<String> writeEncryptedBackup({
-    String? name,
-    Set<SyncCategory>? only,
-    ThemeBlobStore? blobs,
-    BackupV2? carry,
-  }) async {
-    final pwd = await SecureStoreProps.bakPwd.read();
-    if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
-    return BackupV2.backup(name, pwd, only: only, blobs: blobs, carry: carry);
+    final key = _key ?? (throw StateError('Written outside a sync'));
+    await BackupV2.backup(null, null, key: key, only: only, blobs: _themeBlobs, carry: remote);
   }
 
   /// The sync an edit starts, which nobody waits for.
@@ -123,31 +117,40 @@ final class BakSyncer extends SyncIface {
   /// — after downloading and trying to merge a remote it had no key for. The
   /// backup page already says the backup is unencrypted, which is the state
   /// to fix.
+  ///
+  /// Nor while the password does not open the remote's key: nothing syncs
+  /// there then ([SyncPasswordMismatch], as [lastFailure]).
   @override
   Future<void> sync({
     int throttleMilli = 5000,
     RemoteStorage? rs,
     int milliDelay = 0,
   }) async {
+    final target = rs ?? remoteStorage;
     // Only with somewhere to sync to: without a remote the base returns at
     // once, and there is no password question to ask.
-    if ((rs ?? remoteStorage) != null) {
-      final pwd = await SecureStoreProps.bakPwd.read();
-      if (pwd == null || pwd.isEmpty) {
-        Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
-        return;
-      }
-      await _followPassword(pwd);
+    if (target == null) return super.sync(throttleMilli: throttleMilli, rs: rs, milliDelay: milliDelay);
+    final pwd = await SecureStoreProps.bakPwd.read();
+    if (pwd == null || pwd.isEmpty) {
+      Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
+      return;
     }
     try {
-      return await super.sync(
-        throttleMilli: throttleMilli,
-        rs: rs,
-        milliDelay: milliDelay,
-      );
-    } finally {
-      passwordRefused.value = lastFailure.value is WrongPasswordException;
+      // Nothing is read or written while the password does not open it.
+      await keyOf(target);
+    } catch (e, s) {
+      // Said as the sync's failure, as one the base runs into is.
+      lastFailure.value = e;
+      if (e is SyncPasswordMismatch) {
+        Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'password mismatch'});
+      } else if (ReportFilter.isDefect(e)) {
+        Diag.error(e, s, 'Sync key');
+      } else {
+        Loggers.app.warning('Sync key', e, s);
+      }
+      return;
     }
+    return super.sync(throttleMilli: throttleMilli, rs: rs, milliDelay: milliDelay);
   }
 
   @override
@@ -163,24 +166,18 @@ final class BakSyncer extends SyncIface {
       // its default and dropped every synced setting, with no error anywhere
       // (#1562).
       //
-      // A plaintext backup, uploaded before remote encryption became
-      // mandatory, is still accepted: the password is only used on an
-      // encrypted payload.
+      // Sealed to the remote's key; one an older build synced (v4, sealed
+      // with the password, or plaintext from before encryption was
+      // mandatory) is inherited once ([inheritLegacyRemote]).
       final Uint8List plain;
-      try {
+      if (SyncKey.sealedToKey(content)) {
+        // With the keys of the syncs on here: the remote of the cycle that
+        // downloaded it is one of them, whichever that was. The one it is
+        // set to now is opened first, so a password it refuses stops here.
+        if (remoteStorage case final rs?) await keyOf(rs);
+        plain = await SyncKey.openAny(content);
+      } else {
         plain = await BackupV2.unlock(content, pwd);
-      } on WrongPasswordException {
-        // Sealed with the password this device changed from: opened with
-        // it, and sealed with the new one by this sync's upload (what that
-        // change forgot makes it upload).
-        for (final previous in await SyncKey.previousPasswords()) {
-          try {
-            return await _read(await BackupV2.unlock(content, previous), pwd);
-          } on WrongPasswordException {
-            continue;
-          }
-        }
-        rethrow;
       }
       return await _read(plain, pwd);
     } on SchemaTooNewException catch (e) {
@@ -270,29 +267,6 @@ final class BakSyncer extends SyncIface {
       downloaded is! BackupV2 ||
       downloaded.lacksLocal(categories: SyncCategory.onNow);
 
-  /// The password this device last synced with, kept on this device only.
-  ///
-  /// One set on another device arrives through iCloud Keychain, and what
-  /// setting it here forgets ([forgetPasswordState]) has to be forgotten here
-  /// too: the checkpoint stands for a file sealed with the old one, and the
-  /// theme packages' names for packages sealed with it.
-  static const _pwdSeen = SecureProp('bakPwdSeen');
-
-  static Future<void> _followPassword(String pwd) async {
-    // Past the rate limit: a sync is not a user asking, and runs on its own.
-    final seen = await _pwdSeen.storage.read(key: _pwdSeen.key);
-    if (seen == pwd) return;
-    // None on the first sync of this build: nothing known to forget.
-    if (seen != null) await forgetPasswordState();
-    await _pwdSeen.storage.write(key: _pwdSeen.key, value: pwd);
-  }
-
-  /// What a backup password sealed: see [_followPassword].
-  static Future<void> forgetPasswordState() async {
-    await forgetCheckpoint();
-    await LkcThemeBlobs.forgetNames();
-  }
-
   /// Refuses to upload after a failed read of newer remote data, and waits for
   /// [inheritLegacyRemote] to finish deciding. Everything else defers to the
   /// base implementation.
@@ -308,10 +282,9 @@ final class BakSyncer extends SyncIface {
     // remote must not leave this session unable to upload at all. Going ahead
     // then costs the inheritance, which is what an unreadable remote costs
     // anyway.
-    final inheriting = _inheriting;
-    if (inheriting != null) {
-      await inheriting.timeout(const Duration(seconds: 30), onTimeout: () {});
-    }
+    // Again if the last one could not open the remote's key: the password
+    // may be the right one by now.
+    await inheritLegacyRemote().timeout(const Duration(seconds: 30), onTimeout: () {});
 
     final tooNew = remoteTooNew.value;
     if (tooNew != null) {
@@ -325,18 +298,24 @@ final class BakSyncer extends SyncIface {
     }
     Diag.crumb(SbDiag.sync, 'upload');
     final target = rs ?? remoteStorage;
+    if (target == null) return super.backup(target);
+    // The cycle's own remote: a password that does not open its key stops
+    // the upload here.
+    _key = await keyOf(target);
     if (target is! LkcRemoteStorage) {
-      await super.backup(target);
-      // Uploaded: sealed with the password here now.
-      return SyncKey.backupResealed();
+      try {
+        return await super.backup(target);
+      } finally {
+        _key = null;
+      }
     }
     final blobs = _themeBlobs = LkcThemeBlobs.shared..begin();
     try {
       await super.backup(target);
     } finally {
       _themeBlobs = null;
+      _key = null;
     }
-    await SyncKey.backupResealed();
     // Only once the backup naming them is written.
     await blobs.sweep();
   }
@@ -344,6 +323,10 @@ final class BakSyncer extends SyncIface {
   /// The inherit in flight, awaited by [backup] so an upload cannot overtake
   /// it.
   Future<void>? _inheriting;
+
+  /// A new launch, as far as [inheritLegacyRemote] is concerned.
+  @visibleForTesting
+  void forgetInheritForTest() => _inheriting = null;
 
   /// Reads the newest remote file an older build synced to, once, so
   /// upgrading doesn't look like a fresh start.
@@ -374,6 +357,9 @@ final class BakSyncer extends SyncIface {
   Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
+      // Only with the password the remote's key opens with: one that does
+      // not would merge nothing, or another person's backup.
+      await keyOf(rs);
       for (final name in Miscs.legacyBakFileNames) {
         if (!await rs.exists(name)) continue;
         final localPath = Paths.doc.joinPath(name);
@@ -383,6 +369,14 @@ final class BakSyncer extends SyncIface {
         Loggers.app.info('Inherited sync history from $name');
         return;
       }
+    } on SyncPasswordMismatch {
+      // Not an attempt: tried again once the password opens the key, before
+      // the first upload makes the versioned file.
+      _inheriting = null;
+    } on SyncKeyNotHere {
+      _inheriting = null;
+    } on RemoteBackupPasswordMissing {
+      _inheriting = null;
     } catch (e, s) {
       // Best-effort: failing to inherit leaves the user with an empty remote
       // they can populate by syncing, which is recoverable. Failing loudly
@@ -461,50 +455,10 @@ final class BakSyncer extends SyncIface {
     final webdavEnabled = PrefProps.webdavSync.get();
     if (webdavEnabled) return SyncRemotes.webdav;
 
-    final gistEnabled = PrefProps.gistSync.get();
-    if (gistEnabled) return SyncRemotes.gist;
-
-    if (monitorSync.get()) return monitorStorage();
-
-    if (Lkc.enabled && LkcSyncPrefs.enabled.get() && Lkc.client.signedIn) return LkcSyncPrefs.storage;
+    if (Lkc.enabled && LkcSyncPrefs.enabled.get() && Lkc.client.signedIn && Lkc.client.user.value != null) {
+      return LkcSyncPrefs.storage;
+    }
 
     return null;
-  }
-
-  /// Whether the backup syncs to one of this app's own monitor agents, and to
-  /// which server's. Device-local prefs like the other three switches, and
-  /// beside them rather than in fl_lib's `PrefProps`, since a server id is
-  /// this app's concept. Keys are permanent.
-  static const monitorSync = PrefPropDefault(
-    'monitor_sync',
-    false,
-    updateLastUpdateTsOnSetProp: false,
-  );
-  static const monitorSyncServer = PrefProp<String>(
-    'monitor_sync_server',
-    updateLastUpdateTsOnSetProp: false,
-  );
-
-  /// Kept while the chosen server and its agent settings stay the same: it
-  /// owns an HTTP client, and [remoteStorage] is read on every sync.
-  MonitorBackupStorage? _monitorStorage;
-
-  /// The chosen server's agent store, or null when none is chosen, the record
-  /// is gone, or its agent is not configured or switched off ([Spix.monitorOn]).
-  ///
-  /// A method, not a getter: a server's agent settings change wherever it is
-  /// edited, so this is where a stale store is noticed — closed, and its HTTP
-  /// client with it, before a new one is made.
-  MonitorBackupStorage? monitorStorage() {
-    final id = monitorSyncServer.get();
-    final monitor = id == null ? null : Stores.server.fetchOneRaw(id)?.monitorOn;
-    final cached = _monitorStorage;
-    if (id != null && monitor != null && cached != null && cached.matches(id, monitor)) {
-      return cached;
-    }
-    cached?.close();
-    _monitorStorage = null;
-    if (id == null || monitor == null) return null;
-    return _monitorStorage = MonitorBackupStorage(id, monitor);
   }
 }

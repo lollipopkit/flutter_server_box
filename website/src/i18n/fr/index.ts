@@ -278,15 +278,15 @@ const fr: Translation = {
     llmapi: {
       title: 'LLM API',
       description:
-        'Passerelle API unifiée pour les principaux LLM, prête pour l’agent IA de ServerBox, GPT Box ou vos propres outils.',
+        'Passerelle API unifiée pour les principaux LLM, prête pour l’agent IA de ServerBox, LLMBox ou vos propres outils.',
     },
     uptimer: {
       title: 'Uptimer',
       description:
         'Supervision légère de disponibilité et pages de statut pour vos sites, API et serveurs avec alertes instantanées.',
     },
-    gptbox: {
-      title: 'GPT Box',
+    llmbox: {
+      title: 'LLMBox',
       tag: 'iOS · Android · macOS · Linux · Windows',
       description:
         'Client natif rapide pour l’API OpenAI et les modèles compatibles, avec historique local, appels d’outils et points de terminaison personnalisés.',

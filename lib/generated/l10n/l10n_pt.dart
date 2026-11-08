@@ -516,27 +516,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Deve ser ativado o modo de tela cheia quando o dispositivo é girado para o modo paisagem? Esta opção aplica-se apenas à aba do servidor.';
 
   @override
-  String get githubGistIdOptional => 'ID do Gist (opcional)';
-
-  @override
-  String get githubGistToken => 'Token do GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'O token está vazio';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Isto não é um ID de Gist nem um link de Gist. Use a última parte do endereço do gist (https://gist.github.com/<user>/<ID>) ou deixe vazio para criar um novo gist secreto no primeiro backup.';
-
-  @override
-  String get githubGistNotFound =>
-      'O GitHub não encontrou nenhum gist com este ID que este token possa ler: o ID pode estar incorreto, o gist pode ter sido excluído ou pertencer a outra conta. Deixe o ID vazio para criar um novo gist secreto no primeiro backup.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'O GitHub rejeitou este token: ele pode estar incorreto, expirado ou revogado, ou não ter a permissão gist (classic token: o escopo \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Ir para';
 
   @override
@@ -5402,23 +5381,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Use port=80:proto=tcp:toport=8080, com toport, toaddr ou ambos.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Escolha o servidor cujo Monitor armazena o backup.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Este Monitor não pode armazenar backups. Atualize o Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'O backup é maior do que o Monitor aceita ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'O Monitor já guarda o número máximo de backups permitido. Exclua um primeiro.';
 
   @override
   String get virtCreateVmidInvalid => 'Um VMID de 100 a 999999999.';

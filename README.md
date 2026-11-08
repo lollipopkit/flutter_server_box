@@ -93,7 +93,7 @@ Download packages only from sources you trust.
 **Making it yours**
 
 - Install [themes and icon packs](https://serverbox.lollipopkit.com/docs/advanced/theme-packages/) from the built-in store, or make your own.
-- Biometric app lock, and backups to iCloud, WebDAV, GitHub Gist or the Monitor, encrypted with a password you choose.
+- Biometric app lock, and backups to iCloud or WebDAV, encrypted with a password you choose.
 - iOS, Android, macOS, Linux and Windows, in 17 languages.
 
 ## Help
@@ -127,7 +127,7 @@ If I forgot to add your name to the contributors list, please add a comment in t
 
 ## My other apps
 
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box): a third-party client for the OpenAI API.
+- [LLMBox](https://github.com/lollipopkit/llmbox): a third-party client for the OpenAI API.
 - [MFuse](https://mfuse.lollipopkit.com): mounts SFTP, S3, WebDAV and more in macOS Finder through File Provider.
 
 ## License

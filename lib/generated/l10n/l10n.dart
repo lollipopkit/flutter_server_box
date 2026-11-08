@@ -1015,42 +1015,6 @@ abstract class AppLocalizations {
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
 
-  /// User-facing label or message for github gist id optional.
-  ///
-  /// In en, this message translates to:
-  /// **'Gist ID (optional)'**
-  String get githubGistIdOptional;
-
-  /// User-facing label or message for github gist token.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub Gist token'**
-  String get githubGistToken;
-
-  /// Empty-state message for github gist token empty.
-  ///
-  /// In en, this message translates to:
-  /// **'Token is empty'**
-  String get githubGistTokenEmpty;
-
-  /// Error shown when the Gist ID field holds something that is neither an ID nor a gist URL.
-  ///
-  /// In en, this message translates to:
-  /// **'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.'**
-  String get githubGistIdInvalid;
-
-  /// Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.'**
-  String get githubGistNotFound;
-
-  /// Error shown when GitHub answers 401 or 403 for the token. Keep "gist" and "Gists" as GitHub names them.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).'**
-  String get githubGistTokenRejected;
-
   /// User-facing label or message for goto.
   ///
   /// In en, this message translates to:
@@ -9172,30 +9136,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.'**
   String get firewallInvalidForwardPort;
-
-  /// Backup sync to a Monitor: no server is chosen yet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick the server whose Monitor stores the backup.'**
-  String get monitorSyncNeedsServer;
-
-  /// Backup sync to a Monitor: the Monitor is too old to store backups.
-  ///
-  /// In en, this message translates to:
-  /// **'This Monitor cannot store backups. Update the Monitor.'**
-  String get monitorBackupUnsupported;
-
-  /// Backup sync to a Monitor: the file exceeds the Monitor's size limit, given as max.
-  ///
-  /// In en, this message translates to:
-  /// **'The backup is larger than the Monitor accepts ({max}).'**
-  String monitorBackupTooLarge(String max);
-
-  /// Backup sync to a Monitor: the Monitor's blob count limit is reached.
-  ///
-  /// In en, this message translates to:
-  /// **'The Monitor already holds as many backups as it allows. Delete one first.'**
-  String get monitorBackupTooMany;
 
   /// Create form: the VMID is outside the range PVE accepts.
   ///

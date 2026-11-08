@@ -519,27 +519,6 @@ class AppLocalizationsEs extends AppLocalizations {
       '¿Debe habilitarse el modo de pantalla completa cuando el dispositivo se rote al modo horizontal? Esta opción solo se aplica a la pestaña del servidor.';
 
   @override
-  String get githubGistIdOptional => 'ID del Gist (opcional)';
-
-  @override
-  String get githubGistToken => 'Token de GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'El token está vacío';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Esto no es ni un ID de Gist ni un enlace a un Gist. Usa la última parte de la dirección del gist (https://gist.github.com/<user>/<ID>) o déjalo vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub no encontró ningún gist con este ID que este token pueda leer: puede que el ID sea incorrecto, que el gist se haya eliminado o que pertenezca a otra cuenta. Deja el ID vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub rechazó este token: puede ser incorrecto, haber caducado o haberse revocado, o carecer del permiso gist (classic token: el ámbito \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Ir a';
 
   @override
@@ -5430,23 +5409,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Usa port=80:proto=tcp:toport=8080, con toport, toaddr o ambos.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Elige el servidor cuyo Monitor guarda la copia de seguridad.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Este Monitor no puede guardar copias de seguridad. Actualiza el Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'La copia de seguridad supera el tamaño que acepta el Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'El Monitor ya guarda tantas copias de seguridad como permite. Elimina una primero.';
 
   @override
   String get virtCreateVmidInvalid => 'Un VMID entre 100 y 999999999.';

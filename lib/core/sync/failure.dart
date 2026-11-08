@@ -10,7 +10,7 @@ import 'package:server_box/data/store/schema.dart';
 /// [e], a reason a sync stopped (`SyncIface.lastFailure`), in the user's
 /// words; null for one this does not know, which is shown as it is.
 String? syncFailureText(Object e) => switch (e) {
-  WrongPasswordException() => l10n.syncPasswordMismatch,
+  WrongPasswordException() || SyncPasswordMismatch() => l10n.syncPasswordMismatch,
   SchemaTooNewException() => l10n.syncRemoteTooNew,
   RemoteBackupPasswordMissing() => e.toString(),
   LkcSyncError() => switch (e.exception) {

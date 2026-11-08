@@ -5,10 +5,8 @@ import 'dart:typed_data';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmApprovals;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/sync/category.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -98,29 +96,6 @@ final class _Keyed implements SyncSeal {
   Future<bool> refresh() async {
     if (remote.every(held.contains)) return false;
     held = {...held, ...remote}.toList();
-    return true;
-  }
-}
-
-/// [SyncKey]'s file, in memory; while [blind], a device that does not see
-/// the one there yet (iCloud's delivery, a write at the same time).
-final class _KeyFile implements SyncKeyFile {
-  Uint8List? body;
-  var blind = false;
-
-  @override
-  String get id => 'test';
-
-  @override
-  PrefProp<bool> get rewrap => SyncKey.filesRewrap;
-
-  @override
-  Future<Uint8List?> read() async => blind ? null : body;
-
-  @override
-  Future<bool> write(Uint8List body, {required bool replace}) async {
-    if (!replace && this.body != null && !blind) return false;
-    this.body = body;
     return true;
   }
 }
@@ -371,117 +346,5 @@ void main() {
     await _device();
     await _sync(folder).sync();
     expect(Stores.setting.get<String>('bigNote'), big);
-  });
-
-  group('SyncKey', () {
-    setUp(() async {
-      SharedPreferences.setMockInitialValues({});
-      await PrefStore.shared.init();
-      SecureProp.resetRateLimits();
-    });
-    tearDown(SyncKey.resetForTest);
-
-    test('two devices that made a key at once end with both, sealing with one', () async {
-      final file = _KeyFile();
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'pwd'});
-      final a = await SyncKey.load(file);
-      final sealedByA = await a.seal(Uint8List.fromList([1]));
-
-      // B did not see A's file yet, and wrote over it.
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'pwd'});
-      file.blind = true;
-      final b = await SyncKey.load(file);
-      file.blind = false;
-      final sealedByB = await b.seal(Uint8List.fromList([2]));
-      await expectLater(a.open(sealedByB), throwsFormatException);
-
-      // A, on its keys, meets B's file: puts its own back beside B's.
-      expect(await a.refresh(), isTrue);
-      expect(await a.open(sealedByB), [2]);
-      expect(await b.refresh(), isTrue);
-      expect(await b.open(sealedByA), [1]);
-      expect(a.nameOf([0]), b.nameOf([0]), reason: 'both seal with the same key now');
-      expect(await a.refresh(), isFalse);
-    });
-
-    test("another device's password is said, and a change here to a third one writes nothing", () async {
-      final file = _KeyFile();
-      // With the keys a device keeps once it has read them, when [kept].
-      void password(String pwd, {List<int>? kept, String? previous}) => FlutterSecureStorage.setMockInitialValues({
-        SecureStoreProps.bakPwd.key: pwd,
-        if (kept != null) 'syncIdentity.${file.id}': utf8.decode(kept),
-        'syncKeyPreviousPwd': ?previous,
-      });
-      password('old');
-      await SyncKey.load(file);
-      expect(SyncKey.passwordMismatch.value, isEmpty);
-
-      // The others changed it to `new`; a device with `old` and no key kept.
-      final keys = await AgeCryptor.decrypt(file.body!, 'old');
-      file.body = utf8.encode(await AgeCryptor.encrypt(keys, 'new'));
-      password('old');
-      await expectLater(SyncKey.load(file), throwsA(isA<WrongPasswordException>()));
-      expect(SyncKey.passwordMismatch.value, {file.id});
-
-      // A device that kept the keys, changing its password to a third one
-      // that opens neither: the file is left as the others sealed it, and the
-      // kept keys go on syncing.
-      final before = file.body;
-      password('third', kept: keys);
-      await SyncKey.passwordChanged('old', lkc: false, files: true, backup: false);
-      final key = await SyncKey.load(file);
-      expect(await key.open(await key.seal(Uint8List.fromList([7]))), [7]);
-      expect(file.body, same(before));
-      expect(SyncKey.passwordMismatch.value, {file.id});
-
-      // The others' password: taken, and nothing to say any more.
-      password('new', kept: keys, previous: 'old');
-      await SyncKey.passwordChanged('third', lkc: false, files: true, backup: false);
-      await SyncKey.load(file);
-      expect(SyncKey.passwordMismatch.value, isEmpty);
-      expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
-    });
-
-    test('a change while an earlier one is still pending opens the file with either', () async {
-      final file = _KeyFile();
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'b'});
-      await SyncKey.load(file);
-      final keys = await AgeCryptor.decrypt(file.body!, 'b');
-
-      // Changed from `1234` once, and that never done here; now from `b` to `c`.
-      SharedPreferences.setMockInitialValues({});
-      await PrefStore.shared.init();
-      await SyncKey.backupRewrap.set(true);
-      FlutterSecureStorage.setMockInitialValues({
-        SecureStoreProps.bakPwd.key: 'c',
-        'syncIdentity.${file.id}': utf8.decode(keys),
-        // As one password, kept before they were a list: digits alone.
-        'syncKeyPreviousPwd': '1234',
-      });
-      await SyncKey.passwordChanged('b', lkc: false, files: true, backup: false);
-      await SyncKey.load(file);
-      expect(await AgeCryptor.decrypt(file.body!, 'c'), keys);
-      expect(SyncKey.passwordMismatch.value, isEmpty);
-      expect(await SyncKey.previousPasswords(), ['b', '1234'], reason: 'the backup is still to be sealed again');
-    });
-
-    test('a password changed here is taken by the file after a restart too', () async {
-      final file = _KeyFile();
-      FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'old'});
-      await SyncKey.load(file);
-      final keys = await AgeCryptor.decrypt(file.body!, 'old');
-
-      // Changed to `new`, and the app ended before any sync sealed it again.
-      await SyncKey.passwordChanged('old', lkc: false, files: true, backup: false);
-      FlutterSecureStorage.setMockInitialValues({
-        SecureStoreProps.bakPwd.key: 'new',
-        'syncIdentity.${file.id}': utf8.decode(keys),
-        'syncKeyPreviousPwd': 'old',
-      });
-      await SyncKey.load(file);
-      expect(await AgeCryptor.decrypt(file.body!, 'new'), keys);
-      expect(SyncKey.passwordMismatch.value, isEmpty);
-      expect(SyncKey.filesRewrap.get() ?? false, isFalse);
-    });
   });
 }

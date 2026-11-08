@@ -1,27 +1,26 @@
 #!/bin/sh
 # The app's backup sync end to end, on this machine (issue #1772):
 #
-# 1. rclone's WebDAV and a monitor agent started on loopback, each with a
-#    random account;
-# 2. `test/e2e/backup_sync_test.dart` against each: the upload is armored age
-#    under the v4 name, another device restores it, a v3-only remote is
-#    inherited and moved to v4;
-# 3. each uploaded file opened with the `age` CLI and the backup password,
-#    nothing of ServerBox's, and what is in it read;
+# 1. rclone's WebDAV started on loopback with a random account;
+# 2. `test/e2e/backup_sync_test.dart` against it: the upload is sealed to
+#    the sync key under the v5 name, another device restores it, a device on
+#    another password syncs nothing, a v4- or v3-only remote is inherited and
+#    moved to v5;
+# 3. the key file opened with the `age` CLI and the backup password, nothing
+#    of ServerBox's, and the backup with that key, and what is in it read;
 # 4. `test/e2e/segment_sync_test.dart` against the WebDAV: the log sync's
 #    segments reach other devices; the sync key opened with the backup
 #    password, and a segment with that key, by the `age` CLI.
 #
 #     scripts/app-backup-e2e.sh
 #
-# Needs rclone, htpasswd, age, expect, cargo and flutter. Secrets are
-# generated here and passed through the environment.
+# Needs rclone, htpasswd, age, expect and flutter. Secrets are generated here
+# and passed through the environment.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/sbm-app-backup-e2e.XXXXXX")
 WEBDAV_PORT=18090
-MONITOR_PORT=3791
 # The test's own (`_password` in backup_sync_test.dart).
 BACKUP_PASSWORD=e2e-backup-password
 
@@ -35,10 +34,8 @@ trap cleanup EXIT INT TERM
 random() { openssl rand -hex "$1"; }
 export SBM_E2E_WEBDAV_USER=sbm-e2e
 SBM_E2E_WEBDAV_PASSWORD=$(random 16)
-SBM_E2E_MONITOR_PASSWORD=$(random 12)
-export SBM_E2E_WEBDAV_PASSWORD SBM_E2E_MONITOR_PASSWORD
+export SBM_E2E_WEBDAV_PASSWORD
 export SBM_E2E_WEBDAV_URL="http://127.0.0.1:$WEBDAV_PORT/"
-export SBM_E2E_MONITOR_ADDR="http://127.0.0.1:$MONITOR_PORT"
 
 wait_for() { # url
     i=0
@@ -48,29 +45,9 @@ wait_for() { # url
     done
 }
 
-echo "== WebDAV and a monitor"
-mkdir -p "$WORK/rclone" "$WORK/monitor"
-printf '%s' "$SBM_E2E_WEBDAV_PASSWORD" | htpasswd -iBc "$WORK/htpasswd" "$SBM_E2E_WEBDAV_USER" 2>/dev/null
-rclone serve webdav --addr "127.0.0.1:$WEBDAV_PORT" --htpasswd "$WORK/htpasswd" "$WORK/rclone" >"$WORK/rclone.log" 2>&1 &
-PIDS="$PIDS $!"
-wait_for "$SBM_E2E_WEBDAV_URL"
-
-cd "$ROOT"
-cargo build -q -p server_box_monitor
-BIN=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')/debug/server_box_monitor
-M="$WORK/monitor"
-(cd "$M" && DATABASE_URL="sqlite://$M/monitor.db" "$BIN" password --password-env SBM_E2E_MONITOR_PASSWORD >/dev/null)
-(cd "$M" && DATABASE_URL="sqlite://$M/monitor.db" exec "$BIN" serve --addr "127.0.0.1:$MONITOR_PORT" >"$M/monitor.log" 2>&1) &
-PIDS="$PIDS $!"
-wait_for "$SBM_E2E_MONITOR_ADDR/api/v1/health"
-
-for remote in webdav monitor; do
-    echo "== The app against $remote"
-    SBM_E2E_BACKUP_REMOTE=$remote SBM_E2E_BACKUP_OUT="$WORK/$remote.age" \
-        flutter test --timeout 300s test/e2e/backup_sync_test.dart
-
-    echo "== Opened with the age CLI"
-    BACKUP_PASSWORD=$BACKUP_PASSWORD IN="$WORK/$remote.age" OUT="$WORK/$remote.gz" expect -c '
+# The key file opened with the password, as `age -d` asks for it: IN, OUT.
+open_key() {
+    BACKUP_PASSWORD=$BACKUP_PASSWORD IN=$1 OUT=$2 expect -c '
         log_user 0
         spawn age -d -o $env(OUT) $env(IN)
         expect "passphrase"
@@ -78,25 +55,35 @@ for remote in webdav monitor; do
         expect eof
         catch wait result
         exit [lindex $result 3]'
-    gunzip -c "$WORK/$remote.gz" | python3 -c 'import json,sys; v=json.load(sys.stdin); assert v["settings"]["timeOut"] == 17, v["settings"].get("timeOut"); print("timeOut", v["settings"]["timeOut"])'
-done
+}
+
+echo "== WebDAV"
+mkdir -p "$WORK/rclone" "$WORK/backup"
+printf '%s' "$SBM_E2E_WEBDAV_PASSWORD" | htpasswd -iBc "$WORK/htpasswd" "$SBM_E2E_WEBDAV_USER" 2>/dev/null
+# An empty config: the user's own may be encrypted and ask for its password.
+: >"$WORK/rclone.conf"
+rclone --config "$WORK/rclone.conf" serve webdav --addr "127.0.0.1:$WEBDAV_PORT" --htpasswd "$WORK/htpasswd" "$WORK/rclone" >"$WORK/rclone.log" 2>&1 &
+PIDS="$PIDS $!"
+wait_for "$SBM_E2E_WEBDAV_URL"
+
+cd "$ROOT"
+echo "== The app against webdav"
+SBM_E2E_BACKUP_OUT="$WORK/backup" flutter test --timeout 300s test/e2e/backup_sync_test.dart
+
+echo "== Its key and the backup opened with the age CLI"
+open_key "$WORK/backup/identity.age" "$WORK/backup/identity.txt"
+age -d -i "$WORK/backup/identity.txt" "$WORK/backup/backup.age" | gunzip -c |
+    python3 -c 'import json,sys; v=json.load(sys.stdin); assert v["settings"]["timeOut"] == 17, v["settings"].get("timeOut"); print("timeOut", v["settings"]["timeOut"])'
 
 echo "== The log sync against webdav"
 mkdir -p "$WORK/segments"
 SBM_E2E_SEGMENT_OUT="$WORK/segments" flutter test --timeout 300s test/e2e/segment_sync_test.dart
 
 echo "== Its key and a segment opened with the age CLI"
-BACKUP_PASSWORD=$BACKUP_PASSWORD IN="$WORK/segments/identity.age" OUT="$WORK/segments/identity.txt" expect -c '
-    log_user 0
-    spawn age -d -o $env(OUT) $env(IN)
-    expect "passphrase"
-    send "$env(BACKUP_PASSWORD)\r"
-    expect eof
-    catch wait result
-    exit [lindex $result 3]'
+open_key "$WORK/segments/identity.age" "$WORK/segments/identity.txt"
 for seg in "$WORK"/segments/seg-*.age; do
     age -d -i "$WORK/segments/identity.txt" "$seg" | gunzip -c |
-        python3 -c 'import json,sys; v=json.load(sys.stdin); assert v["v"] == 1 and v["ops"], v; print(len(v["ops"]), "ops")'
+        python3 -c 'import json,sys; v=json.load(sys.stdin); assert isinstance(v.get("v"), int) and v["ops"], "no ops"; print(len(v["ops"]), "ops")'
 done
 
 echo "== All passed"

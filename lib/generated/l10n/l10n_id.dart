@@ -516,27 +516,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Apakah mode layar penuh diaktifkan ketika perangkat diputar ke modus lanskap? Opsi ini hanya berlaku untuk tab server.';
 
   @override
-  String get githubGistIdOptional => 'ID Gist (opsional)';
-
-  @override
-  String get githubGistToken => 'Token GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Token kosong';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Ini bukan ID Gist maupun tautan Gist. Gunakan bagian terakhir dari alamat gist (https://gist.github.com/<user>/<ID>), atau kosongkan agar gist rahasia baru dibuat saat pencadangan pertama.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub tidak menemukan gist dengan ID ini yang dapat dibaca oleh token ini: ID mungkin salah, gist mungkin telah dihapus, atau gist tersebut milik akun lain. Kosongkan ID agar gist rahasia baru dibuat saat pencadangan pertama.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub menolak token ini: token mungkin salah, kedaluwarsa, atau dicabut, atau tidak memiliki izin gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Pergi ke';
 
   @override
@@ -5350,23 +5329,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Gunakan port=80:proto=tcp:toport=8080, dengan toport, toaddr, atau keduanya.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Pilih server yang Monitor-nya menyimpan cadangan.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Monitor ini tidak dapat menyimpan cadangan. Perbarui Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Cadangan lebih besar dari yang diterima Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID dari 100 sampai 999999999.';

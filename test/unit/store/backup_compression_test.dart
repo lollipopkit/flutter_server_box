@@ -15,7 +15,6 @@ import 'dart:typed_data';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -72,7 +71,7 @@ void main() {
         );
       }
 
-      final path = await bakSync.writeEncryptedBackup(name: 'gz.age');
+      final path = await BackupV2.backup('gz.age', 'remote-password');
       final content = await File(path).readAsBytes();
 
       expect(AgeCryptor.isEncrypted(content), isTrue);
@@ -120,7 +119,7 @@ void main() {
       }
 
       final plainLen = (await BackupV2.loadFromStore()).toJsonString().length;
-      final path = await bakSync.writeEncryptedBackup(name: 'size.age');
+      final path = await BackupV2.backup('size.age', 'remote-password');
       final wireLen = (await File(path).readAsString()).length;
 
       // Before compression the wire form was base64 of the raw JSON, which is

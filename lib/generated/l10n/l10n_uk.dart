@@ -517,27 +517,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Чи слід увімкнути повноекранний режим під час повороту пристрою в горизонтальне положення? Ця опція стосується лише вкладки сервера.';
 
   @override
-  String get githubGistIdOptional => 'ID Gist (необов\'язково)';
-
-  @override
-  String get githubGistToken => 'Токен GitHub Gist';
-
-  @override
-  String get githubGistTokenEmpty => 'Токен порожній';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Це не ID Gist і не посилання на Gist. Використайте останню частину адреси gist (https://gist.github.com/<user>/<ID>) або залиште поле порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub не знайшов gist із цим ID, який може прочитати цей токен: ID може бути неправильним, gist могли видалити або він може належати іншому обліковому запису. Залиште ID порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub відхилив цей токен: можливо, він неправильний, термін його дії минув або його відкликано, чи йому бракує дозволу gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Перейти до';
 
   @override
@@ -5393,23 +5372,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Використовуйте port=80:proto=tcp:toport=8080, з toport, toaddr або обома.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Виберіть сервер, Monitor якого зберігає резервну копію.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Цей Monitor не може зберігати резервні копії. Оновіть Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Резервна копія більша, ніж приймає Monitor ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID від 100 до 999999999.';

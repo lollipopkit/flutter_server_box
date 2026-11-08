@@ -517,27 +517,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Soll der Vollbildmodus aktiviert werden, wenn das Gerät in den Quermodus gedreht wird? Diese Option gilt nur für die Server-Registerkarte.';
 
   @override
-  String get githubGistIdOptional => 'Gist-ID (optional)';
-
-  @override
-  String get githubGistToken => 'GitHub-Gist-Token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token ist leer';
-
-  @override
-  String get githubGistIdInvalid =>
-      'Dies ist weder eine Gist-ID noch ein Gist-Link. Verwende den letzten Teil der Gist-Adresse (https://gist.github.com/<user>/<ID>) oder lasse das Feld leer, damit beim ersten Backup ein neues geheimes gist erstellt wird.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub hat kein gist mit dieser ID gefunden, das dieses Token lesen kann: Die ID ist möglicherweise falsch, das gist wurde gelöscht oder gehört zu einem anderen Konto. Lasse die ID leer, damit beim ersten Backup ein neues geheimes gist erstellt wird.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub hat dieses Token abgelehnt: Es ist möglicherweise falsch, abgelaufen oder widerrufen oder ihm fehlt die gist-Berechtigung (classic token: der \"gist\"-Scope; fine-grained token: Gists read and write).';
-
-  @override
   String get goto => 'Pfad öffnen';
 
   @override
@@ -5422,23 +5401,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Verwende port=80:proto=tcp:toport=8080, mit toport, toaddr oder beidem.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Wähle den Server, dessen Monitor das Backup speichert.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'Dieser Monitor kann keine Backups speichern. Aktualisiere den Monitor.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'Das Backup ist größer, als der Monitor annimmt ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'Der Monitor hält bereits so viele Backups, wie er erlaubt. Lösche zuerst eines.';
 
   @override
   String get virtCreateVmidInvalid => 'Eine VMID von 100 bis 999999999.';

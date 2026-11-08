@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/sync/key.dart';
-import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
@@ -31,8 +30,7 @@ void main() {
   });
 
   tearDown(() async {
-    SyncKey.passwordMismatch.value = const {};
-    BakSyncer.passwordRefused.value = false;
+    SyncKey.resetForTest();
     await getIt.reset();
     await SqliteDb.close();
   });
@@ -61,7 +59,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  testWidgets('a password the synced key or backup does not open is said, and goes when it does', (tester) async {
+  testWidgets("a password the remote's key does not open is said, and goes when it does", (tester) async {
     await pumpPage(tester);
     final said = find.text(AppLocalizationsEn().syncPasswordMismatch);
     expect(said, findsNothing);
@@ -70,19 +68,7 @@ void main() {
     await tester.pump();
     expect(said, findsOneWidget);
 
-    // The backup's own failure, while it syncs somewhere; not once it does not.
-    SyncKey.passwordMismatch.value = const {};
-    BakSyncer.passwordRefused.value = true;
-    await tester.pump();
-    expect(said, findsNothing);
-    await PrefProps.gistSync.set(true);
-    addTearDown(() => PrefProps.gistSync.set(false));
-    BakSyncer.passwordRefused.value = false;
-    BakSyncer.passwordRefused.value = true;
-    await tester.pump();
-    expect(said, findsOneWidget);
-
-    BakSyncer.passwordRefused.value = false;
+    SyncKey.release('webdav:x');
     await tester.pump();
     expect(said, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());

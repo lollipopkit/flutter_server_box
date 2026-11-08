@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/spi_fixture.dart';
+import '../../helpers/sync_key.dart';
 
 /// Two devices on one remote: a phone holding servers and keys, and a new
 /// install whose only data is a setting changed after the phone's. Each must
@@ -49,6 +51,9 @@ void main() {
     phone = await Directory(tempDir.path.joinPath('phone')).create();
     desktop = await Directory(tempDir.path.joinPath('desktop')).create();
     remote = _FileRemote(File(tempDir.path.joinPath('remote')));
+    // The remote's `identity.age`; both devices keep its keys in one keychain.
+    final keyFile = MemoryKeyFile();
+    BakSyncer.keyForTest = (_) => SyncKey.of(keyFile);
     checkpoints.clear();
     current = null;
     await checkpoint.remove();
@@ -62,6 +67,8 @@ void main() {
   });
 
   tearDown(() async {
+    BakSyncer.keyForTest = null;
+    SyncKey.resetForTest();
     SecureProp.legacyApart = null;
     await _leave();
     await PrefProps.syncAppSettings.set(false);
@@ -244,21 +251,6 @@ void main() {
     await become(desktop);
     await sync();
     expect(Stores.server.fetch().map((s) => s.id).toSet(), {'s1', 's2'});
-  });
-
-  test('a password set on another device forgets what the old one sealed', () async {
-    await seedPhone();
-    await sync();
-    const names = PrefProp<String>('lkc_theme_blobs');
-    await names.set('{"theme":"blob-1.age"}');
-    await sync();
-    expect(names.get(), isNotNull, reason: 'same password');
-
-    // What iCloud Keychain does when another device sets one.
-    await SecureStoreProps.bakPwd.write('new-password');
-    SecureProp.resetRateLimits();
-    await sync();
-    expect(names.get(), isNull);
   });
 
   test('a merged setting reaches what is showing it', () async {

@@ -56,11 +56,9 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
 - **Unlocking with Face ID, Touch ID or a fingerprint**, and on Android
   **Run in background** (keeps connections alive; also allow notifications and
   exempt the app from battery optimisation): **Settings → App → General**.
-- **Backups**: the Backup page — a file, WebDAV, iCloud, a GitHub Gist, or one
-  of your servers' Monitors (the Monitor must be recent enough to list
-  `backup` in its features). A backup has the servers with their SSH passwords, private keys,
+- **Backups**: the Backup page — a file, WebDAV or iCloud. A backup has the servers with their SSH passwords, private keys,
   snippets, remote desktop profiles with their passwords, settings and the Agent's settings, encrypted or
-  not; sudo passwords, API keys, MCP headers, the WebDAV and Gist settings and key passphrases only when
+  not; sudo passwords, API keys, MCP headers, the WebDAV settings and key passphrases only when
   encrypted. Chats are not in it. **Synced
   data** on that page switches each kind of data in or out of sync; fonts,
   images, skills and benchmarks sync only through iCloud, WebDAV and LK Cloud.
@@ -70,7 +68,7 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
   changes. Update every device. Every device that syncs uses the same backup
   password; when the backup page says the synced data uses a different one,
   enter the others' password (after a change on one device, enter the new
-  one on the rest).
+  one on the rest); until then that device syncs nothing.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.
