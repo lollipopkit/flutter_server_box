@@ -5,8 +5,6 @@ mixin _SshStatus on _ScriptStatus {
   PersistentShell? _persistentShell;
   bool _usePersistentShellForStatus = true;
 
-  String get _sshSessionId => 'ssh_${state.spi.id}';
-
   /// The failure ritual every SSH branch repeated: count the attempt against
   /// the retry limiter, record the error on the status, drop to `failed`, and
   /// mark the terminal session dead. Nine copies of it made the actual control
@@ -43,7 +41,7 @@ mixin _SshStatus on _ScriptStatus {
       closeClient: closeClient,
     );
     TermSessionManager.updateStatus(
-      _sshSessionId,
+      _statusSessionId,
       TermSessionStatus.disconnected,
     );
     Loggers.app.warning('SSH ${state.spi.name}: ${err.message}', e ?? err, stack);
@@ -74,7 +72,7 @@ mixin _SshStatus on _ScriptStatus {
       updateConnection(ServerConn.connecting);
       if (!await _connectSsh(spi, interactive: interactive, operation: operation)) return;
       updateConnection(ServerConn.connected);
-      TermSessionManager.updateStatus(_sshSessionId, TermSessionStatus.connected);
+      TermSessionManager.updateStatus(_statusSessionId, TermSessionStatus.connected);
       if (!await _installScriptSsh(spi, operation: operation)) return;
     }
 
@@ -147,15 +145,15 @@ mixin _SshStatus on _ScriptStatus {
       if (!_isRefreshCurrent(operation, spi)) return false;
 
       TermSessionManager.add(
-        id: _sshSessionId,
+        id: _statusSessionId,
         title: spi.name,
         subtitle: spi.oldId,
+        serverId: spi.id,
         startTimeMs: startedAt.millisecondsSinceEpoch,
         disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
         status: TermSessionStatus.connecting,
-        setAsActive: false,
+        hasTerminal: false,
       );
-      TermSessionManager.setActive(_sshSessionId, hasTerminal: false);
       return true;
     } catch (e) {
       if (!_isRefreshCurrent(operation, spi)) return false;
@@ -185,7 +183,7 @@ mixin _SshStatus on _ScriptStatus {
         closeClient: true,
       );
       // Removed, not just marked dead: there is no session to reconnect to
-      TermSessionManager.remove(_sshSessionId);
+      TermSessionManager.remove(_statusSessionId);
       Loggers.app.warning('Connect to ${spi.name} failed', e);
       return false;
     }
@@ -387,7 +385,7 @@ mixin _SshStatus on _ScriptStatus {
         updateConnection(ServerConn.connected);
       }
       TermSessionManager.updateStatus(
-        _sshSessionId,
+        _statusSessionId,
         TermSessionStatus.connected,
       );
       return null;

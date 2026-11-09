@@ -41,4 +41,14 @@
     <string name="channel_transfers">Передача файлов</string>
     <string name="incoming_failed">Не удалось принять файлы</string>
     <string name="shortcut_server_gone">Сервер удалён</string>
+    <string name="notification_disconnect_all">Отключить все</string>
+    <string name="session_connected">Подключено</string>
+    <string name="session_connecting">Подключение</string>
+    <string name="session_disconnected">Отключено</string>
+    <plurals name="notification_more">
+        <item quantity="one">…и ещё %d</item>
+        <item quantity="few">…и ещё %d</item>
+        <item quantity="many">…и ещё %d</item>
+        <item quantity="other">…и ещё %d</item>
+    </plurals>
 </resources>

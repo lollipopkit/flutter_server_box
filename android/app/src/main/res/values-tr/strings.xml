@@ -38,4 +38,11 @@
     <string name="channel_transfers">Dosya aktarımları</string>
     <string name="incoming_failed">Paylaşılan dosyalar alınamadı</string>
     <string name="shortcut_server_gone">Sunucu kaldırıldı</string>
+    <string name="notification_disconnect_all">Tümünün bağlantısını kes</string>
+    <string name="session_connected">Bağlandı</string>
+    <string name="session_connecting">Bağlanıyor</string>
+    <string name="session_disconnected">Bağlantı kesildi</string>
+    <plurals name="notification_more">
+        <item quantity="other">…ve %d tane daha</item>
+    </plurals>
 </resources>

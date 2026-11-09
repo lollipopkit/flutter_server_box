@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
@@ -28,6 +29,10 @@ class TermSessionInfo {
   final String id;
   final String title; // Usually the server name.
   final String subtitle; // Usually `user@host:port`.
+
+  /// The server the session is on; null for this device. Sessions on one
+  /// server are shown as one.
+  final String? serverId;
   final int startTimeMs;
   final TermSessionStatus status;
 
@@ -40,6 +45,7 @@ class TermSessionInfo {
     required this.id,
     required this.title,
     required this.subtitle,
+    this.serverId,
     required this.startTimeMs,
     required this.status,
     this.programState,
@@ -53,6 +59,7 @@ class TermSessionInfo {
     id: id,
     title: title,
     subtitle: subtitle,
+    serverId: serverId,
     startTimeMs: startTimeMs,
     status: status ?? this.status,
     programState: program == null ? programState : program.$1,
@@ -84,8 +91,13 @@ final class TermSessionRegistry {
   /// The session on screen, for the iOS Live Activity.
   String? get activeId => _activeId;
 
-  void add(TermSessionInfo info, VoidCallback disconnect, {bool setAsActive = false}) {
-    _entries[info.id] = TermSessionEntry(info, disconnect, hasTerminalUI: true);
+  void add(
+    TermSessionInfo info,
+    VoidCallback disconnect, {
+    bool setAsActive = false,
+    bool hasTerminal = true,
+  }) {
+    _entries[info.id] = TermSessionEntry(info, disconnect, hasTerminalUI: hasTerminal);
     if (setAsActive) _activeId = info.id;
   }
 
@@ -112,14 +124,59 @@ final class TermSessionRegistry {
     return true;
   }
 
-  /// The entry whose programs report the most urgent state, if any do.
-  TermSessionEntry? get mostUrgentProgram {
-    TermSessionEntry? best;
+  /// What the notification and the Live Activity list: one per server, its
+  /// status connection and its terminals merged. Each session of this device
+  /// is its own.
+  List<TermSessionInfo> get shown {
+    final byServer = <String, TermSessionInfo>{};
     for (final entry in _entries.values) {
-      final state = entry.info.programState;
-      if (state == null || entry.info.program == null) continue;
-      final bestState = best?.info.programState;
-      if (bestState == null || state.index < bestState.index) best = entry;
+      final info = entry.info;
+      final key = info.serverId ?? info.id;
+      final seen = byServer[key];
+      byServer[key] = seen == null ? info : _merge(seen, info);
+    }
+    return byServer.values.toList();
+  }
+
+  static TermSessionInfo _merge(TermSessionInfo a, TermSessionInfo b) {
+    final (programState, program) = _moreUrgent(a, b)
+        ? (a.programState, a.program)
+        : (b.programState, b.program);
+    return TermSessionInfo(
+      id: a.id,
+      title: a.title,
+      subtitle: a.subtitle,
+      serverId: a.serverId,
+      startTimeMs: math.min(a.startTimeMs, b.startTimeMs),
+      // Connected if any is: the server is reachable.
+      status: _statusRank(a.status) <= _statusRank(b.status) ? a.status : b.status,
+      programState: programState,
+      program: program,
+    );
+  }
+
+  static int _statusRank(TermSessionStatus status) => switch (status) {
+    TermSessionStatus.connected => 0,
+    TermSessionStatus.connecting => 1,
+    TermSessionStatus.disconnected => 2,
+  };
+
+  /// Whether [a]'s program report is at least as urgent as [b]'s.
+  static bool _moreUrgent(TermSessionInfo a, TermSessionInfo b) {
+    final stateA = a.program == null ? null : a.programState;
+    final stateB = b.program == null ? null : b.programState;
+    if (stateB == null) return true;
+    if (stateA == null) return false;
+    return stateA.index <= stateB.index;
+  }
+
+  /// Of [shown], the one whose programs report the most urgent state, if any
+  /// do.
+  TermSessionInfo? get mostUrgentProgram {
+    TermSessionInfo? best;
+    for (final info in shown) {
+      if (info.program == null) continue;
+      if (best == null || !_moreUrgent(best, info)) best = info;
     }
     return best;
   }
@@ -193,10 +250,6 @@ abstract final class TermSessionManager {
   static Future<void> init() async {
     if (isAndroid) {
       MethodChans.registerHandler(
-        (id) async {
-          _entries[id]?.disconnect();
-        },
-        // Stop all connections when notification "Stop All" is pressed
         onStopAll: stopAllConnections,
         // The first attempt to start the service raised the permission prompt
         // and was refused by the same call, because asking is asynchronous.
@@ -247,10 +300,17 @@ abstract final class TermSessionManager {
   /// ends that.
   static var _stoodDown = false;
 
+  /// The id of [serverId]'s status connection, whichever transport it uses.
+  static String statusSessionId(String serverId) => 'server_$serverId';
+
+  /// Whether session [id] is registered.
+  static bool contains(String id) => _entries.containsKey(id);
+
   /// Add a session record and push update to Android.
   static void add({
     required String id,
     required String title,
+    String? serverId,
 
     /// What the title is not enough to tell apart — `user@ip:port` for a
     /// server. Empty where there is nothing to add, which is what a terminal
@@ -260,15 +320,17 @@ abstract final class TermSessionManager {
     required VoidCallback disconnect,
     TermSessionStatus status = TermSessionStatus.connecting,
     bool setAsActive = false,
+    bool hasTerminal = true,
   }) {
     final info = TermSessionInfo(
       id: id,
       title: title,
       subtitle: subtitle,
+      serverId: serverId,
       startTimeMs: startTimeMs,
       status: status,
     );
-    _registry.add(info, disconnect, setAsActive: setAsActive);
+    _registry.add(info, disconnect, setAsActive: setAsActive, hasTerminal: hasTerminal);
     _sync();
   }
 
@@ -397,7 +459,7 @@ abstract final class TermSessionManager {
         case AndroidSessionServiceAction.update:
           await MethodChans.updateSessions(
             jsonEncode({
-              'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
+              'sessions': _registry.shown.map((e) => e.toJson()).toList(),
               // Tells the service that an empty list is not the same as
               // "nothing to do" while background execution is wanted.
               'keepAlive': wanted,
@@ -434,16 +496,17 @@ abstract final class TermSessionManager {
   static Future<void> _updateLiveActivity() async {
     if (!isIOS || _entries.isEmpty) return;
 
-    final connectionCount = _entries.length;
+    final shown = _registry.shown;
+    final connectionCount = shown.length;
+    // The one on screen, for whether a terminal is.
+    final entry = _entries[_activeId] ?? _entries.values.first;
 
     if (connectionCount == 1) {
       // Single connection: show hostname
-      final id = _activeId ?? _entries.keys.first;
-      final entry = _entries[id];
-      if (entry == null) return;
-      final program = entry.info.program;
+      final info = shown.single;
+      final program = info.program;
       final payload = jsonEncode({
-        ...entry.info.toJson(),
+        ...info.toJson(),
         // In place of the address: what the session is doing is the more
         // useful line on a lock screen, and the widget has one.
         'subtitle': ?program,
@@ -463,17 +526,14 @@ abstract final class TermSessionManager {
       // The title here is ignored: `LiveActivityManager` localizes it, so that
       // it follows the language the widget renders in rather than the one the
       // app was in when this ran.
-      final id = _activeId ?? _entries.keys.first;
-      final entry = _entries[id];
-      if (entry == null) return;
       final payload = jsonEncode({
         'id': 'multi_connections',
         'title': '$connectionCount',
         'subtitle': switch (_registry.mostUrgentProgram) {
-          final urgent? => '${urgent.info.title}: ${urgent.info.program}',
-          null => _entries.values.map((e) => e.info.title).join(' · '),
+          final urgent? => '${urgent.title}: ${urgent.program}',
+          null => shown.map((e) => e.title).join(' · '),
         },
-        'startTimeMs': entry.info.startTimeMs,
+        'startTimeMs': shown.map((e) => e.startTimeMs).reduce(math.min),
         'status': TermSessionStatus.connected.toString(),
         'hasTerminal': entry.hasTerminalUI,
         'connectionCount': connectionCount,

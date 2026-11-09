@@ -113,7 +113,11 @@ final class TmuxControlPaneOutput {
   final TmuxPaneId paneId;
   final List<int> data;
 
-  const TmuxControlPaneOutput(this.paneId, this.data);
+  /// The pane's screen and history captured and written over the terminal,
+  /// starting with a reset, rather than its own output.
+  final bool redraw;
+
+  const TmuxControlPaneOutput(this.paneId, this.data, {this.redraw = false});
 }
 
 final class TmuxControlCommandException implements Exception {

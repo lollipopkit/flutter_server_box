@@ -38,4 +38,11 @@
     <string name="channel_transfers">Transfer file</string>
     <string name="incoming_failed">Tidak dapat menerima file yang dibagikan</string>
     <string name="shortcut_server_gone">Server dihapus</string>
+    <string name="notification_disconnect_all">Putuskan semua</string>
+    <string name="session_connected">Terhubung</string>
+    <string name="session_connecting">Menghubungkan</string>
+    <string name="session_disconnected">Terputus</string>
+    <plurals name="notification_more">
+        <item quantity="other">…dan %d lainnya</item>
+    </plurals>
 </resources>

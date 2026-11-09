@@ -33,7 +33,6 @@ import tech.lolli.toolbox.widget.WidgetStore
 class MainActivity: FlutterFragmentActivity() {
     private lateinit var channel: MethodChannel
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
-    private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
     private val INTERNAL_BROADCAST_PERMISSION = "tech.lolli.toolbox.permission.INTERNAL_BROADCAST"
     private var stopAllReceiver: BroadcastReceiver? = null
@@ -425,8 +424,6 @@ class MainActivity: FlutterFragmentActivity() {
             onFailed = { incomingFailed() },
         )
 
-        // Handle intent if launched via notification action
-        handleActionIntent(intent)
         if (!launchIntentIsStale) {
             acceptLink(intent)
             acceptIncoming(intent)
@@ -667,7 +664,6 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleActionIntent(intent)
         acceptLink(intent)
         acceptIncoming(intent)
     }
@@ -688,22 +684,6 @@ class MainActivity: FlutterFragmentActivity() {
         if (!data.scheme.equals(LINK_SCHEME, ignoreCase = true)) return
         pendingLink = data.toString()
         linkChannel?.invokeMethod("opened", null)
-    }
-
-    private fun handleActionIntent(intent: Intent?) {
-        if (intent == null) return
-        when (intent.action) {
-            ACTION_DISCONNECT_SESSION -> {
-                val sessionId = intent.getStringExtra("session_id")
-                if (sessionId != null && ::channel.isInitialized) {
-                    try {
-                        channel.invokeMethod("disconnectSession", mapOf("id" to sessionId))
-                    } catch (e: Exception) {
-                        android.util.Log.e("MainActivity", "Failed to invoke disconnect: ${e.message}")
-                    }
-                }
-            }
-        }
     }
 
     private fun setupStopAllReceiver() {

@@ -39,4 +39,12 @@
     <string name="channel_transfers">Transferências de arquivos</string>
     <string name="incoming_failed">Não foi possível receber os arquivos compartilhados</string>
     <string name="shortcut_server_gone">Servidor removido</string>
+    <string name="notification_disconnect_all">Desconectar tudo</string>
+    <string name="session_connected">Conectado</string>
+    <string name="session_connecting">Conectando</string>
+    <string name="session_disconnected">Desconectado</string>
+    <plurals name="notification_more">
+        <item quantity="one">…e mais %d</item>
+        <item quantity="other">…e mais %d</item>
+    </plurals>
 </resources>

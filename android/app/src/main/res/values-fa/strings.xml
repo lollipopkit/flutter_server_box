@@ -34,4 +34,12 @@
     <string name="channel_transfers">انتقال فایل‌ها</string>
     <string name="incoming_failed">فایل‌های اشتراک‌گذاشته‌شده دریافت نشد</string>
     <string name="shortcut_server_gone">سرور حذف شده است</string>
+    <string name="notification_disconnect_all">قطع اتصال همه</string>
+    <string name="session_connected">متصل</string>
+    <string name="session_connecting">در حال اتصال</string>
+    <string name="session_disconnected">قطع‌شده</string>
+    <plurals name="notification_more">
+        <item quantity="one">…و %d مورد دیگر</item>
+        <item quantity="other">…و %d مورد دیگر</item>
+    </plurals>
 </resources>

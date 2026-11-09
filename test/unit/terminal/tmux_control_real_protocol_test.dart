@@ -138,6 +138,108 @@ void main() {
     }
   });
 
+  for (final (name, command, expected) in [
+    (
+      'at the bottom',
+      'seq 1 200; exec cat',
+      [for (var i = 1; i <= 200; i++) '$i'],
+    ),
+    (
+      'above it, after a clear',
+      r'seq 1 200; printf "\033[H\033[2J"; seq 301 303; exec cat',
+      [for (var i = 1; i <= 200; i++) '$i', '301', '302', '303'],
+    ),
+  ]) {
+    test('the replay after a height change keeps the history, cursor $name',
+        () async {
+      if (Platform.isWindows) {
+        markTestSkipped('the real-PTY tmux harness is POSIX-only');
+        return;
+      }
+      try {
+        if (Process.runSync('tmux', ['-V']).exitCode != 0) {
+          markTestSkipped('tmux is not installed');
+          return;
+        }
+      } on ProcessException {
+        markTestSkipped('tmux is not installed');
+        return;
+      }
+
+      final tempDir = await Directory.systemTemp.createTemp(
+        'server-box-tmux-cc-',
+      );
+      final socketName =
+          'sb${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+      final pty = await _startTmuxControlProcess(
+        socketName,
+        tempDir.path,
+        paneCommand: ['sh', '-c', command],
+      );
+      final shell = _PtyShellSession(pty);
+      final client = TmuxControlClient(shell);
+      final terminal = Terminal(maxLines: 1000)..resize(80, 24);
+      var replays = 0;
+      StreamSubscription<void>? subscription;
+
+      List<String> rows() => [
+        for (var i = 0; i < terminal.buffer.lines.length; i++)
+          terminal.buffer.lines[i].toString().trim(),
+      ].where((row) => row.isNotEmpty).toList();
+
+      // The keyboard opening or closing: the terminal resizes itself first,
+      // then tmux's window, and the layout change replays the pane.
+      Future<void> resize(int height) async {
+        final before = replays;
+        terminal.resize(80, height);
+        client.resizeWindow(80, height);
+        for (var i = 0; i < 50 && replays == before; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+
+      try {
+        subscription = client.paneOutput.listen((event) {
+          if (event.paneId != client.snapshot?.activePaneId) return;
+          if (event.data.length >= 2 &&
+              event.data[0] == 0x1b &&
+              event.data[1] == 0x63) {
+            replays++;
+          }
+          terminal.write(utf8.decode(event.data, allowMalformed: true));
+        });
+        await client.initialize().timeout(const Duration(seconds: 10));
+        client.resizeWindow(80, 24);
+        for (var i = 0; i < 50 && rows().length < expected.length; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+        await client.refreshState(captureActivePane: true);
+        expect(rows(), expected);
+
+        await resize(12);
+        expect(rows(), expected);
+        await resize(24);
+        expect(rows(), expected);
+      } finally {
+        await subscription?.cancel();
+        shell.close();
+        await shell.done.timeout(const Duration(seconds: 5));
+        await client.dispose();
+        await Process.run(
+          'tmux',
+          ['-L', socketName, 'kill-server'],
+          environment: {'TMUX_TMPDIR': tempDir.path},
+        );
+        try {
+          await tempDir.delete(recursive: true);
+        } on FileSystemException {
+          // tmux can remove its socket directory concurrently with the test.
+        }
+      }
+    });
+  }
+
   test('closing the last window exits the control client cleanly', () async {
     if (Platform.isWindows) {
       markTestSkipped('the real-PTY tmux harness is POSIX-only');
@@ -401,6 +503,16 @@ void main() {
       await client.refreshState();
       await until(() => status.pane(hidden) == null);
       expect(status.state, ProgramState.working);
+
+      // Only the replay of another pane moves the view to the bottom.
+      var switches = 0;
+      terminalSession.onSwitched = () => switches++;
+      final split = await client.runRequired("split-window -d -P -F '#{pane_id}' 'cat'");
+      final other = TmuxPaneId.parse(split.output.trim());
+      await client.selectPane(other);
+      await until(() => switches == 1);
+      await client.selectPane(shown);
+      await until(() => switches == 2);
     } finally {
       terminalSession.dispose();
       await client.dispose();

@@ -38,4 +38,11 @@
     <string name="channel_transfers">文件传输</string>
     <string name="incoming_failed">无法接收分享的文件</string>
     <string name="shortcut_server_gone">服务器已删除</string>
+    <string name="notification_disconnect_all">全部断开</string>
+    <string name="session_connected">已连接</string>
+    <string name="session_connecting">正在连接</string>
+    <string name="session_disconnected">已断开连接</string>
+    <plurals name="notification_more">
+        <item quantity="other">…还有 %d 个</item>
+    </plurals>
 </resources>

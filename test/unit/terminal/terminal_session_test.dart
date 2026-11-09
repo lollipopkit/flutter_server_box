@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/terminal/redrawing_shell.dart';
 import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
 
@@ -57,6 +58,26 @@ class _FakeShell implements ShellSession {
   void finish() {
     if (!_done.isCompleted) _done.complete();
   }
+}
+
+/// A shell that marks some of its output as redraws, as tmux's replays are.
+class _RedrawingShell extends _FakeShell implements RedrawingShell {
+  final _output = StreamController<ShellOutput>();
+
+  @override
+  Stream<ShellOutput> get output => _output.stream;
+
+  @override
+  void emitBytes(List<int> data) =>
+      _output.add(ShellOutput(Uint8List.fromList(data)));
+
+  void emitRedraw(String data, {bool switched = false}) => _output.add(
+    ShellOutput(
+      Uint8List.fromList(utf8.encode(data)),
+      redraw: true,
+      switched: switched,
+    ),
+  );
 }
 
 /// Long enough for the session's own output flush, which batches a frame's
@@ -182,6 +203,66 @@ void main() {
 
       expect(session.terminal.buffer.currentLine.toString().trim(), 'fresh');
       expect(session.outputTail, 'fresh');
+      session.dispose();
+    });
+
+    test('a redraw reaches the terminal whole, after a character cut off', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _RedrawingShell();
+      session.bindForeground(shell);
+
+      // The first two bytes of 中, then a replay longer than the output cap.
+      shell.emitBytes([0xe4, 0xb8]);
+      final rows = [for (var i = 0; i < 600; i++) '${'$i'.padLeft(4)}${'x' * 60}'];
+      shell.emitRedraw('\x1bcfirst\r\n${rows.join('\r\n')}\r\nlast');
+      await flushed();
+
+      final lines = [
+        for (var i = 0; i < session.terminal.buffer.lines.length; i++)
+          session.terminal.buffer.lines[i].toString().trim(),
+      ].where((line) => line.isNotEmpty).toList();
+      expect(lines.first, 'first');
+      expect(lines.last, 'last');
+      expect(lines, hasLength(602));
+      expect(lines.join(), isNot(contains('\uFFFD')));
+      session.dispose();
+    });
+
+    test('only a redraw of another pane says the view switched', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _RedrawingShell();
+      var switches = 0;
+      session.onSwitched = () => switches++;
+      session.bindForeground(shell);
+
+      shell
+        ..emitRedraw('\x1bcsame pane')
+        ..emitBytes(utf8.encode('output'));
+      await flushed();
+      expect(switches, 0);
+
+      shell.emitRedraw('\x1bcother pane', switched: true);
+      await flushed();
+      expect(switches, 1);
+      session.dispose();
+    });
+
+    test('a new shell starts on the main screen in the default colors', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final old = _FakeShell();
+      session.bindForeground(old);
+      old.emit('\x1b[?1049h\x1b[31m\x1b[?2004hvim');
+      await flushed();
+      expect(session.terminal.isUsingAltBuffer, isTrue);
+
+      session.bindForeground(_FakeShell()..emit('Last login'));
+      await flushed();
+
+      expect(session.terminal.isUsingAltBuffer, isFalse);
+      expect(session.terminal.bracketedPasteMode, isFalse);
+      final line = session.terminal.buffer.lines[0];
+      expect(line.toString().trim(), 'Last login');
+      expect(line.getForeground(0), 0);
       session.dispose();
     });
 

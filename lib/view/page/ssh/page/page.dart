@@ -279,6 +279,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   Terminal get _terminal => _sess.terminal;
 
   late final TerminalController _terminalController = TerminalController();
+  final _terminalScroll = ScrollController();
   final List<List<VirtualKey>> _virtKeysList = [];
 
   /// The keys this session cannot use — see [VirtualKeySupport.worksOn]. Drawn
@@ -529,6 +530,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _stopAiCommands();
     unawaited(_tmuxPageController.dispose());
     _terminalController.dispose();
+    _terminalScroll.dispose();
     _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
     // The reconnect's own `finally` normally does this, but it only runs when
@@ -537,6 +539,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     // a page that no longer exists is one nothing else can close.
     _reconnectCancelled = true;
     _dismissReconnectingDialog(deferred: true);
+    if (session.onSwitched == _followBottom) session.onSwitched = null;
     // A page opened on its own made its session, and nothing else can reach
     // it once the page is gone: its shell goes with it, and so does its
     // connection when the session opened that — a console's websocket, or an
@@ -624,6 +627,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         : ref.readPresentServer(serverId);
     _sess.adopt(serverState?.client, granted: serverState?.agentAccess);
     _sess.onForegroundDone = _onForegroundSessionDone;
+    _sess.onSwitched = _followBottom;
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();
@@ -634,6 +638,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       id: _sessionId,
       title: widget.args.source.label,
       subtitle: widget.args.spi?.oldId ?? '',
+      // Each shell on this device is its own session.
+      serverId: switch (widget.args.spi) {
+        final spi? when !spi.local => spi.id,
+        _ => null,
+      },
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,
@@ -750,6 +759,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     return child;
   }
 
+  /// Back to the bottom, where the view follows what arrives.
+  void _followBottom() {
+    if (!_terminalScroll.hasClients) return;
+    final position = _terminalScroll.position;
+    _terminalScroll.jumpTo(position.maxScrollExtent);
+  }
+
   /// What the tab shows while the terminal is in the floating window.
   ///
   /// Not left blank: this tab is still open, still named after the server, and
@@ -856,6 +872,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           _terminal,
           key: _termKey,
           controller: _terminalController,
+          scrollController: _terminalScroll,
           keyboardType: TextInputType.text,
           // The convention every terminal on every platform keeps: copy what
           // is selected, and paste when nothing is. `_onClipboardAction` is

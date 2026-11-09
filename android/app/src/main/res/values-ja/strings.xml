@@ -38,4 +38,11 @@
     <string name="channel_transfers">ファイル転送</string>
     <string name="incoming_failed">共有されたファイルを受け取れませんでした</string>
     <string name="shortcut_server_gone">サーバーは削除されました</string>
+    <string name="notification_disconnect_all">すべて切断</string>
+    <string name="session_connected">接続済み</string>
+    <string name="session_connecting">接続中</string>
+    <string name="session_disconnected">切断</string>
+    <plurals name="notification_more">
+        <item quantity="other">…他 %d 件</item>
+    </plurals>
 </resources>

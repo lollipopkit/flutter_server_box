@@ -90,8 +90,13 @@ class AppNavBar extends StatelessWidget {
       elevation: barTheme.elevation ?? 3,
       shadowColor: barTheme.shadowColor ?? Colors.transparent,
       surfaceTintColor: barTheme.surfaceTintColor ?? Colors.transparent,
+      // The home indicator's room kept under the keyboard too: `padding` gives
+      // it back only as the keyboard's last stretch goes down, so the page
+      // above, sized by the larger of the two, grew past its height and then
+      // shrank back by it.
       child: SafeArea(
         top: false,
+        maintainBottomViewPadding: true,
         child: SizedBox(
           height: _height(context),
           child: Row(
