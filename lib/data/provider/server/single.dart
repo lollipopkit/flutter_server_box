@@ -135,6 +135,9 @@ abstract class ServerState with _$ServerState {
 /// What the status mixins (`single_*.dart`) take from [ServerNotifier]: the
 /// connection state and the generation every refresh checks against.
 mixin _ServerCore on _$ServerNotifier {
+  /// The status connection's entry in [TermSessionManager].
+  String get _statusSessionId => TermSessionManager.statusSessionId(state.spi.id);
+
   int get _operationGeneration;
   Duration get _timeout;
   bool _isRefreshCurrent(int operation, Spi spi);

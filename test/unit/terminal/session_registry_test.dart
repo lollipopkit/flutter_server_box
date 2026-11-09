@@ -38,10 +38,10 @@ void main() {
     registry
       ..updateProgram('a', ProgramState.values.last, 'later')
       ..updateProgram('b', ProgramState.values.first, null);
-    expect(registry.mostUrgentProgram?.info.id, 'a', reason: 'b says nothing');
+    expect(registry.mostUrgentProgram?.id, 'a', reason: 'b says nothing');
 
     registry.updateProgram('b', ProgramState.values.first, 'now');
-    expect(registry.mostUrgentProgram?.info.id, 'b');
+    expect(registry.mostUrgentProgram?.id, 'b');
   });
 
   test('removing the session on screen puts the first one left there', () {
@@ -70,5 +70,34 @@ void main() {
     registry.clear();
     expect(registry.entries, isEmpty);
     expect(registry.activeId, isNull);
+  });
+
+  test('the sessions on one server are shown as one', () {
+    TermSessionInfo on(String id, String? serverId, TermSessionStatus status, int start) =>
+        TermSessionInfo(
+          id: id,
+          title: 'srv-${serverId ?? id}',
+          subtitle: '',
+          serverId: serverId,
+          startTimeMs: start,
+          status: status,
+        );
+    registry
+      ..clear()
+      ..add(on('status', 'hk', TermSessionStatus.disconnected, 5), () {})
+      ..add(on('term', 'hk', TermSessionStatus.connected, 9), () {})
+      ..add(on('wsl', 'wsl', TermSessionStatus.connected, 1), () {})
+      ..add(on('local1', null, TermSessionStatus.connected, 2), () {})
+      ..add(on('local2', null, TermSessionStatus.connected, 3), () {})
+      ..updateProgram('status', ProgramState.values.last, 'idle')
+      ..updateProgram('term', ProgramState.values.first, 'build');
+
+    final shown = registry.shown;
+    expect(shown.map((e) => e.title), ['srv-hk', 'srv-wsl', 'srv-local1', 'srv-local2']);
+    final hk = shown.first;
+    expect(hk.status, TermSessionStatus.connected, reason: 'reachable through one');
+    expect(hk.startTimeMs, 5);
+    expect(hk.program, 'build', reason: 'the more urgent report');
+    expect(registry.mostUrgentProgram?.title, 'srv-hk', reason: 'named as shown');
   });
 }

@@ -57,5 +57,51 @@ void main() {
         'a' * (TerminalOutputBuffer.maxBufferedChars - 2) + '😀',
       );
     });
+
+    test('takes a redraw whole, past the cap, after the output before it', () {
+      final redraw = '\x1bc${'r' * (TerminalOutputBuffer.maxBufferedChars * 3)}';
+      final buffer = TerminalOutputBuffer()
+        ..add('before')
+        ..addRedraw(redraw)
+        ..add('after');
+
+      expect(buffer.take(100), 'before');
+      expect(buffer.take(10), redraw);
+      expect(buffer.take(10), 'after');
+      expect(buffer.hasPending, isFalse);
+      expect(buffer.droppedChars, 0);
+    });
+
+    test('output past the cap never drops a redraw', () {
+      final buffer = TerminalOutputBuffer()
+        ..addRedraw('\x1bcscreen')
+        ..add('a' * TerminalOutputBuffer.maxBufferedChars)
+        ..add('tail');
+
+      expect(buffer.take(10), '\x1bcscreen');
+      expect(buffer.droppedChars, 'tail'.length);
+      expect(buffer.take(TerminalOutputBuffer.maxBufferedChars * 2), endsWith('tail'));
+    });
+
+    test('a later redraw replaces one still waiting, not the output between', () {
+      final buffer = TerminalOutputBuffer()
+        ..addRedraw('\x1bcfirst')
+        ..add('\x1b]0;title\x07')
+        ..addRedraw('\x1bcsecond');
+
+      expect(buffer.take(100), '\x1b]0;title\x07');
+      expect(buffer.take(100), '\x1bcsecond');
+      expect(buffer.hasPending, isFalse);
+      expect(buffer.pendingChars, 0);
+    });
+
+    test('takes nothing when asked for nothing, a redraw neither', () {
+      final buffer = TerminalOutputBuffer()..addRedraw('\x1bcscreen');
+
+      expect(buffer.take(0), '');
+      buffer.clear();
+      expect(buffer.hasPending, isFalse);
+      expect(buffer.pendingChars, 0);
+    });
   });
 }

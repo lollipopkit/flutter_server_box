@@ -648,7 +648,9 @@ final class TmuxControlClient {
     final bytes = utf8.encode(
       '\x1bc${mode.restorePrefix}$captured$restoreCursor',
     );
-    _paneOutputController.add(TmuxControlPaneOutput(paneId, bytes));
+    _paneOutputController.add(
+      TmuxControlPaneOutput(paneId, bytes, redraw: true),
+    );
     if (pause) _resumePaneOutput(paneId);
   }
 

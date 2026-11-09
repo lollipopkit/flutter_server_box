@@ -41,4 +41,8 @@
     <string name="channel_transfers">Передавання файлів</string>
     <string name="incoming_failed">Не вдалося прийняти файли</string>
     <string name="shortcut_server_gone">Сервер видалено</string>
+    <string name="notification_disconnect_all">Відключити всі</string>
+    <string name="session_connected">Підключено</string>
+    <string name="session_connecting">Підключення</string>
+    <string name="session_disconnected">Відключено</string>
 </resources>

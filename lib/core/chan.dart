@@ -602,25 +602,16 @@ abstract final class MethodChans {
 
   /// Register a handler for native -> Flutter callbacks.
   /// Currently handles:
-  /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
   /// - `notificationPermissionGranted` with no arguments
   /// - `activityPaused` / `activityResumed` with no arguments
-  static void registerHandler(
-    Future<void> Function(String id) onDisconnect, {
+  static void registerHandler({
     VoidCallback? onStopAll,
     VoidCallback? onNotificationPermissionGranted,
     void Function(bool backgrounded)? onBackgrounded,
   }) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case 'disconnectSession':
-          final args = call.arguments;
-          final id = args is Map ? args['id'] as String? : args as String?;
-          if (id != null && id.isNotEmpty) {
-            await onDisconnect(id);
-          }
-          return null;
         case 'stopAllConnections':
           onStopAll?.call();
           return null;

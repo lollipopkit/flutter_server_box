@@ -634,6 +634,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       id: _sessionId,
       title: widget.args.source.label,
       subtitle: widget.args.spi?.oldId ?? '',
+      // Each shell on this device is its own session.
+      serverId: switch (widget.args.spi) {
+        final spi? when !spi.local => spi.id,
+        _ => null,
+      },
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,

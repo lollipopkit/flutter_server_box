@@ -39,4 +39,8 @@
     <string name="channel_transfers">Trasferimenti di file</string>
     <string name="incoming_failed">Impossibile ricevere i file condivisi</string>
     <string name="shortcut_server_gone">Server rimosso</string>
+    <string name="notification_disconnect_all">Disconnetti tutti</string>
+    <string name="session_connected">Connesso</string>
+    <string name="session_connecting">Connessione in corso</string>
+    <string name="session_disconnected">Disconnesso</string>
 </resources>

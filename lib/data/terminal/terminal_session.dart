@@ -19,6 +19,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/terminal/redrawing_shell.dart';
 import 'package:server_box/data/terminal/terminal_output_buffer.dart';
 import 'package:server_box/data/terminal/terminal_platform.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
@@ -509,15 +510,20 @@ class TerminalSession {
   /// Puts [session] on the screen: its bytes into the terminal, the terminal's
   /// keystrokes and size into it.
   void bindForeground(ShellSession session) {
+    // The new shell starts on a clear main screen, in the terminal's default
+    // colors and modes: the last one's, a tmux pane's included, are not its.
+    terminal.write('\x1b[?1049l');
+    terminal.altBuffer.clear();
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
+    terminal.write('\x1b[!p');
     _cancelOutputSubscriptions();
     // What the last shell printed and is not on screen yet belongs to the
     // screen just cleared: flushed after this, it would land on the new
     // shell's, and the tail would read it as the new shell's.
     _flushTimer?.cancel();
     _flushTimer = null;
-    _buffer.take(_buffer.pendingChars);
+    _buffer.clear();
     _tail = '';
 
     // Whatever ran in the terminal before has exited; a tmux pane has not.
@@ -554,8 +560,12 @@ class TerminalSession {
       }
     };
 
-    _listen(session.stdout);
-    _listen(session.stderr);
+    if (session case final RedrawingShell shell) {
+      _listen(shell.output);
+    } else {
+      _listen(session.stdout?.map(ShellOutput.new));
+      _listen(session.stderr?.map(ShellOutput.new));
+    }
 
     _foreground = session;
     unawaited(_awaitDone(session));
@@ -664,7 +674,7 @@ class TerminalSession {
 
   final _buffer = TerminalOutputBuffer();
   Timer? _flushTimer;
-  final List<StreamSubscription<String>> _subscriptions = [];
+  final List<StreamSubscription<ShellOutput>> _subscriptions = [];
   String _tail = '';
 
   /// The last of what the shell printed, as text.
@@ -735,18 +745,43 @@ class TerminalSession {
     }
   }
 
-  void _listen(Stream<Uint8List>? stream) {
+  void _listen(Stream<ShellOutput>? stream) {
     if (stream == null) return;
-    final subscription = stream
-        .cast<List<int>>()
-        .transform(const Utf8Decoder(allowMalformed: true))
-        .listen(
-          _queue,
-          onError: (Object error, StackTrace stack) {
-            Loggers.root.warning('Error in shell stream', error, stack);
-          },
-          cancelOnError: false,
-        );
+    final decoded = StringBuffer();
+    ByteConversionSink decoder() => const Utf8Decoder(
+      allowMalformed: true,
+    ).startChunkedConversion(StringConversionSink.fromStringSink(decoded));
+    var utf8Sink = decoder();
+    String take() {
+      final text = decoded.toString();
+      decoded.clear();
+      return text;
+    }
+
+    final subscription = stream.listen(
+      (chunk) {
+        // A character left unfinished before a redraw is one it erases.
+        if (chunk.redraw) utf8Sink = decoder();
+        utf8Sink.add(chunk.data);
+        final text = take();
+        if (chunk.redraw) {
+          _buffer.addRedraw(text);
+          _appendTail(text);
+          _scheduleFlush();
+        } else if (text.isNotEmpty) {
+          _queue(text);
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        Loggers.root.warning('Error in shell stream', error, stack);
+      },
+      onDone: () {
+        utf8Sink.close();
+        final text = take();
+        if (text.isNotEmpty) _queue(text);
+      },
+      cancelOnError: false,
+    );
     _subscriptions.add(subscription);
   }
 

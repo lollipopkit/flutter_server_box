@@ -29,13 +29,8 @@ class ForegroundService : Service() {
     private val chanId = "ForegroundServiceChannel"
     private val NOTIFICATION_ID = 1000
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
-    private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
 
     private var isFgStarted = false
-    private val postedIds = mutableSetOf<Int>()
-    // Stable mapping from session-id -> notification-id to avoid hash collisions
-    private val notificationIdMap = mutableMapOf<String, Int>()
-    private val nextNotificationId = java.util.concurrent.atomic.AtomicInteger(2001)
 
     private fun logError(message: String, error: Throwable? = null) {
         Log.e("ForegroundService", message, error)
@@ -234,18 +229,18 @@ class ForegroundService : Service() {
         val earliestStartTime = sessions.minOfOrNull { it.startWhen } ?: System.currentTimeMillis()
 
         val title = when (count) {
-            0 -> "Server Box"
+            0 -> getString(R.string.app_name)
             1 -> sessions.first().title
-            else -> "SSH sessions: $count active"
+            else -> resources.getQuantityString(R.plurals.tile_sessions, count, count)
         }
 
         val contentText = when (count) {
-            0 -> "Ready for connections"
+            0 -> getString(R.string.tile_no_sessions)
             1 -> {
                 val session = sessions.first()
-                "${session.subtitle} · ${session.line}"
+                listOf(session.subtitle, lineOf(session)).filter { it.isNotEmpty() }.joinToString(" · ")
             }
-            else -> "Multiple SSH connections active"
+            else -> sessions.joinToString(" · ") { it.title }
         }
 
         // For multiple sessions, show details in expanded view
@@ -278,7 +273,7 @@ class ForegroundService : Service() {
             .addAction(
                 Notification.Action.Builder(
                     Icon.createWithResource(this, android.R.drawable.ic_delete),
-                    "Stop All",
+                    getString(R.string.notification_disconnect_all),
                     stopPending
                 ).build()
             )
@@ -343,16 +338,8 @@ class ForegroundService : Service() {
 
         setSessionCount(sessions.size)
 
-        // Cancel any existing individual notifications (we only show merged notification now)
-        val toCancel = postedIds.toSet()
-        toCancel.forEach { nm.cancel(it) }
-        postedIds.clear()
-        notificationIdMap.clear()
-
-        // Create merged notification content
-        val summaryLines = sessions.map { "${it.title}: ${it.line}" }
-        val mergedNotification = createMergedNotification(sessions.size, summaryLines, sessions)
-        ensureForeground(mergedNotification)
+        val summaryLines = sessions.map { "${it.title}: ${lineOf(it)}" }
+        ensureForeground(createMergedNotification(sessions.size, summaryLines, sessions))
     }
 
     data class SessionItem(
@@ -363,9 +350,14 @@ class ForegroundService : Service() {
         val status: String,
         /** What the session's programs report (OSC 7501), when anything. */
         val program: String? = null,
-    ) {
-        /** The program's report over the connection state: it says more. */
-        val line: String get() = program ?: status
+    )
+
+    /** The program's report over the connection state: it says more. */
+    private fun lineOf(session: SessionItem): String = session.program ?: when (session.status.lowercase()) {
+        "connected" -> getString(R.string.session_connected)
+        "connecting" -> getString(R.string.session_connecting)
+        "disconnected" -> getString(R.string.session_disconnected)
+        else -> session.status
     }
 
     /**
@@ -388,12 +380,9 @@ class ForegroundService : Service() {
         try {
             val nm = getSystemService(NotificationManager::class.java)
             nm?.cancel(NOTIFICATION_ID)
-            postedIds.forEach { id -> nm?.cancel(id) }
         } catch (e: Exception) {
             logError("Error cancelling notifications", e)
         }
-        postedIds.clear()
-        notificationIdMap.clear()
         setSessionCount(0)
         stopSelf()
         Log.d("ForegroundService", "ForegroundService stopped")

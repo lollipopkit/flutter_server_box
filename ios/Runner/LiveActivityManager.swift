@@ -83,7 +83,7 @@ actor LiveActivityManager {
     private static func contentState(from p: Payload) -> TerminalAttributes.ContentState {
         let isMulti = (p.id == "multi_connections")
         let title = isMulti
-            ? String(format: NSLocalizedString("%d terminals", comment: "Title for several open terminals"), p.connectionCount ?? 1)
+            ? String(format: NSLocalizedString("%d sessions", comment: "Title for several open sessions"), p.connectionCount ?? 1)
             : p.title
         let subtitle = p.subtitle
         return TerminalAttributes.ContentState(

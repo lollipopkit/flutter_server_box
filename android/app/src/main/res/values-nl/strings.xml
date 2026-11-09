@@ -39,4 +39,8 @@
     <string name="channel_transfers">Bestandsoverdrachten</string>
     <string name="incoming_failed">Gedeelde bestanden konden niet worden ontvangen</string>
     <string name="shortcut_server_gone">Server verwijderd</string>
+    <string name="notification_disconnect_all">Alles verbreken</string>
+    <string name="session_connected">Verbonden</string>
+    <string name="session_connecting">Verbinden</string>
+    <string name="session_disconnected">Verbinding verbroken</string>
 </resources>

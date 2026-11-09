@@ -85,6 +85,7 @@ mixin _MonitorStatus on _ScriptStatus {
       if (!_isRefreshCurrent(operation, spi)) return;
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
+      _registerMonitorSession(spi, monitor);
     } catch (e, s) {
       Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
       // A failure belongs to the server it was fetched for. Edit a server's
@@ -102,6 +103,26 @@ mixin _MonitorStatus on _ScriptStatus {
               message: e.toString(),
             );
       _setFailedState(_copyStatus(state.status, err: err, setErr: true));
+      TermSessionManager.updateStatus(_statusSessionId, TermSessionStatus.disconnected);
     }
+  }
+
+  /// Lists the agent's connection with the SSH ones, once it answers.
+  void _registerMonitorSession(Spi spi, MonitorHttpCredential monitor) {
+    final id = _statusSessionId;
+    if (TermSessionManager.contains(id)) {
+      TermSessionManager.updateStatus(id, TermSessionStatus.connected);
+      return;
+    }
+    TermSessionManager.add(
+      id: id,
+      title: spi.name,
+      subtitle: monitor.addr,
+      serverId: spi.id,
+      startTimeMs: DateTime.now().millisecondsSinceEpoch,
+      disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
+      status: TermSessionStatus.connected,
+      hasTerminal: false,
+    );
   }
 }

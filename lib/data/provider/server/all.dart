@@ -320,9 +320,7 @@ class ServersNotifier extends _$ServersNotifier {
       ..add(id);
     state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
 
-    // Remove SSH session when server is manually closed
-    final sessionId = 'ssh_$id';
-    TermSessionManager.remove(sessionId);
+    TermSessionManager.remove(TermSessionManager.statusSessionId(id));
   }
 
   Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi));
@@ -423,9 +421,7 @@ class ServersNotifier extends _$ServersNotifier {
     ref.invalidate(serverProvider(id));
     await forgetHostKeyFingerprints(id);
 
-    // Remove SSH session when server is deleted
-    final sessionId = 'ssh_$id';
-    TermSessionManager.remove(sessionId);
+    TermSessionManager.remove(TermSessionManager.statusSessionId(id));
 
     bakSync.syncSoon();
   }
@@ -543,8 +539,7 @@ class ServersNotifier extends _$ServersNotifier {
         }
         ref.invalidate(serverProvider(old.id));
 
-        final oldSessionId = 'ssh_${old.id}';
-        TermSessionManager.remove(oldSessionId);
+        TermSessionManager.remove(TermSessionManager.statusSessionId(old.id));
         await _clearSudoPasswordOverrideBestEffort(old.id);
       } else {
         final serverNotifier = ref.read(serverProvider(old.id).notifier);

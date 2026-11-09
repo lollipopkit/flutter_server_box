@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/terminal/redrawing_shell.dart';
 import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
 import 'package:server_box/data/terminal/tmux/tmux_control_models.dart';
 import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
@@ -17,10 +18,10 @@ import 'package:xterm/core.dart';
 ///
 /// Every pane's program status is read, the hidden ones' included: a pane in
 /// the background is where a program waiting for the user is easy to miss.
-final class TmuxControlShellSession implements ShellSession {
+final class TmuxControlShellSession implements ShellSession, RedrawingShell {
   final TmuxControlClient _client;
   final ShellSession _session;
-  final _outputController = StreamController<Uint8List>();
+  final _outputController = StreamController<ShellOutput>();
   late final TmuxOutputNormalizer _normalizeOutput = TmuxOutputNormalizer()
     ..onUnknownEscape = (escape) {
       Loggers.app.warning('tmux pane used unsupported $escape');
@@ -54,7 +55,10 @@ final class TmuxControlShellSession implements ShellSession {
   TmuxControlClient get client => _client;
 
   @override
-  Stream<Uint8List>? get stdout => _outputController.stream;
+  Stream<ShellOutput> get output => _outputController.stream;
+
+  @override
+  Stream<Uint8List>? get stdout => output.map((chunk) => chunk.data);
 
   @override
   Stream<Uint8List>? get stderr => null;
@@ -101,19 +105,15 @@ final class TmuxControlShellSession implements ShellSession {
     }
     _hiddenPanes.remove(event.paneId);
 
-    // A partial escape from the previous pane has no meaning at this boundary.
-    // The same applies to capture replay, which deliberately starts with RIS.
-    if (_normalizedPaneId != event.paneId) {
+    // A partial escape from the previous pane has no meaning at this boundary,
+    // nor before a capture written over the screen.
+    if (_normalizedPaneId != event.paneId || event.redraw) {
       _normalizedPaneId = event.paneId;
       _normalizeOutput.reset();
     }
-    final data = event.data;
-    if (data.length >= 2 && data[0] == 0x1b && data[1] == 0x63) {
-      _normalizeOutput.reset();
-    }
-    final normalized = _normalizeOutput(data);
+    final normalized = _normalizeOutput(event.data);
     if (normalized.isEmpty) return;
-    _outputController.add(normalized);
+    _outputController.add(ShellOutput(normalized, redraw: event.redraw));
   }
 
   void _scanHiddenPane(TmuxControlPaneOutput event) {
@@ -143,6 +143,6 @@ final class TmuxControlShellSession implements ShellSession {
   void _flushOutputNormalizer() {
     final pending = _normalizeOutput.close();
     if (pending.isEmpty || _outputController.isClosed) return;
-    _outputController.add(pending);
+    _outputController.add(ShellOutput(pending));
   }
 }
