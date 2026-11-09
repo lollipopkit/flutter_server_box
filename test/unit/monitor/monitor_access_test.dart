@@ -175,10 +175,19 @@ void main() {
     });
     MonitorLoginDevices.store = MemoryDeviceTokenStore();
     MonitorLoginDevices.resetForTest();
-    final client = MonitorHttpClient(MonitorHttpCredential(addr: 'http://127.0.0.1:${old.port}', pwd: 'pw'));
+    final cred = MonitorHttpCredential(addr: 'http://127.0.0.1:${old.port}', pwd: 'pw');
+    final client = MonitorHttpClient(cred);
     addTearDown(client.dispose);
+    // It has no `/health`: refused before signing in.
     await expectLater(
       client.changeOwnPassword(currentPassword: 'pw', newPassword: 'n3w-pass'),
+      throwsA(isA<MonitorHttpErr>().having((e) => e.type, 'type', MonitorHttpErrType.agentTooOld)),
+    );
+    // Signed in to for its update, it still wants a user name.
+    final updater = MonitorHttpClient.toUpdate(cred);
+    addTearDown(updater.dispose);
+    await expectLater(
+      updater.changeOwnPassword(currentPassword: 'pw', newPassword: 'n3w-pass'),
       throwsA(
         isA<MonitorHttpErr>()
             .having((e) => e.type, 'type', MonitorHttpErrType.agentTooOld)
@@ -192,6 +201,7 @@ void main() {
     addTearDown(() => agent.close(force: true));
     var logins = 0;
     agent.listen((req) async {
+      if (await answerAgentHealth(req)) return;
       await req.drain<void>();
       // The first sign-in is never answered.
       if (req.uri.path == '/api/v1/login' && ++logins == 1) return;

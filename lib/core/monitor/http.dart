@@ -79,6 +79,12 @@ final class _SharedClient {
 class MonitorHttpClient {
   MonitorHttpClient(this.monitor);
 
+  /// For updating an agent too old for this app, which refuses it otherwise:
+  /// signs in without asking its protocol. Ask it only what updating needs.
+  ///
+  /// TODO: remove with `MonitorHttpCredential.legacyUser`.
+  MonitorHttpClient.toUpdate(this.monitor) : _protocolChecked = true;
+
   static const _connectTimeout = Duration(seconds: 10);
   static const _sendTimeout = Duration(seconds: 30);
   static const _receiveTimeout = Duration(seconds: 30);
@@ -231,12 +237,10 @@ class MonitorHttpClient {
     try {
       health = await _object('/api/v1/health');
     } on DioException catch (e) {
-      // Answered, but not with numbers — an agent from before `/health`, or a
-      // proxy in front of it: the first protocol, like an agent naming none.
-      // A link that failed is still that.
-      if (e.response == null) rethrow;
-    } on MonitorHttpErr catch (e) {
-      if (e.type != MonitorHttpErrType.invalidResponse) rethrow;
+      // An agent from before `/health` has no such route: too old. Anything
+      // else — a proxy's error page, a link that failed — is that error, not
+      // a reason to update an agent that may be current.
+      if (e.response?.statusCode != 404) rethrow;
     }
     final agent = switch (health['protocol']) {
       final int n => n,
@@ -250,15 +254,9 @@ class MonitorHttpClient {
       case ProtocolCompat.ok:
         _protocolChecked = true;
       case ProtocolCompat.agentTooOld:
-        throw MonitorHttpErr(
-          type: MonitorHttpErrType.agentTooOld,
-          message: 'The Monitor speaks protocol $agent, older than this app reads',
-        );
+        throw MonitorHttpErr(type: MonitorHttpErrType.agentTooOld, message: l10n.monitorAgentTooOld);
       case ProtocolCompat.clientTooOld:
-        throw MonitorHttpErr(
-          type: MonitorHttpErrType.clientTooOld,
-          message: 'The Monitor answers protocol $minClient and later; this app speaks ${MonitorProtocol.current}',
-        );
+        throw MonitorHttpErr(type: MonitorHttpErrType.clientTooOld, message: l10n.monitorClientTooOld);
     }
   }
 
@@ -358,9 +356,7 @@ class MonitorHttpClient {
 
   /// [maxPoints] is how many points to come back with; the agent averages the
   /// window into that many buckets rather than answering with its own default
-  /// of 300 for the caller to throw most of away. An agent from before that
-  /// parameter existed ignores it and answers with 300, which is why nothing
-  /// here assumes the count it asked for.
+  /// of 300 for the caller to throw most of away.
   Future<List<MonitorHistoryPoint>> history({
     int minutes = 60,
     int maxPoints = 300,

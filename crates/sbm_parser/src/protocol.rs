@@ -6,9 +6,9 @@
 //! ignores what it does not know. The agent's release version is for showing,
 //! never for deciding.
 //!
-//! Both directions stay working across one step at least: an agent answers a
-//! client still at `PROTOCOL - 1` in that client's shape, and the app still
-//! reads an agent at `PROTOCOL - 1`. Raising [`MIN_CLIENT_PROTOCOL`] or
+//! An agent answers a client still at `PROTOCOL - 1` in that client's shape.
+//! The app reads no agent below [`MIN_AGENT_PROTOCOL`]: it asks for the agent
+//! to be updated instead. Raising [`MIN_CLIENT_PROTOCOL`] or
 //! [`MIN_AGENT_PROTOCOL`] is what drops a shape, together with its shims.
 
 /// What this build speaks.
@@ -22,8 +22,10 @@ pub const PROTOCOL: u32 = 2;
 /// The oldest client the agent still answers; older ones get `426`.
 pub const MIN_CLIENT_PROTOCOL: u32 = 1;
 
-/// The oldest agent the app still reads.
-pub const MIN_AGENT_PROTOCOL: u32 = 1;
+/// The oldest agent the app still reads. An agent at 1 granted files,
+/// relays and listeners apart from the shell, which this client no longer
+/// asks about.
+pub const MIN_AGENT_PROTOCOL: u32 = 2;
 
 /// The request header a client names its protocol in.
 pub const HEADER: &str = "x-sbm-protocol";
@@ -81,8 +83,9 @@ mod tests {
     }
 
     #[test]
-    fn an_agent_from_before_the_protocol_is_read_as_the_first() {
-        assert_eq!(compat(None, None), ProtocolCompat::Ok);
+    fn an_agent_from_before_the_protocol_is_too_old() {
+        assert_eq!(compat(None, None), ProtocolCompat::AgentTooOld);
+        assert_eq!(compat(Some(1), Some(1)), ProtocolCompat::AgentTooOld);
         assert_eq!(compat(Some(PROTOCOL), Some(MIN_CLIENT_PROTOCOL)), ProtocolCompat::Ok);
     }
 

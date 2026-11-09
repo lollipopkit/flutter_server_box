@@ -25,8 +25,9 @@ pub fn capabilities(body: &mut Value) {
         Some(why) => json!({ "ok": false, "why": why }),
         None => json!({ "ok": false, "why": "not_granted" }),
     };
-    // With the options a full role's grant carried: files writable,
-    // connections anywhere, listening on every address.
+    // With the options a full role's grant carried: connections anywhere,
+    // listening on every address. Files say no mode: a client reads that as
+    // writable.
     let with = |extra: Value| {
         let mut g = grant();
         if let (Value::Object(g), Value::Object(extra)) = (&mut g, extra) {
@@ -37,7 +38,7 @@ pub fn capabilities(body: &mut Value) {
     let grants = json!({
         "shell": grant(),
         "ssh_terminal": { "ok": false, "why": "not_granted" },
-        "files": with(json!({ "mode": "write" })),
+        "files": grant(),
         "connect": with(json!({ "allow": [] })),
         "listen": with(json!({ "public": true })),
         "virt": grant(),

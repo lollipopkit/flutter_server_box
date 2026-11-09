@@ -249,11 +249,10 @@ void main() {
     });
   });
 
-  // TODO: remove with the fallbacks when MIN_AGENT_PROTOCOL reaches 2.
-  group('access, as each protocol says it', () {
+  group('access', () {
     MonitorAccess of(Map<String, dynamic> json) => MonitorCapabilities.fromJson(json).access;
 
-    test('protocol 2 says access', () {
+    test('is what the agent says', () {
       expect(of({'access': {'ok': true}}), MonitorAccess.granted);
       expect(
         of({'access': {'ok': false, 'why': 'insecure_transport'}}),
@@ -261,22 +260,11 @@ void main() {
       );
     });
 
-    test('protocol 1 says it as the shell grant', () {
-      expect(of({'grants': {'shell': {'ok': true}, 'files': {'ok': false}}}), MonitorAccess.granted);
-      expect(
-        of({'grants': {'shell': {'ok': false, 'why': 'insecure_transport'}}}),
-        const MonitorAccess(ok: false, why: MonitorAccessWhy.insecureTransport),
-      );
-      expect(of({'grants': {'shell': {'ok': false, 'why': 'not_granted'}}}).ok, isFalse);
-    });
-
-    test('an agent from before roles says it as full access', () {
-      expect(of({'remote_access': {'full_access': true}}), MonitorAccess.granted);
-      expect(of({'remote_access': {'full_access': false}}), MonitorAccess.none);
-    });
-
-    test('access wins over what an agent answering both protocols adds', () {
+    // An agent answering protocol 1 too adds the old fields; none is read.
+    test('nothing else grants anything', () {
       expect(of({'access': {'ok': false}, 'grants': {'shell': {'ok': true}}}).ok, isFalse);
+      expect(of({'grants': {'shell': {'ok': true}}}), MonitorAccess.none);
+      expect(of({'remote_access': {'full_access': true}}), MonitorAccess.none);
     });
 
     test('nothing said grants nothing', () {

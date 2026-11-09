@@ -100,7 +100,7 @@ async fn capabilities_answer_a_first_protocol_client_in_its_shape() {
         for grant in ["shell", "files", "connect", "listen", "virt"] {
             assert_eq!(body["grants"][grant]["ok"], true, "{grant}: {body}");
         }
-        assert_eq!(body["grants"]["files"]["mode"], "write");
+        assert!(body["grants"]["files"].get("mode").is_none(), "no read-only files: {body}");
         assert_eq!(body["grants"]["ssh_terminal"], serde_json::json!({ "ok": false, "why": "not_granted" }));
         for flag in ["terminal", "full_access", "files", "stream", "listen"] {
             assert_eq!(body["remote_access"][flag], true, "{flag}: {body}");
@@ -121,7 +121,7 @@ fn a_refused_link_is_refused_grant_by_grant() {
     let mut body = serde_json::json!({ "access": { "ok": false, "why": "insecure_transport" } });
     server_box_monitor::api::compat_v1::capabilities(&mut body);
     assert_eq!(body["grants"]["shell"], serde_json::json!({ "ok": false, "why": "insecure_transport" }));
-    assert_eq!(body["grants"]["files"], serde_json::json!({ "ok": false, "why": "insecure_transport", "mode": "write" }));
+    assert_eq!(body["grants"]["files"], serde_json::json!({ "ok": false, "why": "insecure_transport" }));
     assert_eq!(body["remote_access"]["full_access"], false);
     // A watch token's `access` names no reason.
     let mut body = serde_json::json!({ "access": { "ok": false } });

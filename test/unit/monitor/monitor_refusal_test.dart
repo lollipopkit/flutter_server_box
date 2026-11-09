@@ -17,6 +17,7 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/rust_lib_helper.dart';
 
 void main() {
@@ -29,6 +30,7 @@ void main() {
   setUp(() async {
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     server.listen((req) async {
+      if (await answerAgentHealth(req)) return;
       await req.drain<void>();
       final (status, body) = switch (req.uri.path) {
         '/api/v1/login' => (200, {'token': 'test-token'}),

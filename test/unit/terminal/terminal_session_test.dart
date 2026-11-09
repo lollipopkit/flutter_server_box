@@ -16,6 +16,7 @@ import 'package:server_box/data/terminal/redrawing_shell.dart';
 import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/fake_shell.dart';
 import '../../helpers/idle_ssh_socket.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -507,14 +508,15 @@ void main() {
       () async {
         final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
         addTearDown(() => server.close(force: true));
-        server.listen((request) {
+        server.listen((request) async {
+          if (await answerAgentHealth(request)) return;
           request.response.headers.contentType = ContentType.json;
           request.response.write(
             request.uri.path == '/api/v1/login'
                 ? '{"token":"test"}'
                 : '{"access":{"ok":true}}',
           );
-          request.response.close();
+          await request.response.close();
         });
 
         final spi = Spi(
@@ -534,14 +536,15 @@ void main() {
     test('a denied grant does not fall back to disabled SSH', () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(() => server.close(force: true));
-      server.listen((request) {
+      server.listen((request) async {
+        if (await answerAgentHealth(request)) return;
         request.response.headers.contentType = ContentType.json;
         request.response.write(
           request.uri.path == '/api/v1/login'
               ? '{"token":"test"}'
               : '{"access":{"ok":false,"why":"insecure_transport"}}',
         );
-        request.response.close();
+        await request.response.close();
       });
 
       final spi = Spi(
