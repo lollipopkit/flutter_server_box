@@ -43,4 +43,8 @@
     <string name="session_connected">Verbonden</string>
     <string name="session_connecting">Verbinden</string>
     <string name="session_disconnected">Verbinding verbroken</string>
+    <plurals name="notification_more">
+        <item quantity="one">…en nog %d</item>
+        <item quantity="other">…en nog %d</item>
+    </plurals>
 </resources>

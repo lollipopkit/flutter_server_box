@@ -248,7 +248,8 @@ class ForegroundService : Service() {
             val inbox = Notification.InboxStyle()
             val maxLines = 5
             val displayLines = if (lines.size > maxLines) {
-                lines.take(maxLines) + "...and ${lines.size - maxLines} more"
+                val rest = lines.size - maxLines
+                lines.take(maxLines) + resources.getQuantityString(R.plurals.notification_more, rest, rest)
             } else {
                 lines
             }

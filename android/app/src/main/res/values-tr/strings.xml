@@ -42,4 +42,7 @@
     <string name="session_connected">Bağlandı</string>
     <string name="session_connecting">Bağlanıyor</string>
     <string name="session_disconnected">Bağlantı kesildi</string>
+    <plurals name="notification_more">
+        <item quantity="other">…ve %d tane daha</item>
+    </plurals>
 </resources>

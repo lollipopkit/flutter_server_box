@@ -45,4 +45,10 @@
     <string name="session_connected">Підключено</string>
     <string name="session_connecting">Підключення</string>
     <string name="session_disconnected">Відключено</string>
+    <plurals name="notification_more">
+        <item quantity="one">…і ще %d</item>
+        <item quantity="few">…і ще %d</item>
+        <item quantity="many">…і ще %d</item>
+        <item quantity="other">…і ще %d</item>
+    </plurals>
 </resources>

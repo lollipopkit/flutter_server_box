@@ -177,6 +177,10 @@ class TerminalSession {
   /// finishes too, and that is not the terminal ending.
   void Function(ShellSession session)? onForegroundDone;
 
+  /// Before a redraw of another tmux pane is written: the view follows its
+  /// live screen rather than keeping its place in the pane it left.
+  VoidCallback? onSwitched;
+
   /// The SSH connection behind [backend], when there is one: tmux discovery
   /// and the AI helper's probe run on its exec channels, which, unlike a
   /// pseudo-terminal, carry their bytes as is.
@@ -765,6 +769,7 @@ class TerminalSession {
         utf8Sink.add(chunk.data);
         final text = take();
         if (chunk.redraw) {
+          if (chunk.switched) onSwitched?.call();
           _buffer.addRedraw(text);
           _appendTail(text);
           _scheduleFlush();

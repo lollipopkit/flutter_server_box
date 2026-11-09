@@ -107,13 +107,16 @@ final class TmuxControlShellSession implements ShellSession, RedrawingShell {
 
     // A partial escape from the previous pane has no meaning at this boundary,
     // nor before a capture written over the screen.
-    if (_normalizedPaneId != event.paneId || event.redraw) {
+    final switched = _normalizedPaneId != event.paneId;
+    if (switched || event.redraw) {
       _normalizedPaneId = event.paneId;
       _normalizeOutput.reset();
     }
     final normalized = _normalizeOutput(event.data);
     if (normalized.isEmpty) return;
-    _outputController.add(ShellOutput(normalized, redraw: event.redraw));
+    _outputController.add(
+      ShellOutput(normalized, redraw: event.redraw, switched: switched && event.redraw),
+    );
   }
 
   void _scanHiddenPane(TmuxControlPaneOutput event) {

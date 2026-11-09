@@ -42,4 +42,7 @@
     <string name="session_connected">已連線</string>
     <string name="session_connecting">正在連線</string>
     <string name="session_disconnected">已中斷連線</string>
+    <plurals name="notification_more">
+        <item quantity="other">…還有 %d 個</item>
+    </plurals>
 </resources>

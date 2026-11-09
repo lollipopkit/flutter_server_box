@@ -6,7 +6,11 @@ final class ShellOutput {
   final Uint8List data;
   final bool redraw;
 
-  const ShellOutput(this.data, {this.redraw = false});
+  /// A redraw of something other than what was on screen, as another tmux
+  /// pane's: the view's place in the old text means nothing in it.
+  final bool switched;
+
+  const ShellOutput(this.data, {this.redraw = false, this.switched = false});
 }
 
 /// A shell whose output can carry redraws. A redraw is written whole and in

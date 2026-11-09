@@ -38,4 +38,8 @@
     <string name="session_connected">متصل</string>
     <string name="session_connecting">در حال اتصال</string>
     <string name="session_disconnected">قطع‌شده</string>
+    <plurals name="notification_more">
+        <item quantity="one">…و %d مورد دیگر</item>
+        <item quantity="other">…و %d مورد دیگر</item>
+    </plurals>
 </resources>

@@ -43,4 +43,8 @@
     <string name="session_connected">Conectado</string>
     <string name="session_connecting">Conectando</string>
     <string name="session_disconnected">Desconectado</string>
+    <plurals name="notification_more">
+        <item quantity="one">…e mais %d</item>
+        <item quantity="other">…e mais %d</item>
+    </plurals>
 </resources>

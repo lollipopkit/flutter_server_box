@@ -43,4 +43,8 @@
     <string name="session_connected">Verbunden</string>
     <string name="session_connecting">Verbindung wird hergestellt</string>
     <string name="session_disconnected">Getrennt</string>
+    <plurals name="notification_more">
+        <item quantity="one">…und %d weitere</item>
+        <item quantity="other">…und %d weitere</item>
+    </plurals>
 </resources>

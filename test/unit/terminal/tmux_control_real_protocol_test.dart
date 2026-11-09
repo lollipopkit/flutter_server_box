@@ -503,6 +503,16 @@ void main() {
       await client.refreshState();
       await until(() => status.pane(hidden) == null);
       expect(status.state, ProgramState.working);
+
+      // Only the replay of another pane moves the view to the bottom.
+      var switches = 0;
+      terminalSession.onSwitched = () => switches++;
+      final split = await client.runRequired("split-window -d -P -F '#{pane_id}' 'cat'");
+      final other = TmuxPaneId.parse(split.output.trim());
+      await client.selectPane(other);
+      await until(() => switches == 1);
+      await client.selectPane(shown);
+      await until(() => switches == 2);
     } finally {
       terminalSession.dispose();
       await client.dispose();

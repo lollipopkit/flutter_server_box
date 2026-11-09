@@ -71,8 +71,12 @@ class _RedrawingShell extends _FakeShell implements RedrawingShell {
   void emitBytes(List<int> data) =>
       _output.add(ShellOutput(Uint8List.fromList(data)));
 
-  void emitRedraw(String data) => _output.add(
-    ShellOutput(Uint8List.fromList(utf8.encode(data)), redraw: true),
+  void emitRedraw(String data, {bool switched = false}) => _output.add(
+    ShellOutput(
+      Uint8List.fromList(utf8.encode(data)),
+      redraw: true,
+      switched: switched,
+    ),
   );
 }
 
@@ -221,6 +225,25 @@ void main() {
       expect(lines.last, 'last');
       expect(lines, hasLength(602));
       expect(lines.join(), isNot(contains('\uFFFD')));
+      session.dispose();
+    });
+
+    test('only a redraw of another pane says the view switched', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _RedrawingShell();
+      var switches = 0;
+      session.onSwitched = () => switches++;
+      session.bindForeground(shell);
+
+      shell
+        ..emitRedraw('\x1bcsame pane')
+        ..emitBytes(utf8.encode('output'));
+      await flushed();
+      expect(switches, 0);
+
+      shell.emitRedraw('\x1bcother pane', switched: true);
+      await flushed();
+      expect(switches, 1);
       session.dispose();
     });
 
