@@ -40,10 +40,15 @@ fn leave_the_crate() {
 }
 
 async fn state() -> Arc<AppState> {
+    state_with(true).await
+}
+
+async fn state_with(lkc: bool) -> Arc<AppState> {
     leave_the_crate();
     ensure_crypto_provider();
     common::owned_state(Config {
         jwt_secret: Some(SECRET.to_string()),
+        lkc,
         ..Default::default()
     })
     .await
@@ -114,6 +119,25 @@ async fn the_account_reaches_everything_and_nothing_without_a_token() {
         assert_eq!(status, 401, "no token: {method} {path}");
     }
     assert!(dir.path().join("d").is_dir());
+}
+
+// TODO: rm with `Config::lkc`.
+#[ntex::test]
+async fn lk_cloud_is_not_there_while_it_is_off() {
+    let srv = server(state_with(false).await).await;
+    let (_, caps) = call(&srv, Some(&jwt()), Method::GET, "/api/v1/capabilities", None).await;
+    let features = caps["features"].as_array().unwrap();
+    assert!(!features.contains(&json!("lkc")), "{features:?}");
+    assert!(features.contains(&json!("desk")), "the rest are listed: {features:?}");
+    for (method, path) in [
+        (Method::GET, "/api/v1/lkc"),
+        (Method::DELETE, "/api/v1/lkc"),
+        (Method::POST, "/api/v1/lkc/sign-in"),
+        (Method::DELETE, "/api/v1/lkc/sign-in"),
+    ] {
+        let (status, _) = call(&srv, Some(&jwt()), method.clone(), path, None).await;
+        assert_eq!(status, 404, "{method} {path}");
+    }
 }
 
 #[ntex::test]

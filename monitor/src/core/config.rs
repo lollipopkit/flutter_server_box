@@ -27,6 +27,13 @@ pub struct Config {
     /// The web apps it deploys (`stacks`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stacks: Option<StacksConfig>,
+    /// LK Cloud (`crate::lkc`), off as the app's `Lkc.enabled` is: no
+    /// `lkc` feature, no `/lkc*`, no sign-in renewed and no push through it.
+    /// Only `SBM_LKC=1` turns it on, read at start: never from or into
+    /// `config.toml`, which a first start writes with the environment in it.
+    // TODO: rm once the LK Cloud account ships in ServerBox.
+    #[serde(skip)]
+    pub lkc: bool,
 
     /// The flat top-level keys the Go agent's `config.json` used.
     ///
@@ -127,6 +134,7 @@ struct EnvOverrides {
     tls_key: Option<String>,
     jwt_secret: Option<String>,
     cors_origins: Option<String>,
+    lkc: Option<String>,
 }
 
 impl EnvOverrides {
@@ -140,6 +148,7 @@ impl EnvOverrides {
             tls_key: value("SBM_TLS_KEY"),
             jwt_secret: value("JWT_SECRET"),
             cors_origins: value("SBM_CORS_ORIGINS"),
+            lkc: value("SBM_LKC"),
         }
     }
 }
@@ -587,6 +596,13 @@ impl Config {
         if let Some(secret) = overrides.jwt_secret {
             self.jwt_secret = Some(secret);
         }
+        if let Some(lkc) = overrides.lkc {
+            self.lkc = match lkc.to_ascii_lowercase().as_str() {
+                "1" | "true" => true,
+                "0" | "false" => false,
+                _ => anyhow::bail!("Invalid SBM_LKC value {lkc:?}: 1 or 0"),
+            };
+        }
 
         let mut server = self.get_server();
         let mut server_changed = false;
@@ -948,6 +964,7 @@ impl Default for Config {
             // its switches; every switch in it defaults to off
             remote_access: Some(RemoteAccessConfig::default()),
             stacks: None,
+            lkc: false,
             // No channel until the operator adds one: a placeholder would
             // send each alert to a third party with an empty key.
             push: Some(Vec::new()),
@@ -975,6 +992,27 @@ mod tests {
     fn oversized_go_durations_are_rejected_without_overflowing() {
         assert_eq!(parse_go_duration("18446744073709551615h"), None);
         assert_eq!(parse_go_duration("18446744073709551615m"), None);
+    }
+
+    // TODO: rm with `lkc`.
+    #[test]
+    fn sbm_lkc_turns_lk_cloud_on() {
+        let mut config = Config::default();
+        assert!(!config.lkc, "off unless asked");
+        config.apply_overrides(EnvOverrides { lkc: Some("1".into()), ..Default::default() }).unwrap();
+        assert!(config.lkc);
+        config.apply_overrides(EnvOverrides { lkc: Some("TRUE".into()), ..Default::default() }).unwrap();
+        assert!(config.lkc);
+        assert!(config.apply_overrides(EnvOverrides { lkc: Some("yes".into()), ..Default::default() }).is_err());
+        assert!(config.lkc, "a value it cannot read changes nothing");
+        config.apply_overrides(EnvOverrides { lkc: Some("0".into()), ..Default::default() }).unwrap();
+        assert!(!config.lkc);
+
+        let on = Config { lkc: true, ..Config::default() };
+        let written = toml::to_string(&on).unwrap();
+        assert!(!written.contains("lkc"), "the environment's, not the file's: {written}");
+        let read: Config = toml::from_str(&format!("{written}\nlkc = true\n")).unwrap();
+        assert!(!read.lkc, "not taken from the file either");
     }
 
     #[test]

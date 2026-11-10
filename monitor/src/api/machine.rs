@@ -83,9 +83,11 @@ pub const FEATURES: &[&str] = &[
     "lkc",
 ];
 
-/// [`FEATURES`], as `/capabilities` lists them.
-pub fn features() -> Vec<&'static str> {
-    FEATURES.to_vec()
+/// [`FEATURES`], as `/capabilities` lists them: `lkc` only while it is on
+/// (`Config::lkc`).
+// TODO: no argument once LK Cloud ships.
+pub fn features(lkc: bool) -> Vec<&'static str> {
+    FEATURES.iter().copied().filter(|f| lkc || *f != "lkc").collect()
 }
 
 /// What this machine is, as a desk app package's `os` names it: `linux` and
