@@ -43,10 +43,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(cargo metadata --format-version 1 --no-deps \
-            | jq -r '.packages[] | select(.name == "server_box_monitor") | .version')"
-          if [[ -z "$version" || "$version" == "null" ]]; then
-            echo "Failed to read server_box_monitor version from Cargo metadata."
+          # From the manifest, not `cargo metadata`: that loads every path
+          # dependency, and those in submodules (fl_lib's `fl_lkc`) are not
+          # checked out here.
+          version="$(python3 -c 'import tomllib; print(tomllib.load(open("monitor/Cargo.toml", "rb"))["package"]["version"])')"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Failed to read server_box_monitor version from monitor/Cargo.toml: $version"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
