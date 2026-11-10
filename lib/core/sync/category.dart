@@ -92,5 +92,5 @@ enum SyncCategory {
   };
 
   /// Whether records of [c] are sent and taken now.
-  static bool carries(String c) => SyncGroups.carries(c);
+  static bool carries(String c) => of(c)?.on ?? true;
 }
