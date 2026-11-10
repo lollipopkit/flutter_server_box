@@ -12,7 +12,6 @@ import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/core/sync/category.dart';
-import 'package:server_box/core/sync/log.dart' show SyncSeal;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
@@ -170,10 +169,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     );
   }
 
-  /// [SyncRecorder.syncedStores] but the settings, which have their own
+  /// [SyncedStores.byName] but the settings, which have their own
   /// section.
   static Map<String, SqliteStore> get _syncedStores => {
-    for (final MapEntry(:key, :value) in SyncRecorder.syncedStores.entries)
+    for (final MapEntry(:key, :value) in SyncedStores.byName.entries)
       if (key != Stores.setting.name) key: value,
   };
 
@@ -277,7 +276,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   static Future<String> backup(
     String? name,
     String? password, {
-    SyncSeal? key,
+    SyncKeyHandle? key,
     Set<SyncCategory>? only,
     ThemeBlobStore? blobs,
     BackupV2? carry,
@@ -301,7 +300,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     List<int> compressed() => compressBackups ? gzip.encode(json) : json;
     final Uint8List bytes;
     if (key != null) {
-      bytes = await key.seal(Uint8List.fromList(compressed()));
+      bytes = await key.seal(plain: Uint8List.fromList(compressed()));
     } else if (encrypted) {
       bytes = utf8.encode(await AgeCryptor.encrypt(compressed(), password!));
     } else {

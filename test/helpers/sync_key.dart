@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:server_box/core/sync/key.dart';
+import 'package:fl_lib/fl_lib.dart';
 
-/// [SyncKey]'s file, in memory, with the version a write must name. While
+/// A sync key's file, in memory, with the version a write must name. While
 /// [blind], a device that does not see the one there yet (iCloud's
 /// delivery, a write at the same moment); while [offline], one that cannot
 /// reach it.
@@ -52,4 +52,11 @@ final class MemoryKeyFile implements SyncKeyFile {
     this.body = body;
     _version++;
   }
+}
+
+/// [file]'s sync key, opened with the backup password here, as the app
+/// opens one.
+Future<SyncKeyHandle> keyOf(SyncKeyFile file, {bool create = true}) {
+  SyncKeyring.init(label: 'ServerBox sync key');
+  return SyncKeyring.ofFiles(file, create: create);
 }

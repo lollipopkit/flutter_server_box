@@ -6842,6 +6842,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStateRunning => '同步中';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud 拒绝了同步（$reason）';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13686,4 +13691,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncStateRunning => '同步中';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud 拒絕了同步（$reason）';
+  }
 }

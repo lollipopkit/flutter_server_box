@@ -267,10 +267,10 @@ extension _SyncWidgets on _BackupPageState {
         _syncing,
         bakSync.running,
         bakSync.lastFailure,
-        SyncKey.passwordMismatch,
+        SyncKeyring.passwordMismatch,
         BakSyncer.remoteTooNew,
-        LogSync.tooNew,
-        SegmentSync.tooNew,
+        lkcLog.tooNew,
+        fileLog.tooNew,
       ]),
       builder: (context, _) {
         return FutureBuilder<bool>(
@@ -292,14 +292,14 @@ extension _SyncWidgets on _BackupPageState {
                 last,
                 null,
               ),
-              _ when SyncKey.passwordMismatch.value.isNotEmpty => (
+              _ when SyncKeyring.passwordMismatch.value.isNotEmpty => (
                 Icons.key_off,
                 scheme.error,
                 l10n.syncStatePassword,
                 l10n.syncPasswordMismatch,
                 () => _onTapSetBakPwd(context),
               ),
-              _ when BakSyncer.remoteTooNew.value != null || LogSync.tooNew.value || SegmentSync.tooNew.value => (
+              _ when BakSyncer.remoteTooNew.value != null || lkcLog.tooNew.value || fileLog.tooNew.value => (
                 Icons.system_update,
                 Colors.orange,
                 l10n.syncStateUpdate,
@@ -507,7 +507,7 @@ extension _SyncActions on _BackupPageState {
     _syncing.value = true;
     try {
       await bakSync.sync(throttleMilli: 0);
-      await Future.wait([LkcLogSync.sync(), FileLogSync.sync()]);
+      await Future.wait([lkcLog.sync(), fileLog.sync()]);
     } catch (e, s) {
       Loggers.app.warning('Sync now', e, s);
     } finally {

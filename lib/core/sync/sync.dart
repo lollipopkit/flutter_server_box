@@ -8,7 +8,6 @@ import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/file_log.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
@@ -55,19 +54,19 @@ final class BakSyncer extends SyncIface {
   /// The key of the remote [backup] is writing to, which seals the backup
   /// there: resolved for the remote of that cycle, not the one [sync] was
   /// asked for, which a throttled or queued sync may not be.
-  SyncKey? _key;
+  SyncKeyHandle? _key;
 
   /// [rs]'s sync key, opened with the password here: throws
   /// [SyncPasswordMismatch] while it does not open it.
-  static Future<SyncKey> keyOf(RemoteStorage rs) => switch (rs) {
+  static Future<SyncKeyHandle> keyOf(RemoteStorage rs) => switch (rs) {
     _ when keyForTest != null => keyForTest!(rs),
-    LkcRemoteStorage() => LkcLogSync.key(),
-    _ => FileLogSync.keyOf(rs),
+    LkcRemoteStorage() => lkcLog.key(),
+    _ => fileLog.keyOf(rs),
   };
 
   /// [keyOf] for a remote a test made.
   @visibleForTesting
-  static Future<SyncKey> Function(RemoteStorage rs)? keyForTest;
+  static Future<SyncKeyHandle> Function(RemoteStorage rs)? keyForTest;
 
   @override
   Future<void> saveToFile() async {
@@ -170,12 +169,12 @@ final class BakSyncer extends SyncIface {
       // with the password, or plaintext from before encryption was
       // mandatory) is inherited once ([inheritLegacyRemote]).
       final Uint8List plain;
-      if (SyncKey.sealedToKey(content)) {
+      if (SyncKeyring.sealedToKey(content)) {
         // With the keys of the syncs on here: the remote of the cycle that
         // downloaded it is one of them, whichever that was. The one it is
         // set to now is opened first, so a password it refuses stops here.
         if (remoteStorage case final rs?) await keyOf(rs);
-        plain = await SyncKey.openAny(content);
+        plain = await SyncKeyring.openAny(content);
       } else {
         plain = await BackupV2.unlock(content, pwd);
       }
@@ -242,7 +241,7 @@ final class BakSyncer extends SyncIface {
   }
 
   /// Calls [onEdit] on each edit to a synced setting or other synced kv store
-  /// (`SyncRecorder.syncedStores`), which no provider syncs on as the entity
+  /// (`SyncedStores.byName`), which no provider syncs on as the entity
   /// stores' do. Every such edit stamps the store, so what is watched is the
   /// stamps' row: device-local keys and internal keys stamp nothing. Only
   /// while the store's category is synced.
@@ -251,7 +250,7 @@ final class BakSyncer extends SyncIface {
   /// every move, and each would be an upload and a merge on every device
   /// listening. It goes with the next sync.
   static List<StreamSubscription<String>> watchEdits(VoidCallback onEdit) => [
-    for (final store in SyncRecorder.syncedStores.values)
+    for (final store in SyncedStores.byName.values)
       store.watch().listen((key) {
         if (key == store.lastUpdateTsKey &&
             SyncCategory.carries('kv:${store.name}')) {
@@ -376,6 +375,8 @@ final class BakSyncer extends SyncIface {
     } on SyncKeyNotHere {
       _inheriting = null;
     } on RemoteBackupPasswordMissing {
+      _inheriting = null;
+    } on SyncPasswordMissing {
       _inheriting = null;
     } catch (e, s) {
       // Best-effort: failing to inherit leaves the user with an empty remote

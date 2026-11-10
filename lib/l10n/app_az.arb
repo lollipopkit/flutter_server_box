@@ -2033,5 +2033,6 @@
   "syncStateFailed": "Sinxronlaşdırma alınmadı",
   "syncStatePassword": "Parol uyğun gəlmir",
   "syncStateUpdate": "Yeniləmə tələb olunur",
-  "syncStateRunning": "Sinxronlaşdırılır"
+  "syncStateRunning": "Sinxronlaşdırılır",
+  "syncRefused": "LK Cloud sinxronizasiyanı rədd etdi ({reason})"
 }

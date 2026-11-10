@@ -43,19 +43,35 @@ enum SyncCategory {
     benchmarks => const PrefPropDefault('sync_benchmarks', true, updateLastUpdateTsOnSetProp: false),
   };
 
-  /// Whether this device syncs it now. Passphrases also need this device to
-  /// keep them (`rememberKeyPassphrase`).
-  bool get on => pref.get() && (this != passphrases || Stores.setting.rememberKeyPassphrase.fetch());
+  /// Its group, as the engines ask it: the one place what decides [on] is
+  /// said.
+  SyncGroup get group => _groups[this]!;
+
+  static final _groups = {
+    for (final cat in values)
+      cat: SyncGroup(
+        name: cat.name,
+        pref: cat.pref,
+        collections: {for (final MapEntry(:key, :value) in _byCollection.entries) if (value == cat) key},
+        // Passphrases also need this device to keep them.
+        also: [if (cat == passphrases) Stores.setting.rememberKeyPassphrase.listenable()],
+        extra: cat == passphrases ? () => Stores.setting.rememberKeyPassphrase.fetch() : null,
+      ),
+  };
+
+  /// Whether this device syncs it now.
+  bool get on => group.on;
 
   /// The switches that decide [on], to listen to.
-  Listenable get changes => Listenable.merge([
-    pref.listenable(),
-    if (this == passphrases) Stores.setting.rememberKeyPassphrase.listenable(),
-  ]);
+  Listenable get changes => group.changes;
 
   /// The category of a record of collection [c] (see `SyncRecorder`); null
   /// for one every sync carries.
   static SyncCategory? of(String c) => _byCollection[c];
+
+  /// The categories as fl_lib's [SyncGroups], which the engines ask. Before
+  /// any sync runs.
+  static void define() => SyncGroups.define([for (final cat in values) cat.group]);
 
   static final _byCollection = <String, SyncCategory>{
     'kv:${Stores.setting.name}': settings,

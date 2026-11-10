@@ -9358,5 +9358,7 @@
   "syncStateFailed": "Sync failed",
   "syncStatePassword": "Password mismatch",
   "syncStateUpdate": "Update required",
-  "syncStateRunning": "Syncing"
+  "syncStateRunning": "Syncing",
+  "syncRefused": "LK Cloud refused the sync ({reason})",
+  "@syncRefused": {"placeholders": {"reason": {"type": "String"}}}
 }

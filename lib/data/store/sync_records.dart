@@ -1,73 +1,106 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/picked_files.dart';
+import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-/// A record kind kept outside the stores ([SyncRecords.kinds]).
-typedef SyncKind = ({
-  FutureOr<Object?> Function(String id) read,
-  void Function()? stamp,
-  FutureOr<void> Function(List<({String c, String id, String h, Object? d})> ops) install,
-});
+/// ServerBox's records for fl_lib's [SyncRecords]: the entity tables, and the
+/// kinds kept outside the stores (themes, picked files, skills, benchmarks).
+abstract final class ServerSyncRecords {
+  /// Registers them, and what tells the app of other devices' ops. Before any
+  /// sync runs.
+  static void install() {
+    SyncRecords.tables = EntityRecords.instance;
+    SyncRecords.kinds
+      ..clear()
+      ..addAll({
+        // A theme is added only: one removed here says nothing to the others.
+        SyncThemes.c: SyncKind.batched(
+          reader: () {
+            Future<Map<String, Object?>?>? themes;
+            return (id) => (themes ??= SyncThemes.read()).then(
+              (t) => t == null ? SyncRecords.unread : t[id] ?? SyncRecords.silent,
+            );
+          },
+          stamp: SyncThemes.stamp,
+          install: SyncThemes.install,
+        ),
+        PickedFiles.c: const SyncKind(read: PickedFiles.read, stamp: PickedFiles.stamp, install: PickedFiles.install),
+        SyncSkills.c: const SyncKind(read: SyncSkills.read, stamp: SyncSkills.stamp, install: SyncSkills.install),
+        BenchmarkStore.c: SyncKind(read: (id) => Stores.benchmark.read(id), install: (ops) => Stores.benchmark.install(ops)),
+      });
+    SyncRecords.afterRead = (carries) async {
+      // Read past: what could not be written then is tried again.
+      if (carries(BenchmarkStore.c)) Stores.benchmark.retry();
+      if (carries(SyncThemes.c)) await SyncThemes.retry();
+    };
+    SyncRecords.announce = _announce;
+  }
 
-/// A synced record as an op carries it: read from the
-/// stores to send, and written back when another device's op wins.
-///
-/// A record is `(c, id)` as [SyncRecorder] stamps it: a sync root's table and
-/// the row's id, or `kv:<store>` and the key. A server carries its children
-/// that are not records of their own: its container hosts and PVE settings.
-abstract final class SyncRecords {
-  static const _kvPrefix = 'kv:';
+  /// Tells the app what other devices' ops changed, as a backup's merge does.
+  static void _announce(List<SyncOp> won, Set<String> written) {
+    final keysBefore = EntityRecords.instance._keysBefore;
+    EntityRecords.instance._keysBefore = null;
+    // The preset may have come before or after its theme.
+    if (won.any((op) => op.c == SyncThemes.c) || written.contains('kv:${Stores.setting.name}')) SyncThemes.reselect();
+    final servers = written.contains(Stores.server.table);
+    if (written.contains(Stores.key.table)) {
+      Stores.key.invalidate();
+      if (keysBefore != null) KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
+    }
+    if (written.contains(Stores.bmcCredential.table)) Stores.bmcCredential.invalidate();
+    if (servers) {
+      Stores.server.invalidate();
+      // A server's delete cascades these rows.
+      Stores.portForward.invalidate();
+      Stores.remoteDesktop.invalidate();
+      Stores.snippet.invalidate();
+      Stores.pve.invalidate();
+    }
+    if (written.contains(Stores.snippet.table)) Stores.snippet.invalidate();
+    if (written.contains(Stores.portForward.table)) Stores.portForward.invalidate();
+    if (written.contains(Stores.remoteDesktop.table)) Stores.remoteDesktop.invalidate();
+    StoreReload.after({
+      if (servers) ...{ReloadedStore.servers, ReloadedStore.containers},
+      if (written.contains(Stores.snippet.table)) ReloadedStore.snippets,
+      if (written.contains(Stores.key.table)) ReloadedStore.keys,
+      if (written.contains(Stores.bmcCredential.table)) ReloadedStore.bmcCredentials,
+    });
+  }
+}
 
-  /// The records kept outside the stores, by kind: each read, stamped where
-  /// it changed ([SyncRecorder.stampChanged]) and written by its owner,
-  /// after the stores. The themes are apart from these: what they install
-  /// moves the selection.
-  static final kinds = <String, SyncKind>{
-    PickedFiles.c: (read: PickedFiles.read, stamp: PickedFiles.stamp, install: PickedFiles.install),
-    SyncSkills.c: (read: SyncSkills.read, stamp: SyncSkills.stamp, install: SyncSkills.install),
-    BenchmarkStore.c: (read: (id) => Stores.benchmark.read(id), stamp: null, install: (ops) => Stores.benchmark.install(ops)),
-  };
+/// The entity tables as records: a sync root's table and the row's id. A
+/// server carries its children that are not records of their own: its
+/// container hosts and PVE settings.
+final class EntityRecords implements SyncTableRecords {
+  EntityRecords._();
 
-  /// What [read] answers for a record it could not read now (the themes'
-  /// files), as against null for one that is not here.
-  static const unread = Object();
+  static final instance = EntityRecords._();
 
-  /// What [read] answers for a record with nothing to say now: not sent,
-  /// and nothing after it held back (a picked file missing under a path
-  /// still set). It is stamped again once there is.
-  static const silent = Object();
+  /// The private keys before a write that touched them: whose passphrases go
+  /// with them ([ServerSyncRecords._announce]).
+  List<String>? _keysBefore;
 
-  /// [c]/[id] as it is now, JSON; null when it is not here (deleted).
-  static FutureOr<Object?> read(String c, String id) => reader()(c, id);
+  @override
+  bool claims(String c) => Stores.syncedEntities.containsKey(c);
 
-  /// [read] for many records: the stores, the servers' children and the
-  /// themes are read once.
-  static FutureOr<Object?> Function(String c, String id) reader() {
+  @override
+  Object? Function(String c, String id) reader() {
     final entities = Stores.syncedEntities;
     Map<String, Object?>? containers;
     Map<String, Object?>? pves;
-    Future<Map<String, Object?>?>? themes;
     return (c, id) {
-      if (c == SyncThemes.c) return (themes ??= SyncThemes.read()).then((t) => t == null ? unread : t[id]);
-      if (kinds[c] case final kind?) return kind.read(id);
-      if (c.startsWith(_kvPrefix)) {
-        final store = _kvStore(c);
-        if (store == null || !_syncedKey(store, id)) return null;
-        return store.get<Object>(id);
-      }
       final store = entities[c];
       final item = store?.fetchOneRaw(id);
       if (store == null || item == null) return null;
-      final json = _plain(store.toJson(item));
+      final json = SyncRecords.plain(store.toJson(item));
       if (c != Stores.server.table) return json;
       return {
         'spi': json,
@@ -77,56 +110,39 @@ abstract final class SyncRecords {
     };
   }
 
-  /// Writes [ops] (each `(c, id, h, d)`, already decided to win) as other
-  /// devices' changes: each record stamped with its op's [h]. One
-  /// transaction; a record this device cannot take (a name another record
-  /// here holds) is left as it is and logged. Answers the collections
-  /// written, for the caller to announce.
-  static Set<String> write(List<({String c, String id, String h, Object? d})> ops) {
-    final kv = <({SqliteStore store, String key, String h, Object? d})>[];
-    final touched = <EntityStore>{};
+  /// One record kept by an entity table, for a test.
+  static Object? read(String c, String id) => instance.reader()(c, id);
+
+  /// Writes [ops] (each already decided to win) as other devices' changes,
+  /// each record stamped with its op's [SyncOp.h], inside the stores'
+  /// transaction. A record this device cannot take (a name another record
+  /// here holds) is left as it is and logged.
+  @override
+  Set<String> write(List<SyncOp> ops) {
     final entities = Stores.syncedEntities;
-    SqliteStore.transact(() {
-      final linked = <(EntityStore, Object, String)>[];
-      for (final op in ops) {
-        if (op.c.startsWith(_kvPrefix)) {
-          final store = _kvStore(op.c);
-          if (store != null && _syncedKey(store, op.id)) kv.add((store: store, key: op.id, h: op.h, d: op.d));
-          continue;
-        }
-        final store = entities[op.c];
-        if (store == null) continue;
-        touched.add(store);
-        SyncRecorder.receiving(op.h, () {
-          final item = _entity(store, op);
-          if (item != null) linked.add((store, item, op.h));
-        });
-      }
-      // Once every row exists, so a reference to one written later in the
-      // same ops still lands (a jump server).
-      for (final (store, item, h) in linked) {
-        SyncRecorder.receiving(h, () => store.writeLinks(item));
-      }
-      for (final op in kv) {
-        SyncRecorder.receiving(op.h, () {
-          final written = op.d == null
-              ? op.store.remove(op.key, updateLastUpdateTsOnRemove: false)
-              : op.store.set(op.key, op.d!, updateLastUpdateTsOnSet: false);
-          if (!written) throw StateError('failed to write ${op.store.name}/${op.key}');
-          SyncRecorder.record('kv:${op.store.name}', op.key);
-        });
-      }
-    });
-    // The snapshot sync's stamps, at each op's time, so it agrees with what
-    // was written.
-    for (final op in kv) {
-      unawaited(op.store.updateLastUpdateTs(ts: SyncRecorder.msOf(op.h), key: op.key));
+    // This write's own: one that failed before left nothing for this one.
+    _keysBefore = ops.any((op) => op.c == Stores.key.table) ? [for (final k in Stores.key.fetch()) k.key] : null;
+    final touched = <EntityStore>{};
+    final linked = <(EntityStore, Object, String)>[];
+    for (final op in ops) {
+      final store = entities[op.c];
+      if (store == null) continue;
+      touched.add(store);
+      SyncRecorder.receiving(op.h, () {
+        final item = _entity(store, op);
+        if (item != null) linked.add((store, item, op.h));
+      });
     }
-    return {for (final store in touched) store.table, for (final op in kv) 'kv:${op.store.name}'};
+    // Once every row exists, so a reference to one written later in the same
+    // ops still lands (a jump server).
+    for (final (store, item, h) in linked) {
+      SyncRecorder.receiving(h, () => store.writeLinks(item));
+    }
+    return {for (final store in touched) store.table};
   }
 
   /// Writes one entity op; the item to link once all are written, if any.
-  static Object? _entity(EntityStore store, ({String c, String id, String h, Object? d}) op) {
+  static Object? _entity(EntityStore store, SyncOp op) {
     final isServer = store == Stores.server;
     final d = op.d;
     // The record this device holds the op's under ([_aliasOf]).
@@ -140,7 +156,7 @@ abstract final class SyncRecords {
     if (d is! Map) return null;
     final json = isServer ? d['spi'] : d;
     if (json is! Map) return null;
-    final map = Map<String, dynamic>.from(_plain(json) as Map);
+    final map = Map<String, dynamic>.from(SyncRecords.plain(json) as Map);
     map['id'] = id;
     // Not [EntityStore.reconcile]: it matches by name alone, for backups
     // written before ids existed. An op names its record by id; another
@@ -246,12 +262,4 @@ abstract final class SyncRecords {
     }
     return '$name ($id)';
   }
-
-  static SqliteStore? _kvStore(String c) => SyncRecorder.syncedStores[c.substring(_kvPrefix.length)];
-
-  static bool _syncedKey(SqliteStore store, String key) => !store.isInternalKey(key) && !store.isDeviceLocalKey(key);
-
-  /// [value] as plain JSON (maps, lists, primitives), as another device
-  /// decodes it.
-  static Object? _plain(Object? value) => json.decode(json.encode(value));
 }

@@ -5,7 +5,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -53,7 +52,7 @@ void main() {
     remote = _FileRemote(File(tempDir.path.joinPath('remote')));
     // The remote's `identity.age`; both devices keep its keys in one keychain.
     final keyFile = MemoryKeyFile();
-    BakSyncer.keyForTest = (_) => SyncKey.of(keyFile);
+    BakSyncer.keyForTest = (_) => keyOf(keyFile);
     checkpoints.clear();
     current = null;
     await checkpoint.remove();
@@ -68,7 +67,8 @@ void main() {
 
   tearDown(() async {
     BakSyncer.keyForTest = null;
-    SyncKey.resetForTest();
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
     SecureProp.legacyApart = null;
     await _leave();
     await PrefProps.syncAppSettings.set(false);

@@ -12340,6 +12340,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Syncing'**
   String get syncStateRunning;
+
+  /// No description provided for @syncRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'LK Cloud refused the sync ({reason})'**
+  String syncRefused(String reason);
 }
 
 class _AppLocalizationsDelegate

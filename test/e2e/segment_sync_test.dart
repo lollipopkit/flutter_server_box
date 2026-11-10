@@ -14,11 +14,13 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_records.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
@@ -54,9 +56,14 @@ void main() {
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
-    SyncRecorder.install();
+    SyncedStores.install();
+    // What launch sets up, per device: its keys read anew, its records.
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
+    ServerSyncRecords.install();
+    SyncCategory.define();
     SyncRemotes.setWebdav(url: url, user: user ?? '', pwd: pwd ?? '');
-    FileLogSync.reset();
+    fileLog.reset();
     return SyncRecorder.deviceHexOf(SyncRecorder.device);
   }
 
@@ -94,7 +101,7 @@ void main() {
     final a = await becomeDevice();
     Stores.snippet.put(snippet);
     Stores.setting.timeout.put(17);
-    await FileLogSync.sync();
+    await fileLog.sync();
     final written = await listed();
     expect(written, containsAll(['identity.age', 'seg-$a-1.age']));
     if (out != null) {
@@ -104,16 +111,16 @@ void main() {
     }
 
     final b = await becomeDevice();
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(Stores.snippet.fetchOneRaw(snippet.id)?.script, 'uptime');
     expect(Stores.setting.timeout.fetch(), 17);
 
     Stores.setting.timeout.put(30);
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(await listed(), contains('seg-$b-2.age'), reason: "the second of B's: its first sent what it joined with");
 
     await becomeDevice();
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(Stores.setting.timeout.fetch(), 30);
     expect(Stores.snippet.fetchOneRaw(snippet.id)?.script, 'uptime');
   });

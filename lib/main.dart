@@ -25,6 +25,7 @@ import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/native_crypto.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
@@ -44,6 +45,7 @@ import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_records.dart';
 import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -502,8 +504,9 @@ Future<void> _startBackgroundServices() async {
   if (Lkc.enabled) {
     unawaited(
       Lkc.init().then((_) {
-        LkcLogSync.init();
-        LkcSyncWatch.init(
+        lkcLog.init();
+        LkcSyncWatch.of(
+          lkcLog,
           // Not held back: another device's write is the whole reason to sync,
           // and a sync already running takes it on when it ends. Only while LK
           // Cloud is where the backup syncs: another remote ranks above it.
@@ -512,12 +515,14 @@ Future<void> _startBackgroundServices() async {
               bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
             }
           },
-        );
+          bakFileName: Miscs.bakFileName,
+          inBackground: isDesktop,
+        ).start();
       }),
     );
   }
   BakSyncer.watchEdits(() => bakSync.syncSoon());
-  FileLogSync.init();
+  fileLog.init();
   SyncSkills.follow();
   SyncThemes.follow();
   unawaited(KeyPassphrases.init());
@@ -598,9 +603,14 @@ Future<void> _migrateStorage() async {
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
-  SyncRecorder.install();
+  SyncedStores.install();
   // TODO: remove with `StoreCredentials.adoptKeychain`.
   StoreCredentials.adopt = SyncRecorder.adopt;
+  // What the syncs carry and how, before any runs; the shipped key files say
+  // this label.
+  SyncKeyring.init(label: 'ServerBox sync key');
+  ServerSyncRecords.install();
+  SyncCategory.define();
 
   migrateBuildFeatures(BuildData.build);
 

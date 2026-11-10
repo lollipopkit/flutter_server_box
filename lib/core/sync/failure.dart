@@ -11,8 +11,12 @@ import 'package:server_box/data/store/schema.dart';
 /// words; null for one this does not know, which is shown as it is.
 String? syncFailureText(Object e) => switch (e) {
   WrongPasswordException() || SyncPasswordMismatch() => l10n.syncPasswordMismatch,
-  SchemaTooNewException() => l10n.syncRemoteTooNew,
+  SchemaTooNewException() || SyncLogTooNew() => l10n.syncRemoteTooNew,
   RemoteBackupPasswordMissing() => e.toString(),
+  SyncPasswordMissing() => const RemoteBackupPasswordMissing().toString(),
+  SyncError(kind: SyncEngineErrorKind.remote) => l10n.syncUnreachable,
+  SyncError(kind: SyncEngineErrorKind.signedOut) => libL10n.lkcNotSignedIn,
+  SyncRefused(:final reason) => l10n.syncRefused(reason),
   LkcSyncError() => switch (e.exception) {
     final LkcException x => x.text(libL10n),
     _ => null,

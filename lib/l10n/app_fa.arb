@@ -1716,5 +1716,6 @@
   "syncStateFailed": "همگام‌سازی ناموفق بود",
   "syncStatePassword": "رمز عبور مطابقت ندارد",
   "syncStateUpdate": "به‌روزرسانی لازم است",
-  "syncStateRunning": "در حال همگام‌سازی"
+  "syncStateRunning": "در حال همگام‌سازی",
+  "syncRefused": "LK Cloud همگام‌سازی را رد کرد ({reason})"
 }

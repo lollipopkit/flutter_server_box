@@ -7291,4 +7291,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'در حال همگام‌سازی';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud همگام‌سازی را رد کرد ($reason)';
+  }
 }

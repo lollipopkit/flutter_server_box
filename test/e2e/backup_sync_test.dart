@@ -18,12 +18,9 @@ import 'dart:typed_data';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync/file_log.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
-import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -60,7 +57,8 @@ void main() {
     await SqliteDb.close();
     SqliteDb.openInMemory();
     await Stores.init();
-    SyncKey.resetForTest();
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
     SecureProp.resetRateLimits();
     SyncRemotes.setWebdav(url: webdav.url!, user: webdav.user ?? '', pwd: webdav.pwd ?? '');
   }
@@ -69,8 +67,9 @@ void main() {
     for (final name in [Miscs.bakFileName, ...Miscs.legacyBakFileNames]) {
       if (await rs.exists(name)) await rs.delete(name);
     }
-    await WebdavSyncFiles(() => SyncRemotes.webdav).deleteBlob('identity.age');
-    SyncKey.resetForTest();
+    await WebdavSyncFiles(() => SyncRemotes.webdav, 'srvbox_sync').delete('identity.age');
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
   }
 
   Future<List<int>> downloaded(String name) async {
@@ -117,10 +116,10 @@ void main() {
       expect(await rs.exists(name), isFalse, reason: 'an older build would read $name');
     }
     final bytes = Uint8List.fromList(await downloaded(Miscs.bakFileName));
-    expect(SyncKey.sealedToKey(bytes), isTrue);
+    expect(SyncKeyring.sealedToKey(bytes), isTrue);
     final key = await BakSyncer.keyOf(rs);
-    expect(BackupV2.fromPlainBytes(await key.open(bytes)).settings['timeOut'], 17);
-    final keyFile = (await WebdavSyncFiles(() => SyncRemotes.webdav).getBlob('identity.age'))!;
+    expect(BackupV2.fromPlainBytes(await key.open(sealed: bytes)).settings['timeOut'], 17);
+    final keyFile = (await WebdavSyncFiles(() => SyncRemotes.webdav, 'srvbox_sync').read('identity.age'))!;
     expect(await AgeCryptor.decrypt(keyFile, _password), isNotEmpty);
     if (e2eEnv('SBM_E2E_BACKUP_OUT') case final out?) {
       await File(out.joinPath('backup.age')).writeAsBytes(bytes);
@@ -172,7 +171,7 @@ void main() {
 
       await bakSync.sync(throttleMilli: 0);
       final key = await BakSyncer.keyOf(rs);
-      final v5 = BackupV2.fromPlainBytes(await key.open(Uint8List.fromList(await downloaded(Miscs.bakFileName))));
+      final v5 = BackupV2.fromPlainBytes(await key.open(sealed: Uint8List.fromList(await downloaded(Miscs.bakFileName))));
       expect(v5.spis.containsKey('srv-fixture'), isTrue, reason: 'the inherited history moves to v5');
     });
   }

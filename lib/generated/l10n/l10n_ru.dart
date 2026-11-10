@@ -7294,4 +7294,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'Синхронизация';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud отклонил синхронизацию ($reason)';
+  }
 }

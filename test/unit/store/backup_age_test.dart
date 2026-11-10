@@ -8,7 +8,6 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -54,14 +53,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await PrefStore.shared.init();
     FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: password});
-    addTearDown(SyncKey.resetForTest);
+    addTearDown(SyncKeyring.resetForTest);
     final file = MemoryKeyFile()..put(File('$dir/sync_key_v5.txt').readAsBytesSync());
-    final key = await SyncKey.of(file);
+    final key = await keyOf(file);
     expect(file.writes, 0, reason: 'opened as it is');
 
     final data = File('$dir/sync_v5.age').readAsBytesSync();
-    expect(SyncKey.sealedToKey(data), isTrue);
-    final (mergeable, _) = BackupReader.fromBytes(await key.open(data));
+    expect(SyncKeyring.sealedToKey(data), isTrue);
+    final (mergeable, _) = BackupReader.fromBytes(await key.open(sealed: data));
     expect((mergeable as BackupV2).toJson(), expected.toJson());
   });
 

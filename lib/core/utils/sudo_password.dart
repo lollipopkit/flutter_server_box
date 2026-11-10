@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///

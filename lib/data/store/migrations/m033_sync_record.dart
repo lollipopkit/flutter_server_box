@@ -35,6 +35,6 @@ CREATE TABLE IF NOT EXISTS sync_record (
     final db = SqliteDb.instance;
     db.execute(_table);
     db.execute('CREATE INDEX IF NOT EXISTS idx_sync_record_hlc ON sync_record(hlc);');
-    SyncRecorder.seed();
+    SyncedStores.seed();
   }
 }

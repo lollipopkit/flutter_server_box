@@ -2,10 +2,19 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
-import 'package:fl_lib/fl_lib.dart' show LkcException, RemoteChangedException;
+import 'package:fl_lib/fl_lib.dart'
+    show
+        LkcException,
+        RemoteChangedException,
+        SyncEngineErrorKind,
+        SyncError,
+        SyncKeyNotHere,
+        SyncLogTooNew,
+        SyncPasswordMismatch,
+        SyncPasswordMissing,
+        SyncRefused;
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show McpTools;
 import 'package:icloud_storage_plus/models/exceptions.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// Whether an error is a defect in this app, or the network's or the user's
@@ -44,9 +53,12 @@ abstract final class ReportFilter {
     DioException(:final type) => !_dioNetwork.contains(type),
     ICloudContainerAccessException() => false,
     // A password removed between `BakSyncer.sync`'s check and the upload.
-    RemoteBackupPasswordMissing() => false,
+    RemoteBackupPasswordMissing() || SyncPasswordMissing() => false,
     // A sync key the password here does not open, or one not arrived yet.
     SyncPasswordMismatch() || SyncKeyNotHere() => false,
+    // The sync engine: the store out of reach, LK Cloud refusing (quota, no
+    // plan), or a newer build's batch.
+    SyncError(kind: SyncEngineErrorKind.remote || SyncEngineErrorKind.signedOut) || SyncRefused() || SyncLogTooNew() => false,
     // LK Cloud: unreachable, signed out, a plan without sync or its space
     // used up; and another device writing first three times in a row.
     LkcException() || RemoteChangedException() => false,
