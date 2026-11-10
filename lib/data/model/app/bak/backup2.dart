@@ -300,7 +300,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     List<int> compressed() => compressBackups ? gzip.encode(json) : json;
     final Uint8List bytes;
     if (key != null) {
-      bytes = key.seal(plain: Uint8List.fromList(compressed()));
+      bytes = await key.seal(plain: Uint8List.fromList(compressed()));
     } else if (encrypted) {
       bytes = utf8.encode(await AgeCryptor.encrypt(compressed(), password!));
     } else {

@@ -42,7 +42,7 @@ void main() {
     await const SyncAllMigration().apply();
 
     final left = {for (final r in db.select('SELECT k, v FROM sync_state;')) r['k'] as String: r['v'] as String};
-    expect(left, {'log.account': 'acct', 'seg.store': 'webdav', 'device': 'abc'});
+    expect(left, {'log.account': 'acct', 'seg.store': 'webdav', 'seg.n': '3', 'device': 'abc'});
     db.execute("INSERT INTO sync_passed (e, c, id, h, d) VALUES ('log.', 'kv:setting', 'k', 'h', 'null');");
     expect(db.select('SELECT COUNT(*) AS n FROM sync_passed;').first['n'], 1);
     // Idempotent.

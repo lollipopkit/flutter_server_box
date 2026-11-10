@@ -72,13 +72,13 @@ void main() {
     final opened = await _opened(file, 'a');
     expect(opened.epoch, 0);
     expect(opened.keys.single, startsWith('AGE-SECRET-KEY-1'));
-    expect(await key.open(sealed: key.seal(plain: Uint8List.fromList([1]))), [1]);
+    expect(await key.open(sealed: await key.seal(plain: Uint8List.fromList([1]))), [1]);
   });
 
   test('two devices that made a key at once end with both, sealing with one', () async {
     final file = MemoryKeyFile();
     final a = await SyncKeyring.ofFiles(file);
-    final sealedByA = a.seal(plain: Uint8List.fromList([1]));
+    final sealedByA = await a.seal(plain: Uint8List.fromList([1]));
     final keysOfA = (await _opened(file, 'a')).keys;
 
     // B did not see A's file yet, and wrote over it.
@@ -87,8 +87,9 @@ void main() {
     file.blind = true;
     final b = await SyncKeyring.ofFiles(file);
     file.blind = false;
-    final sealedByB = b.seal(plain: Uint8List.fromList([2]));
+    final sealedByB = await b.seal(plain: Uint8List.fromList([2]));
     await expectLater(b.open(sealed: sealedByA), _unreadable, reason: 'nothing of A in the file B reads');
+    final keysOfB = (await _opened(file, 'a')).keys;
 
     // A, on its keys, meets B's file: puts its own back beside B's.
     _restart();
@@ -97,6 +98,15 @@ void main() {
     expect(await again.open(sealed: sealedByB), [2]);
     expect(await again.open(sealed: sealedByA), [1]);
     expect((await _opened(file, 'a')).keys, hasLength(2));
+    final byA = await again.seal(plain: Uint8List.fromList([3]));
+
+    // B, on its keys, reads the file A wrote: one key seals for both.
+    _restart();
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'a', 'syncIdentity.${file.id}': keysOfB.join('\n')});
+    final b2 = await SyncKeyring.ofFiles(file);
+    expect(await b2.open(sealed: byA), [3]);
+    expect(await b2.open(sealed: sealedByA), [1]);
+    expect(await again.open(sealed: await b2.seal(plain: Uint8List.fromList([4]))), [4]);
   });
 
   test('a password the file does not open syncs nothing, kept keys or not, until it is the one there', () async {
@@ -131,7 +141,7 @@ void main() {
     await _expectFile(file, 'c', epoch: 1, keys: keys);
     expect(await _pending(), isNull);
     expect(SyncKeyring.passwordMismatch.value, isEmpty);
-    expect(await key.open(sealed: key.seal(plain: Uint8List.fromList([3]))), [3]);
+    expect(await key.open(sealed: await key.seal(plain: Uint8List.fromList([3]))), [3]);
   });
 
   test('a change made offline seals the file at the next launch', () async {
@@ -254,7 +264,7 @@ void main() {
 
   test('a synced backup picked to restore opens with a kept key, nothing synced', () async {
     final file = MemoryKeyFile();
-    final sealed = (await SyncKeyring.ofFiles(file)).seal(plain: Uint8List.fromList([9]));
+    final sealed = await (await SyncKeyring.ofFiles(file)).seal(plain: Uint8List.fromList([9]));
     _restart();
     expect(await SyncKeyring.openKept(sealed), [9]);
     await expectLater(SyncKeyring.openAny(sealed), _unreadable, reason: 'no sync on here');
@@ -263,7 +273,7 @@ void main() {
   test('nor with a password the remote refuses', () async {
     final file = MemoryKeyFile();
     final key = await SyncKeyring.ofFiles(file);
-    final sealed = key.seal(plain: Uint8List.fromList([9]));
+    final sealed = await key.seal(plain: Uint8List.fromList([9]));
     file.put(await _sealed('b', (await _opened(file, 'a')).keys, 1));
     await SyncKeyring.recheck();
     expect(SyncKeyring.passwordMismatch.value, {file.id});

@@ -28,11 +28,13 @@ class SyncAllMigration implements SchemaMigration {
     );
     SyncedStores.seed();
     SyncRecorder.seedRecords(BenchmarkStore.c, BenchmarkStore.finished());
-    // As `LogSync.forget` and `SegmentSync.forget`: read again, everything
-    // sent. The account and the store they are bound to stay.
+    // As the engines' forget: read again, everything sent. The account and
+    // the store they are bound to stay, and this device's segment numbering:
+    // a segment written again under a number the others read past is never
+    // read.
     db.execute(
       "DELETE FROM sync_state WHERE (k LIKE 'log.%' AND k != 'log.account') "
-      "OR (k LIKE 'seg.%' AND k != 'seg.store');",
+      "OR (k LIKE 'seg.%' AND k NOT IN ('seg.store', 'seg.n'));",
     );
   }
 }

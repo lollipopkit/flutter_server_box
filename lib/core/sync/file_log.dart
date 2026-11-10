@@ -8,6 +8,8 @@ final fileLog = FileLogSync(
   remote: () => bakSync.remoteStorage,
   folder: 'srvbox_sync',
   on: () => (PrefProps.icloudSync.get() && isICloudSupported) || PrefProps.webdavSync.get(),
-  webdavAccount: () => SyncRemotes.webdavUser,
+  // "null" without a user: the id the shipped builds made, so the store is
+  // the one they joined.
+  webdavAccount: () => SyncRemotes.webdavUser ?? 'null',
   changes: [PrefProps.icloudSync.listenable(), PrefProps.webdavSync.listenable()],
 );

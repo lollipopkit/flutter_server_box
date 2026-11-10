@@ -130,7 +130,7 @@ Future<Map<String, dynamic>> _plain(Uint8List sealed) async =>
     jsonDecode(utf8.decode(gzip.decode(await _key.open(sealed: sealed)))) as Map<String, dynamic>;
 
 /// [json] as a batch sealed to the account's key.
-Uint8List _batch(Object json) => _key.seal(plain: Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode(json)))));
+Future<Uint8List> _batch(Object json) => _key.seal(plain: Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode(json)))));
 
 Future<void> _device() async {
   KvStore.onEdit = null;
@@ -372,7 +372,7 @@ void main() {
     expect(sync.tooNew, isFalse);
 
     final sent = log.batches.length;
-    log.batches.add((sent + 1, _batch({'v': 99, 'ops': []})));
+    log.batches.add((sent + 1, await _batch({'v': 99, 'ops': []})));
     Stores.setting.timeout.put(9);
     sync = _sync(log);
     await expectLater(sync.sync(), throwsA(isA<SyncLogTooNew>()));
@@ -495,6 +495,30 @@ void main() {
     expect(Stores.setting.timeout.fetch(), 21);
   });
 
+  test('a new key seals from then on; the one before still opens', () async {
+    final log = _Log();
+    await _device();
+    Stores.snippet.put(snippet);
+    final sync = _sync(log);
+    await sync.sync();
+    final before = await _key.seal(plain: Uint8List.fromList([1]));
+    final old = (await _held())!.split('\n').first;
+
+    await sync.rotate();
+    final kept = (await _held())!.split('\n');
+    expect(kept.first, isNot(old));
+    expect(kept, contains(old), reason: 'the one it replaced');
+    final after = await _key.seal(plain: Uint8List.fromList([2]));
+    expect(await _key.open(sealed: before), [1]);
+    expect(await _key.open(sealed: after), [2]);
+
+    // A device with only the password reads both from the account's file.
+    await _device();
+    await _keychain();
+    expect(await _key.open(sealed: before), [1]);
+    expect(await _key.open(sealed: after), [2]);
+  });
+
   test('a device that leaves records out carries them on in its snapshot', () async {
     final log = _Log();
     await _device();
@@ -604,7 +628,7 @@ void main() {
     // An edit of it where it is `aaaaaaaa1` lands on `bbbbbbbb2` here.
     final edit = _Log()..batches.addAll(log.batches);
     final h = syncTick(device: BigInt.from(99), last: '', nowMs: BigInt.from(SyncClock.now() + 1000));
-    edit.batches.add((edit.batches.length + 1, _batch({
+    edit.batches.add((edit.batches.length + 1, await _batch({
       'v': 1,
       'ops': [
         {'c': 'snippet', 'id': 'aaaaaaaa1', 'h': h, 'd': {'id': 'aaaaaaaa1', 'name': 'deploy', 'script': 'make release'}},

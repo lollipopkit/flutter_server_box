@@ -278,7 +278,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     try {
       await lkcLog.key();
     } on SyncPasswordMismatch catch (e) {
-      return Toast.show(e.toString());
+      return Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
       return;
@@ -546,7 +546,7 @@ extension on _BackupPageState {
       if (context.mounted) await BackupService.restoreData(context, bytes);
     } on SyncPasswordMismatch catch (e) {
       // Said as the card above says it: no error to report.
-      Toast.show(e.toString());
+      Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
     } catch (e, s) {
       if (context.mounted) _showLkcErr(e, s, libL10n.restore);
       Loggers.app.warning('Restore LK Cloud backup failed', e, s);

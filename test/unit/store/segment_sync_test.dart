@@ -113,9 +113,9 @@ final class _Sync {
 _Sync _sync(_Folder folder) => _Sync(folder);
 
 /// [json], sealed to the folder's key.
-Uint8List _sealed(Object json) => _key.seal(plain: Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode(json)))));
+Future<Uint8List> _sealed(Object json) => _key.seal(plain: Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode(json)))));
 
-Uint8List _snapshotOf(Map<String, int> covers) => _sealed({'v': 1, 'ops': [], 'covers': covers});
+Future<Uint8List> _snapshotOf(Map<String, int> covers) => _sealed({'v': 1, 'ops': [], 'covers': covers});
 
 void main() {
   setUp(() async {
@@ -197,7 +197,7 @@ void main() {
     Stores.snippet.put(snippet);
     await _sync(folder).sync();
     final name = folder.segmentsOf(a).single;
-    folder.files[name] = (body: _sealed({'v': 99, 'ops': []}), at: DateTime.now());
+    folder.files[name] = (body: await _sealed({'v': 99, 'ops': []}), at: DateTime.now());
 
     await _device();
     final sync = _sync(folder);
@@ -314,7 +314,7 @@ void main() {
     final a = await _device();
     final sync = _sync(folder);
     // Another device, read up to segment 5 of this one.
-    folder.files['snap-00000000000000bb.age'] = (body: _snapshotOf({a: 5}), at: DateTime.now());
+    folder.files['snap-00000000000000bb.age'] = (body: await _snapshotOf({a: 5}), at: DateTime.now());
     for (var i = 0; i < _compactEvery + 1; i++) {
       Stores.setting.timeout.put(100 + i);
       await sync.sync();

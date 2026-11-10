@@ -7,19 +7,7 @@ import 'package:server_box/core/sync/lkc_prefs.dart';
 final lkcLog = LkcLogSync(
   client: Lkc.client,
   app: Lkc.app,
-  enabled: Lkc.enabled ? LkcSyncPrefs.enabled.listenable() : const _Off(),
+  // LK Cloud not in this build: nothing syncs there.
+  enabled: Lkc.enabled ? LkcSyncPrefs.enabled.listenable() : ValueNotifier(false),
 );
 
-/// LK Cloud is not in this build: nothing syncs there.
-final class _Off implements ValueListenable<bool> {
-  const _Off();
-
-  @override
-  bool get value => false;
-
-  @override
-  void addListener(VoidCallback listener) {}
-
-  @override
-  void removeListener(VoidCallback listener) {}
-}

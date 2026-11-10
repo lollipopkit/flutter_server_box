@@ -65,7 +65,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
     final name = '$_prefix${key.nameOf(data: bytes)}.age';
     _used.add(name);
     if (listed.containsKey(name)) return name;
-    final sealed = key.seal(plain: bytes);
+    final sealed = await key.seal(plain: bytes);
     final dir = await Directory.systemTemp.createTemp('sb-theme-blob-');
     try {
       final file = File('${dir.path}/$name');

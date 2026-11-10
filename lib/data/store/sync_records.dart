@@ -120,9 +120,8 @@ final class EntityRecords implements SyncTableRecords {
   @override
   Set<String> write(List<SyncOp> ops) {
     final entities = Stores.syncedEntities;
-    if (ops.any((op) => op.c == Stores.key.table)) {
-      _keysBefore ??= [for (final k in Stores.key.fetch()) k.key];
-    }
+    // This write's own: one that failed before left nothing for this one.
+    _keysBefore = ops.any((op) => op.c == Stores.key.table) ? [for (final k in Stores.key.fetch()) k.key] : null;
     final touched = <EntityStore>{};
     final linked = <(EntityStore, Object, String)>[];
     for (final op in ops) {
