@@ -50,6 +50,8 @@ SolidCompression=yes
 ; reboot.
 CloseApplications=force
 RestartApplications=no
+; Only when Windows' own language is not listed below.
+ShowLanguageDialog=auto
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
@@ -58,18 +60,27 @@ Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "fr"; MessagesFile: "compiler:Languages\French.isl"
 Name: "it"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "ko"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "nl"; MessagesFile: "compiler:Languages\Dutch.isl"
 Name: "pt"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "tr"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "uk"; MessagesFile: "compiler:Languages\Ukrainian.isl"
+; Not shipped with Inno Setup 6.7: its unofficial translations, from the
+; is-6_7_1 tag of jrsoftware/issrc.
+Name: "zh"; MessagesFile: "installer\ChineseSimplified.isl"
+Name: "zh_tw"; MessagesFile: "installer\ChineseTraditional.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [InstallDelete]
-; Replaced whole, so a file the new version no longer has does not linger.
-Type: filesandordirs; Name: "{app}\data"
+; Replaced whole, so an asset the new version no longer has does not linger.
+; Only what Flutter puts there: on a first install {app} is any directory the
+; user picked, and its `data` may not be ours.
+Type: filesandordirs; Name: "{app}\data\flutter_assets"
+Type: files; Name: "{app}\data\app.so"
+Type: files; Name: "{app}\data\icudtl.dat"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

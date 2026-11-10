@@ -105,7 +105,18 @@ submit() {
     return
   fi
 
-  if ! gh api "repos/$fork/git/ref/heads/$branch" --silent 2>/dev/null; then
+  if out="$(gh api "repos/$fork/contents/$path?ref=$branch" 2>&1)"; then
+    # Left by a run that stopped before its pull request: only good to
+    # propose if it holds these manifests.
+    if [[ "$(jq -r '[.[] | "\(.name) \(.sha)"] | sort | .[]' <<<"$out")" != \
+      "$(for f in "$dir"/*.yaml; do echo "$(basename "$f") $(git hash-object "$f")"; done | sort)" ]]; then
+      echo "::error::$fork has a branch $branch with other manifests; delete it and run again"
+      return 1
+    fi
+  elif [[ "$out" != *"HTTP 404"* ]]; then
+    echo "$out" >&2
+    return 1
+  else
     # On upstream's master, which the fork shares objects with; the fork's own
     # master is never read or synced.
     base="$(gh api "repos/$UPSTREAM/git/ref/heads/master" --jq .object.sha)"

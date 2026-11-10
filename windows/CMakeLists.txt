@@ -106,6 +106,9 @@ install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
 # installed can still start it.
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 include(InstallRequiredSystemLibraries)
+if(NOT CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+  message(FATAL_ERROR "The VC++ runtime was not found: install the MSVC redistributable component")
+endif()
 install(PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
   DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)

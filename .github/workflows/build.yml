@@ -876,8 +876,8 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          # The zip beside the installer: releases up to v1.0.1719 update only
-          # from a zip. TODO: drop the zip a release or two after the installer.
+          # The zip beside the installer: releases up to v1.0.1787 update only
+          # from a zip. TODO: drop the zip once few users run those.
           path: |
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.exe
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
@@ -1052,20 +1052,25 @@ jobs:
         run: |
           set -euo pipefail
           URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/${APP_NAME}_v${VERSION}_windows_amd64.exe"
-          curl -fsSL -o "$RUNNER_TEMP/installer.exe" "$URL"
-          SHA256="$(sha256sum "$RUNNER_TEMP/installer.exe" | cut -d' ' -f1)"
+          # From the release's own checksums rather than a second download.
+          SHA256="$(gh release download "v${VERSION}" --repo "$GITHUB_REPOSITORY" -p SHA256SUMS -O - |
+            awk -v f="${URL##*/}" '$2 == f || $2 == "*" f { print $1 }')"
+          [[ "$SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::no checksum for ${URL##*/}"; exit 1; }
           RELEASE_DATE="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${VERSION}" --jq '.published_at[:10]')"
           RELEASE_NOTES_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}"
           export URL SHA256 RELEASE_DATE RELEASE_NOTES_URL
           scripts/release/winget.sh render "$RUNNER_TEMP/winget"
-      - name: Check
-        run: scripts/release/winget.sh check "$RUNNER_TEMP/winget"
+      # Before the check: it runs check-jsonschema's unpinned dependencies,
+      # which could otherwise change what is submitted. A failed check still
+      # stops the submit.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: winget-manifests
           path: ${{ runner.temp }}/winget
           if-no-files-found: error
           retention-days: 14
+      - name: Check
+        run: scripts/release/winget.sh check "$RUNNER_TEMP/winget"
 
   # Opens the pull request on winget-pkgs. A job of its own: the check above
   # runs check-jsonschema's unpinned dependencies, which must not share a
