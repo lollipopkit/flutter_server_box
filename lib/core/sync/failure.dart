@@ -15,6 +15,7 @@ String? syncFailureText(Object e) => switch (e) {
   RemoteBackupPasswordMissing() => e.toString(),
   SyncPasswordMissing() => const RemoteBackupPasswordMissing().toString(),
   SyncError(kind: SyncEngineErrorKind.remote) => l10n.syncUnreachable,
+  SyncError(kind: SyncEngineErrorKind.signedOut) => libL10n.lkcNotSignedIn,
   SyncRefused(:final reason) => l10n.syncRefused(reason),
   LkcSyncError() => switch (e.exception) {
     final LkcException x => x.text(libL10n),

@@ -14,11 +14,13 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_records.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
@@ -55,6 +57,11 @@ void main() {
     await Stores.init();
     SyncRecorder.resetForTest();
     SyncedStores.install();
+    // What launch sets up, per device: its keys read anew, its records.
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
+    ServerSyncRecords.install();
+    SyncCategory.define();
     SyncRemotes.setWebdav(url: url, user: user ?? '', pwd: pwd ?? '');
     fileLog.reset();
     return SyncRecorder.deviceHexOf(SyncRecorder.device);
