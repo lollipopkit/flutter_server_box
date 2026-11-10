@@ -2033,5 +2033,6 @@
   "syncStateFailed": "Sinkronisasi gagal",
   "syncStatePassword": "Kata sandi tidak cocok",
   "syncStateUpdate": "Perlu diperbarui",
-  "syncStateRunning": "Menyinkronkan"
+  "syncStateRunning": "Menyinkronkan",
+  "syncRefused": "LK Cloud menolak sinkronisasi ({reason})"
 }

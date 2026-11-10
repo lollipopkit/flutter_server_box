@@ -7312,4 +7312,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'Sincronizando';
+
+  @override
+  String syncRefused(String reason) {
+    return 'O LK Cloud recusou a sincronização ($reason)';
+  }
 }

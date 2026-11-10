@@ -6952,4 +6952,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncStateRunning => '同期中';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud が同期を拒否しました（$reason）';
+  }
 }

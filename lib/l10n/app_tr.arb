@@ -2033,5 +2033,6 @@
   "syncStateFailed": "Eşitleme başarısız",
   "syncStatePassword": "Parola eşleşmiyor",
   "syncStateUpdate": "Güncelleme gerekli",
-  "syncStateRunning": "Eşitleniyor"
+  "syncStateRunning": "Eşitleniyor",
+  "syncRefused": "LK Cloud eşitlemeyi reddetti ({reason})"
 }

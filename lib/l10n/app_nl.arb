@@ -2033,5 +2033,6 @@
   "syncStateFailed": "Synchronisatie mislukt",
   "syncStatePassword": "Wachtwoord komt niet overeen",
   "syncStateUpdate": "Update vereist",
-  "syncStateRunning": "Bezig met synchroniseren"
+  "syncStateRunning": "Bezig met synchroniseren",
+  "syncRefused": "LK Cloud weigerde de synchronisatie ({reason})"
 }

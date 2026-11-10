@@ -2033,5 +2033,6 @@
   "syncStateFailed": "Error de sincronización",
   "syncStatePassword": "La contraseña no coincide",
   "syncStateUpdate": "Actualización necesaria",
-  "syncStateRunning": "Sincronizando"
+  "syncStateRunning": "Sincronizando",
+  "syncRefused": "LK Cloud rechazó la sincronización ({reason})"
 }

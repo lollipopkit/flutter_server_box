@@ -6953,4 +6953,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syncStateRunning => '동기화 중';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud가 동기화를 거부했습니다 ($reason)';
+  }
 }

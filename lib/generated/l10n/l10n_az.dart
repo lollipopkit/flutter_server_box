@@ -7233,4 +7233,9 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'Sinxronlaşdırılır';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud sinxronizasiyanı rədd etdi ($reason)';
+  }
 }

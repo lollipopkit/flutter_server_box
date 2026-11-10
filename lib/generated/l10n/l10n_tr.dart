@@ -7227,4 +7227,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'Eşitleniyor';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud eşitlemeyi reddetti ($reason)';
+  }
 }

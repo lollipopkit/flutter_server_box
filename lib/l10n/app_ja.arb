@@ -2033,5 +2033,6 @@
   "syncStateFailed": "同期に失敗しました",
   "syncStatePassword": "パスワードが一致しません",
   "syncStateUpdate": "アップデートが必要です",
-  "syncStateRunning": "同期中"
+  "syncStateRunning": "同期中",
+  "syncRefused": "LK Cloud が同期を拒否しました（{reason}）"
 }

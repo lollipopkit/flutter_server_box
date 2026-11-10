@@ -2033,5 +2033,6 @@
   "syncStateFailed": "동기화 실패",
   "syncStatePassword": "비밀번호 불일치",
   "syncStateUpdate": "업데이트 필요",
-  "syncStateRunning": "동기화 중"
+  "syncStateRunning": "동기화 중",
+  "syncRefused": "LK Cloud가 동기화를 거부했습니다 ({reason})"
 }

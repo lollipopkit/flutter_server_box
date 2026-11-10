@@ -2033,5 +2033,6 @@
   "syncStateFailed": "同步失敗",
   "syncStatePassword": "密碼不一致",
   "syncStateUpdate": "需要更新",
-  "syncStateRunning": "同步中"
+  "syncStateRunning": "同步中",
+  "syncRefused": "LK Cloud 拒絕了同步（{reason}）"
 }

@@ -7311,4 +7311,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syncStateRunning => 'Bezig met synchroniseren';
+
+  @override
+  String syncRefused(String reason) {
+    return 'LK Cloud weigerde de synchronisatie ($reason)';
+  }
 }
