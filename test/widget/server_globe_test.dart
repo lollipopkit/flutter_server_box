@@ -6,19 +6,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
-import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
+import 'package:server_box/view/page/server/widget/server_globe.dart';
 import 'package:server_box/view/widget/globe/view.dart';
-import 'package:server_box/view/widget/server_globe.dart';
 
 import '../helpers/geo_fixture.dart';
 import '../helpers/spi_fixture.dart';
@@ -33,6 +34,7 @@ import '../helpers/test_db.dart';
 /// down from a page.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final en = AppLocalizationsEn();
 
   late Directory tmp;
 
@@ -135,8 +137,8 @@ void main() {
     addServer('lan', '192.168.1.10', name: 'nas');
     addServer('lo', '127.0.0.1', name: 'here');
     await show(tester, ['lan', 'lo']);
-    expect(find.text('Private address'), findsOneWidget);
-    expect(find.text('Unknown'), findsNothing);
+    expect(find.text(en.geoMissPrivate), findsOneWidget);
+    expect(find.text(libL10n.unknown), findsNothing);
   });
 
   testWidgets('an address no database covers says that instead', (
@@ -146,7 +148,7 @@ void main() {
     // of the chain rather than being turned back at the top of it.
     addServer('v6', '2400:cb00::1', name: 'cf');
     await show(tester, ['v6']);
-    expect(find.text('No location data'), findsOneWidget);
+    expect(find.text(en.geoMissNoData), findsOneWidget);
   });
 
   /// The entry point that reaches anyone.
@@ -179,8 +181,8 @@ void main() {
       // app and reads as a fact about the server; beside a Download button with
       // the caption fallen back to "Unknown" it read as `Unknown  Download`,
       // which names nothing at all.
-      expect(find.text('City-level data · Not downloaded'), findsOneWidget);
-      expect(find.text('Unknown'), findsNothing);
+      expect(find.text('${en.geoData} · ${en.geoDataMissing}'), findsOneWidget);
+      expect(find.text(libL10n.unknown), findsNothing);
     });
 
     testWidgets('and says so even with a LAN server in the strip too', (
@@ -195,9 +197,9 @@ void main() {
 
       await show(tester, ['a', 'lan']);
 
-      expect(find.text('City-level data · Not downloaded'), findsOneWidget);
+      expect(find.text('${en.geoData} · ${en.geoDataMissing}'), findsOneWidget);
       expect(find.text(libL10n.download), findsOneWidget);
-      expect(find.text('Unknown'), findsNothing);
+      expect(find.text(libL10n.unknown), findsNothing);
     });
 
     testWidgets('not when it is installed', (tester) async {
@@ -259,8 +261,8 @@ void main() {
     addServer('lan', '192.168.1.10', name: 'nas');
     addServer('v6', '2400:cb00::1', name: 'cf');
     await show(tester, ['lan', 'v6']);
-    expect(find.text('Private address · No location data'), findsOneWidget);
-    expect(find.text('Unknown'), findsNothing);
+    expect(find.text('${en.geoMissPrivate} · ${en.geoMissNoData}'), findsOneWidget);
+    expect(find.text(libL10n.unknown), findsNothing);
   });
 
   /// A LAN server placed by what the machine says about itself.

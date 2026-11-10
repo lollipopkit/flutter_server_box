@@ -337,11 +337,6 @@ class ServerDetailReadoutRow extends StatelessWidget {
     final body = Padding(
       padding: EdgeInsets.fromLTRB(17, 7, onTap == null ? 17 : 9, 7),
       child: Row(
-        // The room between the two, not at the end of the row: with a loose
-        // value beside an `Expanded` name the row's children come to less than
-        // its width, and the difference lands after the last of them — which
-        // left every reading short of the edge it is supposed to line up on.
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (dot != null) ...[
             Container(
@@ -375,7 +370,11 @@ class ServerDetailReadoutRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 13),
-          Flexible(
+          // Its half of the row, filled and set to the right, so nothing is
+          // left over: a loose value left room that landed after the last
+          // child, short of the edge the readings line up on, and spread
+          // between the children instead it came between a dot and its name.
+          Expanded(
             child: Text(
               v,
               maxLines: 1,

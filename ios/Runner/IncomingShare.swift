@@ -92,18 +92,27 @@ enum IncomingShare {
     let scoped = url.startAccessingSecurityScopedResource()
     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
+    // The inbox is this app's to clean up, and what is in it is a credential
+    // — read or not: the Files app lists the inbox too. Anything elsewhere
+    // belongs to the user and is left alone.
+    defer { if isInInbox(url) { try? FileManager.default.removeItem(at: url) } }
+
     guard
       let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
       let size = attrs[.size] as? Int, size <= maxBytes,
       let data = try? Data(contentsOf: url)
     else { return nil }
-    let text = String(data: data, encoding: .utf8)
+    return String(data: data, encoding: .utf8)
+  }
 
-    // The inbox is this app's to clean up, and what is in it is a credential.
-    // Anything elsewhere belongs to the user and is left alone.
-    if url.path.contains("/Documents/Inbox/") {
-      try? FileManager.default.removeItem(at: url)
-    }
-    return text
+  /// Directly in this app's own `Documents/Inbox`. A path that only contains
+  /// one, such as a folder the user made in the Files app, is the user's.
+  private static func isInInbox(_ url: URL) -> Bool {
+    guard
+      let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+    else { return false }
+    func canonical(_ u: URL) -> String { u.standardizedFileURL.resolvingSymlinksInPath().path }
+    return canonical(url.deletingLastPathComponent())
+      == canonical(docs.appendingPathComponent("Inbox", isDirectory: true))
   }
 }

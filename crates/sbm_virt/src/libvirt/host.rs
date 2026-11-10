@@ -7,9 +7,14 @@
 //! (`load`, `guestOf`, `sampleOf`).
 
 use crate::error::{Error, ErrorKind};
-use crate::libvirt::{POOL_TYPES, VirtAction, VirtDomain, VirtError, VirtOverview, VirtState};
-use crate::model::{Capabilities, Guest, GuestKind, GuestState, Host, HostKind, HostView, PowerAction};
+use crate::libvirt::{POOL_TYPES, VirtAction, VirtDiskUse, VirtDomain, VirtDomainDetail, VirtError, VirtIfaceUse, VirtNetworkInfo, VirtNetworks, VirtOverview, VirtPool, VirtSnapshotInfo, VirtState, VirtVncConsoleInfo, VirtVolume};
+use crate::libvirt::manage::{self, VirtNetIpv4, VirtResourceOp};
+use crate::libvirt::net::{self, VirtNetEdit, VirtNetHost, VirtNetOp};
+use crate::libvirt::snapshot::{VirtSnapChain, VirtSnapDiff, external_snapshot_refusal, snapshot_refusal};
+use crate::model::{Capabilities, Guest, GuestDetail, GuestKind, GuestState, Host, HostKind, HostView, PowerAction};
 use crate::rates::{CounterSample, RateTracker};
+use crate::resource::{self, Change, GuestRef, Issue, Listing, Network, Pool, Volume};
+use crate::snapshot::{Chain, ChainDisk, ChainFile, Diff, DiffGroup, Snapshot, SnapshotLayer, overlay_path};
 
 /// libvirt's `VIR_DOMAIN_CRASHED`: stopped, with the QEMU process kept by
 /// `on_crash=preserve`.
@@ -246,8 +251,8 @@ pub fn sudo_refusal(stderr: &str, had_password: bool) -> Option<Error> {
 
 /// A domain's detail as the model has it: the consoles are a serial device
 /// (text) and a VNC display, configured or running.
-pub fn detail_of(d: &crate::libvirt::VirtDomainDetail) -> crate::model::GuestDetail {
-    use crate::model::{ConsoleKind, Disk, Display, Graphics, GuestDetail, Nic};
+pub fn detail_of(d: &VirtDomainDetail) -> GuestDetail {
+    use crate::model::{ConsoleKind, Disk, Display, Graphics, Nic};
     let xml = &d.xml;
     let vnc = d.display.as_ref().is_some_and(|d| d.protocol == "vnc") || xml.graphics.iter().any(|g| g.kind == "vnc");
     let mut consoles = std::collections::BTreeSet::new();
@@ -329,7 +334,7 @@ impl std::fmt::Debug for VncTarget {
 }
 
 /// [`super::parse_vnc_console`]'s answer as something to dial, or why not.
-pub fn vnc_target(info: &crate::libvirt::VirtVncConsoleInfo, name: &str) -> Result<VncTarget, Error> {
+pub fn vnc_target(info: &VirtVncConsoleInfo, name: &str) -> Result<VncTarget, Error> {
     let Some(display) = &info.display else {
         return Err(Error::msg(ErrorKind::Unsupported, format!("No VNC display while {name} is not running")));
     };
@@ -354,8 +359,8 @@ pub fn dial_host(host: Option<&str>) -> String {
 }
 
 /// A snapshot as the model has it.
-pub fn snapshot_of(s: &crate::libvirt::VirtSnapshotInfo) -> crate::snapshot::Snapshot {
-    crate::snapshot::Snapshot {
+pub fn snapshot_of(s: &VirtSnapshotInfo) -> Snapshot {
+    Snapshot {
         name: s.name.clone(),
         parent: s.parent.clone(),
         description: s.description.clone(),
@@ -366,7 +371,7 @@ pub fn snapshot_of(s: &crate::libvirt::VirtSnapshotInfo) -> crate::snapshot::Sna
         layers: s
             .layers
             .iter()
-            .map(|l| crate::snapshot::SnapshotLayer {
+            .map(|l| SnapshotLayer {
                 target: l.target.clone(),
                 file: l.file.clone(),
                 external: l.snapshot.as_deref() == Some("external"),
@@ -380,18 +385,18 @@ pub fn snapshot_of(s: &crate::libvirt::VirtSnapshotInfo) -> crate::snapshot::Sna
 /// not a volume of the pool.
 const FILE_POOL_TYPES: &[&str] = &["dir", "fs", "netfs"];
 
-fn is_file_pool(p: &crate::libvirt::VirtPool) -> bool {
+fn is_file_pool(p: &VirtPool) -> bool {
     p.pool_type.as_deref().is_some_and(|t| FILE_POOL_TYPES.contains(&t))
         && p.target.as_deref().is_some_and(|t| t.starts_with('/'))
 }
 
 /// An active pool of files: where an overlay can go.
-pub fn pool_holds_files(p: &crate::libvirt::VirtPool) -> bool {
+pub fn pool_holds_files(p: &VirtPool) -> bool {
     p.active && is_file_pool(p)
 }
 
 /// The pool of files whose directory holds `file` itself.
-pub fn pool_of_file<'a>(pools: &'a [crate::libvirt::VirtPool], file: &str) -> Option<&'a crate::libvirt::VirtPool> {
+pub fn pool_of_file<'a>(pools: &'a [VirtPool], file: &str) -> Option<&'a VirtPool> {
     let at = file.rfind('/')?;
     // A file right under the root is in the pool whose target is `/`.
     let dir = if at == 0 { "/" } else { &file[..at] };
@@ -403,6 +408,17 @@ pub fn pool_of_file<'a>(pools: &'a [crate::libvirt::VirtPool], file: &str) -> Op
     })
 }
 
+/// One change between a snapshot's definition and the guest's, as the model
+/// groups it: libvirt's `interfaces` are the model's NICs.
+pub fn diff_of(d: &VirtSnapDiff) -> Diff {
+    Diff {
+        group: DiffGroup::of_libvirt(&d.group),
+        key: d.key.clone(),
+        before: d.before.clone(),
+        after: d.after.clone(),
+    }
+}
+
 /// The disk chain as the model has it: each layer named for the snapshot
 /// that left the guest on it, each disk's pool, and where an overlay can go.
 ///
@@ -410,11 +426,10 @@ pub fn pool_of_file<'a>(pools: &'a [crate::libvirt::VirtPool], file: &str) -> Op
 /// guest wrote to until the next snapshot moved it on. The topmost layer is
 /// the one in use, the current external snapshot's.
 pub fn chain_of(
-    chain: &crate::libvirt::snapshot::VirtSnapChain,
-    snapshots: &[crate::snapshot::Snapshot],
-    pools: &[crate::libvirt::VirtPool],
-) -> crate::snapshot::Chain {
-    use crate::snapshot::{Chain, ChainDisk, ChainFile};
+    chain: &VirtSnapChain,
+    snapshots: &[Snapshot],
+    pools: &[VirtPool],
+) -> Chain {
     let mut owner = std::collections::HashMap::new();
     for s in snapshots {
         for l in &s.layers {
@@ -453,21 +468,21 @@ pub fn chain_of(
                     .collect(),
             })
             .collect(),
-        refusal: crate::libvirt::snapshot::snapshot_refusal(chain),
-        external_refusal: crate::libvirt::snapshot::external_snapshot_refusal(chain),
+        refusal: snapshot_refusal(chain),
+        external_refusal: external_snapshot_refusal(chain),
     }
 }
 
 /// The overlays an external snapshot named `name` puts each disk on, in the
 /// pool directory `dir`. None picked: no `--diskspec` at all, and libvirt
 /// names each `<disk>.<snapshot>` beside the disk it backs.
-pub fn overlays(chain: &crate::libvirt::snapshot::VirtSnapChain, name: &str, dir: Option<&str>) -> Vec<(String, String)> {
+pub fn overlays(chain: &VirtSnapChain, name: &str, dir: Option<&str>) -> Vec<(String, String)> {
     let Some(dir) = dir else { return Vec::new() };
     chain
         .disks_iter()
         .filter_map(|d| {
             let top = d.files.first()?;
-            Some((d.target.clone(), crate::snapshot::overlay_path(&top.path, name, Some(dir))))
+            Some((d.target.clone(), overlay_path(&top.path, name, Some(dir))))
         })
         .collect()
 }
@@ -478,9 +493,9 @@ pub fn overlays(chain: &crate::libvirt::snapshot::VirtSnapChain, name: &str, dir
 
 /// A pool as [`crate::resource`] has it. An inactive pool reports 0 for
 /// everything: unknown, not empty.
-pub fn pool_of(p: &crate::libvirt::VirtPool) -> crate::resource::Pool {
+pub fn pool_of(p: &VirtPool) -> Pool {
     let known = p.active && p.capacity.is_some_and(|c| c > 0);
-    crate::resource::Pool {
+    Pool {
         id: p.name.clone(),
         name: p.name.clone(),
         node: None,
@@ -501,15 +516,15 @@ pub fn pool_of(p: &crate::libvirt::VirtPool) -> crate::resource::Pool {
 
 /// A volume of `pool`, with the domains whose disks are it: by path, or a
 /// `type='volume'` disk naming its pool and volume instead.
-pub fn volume_of(v: &crate::libvirt::VirtVolume, pool: &str, disks: &[crate::libvirt::VirtDiskUse]) -> crate::resource::Volume {
-    let uses = |d: &crate::libvirt::VirtDiskUse| match &d.source {
+pub fn volume_of(v: &VirtVolume, pool: &str, disks: &[VirtDiskUse]) -> Volume {
+    let uses = |d: &VirtDiskUse| match &d.source {
         None => false,
         Some(source) => {
             v.path.as_deref() == Some(source.as_str())
                 || (d.kind == "volume" && (source == &format!("{pool}/{}", v.name) || source == &v.name))
         }
     };
-    crate::resource::Volume {
+    Volume {
         id: v.name.clone(),
         name: v.name.clone(),
         path: v.path.clone(),
@@ -522,7 +537,7 @@ pub fn volume_of(v: &crate::libvirt::VirtVolume, pool: &str, disks: &[crate::lib
         users: disks
             .iter()
             .filter(|d| uses(d))
-            .map(|d| crate::resource::GuestRef { guest_id: Some(d.domain.clone()), device: Some(d.target.clone()), ..Default::default() })
+            .map(|d| GuestRef { guest_id: Some(d.domain.clone()), device: Some(d.target.clone()), ..Default::default() })
             .collect(),
         backs: Vec::new(),
     }
@@ -531,7 +546,7 @@ pub fn volume_of(v: &crate::libvirt::VirtVolume, pool: &str, disks: &[crate::lib
 /// `volumes` with what is made on each — the volumes in `every` (any active
 /// pool's) whose backing file it is. A base image is attached to nothing,
 /// and its clones may be in another pool.
-pub fn with_backs(mut volumes: Vec<crate::resource::Volume>, every: &[crate::resource::Volume]) -> Vec<crate::resource::Volume> {
+pub fn with_backs(mut volumes: Vec<Volume>, every: &[Volume]) -> Vec<Volume> {
     for v in &mut volumes {
         let Some(path) = v.path.as_deref() else { continue };
         v.backs = every
@@ -545,13 +560,13 @@ pub fn with_backs(mut volumes: Vec<crate::resource::Volume>, every: &[crate::res
 
 /// A network with the domains that have a NIC on it — by network name, or on
 /// its bridge directly — and their addresses from its DHCP leases.
-pub fn network_of(n: &crate::libvirt::VirtNetworkInfo, all: &crate::libvirt::VirtNetworks) -> crate::resource::Network {
-    let on = |i: &crate::libvirt::VirtIfaceUse| match i.kind.as_str() {
+pub fn network_of(n: &VirtNetworkInfo, all: &VirtNetworks) -> Network {
+    let on = |i: &VirtIfaceUse| match i.kind.as_str() {
         "network" => i.source.as_deref() == Some(n.name.as_str()),
         "bridge" => n.bridge.is_some() && i.source == n.bridge,
         _ => false,
     };
-    crate::resource::Network {
+    Network {
         id: n.name.clone(),
         name: n.name.clone(),
         node: None,
@@ -576,7 +591,7 @@ pub fn network_of(n: &crate::libvirt::VirtNetworkInfo, all: &crate::libvirt::Vir
             .ifaces
             .iter()
             .filter(|i| on(i))
-            .map(|i| crate::resource::GuestRef {
+            .map(|i| GuestRef {
                 guest_id: Some(i.domain.clone()),
                 vmid: None,
                 device: i.interface.clone(),
@@ -600,24 +615,24 @@ pub fn network_of(n: &crate::libvirt::VirtNetworkInfo, all: &crate::libvirt::Vir
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "script", content = "op", rename_all = "snake_case")]
 pub enum ResourceScript {
-    Resource(crate::libvirt::manage::VirtResourceOp),
-    Net(crate::libvirt::net::VirtNetOp),
+    Resource(VirtResourceOp),
+    Net(VirtNetOp),
 }
 
 impl ResourceScript {
     /// The script, or why it cannot be written.
     pub fn script(&self) -> Result<String, VirtError> {
         match self {
-            ResourceScript::Resource(op) => crate::libvirt::manage::resource_script(op),
-            ResourceScript::Net(op) => crate::libvirt::net::net_change_script(op),
+            ResourceScript::Resource(op) => manage::resource_script(op),
+            ResourceScript::Net(op) => net::net_change_script(op),
         }
     }
 
     /// What the script printed, as the change made or the host's refusal.
     pub fn parse(&self, raw: &str) -> Result<(), VirtError> {
         match self {
-            ResourceScript::Resource(_) => crate::libvirt::manage::parse_resource(raw),
-            ResourceScript::Net(_) => crate::libvirt::net::parse_net_change(raw),
+            ResourceScript::Resource(_) => manage::parse_resource(raw),
+            ResourceScript::Net(_) => net::parse_net_change(raw),
         }
     }
 }
@@ -625,12 +640,12 @@ impl ResourceScript {
 /// `change` as the script that makes it, checked first against `list` — the
 /// host's pools, networks and the volumes of the pool it is to, read for
 /// this change ([`crate::resource::issue`]).
-pub fn resource_script(change: &crate::resource::Change, list: crate::resource::Listing<'_>) -> Result<ResourceScript, Error> {
-    use crate::libvirt::manage::{VirtNetIpv4, VirtResourceOp as R};
-    use crate::libvirt::net::{VirtNetEdit, VirtNetHost, VirtNetOp as N};
-    use crate::resource::Change as C;
-    if let Some(issue) = crate::resource::issue(change, HostKind::Libvirt, list) {
-        return Err(crate::resource::refusal(issue));
+pub fn resource_script(change: &Change, list: Listing<'_>) -> Result<ResourceScript, Error> {
+    use VirtResourceOp as R;
+    use VirtNetOp as N;
+    use Change as C;
+    if let Some(issue) = resource::issue(change, HostKind::Libvirt, list) {
+        return Err(resource::refusal(issue));
     }
     let pool = || change.pool().and_then(|id| list.pools.iter().find(|p| p.id == id)).expect("checked");
     let volume = |id: &str| list.volumes.iter().find(|v| v.id == id).expect("checked");
@@ -725,7 +740,7 @@ pub fn resource_script(change: &crate::resource::Change, list: crate::resource::
         }
         // Refused by `issue` above: PVE's.
         C::NetworkEditBridge { .. } | C::NetworkApply { .. } | C::NetworkRevert { .. } => {
-            return Err(crate::resource::refusal(crate::resource::Issue::Unsupported));
+            return Err(resource::refusal(Issue::Unsupported));
         }
     };
     Ok(ResourceScript::Resource(op))

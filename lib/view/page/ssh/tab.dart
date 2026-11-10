@@ -1,34 +1,31 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/workspace.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_status_dot.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_status_sheet.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
-import 'package:server_box/view/widget/server_side_tile.dart';
-import 'package:server_box/view/widget/terminal_status_dot.dart';
-import 'package:server_box/view/widget/terminal_status_sheet.dart';
 
 part 'tab_add.dart';
 part 'tab_sort.dart';
@@ -39,8 +36,6 @@ class SSHTabPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<SSHTabPage> createState() => _SSHTabPageState();
-
-  static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
 /// What a terminal tab is, beyond the name, focus and visibility that
@@ -63,19 +58,6 @@ class _SshSession {
   /// built when first visited.
   final ValueNotifier<TerminalSession?> session;
 
-  /// What has to survive a relaunch. Read from the live page when there is
-  /// one, and from the arguments it was opened with when there is not — a tab
-  /// restored but never looked at has no state of its own yet.
-  Map<String, dynamic> toRestorable() {
-    final live = pageKey.currentState;
-    return {
-      // The source's id, not a server's: this device has one too, and it is
-      // what tells the two apart when the set is reopened.
-      'sourceId': live?.widget.args.source.id ?? page.args.source.id,
-      'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
-      'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
-    };
-  }
 }
 
 extension on SessionTabsController<_SshSession> {
@@ -185,11 +167,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
     _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
     Rootfs.removed.addListener(_onRootfsRemoved);
-    // Both after the first frame, and in this order: a queued request is what
-    // the user just asked for, and it should end up beside the tabs that were
-    // already open rather than racing them.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _restoreTabs();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // Here and not only from the listener: a flag set before this tab was
       // ever built is not a *change* by the time the listener exists, so
@@ -296,7 +274,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
-        // Restored sessions land while another tab may be the one on screen.
+        // Sessions can open while another tab is the one on screen.
         mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.ssh,
         // Page 0 is the picker's on one column. Beside a rail it is what the
         // surface shows before anything is opened — and nothing else, because
@@ -333,8 +311,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // A button of its own for a screen reader, which has no other way to
         // the output; behind ⋮ otherwise, so on a phone it never takes a slot
         // from a button that is used more.
-        sessionActions: _serverActions(textView: reader),
+        sessionActions: _serverActions(textView: reader, onBar: true),
         sessionMenu: reader ? null : () => [_textViewMenuItem],
+        sessionMenuActions: _serverActions(textView: reader, onBar: false),
         leadingActions: [_sortAction, _searchAction, _settingsAction],
         // In place of the strip, not over it. Only on the picker: a search here
         // narrows that list, and the tabs beside it are open terminals rather
@@ -377,37 +356,20 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   );
 }
 
-/// Opening, closing and remembering terminals.
+/// Opening and closing terminals.
 extension _Sessions on _SSHTabPageState {
   /// Opens a shell on [spi].
   void _openServer(
     Spi spi, {
     Snippet? snippet,
     TerminalSession? session,
-    String? tmuxSession,
-    int? tmuxWindow,
-    bool select = true,
-  }) => _open(
-    ServerSource(spi),
-    snippet: snippet,
-    session: session,
-    tmuxSession: tmuxSession,
-    tmuxWindow: tmuxWindow,
-    select: select,
-  );
+  }) => _open(ServerSource(spi), snippet: snippet, session: session);
 
   /// Opens a shell wherever [source] says.
-  ///
-  /// [select] is off while restoring: selecting each tab as it arrives would
-  /// animate through all of them and land on the last, which is not where
-  /// anyone left off.
   void _open(
     TerminalSource source, {
     Snippet? snippet,
     TerminalSession? session,
-    String? tmuxSession,
-    int? tmuxWindow,
-    bool select = true,
   }) {
     // Assigned once `add` returns. Only the callback below reads it, and only
     // after the session it names has run for a while — the tab's own name is
@@ -436,25 +398,12 @@ extension _Sessions on _SSHTabPageState {
               onSessionEnd: () => _closeTab(id),
               focusNode: focus,
               visibleListenable: visible,
-              tmuxSession: tmuxSession,
-              tmuxWindow: tmuxWindow,
-              onTmuxStateChanged: _saveTabs,
-              // Per tab: two shells on one server would otherwise share one
-              // restoration bucket and overwrite each other's tmux state.
-              //
-              // The name, not the id: this is evaluated while `add` is still
-              // running, so the id does not exist yet. The name is unique
-              // among the open tabs and comes back in the same order after a
-              // relaunch, which is all a restoration key needs.
-              restorationId: 'tab_$name',
             ),
           ),
         );
       },
     );
     id = tab.id;
-    if (!select) return;
-    _saveTabs();
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
@@ -561,100 +510,7 @@ extension _Sessions on _SSHTabPageState {
     if (at >= 0) _sessions.select(at + 1);
   }
 
-  void _closeTab(String id) {
-    _sessions.remove(id);
-    if (mounted) _saveTabs();
-  }
-
-  void _saveTabs() {
-    Stores.history.sshTabs.put(
-      jsonEncode([for (final tab in _sessions.tabs) tab.data.toRestorable()]),
-    );
-  }
-
-  /// Reopens whatever was open when the app last went away.
-  ///
-  /// Each entry is read defensively and skipped on its own. This is the one
-  /// path that runs against data an older build wrote, and a single malformed
-  /// record used to abort the loop — taking every other terminal with it.
-  Future<void> _restoreTabs() async {
-    final saved = Stores.history.sshTabs.fetch();
-    if (saved.isEmpty) return;
-
-    final List<dynamic> entries;
-    try {
-      entries = jsonDecode(saved) as List;
-    } catch (e, st) {
-      Loggers.app.warning('Unreadable SSH tab state', e, st);
-      return;
-    }
-
-    // Read once, not once per tab.
-    final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
-
-    var restored = 0;
-    for (final entry in entries) {
-      if (entry is! Map) continue;
-      // TODO(migration residue; remove once no saved tab set predates
-      // `sourceId`): `serverId` is what records written before this tab could
-      // open a shell on the device itself carry. Read as a fallback rather
-      // than migrated: one relaunch rewrites the lot, and a session that fails
-      // to reopen has cost nothing.
-      final id = entry['sourceId'] ?? entry['serverId'];
-      final TerminalSource source;
-      if (id is String && id.startsWith(LocalSource.rootfsId)) {
-        // Only where there is one to enter. A rootfs the user deleted, or a
-        // tab set restored onto a build without proot, would otherwise reopen
-        // as a terminal that can only print an error.
-        if (!Rootfs.isAvailable) continue;
-        if (!Rootfs.isReady) continue;
-        // A saved set from before profiles existed names no profile, and reads
-        // as "whichever is selected" — which is what it meant.
-        final profileId = LocalSource.profileIdOf(id);
-        // One that names a profile this device has not got is skipped like an
-        // unknown server: a backup restored onto another device is exactly how
-        // that happens.
-        if (profileId != null &&
-            !Rootfs.profiles.any((e) => e.id == profileId)) {
-          continue;
-        }
-        source = LocalSource(rootfs: true, profileId: profileId);
-      } else if (id == const LocalSource().id) {
-        // A tab set saved on a desktop can be restored on a phone — the same
-        // backup, the same account — and iOS has no shell to give. Skipped
-        // like an unknown server below, rather than opening a tab that can
-        // only fail when its pty is asked for.
-        if (!LocalShellBackend.isSupported) continue;
-        source = const LocalSource();
-      } else {
-        final spi = servers[id];
-        if (spi == null) continue;
-        source = ServerSource(spi);
-      }
-      // Tested rather than cast. `as String?` throws on a value that is
-      // neither — a number where a name was expected — and the throw leaves the
-      // loop, which is the whole-set abort the entry-by-entry reads above
-      // exist to prevent.
-      final tmuxSession = entry['tmuxSession'];
-      final tmuxWindow = entry['tmuxWindow'];
-      _open(
-        source,
-        tmuxSession: tmuxSession is String ? tmuxSession : null,
-        tmuxWindow: tmuxWindow is int ? tmuxWindow : null,
-        select: false,
-      );
-      restored++;
-    }
-
-    if (restored == 0) return;
-    // One write for the whole restore, and only once the set is final.
-    _saveTabs();
-    // Nothing to land on means every restored tab was a local shell: stay on
-    // the picker, where the rail lists them and one tap starts whichever was
-    // wanted.
-    final landOn = _firstTabToStart();
-    if (landOn != null) _sessions.select(landOn);
-  }
+  void _closeTab(String id) => _sessions.remove(id);
 }
 
 /// The buttons on the tab bar.
@@ -689,7 +545,12 @@ extension _Actions on _SSHTabPageState {
   ///
   /// [_floatBtn] is last, which puts it in the corner of the window — the
   /// place a control over the window itself belongs.
-  List<BarAction> _serverActions({required bool textView}) {
+  ///
+  /// [onBar] picks a half for the narrow bar: true for what stays on it —
+  /// the state, the agent, the metrics and the floating window — and false
+  /// for the rest, which lives behind ⋮. Null is every button, for a bar
+  /// wide enough for them all.
+  List<BarAction> _serverActions({required bool textView, bool? onBar}) {
     final current = _sessions.current;
     if (current == null) return const [];
     final args = current.data.page.args;
@@ -699,26 +560,23 @@ extension _Actions on _SSHTabPageState {
       paneLabel: (pane) =>
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
-    return onServer
-        ? [
-            status,
-            if (args.canReconnect) _reconnectAction,
-            _agentAction,
-            _snippetAction,
-            if (textView) _textViewAction,
-            _metricsAction,
-            _settingsAction,
-            _moveAction,
-            _floatAction,
-          ]
-        : [
-            status,
-            if (args.canReconnect) _reconnectAction,
-            _snippetAction,
-            if (textView) _textViewAction,
-            _settingsAction,
-            _floatAction,
-          ];
+    final all = <(BarAction, bool)>[
+      (status, true),
+      if (args.canReconnect) (_reconnectAction, false),
+      if (onServer) (_agentAction, true),
+      (_snippetAction, false),
+      // On the bar: only asked for by a screen reader, which has no other
+      // way to the output.
+      if (textView) (_textViewAction, true),
+      if (onServer) (_metricsAction, true),
+      (_settingsAction, false),
+      if (onServer) (_moveAction, false),
+      (_floatAction, true),
+    ];
+    return [
+      for (final (action, bar) in all)
+        if (onBar == null || onBar == bar) action,
+    ];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,

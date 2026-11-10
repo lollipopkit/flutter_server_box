@@ -3,19 +3,21 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/app.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
+import 'package:server_box/generated/l10n/l10n_zh.dart';
 
 import '../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final en = AppLocalizationsEn().introWelcome;
+  final zh = AppLocalizationsZh().introWelcome;
   late SettingStore setting;
 
   setUp(() async {
-    // The tables, not only a connection: the intro's Virtualization page
-    // reads the PVE table to decide what to say.
     await openTestDb();
     setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
@@ -34,7 +36,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Initialize'), findsOneWidget);
+    expect(find.text(en), findsOneWidget);
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).locale, isNull);
 
     setting.locale.put('zh');
@@ -52,8 +54,8 @@ void main() {
       Localizations.localeOf(tester.element(find.byType(ListView).first)),
       const Locale('zh'),
     );
-    expect(find.text('Initialize'), findsNothing);
-    expect(find.text('初始化'), findsOneWidget);
+    expect(find.text(en), findsNothing);
+    expect(find.text(zh), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

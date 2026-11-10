@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:xterm/core.dart';
 
 part 'virtual_keyboard.g.dart';
@@ -20,7 +20,7 @@ abstract class VirtKeyState with _$VirtKeyState {
 // one then threw on the next key (SERVERBOX-1Q7). Three modifier flags shared
 // by every terminal cost nothing to keep.
 @Riverpod(keepAlive: true)
-class VirtKeyboard extends _$VirtKeyboard implements TerminalInputHandler {
+class VirtualKeyboard extends _$VirtualKeyboard implements TerminalInputHandler {
   @override
   VirtKeyState build() {
     return const VirtKeyState();

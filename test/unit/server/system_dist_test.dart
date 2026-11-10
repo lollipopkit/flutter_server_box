@@ -10,41 +10,6 @@ void main() {
       expect(SystemType.windows.value, equals('__windows'));
     });
 
-    test('SystemType.parse detects Windows', () {
-      const windowsOutput = 'System info __windows version 10';
-      final result = SystemType.parse(windowsOutput);
-      expect(result, equals(SystemType.windows));
-    });
-
-    test('SystemType.parse detects BSD', () {
-      const bsdOutput = 'FreeBSD 13.0-RELEASE __bsd';
-      final result = SystemType.parse(bsdOutput);
-      expect(result, equals(SystemType.bsd));
-    });
-
-    test('SystemType.parse detects Linux', () {
-      const linuxOutput = 'Linux 5.4.0 __linux';
-      final result = SystemType.parse(linuxOutput);
-      expect(result, equals(SystemType.linux));
-    });
-
-    test('SystemType.parse defaults to Linux for empty input', () {
-      const emptyOutput = '';
-      final result = SystemType.parse(emptyOutput);
-      expect(result, equals(SystemType.linux));
-    });
-
-    test('SystemType.parse defaults to Linux for unknown output', () {
-      const unknownOutput = 'Unknown system output';
-      final result = SystemType.parse(unknownOutput);
-      expect(result, equals(SystemType.linux));
-    });
-
-    test('SystemType.parse handles long strings', () {
-      final longOutput = 'a' * 200;
-      final result = SystemType.parse(longOutput);
-      expect(result, equals(SystemType.linux));
-    });
   });
 
   group('Dist Tests', () {

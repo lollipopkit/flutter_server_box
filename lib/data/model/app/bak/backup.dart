@@ -4,20 +4,15 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
-import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
-import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
-import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
-import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'backup.g.dart';
 
@@ -29,8 +24,12 @@ final _logger = Logger('Backup');
 /// have written it can still be restored. It carries one timestamp for the
 /// whole file rather than one per record, which is why a merge here can only
 /// take or leave each store whole.
+///
+/// TODO(migration): remove with [_diyDecrypt], the v1 branch of
+/// `BackupReader` and `test/fixtures/backup/`'s v1 file once no supported
+/// install can still hold a v1 backup.
 @JsonSerializable()
-class Backup implements Mergeable {
+class BackupV1 implements Mergeable {
   // backup format version
   final int version;
   final String date;
@@ -42,24 +41,7 @@ class Backup implements Mergeable {
   final int? lastModTime;
   final Map<String, dynamic>? settings;
 
-  /// The PVE configuration of each entry of [spis], by position, read out of
-  /// the raw records: this format predates `server_pve` and kept PVE inside
-  /// each server's `custom`, which [Spi] no longer reads.
-  // TODO(migration): remove after 5 releases, with
-  // `PveConfig.fromLegacyRecord`.
-  @JsonKey(readValue: _readLegacyPve, includeToJson: false)
-  final List<Map<String, dynamic>?> legacyPve;
-
-  static Object? _readLegacyPve(Map json, String _) {
-    final spis = json['spis'];
-    if (spis is! List) return const <Object?>[];
-    return [
-      for (final spi in spis)
-        spi is Map ? PveConfig.fromServerRecord(spi)?.toJson() : null,
-    ];
-  }
-
-  const Backup({
+  const BackupV1({
     required this.version,
     required this.date,
     required this.spis,
@@ -69,12 +51,11 @@ class Backup implements Mergeable {
     required this.history,
     required this.settings,
     this.lastModTime,
-    this.legacyPve = const [],
   });
 
-  factory Backup.fromJson(Map<String, dynamic> json) => _$BackupFromJson(json);
+  factory BackupV1.fromJson(Map<String, dynamic> json) => _$BackupV1FromJson(json);
 
-  Map<String, dynamic> toJson() => _$BackupToJson(this);
+  Map<String, dynamic> toJson() => _$BackupV1ToJson(this);
 
   @override
   Future<void> merge({bool force = false}) async {
@@ -119,54 +100,35 @@ class Backup implements Mergeable {
       Stores.server.replaceAll(restoredSpis);
       Stores.snippet.replaceAll(snippets);
       Stores.container.restoreLegacyMap(container);
-      // The file is the complete state, so a server without PVE has none.
-      // TODO(migration): remove after 5 releases, with [legacyPve].
-      for (final (i, spi) in restoredSpis.indexed) {
+      // The file is the complete state and predates `server_pve`, so no
+      // restored server has PVE.
+      for (final spi in restoredSpis) {
         Stores.pve.restoreOne(
           Stores.server.reconcile(spi).id,
-          legacyPve.elementAtOrNull(i),
+          null,
           notify: false,
         );
       }
       _restoreInto(Stores.history, history);
 
       if (settings_ != null) {
-        _restoreInto(
-          Stores.setting,
-          settings_,
-          deviceLocal: SettingStore.deviceLocalKeys,
-        );
+        _restoreInto(Stores.setting, settings_);
+        // A restore is neither a launch nor a version bump, so nothing else
+        // converts what just landed; inside the transaction, so a failed step
+        // rolls the restore back. This format predates every step. Only when
+        // the file brought settings: a file carrying none leaves the local
+        // ones alone.
+        if (settings_.isNotEmpty) {
+          for (final step in kRestoreSettingsMigrations) {
+            step.applySync();
+          }
+        }
       }
     });
 
-    // Outside the transaction, and for the reason the v2 path does it too: a
-    // restore is neither a launch nor a version bump, so nothing else will
-    // look at what just landed. This format predates the grouped settings
-    // entirely, so its settings map is always the old per-field keys — and,
-    // being older still, the pre-`virtKeyRows` switch and the `int`
-    // `sshConnectionMode` as well.
-    //
-    // Only when the file brought settings, for the reason [BackupV2.merge]
-    // records: these convert what arrived, and a file carrying none leaves the
-    // local settings alone.
-    //
-    // In version order, which is the order the migrator would have run them in.
-    if (settings_ != null && settings_.isNotEmpty) {
-      await const SettingsFixupsMigration().apply();
-      await const GroupedSettingsMigration().apply();
-      await const VirtKeyRowsMigration().apply();
-      await const VirtKeyNamesMigration().apply();
-      await const HomeTabsBarMigration().apply();
-    }
-
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();
-    unawaited(
-      KeyPassphrases.forgetGone(
-        keysBefore,
-        Stores.key.fetch().map((e) => e.key),
-      ),
-    );
+    KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     await Provider.reload();
     await RNodes.app.notify();
 
@@ -196,8 +158,8 @@ class Backup implements Mergeable {
     ];
   }
 
-  factory Backup.fromJsonString(String raw) =>
-      Backup.fromJson(json.decode(_diyDecrypt(raw)));
+  factory BackupV1.fromJsonString(String raw) =>
+      BackupV1.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
 /// Writes one section of a backup into the key-value store it came from.
@@ -209,9 +171,9 @@ class Backup implements Mergeable {
 /// forced restore of an older file holding preferences that file does not
 /// have, which is not the state the user asked to go back to.
 ///
-/// [deviceLocal] names keys this device answers for itself; they are neither
-/// written from the backup nor deleted for being absent from one. See
-/// [SettingStore.deviceLocalKeys].
+/// Device-local keys ([SqliteStore.isDeviceLocalKey]) are this device's to
+/// answer: neither written from the backup nor deleted for being absent from
+/// one. See [SettingStore.deviceLocalKeys].
 ///
 /// Nothing here stamps `lastUpdateTs`, which is what writing straight to the
 /// Hive box used to achieve. A restore is not an edit: marking every restored
@@ -222,17 +184,13 @@ class Backup implements Mergeable {
 /// `lastUpdateTs` entry is not one of the ones deleted for being absent from
 /// the backup — `getAllMap` leaves it out of the backup by the same rule, so
 /// the box-level version deleted it on every non-forced merge.
-void _restoreInto(
-  SqliteStore store,
-  Map<String, Object?> incoming, {
-  Set<String> deviceLocal = const {},
-}) {
+void _restoreInto(SqliteStore store, Map<String, Object?> incoming) {
   for (final key in store.keys().difference(incoming.keys.toSet())) {
-    if (deviceLocal.contains(key)) continue;
+    if (store.isDeviceLocalKey(key)) continue;
     store.remove(key, updateLastUpdateTsOnRemove: false);
   }
   for (final entry in incoming.entries) {
-    if (deviceLocal.contains(entry.key)) continue;
+    if (store.isDeviceLocalKey(entry.key)) continue;
     final value = entry.value;
     if (value == null) {
       store.remove(entry.key, updateLastUpdateTsOnRemove: false);

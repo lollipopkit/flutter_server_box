@@ -11,7 +11,7 @@ most behaviour, so you can route to the right file in one step.
 The app is Flutter, layered: `lib/view/` renders, `lib/data/provider/` holds
 Riverpod state, `lib/data/model/` and `lib/data/store/` are the data layer.
 Status parsing is not Dart at all — it is a Rust crate shared with the
-server-side agent, so both always agree about what a command's output means.
+server-side Monitor, so both always agree about what a command's output means.
 
 ## A server can expose two transports, and features ask rather than test
 
@@ -26,10 +26,10 @@ needing a shell never has to know that "SSH" is the thing that provides one:
 - `SshCapabilities` answers yes to everything except `storedHistory` — one
   connection already carries a shell, a PTY and a channel, and sampling starts
   when the app connects, so a page opened now starts with an empty buffer.
-- `MonitorHttpCapabilities` answers with what the agent reported on
+- `MonitorHttpCapabilities` answers with what the Monitor reported on
   `GET /api/v1/capabilities`. `byteStream` is false, which is why SFTP and port
-  forwarding are absent: the agent has no endpoint that relays a connection to
-  an address the app names. `storedHistory` is true, since the agent was
+  forwarding are absent: the Monitor has no endpoint that relays a connection to
+  an address the app names. `storedHistory` is true, since the Monitor was
   sampling before the app asked.
 
 `ServerNotifier.ensureExec()` is the single place that decides how a command
@@ -40,7 +40,7 @@ key so a shell that will not open does not also stop the status page
 refreshing.
 
 Where the SSH byte stream comes from is a separate axis, resolved in `genClient`
-(`lib/core/utils/server.dart`): direct, through a jump server, or through a
+(`lib/core/ssh/client.dart`): direct, through a jump server, or through a
 `ProxyCommand`. The last two are mutually exclusive. Everything above
 `SSHSocket` is identical either way, and the app verifies the host key itself in
 every case.
@@ -76,7 +76,7 @@ shapes, and which one a store uses is a decision:
   answers `false` rather than throwing when it has none, which makes a missing
   one silent.
 - **Entity tables** hold servers, private keys, snippets, port forwards,
-  connection statistics and agent conversations, with foreign keys and indexes.
+  connection statistics and Agent conversations, with foreign keys and indexes.
 
 Conventions worth knowing before touching the schema:
 
@@ -141,7 +141,7 @@ project and `libL10n` for the strings `fl_lib` already has. Prefer an existing
 | Where a file belongs in the tree | `docs/src/content/docs/development/structure.md` |
 | Which generator to run and why an adapter is frozen | `docs/src/content/docs/development/codegen.md` |
 | Test strategy, fixtures, integration tests | `docs/src/content/docs/development/testing.md` |
-| The agent's API surface, remote access model, panel | `monitor/CLAUDE.md` |
+| The Monitor's API surface, remote access model, panel | `docs/src/content/docs/development/monitor-agent.md`, `docs/src/content/docs/development/desk-app-reference.md`, `monitor/CLAUDE.md` |
 | Rules for changing this codebase | `CLAUDE.md` |
 
 The `docs/src/content/docs/` pages above each have a `zh/` counterpart, and

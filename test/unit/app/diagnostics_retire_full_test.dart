@@ -4,8 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/test_db.dart';

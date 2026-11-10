@@ -45,9 +45,6 @@ flutter test test/unit/app/frb_parser_test.dart
 # SBM_E2E_SSH_HOST=<SSH 目标或 ~/.ssh/config 别名>
 cargo test -p sbm_parser --test ssh_e2e
 
-# 使用真实 sshd 测试 Monitor terminal
-# 需要 SBM_E2E_TERMINAL_* 环境变量
-cargo test -p server_box_monitor --test terminal_ws
 ```
 
 ## Monitor 面板测试
@@ -63,9 +60,9 @@ npm run check
 
 `npm run check` 进行类型检查，也是 `npm run build` 的一部分。
 
-## Unit test
+## 单元测试（Unit Test）
 
-Unit test 用于验证纯业务逻辑、model 和 parser：
+单元测试用于验证纯业务逻辑、数据模型与解析器：
 
 ```dart
 test('calculates CPU percentage', () {
@@ -74,9 +71,9 @@ test('calculates CPU percentage', () {
 });
 ```
 
-## Widget test
+## 组件测试（Widget Test）
 
-Widget test 用于验证 Widget 的布局、文本和交互：
+组件测试用于验证 UI 组件的布局、文本渲染与交互行为：
 
 ```dart
 testWidgets('shows the server name', (tester) async {
@@ -92,13 +89,13 @@ testWidgets('shows the server name', (tester) async {
 });
 ```
 
-会写入 store 的 Widget test 必须在 `setUp` 使用 `openTestDb()`，并在 `tearDown` 调用 `closeTestDb()`，先排空待写入操作再关闭 SQLite。通过正常构造函数访问隔离数据库，迁移测试使用生产的 `setting` 存储名。不要向生产代码添加测试专用构造、重置方法或可变网络工厂；有状态服务使用正常实例生命周期，HTTP、文件系统替身放在 `test/helpers/`。
+涉及本地存储写入的组件测试必须在 `setUp` 中调用 `openTestDb()`，并在 `tearDown` 中调用 `closeTestDb()`（先排空挂起的写入操作再关闭 SQLite 连接）。测试应通过常规构造函数访问隔离数据库，迁移测试则使用生产环境的 `setting` 存储名。切勿在生产代码中添加仅用于测试的构造函数、状态重置方法或可变网络工厂；有状态服务应遵循正常的实例生命周期，HTTP 与文件系统的测试替身统一放在 `test/helpers/` 下。
 
-不要对包含 text field 或其他持续调度 frame 的 Widget 使用 `pumpAndSettle()`。使用定次数的 `pump(duration)`，并为测试命令设置合理的 timeout。
+对于包含文本输入框或其他持续请求帧刷新（frame）的组件，请勿调用 `pumpAndSettle()`，应改用固定步长的 `pump(duration)` 并设置合理的超时时间。
 
-## Provider test
+## 状态测试（Provider Test）
 
-Provider test 验证状态和异步结果：
+Provider 测试用于验证状态变更与异步返回结果：
 
 ```dart
 test('returns server status', () async {
@@ -109,61 +106,61 @@ test('returns server status', () async {
 });
 ```
 
-## 外部依赖
+## 外部依赖隔离
 
-默认测试必须保持确定性。parser、model、命令构建和普通 Widget test 不应访问网络或真实服务器。引入外部服务边界时，添加专用 fake、fixture 或 mock。
+默认测试必须保持确定性。解析器、数据模型、命令组装及常规组件测试均不得访问真实网络或外部服务器。涉及外部服务边界时，请使用专用的 Fake、Fixture 或 Mock。
 
-上文的 SSH end-to-end 和真实 sshd 测试是例外；它们只在配置环境变量后运行，因此默认 `cargo test --workspace` 不需要外部服务。
+前文提到的 SSH 端到端测试属于例外，仅在显式配置环境变量后才会运行，因此直接执行 `cargo test --workspace` 不依赖任何外部服务。
 
 ## 存储迁移测试
 
-用户设备上的存储迁移通常只运行一次。写入完成标记后，App 不会再读取旧数据；迁移错误因此可能导致数据静默丢失，而不是触发崩溃。
+用户设备上的存储结构迁移通常只执行一次。一旦写入迁移完成标记，应用便不会再次读取旧版数据，因此迁移逻辑中的缺陷往往会导致数据静默丢失而非直接报错崩溃。
 
-每个迁移都必须保留永久 regression test，并使用旧 release 实际写出的 bytes：
+每一版迁移都必须保留永久的回归测试，并使用历史发布版本真实写入的二进制数据（Fixture）：
 
 | 文件 | 作用 |
 |---|---|
-| `test/migration/hive_release_migration_test.dart` | 对每个 release fixture 运行 Hive import 和已注册的 migration |
-| `test/fixtures/hive_v{1466,1480,1491}/` | 这些 release 实际写出的 box、生成器和说明 |
-| `test/migration/hive_import_test.dart` | 验证 import 的重试、幂等和按 box 进度 |
-| `test/migration/m0NN_*_test.dart` | 每个 schema migration 一个，验证该步的迁移行为 |
+| `test/migration/hive_release_migration_test.dart` | 对每个历史版本的 Fixture 执行 Hive 导入与已注册的数据库迁移 |
+| `test/fixtures/hive_v{1466,1480,1491}/` | 对应历史发布版本真实写出的 Hive Box 文件、生成脚本及说明 |
+| `test/migration/hive_import_test.dart` | 验证导入中断重试、幂等性及按 Box 记录的迁移进度 |
+| `test/migration/m0NN_*_test.dart` | 针对每一步 SQLite Schema 迁移的独立验证测试 |
 
-fixture 一旦进入 regression test，就不能重新生成来绕过失败。使用当前 adapter 生成数据只能证明当前版本与自己一致，不能证明它仍能读取旧 release 的格式。
+Fixture 一旦纳入回归测试，绝不能为了绕过测试失败而重新生成。使用当前版本的 Adapter 生成测试数据只能证明当前代码自洽，无法验证它仍能正确解析旧版本写出的数据格式。
 
-### 生成 release-authentic fixture
+### 生成真实历史版本的 Fixture
 
-1. 使用 `git worktree add /tmp/<tag> <tag>` 检出目标 release，初始化它需要的 submodule，并运行 `flutter pub get`。
-2. 将 `test/fixtures/hive_v1466/gen_fixture.dart.txt` 复制到临时测试中，按目标 release 的 model、adapter 和依赖版本调整；使用旧 release 自己的代码写出 `.hive` bytes。数据应覆盖可选字段、枚举值、各类 store，以及非 ASCII 字符、引号和换行。
-3. 将结果复制到 `test/fixtures/hive_v<tag>/`，保留生成器说明和 README，然后删除 worktree。
-4. 使用当前代码通过 public store API 编写读取测试，并检查数据库编码没有残留旧字段。
+1. 使用 `git worktree add /tmp/<tag> <tag>` 检出目标历史版本，初始化子模块并运行 `flutter pub get`。
+2. 将 `test/fixtures/hive_v1466/gen_fixture.dart.txt` 复制到临时测试目录中，根据该历史版本的模型、Adapter 和依赖版本调整代码，使用旧版本自身的代码生成 `.hive` 二进制文件。样本数据应涵盖可选字段、枚举值、各类 Store 以及非 ASCII 字符、引号和换行符。
+3. 将生成的二进制文件复制到 `test/fixtures/hive_v<tag>/`，保留生成脚本说明与 README，随后清理临时 worktree。
+4. 在当前分支使用公开的 Store API 编写读取断言，并验证迁移后的数据库记录中无残留旧字段。
 
-生成器以 `.txt` 签入，因为它针对旧 release 的 API，在当前 tree 中不一定能通过 analyze。
+生成脚本以 `.txt` 扩展名入库，以便与当前源码树的静态分析隔离。
 
-## Integration test
+## 集成测试（Integration Test）
 
-`integration_test/` 用于检查 `flutter test` 无法覆盖的行为。Unit test 在不加载 plugin 的 `flutter_tester` 中运行，无法执行通过 plugin 或 FFI 调用的代码。Integration test 则在已连接的设备或 simulator 上运行：
+`integration_test/` 用于验证 `flutter test` 无法覆盖的平台集成行为。由于单元测试运行在不加载原生插件的 `flutter_tester` 环境中，无法执行涉及平台通道或 FFI 动态库的逻辑，集成测试则直接运行在真实设备或模拟器上：
 
 | 文件 | 验证内容 |
 |---|---|
-| `local_shell_test.dart` | 本机 shell 是否能启动 |
-| `rootfs_shell_test.dart` | Alpine rootfs 是否能通过 App 的 API 运行 |
-| `android_exec_test.dart` | Android App 目录中的进程执行能力 |
-| `android_rootfs_test.dart` | Android guest 机制 |
-| `ios_rootfs_test.dart` | iOS Linux userland |
-| `ios_bench_test.dart` | 真实硬件上的 guest 开销 |
-| `ios_load_test.dart` | guest 运行时对 App 的影响 |
-| `sandbox_import_test.dart` | App Store sandbox build 的数据接管 |
+| `local_shell_test.dart` | 本机 Shell 是否能正常启动 |
+| `rootfs_shell_test.dart` | 内置 Alpine 环境能否通过应用接口正常执行命令 |
+| `android_exec_test.dart` | Android 应用私有目录下的二进制执行权限 |
+| `android_rootfs_test.dart` | Android 端 `proot` 引导机制 |
+| `ios_rootfs_test.dart` | iOS 端内置 Linux 运行环境 |
+| `ios_bench_test.dart` | 真实硬件上的内置环境性能开销 |
+| `ios_load_test.dart` | 内置环境高负载运行时对宿主应用的影响 |
+| `sandbox_import_test.dart` | App Store 沙盒构建版本的数据迁移接管 |
 
 ```bash
-# 需要已连接的设备或模拟器
+# 需连接真机或启动模拟器
 flutter test integration_test/local_shell_test.dart
 ```
 
-`make analyze` 也会分析 `integration_test/`。
+运行 `make analyze` 时同样会检查 `integration_test/` 目录。
 
-### iOS 17+ 无线设备
+### iOS 17+ 无线调试设备
 
-当 Xcode 通过网络连接 iOS 17+ 设备时，需要发布 driver 端口：
+当 Xcode 通过局域网无线连接 iOS 17+ 真机时，需显式发布驱动端口：
 
 ```bash
 flutter drive --publish-port \
@@ -171,18 +168,18 @@ flutter drive --publish-port \
   --target=integration_test/ios_rootfs_test.dart
 ```
 
-首次运行时，设备可能会请求本地网络权限，请允许该权限。
+首次运行时系统会弹窗请求本地网络权限，请点击允许。
 
-## 编写测试的建议
+## 测试编写准则
 
-1. 使用 Arrange–Act–Assert 组织测试。
-2. 测试名称描述实际行为，而不是实现细节。
-3. 对关键行为添加足够断言，同时保持测试专注。
-4. 使用 fake 或 fixture 隔离外部依赖。
-5. 覆盖空列表、缺失值、无效输入和权限错误等边界情况。
+1. 采用 Arrange–Act–Assert（准备、执行、断言）结构组织测试代码。
+2. 测试名称应描述业务行为，而非内部实现细节。
+3. 针对核心行为编写充分断言，同时保持单个测试职责单一。
+4. 使用 Fake 或 Fixture 隔离外部环境依赖。
+5. 覆盖空列表、缺失字段、非法输入与权限拒绝等边界场景。
 
-## 固定数据
+## 固定二进制样本（Fixtures）
 
-rootfs 签名 fixture 必须保留原始字节：`.gitattributes` 为 JSON 固定 LF，将签名标为二进制。永远不要为了让测试通过而重新签名或重新生成 fixture——fixture 是某个发布版本真实写下的字节，改写它只能证明当前代码与自身一致。
+Rootfs 签名等二进制测试样本必须保持原始字节不变：`.gitattributes` 已将 JSON 换行符固定为 LF，并将签名文件标记为二进制。切勿为了通过测试而重新签名或重新生成样本文件（样本代表历史发布版本真实产出的字节，改写样本将失去回归验证意义）。
 
-测试应尽量走生产路径而非替身：fixture 经由真实安装器，HTTP 测试使用本地 socket。
+测试应优先覆盖真实生产代码路径：样本数据应直接交由真实安装器解析，HTTP 测试应使用本地回环 Socket 而非过度 Mock。

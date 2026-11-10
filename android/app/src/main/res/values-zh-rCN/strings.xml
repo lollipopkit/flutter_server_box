@@ -13,23 +13,36 @@
     <string name="widget_configure_server">服务器</string>
     <string name="widget_configure_metric">主要指标</string>
     <string name="widget_configure_save">保存</string>
-    <string name="widget_configure_empty">还没有配置 Monitor 的服务器。\n请先在 ServerBox 中添加，然后返回。</string>
+    <string name="widget_configure_empty">还没有配置启用 Monitor 的服务器。\n请先在 ServerBox 中添加服务器，再返回此处。</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">内存</string>
     <string name="widget_metric_disk">磁盘</string>
     <string name="widget_metric_network">网络</string>
     <string name="widget_err_not_configured">点按选择服务器</string>
-    <string name="widget_err_no_token">无凭据 —— 请打开 ServerBox</string>
+    <string name="widget_err_no_token">缺少访问凭据，请打开 ServerBox</string>
     <string name="widget_err_insecure">需要 HTTPS</string>
     <string name="widget_err_network">网络错误</string>
     <string name="widget_err_timeout">请求超时</string>
-    <string name="widget_no_history">暂无历史</string>
     <string name="widget_chart_desc">状态曲线</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">内存使用率</string>
-    <string name="widget_disk_desc">磁盘使用率</string>
-    <string name="widget_net_desc">网络使用量</string>
     <string name="widget_refresh_desc">刷新</string>
     <string name="widget_small_label">服务器数值</string>
     <string name="widget_medium_label">服务器曲线</string>
+    <string name="widget_label">服务器状态</string>
+    <string name="widget_description">快速查看 CPU、内存、磁盘和网络状态。放大后可查看更多信息。</string>
+
+    <string name="process_text_label">保存为代码片段</string>
+    <string name="tile_no_sessions">没有正在运行的会话</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 个会话</item>
+    </plurals>
+    <string name="channel_transfers">文件传输</string>
+    <string name="incoming_failed">无法接收分享的文件</string>
+    <string name="shortcut_server_gone">服务器已删除</string>
+    <string name="notification_disconnect_all">全部断开</string>
+    <string name="session_connected">已连接</string>
+    <string name="session_connecting">正在连接</string>
+    <string name="session_disconnected">已断开连接</string>
+    <plurals name="notification_more">
+        <item quantity="other">…还有 %d 个</item>
+    </plurals>
 </resources>

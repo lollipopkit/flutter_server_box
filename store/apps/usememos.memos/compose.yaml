@@ -1,0 +1,27 @@
+# Memos 0.31.0 (MIT), https://github.com/usememos/memos/tree/v0.31.0
+#
+# Written for ServerBox Monitor's Notes app from the image's documented
+# settings (usememos.com docs; scripts/Dockerfile and scripts/entrypoint.sh at v0.31.0):
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image's entrypoint starts as root, gives the data folder to
+#   MEMOS_UID:MEMOS_GID and drops to that user, so it is not set as `user:`;
+# - the container listens on 5230 (the image's MEMOS_PORT); the env file is
+#   not passed in, so no MEMOS_* setting of the agent reaches Memos.
+
+services:
+  memos:
+    image: neosmemo/memos:${MEMOS_VERSION}
+    environment:
+      MEMOS_UID: ${SBM_UID}
+      MEMOS_GID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${MEMOS_DATA_LOCATION}:/var/opt/memos
+    ports:
+      - '${MEMOS_WEB_BIND}:${MEMOS_WEB_PORT}:5230'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5230/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

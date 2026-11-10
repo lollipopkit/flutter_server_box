@@ -1,16 +1,18 @@
 // ignore_for_file: invalid_use_of_protected_member
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show llmL10n;
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_grants.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_push.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
-import 'package:server_box/view/page/server/monitor_settings/access.dart';
+import 'package:server_box/core/monitor/http.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_push.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
+import 'package:server_box/view/page/server/monitor_settings/password.dart';
 import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
 
 /// The bar's half of [MonitorSettingsView].
@@ -97,18 +99,13 @@ final class MonitorSettingsView extends StatefulWidget {
 final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
   late var _client = MonitorHttpClient(widget.monitor);
 
-  /// Who this app is logged in as; null for an agent older than roles, where
-  /// every login may do everything.
-  MonitorMe? _me;
-
-  /// The agent has roles and this account is not an admin: the agent's
-  /// settings are not this account's to read, so the page is its own account.
-  bool get _accountOnly => _me != null && !_me!.admin;
-
   /// Bumped by every [_load]. An answer that comes back from an earlier one —
   /// after the credential was edited under this view, which the tab's key does
   /// not catch because the server is the same — must not land in the form.
   var _loadGeneration = 0;
+
+  /// Whether the agent offers Agent mode to this account.
+  bool _agentMode = false;
 
   final _intervalCtrl = TextEditingController();
   final _extendedCtrl = TextEditingController();
@@ -134,6 +131,11 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
   var _pushes = <MonitorPushEntry>[];
 
   String? _err;
+
+  /// The agent refuses this connection (plaintext HTTP): every route here,
+  /// reading the settings included, would answer 403 — so the page says why
+  /// instead of asking.
+  var _refused = false;
 
   // Through setters so every assignment reaches the controller, of which there
   // are a dozen scattered across the form below. A `_syncController()` call
@@ -233,11 +235,10 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
 extension on _MonitorSettingsViewState {
   Widget _buildBody() {
     final err = _err;
-    if (err != null) return _buildErr(err);
-
-    if (_accountOnly) {
-      return PageColumns(children: [_buildAccess(_me!)]);
+    if (err != null) {
+      return PageIssueView(title: libL10n.error, detail: err, onRetry: _load);
     }
+    if (_refused) return _buildRefused();
 
     final settings = _settings;
     if (settings == null) return UIs.centerLoading;
@@ -263,69 +264,58 @@ extension on _MonitorSettingsViewState {
         _buildAlerts(settings),
         _buildRetention(),
         _buildCors(),
-        if (_me case final me?) _buildAccess(me),
+        if (_agentMode) _buildAgent(),
+        _buildAccess(),
       ],
     );
   }
 
-  /// Who may use this agent: this account, and for an admin everyone's.
-  Widget _buildAccess(MonitorMe me) {
+  /// How the agent's Agent tasks run commands, saved on its own page.
+  Widget _buildAgent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(l10n.agentPermsGroup),
+        ListTile(
+          leading: const Icon(Icons.rule),
+          title: Text(llmL10n.permTitle),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => AgentPermissions.route.go(context, MonitorPermissionsSource(widget.monitor)),
+        ).cardx,
+      ],
+    );
+  }
+
+  /// The agent's one account.
+  Widget _buildAccess() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         CenterGreyTitle(l10n.monitorAccess),
-        ListTile(
-          leading: const Icon(Icons.person_outline),
-          title: Text(me.username),
-          subtitle: Text(
-            '${l10n.monitorRole}: ${me.role}',
-            style: UIs.textGrey,
-          ),
-        ).cardx,
         ListTile(
           leading: const Icon(Icons.password),
           title: Text(l10n.monitorChangePassword),
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: _changeOwnPassword,
         ).cardx,
-        if (me.admin) ...[
-          ListTile(
-            leading: const Icon(Icons.group_outlined),
-            title: Text(l10n.monitorAccounts),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: () => MonitorAccountsPage.route.go(
-              context,
-              MonitorAccountsArgs(client: _client, me: me.username),
-            ),
-          ).cardx,
-          ListTile(
-            leading: const Icon(Icons.badge_outlined),
-            title: Text(l10n.monitorRoles),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: () => MonitorRolesPage.route.go(
-              context,
-              MonitorRolesArgs(client: _client),
-            ),
-          ).cardx,
-        ] else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-            child: Text(l10n.monitorNoAccessToSettings, style: UIs.textGrey),
-          ),
       ],
     );
   }
 
-  Widget _buildErr(String err) {
+  Widget _buildRefused() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(libL10n.error, style: UIs.text18),
+          const Icon(Icons.lock_outline, size: 37),
           UIs.height13,
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 27),
-            child: Text(err, style: UIs.textGrey, textAlign: TextAlign.center),
+            child: Text(
+              l10n.monitorNoRemoteAccess,
+              style: UIs.textGrey,
+              textAlign: TextAlign.center,
+            ),
           ),
           UIs.height13,
           Btn.text(text: libL10n.retry, onTap: _load),
@@ -541,28 +531,29 @@ extension on _MonitorSettingsViewState {
     final client = _client;
     setState(() {
       _err = null;
+      _refused = false;
       _settings = null;
-      _me = null;
     });
     _syncController();
     try {
-      // Who this is, first: on an agent with roles only an admin may read its
-      // settings, and asking anyway would be a refusal shown as an error.
-      final me = (await client.fetchCapabilities()).me;
+      // First: over a refused connection every request below is a 403, which
+      // would be shown as an error rather than as the reason.
+      final caps = await client.capabilities();
+      final access = caps.access;
       if (!mounted || generation != _loadGeneration) return;
-      if (me != null && !me.admin) {
-        setState(() => _me = me);
+      _agentMode = caps.features.contains(MonitorFeature.agentMode);
+      if (!access.ok) {
+        setState(() => _refused = true);
         _syncController();
         return;
       }
       // Sequential rather than concurrent: both go through the same session,
       // and a first request that has to log in is what the second one waits
       // for anyway.
-      final settings = await client.fetchSettings();
-      final push = await client.fetchPush();
+      final settings = await client.settings();
+      final push = await client.push();
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
-        _me = me;
         _settings = settings;
         _push = push;
         _apply(settings, push);
@@ -726,21 +717,20 @@ extension on _MonitorSettingsViewState {
 }
 
 extension on _MonitorSettingsViewState {
-  /// This account's own password: the current one, which the agent checks,
-  /// then the new one — and the new one where the app keeps the server, since
-  /// that is what it logs in with.
+  /// The agent's password: the current one, which the agent checks, and the
+  /// new one — saved where the app keeps the server too, since that is what
+  /// it logs in with.
   Future<void> _changeOwnPassword() async {
-    final current = await askMonitorPassword(context);
-    if (current == null || !mounted) return;
-    final next = await askMonitorNewPassword(context);
-    if (next == null || !mounted) return;
+    final change = await askMonitorPasswordChange(context);
+    if (change == null || !mounted) return;
+    final next = change.next;
     try {
       await _client.changeOwnPassword(
-        currentPassword: current,
+        currentPassword: change.current,
         newPassword: next,
       );
     } catch (e) {
-      Toast.show(monitorAccessErrText(e));
+      Toast.show(monitorPasswordErrText(e));
       return;
     }
     var saved = true;

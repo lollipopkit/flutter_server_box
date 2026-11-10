@@ -48,31 +48,14 @@ void main() {
         '/host path:/container path',
         '',
       ]);
-
-      expect(
-        ffi.containerRunCommand(
-          runtimeName: 'docker',
-          image: 'safe; touch /tmp/image-pwned; #',
-          name: 'safe; touch /tmp/name-pwned; #',
-          extraArgs: parseContainerRunArgs('-p 8080:80'),
-        ),
-        "docker run -itd --name 'safe; touch /tmp/name-pwned; #' "
-        "'-p' '8080:80' 'safe; touch /tmp/image-pwned; #'",
-      );
     });
 
+    // Quoting what this returns for the shell is `sbm_parser::container`'s,
+    // and tested there.
     test('shell operators stay ordinary arguments', () {
       expect(
-        ffi.containerRunCommand(
-          runtimeName: 'podman',
-          image: 'alpine',
-          name: '',
-          extraArgs: parseContainerRunArgs(
-            r'--label x=$(touch /tmp/pwned) ; echo owned',
-          ),
-        ),
-        "podman run -itd '--label' 'x=\$(touch' '/tmp/pwned)' ';' 'echo' "
-        "'owned' 'alpine'",
+        parseContainerRunArgs(r'--label x=$(touch /tmp/pwned) ; echo owned'),
+        ['--label', r'x=$(touch', '/tmp/pwned)', ';', 'echo', 'owned'],
       );
     });
 

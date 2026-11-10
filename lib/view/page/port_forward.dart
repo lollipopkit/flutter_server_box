@@ -7,7 +7,7 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 final class PortForwardPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -58,7 +58,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
                       Stores.setting.portForwardBetaWarned.put(noMore);
                     },
                   ),
-                  Text(l10n.noPromptAgain),
+                  Expanded(child: Text(l10n.noPromptAgain)),
                 ],
               );
             },
@@ -300,7 +300,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
             const SizedBox(height: 8),
             _buildTypeSelector(),
             // Only an agent-led server can lack one, SSH always listens: the
-            // agent's grant is off, or the agent predates its listener.
+            // agent refuses this link.
             if (widget.listenUnavailable case final reason?) ...[
               const SizedBox(height: 5),
               Text(reason, style: UIs.text12Grey),

@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import ScreenReaderToggle from '../components/ScreenReaderToggle.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { screenReader } from '../lib/screenReader.svelte'
 import { mountTerminal } from '../lib/xterm'
 import type { TerminalSession } from '../lib/terminal.svelte'
@@ -22,6 +24,8 @@ class FakeTerminal {
   open() {}
   onData() {}
   onResize() {}
+  onBell() {}
+  onTitleChange() {}
 }
 vi.mock('@xterm/xterm', () => ({ Terminal: FakeTerminal }))
 vi.mock('@xterm/addon-fit', () => ({ FitAddon: class { fit() {} } }))
@@ -74,7 +78,7 @@ describe('terminal screen reader mode', () => {
 
   it('says its state on the toggle', async () => {
     render(ScreenReaderToggle)
-    const toggle = screen.getByRole('button', { name: 'Screen reader mode' })
+    const toggle = screen.getByRole('button', { name: get(LL).terminalScreenReader() })
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
     await fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')

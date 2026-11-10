@@ -6,54 +6,50 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `draft`, `group_draft`, `group`, `malformed`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `from`
-
 /// The passwd and group catalogs, the current account and `UID_MIN`
 String usersListScript() => RustLib.instance.api.crateApiUsersUsersListScript();
 
-/// [`users_list_script`]'s output → `UserCatalog` JSON
-Future<String> parseUsersListJson({required String raw}) =>
-    RustLib.instance.api.crateApiUsersParseUsersListJson(raw: raw);
+/// [`users_list_script`]'s output
+Future<UserCatalog> usersParseList({required String raw}) =>
+    RustLib.instance.api.crateApiUsersUsersParseList(raw: raw);
 
 /// What shadow, `authorized_keys` and sudoers say about one account
-String usersDetailScript({required String userJson}) =>
-    RustLib.instance.api.crateApiUsersUsersDetailScript(userJson: userJson);
+String usersDetailScript({required SystemUser user}) =>
+    RustLib.instance.api.crateApiUsersUsersDetailScript(user: user);
 
-/// [`users_detail_script`]'s output for account `name` → `UserDetail` JSON.
-/// Only rows naming `name` are read.
-Future<String> parseUserDetailJson({
+/// [`users_detail_script`]'s output for account `name`. Only rows naming
+/// `name` are read.
+Future<UserDetail> usersParseDetail({
   required String raw,
   required String name,
-}) =>
-    RustLib.instance.api.crateApiUsersParseUserDetailJson(raw: raw, name: name);
+}) => RustLib.instance.api.crateApiUsersUsersParseDetail(raw: raw, name: name);
 
 bool usersValidName({required String name}) =>
     RustLib.instance.api.crateApiUsersUsersValidName(name: name);
 
-/// Why a draft cannot be sent, as an error code, or `None` when it can
-String? usersValidateDraft({required String draftJson}) =>
-    RustLib.instance.api.crateApiUsersUsersValidateDraft(draftJson: draftJson);
+/// Why a draft cannot be sent, or `None` when it can
+UserError? usersValidateDraft({required UserDraft draft}) =>
+    RustLib.instance.api.crateApiUsersUsersValidateDraft(draft: draft);
 
 /// `useradd`, and `chpasswd` when the draft carries a password; needs root
-String usersCreateCommand({required String draftJson}) =>
-    RustLib.instance.api.crateApiUsersUsersCreateCommand(draftJson: draftJson);
+String usersCreateCommand({required UserDraft draft}) =>
+    RustLib.instance.api.crateApiUsersUsersCreateCommand(draft: draft);
 
 /// `usermod` for the fields that changed, and `chpasswd`; needs root
 String usersEditCommand({
-  required String originalJson,
-  required String draftJson,
+  required SystemUser original,
+  required UserDraft draft,
 }) => RustLib.instance.api.crateApiUsersUsersEditCommand(
-  originalJson: originalJson,
-  draftJson: draftJson,
+  original: original,
+  draft: draft,
 );
 
 /// `userdel`, with `-r` when the home directory goes too; needs root
 String usersDeleteCommand({
-  required String userJson,
+  required SystemUser user,
   required bool removeHome,
 }) => RustLib.instance.api.crateApiUsersUsersDeleteCommand(
-  userJson: userJson,
+  user: user,
   removeHome: removeHome,
 );
 
@@ -61,66 +57,304 @@ String usersDeleteCommand({
 String usersLoginShellCommand({required String user}) =>
     RustLib.instance.api.crateApiUsersUsersLoginShellCommand(user: user);
 
-/// Why a group draft cannot be sent, as an error code, or `None` when it can.
-/// `original_json` is the group being changed, absent for a new one;
-/// `accounts` every account's name.
-String? groupsValidateDraft({
-  required String draftJson,
-  String? originalJson,
+/// Why a group draft cannot be sent, or `None` when it can. `original` is the
+/// group being changed, absent for a new one; `accounts` every account's name.
+UserError? groupsValidateDraft({
+  required GroupDraft draft,
+  SystemGroup? original,
   required List<String> accounts,
 }) => RustLib.instance.api.crateApiUsersGroupsValidateDraft(
-  draftJson: draftJson,
-  originalJson: originalJson,
+  draft: draft,
+  original: original,
   accounts: accounts,
 );
 
 /// `groupadd`, and `gpasswd -M` when the draft names members; needs root
 String groupsCreateCommand({
-  required String draftJson,
+  required GroupDraft draft,
   required List<String> accounts,
 }) => RustLib.instance.api.crateApiUsersGroupsCreateCommand(
-  draftJson: draftJson,
+  draft: draft,
   accounts: accounts,
 );
 
 /// `gpasswd -M` for a member list that changed; needs root
 String groupsEditCommand({
-  required String originalJson,
-  required String draftJson,
+  required SystemGroup original,
+  required GroupDraft draft,
   required List<String> accounts,
 }) => RustLib.instance.api.crateApiUsersGroupsEditCommand(
-  originalJson: originalJson,
-  draftJson: draftJson,
+  original: original,
+  draft: draft,
   accounts: accounts,
 );
 
-/// Why `groupdel` would be refused, as an error code, or `None`
-String? groupsDeleteRefusal({required String groupJson}) =>
-    RustLib.instance.api.crateApiUsersGroupsDeleteRefusal(groupJson: groupJson);
+/// Why `userdel` would be refused for `current` (the account the catalog was
+/// read as), or `None`
+UserError? usersDeleteRefusal({required SystemUser user, String? current}) =>
+    RustLib.instance.api.crateApiUsersUsersDeleteRefusal(
+      user: user,
+      current: current,
+    );
+
+/// Why `groupdel` would be refused, or `None`
+UserError? groupsDeleteRefusal({required SystemGroup group}) =>
+    RustLib.instance.api.crateApiUsersGroupsDeleteRefusal(group: group);
 
 /// `groupdel`; refused for root and for a group that is an account's primary
 /// group
-String groupsDeleteCommand({required String groupJson}) =>
-    RustLib.instance.api.crateApiUsersGroupsDeleteCommand(groupJson: groupJson);
+String groupsDeleteCommand({required SystemGroup group}) =>
+    RustLib.instance.api.crateApiUsersGroupsDeleteCommand(group: group);
 
-/// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
-/// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
-/// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
-/// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
-/// `rootGroupNotDeletable`, `groupInUse`, `groupNotLocal`), or `malformed` for JSON the
-/// app should never have sent.
-class UserFfiError implements FrbException {
-  final String code;
+class GroupDraft {
+  final String name;
+  final List<String> members;
+  final bool system;
 
-  const UserFfiError({required this.code});
+  const GroupDraft({
+    required this.name,
+    required this.members,
+    required this.system,
+  });
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode => name.hashCode ^ members.hashCode ^ system.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UserFfiError &&
+      other is GroupDraft &&
           runtimeType == other.runtimeType &&
-          code == other.code;
+          name == other.name &&
+          members == other.members &&
+          system == other.system;
+}
+
+enum PasswordState { set_, locked, none }
+
+class SystemGroup {
+  final String name;
+  final int gid;
+  final List<String> members;
+  final List<String> primaryMembers;
+  final bool local;
+
+  const SystemGroup({
+    required this.name,
+    required this.gid,
+    required this.members,
+    required this.primaryMembers,
+    required this.local,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      gid.hashCode ^
+      members.hashCode ^
+      primaryMembers.hashCode ^
+      local.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SystemGroup &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          gid == other.gid &&
+          members == other.members &&
+          primaryMembers == other.primaryMembers &&
+          local == other.local;
+}
+
+class SystemUser {
+  final String name;
+  final int uid;
+  final int gid;
+  final String comment;
+  final String home;
+  final String shell;
+  final String? primaryGroup;
+  final List<String> supplementaryGroups;
+
+  const SystemUser({
+    required this.name,
+    required this.uid,
+    required this.gid,
+    required this.comment,
+    required this.home,
+    required this.shell,
+    this.primaryGroup,
+    required this.supplementaryGroups,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      uid.hashCode ^
+      gid.hashCode ^
+      comment.hashCode ^
+      home.hashCode ^
+      shell.hashCode ^
+      primaryGroup.hashCode ^
+      supplementaryGroups.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SystemUser &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          uid == other.uid &&
+          gid == other.gid &&
+          comment == other.comment &&
+          home == other.home &&
+          shell == other.shell &&
+          primaryGroup == other.primaryGroup &&
+          supplementaryGroups == other.supplementaryGroups;
+}
+
+class UserCatalog {
+  final String currentUser;
+  final int uidMin;
+  final int gidMin;
+  final List<SystemUser> users;
+  final List<SystemGroup> groups;
+
+  const UserCatalog({
+    required this.currentUser,
+    required this.uidMin,
+    required this.gidMin,
+    required this.users,
+    required this.groups,
+  });
+
+  @override
+  int get hashCode =>
+      currentUser.hashCode ^
+      uidMin.hashCode ^
+      gidMin.hashCode ^
+      users.hashCode ^
+      groups.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserCatalog &&
+          runtimeType == other.runtimeType &&
+          currentUser == other.currentUser &&
+          uidMin == other.uidMin &&
+          gidMin == other.gidMin &&
+          users == other.users &&
+          groups == other.groups;
+}
+
+class UserDetail {
+  final PasswordState? passwordState;
+  final PlatformInt64? passwordChangedMillis;
+  final PlatformInt64? expiresMillis;
+  final bool neverExpires;
+  final List<String>? sshKeyTypes;
+  final String? sudoRule;
+
+  const UserDetail({
+    this.passwordState,
+    this.passwordChangedMillis,
+    this.expiresMillis,
+    required this.neverExpires,
+    this.sshKeyTypes,
+    this.sudoRule,
+  });
+
+  @override
+  int get hashCode =>
+      passwordState.hashCode ^
+      passwordChangedMillis.hashCode ^
+      expiresMillis.hashCode ^
+      neverExpires.hashCode ^
+      sshKeyTypes.hashCode ^
+      sudoRule.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserDetail &&
+          runtimeType == other.runtimeType &&
+          passwordState == other.passwordState &&
+          passwordChangedMillis == other.passwordChangedMillis &&
+          expiresMillis == other.expiresMillis &&
+          neverExpires == other.neverExpires &&
+          sshKeyTypes == other.sshKeyTypes &&
+          sudoRule == other.sudoRule;
+}
+
+class UserDraft {
+  final String name;
+  final String comment;
+  final String home;
+  final String shell;
+  final String primaryGroup;
+  final List<String> supplementaryGroups;
+  final bool createHome;
+  final bool moveHome;
+  final bool system;
+  final String? password;
+
+  const UserDraft({
+    required this.name,
+    required this.comment,
+    required this.home,
+    required this.shell,
+    required this.primaryGroup,
+    required this.supplementaryGroups,
+    required this.createHome,
+    required this.moveHome,
+    required this.system,
+    this.password,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      comment.hashCode ^
+      home.hashCode ^
+      shell.hashCode ^
+      primaryGroup.hashCode ^
+      supplementaryGroups.hashCode ^
+      createHome.hashCode ^
+      moveHome.hashCode ^
+      system.hashCode ^
+      password.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserDraft &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          comment == other.comment &&
+          home == other.home &&
+          shell == other.shell &&
+          primaryGroup == other.primaryGroup &&
+          supplementaryGroups == other.supplementaryGroups &&
+          createHome == other.createHome &&
+          moveHome == other.moveHome &&
+          system == other.system &&
+          password == other.password;
+}
+
+enum UserError {
+  invalidName,
+  lineBreak,
+  invalidPrimaryGroup,
+  invalidSupplementaryGroup,
+  passwordLineBreak,
+  renaming,
+  rootNotDeletable,
+  currentUserNotDeletable,
+  currentUserUnknown,
+  unknownMember,
+  rootGroupNotDeletable,
+  groupInUse,
+  groupNotLocal,
 }

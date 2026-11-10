@@ -1,5 +1,5 @@
 // sbm_parser FFI integration tests:
-// verify binding loading and the JSON assembly contract. Parsing behavior itself
+// verify binding loading and the typed status report. Parsing behavior itself
 // is locked by crates/sbm_parser/tests/dart_compat.rs (same fixtures and expectations).
 // Build the native library first: cargo build -p sbm_ffi
 
@@ -42,75 +42,68 @@ const _connRaw =
 void main() {
   setUpAll(initRustLibForTest);
 
-  Future<Map<String, dynamic>> parseViaFfi(Map<String, String> raw) async {
-    final json = await parseStatusJson(
-      system: 'linux',
-      raw: raw,
-      tempDivisor: 1000.0,
-      countNetwork: false,
-    );
-    return jsonDecode(json) as Map<String, dynamic>;
-  }
+  Future<StatusReport> parseViaFfi(Map<String, String> raw) =>
+      parseStatus(system: SystemType.linux, raw: raw, tempDivisor: 1000.0, countNetwork: false);
 
   test('cpu section', () async {
-    final cpu = (await parseViaFfi({'cpu': _cpuRaw}))['cpu'] as List;
+    final cpu = (await parseViaFfi({'cpu': _cpuRaw})).cpu;
     expect(cpu.length, 2);
-    expect(cpu[0]['id'], 'cpu');
-    expect(cpu[0]['user'], 18232538);
-    expect(cpu[1]['id'], 'cpu0');
-    expect(cpu[1]['idle'], 33446073);
+    expect(cpu[0].id, 'cpu');
+    expect(cpu[0].user, BigInt.from(18232538));
+    expect(cpu[1].id, 'cpu0');
+    expect(cpu[1].idle, BigInt.from(33446073));
   });
 
   test('memory/swap section', () async {
     final status = await parseViaFfi({'mem': _memRaw});
-    expect(status['mem']['total'], 32768);
-    expect(status['mem']['avail'], 24576);
-    expect(status['swap']['total'], 2097148);
-    expect(status['swap']['free'], 1048574);
+    expect(status.mem?.total, BigInt.from(32768));
+    expect(status.mem?.avail, BigInt.from(24576));
+    expect(status.swap?.total, BigInt.from(2097148));
+    expect(status.swap?.free, BigInt.from(1048574));
   });
 
   test('net section', () async {
-    final net = (await parseViaFfi({'net': _netRaw}))['net'] as List;
+    final net = (await parseViaFfi({'net': _netRaw})).net;
     expect(net.length, 2);
-    expect(net[0]['device'], 'lo');
-    expect(net[1]['device'], 'eth0');
-    expect(net[1]['rx_bytes'], 48481023);
-    expect(net[1]['tx_bytes'], 36002262);
+    expect(net[0].device, 'lo');
+    expect(net[1].device, 'eth0');
+    expect(net[1].rxBytes, BigInt.from(48481023));
+    expect(net[1].txBytes, BigInt.from(36002262));
   });
 
   test('disk section (df fallback)', () async {
-    final disks = (await parseViaFfi({'disk': _dfRaw}))['disks'] as List;
+    final disks = (await parseViaFfi({'disk': _dfRaw})).disks;
     // vda3, vda2; tmpfs and the kernel mounts (udev on /dev) excluded
     expect(disks.length, 2);
-    expect(disks.any((d) => d['mount'] == '/dev'), isFalse);
-    final root = disks.firstWhere((d) => d['mount'] == '/');
-    expect(root['path'], '/dev/vda3');
-    expect(root['used_percent'], 47);
-    expect(root['size'], 40910528);
+    expect(disks.any((d) => d.mount == '/dev'), isFalse);
+    final root = disks.firstWhere((d) => d.mount == '/');
+    expect(root.path, '/dev/vda3');
+    expect(root.usedPercent, 47);
+    expect(root.size, BigInt.from(40910528));
   });
 
   test('conn section', () async {
-    final conn = (await parseViaFfi({'conn': _connRaw}))['conn'];
-    expect(conn['max_conn'], -1);
-    expect(conn['fail'], 33);
+    final conn = (await parseViaFfi({'conn': _connRaw})).conn;
+    expect(conn?.maxConn, -1);
+    expect(conn?.fail, 33);
   });
 
   test('temps honors tempDivisor', () async {
     const types = '/sys/class/thermal/thermal_zone0/x86_pkg_temp';
-    final milli = await parseStatusJson(
-      system: 'linux',
+    final milli = await parseStatus(
+      system: SystemType.linux,
       raw: {'tempType': types, 'tempVal': '45000'},
       tempDivisor: 1000.0,
       countNetwork: false,
     );
-    expect(jsonDecode(milli)['temps']['x86_pkg_temp'], 45.0);
-    final celsius = await parseStatusJson(
-      system: 'linux',
+    expect(milli.temps, [('x86_pkg_temp', 45.0)]);
+    final celsius = await parseStatus(
+      system: SystemType.linux,
       raw: {'tempType': types, 'tempVal': '45'},
       tempDivisor: 1.0,
       countNetwork: false,
     );
-    expect(jsonDecode(celsius)['temps']['x86_pkg_temp'], 45.0);
+    expect(celsius.temps, [('x86_pkg_temp', 45.0)]);
   });
 
   test('uptime/sys/host section', () async {
@@ -120,22 +113,20 @@ void main() {
       'sys': 'PRETTY_NAME="Ubuntu 22.04.3 LTS"\n',
       'host': ' myhost \n',
     });
-    expect(status['uptime'], '61 days, 18:16');
-    expect(status['sys'], 'Ubuntu 22.04.3 LTS');
-    expect(status['host'], 'myhost');
+    expect(status.uptime, '61 days, 18:16');
+    expect(status.sys, 'Ubuntu 22.04.3 LTS');
+    expect(status.host, 'myhost');
   });
 
-  // The two keys `ServerStatus.osId`/`osIdLike` are read out of, which the app
-  // takes from this JSON by name — a rename on the Rust side would otherwise
-  // show up as marks silently reverting to the prose match.
+  // What `ServerStatus.osId`/`osIdLike` are read out of.
   test('sys section carries the os-release identifiers', () async {
     final status = await parseViaFfi({
       'sys':
           'ID=linuxmint\nID_LIKE="ubuntu debian"\nPRETTY_NAME="Linux Mint 21.3"\n',
     });
-    expect(status['os_id'], 'linuxmint');
-    expect(status['os_id_like'], ['ubuntu', 'debian']);
-    expect(status['sys'], 'Linux Mint 21.3');
+    expect(status.osId, 'linuxmint');
+    expect(status.osIdLike, ['ubuntu', 'debian']);
+    expect(status.sys, 'Linux Mint 21.3');
   });
 
   test('batteries/sensors/gpu/smart sections', () async {
@@ -160,17 +151,21 @@ void main() {
     });
 
     // The Linux branch collects Li-poly batteries only
-    expect((status['batteries'] as List).length, 1);
-    expect(status['batteries'][0]['percent'], 73);
-    expect((status['sensors'] as List).length, 4);
-    expect(status['sensors'][0]['device'], 'coretemp-isa-0000');
-    expect((status['nvidia'] as List).length, 4);
-    expect((status['gpus'] as List).length, 4);
-    expect(status['gpus'][0]['vendor'], 'nvidia');
-    final smartList = status['disk_smart'] as List;
+    expect(status.batteries.length, 1);
+    expect(status.batteries[0].percent, 73);
+    expect(status.sensors.length, 4);
+    expect(status.sensors[0].device, 'coretemp-isa-0000');
+    expect(status.nvidia.length, 4);
+    expect(status.gpus.length, 4);
+    expect(status.gpus[0].vendor, 'nvidia');
+    final smartList = status.diskSmart;
     expect(smartList.length, 1);
-    expect(smartList[0]['device'], '/dev/sda');
-    expect(smartList[0]['temperature'], 35.0);
+    expect(smartList[0].device, '/dev/sda');
+    expect(smartList[0].temperature, 35.0);
+    // Attributes in name order, raw values as the counts they are.
+    final names = [for (final a in smartList[0].attributes) a.name];
+    expect(names, [...names]..sort());
+    expect(smartList[0].attributes.any((a) => a.rawValue != null), isTrue);
   });
 
   test('linux DRM GPU fields preserve identity and unavailable metrics', () async {
@@ -194,38 +189,38 @@ __SBM_GPU_END__
 ''',
     });
 
-    final gpus = status['gpus'] as List;
+    final gpus = status.gpus;
     expect(gpus, hasLength(2));
-    expect(gpus[0]['id'], '0000:04:00.0');
-    expect(gpus[0]['utilization'], 37.0);
-    expect(gpus[0]['memory']['used'], 1024);
-    expect(gpus[1]['id'], '0000:00:02.0');
-    expect(gpus[1]['utilization'], 68.25);
-    expect(gpus[1]['temperature'], isNull);
-    expect(gpus[1]['memory'], isNull);
+    expect(gpus[0].id, '0000:04:00.0');
+    expect(gpus[0].utilization, 37.0);
+    expect(gpus[0].memory?.used, 1024);
+    expect(gpus[1].id, '0000:00:02.0');
+    expect(gpus[1].utilization, 68.25);
+    expect(gpus[1].temperature, isNull);
+    expect(gpus[1].memory, isNull);
   });
 
   test('diskio section', () async {
     const raw =
         '   7       0 loop0 55 0 2170 42 0 0 0 0 0 80 42 0 0 0 0 0 0\n'
         ' 259       0 nvme0n1 1234 0 567890 100 4321 0 98765 200 0 300 400 0 0 0 0 0 0';
-    final diskio = (await parseViaFfi({'diskio': raw}))['diskio'] as List;
+    final diskio = (await parseViaFfi({'diskio': raw})).diskio;
     expect(diskio.length, 1); // loop skipped
-    expect(diskio[0]['dev'], 'nvme0n1');
-    expect(diskio[0]['sectors_read'], 567890);
+    expect(diskio[0].dev, 'nvme0n1');
+    expect(diskio[0].sectorsRead, 567890);
   });
 
   test('command specs cover linux/bsd/windows', () {
-    for (final system in ['linux', 'bsd', 'windows']) {
+    for (final system in SystemType.values) {
       final specs = commandSpecs(system: system);
-      expect(specs, isNotEmpty, reason: system);
+      expect(specs, isNotEmpty, reason: system.name);
       expect(specs.map((s) => s.key), contains('cpu'));
     }
   });
 
   test('buildScript smoke via FFI', () {
     final unix = script.buildScript(
-      system: 'linux',
+      system: SystemType.linux,
       disabled: [],
       buildNumber: 'test',
     );
@@ -234,7 +229,7 @@ __SBM_GPU_END__
     expect(unix, contains('case \$1 in'));
 
     final win = script.buildScript(
-      system: 'windows',
+      system: SystemType.windows,
       disabled: [],
       buildNumber: 'test',
     );
@@ -246,7 +241,7 @@ __SBM_GPU_END__
     // The whole point of the move: what a user typed never reaches a shell
     // this app generated. It travels encoded and lands in a file.
     final install = script.installCustomCmdsCommand(
-      system: 'linux',
+      system: SystemType.linux,
       cmds: [script.CustomCmd(name: 'probe', cmd: 'rm -rf / #')],
     );
     expect(install, isNot(contains('rm -rf /')));
@@ -262,9 +257,8 @@ __SBM_GPU_END__
   test('the editor reads back what the installer wrote', () {
     // The two halves of the editor, checked against each other: what the
     // listing script prints is what the parser turns back into commands. A
-    // directory that does not exist is a different answer from an empty one —
-    // the migration seeds the first and must leave the second alone.
-    final read = script.readCustomCmdsCommand(system: 'linux');
+    // directory that does not exist is a different answer from an empty one.
+    final read = script.readCustomCmdsCommand(system: SystemType.linux);
     expect(read, contains(r'$HOME/.config/server_box/custom_cmds'));
     expect(read, contains('base64'));
 
@@ -283,6 +277,7 @@ __SBM_GPU_END__
     expect(parsed.first.cmd, 'echo hi\necho there');
 
     expect(script.parseCustomCmdsListing(raw: ''), isNull);
+    expect(script.parseCustomCmdsListing(raw: 'SrvBoxCusCmdDirMissing\n'), isEmpty);
     expect(
       script.parseCustomCmdsListing(
         raw: 'SrvBoxCusCmdDir\nSrvBoxCusCmdDirEnd\n',
@@ -331,10 +326,10 @@ __SBM_GPU_END__
   });
 
   test('enum names stay in sync with the FFI manifest', () {
-    final cases = <(String, List<ShellCmdType>)>[
-      ('linux', StatusCmdType.values),
-      ('bsd', BSDStatusCmdType.values),
-      ('windows', WindowsStatusCmdType.values),
+    final cases = <(SystemType, List<ShellCmdType>)>[
+      (SystemType.linux, StatusCmdType.values),
+      (SystemType.bsd, BSDStatusCmdType.values),
+      (SystemType.windows, WindowsStatusCmdType.values),
     ];
     for (final (system, types) in cases) {
       final manifestKeys = {

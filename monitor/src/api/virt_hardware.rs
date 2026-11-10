@@ -21,6 +21,7 @@
 //! `virt` to see and change, as for power. A host's failure is answered 200
 //! with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -37,7 +38,6 @@ use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, guest_of, run_libvirt};
 use super::virt_guests::Audit;
 use super::virt_resources::{libvirt_networks, libvirt_storage, password, read_volumes};
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize)]
 pub struct GuestBody {
@@ -73,14 +73,14 @@ pub struct CloudInitBody {
     password: Option<String>,
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
 /// Gated by `virt`, the backend found and the guest read: what every read
 /// here starts with.
 async fn read_guest(req: &HttpRequest, state: &AppState, what: &str, guest: &str, pw: Option<&str>) -> Result<(Backend, Result<Guest, VirtError>), HttpResponse> {
-    machine::gate(req, state, Grant::Virt, what).await?;
+    machine::gate(req, state, what).await?;
     let backend = backend(state).await?;
     let found = guest_of(state, &backend, guest, pw).await;
     Ok((backend, found))
@@ -89,8 +89,8 @@ async fn read_guest(req: &HttpRequest, state: &AppState, what: &str, guest: &str
 pub async fn hardware(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt hardware", &request.guest, pw).await {
@@ -113,8 +113,8 @@ pub async fn hardware(
 pub async fn change(
     req: HttpRequest,
     body: web::types::Json<ChangeBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("virt hardware {} {}", request.guest, request.change.describe());
     let audit = match Audit::start(&req, &state, what).await {
@@ -143,8 +143,8 @@ pub async fn change(
 pub async fn revert(
     req: HttpRequest,
     body: web::types::Json<RevertBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let audit = match Audit::start(&req, &state, format!("virt hardware {} revert pending", request.guest)).await {
         Ok(a) => a,
@@ -174,8 +174,8 @@ pub async fn revert(
 pub async fn cloud_init(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt cloud-init", &request.guest, pw).await {
@@ -198,8 +198,8 @@ pub async fn cloud_init(
 pub async fn set_cloud_init(
     req: HttpRequest,
     body: web::types::Json<CloudInitBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     // The password, if one was typed, goes to the host only.
     let audit = match Audit::start(&req, &state, format!("virt cloud-init {}", request.guest)).await {
@@ -225,8 +225,8 @@ pub async fn set_cloud_init(
 pub async fn host_devices(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt host devices", &request.guest, pw).await {

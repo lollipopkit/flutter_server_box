@@ -1,0 +1,67 @@
+/// AI agents' service: Codex, Claude Code, pi, opencode, Hermes and OpenClaw
+/// for the agent's account (`sbm_parser::agents`), never root: found,
+/// installed, updated and removed, pointed at one of Agent mode's providers,
+/// and their gateways run.
+package serverbox:agent-tools;
+
+interface types {
+  enum tool { codex, claude, pi, opencode, hermes, openclaw }
+}
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+  use types.{tool};
+
+  record found {
+    tool: tool,
+    /// Where it is on the account's `PATH`; none when not installed.
+    path: option<string>,
+    version: option<string>,
+    /// The release its installer is given.
+    pinned: option<string>,
+    homepage: string,
+    gateway: bool,
+    /// The model APIs it speaks, as Agent mode names them.
+    apis: list<string>,
+  }
+
+  /// One of Agent mode's providers with an address here, and its models.
+  record provider {
+    id: string,
+    name: string,
+    api: string,
+    base-url: string,
+    models: list<string>,
+  }
+
+  enum gateway-action { status, install, start, stop }
+
+  record gateway-output {
+    exit-code: s32,
+    output: string,
+  }
+
+  view: func() -> result<list<found>, error>;
+  providers: func() -> result<list<provider>, error>;
+  /// The tool's own files point at [provider]'s [model] (its key in them,
+  /// 0600); `failed-precondition("unreadable\n<path>")` for a file it
+  /// cannot parse, left alone.
+  configure: func(tool: tool, provider: string, model: string) -> result<_, error>;
+  gateway: func(tool: tool, action: gateway-action) -> result<gateway-output, error>;
+}
+
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+  use types.{tool};
+
+  install: func(tool: tool) -> result<_, error>;
+  update: func(tool: tool) -> result<_, error>;
+  /// With [purge] its settings, sessions and data too.
+  uninstall: func(tool: tool, purge: bool) -> result<_, error>;
+}
+
+world agent-tools {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

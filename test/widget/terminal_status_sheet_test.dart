@@ -6,12 +6,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
-import 'package:server_box/data/ssh/terminal_status.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
-import 'package:server_box/view/widget/terminal_status_dot.dart';
-import 'package:server_box/view/widget/terminal_status_sheet.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_status.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_status_dot.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_status_sheet.dart';
 import 'package:xterm/core.dart';
 
 String b64(String text) => base64.encode(utf8.encode(text));

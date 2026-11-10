@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -69,7 +68,7 @@ extension SnippetX on Snippet {
   /// The script as one command on [spi], for running rather than typing:
   /// `${sleep}`, `${ctrl+…}` and the other terminal macros stay as written.
   String fmtWithSpi(Spi? spi) =>
-      _call(() => ffi.snippetExpand(script: script, contextJson: _context(spi)));
+      _call(() => ffi.snippetExpand(script: script, context: _context(spi)));
 
   /// Types this snippet into [terminal]. A placeholder can wait (`${sleep N}`);
   /// after each wait the rest is typed only while [alive] says the shell it
@@ -84,10 +83,7 @@ extension SnippetX on Snippet {
     bool autoEnter = false,
     bool Function()? alive,
   }) async {
-    final json = _call(
-      () => ffi.snippetPlan(script: script, contextJson: _context(spi)),
-    );
-    final steps = (jsonDecode(json) as List).cast<Map<String, Object?>>();
+    final steps = _call(() => ffi.snippetPlan(script: script, context: _context(spi)));
 
     // That one ran, and whether it was parameterised — never the script, the
     // name or the server. `interactive` is a snippet typed in pieces, which is
@@ -97,28 +93,23 @@ extension SnippetX on Snippet {
       SbDiag.snippet,
       'run',
       data: {
-        'interactive': steps.every((s) => s['type'] == 'text') ? 'no' : 'yes',
+        'interactive': steps.every((s) => s is ffi.Step_Text) ? 'no' : 'yes',
       },
     );
 
     for (final step in steps) {
-      switch (step['type']) {
-        case 'text':
-          terminal.textInput(step['text'] as String);
-        case 'combo':
-          final key = step['key'] as String;
-          final ok = terminal.charInput(
-            key.codeUnitAt(0),
-            ctrl: step['ctrl'] == true,
-            alt: step['alt'] == true,
-          );
+      switch (step) {
+        case ffi.Step_Text(:final text):
+          terminal.textInput(text);
+        case ffi.Step_Combo(:final ctrl, :final alt, :final key, :final rest):
+          final ok = terminal.charInput(key.codeUnitAt(0), ctrl: ctrl, alt: alt);
           if (!ok) Loggers.app.warning('Failed to input: $key');
-          terminal.textInput(step['rest'] as String);
-        case 'sleep':
-          await Future.delayed(Duration(seconds: step['seconds'] as int));
+          terminal.textInput(rest);
+        case ffi.Step_Sleep(:final seconds):
+          await Future.delayed(Duration(seconds: seconds.toInt()));
           if (alive != null && !alive()) return;
-        case 'enter':
-          for (var i = 0; i < (step['times'] as int); i++) {
+        case ffi.Step_Enter(:final times):
+          for (var i = 0; i < times; i++) {
             terminal.keyInput(TerminalKey.enter);
           }
       }
@@ -134,28 +125,24 @@ extension SnippetX on Snippet {
   /// What [spi] can answer. An absent key is a value the app does not have —
   /// no SSH credential, or one without a password — and a script that asks
   /// for it is refused rather than run with a hole in it.
-  static String _context(Spi? spi) {
-    if (spi == null) return '{}';
-    final ssh = spi.ssh;
-    return jsonEncode({
-      if (ssh != null) ...{
-        'host': ssh.ip,
-        'port': ssh.port.toString(),
-        'user': ssh.user,
-        'pwd': ?ssh.pwd,
-      },
-      'id': spi.id,
-      'name': spi.name,
-    });
+  static ffi.SnippetContext _context(Spi? spi) {
+    final ssh = spi?.ssh;
+    return ffi.SnippetContext(
+      host: ssh?.ip,
+      port: ssh?.port.toString(),
+      user: ssh?.user,
+      pwd: ssh?.pwd,
+      id: spi?.id,
+      name: spi?.name,
+    );
   }
 
-  static String _call(String Function() run) {
+  static T _call<T>(T Function() run) {
     try {
       return run();
-    } on ffi.SnippetFfiError catch (e) {
-      throw SnippetException(switch (e.code) {
-        'unanswerable' => 'This server has no value for \${${e.key}}',
-        _ => e.code,
+    } on ffi.PlanError catch (e) {
+      throw SnippetException(switch (e) {
+        ffi.PlanError_Unanswerable(:final key) => 'This server has no value for \${$key}',
       });
     }
   }

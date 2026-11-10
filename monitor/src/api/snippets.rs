@@ -10,15 +10,17 @@
 //!
 //! # Privilege
 //!
-//! The `shell` grant for all three (`api::machine::gate`). Running a snippet is
-//! typing into a shell, and saving one is preparing what will be typed; a
-//! script can also carry a password, so reading the library needs the grant
+//! The transport rule for all three (`api::machine::gate`). Running a snippet
+//! is typing into a shell, and saving one is preparing what will be typed; a
+//! script can also carry a password, so reading the library needs the rule
 //! too, for the reason `/process` does.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
@@ -27,7 +29,6 @@ use sbm_parser::snippet::{self, SnippetContext, Step};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// The largest request body accepted: the whole library at once, since a write
 /// replaces it. Bounded so one caller cannot make the agent buffer whatever it
@@ -97,23 +98,23 @@ struct PlanResponse {
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "snippets list").await {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "snippets list").await {
         return Ok(refused);
     }
     match load(&state.db).await {
         Ok(snippets) => Ok(HttpResponse::Ok().json(&ListResponse { snippets })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let gated = match machine::gate(&req, &state, Grant::Shell, "snippets replace").await {
+    body: Json<ReplaceRequest, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
+    let gated = match machine::gate(&req, &state, "snippets replace").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -133,7 +134,6 @@ pub async fn replace(
     match store(&state.db, &snippets).await {
         Ok(()) => {
             Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-                .subject(&gated.caller.username)
                 .remote_ip(gated.remote_ip)
                 .detail(&what)
                 .record(&state.db)
@@ -142,12 +142,11 @@ pub async fn replace(
         }
         Err(e) => {
             Event::new(Kind::Machine, Action::Close, Outcome::Error)
-                .subject(&gated.caller.username)
                 .remote_ip(gated.remote_ip)
                 .detail(format!("{what}: write failed"))
                 .record(&state.db)
                 .await;
-            Ok(internal_error(&e))
+            Ok(super::respond::internal(&e))
         }
     }
 }
@@ -156,10 +155,10 @@ pub async fn replace(
 /// nothing; the steps are `sbm_parser::snippet::Step`'s wire shape.
 pub async fn plan(
     req: HttpRequest,
-    body: web::types::Json<PlanRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "snippets plan").await {
+    body: Json<PlanRequest, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "snippets plan").await {
         return Ok(refused);
     }
     let PlanRequest { script, context } = body.into_inner();
@@ -263,10 +262,6 @@ async fn store(db: &SqlitePool, snippets: &[Snippet]) -> Result<(), sqlx::Error>
     tx.commit().await
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("snippets: {e}");
-    HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
-}
 
 #[cfg(test)]
 mod tests {

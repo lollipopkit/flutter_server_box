@@ -1063,20 +1063,18 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _monitorIgnoreCertMeta = const VerificationMeta(
-    'monitorIgnoreCert',
+  static const VerificationMeta _monitorCertSha256Meta = const VerificationMeta(
+    'monitorCertSha256',
   );
   @override
-  late final GeneratedColumn<bool> monitorIgnoreCert = GeneratedColumn<bool>(
-    'monitor_ignore_cert',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("monitor_ignore_cert" IN (0, 1))',
-    ),
-  );
+  late final GeneratedColumn<String> monitorCertSha256 =
+      GeneratedColumn<String>(
+        'monitor_cert_sha256',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _monitorAllowInsecureMeta =
       const VerificationMeta('monitorAllowInsecure');
   @override
@@ -1268,7 +1266,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     monitorAddr,
     monitorUser,
     monitorPwd,
-    monitorIgnoreCert,
+    monitorCertSha256,
     monitorAllowInsecure,
     wolMac,
     wolIp,
@@ -1466,12 +1464,12 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         monitorPwd.isAcceptableOrUnknown(data['monitor_pwd']!, _monitorPwdMeta),
       );
     }
-    if (data.containsKey('monitor_ignore_cert')) {
+    if (data.containsKey('monitor_cert_sha256')) {
       context.handle(
-        _monitorIgnoreCertMeta,
-        monitorIgnoreCert.isAcceptableOrUnknown(
-          data['monitor_ignore_cert']!,
-          _monitorIgnoreCertMeta,
+        _monitorCertSha256Meta,
+        monitorCertSha256.isAcceptableOrUnknown(
+          data['monitor_cert_sha256']!,
+          _monitorCertSha256Meta,
         ),
       );
     }
@@ -1681,9 +1679,9 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}monitor_pwd'],
       ),
-      monitorIgnoreCert: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}monitor_ignore_cert'],
+      monitorCertSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}monitor_cert_sha256'],
       ),
       monitorAllowInsecure: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -1813,7 +1811,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? monitorAddr;
   final String? monitorUser;
   final String? monitorPwd;
-  final bool? monitorIgnoreCert;
+
+  /// `MonitorHttpCredential.certSha256`: the certificate accepted for an
+  /// agent the system does not trust, lowercase hex.
+  final String? monitorCertSha256;
   final bool? monitorAllowInsecure;
   final String? wolMac;
   final String? wolIp;
@@ -1883,7 +1884,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.monitorAddr,
     this.monitorUser,
     this.monitorPwd,
-    this.monitorIgnoreCert,
+    this.monitorCertSha256,
     this.monitorAllowInsecure,
     this.wolMac,
     this.wolIp,
@@ -1956,8 +1957,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     if (!nullToAbsent || monitorPwd != null) {
       map['monitor_pwd'] = Variable<String>(monitorPwd);
     }
-    if (!nullToAbsent || monitorIgnoreCert != null) {
-      map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert);
+    if (!nullToAbsent || monitorCertSha256 != null) {
+      map['monitor_cert_sha256'] = Variable<String>(monitorCertSha256);
     }
     if (!nullToAbsent || monitorAllowInsecure != null) {
       map['monitor_allow_insecure'] = Variable<bool>(monitorAllowInsecure);
@@ -2056,9 +2057,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorPwd: monitorPwd == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorPwd),
-      monitorIgnoreCert: monitorIgnoreCert == null && nullToAbsent
+      monitorCertSha256: monitorCertSha256 == null && nullToAbsent
           ? const Value.absent()
-          : Value(monitorIgnoreCert),
+          : Value(monitorCertSha256),
       monitorAllowInsecure: monitorAllowInsecure == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorAllowInsecure),
@@ -2136,7 +2137,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorAddr: serializer.fromJson<String?>(json['monitorAddr']),
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
-      monitorIgnoreCert: serializer.fromJson<bool?>(json['monitorIgnoreCert']),
+      monitorCertSha256: serializer.fromJson<String?>(
+        json['monitorCertSha256'],
+      ),
       monitorAllowInsecure: serializer.fromJson<bool?>(
         json['monitorAllowInsecure'],
       ),
@@ -2185,7 +2188,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'monitorAddr': serializer.toJson<String?>(monitorAddr),
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
-      'monitorIgnoreCert': serializer.toJson<bool?>(monitorIgnoreCert),
+      'monitorCertSha256': serializer.toJson<String?>(monitorCertSha256),
       'monitorAllowInsecure': serializer.toJson<bool?>(monitorAllowInsecure),
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
@@ -2228,7 +2231,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> monitorAddr = const Value.absent(),
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
-    Value<bool?> monitorIgnoreCert = const Value.absent(),
+    Value<String?> monitorCertSha256 = const Value.absent(),
     Value<bool?> monitorAllowInsecure = const Value.absent(),
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
@@ -2275,9 +2278,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorAddr: monitorAddr.present ? monitorAddr.value : this.monitorAddr,
     monitorUser: monitorUser.present ? monitorUser.value : this.monitorUser,
     monitorPwd: monitorPwd.present ? monitorPwd.value : this.monitorPwd,
-    monitorIgnoreCert: monitorIgnoreCert.present
-        ? monitorIgnoreCert.value
-        : this.monitorIgnoreCert,
+    monitorCertSha256: monitorCertSha256.present
+        ? monitorCertSha256.value
+        : this.monitorCertSha256,
     monitorAllowInsecure: monitorAllowInsecure.present
         ? monitorAllowInsecure.value
         : this.monitorAllowInsecure,
@@ -2351,9 +2354,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorPwd: data.monitorPwd.present
           ? data.monitorPwd.value
           : this.monitorPwd,
-      monitorIgnoreCert: data.monitorIgnoreCert.present
-          ? data.monitorIgnoreCert.value
-          : this.monitorIgnoreCert,
+      monitorCertSha256: data.monitorCertSha256.present
+          ? data.monitorCertSha256.value
+          : this.monitorCertSha256,
       monitorAllowInsecure: data.monitorAllowInsecure.present
           ? data.monitorAllowInsecure.value
           : this.monitorAllowInsecure,
@@ -2408,7 +2411,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
-          ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorCertSha256: $monitorCertSha256, ')
           ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
@@ -2453,7 +2456,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorAddr,
     monitorUser,
     monitorPwd,
-    monitorIgnoreCert,
+    monitorCertSha256,
     monitorAllowInsecure,
     wolMac,
     wolIp,
@@ -2497,7 +2500,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.monitorAddr == this.monitorAddr &&
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
-          other.monitorIgnoreCert == this.monitorIgnoreCert &&
+          other.monitorCertSha256 == this.monitorCertSha256 &&
           other.monitorAllowInsecure == this.monitorAllowInsecure &&
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
@@ -2539,7 +2542,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> monitorAddr;
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
-  final Value<bool?> monitorIgnoreCert;
+  final Value<String?> monitorCertSha256;
   final Value<bool?> monitorAllowInsecure;
   final Value<String?> wolMac;
   final Value<String?> wolIp;
@@ -2579,7 +2582,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
-    this.monitorIgnoreCert = const Value.absent(),
+    this.monitorCertSha256 = const Value.absent(),
     this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
@@ -2620,7 +2623,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
-    this.monitorIgnoreCert = const Value.absent(),
+    this.monitorCertSha256 = const Value.absent(),
     this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
@@ -2662,7 +2665,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? monitorAddr,
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
-    Expression<bool>? monitorIgnoreCert,
+    Expression<String>? monitorCertSha256,
     Expression<bool>? monitorAllowInsecure,
     Expression<String>? wolMac,
     Expression<String>? wolIp,
@@ -2704,7 +2707,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (monitorAddr != null) 'monitor_addr': monitorAddr,
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
-      if (monitorIgnoreCert != null) 'monitor_ignore_cert': monitorIgnoreCert,
+      if (monitorCertSha256 != null) 'monitor_cert_sha256': monitorCertSha256,
       if (monitorAllowInsecure != null)
         'monitor_allow_insecure': monitorAllowInsecure,
       if (wolMac != null) 'wol_mac': wolMac,
@@ -2748,7 +2751,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? monitorAddr,
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
-    Value<bool?>? monitorIgnoreCert,
+    Value<String?>? monitorCertSha256,
     Value<bool?>? monitorAllowInsecure,
     Value<String?>? wolMac,
     Value<String?>? wolIp,
@@ -2790,7 +2793,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       monitorAddr: monitorAddr ?? this.monitorAddr,
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
-      monitorIgnoreCert: monitorIgnoreCert ?? this.monitorIgnoreCert,
+      monitorCertSha256: monitorCertSha256 ?? this.monitorCertSha256,
       monitorAllowInsecure: monitorAllowInsecure ?? this.monitorAllowInsecure,
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
@@ -2883,8 +2886,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (monitorPwd.present) {
       map['monitor_pwd'] = Variable<String>(monitorPwd.value);
     }
-    if (monitorIgnoreCert.present) {
-      map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert.value);
+    if (monitorCertSha256.present) {
+      map['monitor_cert_sha256'] = Variable<String>(monitorCertSha256.value);
     }
     if (monitorAllowInsecure.present) {
       map['monitor_allow_insecure'] = Variable<bool>(
@@ -2962,7 +2965,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
-          ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorCertSha256: $monitorCertSha256, ')
           ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
@@ -3700,6 +3703,265 @@ class ServerJumpsCompanion extends UpdateCompanion<ServerJumpRow> {
   }
 }
 
+class $ServerIdentityFilesTable extends ServerIdentityFiles
+    with TableInfo<$ServerIdentityFilesTable, ServerIdentityFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerIdentityFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ordMeta = const VerificationMeta('ord');
+  @override
+  late final GeneratedColumn<int> ord = GeneratedColumn<int>(
+    'ord',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, ord, path];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_identity_file';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerIdentityFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('ord')) {
+      context.handle(
+        _ordMeta,
+        ord.isAcceptableOrUnknown(data['ord']!, _ordMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ordMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, ord};
+  @override
+  ServerIdentityFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerIdentityFileRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      ord: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ord'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerIdentityFilesTable createAlias(String alias) {
+    return $ServerIdentityFilesTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerIdentityFileRow extends DataClass
+    implements Insertable<ServerIdentityFileRow> {
+  final String serverId;
+  final int ord;
+  final String path;
+  const ServerIdentityFileRow({
+    required this.serverId,
+    required this.ord,
+    required this.path,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['ord'] = Variable<int>(ord);
+    map['path'] = Variable<String>(path);
+    return map;
+  }
+
+  ServerIdentityFilesCompanion toCompanion(bool nullToAbsent) {
+    return ServerIdentityFilesCompanion(
+      serverId: Value(serverId),
+      ord: Value(ord),
+      path: Value(path),
+    );
+  }
+
+  factory ServerIdentityFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerIdentityFileRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      ord: serializer.fromJson<int>(json['ord']),
+      path: serializer.fromJson<String>(json['path']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'ord': serializer.toJson<int>(ord),
+      'path': serializer.toJson<String>(path),
+    };
+  }
+
+  ServerIdentityFileRow copyWith({String? serverId, int? ord, String? path}) =>
+      ServerIdentityFileRow(
+        serverId: serverId ?? this.serverId,
+        ord: ord ?? this.ord,
+        path: path ?? this.path,
+      );
+  ServerIdentityFileRow copyWithCompanion(ServerIdentityFilesCompanion data) {
+    return ServerIdentityFileRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      ord: data.ord.present ? data.ord.value : this.ord,
+      path: data.path.present ? data.path.value : this.path,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerIdentityFileRow(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('path: $path')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, ord, path);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerIdentityFileRow &&
+          other.serverId == this.serverId &&
+          other.ord == this.ord &&
+          other.path == this.path);
+}
+
+class ServerIdentityFilesCompanion
+    extends UpdateCompanion<ServerIdentityFileRow> {
+  final Value<String> serverId;
+  final Value<int> ord;
+  final Value<String> path;
+  const ServerIdentityFilesCompanion({
+    this.serverId = const Value.absent(),
+    this.ord = const Value.absent(),
+    this.path = const Value.absent(),
+  });
+  ServerIdentityFilesCompanion.insert({
+    required String serverId,
+    required int ord,
+    required String path,
+  }) : serverId = Value(serverId),
+       ord = Value(ord),
+       path = Value(path);
+  static Insertable<ServerIdentityFileRow> custom({
+    Expression<String>? serverId,
+    Expression<int>? ord,
+    Expression<String>? path,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (ord != null) 'ord': ord,
+      if (path != null) 'path': path,
+    });
+  }
+
+  ServerIdentityFilesCompanion copyWith({
+    Value<String>? serverId,
+    Value<int>? ord,
+    Value<String>? path,
+  }) {
+    return ServerIdentityFilesCompanion(
+      serverId: serverId ?? this.serverId,
+      ord: ord ?? this.ord,
+      path: path ?? this.path,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (ord.present) {
+      map['ord'] = Variable<int>(ord.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerIdentityFilesCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('path: $path')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ServerDisabledCmdsTable extends ServerDisabledCmds
     with TableInfo<$ServerDisabledCmdsTable, ServerDisabledCmdRow> {
   @override
@@ -3910,264 +4172,6 @@ class ServerDisabledCmdsCompanion
     return (StringBuffer('ServerDisabledCmdsCompanion(')
           ..write('serverId: $serverId, ')
           ..write('cmdType: $cmdType')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ServerCustomCmdsTable extends ServerCustomCmds
-    with TableInfo<$ServerCustomCmdsTable, ServerCustomCmdRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ServerCustomCmdsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _serverIdMeta = const VerificationMeta(
-    'serverId',
-  );
-  @override
-  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
-    'server_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES server (id) ON DELETE CASCADE',
-    ),
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _cmdMeta = const VerificationMeta('cmd');
-  @override
-  late final GeneratedColumn<String> cmd = GeneratedColumn<String>(
-    'cmd',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [serverId, name, cmd];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'server_custom_cmd';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ServerCustomCmdRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('server_id')) {
-      context.handle(
-        _serverIdMeta,
-        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_serverIdMeta);
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('cmd')) {
-      context.handle(
-        _cmdMeta,
-        cmd.isAcceptableOrUnknown(data['cmd']!, _cmdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_cmdMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {serverId, name};
-  @override
-  ServerCustomCmdRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ServerCustomCmdRow(
-      serverId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}server_id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      cmd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}cmd'],
-      )!,
-    );
-  }
-
-  @override
-  $ServerCustomCmdsTable createAlias(String alias) {
-    return $ServerCustomCmdsTable(attachedDatabase, alias);
-  }
-
-  @override
-  bool get withoutRowId => true;
-}
-
-class ServerCustomCmdRow extends DataClass
-    implements Insertable<ServerCustomCmdRow> {
-  final String serverId;
-  final String name;
-  final String cmd;
-  const ServerCustomCmdRow({
-    required this.serverId,
-    required this.name,
-    required this.cmd,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['server_id'] = Variable<String>(serverId);
-    map['name'] = Variable<String>(name);
-    map['cmd'] = Variable<String>(cmd);
-    return map;
-  }
-
-  ServerCustomCmdsCompanion toCompanion(bool nullToAbsent) {
-    return ServerCustomCmdsCompanion(
-      serverId: Value(serverId),
-      name: Value(name),
-      cmd: Value(cmd),
-    );
-  }
-
-  factory ServerCustomCmdRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ServerCustomCmdRow(
-      serverId: serializer.fromJson<String>(json['serverId']),
-      name: serializer.fromJson<String>(json['name']),
-      cmd: serializer.fromJson<String>(json['cmd']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'serverId': serializer.toJson<String>(serverId),
-      'name': serializer.toJson<String>(name),
-      'cmd': serializer.toJson<String>(cmd),
-    };
-  }
-
-  ServerCustomCmdRow copyWith({String? serverId, String? name, String? cmd}) =>
-      ServerCustomCmdRow(
-        serverId: serverId ?? this.serverId,
-        name: name ?? this.name,
-        cmd: cmd ?? this.cmd,
-      );
-  ServerCustomCmdRow copyWithCompanion(ServerCustomCmdsCompanion data) {
-    return ServerCustomCmdRow(
-      serverId: data.serverId.present ? data.serverId.value : this.serverId,
-      name: data.name.present ? data.name.value : this.name,
-      cmd: data.cmd.present ? data.cmd.value : this.cmd,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ServerCustomCmdRow(')
-          ..write('serverId: $serverId, ')
-          ..write('name: $name, ')
-          ..write('cmd: $cmd')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(serverId, name, cmd);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ServerCustomCmdRow &&
-          other.serverId == this.serverId &&
-          other.name == this.name &&
-          other.cmd == this.cmd);
-}
-
-class ServerCustomCmdsCompanion extends UpdateCompanion<ServerCustomCmdRow> {
-  final Value<String> serverId;
-  final Value<String> name;
-  final Value<String> cmd;
-  const ServerCustomCmdsCompanion({
-    this.serverId = const Value.absent(),
-    this.name = const Value.absent(),
-    this.cmd = const Value.absent(),
-  });
-  ServerCustomCmdsCompanion.insert({
-    required String serverId,
-    required String name,
-    required String cmd,
-  }) : serverId = Value(serverId),
-       name = Value(name),
-       cmd = Value(cmd);
-  static Insertable<ServerCustomCmdRow> custom({
-    Expression<String>? serverId,
-    Expression<String>? name,
-    Expression<String>? cmd,
-  }) {
-    return RawValuesInsertable({
-      if (serverId != null) 'server_id': serverId,
-      if (name != null) 'name': name,
-      if (cmd != null) 'cmd': cmd,
-    });
-  }
-
-  ServerCustomCmdsCompanion copyWith({
-    Value<String>? serverId,
-    Value<String>? name,
-    Value<String>? cmd,
-  }) {
-    return ServerCustomCmdsCompanion(
-      serverId: serverId ?? this.serverId,
-      name: name ?? this.name,
-      cmd: cmd ?? this.cmd,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (serverId.present) {
-      map['server_id'] = Variable<String>(serverId.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (cmd.present) {
-      map['cmd'] = Variable<String>(cmd.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ServerCustomCmdsCompanion(')
-          ..write('serverId: $serverId, ')
-          ..write('name: $name, ')
-          ..write('cmd: $cmd')
           ..write(')'))
         .toString();
   }
@@ -9406,6 +9410,570 @@ class SyncStatesCompanion extends UpdateCompanion<SyncStateRow> {
   }
 }
 
+class $SyncRecordsTable extends SyncRecords
+    with TableInfo<$SyncRecordsTable, SyncRecordRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cMeta = const VerificationMeta('c');
+  @override
+  late final GeneratedColumn<String> c = GeneratedColumn<String>(
+    'c',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hlcMeta = const VerificationMeta('hlc');
+  @override
+  late final GeneratedColumn<String> hlc = GeneratedColumn<String>(
+    'hlc',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [c, id, hlc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_record';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncRecordRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('c')) {
+      context.handle(_cMeta, c.isAcceptableOrUnknown(data['c']!, _cMeta));
+    } else if (isInserting) {
+      context.missing(_cMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('hlc')) {
+      context.handle(
+        _hlcMeta,
+        hlc.isAcceptableOrUnknown(data['hlc']!, _hlcMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hlcMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {c, id};
+  @override
+  SyncRecordRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncRecordRow(
+      c: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}c'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      hlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hlc'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncRecordsTable createAlias(String alias) {
+    return $SyncRecordsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class SyncRecordRow extends DataClass implements Insertable<SyncRecordRow> {
+  final String c;
+  final String id;
+  final String hlc;
+  const SyncRecordRow({required this.c, required this.id, required this.hlc});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['c'] = Variable<String>(c);
+    map['id'] = Variable<String>(id);
+    map['hlc'] = Variable<String>(hlc);
+    return map;
+  }
+
+  SyncRecordsCompanion toCompanion(bool nullToAbsent) {
+    return SyncRecordsCompanion(c: Value(c), id: Value(id), hlc: Value(hlc));
+  }
+
+  factory SyncRecordRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncRecordRow(
+      c: serializer.fromJson<String>(json['c']),
+      id: serializer.fromJson<String>(json['id']),
+      hlc: serializer.fromJson<String>(json['hlc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'c': serializer.toJson<String>(c),
+      'id': serializer.toJson<String>(id),
+      'hlc': serializer.toJson<String>(hlc),
+    };
+  }
+
+  SyncRecordRow copyWith({String? c, String? id, String? hlc}) =>
+      SyncRecordRow(c: c ?? this.c, id: id ?? this.id, hlc: hlc ?? this.hlc);
+  SyncRecordRow copyWithCompanion(SyncRecordsCompanion data) {
+    return SyncRecordRow(
+      c: data.c.present ? data.c.value : this.c,
+      id: data.id.present ? data.id.value : this.id,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordRow(')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(c, id, hlc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncRecordRow &&
+          other.c == this.c &&
+          other.id == this.id &&
+          other.hlc == this.hlc);
+}
+
+class SyncRecordsCompanion extends UpdateCompanion<SyncRecordRow> {
+  final Value<String> c;
+  final Value<String> id;
+  final Value<String> hlc;
+  const SyncRecordsCompanion({
+    this.c = const Value.absent(),
+    this.id = const Value.absent(),
+    this.hlc = const Value.absent(),
+  });
+  SyncRecordsCompanion.insert({
+    required String c,
+    required String id,
+    required String hlc,
+  }) : c = Value(c),
+       id = Value(id),
+       hlc = Value(hlc);
+  static Insertable<SyncRecordRow> custom({
+    Expression<String>? c,
+    Expression<String>? id,
+    Expression<String>? hlc,
+  }) {
+    return RawValuesInsertable({
+      if (c != null) 'c': c,
+      if (id != null) 'id': id,
+      if (hlc != null) 'hlc': hlc,
+    });
+  }
+
+  SyncRecordsCompanion copyWith({
+    Value<String>? c,
+    Value<String>? id,
+    Value<String>? hlc,
+  }) {
+    return SyncRecordsCompanion(
+      c: c ?? this.c,
+      id: id ?? this.id,
+      hlc: hlc ?? this.hlc,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (c.present) {
+      map['c'] = Variable<String>(c.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(hlc.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordsCompanion(')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncPassedTable extends SyncPassed
+    with TableInfo<$SyncPassedTable, SyncPassedRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncPassedTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _eMeta = const VerificationMeta('e');
+  @override
+  late final GeneratedColumn<String> e = GeneratedColumn<String>(
+    'e',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cMeta = const VerificationMeta('c');
+  @override
+  late final GeneratedColumn<String> c = GeneratedColumn<String>(
+    'c',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hMeta = const VerificationMeta('h');
+  @override
+  late final GeneratedColumn<String> h = GeneratedColumn<String>(
+    'h',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dMeta = const VerificationMeta('d');
+  @override
+  late final GeneratedColumn<String> d = GeneratedColumn<String>(
+    'd',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [e, c, id, h, d];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_passed';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPassedRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('e')) {
+      context.handle(_eMeta, e.isAcceptableOrUnknown(data['e']!, _eMeta));
+    } else if (isInserting) {
+      context.missing(_eMeta);
+    }
+    if (data.containsKey('c')) {
+      context.handle(_cMeta, c.isAcceptableOrUnknown(data['c']!, _cMeta));
+    } else if (isInserting) {
+      context.missing(_cMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('h')) {
+      context.handle(_hMeta, h.isAcceptableOrUnknown(data['h']!, _hMeta));
+    } else if (isInserting) {
+      context.missing(_hMeta);
+    }
+    if (data.containsKey('d')) {
+      context.handle(_dMeta, d.isAcceptableOrUnknown(data['d']!, _dMeta));
+    } else if (isInserting) {
+      context.missing(_dMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {e, c, id};
+  @override
+  SyncPassedRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPassedRow(
+      e: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}e'],
+      )!,
+      c: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}c'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      h: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}h'],
+      )!,
+      d: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}d'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncPassedTable createAlias(String alias) {
+    return $SyncPassedTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class SyncPassedRow extends DataClass implements Insertable<SyncPassedRow> {
+  final String e;
+  final String c;
+  final String id;
+  final String h;
+
+  /// The op's data as JSON: a blob's name for a large one.
+  final String d;
+  const SyncPassedRow({
+    required this.e,
+    required this.c,
+    required this.id,
+    required this.h,
+    required this.d,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['e'] = Variable<String>(e);
+    map['c'] = Variable<String>(c);
+    map['id'] = Variable<String>(id);
+    map['h'] = Variable<String>(h);
+    map['d'] = Variable<String>(d);
+    return map;
+  }
+
+  SyncPassedCompanion toCompanion(bool nullToAbsent) {
+    return SyncPassedCompanion(
+      e: Value(e),
+      c: Value(c),
+      id: Value(id),
+      h: Value(h),
+      d: Value(d),
+    );
+  }
+
+  factory SyncPassedRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPassedRow(
+      e: serializer.fromJson<String>(json['e']),
+      c: serializer.fromJson<String>(json['c']),
+      id: serializer.fromJson<String>(json['id']),
+      h: serializer.fromJson<String>(json['h']),
+      d: serializer.fromJson<String>(json['d']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'e': serializer.toJson<String>(e),
+      'c': serializer.toJson<String>(c),
+      'id': serializer.toJson<String>(id),
+      'h': serializer.toJson<String>(h),
+      'd': serializer.toJson<String>(d),
+    };
+  }
+
+  SyncPassedRow copyWith({
+    String? e,
+    String? c,
+    String? id,
+    String? h,
+    String? d,
+  }) => SyncPassedRow(
+    e: e ?? this.e,
+    c: c ?? this.c,
+    id: id ?? this.id,
+    h: h ?? this.h,
+    d: d ?? this.d,
+  );
+  SyncPassedRow copyWithCompanion(SyncPassedCompanion data) {
+    return SyncPassedRow(
+      e: data.e.present ? data.e.value : this.e,
+      c: data.c.present ? data.c.value : this.c,
+      id: data.id.present ? data.id.value : this.id,
+      h: data.h.present ? data.h.value : this.h,
+      d: data.d.present ? data.d.value : this.d,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPassedRow(')
+          ..write('e: $e, ')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('h: $h, ')
+          ..write('d: $d')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(e, c, id, h, d);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPassedRow &&
+          other.e == this.e &&
+          other.c == this.c &&
+          other.id == this.id &&
+          other.h == this.h &&
+          other.d == this.d);
+}
+
+class SyncPassedCompanion extends UpdateCompanion<SyncPassedRow> {
+  final Value<String> e;
+  final Value<String> c;
+  final Value<String> id;
+  final Value<String> h;
+  final Value<String> d;
+  const SyncPassedCompanion({
+    this.e = const Value.absent(),
+    this.c = const Value.absent(),
+    this.id = const Value.absent(),
+    this.h = const Value.absent(),
+    this.d = const Value.absent(),
+  });
+  SyncPassedCompanion.insert({
+    required String e,
+    required String c,
+    required String id,
+    required String h,
+    required String d,
+  }) : e = Value(e),
+       c = Value(c),
+       id = Value(id),
+       h = Value(h),
+       d = Value(d);
+  static Insertable<SyncPassedRow> custom({
+    Expression<String>? e,
+    Expression<String>? c,
+    Expression<String>? id,
+    Expression<String>? h,
+    Expression<String>? d,
+  }) {
+    return RawValuesInsertable({
+      if (e != null) 'e': e,
+      if (c != null) 'c': c,
+      if (id != null) 'id': id,
+      if (h != null) 'h': h,
+      if (d != null) 'd': d,
+    });
+  }
+
+  SyncPassedCompanion copyWith({
+    Value<String>? e,
+    Value<String>? c,
+    Value<String>? id,
+    Value<String>? h,
+    Value<String>? d,
+  }) {
+    return SyncPassedCompanion(
+      e: e ?? this.e,
+      c: c ?? this.c,
+      id: id ?? this.id,
+      h: h ?? this.h,
+      d: d ?? this.d,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (e.present) {
+      map['e'] = Variable<String>(e.value);
+    }
+    if (c.present) {
+      map['c'] = Variable<String>(c.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (h.present) {
+      map['h'] = Variable<String>(h.value);
+    }
+    if (d.present) {
+      map['d'] = Variable<String>(d.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPassedCompanion(')
+          ..write('e: $e, ')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('h: $h, ')
+          ..write('d: $d')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
@@ -9415,11 +9983,10 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ServerTagsTable serverTags = $ServerTagsTable(this);
   late final $ServerEnvsTable serverEnvs = $ServerEnvsTable(this);
   late final $ServerJumpsTable serverJumps = $ServerJumpsTable(this);
+  late final $ServerIdentityFilesTable serverIdentityFiles =
+      $ServerIdentityFilesTable(this);
   late final $ServerDisabledCmdsTable serverDisabledCmds =
       $ServerDisabledCmdsTable(this);
-  late final $ServerCustomCmdsTable serverCustomCmds = $ServerCustomCmdsTable(
-    this,
-  );
   late final $KnownHostsTable knownHosts = $KnownHostsTable(this);
   late final $SnippetsTable snippets = $SnippetsTable(this);
   late final $SnippetTagsTable snippetTags = $SnippetTagsTable(this);
@@ -9438,6 +10005,8 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
   late final $TombstonesTable tombstones = $TombstonesTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
+  late final $SyncRecordsTable syncRecords = $SyncRecordsTable(this);
+  late final $SyncPassedTable syncPassed = $SyncPassedTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9449,8 +10018,8 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverTags,
     serverEnvs,
     serverJumps,
+    serverIdentityFiles,
     serverDisabledCmds,
-    serverCustomCmds,
     knownHosts,
     snippets,
     snippetTags,
@@ -9465,6 +10034,8 @@ abstract class _$AppDb extends GeneratedDatabase {
     benchmarkRuns,
     tombstones,
     syncStates,
+    syncRecords,
+    syncPassed,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -9515,14 +10086,14 @@ abstract class _$AppDb extends GeneratedDatabase {
         'server',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('server_disabled_cmd', kind: UpdateKind.delete)],
+      result: [TableUpdate('server_identity_file', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'server',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('server_custom_cmd', kind: UpdateKind.delete)],
+      result: [TableUpdate('server_disabled_cmd', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -10270,7 +10841,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
-      Value<bool?> monitorIgnoreCert,
+      Value<String?> monitorCertSha256,
       Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
@@ -10312,7 +10883,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
-      Value<bool?> monitorIgnoreCert,
+      Value<String?> monitorCertSha256,
       Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
@@ -10405,6 +10976,29 @@ final class $$ServersTableReferences
   }
 
   static MultiTypedResultKey<
+    $ServerIdentityFilesTable,
+    List<ServerIdentityFileRow>
+  >
+  _serverIdentityFilesRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverIdentityFiles,
+    aliasName: 'server__id__server_identity_file__server_id',
+  );
+
+  $$ServerIdentityFilesTableProcessedTableManager get serverIdentityFilesRefs {
+    final manager = $$ServerIdentityFilesTableTableManager(
+      $_db,
+      $_db.serverIdentityFiles,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _serverIdentityFilesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
     $ServerDisabledCmdsTable,
     List<ServerDisabledCmdRow>
   >
@@ -10421,26 +11015,6 @@ final class $$ServersTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _serverDisabledCmdsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$ServerCustomCmdsTable, List<ServerCustomCmdRow>>
-  _serverCustomCmdsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
-    db.serverCustomCmds,
-    aliasName: 'server__id__server_custom_cmd__server_id',
-  );
-
-  $$ServerCustomCmdsTableProcessedTableManager get serverCustomCmdsRefs {
-    final manager = $$ServerCustomCmdsTableTableManager(
-      $_db,
-      $_db.serverCustomCmds,
-    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _serverCustomCmdsRefsTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -10756,8 +11330,8 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  ColumnFilters<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10927,6 +11501,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     return f(composer);
   }
 
+  Expression<bool> serverIdentityFilesRefs(
+    Expression<bool> Function($$ServerIdentityFilesTableFilterComposer f) f,
+  ) {
+    final $$ServerIdentityFilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverIdentityFiles,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerIdentityFilesTableFilterComposer(
+            $db: $db,
+            $table: $db.serverIdentityFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<bool> serverDisabledCmdsRefs(
     Expression<bool> Function($$ServerDisabledCmdsTableFilterComposer f) f,
   ) {
@@ -10943,31 +11542,6 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerDisabledCmdsTableFilterComposer(
             $db: $db,
             $table: $db.serverDisabledCmds,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> serverCustomCmdsRefs(
-    Expression<bool> Function($$ServerCustomCmdsTableFilterComposer f) f,
-  ) {
-    final $$ServerCustomCmdsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.serverCustomCmds,
-      getReferencedColumn: (t) => t.serverId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServerCustomCmdsTableFilterComposer(
-            $db: $db,
-            $table: $db.serverCustomCmds,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11347,8 +11921,8 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  ColumnOrderings<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -11570,8 +12144,8 @@ class $$ServersTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  GeneratedColumn<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => column,
   );
 
@@ -11723,6 +12297,32 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> serverIdentityFilesRefs<T extends Object>(
+    Expression<T> Function($$ServerIdentityFilesTableAnnotationComposer a) f,
+  ) {
+    final $$ServerIdentityFilesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.serverIdentityFiles,
+          getReferencedColumn: (t) => t.serverId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ServerIdentityFilesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.serverIdentityFiles,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> serverDisabledCmdsRefs<T extends Object>(
     Expression<T> Function($$ServerDisabledCmdsTableAnnotationComposer a) f,
   ) {
@@ -11746,31 +12346,6 @@ class $$ServersTableAnnotationComposer
                     $removeJoinBuilderFromRootComposer,
               ),
         );
-    return f(composer);
-  }
-
-  Expression<T> serverCustomCmdsRefs<T extends Object>(
-    Expression<T> Function($$ServerCustomCmdsTableAnnotationComposer a) f,
-  ) {
-    final $$ServerCustomCmdsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.serverCustomCmds,
-      getReferencedColumn: (t) => t.serverId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServerCustomCmdsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.serverCustomCmds,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
     return f(composer);
   }
 
@@ -12045,8 +12620,8 @@ class $$ServersTableTableManager
             bool bmcCredId,
             bool serverTagsRefs,
             bool serverEnvsRefs,
+            bool serverIdentityFilesRefs,
             bool serverDisabledCmdsRefs,
-            bool serverCustomCmdsRefs,
             bool knownHostsRefs,
             bool snippetAutoRunOnRefs,
             bool portForwardsRefs,
@@ -12095,7 +12670,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
-                Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<String?> monitorCertSha256 = const Value.absent(),
                 Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
@@ -12135,7 +12710,7 @@ class $$ServersTableTableManager
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
-                monitorIgnoreCert: monitorIgnoreCert,
+                monitorCertSha256: monitorCertSha256,
                 monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,
@@ -12177,7 +12752,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
-                Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<String?> monitorCertSha256 = const Value.absent(),
                 Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
@@ -12217,7 +12792,7 @@ class $$ServersTableTableManager
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
-                monitorIgnoreCert: monitorIgnoreCert,
+                monitorCertSha256: monitorCertSha256,
                 monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,
@@ -12248,8 +12823,8 @@ class $$ServersTableTableManager
                 bmcCredId = false,
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
+                serverIdentityFilesRefs = false,
                 serverDisabledCmdsRefs = false,
-                serverCustomCmdsRefs = false,
                 knownHostsRefs = false,
                 snippetAutoRunOnRefs = false,
                 portForwardsRefs = false,
@@ -12266,8 +12841,8 @@ class $$ServersTableTableManager
                   explicitlyWatchedTables: [
                     if (serverTagsRefs) db.serverTags,
                     if (serverEnvsRefs) db.serverEnvs,
+                    if (serverIdentityFilesRefs) db.serverIdentityFiles,
                     if (serverDisabledCmdsRefs) db.serverDisabledCmds,
-                    if (serverCustomCmdsRefs) db.serverCustomCmds,
                     if (knownHostsRefs) db.knownHosts,
                     if (snippetAutoRunOnRefs) db.snippetAutoRunOn,
                     if (portForwardsRefs) db.portForwards,
@@ -12368,6 +12943,27 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (serverIdentityFilesRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerIdentityFileRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverIdentityFilesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverIdentityFilesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (serverDisabledCmdsRefs)
                         await $_getPrefetchedData<
                           ServerRow,
@@ -12383,27 +12979,6 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverDisabledCmdsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (serverCustomCmdsRefs)
-                        await $_getPrefetchedData<
-                          ServerRow,
-                          $ServersTable,
-                          ServerCustomCmdRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ServersTableReferences
-                              ._serverCustomCmdsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ServersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).serverCustomCmdsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.serverId == item.id,
@@ -12645,8 +13220,8 @@ typedef $$ServersTableProcessedTableManager =
         bool bmcCredId,
         bool serverTagsRefs,
         bool serverEnvsRefs,
+        bool serverIdentityFilesRefs,
         bool serverDisabledCmdsRefs,
-        bool serverCustomCmdsRefs,
         bool knownHostsRefs,
         bool snippetAutoRunOnRefs,
         bool portForwardsRefs,
@@ -13534,6 +14109,298 @@ typedef $$ServerJumpsTableProcessedTableManager =
       ServerJumpRow,
       PrefetchHooks Function({bool serverId, bool jumpId})
     >;
+typedef $$ServerIdentityFilesTableCreateCompanionBuilder =
+    ServerIdentityFilesCompanion Function({
+      required String serverId,
+      required int ord,
+      required String path,
+    });
+typedef $$ServerIdentityFilesTableUpdateCompanionBuilder =
+    ServerIdentityFilesCompanion Function({
+      Value<String> serverId,
+      Value<int> ord,
+      Value<String> path,
+    });
+
+final class $$ServerIdentityFilesTableReferences
+    extends
+        BaseReferences<
+          _$AppDb,
+          $ServerIdentityFilesTable,
+          ServerIdentityFileRow
+        > {
+  $$ServerIdentityFilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_identity_file__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerIdentityFilesTableFilterComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableOrderingComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get ord =>
+      $composableBuilder(column: $table.ord, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerIdentityFilesTable,
+          ServerIdentityFileRow,
+          $$ServerIdentityFilesTableFilterComposer,
+          $$ServerIdentityFilesTableOrderingComposer,
+          $$ServerIdentityFilesTableAnnotationComposer,
+          $$ServerIdentityFilesTableCreateCompanionBuilder,
+          $$ServerIdentityFilesTableUpdateCompanionBuilder,
+          (ServerIdentityFileRow, $$ServerIdentityFilesTableReferences),
+          ServerIdentityFileRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerIdentityFilesTableTableManager(
+    _$AppDb db,
+    $ServerIdentityFilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerIdentityFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerIdentityFilesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ServerIdentityFilesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<int> ord = const Value.absent(),
+                Value<String> path = const Value.absent(),
+              }) => ServerIdentityFilesCompanion(
+                serverId: serverId,
+                ord: ord,
+                path: path,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required int ord,
+                required String path,
+              }) => ServerIdentityFilesCompanion.insert(
+                serverId: serverId,
+                ord: ord,
+                path: path,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerIdentityFilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$ServerIdentityFilesTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ServerIdentityFilesTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerIdentityFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerIdentityFilesTable,
+      ServerIdentityFileRow,
+      $$ServerIdentityFilesTableFilterComposer,
+      $$ServerIdentityFilesTableOrderingComposer,
+      $$ServerIdentityFilesTableAnnotationComposer,
+      $$ServerIdentityFilesTableCreateCompanionBuilder,
+      $$ServerIdentityFilesTableUpdateCompanionBuilder,
+      (ServerIdentityFileRow, $$ServerIdentityFilesTableReferences),
+      ServerIdentityFileRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$ServerDisabledCmdsTableCreateCompanionBuilder =
     ServerDisabledCmdsCompanion Function({
       required String serverId,
@@ -13800,286 +14667,6 @@ typedef $$ServerDisabledCmdsTableProcessedTableManager =
       $$ServerDisabledCmdsTableUpdateCompanionBuilder,
       (ServerDisabledCmdRow, $$ServerDisabledCmdsTableReferences),
       ServerDisabledCmdRow,
-      PrefetchHooks Function({bool serverId})
-    >;
-typedef $$ServerCustomCmdsTableCreateCompanionBuilder =
-    ServerCustomCmdsCompanion Function({
-      required String serverId,
-      required String name,
-      required String cmd,
-    });
-typedef $$ServerCustomCmdsTableUpdateCompanionBuilder =
-    ServerCustomCmdsCompanion Function({
-      Value<String> serverId,
-      Value<String> name,
-      Value<String> cmd,
-    });
-
-final class $$ServerCustomCmdsTableReferences
-    extends
-        BaseReferences<_$AppDb, $ServerCustomCmdsTable, ServerCustomCmdRow> {
-  $$ServerCustomCmdsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ServersTable _serverIdTable(_$AppDb db) =>
-      db.servers.createAlias('server_custom_cmd__server_id__server__id');
-
-  $$ServersTableProcessedTableManager get serverId {
-    final $_column = $_itemColumn<String>('server_id')!;
-
-    final manager = $$ServersTableTableManager(
-      $_db,
-      $_db.servers,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$ServerCustomCmdsTableFilterComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get cmd => $composableBuilder(
-    column: $table.cmd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ServersTableFilterComposer get serverId {
-    final $$ServersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableFilterComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableOrderingComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get cmd => $composableBuilder(
-    column: $table.cmd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ServersTableOrderingComposer get serverId {
-    final $$ServersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableOrderingComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableAnnotationComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get cmd =>
-      $composableBuilder(column: $table.cmd, builder: (column) => column);
-
-  $$ServersTableAnnotationComposer get serverId {
-    final $$ServersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDb,
-          $ServerCustomCmdsTable,
-          ServerCustomCmdRow,
-          $$ServerCustomCmdsTableFilterComposer,
-          $$ServerCustomCmdsTableOrderingComposer,
-          $$ServerCustomCmdsTableAnnotationComposer,
-          $$ServerCustomCmdsTableCreateCompanionBuilder,
-          $$ServerCustomCmdsTableUpdateCompanionBuilder,
-          (ServerCustomCmdRow, $$ServerCustomCmdsTableReferences),
-          ServerCustomCmdRow,
-          PrefetchHooks Function({bool serverId})
-        > {
-  $$ServerCustomCmdsTableTableManager(_$AppDb db, $ServerCustomCmdsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ServerCustomCmdsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ServerCustomCmdsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ServerCustomCmdsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String> cmd = const Value.absent(),
-              }) => ServerCustomCmdsCompanion(
-                serverId: serverId,
-                name: name,
-                cmd: cmd,
-              ),
-          createCompanionCallback:
-              ({
-                required String serverId,
-                required String name,
-                required String cmd,
-              }) => ServerCustomCmdsCompanion.insert(
-                serverId: serverId,
-                name: name,
-                cmd: cmd,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$ServerCustomCmdsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({serverId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$ServerCustomCmdsTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ServerCustomCmdsTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$ServerCustomCmdsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDb,
-      $ServerCustomCmdsTable,
-      ServerCustomCmdRow,
-      $$ServerCustomCmdsTableFilterComposer,
-      $$ServerCustomCmdsTableOrderingComposer,
-      $$ServerCustomCmdsTableAnnotationComposer,
-      $$ServerCustomCmdsTableCreateCompanionBuilder,
-      $$ServerCustomCmdsTableUpdateCompanionBuilder,
-      (ServerCustomCmdRow, $$ServerCustomCmdsTableReferences),
-      ServerCustomCmdRow,
       PrefetchHooks Function({bool serverId})
     >;
 typedef $$KnownHostsTableCreateCompanionBuilder =
@@ -18500,6 +19087,330 @@ typedef $$SyncStatesTableProcessedTableManager =
       SyncStateRow,
       PrefetchHooks Function()
     >;
+typedef $$SyncRecordsTableCreateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      required String c,
+      required String id,
+      required String hlc,
+    });
+typedef $$SyncRecordsTableUpdateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      Value<String> c,
+      Value<String> id,
+      Value<String> hlc,
+    });
+
+class $$SyncRecordsTableFilterComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncRecordsTableOrderingComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncRecordsTableAnnotationComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get c =>
+      $composableBuilder(column: $table.c, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+}
+
+class $$SyncRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $SyncRecordsTable,
+          SyncRecordRow,
+          $$SyncRecordsTableFilterComposer,
+          $$SyncRecordsTableOrderingComposer,
+          $$SyncRecordsTableAnnotationComposer,
+          $$SyncRecordsTableCreateCompanionBuilder,
+          $$SyncRecordsTableUpdateCompanionBuilder,
+          (
+            SyncRecordRow,
+            BaseReferences<_$AppDb, $SyncRecordsTable, SyncRecordRow>,
+          ),
+          SyncRecordRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncRecordsTableTableManager(_$AppDb db, $SyncRecordsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> c = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> hlc = const Value.absent(),
+              }) => SyncRecordsCompanion(c: c, id: id, hlc: hlc),
+          createCompanionCallback:
+              ({required String c, required String id, required String hlc}) =>
+                  SyncRecordsCompanion.insert(c: c, id: id, hlc: hlc),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $SyncRecordsTable,
+      SyncRecordRow,
+      $$SyncRecordsTableFilterComposer,
+      $$SyncRecordsTableOrderingComposer,
+      $$SyncRecordsTableAnnotationComposer,
+      $$SyncRecordsTableCreateCompanionBuilder,
+      $$SyncRecordsTableUpdateCompanionBuilder,
+      (
+        SyncRecordRow,
+        BaseReferences<_$AppDb, $SyncRecordsTable, SyncRecordRow>,
+      ),
+      SyncRecordRow,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncPassedTableCreateCompanionBuilder =
+    SyncPassedCompanion Function({
+      required String e,
+      required String c,
+      required String id,
+      required String h,
+      required String d,
+    });
+typedef $$SyncPassedTableUpdateCompanionBuilder =
+    SyncPassedCompanion Function({
+      Value<String> e,
+      Value<String> c,
+      Value<String> id,
+      Value<String> h,
+      Value<String> d,
+    });
+
+class $$SyncPassedTableFilterComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get e => $composableBuilder(
+    column: $table.e,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get h => $composableBuilder(
+    column: $table.h,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get d => $composableBuilder(
+    column: $table.d,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncPassedTableOrderingComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get e => $composableBuilder(
+    column: $table.e,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get h => $composableBuilder(
+    column: $table.h,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get d => $composableBuilder(
+    column: $table.d,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncPassedTableAnnotationComposer
+    extends Composer<_$AppDb, $SyncPassedTable> {
+  $$SyncPassedTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get e =>
+      $composableBuilder(column: $table.e, builder: (column) => column);
+
+  GeneratedColumn<String> get c =>
+      $composableBuilder(column: $table.c, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get h =>
+      $composableBuilder(column: $table.h, builder: (column) => column);
+
+  GeneratedColumn<String> get d =>
+      $composableBuilder(column: $table.d, builder: (column) => column);
+}
+
+class $$SyncPassedTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $SyncPassedTable,
+          SyncPassedRow,
+          $$SyncPassedTableFilterComposer,
+          $$SyncPassedTableOrderingComposer,
+          $$SyncPassedTableAnnotationComposer,
+          $$SyncPassedTableCreateCompanionBuilder,
+          $$SyncPassedTableUpdateCompanionBuilder,
+          (
+            SyncPassedRow,
+            BaseReferences<_$AppDb, $SyncPassedTable, SyncPassedRow>,
+          ),
+          SyncPassedRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncPassedTableTableManager(_$AppDb db, $SyncPassedTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncPassedTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncPassedTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncPassedTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> e = const Value.absent(),
+                Value<String> c = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> h = const Value.absent(),
+                Value<String> d = const Value.absent(),
+              }) => SyncPassedCompanion(e: e, c: c, id: id, h: h, d: d),
+          createCompanionCallback:
+              ({
+                required String e,
+                required String c,
+                required String id,
+                required String h,
+                required String d,
+              }) => SyncPassedCompanion.insert(e: e, c: c, id: id, h: h, d: d),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncPassedTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $SyncPassedTable,
+      SyncPassedRow,
+      $$SyncPassedTableFilterComposer,
+      $$SyncPassedTableOrderingComposer,
+      $$SyncPassedTableAnnotationComposer,
+      $$SyncPassedTableCreateCompanionBuilder,
+      $$SyncPassedTableUpdateCompanionBuilder,
+      (SyncPassedRow, BaseReferences<_$AppDb, $SyncPassedTable, SyncPassedRow>),
+      SyncPassedRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDbManager {
   final _$AppDb _db;
@@ -18516,10 +19427,10 @@ class $AppDbManager {
       $$ServerEnvsTableTableManager(_db, _db.serverEnvs);
   $$ServerJumpsTableTableManager get serverJumps =>
       $$ServerJumpsTableTableManager(_db, _db.serverJumps);
+  $$ServerIdentityFilesTableTableManager get serverIdentityFiles =>
+      $$ServerIdentityFilesTableTableManager(_db, _db.serverIdentityFiles);
   $$ServerDisabledCmdsTableTableManager get serverDisabledCmds =>
       $$ServerDisabledCmdsTableTableManager(_db, _db.serverDisabledCmds);
-  $$ServerCustomCmdsTableTableManager get serverCustomCmds =>
-      $$ServerCustomCmdsTableTableManager(_db, _db.serverCustomCmds);
   $$KnownHostsTableTableManager get knownHosts =>
       $$KnownHostsTableTableManager(_db, _db.knownHosts);
   $$SnippetsTableTableManager get snippets =>
@@ -18548,4 +19459,8 @@ class $AppDbManager {
       $$TombstonesTableTableManager(_db, _db.tombstones);
   $$SyncStatesTableTableManager get syncStates =>
       $$SyncStatesTableTableManager(_db, _db.syncStates);
+  $$SyncRecordsTableTableManager get syncRecords =>
+      $$SyncRecordsTableTableManager(_db, _db.syncRecords);
+  $$SyncPassedTableTableManager get syncPassed =>
+      $$SyncPassedTableTableManager(_db, _db.syncPassed);
 }

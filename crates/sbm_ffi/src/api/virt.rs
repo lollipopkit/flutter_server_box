@@ -1,12 +1,20 @@
 //! libvirt command layer FFI (sbm_virt::libvirt)
 //!
 //! Scripts are POSIX `sh` for `CommandExec.run(script, entry: 'sh')` (or the
-//! sudo entry of `PrivilegedExec`). Parsed results cross as `sbm_virt`'s
-//! serde JSON, like `parse_status_json`, so the monitor can serve the same
-//! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what
-//! the app branches on (retry with sudo on `PermissionDenied`).
+//! sudo entry of `PrivilegedExec`). Parsed results are `sbm_virt`'s models,
+//! mirrored ([`super::virt_libvirt`], [`super::virt_view`]); a failure crosses
+//! as [`VirtFfiError`], whose `kind` is what the app branches
+//! on (retry with sudo on `PermissionDenied`).
 
 use sbm_virt::libvirt::{self, manage, net, snapshot};
+
+use super::virt_libvirt::{
+    FirmwareDescriptor, VirtCloneSpec, VirtCloudInit, VirtCreateHost, VirtCreateSpec, VirtCreateVolumes, VirtCreated, VirtDomainDetail,
+    VirtHardwareInfo, VirtHostDevices, VirtHostProbe, VirtHwChange, VirtHwOutcome, VirtResourceOp, VirtSeedRead, VirtStorage,
+    VirtVncConsoleInfo,
+};
+use super::exec_session::SudoEntry;
+use super::virt_view::{Chain, Diff, Snapshot, VirtGuestDetailReport, VirtHostReport};
 
 /// Power actions (mirrors sbm_virt::libvirt::VirtAction)
 pub enum VirtActionKind {
@@ -82,13 +90,6 @@ impl From<libvirt::VirtError> for VirtFfiError {
     }
 }
 
-pub(crate) fn json_err(e: serde_json::Error) -> VirtFfiError {
-    VirtFfiError {
-        kind: VirtErrorKind::Malformed,
-        message: e.to_string(),
-    }
-}
-
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_probe_script() -> String {
@@ -119,17 +120,12 @@ pub fn virt_console_command(domain: String) -> String {
     libvirt::console_command(&domain)
 }
 
-/// [`virt_probe_script`]'s output → `VirtHostProbe` JSON
-pub fn parse_virt_probe_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_probe(&raw)?).map_err(json_err)
+/// [`virt_probe_script`]'s output as `VirtHostProbe`
+pub fn virt_libvirt_probe(raw: String) -> Result<VirtHostProbe, VirtFfiError> {
+    Ok(libvirt::parse_probe(&raw)?)
 }
 
-/// [`virt_overview_script`]'s output → `VirtOverview` JSON
-pub fn parse_virt_overview_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_overview(&raw)?).map_err(json_err)
-}
-
-/// The overview read into one host view (`sbm_virt::model::HostView` JSON),
+/// The overview read into one host view (`sbm_virt::model::HostView`),
 /// with usage diffed against the previous one (sbm_virt::libvirt::host). One
 /// per host: it holds each guest's last counters.
 #[flutter_rust_bridge::frb(opaque)]
@@ -145,10 +141,9 @@ impl LibvirtRates {
     /// `pool_types` is [`parse_virt_pool_types`]'s answer; `upload` whether
     /// the channel carries bytes for `vol-upload`.
     #[flutter_rust_bridge::frb(sync)]
-    pub fn view(&mut self, raw: String, at_ms: i64, pool_types: Option<Vec<String>>, upload: bool) -> Result<String, VirtFfiError> {
+    pub fn view(&mut self, raw: String, at_ms: i64, pool_types: Option<Vec<String>>, upload: bool) -> Result<VirtHostReport, VirtFfiError> {
         let overview = libvirt::parse_overview(&raw)?;
-        let view = libvirt::host::view_of(&overview, &mut self.0, at_ms, pool_types.as_deref(), upload);
-        serde_json::to_string(&view).map_err(json_err)
+        Ok(libvirt::host::view_of(&overview, &mut self.0, at_ms, pool_types.as_deref(), upload).into())
     }
 
     /// Forgets every guest's counters: the next view has no rates.
@@ -158,12 +153,18 @@ impl LibvirtRates {
     }
 }
 
+/// [`virt_overview_script`]'s output checked as [`LibvirtRates::view`] reads
+/// it, without touching any counters: what tells a refusal from a listing.
+pub fn virt_overview_check(raw: String) -> Result<(), VirtFfiError> {
+    libvirt::parse_overview(&raw)?;
+    Ok(())
+}
+
 /// [`virt_domain_detail_script`]'s output read into
-/// `sbm_virt::model::GuestDetail` JSON (sbm_virt::libvirt::host).
+/// `sbm_virt::model::GuestDetail` (sbm_virt::libvirt::host).
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_guest_detail(raw: String) -> Result<String, VirtFfiError> {
-    let detail = libvirt::parse_domain_detail(&raw)?;
-    serde_json::to_string(&libvirt::host::detail_of(&detail)).map_err(json_err)
+pub fn virt_libvirt_guest_detail(raw: String) -> Result<VirtGuestDetailReport, VirtFfiError> {
+    Ok(libvirt::host::detail_of(&libvirt::parse_domain_detail(&raw)?).into())
 }
 
 // --- Snapshots (sbm_virt::snapshot, sbm_virt::libvirt::host) ---
@@ -197,23 +198,20 @@ pub fn virt_libvirt_pool_of_file(pools: Vec<LibvirtPoolRef>, file: String) -> Op
     libvirt::host::pool_of_file(&pools, &file).map(|p| p.name.clone())
 }
 
-/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`
-/// JSON.
+/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`s.
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_snapshots(raw: String) -> Result<String, VirtFfiError> {
-    let list: Vec<_> = libvirt::parse_snapshots(&raw)?.iter().map(libvirt::host::snapshot_of).collect();
-    serde_json::to_string(&list).map_err(json_err)
+pub fn virt_libvirt_snapshots(raw: String) -> Result<Vec<Snapshot>, VirtFfiError> {
+    Ok(libvirt::parse_snapshots(&raw)?.iter().map(libvirt::host::snapshot_of).collect())
 }
 
-/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain` JSON:
-/// each layer named for the snapshot (`snapshots_json`, from
-/// [`virt_libvirt_snapshots`]) that left the disk on it, each disk's pool.
+/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain`: each
+/// layer named for the snapshot (`snapshots`, from [`virt_libvirt_snapshots`])
+/// that left the disk on it, each disk's pool.
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_chain(chain_raw: String, snapshots_json: String, pools: Vec<LibvirtPoolRef>) -> Result<String, VirtFfiError> {
+pub fn virt_libvirt_chain(chain_raw: String, snapshots: Vec<Snapshot>, pools: Vec<LibvirtPoolRef>) -> Result<Chain, VirtFfiError> {
     let chain = snapshot::parse_snap_chain(&chain_raw)?;
-    let snaps: Vec<sbm_virt::snapshot::Snapshot> = serde_json::from_str(&snapshots_json).map_err(json_err)?;
     let pools: Vec<libvirt::VirtPool> = pools.into_iter().map(Into::into).collect();
-    serde_json::to_string(&libvirt::host::chain_of(&chain, &snaps, &pools)).map_err(json_err)
+    Ok(libvirt::host::chain_of(&chain, &snapshots, &pools))
 }
 
 pub struct VirtOverlay {
@@ -221,15 +219,27 @@ pub struct VirtOverlay {
     pub path: String,
 }
 
-/// Where an external snapshot `name` puts each disk's overlay in `dir`; none
-/// without one (libvirt names them beside each disk).
+/// An external snapshot as one read of the chain decides it: why it cannot
+/// be taken, or each disk's overlay.
+pub struct VirtExternalSnapshot {
+    pub refusal: Option<String>,
+    pub overlays: Vec<VirtOverlay>,
+}
+
+/// The external snapshot `name` from [`virt_snap_chain_script`]'s output:
+/// its overlays in `dir`, or none named without one (libvirt puts them
+/// beside each disk).
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_overlays(chain_raw: String, name: String, dir: Option<String>) -> Result<Vec<VirtOverlay>, VirtFfiError> {
+pub fn virt_libvirt_external_snapshot(chain_raw: String, name: String, dir: Option<String>) -> Result<VirtExternalSnapshot, VirtFfiError> {
     let chain = snapshot::parse_snap_chain(&chain_raw)?;
-    Ok(libvirt::host::overlays(&chain, &name, dir.as_deref())
+    if let Some(why) = snapshot::external_snapshot_refusal(&chain) {
+        return Ok(VirtExternalSnapshot { refusal: Some(why), overlays: Vec::new() });
+    }
+    let overlays = libvirt::host::overlays(&chain, &name, dir.as_deref())
         .into_iter()
         .map(|(target, path)| VirtOverlay { target, path })
-        .collect())
+        .collect();
+    Ok(VirtExternalSnapshot { refusal: None, overlays })
 }
 
 /// Why a name cannot be a new snapshot's (mirrors sbm_virt::snapshot::NameIssue).
@@ -341,15 +351,15 @@ pub fn virt_vnc_console_script(domain: String) -> String {
     libvirt::vnc_console_script(&domain)
 }
 
-/// [`virt_vnc_console_script`]'s output → `VirtVncConsoleInfo` JSON. Holds
+/// [`virt_vnc_console_script`]'s output as `VirtVncConsoleInfo`. Holds
 /// the password: never logged.
-pub fn parse_virt_vnc_console_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_vnc_console(&raw)?).map_err(json_err)
+pub fn virt_libvirt_vnc_console(raw: String) -> Result<VirtVncConsoleInfo, VirtFfiError> {
+    Ok(libvirt::parse_vnc_console(&raw)?)
 }
 
-/// [`virt_domain_detail_script`]'s output → `VirtDomainDetail` JSON
-pub fn parse_virt_domain_detail_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_domain_detail(&raw)?).map_err(json_err)
+/// [`virt_domain_detail_script`]'s output as `VirtDomainDetail`
+pub fn virt_libvirt_domain_detail(raw: String) -> Result<VirtDomainDetail, VirtFfiError> {
+    Ok(libvirt::parse_domain_detail(&raw)?)
 }
 
 /// [`virt_action_script`]'s output: `Ok` when virsh accepted the action
@@ -362,11 +372,6 @@ pub fn parse_virt_action(raw: String) -> Result<(), VirtFfiError> {
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_snapshots_script(domain: String) -> String {
     libvirt::snapshots_script(&domain)
-}
-
-/// [`virt_snapshots_script`]'s output → `Vec<VirtSnapshotInfo>` JSON
-pub fn parse_virt_snapshots_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_snapshots(&raw)?).map_err(json_err)
 }
 
 /// An internal snapshot; with memory when the domain is active. Parse with
@@ -413,9 +418,10 @@ pub fn virt_snap_chain_script(domain: String) -> String {
     snapshot::snap_chain_script(&domain)
 }
 
-/// [`virt_snap_chain_script`]'s output → `VirtSnapChain` JSON
-pub fn parse_virt_snap_chain_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&snapshot::parse_snap_chain(&raw)?).map_err(json_err)
+/// [`virt_snap_chain_script`]'s output checked: the error it reports, if any.
+pub fn virt_snap_chain_check(raw: String) -> Result<(), VirtFfiError> {
+    snapshot::parse_snap_chain(&raw)?;
+    Ok(())
 }
 
 /// What deciding whether the host would refuse deleting or reverting to
@@ -459,31 +465,15 @@ pub fn virt_snapshot_external_script(
 }
 
 /// A snapshot's configuration and the guest's current one. Parse with
-/// [`parse_virt_snap_diff_json`].
+/// [`virt_libvirt_snap_diff`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_snap_diff_script(domain: String, name: String) -> String {
     snapshot::snap_diff_script(&domain, &name)
 }
 
-/// [`virt_snap_diff_script`]'s output → `Vec<VirtSnapDiff>` JSON
-pub fn parse_virt_snap_diff_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&snapshot::parse_snap_diff(&raw)?).map_err(json_err)
-}
-
-/// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_external_snapshot_refusal(chain_json: String) -> Result<Option<String>, VirtFfiError> {
-    let chain: snapshot::VirtSnapChain =
-        serde_json::from_str(&chain_json).map_err(json_err)?;
-    Ok(snapshot::external_snapshot_refusal(&chain))
-}
-
-/// Why no snapshot at all can be taken, from a `VirtSnapChain` JSON
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_snapshot_refusal(chain_json: String) -> Result<Option<String>, VirtFfiError> {
-    let chain: snapshot::VirtSnapChain =
-        serde_json::from_str(&chain_json).map_err(json_err)?;
-    Ok(snapshot::snapshot_refusal(&chain))
+/// [`virt_snap_diff_script`]'s output as `Vec<VirtSnapDiff>`
+pub fn virt_libvirt_snap_diff(raw: String) -> Result<Vec<Diff>, VirtFfiError> {
+    Ok(snapshot::parse_snap_diff(&raw)?.iter().map(libvirt::host::diff_of).collect())
 }
 
 /// Pools, volume names and every domain's disks
@@ -492,9 +482,9 @@ pub fn virt_storage_script() -> String {
     libvirt::storage_script()
 }
 
-/// [`virt_storage_script`]'s output → `VirtStorage` JSON
-pub fn parse_virt_storage_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_storage(&raw)?).map_err(json_err)
+/// [`virt_storage_script`]'s output as `VirtStorage`
+pub fn virt_libvirt_storage(raw: String) -> Result<VirtStorage, VirtFfiError> {
+    Ok(libvirt::parse_storage(&raw)?)
 }
 
 /// What each of `names` in `pool` is: format and sizes. Read with
@@ -518,32 +508,28 @@ pub fn parse_virt_net_change(raw: String) -> Result<(), VirtFfiError> {
     Ok(net::parse_net_change(&raw)?)
 }
 
-fn spec_of(json: &str) -> Result<libvirt::VirtCreateSpec, VirtFfiError> {
-    serde_json::from_str(json).map_err(json_err)
-}
-
 /// What the host can run a new domain as (`domcapabilities`)
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_create_host_script() -> String {
     libvirt::create_host_script()
 }
 
-/// [`virt_create_host_script`]'s output → `VirtCreateHost` JSON
-pub fn parse_virt_create_host_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_create_host(&raw)?).map_err(json_err)
+/// [`virt_create_host_script`]'s output as `VirtCreateHost`
+pub fn virt_libvirt_create_host(raw: String) -> Result<VirtCreateHost, VirtFfiError> {
+    Ok(libvirt::parse_create_host(&raw)?)
 }
 
 /// A new domain's disk (empty, or a copy of a cloud image) and its
-/// cloud-init seed; `spec_json` is a `VirtCreateSpec`
+/// cloud-init seed
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_create_volume_script(spec_json: String) -> Result<String, VirtFfiError> {
-    Ok(libvirt::create_volume_script(&spec_of(&spec_json)?)?)
+pub fn virt_create_volume_script(spec: VirtCreateSpec) -> Result<String, VirtFfiError> {
+    Ok(libvirt::create_volume_script(&spec)?)
 }
 
-/// [`virt_create_volume_script`]'s output → `VirtCreateVolumes` JSON (the
+/// [`virt_create_volume_script`]'s output as `VirtCreateVolumes` (the
 /// disk's and the seed's paths)
-pub fn parse_virt_create_volumes_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_create_volumes(&raw)?).map_err(json_err)
+pub fn virt_libvirt_create_volumes(raw: String) -> Result<VirtCreateVolumes, VirtFfiError> {
+    Ok(libvirt::parse_create_volumes(&raw)?)
 }
 
 /// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
@@ -556,11 +542,10 @@ pub fn virt_hash_password(password: String, salt: String) -> Result<String, Virt
     Ok(sbm_virt::libvirt::cloud_init::sha512_crypt(&password, &salt)?)
 }
 
-/// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
+/// A clone's disks, each copied or made empty in
 /// its source's pool
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_clone_volumes_script(spec_json: String) -> Result<String, VirtFfiError> {
-    let spec: libvirt::VirtCloneSpec = serde_json::from_str(&spec_json).map_err(json_err)?;
+pub fn virt_clone_volumes_script(spec: VirtCloneSpec) -> Result<String, VirtFfiError> {
     Ok(libvirt::clone_volumes_script(&spec)?)
 }
 
@@ -569,27 +554,26 @@ pub fn parse_virt_clone_volumes(raw: String) -> Result<Vec<String>, VirtFfiError
     Ok(libvirt::parse_clone_volumes(&raw)?)
 }
 
-/// Defines the clone of `base_xml` called `name` on `disks_json`
-/// (`[[target, path], ...]`); parse with [`parse_virt_create_json`]
+/// Defines the clone of `base_xml` called `name` on `disks`
+/// (`[[target, path], ...]`); parse with [`virt_libvirt_define_result`]
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_clone_define_script(
     base_xml: String,
     name: String,
-    disks_json: String,
+    disks: Vec<(String, String)>,
 ) -> Result<String, VirtFfiError> {
-    let disks: Vec<(String, String)> = serde_json::from_str(&disks_json).map_err(json_err)?;
     Ok(libvirt::clone_define_script(&base_xml, &name, &disks)?)
 }
 
 /// Defines (and optionally starts) the domain on that disk
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_define_script(spec_json: String) -> Result<String, VirtFfiError> {
-    Ok(libvirt::define_script(&spec_of(&spec_json)?)?)
+pub fn virt_define_script(spec: VirtCreateSpec) -> Result<String, VirtFfiError> {
+    Ok(libvirt::define_script(&spec)?)
 }
 
-/// [`virt_define_script`]'s output → `VirtCreated` JSON
-pub fn parse_virt_create_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_create(&raw)?).map_err(json_err)
+/// [`virt_define_script`]'s output as `VirtCreated`
+pub fn virt_libvirt_define_result(raw: String) -> Result<VirtCreated, VirtFfiError> {
+    Ok(libvirt::parse_create(&raw)?)
 }
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
@@ -616,32 +600,31 @@ pub fn parse_virt_undefine(raw: String) -> Result<(), VirtFfiError> {
 
 /// A domain's cloud-init seed at `seed` (its path, as the domain's metadata
 /// names it), read back from its volume. Parse with
-/// [`parse_virt_seed_read_json`].
+/// [`virt_libvirt_seed_read`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_seed_read_script(seed: String) -> Result<String, VirtFfiError> {
     Ok(sbm_virt::libvirt::cloud_init::seed_read_script(&seed)?)
 }
 
-/// [`virt_seed_read_script`]'s output → `VirtSeedRead` JSON: what the seed
+/// [`virt_seed_read_script`]'s output as `VirtSeedRead`: what the seed
 /// says (its password as the hash in it), whether it holds more than the
 /// app writes, and its revision
-pub fn parse_virt_seed_read_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&sbm_virt::libvirt::cloud_init::parse_seed_read(&raw)?).map_err(json_err)
+pub fn virt_libvirt_seed_read(raw: String) -> Result<VirtSeedRead, VirtFfiError> {
+    Ok(sbm_virt::libvirt::cloud_init::parse_seed_read(&raw)?)
 }
 
-/// The seed at `seed` rewritten in place from `cloud_init_json` (a
-/// `VirtCloudInit`), made from the read of `revision`; `tools` narrows the
+/// The seed at `seed` rewritten in place from `cloud_init`, made from the read of `revision`; `tools` narrows the
 /// ISO tools tried (none: all, in their order). Parse with
 /// [`parse_virt_seed_update`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_seed_update_script(
     seed: String,
     revision: String,
-    cloud_init_json: String,
+    cloud_init: VirtCloudInit,
     tools: Option<Vec<String>>,
 ) -> Result<String, VirtFfiError> {
     use sbm_virt::libvirt::cloud_init as ci;
-    let c: ci::VirtCloudInit = serde_json::from_str(&cloud_init_json).map_err(json_err)?;
+    let c = cloud_init;
     // Checked by the script builder itself.
     let tools: Vec<&str> = match &tools {
         Some(t) => t.iter().map(String::as_str).collect(),
@@ -663,28 +646,27 @@ pub fn virt_hardware_script(domain: String) -> String {
     libvirt::hardware_script(&domain)
 }
 
-/// [`virt_hardware_script`]'s output → `VirtHardwareInfo` JSON
-pub fn parse_virt_hardware_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_hardware(&raw)?).map_err(json_err)
+/// [`virt_hardware_script`]'s output as `VirtHardwareInfo`
+pub fn virt_libvirt_hardware_read(raw: String) -> Result<VirtHardwareInfo, VirtFfiError> {
+    Ok(libvirt::parse_hardware(&raw)?)
 }
 
-/// One hardware change; `change_json` is a `VirtHwChange`, `base_xml` the
+/// One hardware change; `base_xml` the
 /// persistent definition it was made from. Parse with
-/// [`parse_virt_hardware_change_json`].
+/// [`virt_libvirt_hardware_outcome`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_hardware_change_script(
     domain: String,
     running: bool,
     base_xml: Option<String>,
-    change_json: String,
+    change: VirtHwChange,
 ) -> Result<String, VirtFfiError> {
-    let change: libvirt::VirtHwChange = serde_json::from_str(&change_json).map_err(json_err)?;
     Ok(libvirt::hardware_change_script(&domain, running, base_xml.as_deref(), &change)?)
 }
 
-/// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
-pub fn parse_virt_hardware_change_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_hardware_change(&raw)?).map_err(json_err)
+/// [`virt_hardware_change_script`]'s output as `VirtHwOutcome`
+pub fn virt_libvirt_hardware_outcome(raw: String) -> Result<VirtHwOutcome, VirtFfiError> {
+    Ok(libvirt::parse_hardware_change(&raw)?)
 }
 
 /// Which pool types the daemon has a backend for (`pool-capabilities`).
@@ -703,15 +685,15 @@ pub fn parse_virt_pool_types(raw: String) -> Option<Vec<String>> {
 
 /// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for
 /// what a new domain can boot with. Parse with
-/// [`parse_virt_firmware_json`].
+/// [`virt_libvirt_firmware`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_firmware_script() -> String {
     libvirt::firmware_script()
 }
 
-/// [`virt_firmware_script`]'s output → `Vec<FirmwareDescriptor>` JSON
-pub fn parse_virt_firmware_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_firmware_descriptors(&raw)).map_err(json_err)
+/// [`virt_firmware_script`]'s output as `Vec<FirmwareDescriptor>`
+pub fn virt_libvirt_firmware(raw: String) -> Vec<FirmwareDescriptor> {
+    libvirt::parse_firmware_descriptors(&raw)
 }
 
 /// The host's USB and PCI devices, for passing one to a guest
@@ -720,37 +702,14 @@ pub fn virt_host_devices_script() -> String {
     libvirt::host_devices_script()
 }
 
-/// [`virt_host_devices_script`]'s output → `VirtHostDevices` JSON
-pub fn parse_virt_host_devices_json(raw: String) -> Result<String, VirtFfiError> {
-    serde_json::to_string(&libvirt::parse_host_devices(&raw)?).map_err(json_err)
+/// [`virt_host_devices_script`]'s output as `VirtHostDevices`
+pub fn virt_libvirt_host_devices_read(raw: String) -> Result<VirtHostDevices, VirtFfiError> {
+    Ok(libvirt::parse_host_devices(&raw)?)
 }
 
-/// How the upload command reaches the daemon (mirrors
-/// sbm_virt::libvirt::manage::VirtUploadEntry)
-pub enum VirtUploadEntryKind {
-    /// As this account
-    Direct,
-    /// `sudo -n`
-    SudoNoPassword,
-    /// `sudo -S`, the password first on stdin
-    SudoPassword,
-}
-
-impl From<VirtUploadEntryKind> for manage::VirtUploadEntry {
-    fn from(kind: VirtUploadEntryKind) -> Self {
-        match kind {
-            VirtUploadEntryKind::Direct => manage::VirtUploadEntry::Direct,
-            VirtUploadEntryKind::SudoNoPassword => manage::VirtUploadEntry::SudoNoPassword,
-            VirtUploadEntryKind::SudoPassword => manage::VirtUploadEntry::SudoPassword,
-        }
-    }
-}
-
-/// One change to the host's storage or networks; `op_json` is a
-/// `VirtResourceOp`. Parse with [`parse_virt_resource`].
+/// One change to the host's storage or networks. Parse with [`parse_virt_resource`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn virt_resource_script(op_json: String) -> Result<String, VirtFfiError> {
-    let op: manage::VirtResourceOp = serde_json::from_str(&op_json).map_err(json_err)?;
+pub fn virt_resource_script(op: VirtResourceOp) -> Result<String, VirtFfiError> {
     Ok(manage::resource_script(&op)?)
 }
 
@@ -767,9 +726,9 @@ pub fn parse_virt_resource(raw: String) -> Result<(), VirtFfiError> {
 pub fn virt_vol_upload_command(
     pool: String,
     name: String,
-    entry: VirtUploadEntryKind,
+    entry: SudoEntry,
 ) -> Result<String, VirtFfiError> {
-    Ok(manage::vol_upload_command(&pool, &name, entry.into())?)
+    Ok(manage::vol_upload_command(&pool, &name, entry)?)
 }
 
 /// [`virt_vol_upload_command`]'s output: `true` uploaded, `false` stopped

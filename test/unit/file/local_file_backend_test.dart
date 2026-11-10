@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
 void main() {
@@ -53,6 +53,28 @@ void main() {
     test('is null for something that is not there', () async {
       expect(await backend.stat(at('missing')), isNull);
     });
+
+    test('is null beneath a file', () async {
+      await File(at('a.txt')).writeAsString('hello');
+
+      expect(await backend.stat(at('a.txt/child')), isNull);
+    });
+
+    test(
+      'throws, not null, beneath a directory it cannot traverse',
+      () async {
+        await Directory(at('locked')).create();
+        await File(at('locked/a.txt')).writeAsString('hello');
+        await Process.run('chmod', ['000', at('locked')]);
+        addTearDown(() => Process.run('chmod', ['755', at('locked')]));
+
+        await expectLater(
+          backend.stat(at('locked/a.txt')),
+          throwsA(isA<FileSystemException>()),
+        );
+      },
+      skip: Platform.isWindows,
+    );
 
     test('reports a file it can see', () async {
       await File(at('a.txt')).writeAsString('hello');
@@ -130,8 +152,8 @@ void main() {
 
   group('write', () {
     test('replaces the contents', () async {
-      await backend.write(at('a.txt'), Stream.value(utf8.encode('one')));
-      await backend.write(at('a.txt'), Stream.value(utf8.encode('two')));
+      await backend.write(at('a.txt'), () => Stream.value(utf8.encode('one')));
+      await backend.write(at('a.txt'), () => Stream.value(utf8.encode('two')));
 
       expect(await File(at('a.txt')).readAsString(), 'two');
     });
@@ -145,7 +167,7 @@ void main() {
           });
 
       await expectLater(
-        backend.write(at('a.txt'), failing),
+        backend.write(at('a.txt'), () => failing),
         throwsA(isA<FileSystemException>()),
       );
 
@@ -157,7 +179,7 @@ void main() {
     test('does not touch the destination until the source is done', () async {
       await File(at('a.txt')).writeAsString('original');
       final controller = StreamController<List<int>>();
-      final write = backend.write(at('a.txt'), controller.stream);
+      final write = backend.write(at('a.txt'), () => controller.stream);
 
       controller.add(utf8.encode('new'));
       await Future<void>.delayed(Duration.zero);

@@ -13,23 +13,36 @@
     <string name="widget_configure_server">서버</string>
     <string name="widget_configure_metric">주요 지표</string>
     <string name="widget_configure_save">저장</string>
-    <string name="widget_configure_empty">monitor 에이전트가 있는 서버가 아직 없습니다.\nServerBox에서 추가한 뒤 돌아오세요.</string>
+    <string name="widget_configure_empty">ServerBox Monitor를 설정한 서버가 아직 없습니다.\nServerBox에서 서버를 추가한 뒤 여기로 돌아오세요.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">메모리</string>
     <string name="widget_metric_disk">디스크</string>
     <string name="widget_metric_network">네트워크</string>
     <string name="widget_err_not_configured">탭하여 서버 선택</string>
-    <string name="widget_err_no_token">자격 증명 없음 — ServerBox를 여세요</string>
+    <string name="widget_err_no_token">로그인 정보가 없습니다 — ServerBox를 여세요</string>
     <string name="widget_err_insecure">HTTPS 필요</string>
     <string name="widget_err_network">네트워크 오류</string>
     <string name="widget_err_timeout">시간 초과</string>
-    <string name="widget_no_history">기록 없음</string>
     <string name="widget_chart_desc">상태 그래프</string>
-    <string name="widget_cpu_desc">CPU 사용률</string>
-    <string name="widget_mem_desc">메모리 사용률</string>
-    <string name="widget_disk_desc">디스크 사용률</string>
-    <string name="widget_net_desc">네트워크 사용량</string>
     <string name="widget_refresh_desc">새로 고침</string>
     <string name="widget_small_label">서버 값</string>
     <string name="widget_medium_label">서버 그래프</string>
+    <string name="widget_label">서버 상태</string>
+    <string name="widget_description">CPU, 메모리, 디스크, 네트워크 상태를 한눈에 확인하세요. 위젯을 크게 하면 더 자세히 볼 수 있습니다.</string>
+
+    <string name="process_text_label">코드 snippet으로 저장</string>
+    <string name="tile_no_sessions">실행 중인 세션이 없습니다</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">세션 %d개</item>
+    </plurals>
+    <string name="channel_transfers">파일 전송</string>
+    <string name="incoming_failed">공유된 파일을 받을 수 없습니다</string>
+    <string name="shortcut_server_gone">서버가 삭제됨</string>
+    <string name="notification_disconnect_all">모두 연결 해제</string>
+    <string name="session_connected">연결됨</string>
+    <string name="session_connecting">연결 중</string>
+    <string name="session_disconnected">연결 끊김</string>
+    <plurals name="notification_more">
+        <item quantity="other">…외 %d개</item>
+    </plurals>
 </resources>

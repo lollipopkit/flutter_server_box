@@ -1,47 +1,9 @@
-final class ServerUser {
-  const ServerUser({
-    required this.name,
-    required this.uid,
-    required this.gid,
-    required this.comment,
-    required this.home,
-    required this.shell,
-    required this.supplementaryGroups,
-    this.primaryGroup,
-  });
+import 'package:server_box/src/rust/api/users.dart';
 
-  final String name;
-  final int uid;
-  final int gid;
-  final String comment;
-  final String home;
-  final String shell;
-  final String? primaryGroup;
-  final List<String> supplementaryGroups;
+export 'package:server_box/src/rust/api/users.dart'
+    show GroupDraft, PasswordState, SystemGroup, SystemUser, UserCatalog, UserDetail, UserDraft, UserError;
 
-  /// `sbm_parser::users::SystemUser` as serde writes it.
-  factory ServerUser.fromJson(Map<String, Object?> json) => ServerUser(
-    name: json['name'] as String,
-    uid: json['uid'] as int,
-    gid: json['gid'] as int,
-    comment: json['comment'] as String,
-    home: json['home'] as String,
-    shell: json['shell'] as String,
-    primaryGroup: json['primary_group'] as String?,
-    supplementaryGroups: (json['supplementary_groups'] as List).cast<String>(),
-  );
-
-  Map<String, Object?> toJson() => {
-    'name': name,
-    'uid': uid,
-    'gid': gid,
-    'comment': comment,
-    'home': home,
-    'shell': shell,
-    'primary_group': primaryGroup,
-    'supplementary_groups': supplementaryGroups,
-  };
-
+extension SystemUserX on SystemUser {
   bool get isRoot => uid == 0;
 
   bool isSystem(int uidMin) => uid < uidMin;
@@ -52,82 +14,15 @@ final class ServerUser {
   }
 }
 
-final class ServerGroup {
-  const ServerGroup({
-    required this.name,
-    required this.gid,
-    required this.members,
-    required this.primaryMembers,
-    required this.local,
-  });
-
-  final String name;
-  final int gid;
-
-  /// Supplementary members, from the group's own member field.
-  final List<String> members;
-
-  /// Accounts whose primary group this is.
-  final List<String> primaryMembers;
-
-  /// Whether `/etc/group` holds it. A group from LDAP or SSSD is read-only.
-  final bool local;
-
-  /// `sbm_parser::users::SystemGroup` as serde writes it.
-  factory ServerGroup.fromJson(Map<String, Object?> json) => ServerGroup(
-    name: json['name'] as String,
-    gid: json['gid'] as int,
-    members: (json['members'] as List).cast<String>(),
-    primaryMembers: (json['primary_members'] as List).cast<String>(),
-    local: json['local'] as bool,
-  );
-
-  Map<String, Object?> toJson() => {
-    'name': name,
-    'gid': gid,
-    'members': members,
-    'primary_members': primaryMembers,
-    'local': local,
-  };
-
+extension SystemGroupX on SystemGroup {
   /// `SystemGroup::is_root`.
   bool get isRoot => gid == 0 || name == 'root';
 
   bool isSystem(int gidMin) => gid < gidMin;
 }
 
-final class ServerUserCatalog {
-  const ServerUserCatalog({
-    required this.currentUser,
-    required this.uidMin,
-    required this.gidMin,
-    required this.users,
-    required this.groups,
-  });
-
-  /// `sbm_parser::users::UserCatalog` as serde writes it.
-  factory ServerUserCatalog.fromJson(Map<String, Object?> json) =>
-      ServerUserCatalog(
-        currentUser: json['current_user'] as String,
-        uidMin: json['uid_min'] as int,
-        gidMin: json['gid_min'] as int,
-        users: [
-          for (final user in json['users'] as List)
-            ServerUser.fromJson(user as Map<String, Object?>),
-        ],
-        groups: [
-          for (final group in json['groups'] as List)
-            ServerGroup.fromJson(group as Map<String, Object?>),
-        ],
-      );
-
-  final String currentUser;
-  final int uidMin;
-  final int gidMin;
-  final List<ServerUser> users;
-  final List<ServerGroup> groups;
-
-  ServerGroup? findGroup(String name) {
+extension UserCatalogX on UserCatalog {
+  SystemGroup? findGroup(String name) {
     for (final group in groups) {
       if (group.name == name) return group;
     }
@@ -137,124 +32,25 @@ final class ServerUserCatalog {
   List<String> get accountNames => [for (final user in users) user.name];
 }
 
-final class ServerUserDraft {
-  const ServerUserDraft({
-    required this.name,
-    required this.comment,
-    required this.home,
-    required this.shell,
-    required this.primaryGroup,
-    required this.supplementaryGroups,
-    required this.createHome,
-    required this.moveHome,
-    required this.system,
-    this.password,
-  });
-
-  final String name;
-  final String comment;
-  final String home;
-  final String shell;
-  final String primaryGroup;
-  final List<String> supplementaryGroups;
-  final bool createHome;
-  final bool moveHome;
-  final bool system;
-  final String? password;
-
-  /// `sbm_parser::users::UserDraft` as serde reads it.
-  Map<String, Object?> toJson() => {
-    'name': name,
-    'comment': comment,
-    'home': home,
-    'shell': shell,
-    'primary_group': primaryGroup,
-    'supplementary_groups': supplementaryGroups,
-    'create_home': createHome,
-    'move_home': moveHome,
-    'system': system,
-    'password': password,
-  };
-}
-
-final class ServerGroupDraft {
-  const ServerGroupDraft({
-    required this.name,
-    required this.members,
-    required this.system,
-  });
-
-  final String name;
-  final List<String> members;
-  final bool system;
-
-  /// `sbm_parser::users::GroupDraft` as serde reads it.
-  Map<String, Object?> toJson() => {
-    'name': name,
-    'members': members,
-    'system': system,
-  };
-}
-
-/// Whether an account can be logged into with a password.
-enum ServerUserPasswordState { set, locked, none }
-
-/// What `/etc/shadow`, `authorized_keys` and sudoers say about one account.
-///
 /// Every field is nullable and null means "not readable from here", never
-/// "absent": all three sources are root-only on a normal system, and an
-/// unprivileged session would otherwise report every account as having no
-/// password and no keys.
-final class ServerUserDetail {
-  const ServerUserDetail({
-    this.passwordState,
-    this.passwordChanged,
-    this.expires,
-    this.neverExpires = false,
-    this.sshKeyTypes,
-    this.sudoRule,
-  });
-
-  /// `sbm_parser::users::UserDetail` as serde writes it. Its instants are
-  /// shadow's day counts, which are UTC midnights.
-  factory ServerUserDetail.fromJson(Map<String, Object?> json) {
-    DateTime? instant(Object? millis) => millis is int
-        ? DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true)
-        : null;
-    return ServerUserDetail(
-      passwordState: switch (json['password_state']) {
-        'set' => ServerUserPasswordState.set,
-        'locked' => ServerUserPasswordState.locked,
-        'none' => ServerUserPasswordState.none,
-        _ => null,
-      },
-      passwordChanged: instant(json['password_changed_millis']),
-      expires: instant(json['expires_millis']),
-      neverExpires: json['never_expires'] as bool? ?? false,
-      sshKeyTypes: (json['ssh_key_types'] as List?)?.cast<String>(),
-      sudoRule: json['sudo_rule'] as String?,
-    );
-  }
-
-  final ServerUserPasswordState? passwordState;
-  final DateTime? passwordChanged;
+/// "absent": shadow, `authorized_keys` and sudoers are root-only on a normal
+/// system, and an unprivileged session would otherwise report every account
+/// as having no password and no keys.
+extension UserDetailX on UserDetail {
+  /// Shadow's day counts are UTC midnights.
+  DateTime? get passwordChanged => _instant(passwordChangedMillis);
 
   /// Null when shadow was unreadable; absent-from-the-record is [neverExpires].
-  final DateTime? expires;
-  final bool neverExpires;
-
-  /// Distinct key types in the account's `authorized_keys`, in file order.
-  /// An empty list means the file was read and held none.
-  final List<String>? sshKeyTypes;
-
-  /// The right-hand side of the account's sudoers entry, e.g. `NOPASSWD: ALL`.
-  final String? sudoRule;
+  DateTime? get expires => _instant(expiresMillis);
 
   bool get isEmpty =>
       passwordState == null &&
-      passwordChanged == null &&
-      expires == null &&
+      passwordChangedMillis == null &&
+      expiresMillis == null &&
       !neverExpires &&
       sshKeyTypes == null &&
       sudoRule == null;
+
+  static DateTime? _instant(int? millis) =>
+      millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
 }

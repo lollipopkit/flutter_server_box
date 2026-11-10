@@ -32,13 +32,11 @@ void main() {
   test('none uploads nothing at all', () {
     const none = DiagnosticsLevel.none;
     expect(none.uploads, isFalse);
-    expect(none.sendsBreadcrumbs, isFalse);
   });
 
   test('basic reports failures but is silent in between', () {
     const basic = DiagnosticsLevel.basic;
     expect(basic.uploads, isTrue);
-    expect(basic.sendsBreadcrumbs, isTrue, reason: 'context for a failure');
   });
 
   // TODO: remove with `DiagnosticsUpload.retireFullLevel`.

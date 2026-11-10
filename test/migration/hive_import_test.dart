@@ -7,16 +7,15 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/tables.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/hive/frozen_adapters.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,7 +50,6 @@ void main() {
     await PrefStore.shared.init();
 
     Hive.init(tempDir.path);
-    Hive.registerAdapters();
     registerHiveLegacyAdapters();
   });
 
@@ -134,16 +132,7 @@ void main() {
     await docker.box.put('containerHostdocker', 'unix:///var/run/docker.sock');
 
     final stats = await open('connection_stats');
-    await stats.box.put(
-      'srv-pwd_1000',
-      ConnectionStat(
-        serverId: 'srv-pwd',
-        serverName: 'password auth',
-        timestamp: DateTime.now(),
-        result: ConnectionResult.success,
-        durationMs: 12,
-      ),
-    );
+    await _seedConnectionStat(stats.box, 'srv-pwd_1000', durationMs: 12);
 
     final agent = await open('agent_conversation');
     await agent.box.put('active::srv-pwd', 'conv-1');
@@ -388,16 +377,7 @@ void main() {
 
     final stats = HiveStore('connection_stats');
     await stats.init();
-    await stats.box.put(
-      'srv-pwd_2000',
-      ConnectionStat(
-        serverId: 'srv-pwd',
-        serverName: 'password auth',
-        timestamp: DateTime.now(),
-        result: ConnectionResult.success,
-        durationMs: 24,
-      ),
-    );
+    await _seedConnectionStat(stats.box, 'srv-pwd_2000', durationMs: 24);
     await Hive.close();
 
     SqliteDb.instance.execute('''
@@ -506,7 +486,7 @@ void main() {
     expect(spi.ssh?.pwd, 'secret');
     expect(spi.ssh?.keyId, 'k1');
     expect(spi.ssh?.alterUrl, 'alt.example');
-    expect(spi.ssh?.jumpId, 'srv-1');
+    expect(spi.ssh?.resolvedJumpIds.firstOrNull, 'srv-1');
     expect(spi.ssh?.jumpIds, ['srv-1']);
     expect(spi.ssh?.proxyCommand, 'nc %h %p');
     // 1466 had no monitor support, so field 18 was never written.
@@ -637,4 +617,60 @@ class _V1PrivateKeyWriter extends TypeAdapter<LegacyPrivateKeyV1> {
       ..writeByte(1)
       ..write(obj.key);
   }
+}
+
+/// One record of the typeId 100 layout the released builds wrote, through
+/// seed-only writers: the frozen adapters are read-only.
+Future<void> _seedConnectionStat(Box<dynamic> box, String key, {required int durationMs}) async {
+  Hive.registerAdapter(_V1ConnectionStatWriter(), override: true);
+  Hive.registerAdapter(_V1ConnectionResultWriter(), override: true);
+  await box.put(
+    key,
+    LegacyConnectionStatV1({
+      'serverId': 'srv-pwd',
+      'serverName': 'password auth',
+      'timestamp': DateTime.now(),
+      'result': const LegacyConnectionResult('success'),
+      'durationMs': durationMs,
+    }),
+  );
+  registerHiveFrozenAdapters(override: true);
+}
+
+class _V1ConnectionStatWriter extends TypeAdapter<LegacyConnectionStatV1> {
+  @override
+  final typeId = 100;
+
+  @override
+  LegacyConnectionStatV1 read(BinaryReader reader) => throw UnsupportedError('seed-only writer');
+
+  @override
+  void write(BinaryWriter writer, LegacyConnectionStatV1 obj) {
+    final j = obj.json;
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(j['serverId'])
+      ..writeByte(1)
+      ..write(j['serverName'])
+      ..writeByte(2)
+      ..write(j['timestamp'])
+      ..writeByte(3)
+      ..write(j['result'])
+      ..writeByte(5)
+      ..write(j['durationMs']);
+  }
+}
+
+class _V1ConnectionResultWriter extends TypeAdapter<LegacyConnectionResult> {
+  @override
+  final typeId = 102;
+
+  static const _values = ['success', 'timeout', 'auth_failed', 'network_error', 'unknown_error'];
+
+  @override
+  LegacyConnectionResult read(BinaryReader reader) => throw UnsupportedError('seed-only writer');
+
+  @override
+  void write(BinaryWriter writer, LegacyConnectionResult obj) => writer.writeByte(_values.indexOf(obj.value));
 }

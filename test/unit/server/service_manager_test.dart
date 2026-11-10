@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/admin/service_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/service.dart';
-import 'package:server_box/data/service/service_manager.dart';
 import 'package:server_box/src/rust/api/service.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -12,7 +12,7 @@ import '../../helpers/rust_lib_helper.dart';
 final class _ByName implements CommandExec {
   _ByName(ServiceManagerType type, this.answers)
     : names = {
-        for (final c in ffi.serviceListingCommands(managerName: type.name)) c.command!: c.name,
+        for (final c in ffi.serviceListingCommands(manager: type)) c.command!: c.name,
       };
 
   final Map<String, String> names;
@@ -97,11 +97,13 @@ void main() {
   test('a unit crosses back to name its commands', () {
     const unit = ServiceUnit(
       name: 'chronyd',
-      type: ServiceUnitType.service,
+      fullName: 'chronyd.service',
+      unitType: ServiceUnitType.service,
       scope: ServiceScope.system,
       state: ServiceState.stopped,
       enabled: false,
       actions: [ServiceAction.start, ServiceAction.enable],
+      needsAttention: false,
     );
     const openrc = ServiceManager(ServiceManagerType.openrc);
     expect(openrc.commandFor(unit, ServiceAction.enable), "rc-update add 'chronyd' default");
@@ -113,10 +115,12 @@ void main() {
   test('a procd log, and none where logread is missing', () async {
     const unit = ServiceUnit(
       name: 'dnsmasq',
-      type: ServiceUnitType.service,
+      fullName: 'dnsmasq.service',
+      unitType: ServiceUnitType.service,
       scope: ServiceScope.system,
       state: ServiceState.running,
       actions: [],
+      needsAttention: false,
     );
     const procd = ServiceManager(ServiceManagerType.procd);
     final command = "logread -e 'dnsmasq' | tail -n 5";

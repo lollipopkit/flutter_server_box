@@ -1,7 +1,7 @@
-/// A virtual key in a Hive box, read after `clipboard` left `VirtKey`.
+/// A virtual key in a Hive box, read after `clipboard` left `VirtualKey`.
 ///
-/// The generated adapter wrote a key as one byte, its place in
-/// `hive_adapters.g.yaml` — which is not the enum's order. Regenerated from the
+/// The generated adapter wrote a key as one byte, its place in the
+/// generator's type list — which is not the enum's order. Regenerated from the
 /// enum without `clipboard`, it would have read every byte past it as another
 /// key, so the adapter is frozen; this is what it has to keep answering.
 library;

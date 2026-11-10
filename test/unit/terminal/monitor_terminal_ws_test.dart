@@ -10,7 +10,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
+import 'package:server_box/core/monitor/http.dart';
 
 void main() {
   group('the terminal upgrade', () {

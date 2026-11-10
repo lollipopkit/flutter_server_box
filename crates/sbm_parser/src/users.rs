@@ -141,6 +141,22 @@ impl SystemUser {
         self.uid == 0
     }
 
+    /// Why this account may not be deleted by `current` (the account the
+    /// catalog was read as), or `None`: root, the account doing the deleting,
+    /// and a name `userdel` would not take.
+    pub fn delete_refusal(&self, current: Option<&str>) -> Option<UserError> {
+        if self.is_root() || self.name == "root" {
+            return Some(UserError::RootNotDeletable);
+        }
+        if current == Some(self.name.as_str()) {
+            return Some(UserError::CurrentUserNotDeletable);
+        }
+        if !valid_name(&self.name) {
+            return Some(UserError::InvalidName);
+        }
+        None
+    }
+
     /// Whether this is a system account by the machine's own threshold.
     ///
     /// The threshold is [`UserCatalog::uid_min`], read from `/etc/login.defs`
@@ -377,6 +393,9 @@ pub enum UserError {
     /// there is no command that moves them all.
     Renaming,
     RootNotDeletable,
+    /// The account the app is signed in as: deleting it would end the session
+    /// doing the deleting.
+    CurrentUserNotDeletable,
     /// The catalog script did not print the account it ran as, so nothing about
     /// this output can be trusted to be about this machine.
     CurrentUserUnknown,
@@ -403,6 +422,7 @@ impl UserError {
             Self::PasswordLineBreak => "passwordLineBreak",
             Self::Renaming => "renaming",
             Self::RootNotDeletable => "rootNotDeletable",
+            Self::CurrentUserNotDeletable => "currentUserNotDeletable",
             Self::CurrentUserUnknown => "currentUserUnknown",
             Self::UnknownMember => "unknownMember",
             Self::RootGroupNotDeletable => "rootGroupNotDeletable",
@@ -441,7 +461,7 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
     let mut section = "";
 
     // Bound to a local: every row below borrows from it.
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw_line in normalized.split('\n') {
         let line = raw_line.trim_end();
         if let Some(rest) = line.strip_prefix(CURRENT_MARKER) {
@@ -641,7 +661,7 @@ pub fn parse_detail(output: &str, name: &str) -> UserDetail {
     let mut sections: HashMap<&str, Vec<&str>> = HashMap::new();
     let mut section = "";
     // Bound to a local: every section below borrows from it.
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw_line in normalized.split('\n') {
         let line = raw_line.trim_end();
         if let Some(marker) = MARKERS.iter().find(|marker| **marker == line) {

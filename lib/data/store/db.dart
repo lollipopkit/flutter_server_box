@@ -157,7 +157,9 @@ class Servers extends Table with SyncMeta {
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();
-  BoolColumn get monitorIgnoreCert => boolean().nullable()();
+  /// `MonitorHttpCredential.certSha256`: the certificate accepted for an
+  /// agent the system does not trust, lowercase hex.
+  TextColumn get monitorCertSha256 => text().nullable()();
   BoolColumn get monitorAllowInsecure => boolean().nullable()();
 
   TextColumn get wolMac => text().nullable()();
@@ -280,6 +282,23 @@ class ServerJumps extends Table {
   Set<Column> get primaryKey => {serverId, ord};
 }
 
+/// A server's `IdentityFile` paths, in the order OpenSSH tries them.
+@DataClassName('ServerIdentityFileRow')
+class ServerIdentityFiles extends Table {
+  @override
+  String get tableName => 'server_identity_file';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  IntColumn get ord => integer()();
+  TextColumn get path => text()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, ord};
+}
+
 @DataClassName('ServerDisabledCmdRow')
 class ServerDisabledCmds extends Table {
   @override
@@ -293,23 +312,6 @@ class ServerDisabledCmds extends Table {
 
   @override
   Set<Column> get primaryKey => {serverId, cmdType};
-}
-
-/// `ServerCustom.cmds`, a map of name -> command.
-@DataClassName('ServerCustomCmdRow')
-class ServerCustomCmds extends Table {
-  @override
-  String get tableName => 'server_custom_cmd';
-  @override
-  bool get withoutRowId => true;
-
-  TextColumn get serverId =>
-      text().references(Servers, #id, onDelete: KeyAction.cascade)();
-  TextColumn get name => text()();
-  TextColumn get cmd => text()();
-
-  @override
-  Set<Column> get primaryKey => {serverId, name};
 }
 
 /// Was a JSON map in `setting` keyed `<serverId>::<keyType>`, so deleting a
@@ -690,6 +692,48 @@ class SyncStates extends Table {
   Set<Column> get primaryKey => {k};
 }
 
+/// What a sync engine (`e`: `log.`, `seg.`) took from the others and this
+/// device does not sync now (a category turned off here): kept as it came,
+/// the newest op of each record, so a snapshot written here carries it on.
+@DataClassName('SyncPassedRow')
+class SyncPassed extends Table {
+  @override
+  String get tableName => 'sync_passed';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get e => text()();
+  TextColumn get c => text()();
+  TextColumn get id => text()();
+  TextColumn get h => text()();
+
+  /// The op's data as JSON: a blob's name for a large one.
+  TextColumn get d => text()();
+
+  @override
+  Set<Column> get primaryKey => {e, c, id};
+}
+
+/// Each synced record's newest stamp (`fl_sync`'s HLC): the last change made
+/// here or applied from elsewhere. `c` is the record's collection (a sync
+/// root's table, or `kv:<store>` for a key of a kv store), `id` its id or key.
+/// The stamp carries the device that made it, so what this device still has
+/// to send is its own stamps after the last one sent (`SyncRecorder`).
+@DataClassName('SyncRecordRow')
+class SyncRecords extends Table {
+  @override
+  String get tableName => 'sync_record';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get c => text()();
+  TextColumn get id => text()();
+  TextColumn get hlc => text()();
+
+  @override
+  Set<Column> get primaryKey => {c, id};
+}
+
 /// The database, over the connection the app already opened and keyed.
 ///
 /// Drift is a query and mapping layer here, not the owner of the connection:
@@ -717,8 +761,8 @@ class SyncStates extends Table {
     ServerTags,
     ServerEnvs,
     ServerJumps,
+    ServerIdentityFiles,
     ServerDisabledCmds,
-    ServerCustomCmds,
     KnownHosts,
     Snippets,
     SnippetTags,
@@ -733,6 +777,8 @@ class SyncStates extends Table {
     BenchmarkRuns,
     Tombstones,
     SyncStates,
+    SyncRecords,
+    SyncPassed,
   ],
 )
 class AppDb extends _$AppDb {
@@ -788,5 +834,7 @@ class AppDb extends _$AppDb {
         'ON benchmark_run(server_id, started_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
         'ON tombstone(deleted_at);',
+    // What is still to send: this device's stamps after the last one sent.
+    'CREATE INDEX IF NOT EXISTS idx_sync_record_hlc ON sync_record(hlc);',
   ];
 }

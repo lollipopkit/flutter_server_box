@@ -47,6 +47,10 @@ final class _Client implements HttpClient {
   @override
   set idleTimeout(Duration value) => inner.idleTimeout = value;
   @override
+  set badCertificateCallback(
+    bool Function(X509Certificate cert, String host, int port)? callback,
+  ) => inner.badCertificateCallback = callback;
+  @override
   void close({bool force = false}) {
     owner.closed++;
     inner.close(force: force);

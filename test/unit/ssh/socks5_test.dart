@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/socks5.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
+import 'package:server_box/core/ssh/socks5.dart';
 
 /// A dynamic forward: a SOCKS5 proxy on this device whose every connection is
 /// dialled to the address its client named.

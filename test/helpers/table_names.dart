@@ -53,8 +53,8 @@ abstract final class Tables {
     'server_tag',
     'server_env',
     'server_jump',
+    'server_identity_file',
     'server_disabled_cmd',
-    'server_custom_cmd',
     'known_host',
     'container_host',
     'container_runtime',
@@ -69,5 +69,7 @@ abstract final class Tables {
     'benchmark_run',
     'tombstone',
     'sync_state',
+    'sync_record',
+    'sync_passed',
   ];
 }

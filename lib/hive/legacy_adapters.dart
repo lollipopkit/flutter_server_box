@@ -1,6 +1,7 @@
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/hive/frozen_adapters.dart';
 import 'package:server_box/hive/spi_legacy_adapter.dart';
 
 /// Hive records as the released builds wrote them, frozen.
@@ -28,6 +29,7 @@ import 'package:server_box/hive/spi_legacy_adapter.dart';
 /// TODO: delete this file, `lib/hive/` and the `hive_ce*` dependencies with
 /// `HiveImport`, once no supported install can still be on Hive.
 void registerHiveLegacyAdapters() {
+  registerHiveFrozenAdapters();
   Hive.registerAdapter(SpiLegacyAdapter());
   Hive.registerAdapter(SpiNestedLegacyAdapter());
   Hive.registerAdapter(LegacyPrivateKeyAdapter());
@@ -39,9 +41,9 @@ void registerHiveLegacyAdapters() {
 }
 
 /// typeId 4: a virtual key, by the byte the generated adapter gave it — which
-/// is its place in `hive_adapters.g.yaml`, not in the enum.
+/// was its place in the generator's type list, not in the enum.
 ///
-/// Frozen when `clipboard` left `VirtKey`: an adapter generated from the enum
+/// Frozen when `clipboard` left `VirtualKey`: an adapter generated from the enum
 /// without it no longer names that byte, and the name is what the store keeps.
 class LegacyVirtKeyV1 {
   const LegacyVirtKeyV1(this.name);
@@ -295,8 +297,10 @@ class LegacyServerCustomV1 {
   ///
   /// Without the PVE fields, which today's model does not have: they are a
   /// `server_pve` row now. [toJson] is what keeps them.
+  ///
+  /// [cmds] are read so the box opens, and dropped: custom commands live on
+  /// the server now.
   ServerCustom toCustom() => ServerCustom(
-    cmds: cmds,
     preferTempDev: preferTempDev,
     tempIsCelsius: tempIsCelsius,
     logoUrl: logoUrl,

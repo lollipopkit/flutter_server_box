@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_keygen.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 
 /// Generating a key pair in the app.
 ///

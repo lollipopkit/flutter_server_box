@@ -2,9 +2,8 @@
   /// One line above the terminal: the most urgent thing its programs report
   /// about themselves (OSC 7501, OSC 9;4). Nothing while they report nothing
   /// or are only idle.
-  import { X } from '@lucide/svelte'
-  import { IconButton } from '@serverbox/webui'
-  import LL from '../i18n/i18n-svelte'
+  import { IconButton } from '../desk/lk'
+  import { LL } from '../i18n/i18n-svelte'
   import type { ProgramState, ProgramStatusRecord, ProgramStatusRecords } from '../lib/programStatus'
 
   let { records }: { records: ProgramStatusRecords | null } = $props()
@@ -43,11 +42,11 @@
   })
 
   const dot: Record<ProgramState, string> = {
-    blocked: 'bg-warning',
-    error: 'bg-danger',
-    done: 'bg-success',
-    working: 'bg-accent',
-    idle: 'bg-faint-fg',
+    blocked: 'var(--color-warning)',
+    error: 'var(--color-danger)',
+    done: 'var(--color-success)',
+    working: 'var(--color-accent)',
+    idle: 'var(--text-tertiary)',
   }
 
   function label(state: ProgramState, record?: ProgramStatusRecord): string {
@@ -83,29 +82,24 @@
 
 {#if headline}
   {@const { state, record, app, progress, count } = headline}
-  <div
-    class="flex items-center gap-2 min-w-0 text-sm"
-    role="status"
-    aria-live="polite"
-  >
-    <span class="shrink-0 w-2 h-2 rounded-full {dot[state]}"></span>
+  <div class="flex min-w-0 items-center gap-[7px] px-[13px] py-[5px] text-[12px]" role="status" aria-live="polite">
+    <span class="h-[7px] w-[7px] shrink-0 rounded-full" style:background={dot[state]}></span>
     <!-- Plain text: what a program says is never markup -->
-    <span class="shrink-0 font-medium text-fg-strong">
+    <span class="lk-num shrink-0 font-semibold text-(--text-primary)">
       {label(state, record)}{#if progress !== undefined}&nbsp;{progress}%{/if}
     </span>
     {#if record?.report.title ?? app}
-      <span class="shrink-0 text-muted-fg">{record?.report.title ?? app}</span>
+      <span class="shrink-0 text-(--text-secondary)">{record?.report.title ?? app}</span>
     {/if}
     {#if record?.report.msg}
-      <span class="truncate text-muted-fg" title={record.report.msg}>{record.report.msg}</span>
+      <span class="truncate text-(--text-secondary)" title={record.report.msg}>{record.report.msg}</span>
     {/if}
     {#if count > 1}
-      <span class="shrink-0 text-faint-fg">+{count - 1}</span>
+      <span class="lk-num shrink-0 text-(--text-tertiary)">+{count - 1}</span>
     {/if}
     {#if record && (state === 'done' || state === 'error')}
-      <IconButton label={$LL.terminalProgramDismiss()} onclick={dismiss}>
-        <X class="w-3.5 h-3.5" />
-      </IconButton>
+      <span class="flex-1"></span>
+      <IconButton icon="close" size="sm" label={$LL.terminalProgramDismiss()} onclick={dismiss} />
     {/if}
   </div>
 {/if}

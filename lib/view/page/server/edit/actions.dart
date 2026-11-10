@@ -109,27 +109,37 @@ extension _Tags on _ServerEditPageState {
 }
 
 extension _Discovery on _ServerEditPageState {
-  /// Sweeps the network and fills this form in from what is picked.
-  ///
-  /// Only the fields the sweep actually knows: an address and a port. It
-  /// cannot know an account, a key or what you call the machine, so it does
-  /// not guess at them — except the name, and only while that field is still
-  /// empty, where the address is a better starting point than nothing and is
-  /// what someone would have typed anyway.
+  /// Fills this form in from a discovered host: only what the source knew,
+  /// and the name only while it is still empty. Its hops are added as
+  /// servers, the ones that are not already, and become its jump servers.
   Future<void> _onTapDiscover() async {
-    final SshDiscoveryResult? found;
-    try {
-      found = await SshDiscoveryDialog.show(context);
-    } catch (e, s) {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-      return;
-    }
+    final found = await pickDiscoveredHost(context);
     if (!mounted || found == null) return;
+    final ssh = found.server.ssh;
+    if (ssh == null) return;
 
-    _ipController.text = found.ip;
-    _portController.text = '${found.port}';
-    if (_nameController.text.isEmpty) _nameController.text = found.ip;
+    if (found.via.isNotEmpty) {
+      final notifier = ref.read(serversProvider.notifier);
+      final plan = planDiscoveredServers([
+        found,
+      ], ref.read(serversProvider).servers.values.toList());
+      try {
+        for (final hop in plan.add) {
+          if (hop.id != found.server.id) await notifier.addServer(hop);
+        }
+      } catch (e, s) {
+        if (mounted) context.showErrDialog(e, s);
+        return;
+      }
+      _jumpServers.value = [
+        for (final id in ssh.resolvedJumpIds) plan.ids[id] ?? id,
+      ];
+    }
+    _ipController.text = ssh.ip;
+    _portController.text = '${ssh.port}';
+    if (found.userKnown) _usernameController.text = ssh.user;
+    if (ssh.proxyCommand case final cmd?) _proxyCommandCtrl.text = cmd;
+    if (_nameController.text.isEmpty) _nameController.text = found.server.name;
   }
 
   void _initWithDraft(ServerDraft draft) {
@@ -153,19 +163,17 @@ extension _Actions on _ServerEditPageState {
     WindowsStatusCmdType.diskSmart,
   ];
 
-  Future<void> _refreshStoredSudoPasswordState() async {
-    String? storedValue;
-    try {
-      storedValue = await SudoPassword.readOverride(_serverId);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to read sudo password override', e, s);
-      return;
-    }
+  void _refreshStoredSudoPasswordState() {
     if (!mounted) return;
-    _pendingSudoPassword ??= storedValue;
+    _pendingSudoPassword ??= SudoPassword.saved(_serverId);
     _hasStoredSudoPassword.value =
         _pendingSudoPassword != null && _pendingSudoPassword!.isNotEmpty;
   }
+
+  /// [Input.onReveal] for [ctrl]: a saved secret shows only after
+  /// [AppAuth.confirm]; one typed on this page shows freely.
+  Future<bool> Function() _revealStored(TextEditingController ctrl) =>
+      () async => !_storedSecrets.contains(ctrl) || await AppAuth.confirm();
 
   Future<void> _setPendingSudoPassword(String? value) async {
     _pendingSudoPassword = value;
@@ -223,11 +231,6 @@ extension _Actions on _ServerEditPageState {
 
   /// Fetches the certificate the BMC presents, shows it, and pins it if the
   /// user agrees.
-  ///
-  /// The connection here sends nothing — it exists only to read what the far
-  /// end offers — so an impostor at that address learns no password from it.
-  /// That is what makes it safe to accept any certificate for this one step,
-  /// and it is the only step that does.
   Future<void> _onTapBmcCert() async {
     final cfg = BmcCfg(addr: _bmcAddrCtrl.text.trim());
     final uri = cfg.uri;
@@ -236,54 +239,58 @@ extension _Actions on _ServerEditPageState {
       Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
       return;
     }
+    final pin = await _reviewCert(uri.host, port, pinned: _bmcCert.value);
+    if (pin != null) _bmcCert.value = pin;
+  }
 
-    final CertInfo info;
-    try {
-      info = await bmcFetchServerCert(host: uri.host, port: port);
-    } on BmcError catch (e) {
-      Toast.error(libL10n.fail, body: e.message);
-      return;
-    } catch (e) {
-      Toast.error(libL10n.fail, body: '$e');
+  /// The same for the agent at the monitor URL; the pin is kept for that
+  /// address only ([_monitorCertAddr]).
+  Future<void> _onTapMonitorCert() async {
+    final addr = _monitorAddrCtrl.text.trim();
+    final uri = Uri.tryParse(addr);
+    if (uri == null || uri.host.isEmpty || !uri.isScheme('https')) {
+      Toast.error(libL10n.fail, body: l10n.monitorHttpsRequired);
       return;
     }
-    if (!mounted) return;
+    final pinned = _monitorCertAddr?.trim() == addr ? _monitorCert.value : null;
+    final pin = await _reviewCert(uri.host, uri.port, pinned: pinned);
+    if (pin == null) return;
+    _monitorCertAddr = addr;
+    _monitorCert.value = pin;
+  }
 
-    final pinned = _bmcCert.value;
-    final changed = pinned != null && pinned != info.fingerprint;
+  /// Reads the certificate [host]:[port] presents, shows it, and answers its
+  /// fingerprint if the user accepts it; null otherwise.
+  ///
+  /// The connection here sends nothing — it exists only to read what the far
+  /// end offers — so an impostor at that address learns no password from it.
+  /// That is what makes it safe to accept any certificate for this one step,
+  /// and it is the only step that does.
+  Future<String?> _reviewCert(String host, int port, {String? pinned}) async {
+    final CertInfo info;
+    try {
+      info = await bmcFetchServerCert(host: host, port: port);
+    } on BmcError catch (e) {
+      Toast.error(libL10n.fail, body: e.message);
+      return null;
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+      return null;
+    }
+    if (!mounted) return null;
 
-    final accepted = await context.showRoundDialog<bool>(
-      title: l10n.bmcCert,
-      barrierDismiss: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(changed ? l10n.bmcCertChanged : l10n.bmcCertReview),
-          const SizedBox(height: 12),
-          SelectableText('${libL10n.addr}: ${uri.host}:$port'),
-          SelectableText('Subject: ${info.subject}'),
-          SelectableText('Issuer: ${info.issuer}'),
-          SelectableText('SHA-256: ${info.prettyFingerprint}'),
-          if (info.isExpired) ...[
-            const SizedBox(height: 8),
-            Text(
-              l10n.bmcCertExpired,
-              style: const TextStyle(color: Colors.orange),
-            ),
-          ],
-          if (changed) ...[
-            const SizedBox(height: 8),
-            SelectableText(l10n.bmcCertWas(pinned)),
-          ],
-        ],
-      ),
-      actions: Btnx.cancelOk,
+    final accepted = await showCertTrustDialog(
+      context,
+      cert: info,
+      previous: pinned != info.fingerprint ? pinned : null,
+      source: '$host:$port',
+      // A form field is set; nothing connects until the form is saved.
+      reconnects: false,
     );
     // The dialog answers; this page acts on the answer and this page is what
     // holds the field — see the dialog rules in CLAUDE.md
-    if (accepted != true || !mounted) return;
-    _bmcCert.value = info.fingerprint;
+    if (!accepted || !mounted) return null;
+    return info.fingerprint;
   }
 
   /// What [_pveConfigToSave] answers when the form cannot be saved; it has
@@ -388,6 +395,7 @@ extension _Actions on _ServerEditPageState {
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
     controller.text = _pendingSudoPassword ?? '';
+    final stored = !_sudoPasswordDirty && controller.text.isNotEmpty;
     if (!mounted) return;
 
     // Disposed by the tree, not after this `await`: the dialog's future
@@ -400,6 +408,7 @@ extension _Actions on _ServerEditPageState {
           controller: controller,
           type: TextInputType.visiblePassword,
           obscureText: true,
+          onReveal: stored ? AppAuth.confirm : null,
           label: libL10n.pwd,
           icon: Icons.password,
           suggestion: false,
@@ -446,12 +455,8 @@ extension _Actions on _ServerEditPageState {
     SudoPassword.forget(_serverId);
     try {
       final pending = _pendingSudoPassword;
-      if (pending == null || pending.isEmpty) {
-        await SudoPassword.clearOverride(_serverId);
-      } else {
-        await SudoPassword.writeOverride(_serverId, pending);
-      }
-      await _refreshStoredSudoPasswordState();
+      SudoPassword.save(_serverId, pending ?? '');
+      _refreshStoredSudoPasswordState();
       _sudoPasswordDirty = false;
       return true;
     } catch (e, s) {
@@ -547,7 +552,34 @@ extension _Actions on _ServerEditPageState {
     await _showCmdTypesDialog(allCmdTypes);
   }
 
-  void _onSave() async {
+  Future<void> _onSave() async {
+    final form = await _validateForm();
+    if (form == null || !mounted) return;
+    final spi = _buildSpi(form);
+    if (spi.validate() case final error?) {
+      Toast.error(_validationErrorMessage(error));
+      return;
+    }
+    if (!await _persist(spi, form.pve)) return;
+    if (!mounted) return;
+    _reportSaved(form);
+    // Saved either way — the address may well be one TLS is being set up for,
+    // and refusing to store it would be this page deciding that for the user.
+    // But it will not connect as it stands, and the switch that would let it
+    // is on this same page under More, so saying so beats leaving them to find
+    // out from the detail page's error.
+    if (spi.monitorHttp?.needsInsecureOptIn == true) {
+      Toast.warn(
+        l10n.monitorHttpsRequired,
+        body: l10n.monitorAllowInsecureHttpTip,
+      );
+    }
+    context.pop();
+  }
+
+  /// The checks a save makes before anything is built, each saying what is
+  /// wrong. Null when one refused; nothing on the form is changed.
+  Future<_SaveForm?> _validateForm() async {
     final local = _local.value;
     // What is going to be dialled, which is what the checks below are about.
     // The switches themselves are stored as they are: this device parks both
@@ -555,41 +587,38 @@ extension _Actions on _ServerEditPageState {
     final useSsh = _useSsh.value && !local;
     final useMonitorHttp = _useMonitorHttp.value && !local;
     final keyIdx = _keyIdx.value;
-    // `-1` is not an index into anything. It is what the key-auth switch
-    // writes when it is turned on before a key is picked, and it stands for
-    // "no selection" — the check further down at `_keyIdx.value == -1` is what
-    // handles it. `elementAtOrNull` does not tolerate it either: it throws
-    // `RangeError.checkNotNegative` rather than answering null, so reaching it
-    // with the switch on and no key chosen took the save down.
+    // `-1` is what the key-auth switch writes when it is turned on before a
+    // key is picked: no selection. `elementAtOrNull` throws on it rather than
+    // answering null.
     final selectedKey = keyIdx == null || keyIdx < 0
         ? null
         : ref.read(privateKeyProvider).keys.elementAtOrNull(keyIdx);
-    // Said rather than silently dropped. `elementAtOrNull` is what keeps the
-    // save from throwing when the chosen key was deleted from another pane
-    // meanwhile, but going on from there would write a server with no key and
-    // no word about why.
-    // Only when the key is going to be written. With SSH switched off the
-    // form is hidden and `_keyIdx` still holds whatever it was loaded with, so
-    // this used to refuse a save over a key the record is about to drop.
-    if (useSsh && keyIdx != null && keyIdx >= 0 && selectedKey == null) {
-      Toast.show('${libL10n.invalid}: ${libL10n.key}');
-      return;
-    }
 
     // The SSH form is hidden when SSH is switched off, so there is nothing
     // there to validate — and requiring it is what used to make a
     // monitor-only server invent a host and a user named `monitor`.
     if (useSsh) {
+      // Said rather than silently dropped: the chosen key was deleted from
+      // another pane meanwhile, and going on would write a server with no
+      // key and no word about why.
+      if (keyIdx != null && keyIdx >= 0 && selectedKey == null) {
+        Toast.show('${libL10n.invalid}: ${libL10n.key}');
+        return null;
+      }
       if (_ipController.text.isEmpty) {
         Toast.show('${libL10n.empty} ${libL10n.host}');
-        return;
+        return null;
       }
-
       if (!_hostReg.hasMatch(_ipController.text)) {
         Toast.show(l10n.invalidHostFormat);
-        return;
+        return null;
       }
-
+      // Key auth switched on with no key picked and no password to fall back
+      // on: refused before asking whether no authentication is meant.
+      if (keyIdx == -1 && _passwordController.text.isEmpty) {
+        Toast.show('${libL10n.empty}: ${libL10n.key}');
+        return null;
+      }
       // Either key source counts. A server imported with an IdentityFile has
       // a key and no password, and asking it to confirm "no authentication"
       // on every save would be asking about something that is not true.
@@ -600,26 +629,13 @@ extension _Actions on _ServerEditPageState {
           child: Text(libL10n.askContinue(l10n.useNoPwd)),
           actions: Btnx.cancelRedOk,
         );
-        if (ok != true || !mounted) return;
-      }
-
-      // If [_pubKeyIndex] is -1, it means that the user has not selected
-      if (_keyIdx.value == -1 && _passwordController.text.isEmpty) {
-        Toast.show(libL10n.empty);
-        return;
-      }
-      if (_usernameController.text.isEmpty) {
-        _usernameController.text = 'root';
-      }
-      if (_portController.text.isEmpty) {
-        _portController.text = '22';
+        if (ok != true || !mounted) return null;
       }
       if (_areInvalidJumpSelections(_jumpServers.value)) {
         Toast.show('${libL10n.invalid}: ${l10n.jumpServer}');
-        return;
+        return null;
       }
     }
-    final proxyCommandText = _proxyCommandCtrl.text.trim();
     // Refused rather than dropped. A coordinate that does not parse is a typo
     // in something the user meant, and silently saving nothing there would
     // read as the field not working.
@@ -627,13 +643,83 @@ extension _Actions on _ServerEditPageState {
     final geo = GeoCoord.tryParse(geoText);
     if (geoText.isNotEmpty && geo == null) {
       Toast.show('${libL10n.invalid}: ${libL10n.location}');
-      return;
+      return null;
     }
     final pve = _pveConfigToSave(sshKeyId: selectedKey?.id);
-    if (identical(pve, _pveInvalid)) return;
-    final customCmds = _unmigratedCmds.value;
+    if (identical(pve, _pveInvalid)) return null;
+
+    // Only the address is required, and only when the switch is on: there is
+    // nothing to dial without it.
+    if (useMonitorHttp && _monitorAddrCtrl.text.selfNotEmptyOrNull == null) {
+      Toast.show('${libL10n.invalid}: Monitor URL');
+      return null;
+    }
+
+    final wol = _wolToSave();
+    if (wol != null) {
+      final wolValidation = wol.validate();
+      if (!wolValidation.$2) {
+        Toast.error(libL10n.fail, body: wolValidation.$1?.toString());
+        return null;
+      }
+    }
+
+    final bmc = _bmcToSave();
+    if (bmc != null && !bmc.isComplete) {
+      // Which half is missing, since `isComplete` is both and reporting either
+      // as a bad address sent the user back to retype one that was fine.
+      Toast.error(
+        libL10n.fail,
+        body: bmc.uri == null ? l10n.bmcAddrInvalid : l10n.bmcAccountUnset,
+      );
+      return null;
+    }
+
+    return (
+      local: local,
+      useSsh: useSsh,
+      useMonitorHttp: useMonitorHttp,
+      selectedKey: selectedKey,
+      geo: geo,
+      pve: pve,
+      wol: wol,
+      bmc: bmc,
+    );
+  }
+
+  WakeOnLanCfg? _wolToSave() {
+    final wolEmpty =
+        _wolMacCtrl.text.isEmpty &&
+        _wolIpCtrl.text.isEmpty &&
+        _wolPwdCtrl.text.isEmpty;
+    return wolEmpty
+        ? null
+        : WakeOnLanCfg(
+            mac: _wolMacCtrl.text,
+            ip: _wolIpCtrl.text,
+            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
+          );
+  }
+
+  BmcCfg? _bmcToSave() {
+    // An address alone is not enough to reach a BMC, and a half-filled one
+    // would poll forever against nothing — so it is all or nothing
+    final bmcAddr = _bmcAddrCtrl.text.trim();
+    return bmcAddr.isEmpty
+        ? null
+        : BmcCfg(
+            addr: bmcAddr,
+            credId: _bmcCredId.value,
+            certSha256: _bmcCert.value,
+          );
+  }
+
+  /// The server the form describes, defaults applied once. Pure: nothing on
+  /// the form is written.
+  Spi _buildSpi(_SaveForm form) {
+    final (:local, :selectedKey, :geo, :wol, :bmc, useSsh: _, useMonitorHttp: _, pve: _) = form;
+    final proxyCommandText = _proxyCommandCtrl.text.trim();
     final custom = ServerCustom(
-      cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
       tempIsCelsius: _tempIsCelsius.value,
       logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
@@ -649,17 +735,20 @@ extension _Actions on _ServerEditPageState {
     // retyping exercise. Only the address is required, and only when the
     // switch is on: there is nothing to dial without it.
     final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
-    if (useMonitorHttp && monitorAddr == null) {
-      Toast.show('${libL10n.invalid}: Monitor URL');
-      return;
-    }
     final monitorHttp = monitorAddr == null
         ? null
         : MonitorHttpCredential(
             addr: monitorAddr,
-            user: _monitorUserCtrl.text.selfNotEmptyOrNull,
             pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
-            ignoreCert: _monitorIgnoreCert.value,
+            // Not edited here: kept for the same agent only.
+            // TODO: remove with `MonitorHttpCredential.legacyUser`.
+            legacyUser: spi?.monitorHttp?.addr == monitorAddr
+                ? spi?.monitorHttp?.legacyUser
+                : null,
+            // A pin names the certificate seen at one address: kept for that
+            // address only, so another agent's first connection asks rather
+            // than reporting a changed certificate.
+            certSha256: _monitorCertAddr?.trim() == monitorAddr.trim() ? _monitorCert.value : null,
             allowInsecure: _monitorAllowInsecure.value,
           );
 
@@ -670,9 +759,8 @@ extension _Actions on _ServerEditPageState {
         : SshCredential(
             ip: _ipController.text,
             port: int.tryParse(_portController.text) ?? 22,
-            // Defaulted here as well as in the checks above, which only run
-            // when the switch is on: a parked configuration is still one
-            // somebody will turn back on.
+            // Defaulted here and only here, whatever the switch says: a
+            // parked configuration is still one somebody will turn back on.
             user: _usernameController.text.isEmpty
                 ? 'root'
                 : _usernameController.text,
@@ -681,61 +769,21 @@ extension _Actions on _ServerEditPageState {
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            keyPath: selectedKey != null ? null : _keyPath.value,
-            identityFiles:
-                keyIdx == null && _keyPath.value == this.spi?.ssh?.keyPath
-                ? this.spi?.ssh?.identityFiles
-                : null,
+            identityFiles: switch ((selectedKey, _keyPath.value)) {
+              (null, final path?) =>
+                path == spi?.ssh?.resolvedIdentityFiles.firstOrNull
+                    ? spi!.ssh!.resolvedIdentityFiles
+                    : [path],
+              _ => null,
+            },
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
-            jumpId: _jumpServers.value.isEmpty
-                ? null
-                : _jumpServers.value.first,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
             fileTransport: _fileTransport.value,
             allowLegacyAlgorithms: _allowLegacyAlgorithms.value,
           );
 
-    final wolEmpty =
-        _wolMacCtrl.text.isEmpty &&
-        _wolIpCtrl.text.isEmpty &&
-        _wolPwdCtrl.text.isEmpty;
-    final wol = wolEmpty
-        ? null
-        : WakeOnLanCfg(
-            mac: _wolMacCtrl.text,
-            ip: _wolIpCtrl.text,
-            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
-          );
-    if (wol != null) {
-      final wolValidation = wol.validate();
-      if (!wolValidation.$2) {
-        Toast.error(libL10n.fail, body: wolValidation.$1?.toString());
-        return;
-      }
-    }
-
-    // An address alone is not enough to reach a BMC, and a half-filled one
-    // would poll forever against nothing — so it is all or nothing
-    final bmcAddr = _bmcAddrCtrl.text.trim();
-    final bmc = bmcAddr.isEmpty
-        ? null
-        : BmcCfg(
-            addr: bmcAddr,
-            credId: _bmcCredId.value,
-            certSha256: _bmcCert.value,
-          );
-    if (bmc != null && !bmc.isComplete) {
-      // Which half is missing, since `isComplete` is both and reporting either
-      // as a bad address sent the user back to retype one that was fine.
-      Toast.error(
-        libL10n.fail,
-        body: bmc.uri == null ? l10n.bmcAddrInvalid : l10n.bmcAccountUnset,
-      );
-      return;
-    }
-
-    final spi = Spi(
+    return Spi(
       name: _nameController.text.isNotEmpty
           ? _nameController.text
           : local
@@ -767,23 +815,22 @@ extension _Actions on _ServerEditPageState {
           ? null
           : _disabledCmdTypes.value.toList(),
     );
-    final validationError = spi.validate();
-    if (validationError != null) {
-      Toast.error(_validationErrorMessage(validationError));
-      return;
-    }
+  }
 
+  /// Writes [spi], its sudo password, its PVE config and the tag renames.
+  /// False when it did not save, having said why.
+  Future<bool> _persist(Spi spi, PveConfig? pve) async {
     try {
       if (this.spi == null) {
         final existsIds = Stores.server.keys();
         if (existsIds.contains(spi.id)) {
           Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
-          return;
+          return false;
         }
-        if (!await _persistPendingSudoPassword()) return;
+        if (!await _persistPendingSudoPassword()) return false;
         await ref.read(serversProvider.notifier).addServer(spi);
       } else {
-        if (!await _persistPendingSudoPassword()) return;
+        if (!await _persistPendingSudoPassword()) return false;
         await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
       // A child of the server row, so only once that row exists.
@@ -794,18 +841,34 @@ extension _Actions on _ServerEditPageState {
       await _applyTagRenames();
     } on DuplicateNameException catch (e) {
       if (mounted) Toast.error(l10n.nameAlreadyExistsFmt(e.name));
-      return;
+      return false;
     } catch (e, s) {
       if (mounted) context.showErrDialog(e, s);
-      return;
+      return false;
+    }
+    return true;
+
+  }
+
+  /// Closes the funnel `edit opened` began, and is the one place that knows
+  /// the whole shape of what was configured. Every value here is an enum or a
+  /// flag this app defines -- no host, no name, no credential -- which is
+  /// what makes "which combinations are actually used" answerable without
+  /// any of them being about a particular server.
+  void _reportSaved(_SaveForm form) {
+    final (:useSsh, :useMonitorHttp, :local, :selectedKey, :geo, pve: _, wol: _, bmc: _) = form;
+    String auth() {
+      if (selectedKey != null || _keyPath.value != null) return 'key';
+      if (_passwordController.text.isNotEmpty) return 'password';
+      return 'none';
     }
 
-    if (!mounted) return;
-    // Closes the funnel `edit opened` began, and is the one place that knows
-    // the whole shape of what was configured. Every value here is an enum or a
-    // flag this app defines -- no host, no name, no credential -- which is
-    // what makes "which combinations are actually used" answerable without
-    // any of them being about a particular server.
+    String via() {
+      if (_jumpServers.value.isNotEmpty) return 'jump';
+      if (_proxyCommandCtrl.text.trim().isNotEmpty) return 'proxy';
+      return 'direct';
+    }
+
     Diag.crumb(
       SbDiag.server,
       'edit saved',
@@ -813,112 +876,78 @@ extension _Actions on _ServerEditPageState {
         'ssh': '$useSsh',
         'monitor': '$useMonitorHttp',
         'local': '$local',
-        // The same two key sources the validation above counts, and for the
-        // same reason: a server imported with an IdentityFile has its key in
-        // `_keyPath` and no `selectedKey`, so testing only the latter filed it
-        // under `password` when it has no password at all. `none` is a real
-        // third answer -- the save path asks the user to confirm it and then
-        // goes ahead -- and folding it into `password` would report a
-        // passwordless server as one with a password.
-        if (useSsh)
-          'auth': switch (0) {
-            _ when selectedKey != null || _keyPath.value != null => 'key',
-            _ when _passwordController.text.isNotEmpty => 'password',
-            _ => 'none',
-          },
-        if (useSsh)
-          'via': switch (0) {
-            _ when _jumpServers.value.isNotEmpty => 'jump',
-            _ when proxyCommandText.isNotEmpty => 'proxy',
-            _ => 'direct',
-          },
+        // The same two key sources the validation counts: a server imported
+        // with an IdentityFile has its key in `_keyPath` and no `selectedKey`.
+        // `none` is a real third answer -- the save asks the user to confirm
+        // it and then goes ahead.
+        if (useSsh) 'auth': auth(),
+        if (useSsh) 'via': via(),
         if (useSsh) 'files': _fileTransport.value.name,
         // Whether one was typed, never what it was — a coordinate is where the
-        // user's machine is. Here rather than under `globe` because it is one
-        // more field of a saved server, and it answers a different question
-        // from `globe.placed`: that counts what is on a globe someone has open,
-        // this counts the field being filled in at all.
+        // user's machine is.
         'geo': geo == null ? 'no' : 'yes',
       },
     );
-    // Saved either way — the address may well be one TLS is being set up for,
-    // and refusing to store it would be this page deciding that for the user.
-    // But it will not connect as it stands, and the switch that would let it
-    // is on this same page under More, so saying so beats leaving them to find
-    // out from the detail page's error.
-    if (monitorHttp?.needsInsecureOptIn == true) {
-      Toast.warn(
-        l10n.monitorHttpsRequired,
-        body: l10n.monitorAllowInsecureHttpTip,
-      );
-    }
-    context.pop();
   }
 }
+
+/// What [_Actions._validateForm] checked, for the rest of a save.
+typedef _SaveForm = ({
+  bool local,
+  bool useSsh,
+  bool useMonitorHttp,
+  PrivateKeyInfo? selectedKey,
+  GeoCoord? geo,
+  PveConfig? pve,
+  WakeOnLanCfg? wol,
+  BmcCfg? bmc,
+});
 
 extension _Utils on _ServerEditPageState {
   void _markSSHConfigImportHandled() {
     Stores.setting.firstTimeReadSSHCfg.put(false);
   }
 
+  /// Offers `~/.ssh/config` once, for the first server, when it has hosts:
+  /// in the discovery sheet, where they are picked and their jumps come with
+  /// them.
   Future<void> _checkSSHConfigImport() async {
     final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
-    if (hasExistingServers) {
+    var hasHosts = false;
+    if (!hasExistingServers && await SshConfigDiscovery.isAvailable()) {
+      try {
+        hasHosts = (await const SshConfigDiscovery().discover()).hosts.isNotEmpty;
+      } catch (e) {
+        // Unreadable here, the sandboxed build's case: nothing to offer
+        // unasked. Settings → SSH config import picks the file by hand.
+        dprint('Reading SSH config for the first server: $e');
+      }
+    }
+    if (!hasHosts) {
       _markSSHConfigImportHandled();
       return;
     }
+    if (!mounted) return;
 
-    try {
-      final servers = await SSHConfig.parseConfig();
-      if (!mounted) return;
-      if (servers.isEmpty) {
-        _markSSHConfigImportHandled();
-        return;
-      }
-
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: l10n.sshConfigImport,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigFound),
-            const SizedBox(height: 8),
-            Text(l10n.sshConfigImportPermission),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      _markSSHConfigImportHandled();
-
-      if (shouldImport == true) {
-        await ServerDeduplication.importServersWithNotification(
-          servers: servers,
-          ref: ref,
-          context: context,
-          allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: l10n.sshConfigImported,
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      if (e is PathAccessException ||
-          e.toString().contains('Operation not permitted')) {
-        _markSSHConfigImportHandled();
-        Toast.show(
-          '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
-        );
-      } else {
-        dprint('Error checking SSH config: $e');
-        _markSSHConfigImportHandled();
-        if (e is SpiValidationException) {
-          Toast.error(_validationErrorMessage(e.error));
-        }
-      }
-    }
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.sshConfigFound),
+          const SizedBox(height: 8),
+          Text(l10n.sshConfigImportPermission),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    _markSSHConfigImportHandled();
+    if (shouldImport != true || !mounted) return;
+    await showSshDiscoverySheet(
+      context,
+      sources: const [SshConfigDiscovery()],
+    );
   }
 
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
@@ -999,7 +1028,7 @@ extension _Utils on _ServerEditPageState {
             .keys
             .indexWhere((e) => e.id == ssh.keyId);
       }
-      _keyPath.value = ssh.keyPath;
+      _keyPath.value = ssh.resolvedIdentityFiles.firstOrNull;
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
@@ -1014,7 +1043,6 @@ extension _Utils on _ServerEditPageState {
 
     final custom = spi.custom;
     if (custom != null) {
-      _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _diskCountsNetwork.value = custom.diskCountsNetwork;
@@ -1048,9 +1076,9 @@ extension _Utils on _ServerEditPageState {
     _preferMonitorHttp.value = dialled.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
-      _monitorUserCtrl.text = monitorHttp.user ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
-      _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+      _monitorCert.value = monitorHttp.certSha256;
+      _monitorCertAddr = monitorHttp.addr;
       _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 
@@ -1067,6 +1095,16 @@ extension _Utils on _ServerEditPageState {
       _wolIpCtrl.text = wol.ip;
       _wolPwdCtrl.text = wol.pwd ?? '';
     }
+
+    _storedSecrets.addAll(
+      [
+        _passwordController,
+        _pvePwdCtrl,
+        _pveTokenSecretCtrl,
+        _monitorPwdCtrl,
+        _wolPwdCtrl,
+      ].where((c) => c.text.isNotEmpty),
+    );
 
     _env.value = spi.envs ?? {};
 

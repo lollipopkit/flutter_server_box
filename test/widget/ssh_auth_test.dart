@@ -3,12 +3,13 @@ import 'dart:isolate';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/data/model/file/transfer_worker.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
@@ -33,8 +34,11 @@ final _spiWithPassword = spiFixture(
 );
 
 void main() {
+  final en = AppLocalizationsEn();
+  final libEn = LibLocalizationsEn();
+
   setUp(() {
-    app_locale.l10n = AppLocalizationsEn();
+    app_locale.l10n = en;
   });
 
   test('empty keyboard-interactive request needs no dialog', () {
@@ -121,7 +125,7 @@ void main() {
 
     expect(find.text('Multi-factor authentication'), findsOneWidget);
     expect(find.text('Enter all requested values.'), findsOneWidget);
-    expect(find.text('Server: Jump host'), findsOneWidget);
+    expect(find.text('${libEn.server}: Jump host'), findsOneWidget);
 
     final fields = find.byType(TextField);
     expect(fields, findsNWidgets(3));
@@ -173,7 +177,7 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(
       tester.widget<TextField>(find.byType(TextField)).decoration?.labelText,
-      'Verification code',
+      en.sshVerificationCode,
     );
     await tester.enterText(find.byType(TextField), '123456');
     await tester.tap(find.byType(TextButton).last);
@@ -249,7 +253,7 @@ void main() {
 
     await tester.pumpAndSettle();
     final field = tester.widget<TextField>(find.byType(TextField));
-    expect(field.decoration?.labelText, 'Verification code');
+    expect(field.decoration?.labelText, en.sshVerificationCode);
     expect(field.decoration?.hintText, 'Enter backup code from list 3:');
     await tester.tap(find.byType(TextButton).first);
     await tester.pumpAndSettle();
@@ -323,7 +327,7 @@ void main() {
 
     expect(
       tester.widget<TextField>(find.byType(TextField)).decoration?.labelText,
-      'Verification code',
+      en.sshVerificationCode,
     );
     await tester.enterText(find.byType(TextField), '654321');
     await tester.tap(find.byType(TextButton).last);
@@ -364,7 +368,7 @@ void main() {
 
     expect(
       tester.widget<TextField>(find.byType(TextField)).decoration?.labelText,
-      '验证码',
+      app_locale.l10n.sshVerificationCode,
     );
     await tester.enterText(find.byType(TextField), '123456');
     await tester.tap(find.byType(TextButton).last);

@@ -21,7 +21,7 @@
 //! empty here — those stay on the shared script path (see monitor's
 //! extended-cycle collection), which is the only source for them.
 
-use sbm_parser::types::Disk;
+use sbm_parser::types::{BlockDevice, Disk};
 use sbm_parser::{ServerStatus, common, linux};
 use std::fs;
 use std::fs::OpenOptions;
@@ -336,6 +336,29 @@ pub fn total_memory() -> Option<u64> {
         .map(|kib| kib * 1024)
 }
 
+/// Linux under WSL2.
+pub fn wsl() -> bool {
+    read("/proc/sys/kernel/osrelease").to_ascii_lowercase().contains("microsoft")
+}
+
+/// Processes holding WSL2's GPU device (`/dev/dxg`), which every GPU of the
+/// host is reached through: what `nvidia-smi` cannot list there. Those this
+/// account may look into (its own, all as root); no memory figure.
+pub fn dxg_processes() -> Vec<sbm_parser::types::GpuMemProcess> {
+    let Ok(procs) = std::fs::read_dir("/proc") else { return Vec::new() };
+    let mut out = Vec::new();
+    for entry in procs.flatten() {
+        let Some(pid) = entry.file_name().to_str().and_then(|n| n.parse::<i64>().ok()) else { continue };
+        let Ok(fds) = std::fs::read_dir(entry.path().join("fd")) else { continue };
+        let holds = fds.flatten().any(|fd| std::fs::read_link(fd.path()).is_ok_and(|t| t == std::path::Path::new("/dev/dxg")));
+        if holds {
+            let name = read(&format!("/proc/{pid}/comm")).trim().to_string();
+            out.push(sbm_parser::types::GpuMemProcess { pid, name, memory: 0 });
+        }
+    }
+    out
+}
+
 /// `lsblk`'s JSON, as `commands::DISK` runs it; empty where there is none.
 pub fn block_devices() -> String {
     run("lsblk", &linux::LSBLK_ARGS)
@@ -355,8 +378,9 @@ fn df() -> String {
 }
 
 /// `block_devices` is [`block_devices`]' last output, merged with a fresh
-/// [`df`] the way `commands::DISK`'s output is — see `linux::merge_disks`.
-pub fn sample(block_devices: &str) -> ServerStatus {
+/// [`df`] the way `commands::DISK`'s output is — see `linux::merge_disks`;
+/// `device_tree` is the same output parsed into the device tree.
+pub fn sample(block_devices: &str, device_tree: &[BlockDevice]) -> ServerStatus {
     let mem_raw = read("/proc/meminfo");
     let (temp_types, temp_values) = thermal_zones();
     let disks: Vec<Disk> = linux::parse_disk(&format!(
@@ -373,6 +397,7 @@ pub fn sample(block_devices: &str) -> ServerStatus {
         mem: linux::parse_mem(&mem_raw),
         swap: linux::parse_swap(&mem_raw),
         disks,
+        block_devices: device_tree.to_vec(),
         net: linux::parse_net(&read("/proc/net/dev")),
         temps: linux::parse_temps(&temp_types, &temp_values, 1000.0),
         conn: linux::parse_conn(&read("/proc/net/snmp")),
@@ -398,7 +423,7 @@ mod tests {
     // produces plausible data end to end on a real Linux machine.
     #[test]
     fn sample_produces_plausible_data() {
-        let status = sample(&block_devices());
+        let status = sample(&block_devices(), &[]);
         assert!(
             !status.cpu.is_empty(),
             "expected at least a 'cpu' summary row"
@@ -420,7 +445,7 @@ mod tests {
                 .iter()
                 .find_map(|d| (d.mount == mount).then_some(d).or_else(|| find(&d.children, mount)))
         }
-        let status = sample(&block_devices());
+        let status = sample(&block_devices(), &[]);
         let root = find(&status.disks, "/").expect("a root filesystem");
         assert!(root.fs_type.is_some(), "{root:?}");
         assert!(root.size > 0, "{root:?}");

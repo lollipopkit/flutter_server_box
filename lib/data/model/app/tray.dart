@@ -1,5 +1,5 @@
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
 
 /// What one server looks like in the status menu.
 ///

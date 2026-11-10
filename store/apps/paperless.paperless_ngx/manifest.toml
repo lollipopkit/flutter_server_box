@@ -1,0 +1,140 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Paperless-ngx, a document archive: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "paperless"
+name = "paperless_ngx"
+project = "Paperless-ngx"
+developer = "Paperless-ngx"
+version = "3.2.1"
+homepage = "https://docs.paperless-ngx.com"
+source = "https://github.com/paperless-ngx/paperless-ngx/tree/v3.2.1"
+glyph = "description"
+tone = "leaf"
+categories = ["documents"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Paperless-ngx"
+
+[description]
+en = "Scan, index and archive your paper documents: OCR makes every page searchable. Files put in the consume folder are imported and removed from it."
+zh = "扫描、索引并归档纸质文档，OCR 让每一页都可搜索。放入导入文件夹的文件会被导入，并从该文件夹中删除。"
+zh-TW = "掃描、索引並歸檔紙本文件，OCR 讓每一頁都可搜尋。放入匯入資料夾的檔案會被匯入，並從該資料夾中刪除。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/paperless-ngx/paperless-ngx/blob/v3.2.1/LICENSE"
+accept = true
+
+# docs.paperless-ngx.com/setup: the OCR and the workers want about 1 GiB.
+[requirements]
+memory_min_mib = 1024
+memory_recommended_mib = 2048
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+PAPERLESS_VERSION = "3.2.1"
+POSTGRES_VERSION = "18.6-alpine"
+VALKEY_VERSION = "9.0.3-alpine"
+PAPERLESS_ADMIN_USER = "admin"
+POSTGRES_USER = "paperless"
+POSTGRES_DB = "paperless"
+
+[[secrets]]
+env = "PAPERLESS_ADMIN_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "PAPERLESS_SECRET_KEY"
+length = 64
+
+[[secrets]]
+env = "POSTGRES_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "PAPERLESS_ADMIN_PASSWORD"
+
+[[settings]]
+key = "data"
+type = "path"
+env = "PAPERLESS_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The search index, the classifier and the logs.", zh = "搜索索引、分类模型和日志。", zh-TW = "搜尋索引、分類模型和日誌。" }
+
+[[settings]]
+key = "media"
+type = "path"
+env = "PAPERLESS_MEDIA"
+default = "{stack}/media"
+data = true
+label = { en = "Documents", zh = "文档", zh-TW = "文件" }
+help = { en = "The originals and their archived PDF versions.", zh = "原始文件及其归档 PDF 版本。", zh-TW = "原始檔案及其歸檔 PDF 版本。" }
+
+[[settings]]
+key = "database"
+type = "path"
+env = "PAPERLESS_DB_DATA"
+default = "{stack}/postgres"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "consume"
+type = "path"
+env = "PAPERLESS_CONSUME"
+default = "{shared}/documents/consume"
+label = { en = "Consume folder", zh = "导入文件夹", zh-TW = "匯入資料夾" }
+help = { en = "Documents put here are imported, then deleted from here.", zh = "放到这里的文档会被导入，然后从这里删除。", zh-TW = "放到這裡的文件會被匯入，然後從這裡刪除。" }
+
+[[settings]]
+key = "export"
+type = "path"
+env = "PAPERLESS_EXPORT"
+default = "{stack}/export"
+data = false
+label = { en = "Export folder", zh = "导出文件夹", zh-TW = "匯出資料夾" }
+help = { en = "Where document_exporter writes a full backup.", zh = "document_exporter 写入完整备份的位置。", zh-TW = "document_exporter 寫入完整備份的位置。" }
+
+[[settings]]
+key = "ocr"
+type = "choice"
+default = "eng"
+label = { en = "OCR language", zh = "OCR 语言", zh-TW = "OCR 語言" }
+help = { en = "The language most documents are written in. The image ships these five.", zh = "大多数文档使用的语言。镜像内置这五种。", zh-TW = "大多數文件使用的語言。映像內建這五種。" }
+options = [
+  { value = "eng", label = { en = "English" }, env = { PAPERLESS_OCR_LANGUAGE = "eng" } },
+  { value = "deu", label = { en = "Deutsch" }, env = { PAPERLESS_OCR_LANGUAGE = "deu" } },
+  { value = "fra", label = { en = "Français" }, env = { PAPERLESS_OCR_LANGUAGE = "fra" } },
+  { value = "ita", label = { en = "Italiano" }, env = { PAPERLESS_OCR_LANGUAGE = "ita" } },
+  { value = "spa", label = { en = "Español" }, env = { PAPERLESS_OCR_LANGUAGE = "spa" } },
+]
+
+[[settings]]
+key = "port"
+type = "port"
+env = "PAPERLESS_PORT"
+default = 8000
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the Paperless mobile apps. Off: only through the desk.", zh = "供 Paperless 手机应用连接。关闭时只能通过桌面访问。", zh-TW = "供 Paperless 手機應用程式連線。關閉時只能透過桌面存取。" }
+on = { PAPERLESS_BIND = "0.0.0.0" }
+off = { PAPERLESS_BIND = "127.0.0.1" }

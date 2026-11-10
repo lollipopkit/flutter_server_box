@@ -94,7 +94,7 @@ updates:
         patterns:
           - "*"
 
-  # fl_pi_llm, the LLM layer shared with GPT Box, moves with its own repository
+  # fl_pi_llm, the LLM layer shared with LLMBox, moves with its own repository
   # rather than with a release: a bump is the submodule pointer following its
   # `main` (the `branch` in .gitmodules). Only that submodule — the others are
   # moved by hand, with the change that needs them. The shortest cooldown

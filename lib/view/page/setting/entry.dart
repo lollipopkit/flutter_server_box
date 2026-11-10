@@ -4,11 +4,11 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
-import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
 import 'package:fl_tty/fl_tty.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -20,28 +20,27 @@ import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/geo_data.dart';
+import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/utils/logo_url.dart';
-import 'package:server_box/core/utils/server_dedup.dart';
-import 'package:server_box/core/utils/ssh_config.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
-import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/github_id.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/bmc_credential/list.dart';
+import 'package:server_box/view/page/notice/dmg_notice.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
@@ -51,18 +50,20 @@ import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
-import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/page/setting/seq/virtual_key.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
 import 'package:server_box/view/widget/crash_debug.dart';
 import 'package:server_box/view/widget/crash_report_dialog.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
-import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/marked_title.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'about.dart';
 part 'app_page.dart';
@@ -85,8 +86,6 @@ part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
-
-  static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -146,31 +145,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     _selectedId = _buildNodes().firstOrNull?.firstLeaf?.id;
+    // Which appearance rows there are follows what is installed: the icon
+    // pack row is one only once a pack is — see [ThemeAppearance.themeRows].
+    ThemePackages.installedChanged.addListener(_onInstalledChanged);
   }
+
+  void _onInstalledChanged() => setStateSafe(() {});
 
   @override
   void dispose() {
+    ThemePackages.installedChanged.removeListener(_onInstalledChanged);
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
   }
 
-  Future<void> _clearAllSettings() async {
-    try {
-      if (!await Stores.setting.clear()) {
-        Toast.error(libL10n.fail);
-        return;
-      }
-      unawaited(RNodes.app.notify());
-      Toast.success(libL10n.success);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to clear settings', e, s);
-      Toast.error(libL10n.fail);
-    }
-  }
-
-  void _onSelect(SettingsNode node) {
-    _dropPushedPages();
+  Future<void> _onSelect(SettingsNode node) async {
+    if (!await _leavePushedPages() || !mounted) return;
     setState(() => _selectedId = node.id);
   }
 
@@ -236,8 +227,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// The search is a way *to* a page, not a place — leaving it up behind the
   /// page it just opened would mean two things on screen claiming to be what
   /// the content is showing.
-  void _onHit(SettingsHit hit) {
-    _dropPushedPages();
+  Future<void> _onHit(SettingsHit hit) async {
+    if (!await _leavePushedPages() || !mounted) return;
     setState(() {
       _searchCtrl.clear();
       _query = '';
@@ -253,7 +244,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// The navigator holding the right-hand side, so a selection can reach it.
   final _contentNav = GlobalKey<NavigatorState>();
 
-  /// Discards anything pushed on top of the levels [_path] describes.
+  /// Whether [_contentNav] has a page to go back from, as it last said; back
+  /// and the swipe are its until it has none.
+  bool _contentCanPop = false;
+
+
+  /// Removes anything pushed on top of the levels [_path] describes, once
+  /// each page that would lose something agreed; false when one refused.
   ///
   /// The content navigator is driven declaratively — the pages come from the
   /// selection — but a page inside it may push a route by hand: the raw
@@ -263,18 +260,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// nothing at all, and the editor stayed put whichever section was picked.
   ///
   /// `route.settings is Page` is what tells the two apart: the declarative ones
-  /// each come from a `MaterialPage`, and a hand-pushed one does not.
-  void _dropPushedPages() {
+  /// each come from an `AppPage`, and a hand-pushed one does not.
+  Future<bool> _leavePushedPages() async {
     final nav = _contentNav.currentState;
-    if (nav == null) return;
-    nav.popUntil((route) => route.settings is Page);
+    if (nav == null) return true;
+    return nav.popUntilGuarded((route) => route.settings is Page);
   }
 
   /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
   /// selects what is first inside, rather than leaving a row of tabs with none
   /// of them on. The same applies to a row of the list.
-  void _onTab(SettingsNode node) {
-    _dropPushedPages();
+  Future<void> _onTab(SettingsNode node) async {
+    if (!await _leavePushedPages() || !mounted) return;
     setState(() {
       if (node.isLeaf && _path.isNotEmpty) {
         _selectedId = node.id;
@@ -288,13 +285,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   /// Out one level. What was selected stays selected — it is inside the branch
   /// just left, and that branch is a tab here, lit to say so.
-  void _onTabBack() {
+  Future<void> _onTabBack() async {
     if (_path.isEmpty) return;
     // The back button lives in the `Scaffold`'s app bar, outside the content
     // navigator — so with the raw editor pushed on top it is still visible and
     // still tappable, and rebuilding the pages underneath would leave the
     // editor on screen describing a level that is no longer showing.
-    _dropPushedPages();
+    if (!await _leavePushedPages() || !mounted || _path.isEmpty) return;
     setState(_path.removeLast);
   }
 
@@ -323,15 +320,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         // The width `AdaptivePanes` splits at, so that a window wide enough for
         // two columns gets two columns here as well.
         final wide = constraints.maxWidth >= AdaptivePanes.kSplitWidth;
-        return _SettingsWidth(
+        return _buildScaffold(
           wide: wide,
-          child: _buildScaffold(
-            wide: wide,
-            menu: menu,
-            nodes: nodes,
-            selected: selected,
-            hits: hits,
-          ),
+          menu: menu,
+          nodes: nodes,
+          selected: selected,
+          hits: hits,
         );
       },
     );

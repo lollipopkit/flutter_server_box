@@ -14,11 +14,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_tunnel.dart';
-import 'package:server_box/core/utils/monitor_ws_frames.dart';
+import 'package:server_box/core/monitor/http.dart';
+import 'package:server_box/core/monitor/tunnel.dart';
+import 'package:server_box/core/monitor/ws_frames.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 
 import '../../helpers/fake_agent_health.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -50,6 +50,18 @@ class _FakeAgent {
   /// Stops reading a connection once it is open: a link that has stopped
   /// moving, which fills the socket's buffers until the writer is held back.
   bool stalled = false;
+
+  /// The connections [stalled] stopped reading.
+  final _paused = <StreamSubscription<dynamic>>[];
+
+  /// Reads again what [stalled] stopped, so what is queued drains.
+  void unstall() {
+    stalled = false;
+    for (final sub in _paused) {
+      sub.resume();
+    }
+    _paused.clear();
+  }
 
   static Future<_FakeAgent> start({String? target}) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
@@ -109,7 +121,10 @@ class _FakeAgent {
             return;
           }
           socket.add(jsonEncode({'type': 'ready'}));
-          if (stalled) sub.pause();
+          if (stalled) {
+            sub.pause();
+            _paused.add(sub);
+          }
           return;
         }
         // Bytes going the other way are echoed back with a marker, so a test
@@ -181,7 +196,13 @@ void main() {
         // The app's own transport error, not a bare `Exception`: a session
         // reports this one to the page, and `RemoteDesktopSessions` retries on
         // it rather than on the type.
-        throwsA(isA<MonitorHttpErr>()),
+        throwsA(
+          isA<MonitorHttpErr>().having(
+            (e) => e.type,
+            'type',
+            MonitorHttpErrType.targetUnreachable,
+          ),
+        ),
       );
     });
   });
@@ -311,10 +332,15 @@ void main() {
       await Future<void>.delayed(const Duration(seconds: 2));
       expect(read, lessThan(64 << 20), reason: 'no more than the buffers hold');
 
-      await channel.close();
+      // Not awaited yet: on a stalled link `close` waits out its grace period
+      // for the socket, and what this checks is that reading stops at once.
+      final closing = channel.close();
       final atClose = read;
       await Future<void>.delayed(const Duration(milliseconds: 500));
       expect(read, lessThanOrEqualTo(atClose + (1 << 20)));
+      // The link moving again is what lets the socket finish closing.
+      agent.unstall();
+      await closing;
     });
   });
 

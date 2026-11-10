@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/src/rust/api/container.dart' as ffi;
 
@@ -239,7 +239,7 @@ void main() {
       expect(exec.stdin, isNull);
     });
 
-    test('a rejected password is reported as exit code 2', () async {
+    test('a rejected password is said beside the exit code', () async {
       final exec = _RecordingExec()
         ..result = const ExecResult(
           exitCode: 1,
@@ -247,6 +247,20 @@ void main() {
           stderr: 'Sorry, try again.',
         );
       final result = await exec.runWithSudo('sudo -S id', password: 'wrong');
+      expect(result.sudoRejected, isTrue);
+      expect(result.exitCode, 1);
+      expect(result.succeeded, isFalse);
+    });
+
+    test("a command's own exit 2 is not a rejected password", () async {
+      final exec = _RecordingExec()
+        ..result = const ExecResult(
+          exitCode: 2,
+          stdout: '',
+          stderr: "ls: cannot access 'x': No such file or directory",
+        );
+      final result = await exec.runWithSudo('ls x', password: 'right');
+      expect(result.sudoRejected, isFalse);
       expect(result.exitCode, 2);
     });
 
@@ -261,7 +275,7 @@ void main() {
           stderr: 'sudo: a password is required',
         );
       final result = await exec.runWithSudo('sudo -S shutdown -h now');
-      expect(result.exitCode, kSudoPasswordRejected);
+      expect(result.sudoRejected, isTrue);
       expect(exec.stdin, isNull);
     });
 
@@ -287,7 +301,7 @@ void main() {
         runtimeName: 'docker',
         sudo: true,
       );
-      expect(command, startsWith('sudo -S env '));
+      expect(command, startsWith("sudo -S -p '' env "));
       expect(command, isNot(contains('base64')));
       expect(command, isNot(contains('echo')));
     });

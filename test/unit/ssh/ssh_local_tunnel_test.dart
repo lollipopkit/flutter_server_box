@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 
 void main() {
   test('the desktop listener is IPv4 loopback on an ephemeral port', () async {

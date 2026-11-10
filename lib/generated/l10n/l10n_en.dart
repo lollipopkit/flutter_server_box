@@ -85,13 +85,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiRiskDestructive => 'High risk';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Runs only when both the model and the local check call it read-only';
-
-  @override
   String get askAiHistory => 'Conversation history';
 
   @override
@@ -163,14 +156,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This host and the password you enter are saved on this device';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'Monitor (optional)';
 
   @override
   String get authFailTip => 'Authentication failed. Check the details';
-
-  @override
-  String get autoBackupConflict =>
-      'Only one automatic backup can be turned on at the same time.';
 
   @override
   String get autoConnect => 'Auto connect';
@@ -188,10 +177,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupEncrypted => 'Backup is encrypted';
 
   @override
-  String get backupNotEncrypted => 'Backup is not encrypted';
+  String get backupPassword => 'Backup password';
 
   @override
-  String get backupPassword => 'Backup password';
+  String get backupPasswordRemoveSynced =>
+      'This will remove the backup password from all devices using the same iCloud Keychain. Sync will pause on those devices until a new password is set.';
 
   @override
   String get backupPasswordRemoved => 'Backup password removed';
@@ -201,7 +191,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupPasswordTip =>
-      'Set a password to encrypt backup files. Leave empty to disable encryption.';
+      'Used to encrypt backups and synced data. All synced devices must use the same password—if you change it on one device, enter the new password on the others.';
 
   @override
   String get backupPasswordWrong => 'Incorrect backup password';
@@ -266,13 +256,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.';
+      'A remote Monitor needs HTTPS, unless HTTP is allowed for it.';
 
   @override
   String get monitorAllowInsecureHttp => 'Allow HTTP';
 
   @override
-  String get plainHttpTitle => 'This agent is served over plain HTTP';
+  String get plainHttpTitle => 'This Monitor is served over plain HTTP';
 
   @override
   String get plainHttpTip =>
@@ -290,7 +280,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]($url)';
+    return 'Read this server\'s status from the **Monitor**\'s HTTP API instead of running commands over SSH.\n\nThe Monitor has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up the Monitor]($url)';
   }
 
   @override
@@ -298,37 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Restored, except these themes. Install them again from the theme store or the file they came from.';
 
   @override
-  String get backupTip =>
-      'The exported data can be encrypted with password. \nPlease keep it safe.';
-
-  @override
-  String get icloudBackupStatusTitle => 'Backup status';
-
-  @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
-
-  @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
-
-  @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
-
-  @override
-  String get icloudBackupStateUploading => 'Uploading';
-
-  @override
   String get icloudBackupStateConflict => 'Conflict detected';
-
-  @override
-  String get icloudBackupStateUploaded => 'Uploaded';
-
-  @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
-  }
 
   @override
   String get bgRun => 'Run in background';
@@ -370,6 +330,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearAllStatsTitle => 'Clear All Statistics';
+
+  @override
+  String get clearAllSettings => 'Clear all settings';
 
   @override
   String clearServerStatsContent(String serverName) {
@@ -435,9 +398,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoveryFailed => 'Discovery failed';
 
   @override
-  String get discoverySettings => 'Discovery Settings';
-
-  @override
   String get distro => 'Distribution';
 
   @override
@@ -459,20 +419,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dockerPruneTip => 'Remove unused data to free up disk space';
 
   @override
-  String get dockerStatistics => 'Docker Statistics';
-
-  @override
   String get editVirtKeys => 'Virtual keys';
 
   @override
   String get editorHighlightTip =>
       'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
-
-  @override
-  String get enableMdns => 'Enable mDNS';
-
-  @override
-  String get enableMdnsDesc => 'Use mDNS/Bonjour to discover SSH services';
 
   @override
   String get envVars => 'Environment variable';
@@ -484,12 +435,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fallbackSshDest => 'Fallback SSH destination';
 
   @override
-  String get fdroidReleaseTip =>
-      'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'File \'$file\' too large $size, max $sizeMax';
+  }
+
+  @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' changed on the server after it was opened. Overwrite it?';
   }
 
   @override
@@ -502,35 +454,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullScreen => 'Full screen';
 
   @override
-  String get fullScreenJitter => 'Full screen jitter';
+  String get fullScreenAllServers => 'All servers';
 
   @override
-  String get fullScreenJitterHelp => 'To avoid screen burn-in';
+  String get fullScreenOneServer => 'One server';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total connected';
+  }
+
+  @override
+  String get fullScreenExit => 'Exit full screen';
+
+  @override
+  String get fullScreenJitter => 'Burn-in protection';
 
   @override
   String get fullScreenTip =>
       'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
-
-  @override
-  String get githubGistToken => 'GitHub Gist token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token is empty';
-
-  @override
-  String get githubGistIdInvalid =>
-      'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Go to';
@@ -541,9 +483,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeTabsCustomizeDesc =>
       'Customize which tabs appear on the home page and their order';
-
-  @override
-  String get ignoreCert => 'Ignore certificate';
 
   @override
   String get image => 'Image';
@@ -611,7 +550,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.';
+      'Save passphrases for encrypted private keys so you don\'t need to re-enter them after restarting the app. Turning this off deletes saved passphrases from this device.';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -694,7 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Jump server and ProxyCommand cannot be used together.';
 
   @override
-  String get noConnectionMethod => 'Configure SSH, a monitor agent, or both';
+  String get noConnectionMethod => 'Configure SSH, the Monitor, or both';
 
   @override
   String get keepForeground => 'Keep app foreground!';
@@ -727,15 +666,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Which shell a terminal starts. Empty restores /bin/sh.';
 
   @override
-  String get linuxNetTip => 'DNS servers. Empty restores the defaults';
+  String get linuxDnsTip => 'DNS servers. Empty restores the defaults.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Package mirror for the selected distribution. Empty restores the default.';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro mirror';
+  }
 
   @override
   String madeWithLove(String myGithub) {
     return 'Made with ❤️ by $myGithub';
   }
-
-  @override
-  String get maxConcurrency => 'Max Concurrency';
 
   @override
   String get maxRetryCount => 'Number of server reconnections';
@@ -852,19 +797,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not reviewed yet — tap to see the certificate';
 
   @override
-  String get bmcCertReview =>
-      'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.';
-
-  @override
-  String get bmcCertChanged => 'The certificate does not match. Check it.';
-
-  @override
   String get bmcCertExpired => 'Expired.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Previously accepted: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -905,10 +838,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.';
 
   @override
   String get pvePasswordRequired =>
@@ -999,7 +928,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Needs SSH to this server, or server_box_monitor installed with its file API on.';
+      'Needs SSH to this server, or the Monitor installed with its file API on.';
 
   @override
   String get back => 'Back';
@@ -1156,11 +1085,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.';
+      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the Monitor, the Monitor\'s own setting decides.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.';
+      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the Monitor stores in its history and checks disk alerts against.';
 
   @override
   String spentTime(String time) {
@@ -1168,22 +1097,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'All servers already exist ($duplicateCount duplicates found)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount duplicates will be skipped';
-  }
-
-  @override
   String get sshConfigFound => 'We found SSH configuration on your system.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return 'Found $totalCount servers';
-  }
 
   @override
   String get sshConfigImport => 'SSH Config Import';
@@ -1195,11 +1109,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Prompt to read ~/.ssh/config on first server creation';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'Imported $count servers from SSH config';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1233,16 +1142,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Would you like to select the SSH config file manually?';
 
   @override
-  String get sshConfigNoServers => 'No servers found in SSH config';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Cannot access SSH config file due to macOS permissions.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount servers will be imported';
-  }
 
   @override
   String get sshTermHelp =>
@@ -1265,11 +1166,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncedData => 'Synced data';
 
   @override
-  String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+  String get syncSecrets => 'Sudo passwords and API keys';
+
+  @override
+  String get keyPassphrases => 'Key passphrases';
+
+  @override
+  String get syncFiles => 'Fonts, images and skills';
+
+  @override
+  String get syncRemoteTooNew =>
+      'Synced data was created by a newer version of ServerBox. Update the app to continue syncing.';
+
+  @override
+  String get syncPasswordMismatch =>
+      'Synced data is encrypted with a different backup password. Enter the backup password used on your other devices.';
+
+  @override
+  String get syncUnreachable =>
+      'Could not connect to the sync service. Check your network connection and try again.';
 
   @override
   String get termFontSizeTip =>
@@ -1351,38 +1269,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtKeyRowsTip =>
       'The rest go on a page of their own, swiped sideways.';
-
-  @override
-  String get keyArrowDown => 'Down arrow';
-
-  @override
-  String get keyArrowLeft => 'Left arrow';
-
-  @override
-  String get keyArrowRight => 'Right arrow';
-
-  @override
-  String get keyArrowUp => 'Up arrow';
-
-  @override
-  String get keyControl => 'Control';
-
-  @override
-  String get keyEscape => 'Escape';
-
-  @override
-  String get keyPageDown => 'Page down';
-
-  @override
-  String get keyPageUp => 'Page up';
-
-  @override
-  String get termTextView => 'View as text';
-
-  @override
-  String termTextLetGo(int count) {
-    return 'Earlier lines no longer kept: $count';
-  }
 
   @override
   String get waitConnection =>
@@ -1573,17 +1459,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'The watch fetches from the monitor on its own, so only servers with one can be picked.';
+      'The watch fetches from the Monitor on its own, so only servers with the Monitor can be picked.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer => 'No server has the Monitor configured';
 
   @override
   String get legacyStatusGoneTitle => 'Status URLs no longer work';
 
   @override
   String get legacyStatusGoneBody =>
-      'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
+      'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the Monitor\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
 
   @override
   String get services => 'Services';
@@ -1744,7 +1630,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed';
+      'Allows the Agent to run commands on this device according to the permission mode';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -2117,44 +2003,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
-  String get systemGroups => 'Groups';
-
-  @override
-  String get userGid => 'GID';
-
-  @override
-  String get userGroupMembers => 'Members';
-
-  @override
-  String get userPrimaryMembers => 'Primary members';
-
-  @override
-  String get userSystemGroup => 'System group';
-
-  @override
-  String get userMembersHint => 'alice,bob';
-
-  @override
-  String get userRegularGroup => 'Regular';
-
-  @override
   String funcUnavailableFmt(String func) {
     return '$func is not available over this server\'s connection.';
   }
-
-  @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func needs the Monitor agent\'s $setting to be turned on.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func needs a newer Monitor agent.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Remote forwards through the Monitor agent need a newer agent: update it on the server.';
 
   @override
   String get rangeLive => 'Live';
@@ -2173,7 +2024,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.';
+      'Only the Monitor stores history. This connection keeps what this app has seen since it connected.';
 
   @override
   String get noHistoryYet => 'Nothing measured yet';
@@ -2188,11 +2039,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get to => 'To';
 
   @override
-  String get beyondRetention => 'beyond what this agent kept';
+  String get beyondRetention => 'beyond what this Monitor kept';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'Agent keeps $kept';
+    return 'Monitor keeps $kept';
   }
 
   @override
@@ -2359,6 +2210,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Filesystems';
+
+  @override
+  String get blockDevices => 'Block devices';
+
+  @override
+  String get notMounted => 'Not mounted';
+
+  @override
   String get unitDevices => 'devices';
 
   @override
@@ -2468,52 +2328,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionTip =>
-      'Both can be on at once. The order is the order they are dialled.';
+      'Both can be enabled at once and are tried in the order shown.';
 
   @override
-  String get transportNoneOn =>
-      'Both are off — this server cannot be connected.';
+  String get transportNoneOn => 'Enable at least one connection method.';
 
   @override
   String get thisDevice => 'This device';
 
   @override
   String get localServerTip =>
-      'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.';
+      'Reads this device directly, by running the status script here. SSH and the Monitor are not used, and their settings are kept.';
 
   @override
   String get localServerUnsupported =>
       'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.';
-
-  @override
-  String get localServerIntro =>
-      'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.';
-
-  @override
-  String get localServerAdd => 'Add this device';
-
-  @override
-  String get localServerIntroFooter =>
-      'It can also be turned on later, in a server\'s edit page under Connection.';
-
-  @override
   String get transportSectionOff =>
       'Off. The fields below are kept for when you turn it back on.';
 
   @override
-  String get monitorAgent => 'Monitor agent';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.';
+      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.';
 
   @override
   String get behaviour => 'Behaviour';
@@ -2563,7 +2403,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get tagOnThisServer => 'on this server';
+  String get tagOnThisServer => 'On this server';
 
   @override
   String tagServersFmt(int count) {
@@ -2726,10 +2566,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorSettings => 'Monitor settings';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart => 'Takes effect after the Monitor restarts';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2779,7 +2619,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Set on the Monitor, not shown';
 
   @override
   String get pushSecretKeep => 'Leave blank to keep';
@@ -2799,7 +2639,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'This Monitor has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the Monitor\'s config.toml.';
 
   @override
   String get pushJsonInvalid => 'is not valid JSON';
@@ -2809,7 +2649,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Off means the Monitor never deletes anything and its database grows without limit.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2828,19 +2668,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Origins a browser panel may call this Monitor from. Empty means same-origin only.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.';
+      'This Monitor refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the Monitor ([remote_access] allow_insecure) and this app.';
 
   @override
   String get monitorAgentTooOld =>
-      'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.';
+      'This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.';
 
   @override
   String get monitorClientTooOld =>
-      'This Monitor agent no longer supports this version of ServerBox. Update the app.';
+      'This Monitor no longer supports this version of ServerBox. Update the app.';
 
   @override
   String get alerts => 'Alerts';
@@ -2864,8 +2704,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnect => 'Disconnect';
 
   @override
-  String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+  String get searchServerTip => 'Search by server name or address.';
 
   @override
   String get addServerTip =>
@@ -2884,7 +2723,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupByTag => 'Group by tag';
 
   @override
-  String get groupByTagTip => 'Tags are set in a server’s own editor.';
+  String get groupByTagTip => 'Add and manage tags when editing a server.';
 
   @override
   String get connecting => 'Connecting…';
@@ -2990,7 +2829,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+      'The target is resolved from the SSH server or the Monitor. Localhost refers to that machine.';
 
   @override
   String get remoteDesktopDomain => 'Domain (optional)';
@@ -3036,6 +2875,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'The target host cannot contain spaces or line breaks.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'The username and domain can be up to 256 characters and cannot contain line breaks.';
 
@@ -3053,6 +2895,104 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => 'Waiting for desktop…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      'The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'The server has no TLS certificate. Install one on the server; for xrdp, set certificate and key_file in xrdp.ini.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'The server requires a client certificate (smart card logon), which is not supported.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => 'Wrong username or password.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'The account is locked out. Try again later, or ask an administrator to unlock it.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'The account is disabled.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'The account has expired.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'The password has expired or must be changed. Change it on the server first.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'The account may not log on at this time or from this device, or its blank password is not allowed for remote logon.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'The account is not allowed to log on through Remote Desktop. Add it to the Remote Desktop Users group on the server.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'The server does not accept saved credentials. Enter the password again.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'The session was disconnected after the server\'s idle time limit.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'The session reached the server\'s time limit.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Another connection took over this session.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'The session was disconnected on the server.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'An administrator logged off the session.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'The session was logged off.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'The server is shutting down.';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'The server is restarting.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'The server denied the connection.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'Remote Desktop licensing failed on the server. Check its license server and Client Access Licenses.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'The VNC server offers no supported security type; only a VNC password or none is supported. For TigerVNC, set SecurityTypes=VncAuth.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired =>
+      'The VNC server requires a password.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'The server could not connect to this address. Check that the service is running and listening on that port.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'The Monitor refused this connection: its password has changed, or it does not act over plain HTTP. Sign in again, or connect over HTTPS.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3074,6 +3014,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+
+  @override
+  String get certTrust => 'Trust';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
@@ -3153,33 +3096,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualization';
-
-  @override
-  String get virtIntro =>
-      'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.';
-
-  @override
-  String get virtIntroTransports =>
-      'Both work over SSH, through a Monitor agent, or on this device.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.';
-
-  @override
-  String get virtIntroInBar => 'It has been added to the tab bar.';
-
-  @override
-  String get virtIntroInMore =>
-      'It is under More. Home Tabs in Settings can move it to the tab bar.';
 
   @override
   String get virtGuests => 'Virtual machines';
@@ -3328,10 +3244,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'The Monitor agent does not relay connections';
+      'The Monitor does not open TCP connections from the server over this link';
 
   @override
-  String get virtErrExecNotGranted => 'The Monitor agent does not run commands';
+  String get virtErrExecNotGranted => 'The Monitor does not run commands';
 
   @override
   String get virtErrNotInstalled => 'virsh is not installed on this server';
@@ -5133,35 +5049,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyLink => 'Copy link';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Your account on this Monitor agent has no permission for $func. Ask the agent\'s admin.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
-    return '$func needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.';
+    return '$func needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.';
   }
-
-  @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func is not set up on this Monitor agent; its operator has to configure it.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Read-only: this account can browse files on the agent but not change them.';
 
   @override
   String get monitorAccess => 'Access';
-
-  @override
-  String get monitorAccounts => 'Accounts';
-
-  @override
-  String get monitorRoles => 'Roles';
-
-  @override
-  String get monitorRole => 'Role';
 
   @override
   String get monitorChangePassword => 'Change password';
@@ -5173,10 +5066,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorCurrentPassword => 'Your current password';
 
   @override
-  String get monitorReauthTip =>
-      'Changing access needs your own password again.';
-
-  @override
   String get monitorPasswordTooShort => 'At least 8 characters';
 
   @override
@@ -5186,82 +5075,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorErrReauth => 'Your password was wrong.';
 
   @override
-  String get monitorErrLastAdmin =>
-      'The agent needs at least one admin account.';
-
-  @override
-  String get monitorErrConflict => 'It already exists, or it is still in use.';
-
-  @override
-  String get monitorErrForbidden => 'Only an admin can do this.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Lowercase letters, digits, - and _, up to 32 characters';
-
-  @override
-  String get monitorGrantShell => 'Shell and commands';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, processes, services, containers, snippets, power — as the agent\'s account';
-
-  @override
-  String get monitorGrantSshTerminal => 'Panel terminal over SSH';
-
-  @override
-  String get monitorGrantVirt => 'Virtualization';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel';
-
-  @override
-  String get monitorGrantFiles => 'Files';
-
-  @override
-  String get monitorGrantConnect => 'Outbound connections';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Local and dynamic port forwards, remote desktop';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)';
-
-  @override
-  String get monitorGrantListen => 'Listen on the server';
-
-  @override
-  String get monitorGrantListenTip => 'Remote port forwards';
-
-  @override
-  String get monitorGrantListenPublic => 'Non-loopback addresses';
-
-  @override
-  String get monitorGrantPorts => 'Port range (empty is any)';
-
-  @override
-  String get monitorGrantOff => 'Off';
-
-  @override
-  String get monitorBuiltin => 'Built-in';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Manages accounts, roles and the agent\'s settings';
-
-  @override
-  String get monitorYou => 'You';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Only an admin can change this agent\'s settings.';
-
-  @override
   String get monitorPasswordNotSaved =>
-      'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.';
+      'The password was changed on the Monitor, but the app could not save it. Update this server\'s Monitor password in its settings.';
 
   @override
   String get firewall => 'Firewall';
@@ -5484,27 +5299,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get firewallInvalidForwardPort =>
       'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.';
-
-  @override
-  String get monitorSyncNeedsServer =>
-      'Pick the server whose monitor agent stores the backup.';
-
-  @override
-  String get monitorBackupUnsupported =>
-      'This monitor agent cannot store backups. Update the agent.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Only an admin account of the monitor agent can store backups on it.';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return 'The backup is larger than the monitor agent accepts ($max).';
-  }
-
-  @override
-  String get monitorBackupTooMany =>
-      'The monitor agent already holds as many backups as it allows. Delete one first.';
 
   @override
   String get virtCreateVmidInvalid => 'A VMID from 100 to 999999999.';
@@ -5968,6 +5762,1244 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kbServerClose => 'Servers: close details';
 
   @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Disks';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS pools';
+
+  @override
+  String get storageNoFilesystem => 'No filesystem';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used of $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'In use';
+
+  @override
+  String get storageBusySwap => 'Swap';
+
+  @override
+  String get storageBusyRaid => 'In an array';
+
+  @override
+  String get storageBusyPool => 'In a pool';
+
+  @override
+  String get storageBusyVolume => 'Holds a volume';
+
+  @override
+  String get storageBusyReadOnly => 'Read only';
+
+  @override
+  String get storageBusySystem => 'System partition';
+
+  @override
+  String get storageSystemMount =>
+      'The system uses this mount; it stays mounted.';
+
+  @override
+  String get storageNotMounted => 'Nothing is mounted there any more.';
+
+  @override
+  String get storageMount => 'Mount';
+
+  @override
+  String get storageUnmount => 'Unmount';
+
+  @override
+  String get storageFormat => 'Format';
+
+  @override
+  String get storageInitialize => 'Initialize';
+
+  @override
+  String get storageSmartTest => 'SMART test';
+
+  @override
+  String get storageFilesystem => 'Filesystem';
+
+  @override
+  String get storageLabel => 'Label';
+
+  @override
+  String get storageMountpoint => 'Mount point';
+
+  @override
+  String get storageMountPersist => 'Mount again at every start (/etc/fstab)';
+
+  @override
+  String get storageMountOwn => 'Let ServerBox write here (for backups)';
+
+  @override
+  String get storageName => 'Name';
+
+  @override
+  String get storageLevel => 'Level';
+
+  @override
+  String get storageLayout => 'Layout';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Pick at least $count devices. What they hold is lost.';
+  }
+
+  @override
+  String get storageCreateRaid => 'Create array';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Builds /dev/$name (RAID $level) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String get storageCreatePool => 'Create pool';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Builds pool $name ($layout) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Makes a new filesystem on $device. Everything on it is lost.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Wipes $device and gives it one partition for the whole disk. Everything on it is lost.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Mounts $device at $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Unmounts $mountpoint and stops mounting it at start.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Starts a short self-test on $device. It takes a few minutes; its progress and result show here.';
+  }
+
+  @override
+  String get storageAddMember => 'Add disk';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array: it replaces a failed member, or waits as a spare. What it holds is lost.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Remove';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Marks $device failed and takes it out of /dev/$array. The array runs on without it, degraded if it was a working member.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Delete array';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Stops /dev/$array and wipes its members\' RAID signatures. Its data is lost.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Destroy pool';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Destroys pool $name and everything in it.';
+  }
+
+  @override
+  String get storageScrub => 'Scrub';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Reads all of pool $name and repairs what it can. It runs in the background.';
+  }
+
+  @override
+  String get storageState => 'State';
+
+  @override
+  String get storageHealthy => 'Healthy';
+
+  @override
+  String get storageDegraded => 'Degraded';
+
+  @override
+  String storageSync(Object action) {
+    return 'Sync ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Failed';
+
+  @override
+  String get storageSpare => 'Spare';
+
+  @override
+  String get storageActive => 'Working';
+
+  @override
+  String get storageScan => 'Last scan';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count errors';
+  }
+
+  @override
+  String get storageNoDisks => 'No disks';
+
+  @override
+  String get storageNoArrays => 'No arrays';
+
+  @override
+  String get storageNoPools => 'No pools';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm is not installed: arrays cannot be built or changed here.';
+
+  @override
+  String get storageNoZfs => 'ZFS is not installed (zfsutils).';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Type $word to confirm';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device is in use.';
+  }
+
+  @override
+  String get storageBusy => 'Another change to the disks is running.';
+
+  @override
+  String get storageHealthRead => 'Read disk health';
+
+  @override
+  String get storageHealthWearing => 'Wearing';
+
+  @override
+  String get storageHealthFailing => 'Failing';
+
+  @override
+  String get storageHealthAsleep => 'Asleep';
+
+  @override
+  String get storageHealthUnsupported => 'No SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours h powered on';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count bad sectors';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Self-test: $percent% left';
+  }
+
+  @override
+  String get storageGrowPartition => 'Grow partition';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Grows $device into the free space after it. Expand its filesystem after.';
+  }
+
+  @override
+  String get storageEncrypt => 'Encrypt (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Passphrase';
+
+  @override
+  String get storagePassphraseAgain => 'The same again';
+
+  @override
+  String get storagePassphraseHint =>
+      'At least 8 characters. Without it the data cannot be read: keep it safe.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'The passphrase must be 8 to 512 characters, on one line.';
+
+  @override
+  String get storagePassphrasesDiffer => 'The two passphrases differ.';
+
+  @override
+  String get storageEncrypted => 'Encrypted';
+
+  @override
+  String get storageLocked => 'Locked';
+
+  @override
+  String get storageUnlock => 'Unlock';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Opens $device with its passphrase.';
+  }
+
+  @override
+  String get storageLock => 'Lock';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Closes $device. Its filesystem must be unmounted.';
+  }
+
+  @override
+  String get storageReplace => 'Replace';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Replaces $old in pool $name with $replacement. The pool copies its data onto it; what $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAttach => 'Mirror';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Mirrors $existing onto $replacement. What $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAddSpare => 'Add spare';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Adds $devices to pool $name as spares. What they hold is lost.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Remove';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Takes $device out of pool $name.';
+  }
+
+  @override
+  String get storageOnline => 'Bring online';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Brings $device back into pool $name, grown into the whole disk.';
+  }
+
+  @override
+  String get storageDetails => 'Details';
+
+  @override
+  String get storageAttributes => 'Attributes';
+
+  @override
+  String get storageAttrValue => 'Value';
+
+  @override
+  String get storageAttrWorst => 'Worst';
+
+  @override
+  String get storageAttrThresh => 'Threshold';
+
+  @override
+  String get storageSelfTests => 'Self-tests';
+
+  @override
+  String get storageTestShort => 'Short';
+
+  @override
+  String get storageTestLong => 'Long';
+
+  @override
+  String get storageTestPassed => 'Passed';
+
+  @override
+  String get storageTestFailed => 'Failed';
+
+  @override
+  String get storageTestAborted => 'Stopped';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'at $hours h';
+  }
+
+  @override
+  String get storageNothingToShow => 'Nothing to show';
+
+  @override
+  String get storageLongTest => 'Long test';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Starts a long self-test on $device. It reads the whole disk: hours on a large one.';
+  }
+
+  @override
+  String get storageMountedInside => 'Unmount its filesystem first.';
+
+  @override
+  String get storageNotRemovable =>
+      'Only a spare or cache device can be taken out here.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
+
+  @override
+  String get storageExpand => 'Expand';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Grows the filesystem on $device to fill its device. It stays mounted.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Grow';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What $device holds is lost.';
+  }
+
+  @override
+  String get storageAddToPool => 'Add disks';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Adds $layout of $devices to pool $name for more room. They cannot be taken out again, and what they hold is lost.';
+  }
+
+  @override
+  String get sharingTitle => 'Sharing';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Service';
+
+  @override
+  String get sharingRunning => 'Running';
+
+  @override
+  String get sharingStopped => 'Stopped';
+
+  @override
+  String get sharingNfsServer => 'NFS server';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba is not installed. Windows, macOS and Linux open SMB shares.';
+
+  @override
+  String get sharingNoNfs =>
+      'The NFS server is not installed. Linux and macOS mount NFS exports.';
+
+  @override
+  String get sharingInstallSamba => 'Install Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Installs Samba with the machine\'s package manager.';
+
+  @override
+  String get sharingInstallNfs => 'Install NFS server';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Installs the NFS server with the machine\'s package manager.';
+
+  @override
+  String get sharingAddShare => 'Add share';
+
+  @override
+  String get sharingAddExport => 'Add export';
+
+  @override
+  String get sharingEdit => 'Edit';
+
+  @override
+  String get sharingRemove => 'Remove';
+
+  @override
+  String get sharingSave => 'Save';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Shares $path over SMB as $name, then reloads Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Exports $path over NFS, then reloads the exports.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Stops sharing $name. The folder and its files stay.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Stops exporting $path. The folder and its files stay.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Set up outside ServerBox';
+
+  @override
+  String get sharingNoShares => 'No SMB shares';
+
+  @override
+  String get sharingNoExports => 'No NFS exports';
+
+  @override
+  String get sharingReadOnly => 'Read only';
+
+  @override
+  String get sharingReadWrite => 'Read and write';
+
+  @override
+  String get sharingGuest => 'Guests';
+
+  @override
+  String get sharingGuestLabel =>
+      'Let anyone on the network in without an account';
+
+  @override
+  String get sharingUsersHint =>
+      'Accounts allowed in (none ticked: every account with an SMB password):';
+
+  @override
+  String get sharingFolder => 'Folder';
+
+  @override
+  String get sharingFolderHint =>
+      'A folder on the server, e.g. a disk mounted in Storage.';
+
+  @override
+  String get sharingComment => 'Description';
+
+  @override
+  String get sharingPasswords => 'SMB passwords';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba keeps its own passwords: set one for each account that connects.';
+
+  @override
+  String get sharingSetPassword => 'Set password';
+
+  @override
+  String get sharingNewPassword => 'New SMB password';
+
+  @override
+  String get sharingNewPasswordAgain => 'The same again';
+
+  @override
+  String get sharingPasswordsDiffer => 'The two passwords differ.';
+
+  @override
+  String get sharingClientsHint =>
+      'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Client';
+
+  @override
+  String get sharingAddClient => 'Add client';
+
+  @override
+  String get sharingSquashRoot => 'Root is nobody';
+
+  @override
+  String get sharingSquashAll => 'Everyone is nobody';
+
+  @override
+  String get sharingSquashNone => 'Root stays root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path is not a folder on the server.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'The configuration was refused and the previous one is back: $detail';
+  }
+
+  @override
+  String get sharingDuplicate => 'Another share has this name or folder.';
+
+  @override
+  String get sharingInvalidName =>
+      'A name is letters, digits, _ . - (32 at most).';
+
+  @override
+  String get sharingInvalidPath =>
+      'The folder must be an absolute path without quotes, backslashes or ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'A client is *, a host, an address or a network.';
+
+  @override
+  String get sharingInvalidPassword => 'This password cannot be used.';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine backups (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Keep deleted files in .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Recycle bin';
+
+  @override
+  String get sharingConnectedNow => 'Connected now';
+
+  @override
+  String get sharingNobodyConnected => 'Nobody is connected';
+
+  @override
+  String get sharingShowConnections => 'Show connections';
+
+  @override
+  String get sharingShowConnectionsBody => 'Reads who is connected, as root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'This device';
+
+  @override
+  String get agentSource => 'Source';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'The task is deleted on $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'This task is no longer on the server.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Reply to the task on $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Queued',
+      'running': 'Running',
+      'waiting': 'Waiting for you',
+      'done': 'Done',
+      'failed': 'Failed',
+      'cancelled': 'Stopped',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Always allow $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Type $name to run';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Run anyway';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Password of $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Wrong password';
+
+  @override
+  String get agentRemoteSudoRemember => 'Remember for 15 minutes';
+
+  @override
+  String agentNewOn(String place) {
+    return 'New in $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Ask the agent on $server, or give it a task.';
+  }
+
+  @override
+  String get agentModeBypassWarn =>
+      'Allow all: deleting, restarting and config changes run directly, without asking.';
+
+  @override
+  String get webApps => 'Web apps';
+
+  @override
+  String get webAppUnhealthy => 'Unhealthy';
+
+  @override
+  String get webAppDown => 'Down';
+
+  @override
+  String get webAppInstalling => 'Installing';
+
+  @override
+  String get webAppsEmpty =>
+      'No web apps yet. Deploy them from the App Store of the Monitor panel.';
+
+  @override
+  String get deskAppOpensInPanel => 'Opens in the panel';
+
+  @override
+  String get webAppVersion => 'Version';
+
+  @override
+  String get webAppHomepage => 'Homepage';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Version $version is available. Update it in the Monitor panel.';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app is down';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'Not running: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'None of its containers is running.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app is unhealthy';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Failing its health check: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app is running again';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Every container is up.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app: an update is available';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version can be installed (now $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array is degraded';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'A member failed or is missing; the array runs without its redundancy.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array is healthy again';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Every member is working.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return 'Pool $pool is $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Open Storage to see which device.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return 'Pool $pool is online again';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Every device is working.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device is failing';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'Its SMART check or self-test failed: copy what it holds elsewhere and replace it.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device has $count bad sectors';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'It had $was. A disk losing sectors often fails soon.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Storage maintenance did not run: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Scrub pools and check arrays';
+
+  @override
+  String get storageTaskSmartShort => 'Short SMART test';
+
+  @override
+  String get storageTaskSmartLong => 'Long SMART test';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo asked for a password: run the Monitor as root, or allow these commands (above).';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'Overview';
+
+  @override
+  String get monitorNotices => 'Notifications';
+
+  @override
+  String get monitorAudit => 'Audit log';
+
+  @override
+  String get monitorLive => 'Sessions & devices';
+
+  @override
+  String get monitorNoAgents => 'No server is reached through a Monitor yet.';
+
+  @override
+  String get monitorNotOffered =>
+      'This Monitor version does not offer this. Update the Monitor.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'This Monitor version does not report alerts.';
+
+  @override
+  String get monitorAlertsNone => 'No rule is firing.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return 'firing for $duration';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version available';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count unread';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Apps with problems: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'App updates: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Updates only';
+
+  @override
+  String get monitorNoUpdates => 'No app has an update.';
+
+  @override
+  String get monitorNoticesEmpty => 'No notifications.';
+
+  @override
+  String get monitorMarkAllRead => 'Mark all as read';
+
+  @override
+  String get monitorAuditExec => 'Commands';
+
+  @override
+  String get monitorAuditMachine => 'Machine management';
+
+  @override
+  String get monitorAuditListen => 'Listened ports';
+
+  @override
+  String get monitorAuditTicket => 'Connection tickets';
+
+  @override
+  String get monitorAuditPush => 'Notification channels';
+
+  @override
+  String get monitorAuditAdmin => 'Account';
+
+  @override
+  String get monitorAuditDenied => 'Denied';
+
+  @override
+  String get monitorLoadMore => 'Load more';
+
+  @override
+  String get monitorLiveSessions => 'Terminal sessions';
+
+  @override
+  String get monitorLiveConnections => 'Connections';
+
+  @override
+  String get monitorLiveWatchTokens => 'Watch and widget tokens';
+
+  @override
+  String get monitorLiveDevices => 'Signed-in devices';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.';
+
+  @override
+  String get monitorLiveAttached => 'Attached';
+
+  @override
+  String get monitorLiveDetached => 'Detached';
+
+  @override
+  String get monitorLiveEnd => 'End';
+
+  @override
+  String get monitorLiveRevoke => 'Revoke';
+
+  @override
+  String get monitorLiveForget => 'Forget';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return 'End the terminal session \"$name\"? What runs in it stops.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return 'End the connection to $name?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return 'Revoke the token of $name? It stops updating until it is set up again.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return 'Forget $name?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Expires $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Relayed connection';
+
+  @override
+  String get monitorLiveAccepted => 'Forwarded connection';
+
+  @override
+  String get monitorLiveConsole => 'Console';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count Monitors';
+  }
+
+  @override
+  String get monitorStatOnline => 'Online';
+
+  @override
+  String get monitorStatFiring => 'Alerts firing';
+
+  @override
+  String get monitorStatUnread => 'Unread';
+
+  @override
+  String get monitorStatUpdates => 'App updates';
+
+  @override
+  String get monitorAuditEmpty => 'Nothing recorded matches.';
+
+  @override
+  String get monitorLiveNoSessions => 'No terminal session is open.';
+
+  @override
+  String get monitorLiveNoConnections => 'Nothing is forwarded or relayed.';
+
+  @override
+  String get monitorLiveNoTokens => 'No watch or widget is paired.';
+
+  @override
+  String get monitorLiveNoDevices => 'No device has signed in.';
+
+  @override
+  String get monitorUpdateAgent => 'Update the Monitor';
+
+  @override
+  String get monitorAgentTooOldTip =>
+      'The Monitor tab has the steps to update it.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'This Monitor is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest is out; this Monitor runs $running.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Run this on the server, as the account the Monitor was installed from:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'The terminal runs it. If the Monitor was installed system-wide and the terminal goes over SSH, sudo asks for its password there.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'The app cannot open a terminal on this server: run it there yourself.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'In Docker? Pull the new image and recreate the container instead.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Once it has restarted, refresh the Monitor tab.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Run in a terminal';
+
+  @override
+  String get monitorHowToUpdate => 'How to update';
+
+  @override
+  String get monitorUpdateNix =>
+      'Installed by the NixOS module: update it through your system configuration and rebuild.';
+
+  @override
+  String get noticeAgentUpdate => 'The Monitor has an update';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Its account name';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'This Monitor still signs in with an account name and a password: the name this app used before (often admin) and the saved password.';
+
+  @override
+  String get monitorUpdateNow => 'Update now';
+
+  @override
+  String get monitorUpdating => 'Updating…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'The Monitor is restarting; the connection is back in a few seconds…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Updated: the Monitor runs $version.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'The update failed. Its output is above.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'The Monitor runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo password';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'The installer needs root here (an OpenRC service). The password is used once and not saved.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo did not accept this password.';
+
+  @override
+  String get monitorUpdateNoAnswer =>
+      'The Monitor has not come back. Check it on the server.';
+
+  @override
+  String get keyArrowDown => 'Down arrow';
+
+  @override
+  String get keyArrowLeft => 'Left arrow';
+
+  @override
+  String get keyArrowRight => 'Right arrow';
+
+  @override
+  String get keyArrowUp => 'Up arrow';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Page down';
+
+  @override
+  String get keyPageUp => 'Page up';
+
+  @override
+  String get termTextView => 'View as text';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Earlier lines no longer kept: $count';
+  }
+
+  @override
+  String get systemGroups => 'Groups';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Members';
+
+  @override
+  String get userPrimaryMembers => 'Primary members';
+
+  @override
+  String get userSystemGroup => 'System group';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
   String get termMetricsBar => 'Server readings under the terminal';
 
   @override
@@ -5992,6 +7024,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
+
+  @override
+  String get handedness => 'Handedness';
+
+  @override
+  String get handednessLeft => 'Left hand';
+
+  @override
+  String get handednessRight => 'Right hand';
+
+  @override
+  String get handednessTip =>
+      'On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system\'s own bars do.';
 
   @override
   String get storeUnreadableTitle => 'Previous data could not be opened';
@@ -6045,4 +7090,162 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Already in the list';
+
+  @override
+  String get addToHomeScreen => 'Add to home screen';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers',
+      one: '1 transfer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncKeyRotate => 'Replace sync key';
+
+  @override
+  String get discoverIntro => 'Find machines to add as servers.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'Scan';
+
+  @override
+  String get discoveryScanAgain => 'Scan again';
+
+  @override
+  String get discoveryScanning => 'Scanning…';
+
+  @override
+  String discoveryFound(int count) {
+    return 'Found $count';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'Add $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count added';
+  }
+
+  @override
+  String get discoveryAdded => 'Added';
+
+  @override
+  String get discoveryExists => 'Exists';
+
+  @override
+  String get localServerNoSsh => 'Runs without SSH';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.';
+
+  @override
+  String get security => 'Security';
+
+  @override
+  String get sshConfig => 'SSH config';
+
+  @override
+  String get tailscaleStopped => 'Tailscale is not running';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Installed on this device, but not connected to a tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'API token';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Needs Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Choose file';
+
+  @override
+  String get discoveryOnline => 'Online';
+
+  @override
+  String get discoveryOffline => 'Offline';
+
+  @override
+  String get discoverySelectAll => 'Select all';
+
+  @override
+  String get discoveryFilter => 'Filter by name or address';
+
+  @override
+  String get discoverySameMachine => 'Same machine, more than one address';
+
+  @override
+  String get discoveryPrimaryAddress => 'Primary address';
+
+  @override
+  String get discoveryAlternateAddress => 'Alternate address';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => 'Discard unsaved changes?';
+
+  @override
+  String get syncAuto => 'Auto sync';
+
+  @override
+  String get syncOff => 'Off';
+
+  @override
+  String get syncDone => 'Synced';
+
+  @override
+  String syncLastAt(String time) {
+    return 'Last sync $time';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String syncSwitchBody(String name) {
+    return 'Auto sync with $name will be turned off. Existing backups on $name will not be deleted.';
+  }
+
+  @override
+  String get bakPwdSet => 'Set';
+
+  @override
+  String get bakPwdNotSet => 'Not set';
+
+  @override
+  String get syncChannel => 'Channel';
+
+  @override
+  String get syncStateFailed => 'Sync failed';
+
+  @override
+  String get syncStatePassword => 'Password mismatch';
+
+  @override
+  String get syncStateUpdate => 'Update required';
+
+  @override
+  String get syncStateRunning => 'Syncing';
 }

@@ -3,17 +3,22 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/settings.dart';
+import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 import '../helpers/test_db.dart';
 
@@ -45,6 +50,7 @@ void main() {
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     // The server order page reads it as soon as it is shown.
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
   });
 
   tearDownAll(() async {
@@ -83,6 +89,12 @@ void main() {
   /// the screen — the tabs show the level and nothing else.
   final backBtn = find.byType(BackButton);
 
+  /// The way out of settings pushed onto a wide window.
+  final headerBack = find.descendant(
+    of: find.byKey(settingsHeaderKey),
+    matching: find.byType(BackButton),
+  );
+
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
         find
@@ -108,6 +120,8 @@ void main() {
     WidgetTester tester, {
     required double width,
     bool reduceMotion = false,
+    ThemeData? theme,
+    bool rail = true,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = Size(width, 900);
@@ -116,6 +130,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          theme: theme,
           localizationsDelegates: const [
             ...appLocalizationsDelegates,
           ],
@@ -133,7 +148,9 @@ void main() {
             body: Builder(
               builder: (ctx) => TextButton(
                 onPressed: () => Navigator.of(ctx).push(
-                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+                  MaterialPageRoute<void>(
+                    builder: (page) => RailBeside(present: rail, child: const SettingsPage()),
+                  ),
                 ),
                 child: const Text('open'),
               ),
@@ -160,6 +177,48 @@ void main() {
     // The one level of nesting there is stays shut until asked for.
     expect(menuRow(libL10n.sequence), findsNothing);
     expect(find.byKey(settingsTabsKey), findsNothing);
+  });
+
+  testWidgets('wide, beside the rail, the header has no way back', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(headerBack, findsNothing);
+  });
+
+  testWidgets('wide with no rail beside, the header leads out', (tester) async {
+    await pump(tester, width: 1200, rail: false);
+
+    expect(find.byType(AppBar), findsNothing);
+    await tester.tap(headerBack);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
+  });
+
+  testWidgets('narrow, the bar leads out of the settings at their root', (
+    tester,
+  ) async {
+    await pump(tester, width: 600);
+
+    await tester.tap(backBtn);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
+  });
+
+  testWidgets('searching names the results over the content', (tester) async {
+    await pump(tester, width: 1200);
+    await tester.enterText(find.byType(TextField).first, 'zzzz');
+    await settle(tester);
+
+    expect(
+      find.descendant(
+        of: find.byKey(settingsHeaderKey),
+        matching: find.text(libL10n.search),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the wide menu is a rail, not a list of cards', (tester) async {
@@ -943,5 +1002,152 @@ void main() {
     await tester.binding.handlePopRoute();
     await settle(tester, 20);
     expect(find.text('open'), findsOneWidget);
+  });
+
+  // #1819: the bar stays over every page, and on a narrow window over the bar
+  // of a page pushed into the settings, so a delete of everything in it sat
+  // right over a page's own delete.
+  Finder deleteIn(Finder bar) => find.descendant(
+    of: bar,
+    matching: find.byWidgetPredicate(
+      (w) =>
+          (w is Icon &&
+              [
+                Icons.delete,
+                Icons.delete_forever,
+                Icons.delete_outline,
+              ].contains(w.icon)) ||
+          (w is Tooltip && w.message == libL10n.delete) ||
+          (w is Text && w.data == l10n.clearAllSettings),
+    ),
+  );
+
+  testWidgets('no bar offers to delete every setting', (tester) async {
+    await pump(tester, width: 500);
+    expect(deleteIn(find.byType(AppBar)), findsNothing);
+
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    expect(deleteIn(find.byType(AppBar)), findsNothing);
+  });
+
+  testWidgets('nor the header over a wide window', (tester) async {
+    await pump(tester, width: 1400);
+    expect(deleteIn(find.byKey(settingsHeaderKey)), findsNothing);
+  });
+
+  testWidgets('clearing every setting is a row of App, and asks first', (
+    tester,
+  ) async {
+    Stores.setting.locale.put('de');
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+
+    final row = find.text(l10n.clearAllSettings);
+    await tester.scrollUntilVisible(
+      row,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(row);
+    await settle(tester);
+    expect(Stores.setting.locale.fetch(), 'de');
+
+    // Counted down before it takes a tap.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.tap(find.byType(CountDownBtn));
+    await settle(tester);
+    expect(Stores.setting.locale.fetch(), '');
+  });
+
+  testWidgets('a page opened from one narrow column covers the settings', (
+    tester,
+  ) async {
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    final list = tester.element(find.byType(PrivateKeysListPage));
+    expect(NavTargetScope.maybeOf(list), NavTarget.root);
+
+    await tester.tap(backBtn);
+    await settle(tester, 20);
+    await tester.tap(menuRow(libL10n.about));
+    await settle(tester, 20);
+    await tester.tap(find.text(libL10n.license));
+    await settle(tester, 20);
+    final license = tester.element(find.byType(LicensePage));
+    expect(
+      Navigator.of(license),
+      Navigator.of(license, rootNavigator: true),
+    );
+  });
+
+  testWidgets('and takes the content column beside the menu', (tester) async {
+    await pump(tester, width: 1400);
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    final list = tester.element(find.byType(PrivateKeysListPage));
+    expect(NavTargetScope.maybeOf(list), isNull);
+  });
+
+  testWidgets('AI is a subject of its own, not a page of App', (tester) async {
+    await pump(tester, width: 500);
+    expect(menuRow(libL10n.ai), findsOneWidget);
+
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+    expect(tabRow(libL10n.ai), findsNothing);
+  });
+
+  testWidgets('About links no wiki', (tester) async {
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(libL10n.about));
+    await settle(tester, 20);
+    expect(find.text(libL10n.menuWiki), findsNothing);
+    expect(find.text(libL10n.feedback), findsOneWidget);
+  });
+
+  // On iOS and macOS an edge swipe is a predictive back, and Flutter gives one
+  // to every route that is current in its own navigator: the page AI opened
+  // over the window, and the AI level under it in the settings' navigator.
+  // Both popped, and the swipe landed on the list.
+  testWidgets('a swipe back from a page AI opened returns to AI', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    // Reset in the body: the binding checks it before any tear-down runs.
+    try {
+      await pump(
+        tester,
+        width: 400,
+        theme: ThemeData(
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.iOS: SwipeBackPageTransitionsBuilder(),
+            },
+          ),
+        ),
+      );
+      await tester.tap(menuRow(libL10n.ai));
+      await settle(tester, 20);
+      await tester.tap(find.text(l10n.agentProviders).first);
+      await settle(tester, 20);
+      expect(find.byType(AgentProvidersPage), findsOneWidget);
+
+      final swipe = await tester.startGesture(const Offset(2, 400));
+      for (var i = 0; i < 20; i++) {
+        await swipe.moveBy(const Offset(15, 0));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await swipe.up();
+      await settle(tester, 30);
+
+      expect(find.byType(AgentProvidersPage), findsNothing);
+      expect(barTitle(tester), libL10n.ai);
+      expect(find.text(l10n.agentProviders), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 }

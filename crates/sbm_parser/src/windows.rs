@@ -315,7 +315,6 @@ pub fn parse_disk_smart(raw: &str) -> Vec<DiskSmart> {
                 serial: None,
                 power_on_hours: d["PowerOnHours"].as_i64(),
                 power_cycle_count: None,
-                raw_data: d.clone(),
                 smart_attributes: Default::default(),
             })
         })

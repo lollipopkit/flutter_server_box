@@ -97,8 +97,8 @@ throwaway domain `sbxe2e-f1` with a qcow2 disk in `images` and a second pool
 
 `overview.expected.json`, `detail_*.expected.json`, `snapshots_*.expected.json`,
 `storage.expected.json`, `volumes_*.expected.json` and `networks.expected.json`
-are the parsers' output for these inputs, asserted by both the Rust and the
-Dart test.
+are the parsers' output for these inputs, asserted by the Rust test; the
+Dart test checks the overview crosses the FFI typed.
 
 `script_create_*`, `script_define_*` and `script_undefine.txt` are what the
 create and delete scripts printed on the same host (2026-09-25):

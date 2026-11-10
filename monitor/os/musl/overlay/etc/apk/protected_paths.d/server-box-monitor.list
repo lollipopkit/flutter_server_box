@@ -1,0 +1,3 @@
++usr/share/server-box-monitor
++etc/init.d/sbm-setup
+-etc/runlevels/default/server-box-monitor

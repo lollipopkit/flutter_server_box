@@ -12,7 +12,7 @@ Treat power operations like pressing a physical power button on a remote server.
 A BMC (Baseboard Management Controller) is a small computer on the server's
 motherboard. It has its own power and network connection, so it can remain
 reachable when the host is off, unresponsive, or has no operating system. SSH
-and Monitor agent depend on the host, so they cannot provide access in those
+and Monitor depend on the host, so they cannot provide access in those
 states.
 
 Server Box connects to the BMC through **Redfish**, an HTTPS management API
@@ -21,14 +21,14 @@ used by enterprise servers. BMCs that expose only IPMI are not supported.
 ## What it provides
 
 - **Power state:** Check whether the host is on or off, even if SSH and Monitor
-  agent are unavailable.
+  are unavailable.
 - **Hardware sensors:** Read inlet and CPU temperatures, fan speeds, and
   chassis power draw reported by the BMC.
 - **Power control:** Turn on the host, ask its operating system to shut down or
   restart, or directly power-cycle or force it off.
 
 Use BMC alongside SSH; it does not replace normal host access. You can
-configure SSH, Monitor agent, and BMC on the same server.
+configure SSH, Monitor, and BMC on the same server.
 
 ## Configure a BMC
 
@@ -93,8 +93,8 @@ The following features are not implemented:
 - Storage inventory
 - Boot-device override
 - Virtual media
-- Relaying BMC access through Monitor agent
+- Relaying BMC access through the Monitor
 
-If a BMC is on an isolated management network, the phone must be able to route to it directly. Monitor agent cannot currently proxy BMC access.
+If a BMC is on an isolated management network, the phone must be able to route to it directly. Monitor cannot currently proxy BMC access.
 
 The App does not model physical-host and virtual-machine relationships. Several virtual machines may point to one physical host's BMC; a power operation from any of them affects the entire physical host and all its guests, and the reported power state belongs to the host. Configure BMC on the physical-host record only.

@@ -17,7 +17,11 @@ import 'package:server_box/view/widget/dist_icon.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
-  const SnippetEditPageArgs({this.snippet});
+
+  /// A new snippet's script, filled in: text shared from another app.
+  final String? script;
+
+  const SnippetEditPageArgs({this.snippet, this.script});
 }
 
 class SnippetEditPage extends ConsumerStatefulWidget {
@@ -50,7 +54,10 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
   void initState() {
     super.initState();
     final snippet = widget.args?.snippet;
-    if (snippet == null) return;
+    if (snippet == null) {
+      _scriptController.text = widget.args?.script ?? '';
+      return;
+    }
     _nameController.text = snippet.name;
     _scriptController.text = snippet.script;
     if (snippet.note != null) _noteController.text = snippet.note!;
@@ -135,7 +142,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
             actions: Btn.ok(red: true).toList,
           );
           if (confirmed != true || !context.mounted) return;
-          await ref.read(snippetProvider.notifier).del(snippet);
+          ref.read(snippetProvider.notifier).del(snippet);
           _leave();
         },
         tooltip: libL10n.delete,
@@ -175,9 +182,9 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     final notifier = ref.read(snippetProvider.notifier);
     try {
       if (oldSnippet != null) {
-        await notifier.update(oldSnippet, snippet);
+        notifier.update(oldSnippet, snippet);
       } else {
-        await notifier.add(snippet);
+        notifier.add(snippet);
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema rather than in whichever dialog last

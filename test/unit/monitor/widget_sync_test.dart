@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 import '../../helpers/spi_fixture.dart';
@@ -25,15 +25,14 @@ void main() {
     required String id,
     required String name,
     String addr = addr,
-    bool ignoreCert = false,
+    String? certSha256,
     bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
-        user: 'admin',
         pwd: 'secret',
-        ignoreCert: ignoreCert,
+        certSha256: certSha256,
         allowInsecure: allowInsecure,
       ),
     );
@@ -52,7 +51,7 @@ void main() {
   group('what a widget is told about a server', () {
     test('is everything it needs and no login', () {
       final result = payload(
-        servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
+        servers: [monitorSpi(id: 'a', name: 'Home', certSha256: 'abababababababababababababababababababababababababababababababab')],
         tokens: {'a': tok('widget-token')},
       );
 
@@ -64,7 +63,7 @@ void main() {
           'addr': addr,
           'token': 'widget-token',
           'expiresAt': 1800000000,
-          'ignoreCert': true,
+          'certSha256': 'abababababababababababababababababababababababababababababababab',
           'allowInsecure': false,
         },
       ]);

@@ -1,0 +1,122 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Grafana: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "grafana"
+name = "grafana"
+project = "Grafana"
+developer = "Grafana Labs"
+version = "13.2.4"
+homepage = "https://grafana.com/oss/grafana/"
+source = "https://github.com/grafana/grafana/tree/v13.2.4"
+glyph = "monitoring"
+tone = "amber"
+categories = ["monitoring", "development"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Grafana"
+
+[description]
+en = "Dashboards and alerts over your metrics, logs and traces: Prometheus, Loki, InfluxDB, PostgreSQL and many other data sources. Agent mode can search dashboards and run queries."
+zh = "基于指标、日志和链路追踪的仪表盘与告警：支持 Prometheus、Loki、InfluxDB、PostgreSQL 等众多数据源。Agent 模式可以搜索仪表盘和执行查询。"
+zh-TW = "基於指標、日誌和鏈路追蹤的儀表板與警示：支援 Prometheus、Loki、InfluxDB、PostgreSQL 等眾多資料來源。Agent 模式可以搜尋儀表板和執行查詢。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/grafana/grafana/blob/v13.2.4/LICENSE"
+accept = true
+
+[requirements]
+memory_min_mib = 256
+memory_recommended_mib = 512
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-mcp"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+GRAFANA_VERSION = "13.2.4"
+
+[[secrets]]
+env = "GRAFANA_ADMIN_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
+[login]
+user = "admin"
+password = "GRAFANA_ADMIN_PASSWORD"
+note = { en = "Agent mode acts as the \"Agent mode\" service account (Editor), in Administration → Users and access → Service accounts.", zh = "Agent 模式以 “Agent mode” 服务账号（Editor）操作，见 Administration → Users and access → Service accounts。", zh-TW = "Agent 模式以「Agent mode」服務帳號（Editor）操作，見 Administration → Users and access → Service accounts。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "GRAFANA_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database (dashboards, users, alerts) and plugins.", zh = "数据库（仪表盘、用户、告警）和插件。", zh-TW = "資料庫（儀表板、使用者、警示）和外掛程式。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "GRAFANA_PORT"
+default = 3002
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { GRAFANA_BIND = "0.0.0.0" }
+off = { GRAFANA_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "GRAFANA_URL"
+default = "http://localhost:3000/"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address Grafana's links name (alert notifications, shared dashboards). Set it when it is reachable from the network.", zh = "Grafana 生成的链接（告警通知、共享仪表盘）使用的地址。允许从网络访问时请设置。", zh-TW = "Grafana 產生的連結（警示通知、共享儀表板）使用的位址。允許從網路存取時請設定。" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 3003
+label = { en = "MCP server port", zh = "MCP 服务端口", zh-TW = "MCP 服務連接埠" }
+help = { en = "Agent mode's connection to Grafana, on this machine only.", zh = "Agent 模式连接 Grafana 用，仅限本机。", zh-TW = "Agent 模式連線 Grafana 用，僅限本機。" }
+
+[[settings]]
+key = "mcp_token"
+type = "text"
+env = "GRAFANA_MCP_TOKEN"
+optional = true
+pattern = '[A-Za-z0-9_-]{16,256}'
+label = { en = "Service account token for Agent mode", zh = "供 Agent 模式使用的服务账号令牌", zh-TW = "供 Agent 模式使用的服務帳號權杖" }
+help = { en = "Optional: Agent mode is given a token of its own service account when Grafana is set up. To give it other permissions, add a token to a service account in Administration and set it here.", zh = "可选：部署时会自动为 Agent 模式创建服务账号和令牌。若要给它其他权限，请在 Administration 中为服务账号添加令牌并填在这里。", zh-TW = "選填：部署時會自動為 Agent 模式建立服務帳號和權杖。若要給它其他權限，請在 Administration 中為服務帳號新增權杖並填在這裡。" }
+
+# Grafana's own MCP server (grafana/mcp-grafana) beside it, asking for
+# MCP_TOKEN itself (MCP_GRAFANA_SERVER_TOKEN).
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "official"
+service = "mcp"
+source = "https://github.com/grafana/mcp-grafana/tree/v2.0.2"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/view/widget/virt_key_semantics.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
+import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 
-Widget _key(VirtKey item, {bool armed = false}) => MaterialApp(
+Widget _key(VirtualKey item, {bool armed = false}) => MaterialApp(
   home: Scaffold(
-    body: VirtKeySemantics(
+    body: VirtualKeySemantics(
       item: item,
       armed: armed,
       child: InkWell(
@@ -21,11 +22,11 @@ Widget _key(VirtKey item, {bool armed = false}) => MaterialApp(
 void main() {
   testWidgets('a modifier says whether it is armed', (tester) async {
     final handle = tester.ensureSemantics();
-    await tester.pumpWidget(_key(VirtKey.ctrl, armed: true));
+    await tester.pumpWidget(_key(VirtualKey.ctrl, armed: true));
     expect(
-      tester.getSemantics(find.byType(VirtKeySemantics)),
+      tester.getSemantics(find.byType(VirtualKeySemantics)),
       matchesSemantics(
-        label: 'Control',
+        label: l10n.keyControl,
         isButton: true,
         hasEnabledState: true,
         isEnabled: true,
@@ -41,11 +42,11 @@ void main() {
 
   testWidgets('an icon key is named, once', (tester) async {
     final handle = tester.ensureSemantics();
-    await tester.pumpWidget(_key(VirtKey.up));
+    await tester.pumpWidget(_key(VirtualKey.up));
     expect(
-      tester.getSemantics(find.byType(VirtKeySemantics)),
+      tester.getSemantics(find.byType(VirtualKeySemantics)),
       isSemantics(
-        label: 'Up arrow',
+        label: l10n.keyArrowUp,
         isButton: true,
         hasToggledState: false,
         hasTapAction: true,
@@ -58,24 +59,24 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    for (final item in [VirtKey.ime, VirtKey.sudo]) {
+    for (final item in [VirtualKey.ime, VirtualKey.sudo]) {
       await tester.pumpWidget(_key(item));
       final data = tester
-          .getSemantics(find.byType(VirtKeySemantics))
+          .getSemantics(find.byType(VirtualKeySemantics))
           .getSemanticsData();
       expect(data.label, item.semanticLabel, reason: item.name);
       expect(data.hint, isEmpty, reason: item.name);
     }
-    await tester.pumpWidget(_key(VirtKey.sftp));
+    await tester.pumpWidget(_key(VirtualKey.sftp));
     final sftp = tester
-        .getSemantics(find.byType(VirtKeySemantics))
+        .getSemantics(find.byType(VirtualKeySemantics))
         .getSemanticsData();
-    expect(sftp.hint, VirtKey.sftp.help);
+    expect(sftp.hint, VirtualKey.sftp.help);
     handle.dispose();
   });
 
   test('every key has a name', () {
-    for (final key in VirtKey.values) {
+    for (final key in VirtualKey.values) {
       expect(key.semanticLabel, isNotEmpty, reason: key.name);
     }
   });

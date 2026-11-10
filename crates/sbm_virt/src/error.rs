@@ -105,7 +105,10 @@ pub enum Detail {
     ApplyUnreadable,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Serialised with [`Error::needs_input`] beside its fields, so a client
+/// reading it (the panel) stops refreshing on the same refusal without a
+/// list of kinds of its own.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Error {
     pub kind: ErrorKind,
     /// The host's own words, or the transport's. Never a credential.
@@ -117,6 +120,31 @@ pub struct Error {
     pub previous_fingerprint: Option<String>,
     /// The HTTP status the host answered with, when it was one.
     pub status: Option<u16>,
+}
+
+impl Serialize for Error {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        struct Wire<'a> {
+            kind: &'a ErrorKind,
+            message: &'a Option<String>,
+            detail: &'a Option<Box<Detail>>,
+            cert: &'a Option<Box<CertInfo>>,
+            previous_fingerprint: &'a Option<String>,
+            status: &'a Option<u16>,
+            needs_input: bool,
+        }
+        Wire {
+            kind: &self.kind,
+            message: &self.message,
+            detail: &self.detail,
+            cert: &self.cert,
+            previous_fingerprint: &self.previous_fingerprint,
+            status: &self.status,
+            needs_input: self.needs_input(),
+        }
+        .serialize(serializer)
+    }
 }
 
 impl Error {
@@ -169,3 +197,19 @@ impl std::fmt::Display for Error {
 impl std::error::Error for Error {}
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[cfg(test)]
+mod wire_tests {
+    use super::*;
+
+    #[test]
+    fn an_error_says_whether_it_waits_for_the_user() {
+        let wire = serde_json::to_value(Error::new(ErrorKind::NeedTfa)).unwrap();
+        assert_eq!(wire["kind"], "need_tfa");
+        assert_eq!(wire["needs_input"], true);
+        assert_eq!(serde_json::to_value(Error::msg(ErrorKind::Unreachable, "down")).unwrap()["needs_input"], false);
+        // Read back as written, the derived flag ignored.
+        let back: Error = serde_json::from_value(wire).unwrap();
+        assert_eq!(back, Error::new(ErrorKind::NeedTfa));
+    }
+}

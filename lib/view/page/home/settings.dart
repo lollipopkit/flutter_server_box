@@ -2,100 +2,77 @@
 
 part of '../home.dart';
 
-/// The settings, shown where a tab is shown rather than over the window.
+/// The settings: a page pushed where a tab is shown, over the tabs and beside
+/// the rail, so the rail stays the way back out.
 extension _HomePageSettings on _HomePageState {
-  /// Whether the tabs are laid out at all.
+  /// The tabs, and what is pushed over them in place of a tab: the settings.
   ///
-  /// Only once the settings have finished arriving. Offstage is not laid out,
-  /// so hiding them the moment the animation *starts* would leave nothing to
-  /// fade out of.
-  bool get _tabsHidden => _settingsOpen && _settingsCtrl.isCompleted;
-
-  /// Whether the settings are laid out, which they are for the whole of their
-  /// own leaving as well.
-  bool get _settingsShowing => _settingsOpen || !_settingsCtrl.isDismissed;
-
-  /// The settings' own navigator, crossing with the tabs.
-  Widget _buildSettingsPane() {
-    // Its own navigator, like a tab's: what the settings push — the private
-    // keys, a backup, the raw editor — belongs over the settings and not over
-    // the window.
-    return Offstage(
-      offstage: !_settingsShowing,
-      child: TickerMode(
-        enabled: _settingsShowing,
-        child: IgnorePointer(
-          // On the way out it is still painted and still on top, so without
-          // this a tap meant for the tab underneath would land on a page that
-          // is leaving.
-          ignoring: !_settingsOpen,
-          child: _crossed(
-            leaving: false,
-            child: NestedNavigator(
-              key: const ValueKey('settings'),
-              navigatorKey: _settingsNavKey,
-              observers: [AgentScreen.settingsObserver],
-              rootBuilder: (_) => const SafeArea(
-                bottom: false,
-                child: SettingsPage(),
-              ),
-            ),
-          ),
+  /// A navigator of its own rather than the window's, which would cover the
+  /// rail. The tabs are its first page, so they stay mounted under the
+  /// settings — every terminal, scroll and route they hold — and the settings
+  /// arrive, leave and are swiped back like any other page.
+  ///
+  /// The bar is the tabs', so the settings cover it as they arrive; their own
+  /// bar is the way out.
+  Widget _buildArea({required Widget? bar}) {
+    return NestedNavigator(
+      navigatorKey: _areaNavKey,
+      observers: [_areaRoutes, AgentScreen.settingsObserver],
+      // Always a `Scaffold`, the bar or not: a different widget here would
+      // mount the tabs again. Its own messenger, so a tab's snack bar stands
+      // over the bar rather than on it.
+      rootBuilder: (_) => ScaffoldMessenger(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: _buildTabPages(),
+          bottomNavigationBar: bar,
         ),
       ),
     );
   }
 
-  /// One side of the crossing between the tabs and the settings.
-  ///
-  /// [leaving] is the side that is on its way out as the settings arrive —
-  /// the tabs — so the two fade in opposite directions and are displaced in
-  /// opposite directions, which is what reads as one replacing the other
-  /// rather than as two things fading independently.
-  ///
-  /// Only the fade where the device has asked for less movement. The slide
-  /// stays in the tree with nowhere to go rather than being left out: the
-  /// tabs are under it, and a different tree would build them again.
-  Widget _crossed({required bool leaving, required Widget child}) {
-    final shift = context.reduceMotion ? 0.0 : 0.03;
-    return FadeTransition(
-      opacity: leaving
-          ? Tween(begin: 1.0, end: 0.0).animate(_settingsAnim)
-          : _settingsAnim,
-      child: SlideTransition(
-        position: Tween(
-          begin: leaving ? Offset.zero : Offset(shift, 0),
-          end: leaving ? Offset(-shift, 0) : Offset.zero,
-        ).animate(_settingsAnim),
-        child: child,
-      ),
-    );
+  /// Puts the settings away, once what they hold agreed to go; false when
+  /// something refused.
+  Future<bool> _closeSettings() async {
+    final nav = _areaNavKey.currentState;
+    if (nav == null || !_settingsOpen) return true;
+    return nav.popUntilGuarded((route) => route.isFirst);
   }
 
-  /// Puts the settings away, where they are shown in place of a tab.
-  void _closeSettings() {
-    if (!_settingsOpen) return;
-    setState(() => _settingsOpen = false);
-    AgentScreen.settingsOpen = false;
-    _settingsCtrl.reverse();
-  }
-
-  /// Shows the settings where a tab is shown, rather than over everything.
-  ///
-  /// Only where there is a rail to keep on screen. A phone has none to cover,
-  /// and no room for a second strip under the settings' own floating one — so
-  /// there they stay a page, with the bar's back button as the way out.
   void _openSettings() {
-    if (_narrow) {
-      SettingsPage.route.go(context);
-      return;
-    }
     if (_settingsOpen) return;
-    setState(() {
-      _settingsOpen = true;
-      _settingsSeen = true;
-    });
-    AgentScreen.settingsOpen = true;
-    _settingsCtrl.forward();
+    final nav = _areaNavKey.currentState;
+    if (nav == null) return;
+    final route = AppPageRoute<void>(
+      settings: const RouteSettings(name: AgentScreen.settingsRoute),
+      builder: (_) => const SettingsPage(),
+    );
+    _onSettingsRoute(route);
+    unawaited(nav.push(route));
+  }
+
+  /// [route] is the settings now, or none is when null.
+  void _onSettingsRoute(Route<dynamic>? route) {
+    if (_settingsRoute == route) return;
+    setState(() => _settingsRoute = route);
+  }
+}
+
+/// Hears the settings leave [_HomePageSettings._buildArea]'s navigator,
+/// however they leave: a back, a swipe, a tab picked on the rail.
+final class _AreaRoutes extends NavigatorObserver {
+  _AreaRoutes(this.onGone);
+
+  final void Function(Route<dynamic> route) onGone;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => onGone(route);
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) => onGone(route);
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    if (oldRoute != null) onGone(oldRoute);
   }
 }

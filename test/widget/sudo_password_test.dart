@@ -1,18 +1,21 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+
+import '../helpers/test_db.dart';
 
 /// `SudoPassword`: one sudo password per server for the session, shared by
 /// every feature — asked for once, tried before asking again, and dropped
 /// when sudo refuses it.
 void main() {
-  setUp(() {
-    FlutterSecureStorage.setMockInitialValues({});
+  setUp(() async {
+    await openTestDb();
     SudoPassword.forget('s');
   });
+  tearDown(closeTestDb);
 
   late BuildContext ctx;
   Future<void> pump(WidgetTester tester) => tester.pumpWidget(
@@ -106,11 +109,72 @@ void main() {
     expect(SudoPassword.typed('s'), isNull);
   });
 
+  group('retryOnRejected', () {
+    /// sudo as a host whose password is [right], refusing by throwing.
+    Future<String> Function(String? password) throwing(
+      String right,
+      List<String?> tried,
+    ) =>
+        (password) async {
+          tried.add(password);
+          if (password != right) throw const SudoRejected();
+          return 'ok';
+        };
+
+    testWidgets('a refusal moves on to the asked one', (tester) async {
+      await pump(tester);
+      final tried = <String?>[];
+      final result = SudoPassword.retryOnRejected(
+        ctx,
+        's',
+        attempt: throwing('pw', tried),
+      );
+      await type(tester, 'pw');
+      expect(await result, 'ok');
+      expect(tried, [null, 'pw']);
+      expect(SudoPassword.typed('s'), 'pw');
+    });
+
+    testWidgets('refused after asking: rethrown, and forgotten', (
+      tester,
+    ) async {
+      await pump(tester);
+      final tried = <String?>[];
+      final result = SudoPassword.retryOnRejected(
+        ctx,
+        's',
+        attempt: throwing('right', tried),
+      );
+      final refused = expectLater(result, throwsA(isA<SudoRejected>()));
+      await type(tester, 'wrong');
+      await refused;
+      expect(tried, [null, 'wrong']);
+      expect(SudoPassword.typed('s'), isNull);
+    });
+
+    testWidgets('any other failure propagates without asking', (tester) async {
+      await pump(tester);
+      var tried = 0;
+      final result = SudoPassword.retryOnRejected<String>(
+        ctx,
+        's',
+        attempt: (_) async {
+          tried++;
+          throw StateError('disk gone');
+        },
+      );
+      await expectLater(result, throwsA(isA<StateError>()));
+      await tester.pump();
+      expect(tried, 1);
+      expect(find.byType(TextField), findsNothing);
+    });
+  });
+
   test('the one saved with the server is tried when none was typed', () async {
-    FlutterSecureStorage.setMockInitialValues({'sudo_pwd_s': 'saved'});
-    expect(await SudoPassword.known('s'), 'saved');
+    SudoPassword.save('s', 'saved');
+    expect(SudoPassword.known('s'), 'saved');
     SudoPassword.remember('s', 'typed');
-    expect(await SudoPassword.known('s'), 'typed');
+    expect(SudoPassword.known('s'), 'typed');
     // What runs unasked uses only the typed one.
     SudoPassword.forget('s');
     expect(SudoPassword.typed('s'), isNull);

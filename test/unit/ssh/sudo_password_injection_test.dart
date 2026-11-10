@@ -194,8 +194,8 @@ void main() {
     });
   });
 
-  group('VirtKeyboard modifier merging — Enter key', () {
-    /// Simulates what VirtKeyboard.call() does:
+  group('VirtualKeyboard modifier merging — Enter key', () {
+    /// Simulates what VirtualKeyboard.call() does:
     /// merges stored modifier state into the event,
     /// then delegates to defaultInputHandler.
     String? simulateVirtKeyCall({
@@ -230,7 +230,7 @@ void main() {
         ),
         equals('\r'),
         reason:
-            'VirtKeyboard merges Ctrl into Enter event, '
+            'VirtualKeyboard merges Ctrl into Enter event, '
             'but the keytab Enter rules ignore modifiers. '
             'This means modifier pollution is NOT the root cause of #1180.',
       );
@@ -270,7 +270,7 @@ void main() {
       expect(sent, equals(['\r']));
     });
 
-    test('keyInput(Enter) with VirtKeyboard Ctrl=true still sends \\r', () {
+    test('keyInput(Enter) with VirtualKeyboard Ctrl=true still sends \\r', () {
       final terminal = Terminal(platform: TerminalTargetPlatform.linux);
       final sent = <String>[];
       terminal.onOutput = (data) => sent.add(data);
@@ -354,7 +354,7 @@ void main() {
   });
 }
 
-/// Minimal mock of VirtKeyboard behavior for testing.
+/// Minimal mock of VirtualKeyboard behavior for testing.
 class _MockVirtKeyboard implements TerminalInputHandler {
   bool ctrl;
   bool alt;

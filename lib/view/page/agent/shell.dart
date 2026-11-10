@@ -1,11 +1,12 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/view/page/agent/activity.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/widget/float_shell.dart';
 

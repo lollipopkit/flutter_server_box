@@ -1,0 +1,68 @@
+# Grocy 4.7.1 (MIT), https://github.com/grocy/grocy/tree/v4.7.1
+# Image: linuxserver.io's build, https://github.com/linuxserver/docker-grocy
+# (tag v4.7.1-ls344). Upstream publishes no image.
+#
+# Written for ServerBox Monitor (2026-10-18) from linuxserver.io's compose
+# example:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - seed-admin is a one-shot job that runs first: Grocy's database starts
+#   with admin/admin, so before Grocy answers anyone it runs Grocy alone in
+#   the job's container (PHP's own server, on loopback), lets it make its
+#   database, and sets the generated password through Grocy's API
+#   (PUT /api/users/1) while admin still has the default one. The password
+#   never reaches a command line.
+
+services:
+  seed-admin:
+    image: lscr.io/linuxserver/grocy:${GROCY_TAG}
+    environment:
+      ADMIN_PASSWORD: ${GROCY_PASSWORD}
+    volumes:
+      - ${GROCY_CONFIG}:/config
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        # As the image's init-grocy-config does, for this container alone.
+        mkdir -p /config/data/viewcache
+        [ -e /config/data/config.php ] || cp /app/www/config-dist.php /config/data/config.php
+        [ -d /config/data/plugins ] || cp -R /defaults/plugins /config/data
+        rm -rf /app/www/data && ln -s /config/data /app/www/data
+        php -S 127.0.0.1:8999 -t /app/www/public /app/www/public/index.php > /dev/null 2>&1 &
+        trap 'kill $$!' EXIT
+        # Its first pages make the database: signed in (or refused) once
+        # they have.
+        jar=$$(mktemp)
+        to=
+        for i in $$(seq 60); do
+          curl -sS -o /dev/null http://127.0.0.1:8999/ 2>/dev/null || true
+          to=$$(curl -sS -c "$$jar" -o /dev/null -w '%{redirect_url}' -d username=admin -d password=admin http://127.0.0.1:8999/login 2>/dev/null || true)
+          [ -n "$$to" ] && break
+          sleep 1
+        done
+        case "$$to" in *invalid*) exit 0 ;; "") echo "Grocy never answered"; exit 1 ;; esac
+        php -r 'echo json_encode(["username" => "admin", "first_name" => "", "last_name" => "", "password" => getenv("ADMIN_PASSWORD"), "picture_file_name" => null]);' \
+          | curl -fsS -b "$$jar" -X PUT -H 'content-type: application/json' --data-binary @- http://127.0.0.1:8999/api/users/1
+    restart: "no"
+
+  grocy:
+    image: lscr.io/linuxserver/grocy:${GROCY_TAG}
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${GROCY_CONFIG}:/config
+    ports:
+      - '${GROCY_BIND}:${GROCY_PORT}:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

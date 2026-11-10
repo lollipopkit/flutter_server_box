@@ -21,12 +21,13 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/generated/l10n/l10n_zh.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
@@ -72,6 +73,7 @@ class _NoConnectRemoteDesktopSessions extends RemoteDesktopSessions {
 }
 
 void main() {
+  final en = AppLocalizationsEn();
   TestWidgetsFlutterBinding.ensureInitialized();
   // The profile editor's rules are `sbm_parser::desktop`, through FFI.
   setUpAll(initRustLibForTest);
@@ -165,7 +167,7 @@ void main() {
     // "Remote Desktop" in a locale whose word for it is elsewhere, and the
     // mark beside it still says Beta.
     expect(find.text('Beta'), findsOneWidget);
-    final title = tester.getRect(find.text('Remote desktop'));
+    final title = tester.getRect(find.text(en.remoteDesktop));
     final mark = tester.getRect(find.text('Beta'));
     expect(mark.left, greaterThan(title.right));
     expect(mark.center.dy, title.center.dy);
@@ -174,20 +176,21 @@ void main() {
   testWidgets('empty profiles and the editor use Chinese translations', (
     tester,
   ) async {
+    final zh = AppLocalizationsZh();
     final previous = app_locale.l10n;
-    app_locale.l10n = AppLocalizationsZh();
+    app_locale.l10n = zh;
     addTearDown(() => app_locale.l10n = previous);
     for (final profile in Stores.remoteDesktop.fetchForServer(sid)) {
       Stores.remoteDesktop.delete(profile);
     }
     await pumpPage(tester, width: 620, locale: const Locale('zh'));
-    expect(find.text('暂无远程桌面配置'), findsOneWidget);
-    await tester.tap(find.text('添加配置'));
+    expect(find.text(zh.remoteDesktopNoProfiles), findsOneWidget);
+    await tester.tap(find.text(zh.remoteDesktopAddProfile));
     await tester.pumpAndSettle();
-    expect(find.text('添加远程桌面'), findsOneWidget);
-    expect(find.text('保存密码'), findsOneWidget);
-    expect(find.text('域（可选）'), findsOneWidget);
-    expect(find.text('Save password'), findsNothing);
+    expect(find.text(zh.remoteDesktopAdd), findsOneWidget);
+    expect(find.text(zh.remoteDesktopSavePassword), findsOneWidget);
+    expect(find.text(zh.remoteDesktopDomain), findsOneWidget);
+    expect(find.text(en.remoteDesktopSavePassword), findsNothing);
   });
 
   testWidgets(
@@ -336,7 +339,7 @@ void main() {
       await tester.pumpAndSettle();
       final restingX = tester.getTopLeft(editor).dx;
       expect(restingX, lessThan(startingX));
-      await tester.tap(find.byTooltip('Back'));
+      await tester.tap(find.byTooltip(const DefaultMaterialLocalizations().backButtonTooltip));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(tester.getTopLeft(editor).dx, greaterThan(restingX));
@@ -398,7 +401,7 @@ void main() {
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('Beta'), findsOneWidget);
     expect(find.text('PROD'), findsOneWidget);
-    expect(find.text('SERVERS'), findsNothing);
+    expect(find.text(libL10n.servers.toUpperCase()), findsNothing);
 
     await tester.tap(find.byTooltip(libL10n.sort));
     await tester.pumpAndSettle();
@@ -428,7 +431,7 @@ void main() {
     expect(find.byType(SideBarTile), findsNothing);
     expect(find.byType(CardTile), findsOneWidget);
 
-    expect(find.byTooltip('Connect'), findsOneWidget);
+    expect(find.byTooltip(en.connect), findsOneWidget);
     expect(find.byTooltip(libL10n.edit), findsOneWidget);
 
     await tester.tap(find.byTooltip(libL10n.edit));
@@ -451,11 +454,11 @@ void main() {
       ),
     );
 
-    expect(find.widgetWithText(TextButton, 'Connect'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, en.connect), findsOneWidget);
     expect(find.widgetWithText(TextButton, libL10n.edit), findsOneWidget);
     expect(tester.getSize(find.byType(CardTile)).width, lessThanOrEqualTo(620));
 
-    await tester.tap(find.widgetWithText(TextButton, 'Connect'));
+    await tester.tap(find.widgetWithText(TextButton, en.connect));
     await tester.pumpAndSettle();
     expect(find.text('RDP ${libL10n.pwd}'), findsOneWidget);
     expect(find.byType(RemoteDesktopProfileEditPage), findsNothing);
@@ -478,7 +481,7 @@ void main() {
       expect(find.byType(PageColumns), findsNothing);
       expect(find.byType(FloatingActionButton), findsNothing);
       expect(find.widgetWithText(FilledButton, libL10n.save), findsOneWidget);
-      expect(find.widgetWithText(TextButton, 'Test'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, libL10n.test), findsOneWidget);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -508,8 +511,13 @@ void main() {
       RemoteDesktopProtocol.vnc,
     );
     expect(tester.widget<Input>(port).controller?.text, '5900');
-    expect(find.text('Share session'), findsOneWidget);
-    expect(find.text('Username'), findsNothing);
+    expect(find.text(en.remoteDesktopShareSession), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Input && widget.label == libL10n.user,
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('the form is not a dialog', (tester) async {
@@ -560,7 +568,7 @@ void main() {
       find.byType(TextField).last,
       '密码密码',
     );
-    await tester.tap(find.widgetWithText(TextButton, 'Test'));
+    await tester.tap(find.widgetWithText(TextButton, libL10n.test));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -610,7 +618,7 @@ void main() {
       find.descendant(of: hostInput, matching: find.byType(TextField)),
       '192.0.2.10',
     );
-    await tester.tap(find.widgetWithText(TextButton, 'Test'));
+    await tester.tap(find.widgetWithText(TextButton, libL10n.test));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.descendant(

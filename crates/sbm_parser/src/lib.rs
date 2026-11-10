@@ -1,7 +1,7 @@
 //! ServerBox shared status parsing library
 //!
 //! Pure parsing, no IO: input is a map of command key → raw output, output is
-//! structured status. The semantic baseline is flutter_server_box's Dart
+//! structured status. The semantic baseline is the app's Dart
 //! implementation (`lib/data/model/server/`); behavior is locked by the app's
 //! fixture tests during migration.
 //!
@@ -11,30 +11,46 @@
 //!   (the delta helpers in `types::`) — no mutable state is held
 //! - Units follow the data source: memory/disk in KiB (meminfo/df -k), network in bytes
 
+pub mod agents;
 pub mod arm;
 pub mod bench;
 pub mod bsd;
+pub mod cleanup;
 pub mod capabilities;
 pub mod commands;
 pub mod common;
 pub mod container;
+pub mod container_backup;
 pub mod desktop;
+pub mod exec_session;
 pub mod files;
 pub mod firewall;
 pub mod cron;
 pub mod gpu;
+pub mod inference;
 pub mod iperf;
+pub mod kernel;
 pub mod linux;
+pub mod monitor_agent;
 pub mod output;
 pub mod proc;
+pub mod proxy;
 pub mod protocol;
 pub mod script;
 pub mod service;
+pub mod shares;
 pub mod smart;
 pub mod snippet;
+pub mod stack;
+pub mod storage;
+pub mod sudo;
+pub mod system;
+pub mod tailscale;
 pub mod tmux;
 pub mod types;
+pub mod ubuntu_pro;
 pub mod users;
+pub mod waf;
 pub mod windows;
 
 use std::collections::HashMap;
@@ -62,6 +78,9 @@ pub struct ServerStatus {
     pub mem: Option<Memory>,
     pub swap: Option<Swap>,
     pub disks: Vec<Disk>,
+    /// Every block device, mounted or not (Linux `lsblk`). Sizes in bytes,
+    /// unlike [`disks`](ServerStatus::disks).
+    pub block_devices: Vec<BlockDevice>,
     pub net: Vec<NetIface>,
     pub temps: Temperatures,
     pub conn: Option<Conn>,
@@ -168,6 +187,7 @@ pub fn parse_status_opts(
             status.mem = linux::parse_mem(get(commands::MEM));
             status.swap = linux::parse_swap(get(commands::MEM));
             status.disks = linux::parse_disk(get(commands::DISK));
+            status.block_devices = linux::parse_block_devices(get(commands::DISK));
             status.net = linux::parse_net(get(commands::NET));
             status.temps = linux::parse_temps(
                 get(commands::TEMP_TYPE),

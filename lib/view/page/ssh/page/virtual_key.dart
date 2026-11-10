@@ -1,0 +1,217 @@
+part of 'page.dart';
+
+extension _VirtualKey on SSHPageState {
+  void _reloadVirtKeys() {
+    final pagesBefore = _virtKeyPages.length;
+    _virtKeyRows = Stores.setting.virtualKeyRows.fetch();
+    _initVirtKeys();
+    _updateVirtKeysHeight();
+    // Only when the count changed, which is exactly when the `PageView` is
+    // rebuilt from its key and starts at the first page again. Resetting
+    // unconditionally moved the dots while the strip stayed where it was — a
+    // key turned on or off within the same number of rows left page two
+    // showing under a lit first dot.
+    if (_virtKeyPages.length != pagesBefore) _virtKeyPage.value = 0;
+  }
+
+  /// Runs the walkthrough over the keys, once ever — on the terminal that is
+  /// actually on screen.
+  ///
+  /// Every restored tab lays out, not only the one landed on, so this waits
+  /// for its own page to be the visible one. Without that, the walkthrough is
+  /// spent on whichever tab the `PageView` happened to build first and the
+  /// user sees a flag that has already been set.
+  void _startVirtKeyIntroWhenVisible() {
+    final visible = widget.args.visibleListenable;
+    if (visible == null || visible.value) return _startVirtKeyIntro();
+    if (Stores.setting.virtualKeyIntroShown.fetch()) return;
+
+    void onVisible() {
+      if (!mounted || !visible.value) return;
+      visible.removeListener(onVisible);
+      _introVisibilityListener = null;
+      _startVirtKeyIntro();
+    }
+
+    _introVisibilityListener = onVisible;
+    visible.addListener(onVisible);
+  }
+
+  /// Only where there are keys to walk through: a desktop has none, and a user
+  /// who hid the lot has said what they think of them. [_showHelp] is what
+  /// covers the terminal itself when this does not run.
+  void _startVirtKeyIntro() {
+    if (_virtKeysHeight == 0) return;
+    if (Stores.setting.virtualKeyIntroShown.fetch()) return;
+    // Written now rather than at the end: a walkthrough that reappears because
+    // the app was killed halfway through is worse than one seen once.
+    Stores.setting.virtualKeyIntroShown.put(true);
+    setIntroStep(0, steps: VirtKeyIntroStep.of(context));
+  }
+
+  void _endVirtKeyIntro() {
+    if (_introStep == null) return;
+    setIntroStep(null);
+  }
+
+  /// The keys the step on screen is about, or null while none is.
+  VirtualKeyGroup? get _introGroup {
+    final step = _introStep;
+    final steps = _introSteps;
+    if (step == null || steps == null || step >= steps.length) return null;
+    return steps[step].group;
+  }
+
+  /// What a key does, for the ones where the label does not say.
+  ///
+  /// A dialog rather than a tooltip: this is reached by holding a key on a
+  /// phone, where a tooltip appears under the finger that is covering it.
+  void _showVirtKeyHelp(VirtualKey item) {
+    final help = item.help;
+    if (help == null) return;
+    HapticFeedback.selectionClick();
+    context.showRoundDialog(
+      title: item.text,
+      child: Text(help),
+      actions: [Btn.ok(onTap: context.popDialog)],
+    );
+  }
+
+  void _doVirtualKey(VirtualKey item, VirtualKeyboard virtKeyNotifier) {
+    if (item.func != null) {
+      HapticFeedback.mediumImpact();
+      _doVirtualKeyFunc(item.func!);
+      return;
+    }
+    if (item.key != null) {
+      HapticFeedback.mediumImpact();
+      _doVirtualKeyInput(item.key!, virtKeyNotifier);
+    }
+    final inputRaw = item.inputRaw;
+    if (inputRaw != null) {
+      HapticFeedback.mediumImpact();
+      _terminal.textInput(inputRaw);
+    }
+  }
+
+  void _doVirtualKeyInput(TerminalKey key, VirtualKeyboard virtKeyNotifier) {
+    switch (key) {
+      case TerminalKey.control:
+        virtKeyNotifier.setCtrl(!virtKeyNotifier.ctrl);
+        break;
+      case TerminalKey.alt:
+        virtKeyNotifier.setAlt(!virtKeyNotifier.alt);
+        break;
+      case TerminalKey.shift:
+        virtKeyNotifier.setShift(!virtKeyNotifier.shift);
+        break;
+      default:
+        _terminal.keyInput(key);
+        break;
+    }
+  }
+
+  Future<void> _doVirtualKeyFunc(VirtualKeyFunc type) async {
+    switch (type) {
+      case VirtualKeyFunc.toggleIME:
+        _termKey.currentState?.toggleFocus();
+        break;
+      case VirtualKeyFunc.backspace:
+        _terminal.keyInput(TerminalKey.backspace);
+        break;
+      case VirtualKeyFunc.snippet:
+        // The toolbar's picker, not a copy of it. The copy that used to be
+        // here returned without a word when there was no server, so the key
+        // did nothing at all on a shell on this device — while the button two
+        // rows up ran the snippets that name no server perfectly well.
+        await _pickSnippet();
+        break;
+      case VirtualKeyFunc.file:
+        // Before anything is typed. This opens the files of the server the
+        // shell is on, and this device has its own browser in the files tab —
+        // so the key is not offered on a local shell at all (see
+        // `_virtKeyWorksHere`) rather than echoing a probe command into the
+        // session, polling for three seconds and giving up in silence.
+        final fileSpi = widget.args.spi;
+        if (fileSpi == null) return;
+        // Where the shell is (OSC 7, else the system's own record of it), or
+        // the file page's own start. Nothing is typed into the shell to find
+        // out: a probe lands in its history, and a program in front can
+        // swallow it.
+        final initPath = _sess.workingDirectory ?? await _shellDirectory(fileSpi.id);
+        if (!mounted) return;
+        final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
+        // `ServerFilePage`, not `SftpPage`: it is the one place that decides
+        // how a server's files are reached, so this key now works on a server
+        // reached through its monitor agent — which has files and no SFTP, and
+        // where opening the SFTP page directly could only fail.
+        // Not awaited: it completes when the file page closes.
+        unawaited(ServerFilePage.route.go(context, args));
+        break;
+      case VirtualKeyFunc.sudoPassword:
+        await _insertSudoPassword();
+        break;
+      case VirtualKeyFunc.tmuxSwitch:
+        await _showTmuxSwitcher();
+        break;
+    }
+  }
+
+  void _initVirtKeys() {
+    _virtKeysList.clear();
+    _virtKeysUnavailable.clear();
+    final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
+    // What the user hid is left out; what this session cannot do is drawn
+    // disabled in its place, so the strip is laid out the same on every
+    // server. Read from the server behind the terminal rather than from a
+    // connection that may not be up yet: both questions are settled before the
+    // first key is drawn, and a key that changed once something connected
+    // would be a strip changing under the user's thumb.
+    final spi = widget.args.spi;
+    // The grant, not the transport: `_connectBackend` asks the same provider
+    // for the same field, so whether this shell will be the agent's is known
+    // here too — before the first key is drawn, which is what keeps the strip
+    // still.
+    final shellUsesAgent =
+        spi != null &&
+        serverShellUsesAgent(
+          spi,
+          ref.readPresentServer(spi.id)?.agentAccess,
+        );
+    final virtKeys = Stores.setting.virtualKeys()
+        .where((key) => !disabled.contains(key.name))
+        .toList();
+    _virtKeysUnavailable.addAll(
+      virtKeys.where(
+        (key) => !key.worksOn(
+          widget.args.source,
+          shellUsesAgent: shellUsesAgent,
+        ),
+      ),
+    );
+    for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
+      _virtKeysList.add(
+        virtKeys.sublist(at, math.min(at + kVirtKeysPerRow, virtKeys.length)),
+      );
+    }
+  }
+
+  /// The directory of this terminal's shell as the system records it, for a
+  /// shell that sends no OSC 7: the account's terminal shells listed through
+  /// [ServerNotifier.ensureExec] (no PTY, so no login record) and matched by
+  /// when this one was opened. Null when that cannot tell (not Linux, two
+  /// opened together, another account on the transport that answers).
+  Future<String?> _shellDirectory(String serverId) async {
+    final age = _sess.shellAge;
+    if (age == null) return null;
+    try {
+      final exec = await ref.read(serverProvider(serverId).notifier).ensureExec();
+      final res = await exec.run(filesTerminalShellsCommand()).timeout(const Duration(seconds: 5));
+      return filesTerminalShellCwd(output: res.stdout, ageSecs: age.inMilliseconds / 1000);
+    } catch (e) {
+      Loggers.app.warning('Reading the terminal shell\'s directory failed', e);
+      return null;
+    }
+  }
+
+}

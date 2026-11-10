@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// The server's CPU, memory, network and disk under its terminal (#1653).
 ///

@@ -105,10 +105,10 @@ extension on _ServerDetailPageState {
   /// The cards, not the load: what a GPU is doing is the row above, and what
   /// is left is a table — the memory each card has left, its clock and fans,
   /// and the processes holding that memory.
-  Widget? _buildGpuView(ServerState si) {
-    final gpus = si.status.gpus;
+  Widget? _buildGpuView(ServerState srv) {
+    final gpus = srv.status.gpus;
     if (gpus.isEmpty) return null;
-    final mem = busiestGpu(si.status)?.memory;
+    final mem = busiestGpu(srv.status)?.memory;
     final processes = [for (final gpu in gpus) ...?gpu.memory?.processes];
 
     return _buildReadoutCard(
@@ -205,11 +205,13 @@ extension on _ServerDetailPageState {
               style: UIs.text11Grey.copyWith(color: scheme.primary),
             ),
           ),
+          // Under WDDM (Windows, WSL) the driver gives no per-process
+          // memory, which arrives as 0, and a name only with privilege.
           for (final process in processes)
             ServerDetailReadoutRow(
-              k: process.name,
-              sub: 'PID ${process.pid}',
-              v: '${process.memory} MiB',
+              k: process.name.isEmpty ? 'PID ${process.pid}' : process.name,
+              sub: process.name.isEmpty ? null : 'PID ${process.pid}',
+              v: process.memory > 0 ? '${process.memory} MiB' : '--',
             ),
         ],
       ],
@@ -222,13 +224,13 @@ extension on _ServerDetailPageState {
   /// whether anything is failing — and the rows are what to look at once the
   /// answer is no longer "all of them passed". The attributes behind a drive
   /// are two dozen numbers and stay one tap away.
-  Widget? _buildDiskSmart(ServerState si) {
-    final smarts = si.status.diskSmart;
+  Widget? _buildDiskSmart(ServerState srv) {
+    final smarts = srv.status.diskSmart;
     if (smarts.isEmpty) {
       // `smartctl` is missing, or is there and refused: both are why this card
       // was empty, and neither was ever said. A host with no drives it can read
       // still gets nothing.
-      if (si.status.sectionErrs['smart'] case final err?) {
+      if (srv.status.sectionErrs['smart'] case final err?) {
         return _buildFailedCard(
           cardKey: 'smart',
           icon: ServerDetailCards.smart.icon,
@@ -298,7 +300,6 @@ extension on _ServerDetailPageState {
   static const _smartOk = DiskSmart(
     device: '',
     healthy: true,
-    rawData: {},
     smartAttributes: {},
   );
 
@@ -463,8 +464,8 @@ extension on _ServerDetailPageState {
   /// each, with no line worth drawing behind any of them. A machine with one
   /// battery has no card at all, because the row already says everything this
   /// would.
-  Widget? _buildBatteries(ServerState si) {
-    final ss = si.status;
+  Widget? _buildBatteries(ServerState srv) {
+    final ss = srv.status;
     if (ss.batteries.length < 2) return null;
 
     return _buildReadoutCard(
@@ -494,8 +495,8 @@ extension on _ServerDetailPageState {
 
   /// What `sensors` reports, which is a table and stays one: a summary line
   /// per chip, and the readings behind it on tap.
-  Widget? _buildSensors(ServerState si) {
-    final ss = si.status;
+  Widget? _buildSensors(ServerState srv) {
+    final ss = srv.status;
     if (ss.sensors.isEmpty) {
       if (ss.sectionErrs['sensors'] case final err?) {
         return _buildFailedCard(
@@ -522,21 +523,21 @@ extension on _ServerDetailPageState {
     );
   }
 
-  Widget _buildSensorItem(SensorItem si) {
+  Widget _buildSensorItem(SensorItem srv) {
     return ServerDetailReadoutRow(
-      k: si.device,
-      sub: si.summary,
-      v: si.adapter.raw,
-      onTap: si.summary == null ? null : () => _onTapSensorItem(si),
+      k: srv.device,
+      sub: srv.summary,
+      v: srv.adapter.raw,
+      onTap: srv.summary == null ? null : () => _onTapSensorItem(srv),
     );
   }
 
-  void _onTapSensorItem(SensorItem si) {
+  void _onTapSensorItem(SensorItem srv) {
     context.showRoundDialog(
-      title: si.device,
+      title: srv.device,
       child: SingleChildScrollView(
         child: SimpleMarkdown(
-          data: si.toMarkdown,
+          data: srv.toMarkdown,
           styleSheet: MarkdownStyleSheet(
             tableBorder: TableBorder.all(color: Colors.grey),
             tableHead: const TextStyle(fontWeight: FontWeight.bold),
@@ -546,9 +547,9 @@ extension on _ServerDetailPageState {
     );
   }
 
-  Widget? _buildPve(ServerState si) {
+  Widget? _buildPve(ServerState srv) {
     // One primary-key lookup; the row is not part of `Spi`.
-    if (Stores.pve.fetch(si.spi.id) == null) return null;
+    if (Stores.pve.fetch(srv.spi.id) == null) return null;
     // Nothing is read here: the guests are the Virtualization tab's, and this
     // card is the way to them rather than a summary of what they will say.
     // The host is asked for before the tab, so a tab built by the switch finds
@@ -558,14 +559,14 @@ extension on _ServerDetailPageState {
       icon: FontAwesome.server_solid,
       title: 'PVE',
       onTap: () {
-        ref.read(virtHostRequestProvider.notifier).go(si.spi.id);
+        ref.read(virtHostRequestProvider.notifier).go(srv.spi.id);
         ref.read(homeTabRequestProvider.notifier).go(AppTab.virt);
       },
     );
   }
 
-  Widget? _buildCustomCmd(ServerState si) {
-    final ss = si.status;
+  Widget? _buildCustomCmd(ServerState srv) {
+    final ss = srv.status;
     if (ss.customCmds.isEmpty) return null;
     return _buildReadoutCard(
       cardKey: 'custom',

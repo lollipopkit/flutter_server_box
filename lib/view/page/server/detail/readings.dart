@@ -16,12 +16,12 @@ extension on _ServerDetailPageState {
 
   /// One line per device, or null where the aggregate is what there is: a
   /// single device, or a window that came from a store that has only totals.
-  List<HistorySeries>? _deviceSeries(ServerState si, ServerMetricKind kind) {
+  List<HistorySeries>? _deviceSeries(ServerState srv, ServerMetricKind kind) {
     // These come from the rolling buffer, whose samples are the live window's.
     // Drawn against any other window they would be plotted at instants they
     // were not taken at.
     if (_custom != null || _range != HistoryRange.live) return null;
-    final devices = MetricDevices.of(si, kind);
+    final devices = MetricDevices.of(srv, kind);
     if (devices == null) return null;
     final plotted = _plottedDevices(kind, devices);
     final series = [
@@ -65,15 +65,15 @@ extension on _ServerDetailPageState {
   ///
   /// Built again when a different one is chosen, and nothing else on the page
   /// is — see [_ServerDetailPageState._focus].
-  Widget _buildMetrics(ServerState si, {required bool wide}) {
-    final window = _window(si);
+  Widget _buildMetrics(ServerState srv, {required bool wide}) {
+    final window = _window(srv);
     final views = serverDetailMetrics(
-      si,
+      srv,
       window,
-      deviceSeries: (kind) => _deviceSeries(si, kind),
+      deviceSeries: (kind) => _deviceSeries(srv, kind),
     );
     if (views.isEmpty) return UIs.placeholder;
-    final staleAt = serverStaleSince(si);
+    final staleAt = serverStaleSince(srv);
     // Each row as it is drawn chosen and as it is drawn not, kept between the
     // builder's runs and dropped whenever this method is called again.
     //
@@ -91,7 +91,7 @@ extension on _ServerDetailPageState {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildFocusCard(si, focus, window, wide: wide),
+            _buildFocusCard(srv, focus, window, wide: wide),
             UIs.height7,
             // The cards bring their own margin, which is what spaces them.
             for (final view in views)
@@ -111,18 +111,18 @@ extension on _ServerDetailPageState {
   }
 
   Widget _buildFocusCard(
-    ServerState si,
+    ServerState srv,
     DetailMetric m,
     MetricWindow w, {
     required bool wide,
   }) {
-    final axis = _chartWindow(si, m, w);
+    final axis = _chartWindow(srv, m, w);
     // The card's chart lands here when the card pushed this page — see
     // [ServerChartHero].
     final chart = ServerChartHero(
-      id: si.spi.id,
+      id: srv.spi.id,
       enabled: !widget.bare,
-      child: _buildFocusChart(si, m, w, axis, wide: wide),
+      child: _buildFocusChart(srv, m, w, axis, wide: wide),
     );
     // What a window that could not be filled actually holds. Only when it is
     // short: on a window the agent covered, "stored 24 h · window 24 h" is two
@@ -153,8 +153,8 @@ extension on _ServerDetailPageState {
       if (_custom != null && w.times.isNotEmpty)
         (k: l10n.samples, v: '${w.times.length}'),
     ];
-    final device = _buildDeviceControl(si, m);
-    final note = _historyNote(si, wide: wide);
+    final device = _buildDeviceControl(srv, m);
+    final note = _historyNote(srv, wide: wide);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
     // it, and a `Flexible` narrower than its share leaves the difference as
@@ -218,7 +218,7 @@ extension on _ServerDetailPageState {
               // Flexible as well, the two split what was left evenly, and on
               // a page just past two columns the chips were handed less than
               // they are wide.
-              _buildRangeChips(si, wide: wide),
+              _buildRangeChips(srv, wide: wide),
             ],
           ),
         ),
@@ -335,7 +335,7 @@ extension on _ServerDetailPageState {
               // is read beside the line it adds up to.
               ServerDetailEased(
                 child: switch (m.kind == ServerMetricKind.cpu && _coresOpen
-                    ? _cpuCores(si.status)
+                    ? _cpuCores(srv.status)
                     : null) {
                   final cores? => Padding(
                     padding: const EdgeInsets.only(top: 11),
@@ -353,7 +353,7 @@ extension on _ServerDetailPageState {
 
   /// The chart, or the one line that says why there isn't one.
   Widget _buildFocusChart(
-    ServerState si,
+    ServerState srv,
     DetailMetric m,
     MetricWindow w,
     ({({int from, int to})? window, List<ChartBand> bands}) axis, {
@@ -381,7 +381,7 @@ extension on _ServerDetailPageState {
       // Waiting and having nothing are different answers. Before the first
       // sample the page is not empty, it is early — and the progress line is
       // what says which of the two this is.
-      if (serverNeverSampled(si)) {
+      if (serverNeverSampled(srv)) {
         return ServerDetailChartNotice(
           height: height,
           text: l10n.waitingFirstSample,
@@ -428,8 +428,8 @@ extension on _ServerDetailPageState {
   ///
   /// The disk row is the exception: what a filesystem is at has no line, so
   /// its devices are a list to read rather than a set to choose from.
-  Widget? _buildDeviceControl(ServerState si, DetailMetric m) {
-    final ss = si.status;
+  Widget? _buildDeviceControl(ServerState srv, DetailMetric m) {
+    final ss = srv.status;
     if (m.kind == ServerMetricKind.cpu) {
       if (_cpuCores(ss) == null) return null;
       return ServerDetailDeviceButton(
@@ -439,9 +439,19 @@ extension on _ServerDetailPageState {
       );
     }
     if (m.kind == ServerMetricKind.disk) {
-      if (ss.disk.length < 2) return null;
+      final blocks = ss.blockDevices;
+      if (ss.disk.length < 2 && blocks.isEmpty) return null;
       final disks = [...ss.disk]
         ..sort((a, b) => b.usedPercent.compareTo(a.usedPercent));
+      // Where `lsblk` answered, the devices are the hardware it lists, the
+      // unmounted included (#1829); the filesystems are what is on them.
+      Widget header(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(17, 11, 17, 3),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(text, style: UIs.text13Bold),
+        ),
+      );
       return ServerDetailDeviceButton(
         label: l10n.devicesFmt(disks.length),
         onTap: () => _showClosableDetailDialog(
@@ -452,8 +462,14 @@ extension on _ServerDetailPageState {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (blocks.isNotEmpty) header(l10n.filesystems),
                   for (final disk in disks)
                     ServerDetailDiskItem(disk: disk, status: ss),
+                  if (blocks.isNotEmpty) ...[
+                    header(l10n.blockDevices),
+                    for (final device in blocks)
+                      ServerDetailBlockDeviceItem(device: device),
+                  ],
                 ],
               ),
             ),
@@ -462,7 +478,7 @@ extension on _ServerDetailPageState {
       );
     }
 
-    final devices = MetricDevices.of(si, m.kind);
+    final devices = MetricDevices.of(srv, m.kind);
     if (devices == null) return null;
     // What the legend is showing, out of what the machine reports. Only the
     // live window draws a line each, so anywhere else this is the count alone.
@@ -477,7 +493,7 @@ extension on _ServerDetailPageState {
         : l10n.devicesFmt(devices.names.length);
     return ServerDetailDeviceButton(
       label: label,
-      onTap: () => _showDevicePicker(si, m.kind),
+      onTap: () => _showDevicePicker(srv, m.kind),
     );
   }
 
@@ -486,7 +502,7 @@ extension on _ServerDetailPageState {
   /// Stays open as they are ticked, and the chart behind it follows each tap:
   /// which lines are worth drawing is a question answered by looking at them,
   /// not by predicting them and closing a sheet.
-  Future<void> _showDevicePicker(ServerState si, ServerMetricKind kind) async {
+  Future<void> _showDevicePicker(ServerState srv, ServerMetricKind kind) async {
     final scheme = Theme.of(context).colorScheme;
     await showRowsSheet<void>(
       context,

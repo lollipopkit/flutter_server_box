@@ -8,17 +8,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/core/utils/server_picker.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
 import 'package:server_box/view/page/benchmark/run.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 /// The benchmark tab: pick a machine, run one, and read what every machine has
 /// reported so far.
@@ -87,7 +87,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// and how it ended, and only the revision below can change any of those.
   void _onTick() {
     if (!mounted) return;
-    final rev = BenchmarkStore.instance.listRevision();
+    final rev = Stores.benchmark.listRevision();
     if (rev.total != _total || !setEquals(rev.running, _running)) {
       _total = rev.total;
       _running = rev.running;
@@ -103,7 +103,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// a write this page made itself is not also reported as a change a second
   /// later.
   void _syncRevision() {
-    final rev = BenchmarkStore.instance.listRevision();
+    final rev = Stores.benchmark.listRevision();
     _total = rev.total;
     _running = rev.running;
     _history = null;
@@ -119,7 +119,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// Every server, in the order the server tab shows them.
   ///
   /// Not filtered by capability, though it could be. Whether a monitor-backed
-  /// server can run a command is its agent's `full_access` grant, and that is
+  /// server can run a command is its agent's `access` answer, and that is
   /// unknown until the agent has been asked — so filtering on it would hide
   /// servers that can, on the strength of not having looked. The run reports a
   /// refusal itself, which is both later and honest.
@@ -144,7 +144,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
 
   /// Every past run, off the cache. See [_history].
   List<BenchmarkRun> get _allRuns =>
-      _history ??= BenchmarkStore.instance.all();
+      _history ??= Stores.benchmark.all();
 
   @override
   Widget build(BuildContext context) {
@@ -424,7 +424,7 @@ extension _Actions on _BenchmarkTabPageState {
     if (run.serverId == _selectedId) {
       ref.read(benchmarkProvider(run.serverId).notifier).remove(run.id);
     } else {
-      BenchmarkStore.instance.remove(run.id);
+      Stores.benchmark.remove(run.id);
     }
     if (!mounted) return;
     setState(() {

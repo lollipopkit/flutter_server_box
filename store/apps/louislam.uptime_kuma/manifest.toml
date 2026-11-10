@@ -1,0 +1,71 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Uptime Kuma, as the Monitor's Uptime app: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "louislam"
+name = "uptime_kuma"
+project = "Uptime Kuma"
+developer = "Uptime Kuma"
+version = "2.5.6"
+homepage = "https://uptime.kuma.pet"
+source = "https://github.com/louislam/uptime-kuma/tree/2.5.6"
+glyph = "monitor_heart"
+tone = "leaf"
+recommended = true
+categories = ["monitoring"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Uptime Kuma"
+
+[description]
+en = "Watch websites, servers and services with HTTP, TCP, ping, DNS and push monitors, with alerts and status pages."
+zh = "用 HTTP、TCP、Ping、DNS 和推送监控网站、服务器与服务，支持告警和状态页。"
+zh-TW = "用 HTTP、TCP、Ping、DNS 與推送監控網站、伺服器與服務，支援告警和狀態頁。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/louislam/uptime-kuma/blob/2.5.6/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+UPTIME_KUMA_VERSION = "2.5.6"
+
+[login]
+note = { en = "No account is seeded. Open the app and create the first account on the setup page; it is the administrator.", zh = "不会预设账号。打开应用，在设置页创建第一个账号，它是管理员。", zh-TW = "不會預設帳號。開啟應用，在設定頁建立第一個帳號，它是管理員。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "UPTIME_KUMA_DATA_LOCATION"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The SQLite database and settings. Use a local disk, not a network share.", zh = "SQLite 数据库和设置。请使用本地磁盘，不要用网络共享。", zh-TW = "SQLite 資料庫和設定。請使用本機磁碟，不要用網路共用。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "UPTIME_KUMA_WEB_PORT"
+default = 3001
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { UPTIME_KUMA_WEB_BIND = "0.0.0.0" }
+off = { UPTIME_KUMA_WEB_BIND = "127.0.0.1" }

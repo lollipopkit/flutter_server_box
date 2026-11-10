@@ -1,10 +1,10 @@
 ---
 title: Building
-description: Build Server Box and Monitor agent for different platforms
+description: Build Server Box and Monitor for different platforms
 ---
 
-Build the Flutter App with the repository's `fl_build` tool. Monitor agent is
-a separate Rust service and has its own build steps.
+Build the Flutter App with the repository's `fl_build` tool. The Monitor
+is a separate Rust service and has its own build steps.
 
 ## Prerequisites
 
@@ -84,9 +84,9 @@ dart run fl_build -p windows
 Requires Visual Studio with the **Desktop development with C++** workload and
 ATL support.
 
-## Build Monitor agent
+## Build the Monitor
 
-Monitor agent is a standalone server binary. Build it separately from the
+The Monitor is a standalone server binary. Build it separately from the
 Flutter App:
 
 ```bash
@@ -99,7 +99,7 @@ npm install
 npm run build
 ```
 
-After building the panel, Monitor agent serves it when `frontend/dist` exists.
+After building the panel, Monitor serves it when `frontend/dist` exists.
 For development, run `make monitor-dev` from the repository root. It starts
 the API on `:3770` and the Vite dev server on `:3000`.
 

@@ -1,0 +1,59 @@
+<script lang="ts">
+  /// An iperf client run on the machine: a host and a port, then the terminal
+  /// its output arrives on.
+  ///
+  /// The agent validates both values (`sbm_parser::iperf`) and builds the
+  /// command, so this is a form and nothing more. The dialog is rendered by
+  /// its opener only while it is open, so closing it drops the session.
+  import { Button, Dialog, Input } from '../../lk'
+  import TargetTerminal from '../../../components/TargetTerminal.svelte'
+  import { LL } from '../../../i18n/i18n-svelte'
+  import { iperfIssueText } from '../../../lib/iperf'
+  import type { TerminalTarget } from '../../../lib/terminal.svelte'
+
+  interface Props {
+    onclose: () => void
+  }
+
+  const { onclose }: Props = $props()
+
+  let host = $state('')
+  let port = $state('')
+  /// The target the terminal runs, once Start was pressed. `null` while the
+  /// form is showing.
+  let target = $state<TerminalTarget | null>(null)
+
+  /// The port as the wire wants it — a number. Not the range or format check:
+  /// `sbm_parser::iperf` does that on the agent, and a value it refuses comes
+  /// back as the translated issue below.
+  const portValue = $derived(Number(port.trim()))
+  const ready = $derived(
+    host.trim() !== '' && port.trim() !== '' && Number.isFinite(portValue),
+  )
+
+  function start() {
+    if (!ready) return
+    target = { kind: 'iperf', host: host.trim(), port: portValue }
+  }
+</script>
+
+<!-- As wide as the container shell's dialog: iperf's output lines wrap
+     mid-word at the default width. -->
+<Dialog open wide title={$LL.iperf()} class="max-w-3xl" onclose={onclose}>
+  {#if target === null}
+    <div class="grid gap-[13px] @3xl:grid-cols-2">
+      <Input label={$LL.iperfHost()} bind:value={host} placeholder="example.com" autocomplete="off" />
+      <Input label={$LL.iperfPort()} bind:value={port} placeholder="5201" autocomplete="off" />
+    </div>
+  {:else}
+    <!-- A refused host or port comes back to the form with what was typed;
+         the refused session ends as the terminal leaves. -->
+    <TargetTerminal {target} issueText={iperfIssueText} onedit={() => (target = null)} />
+  {/if}
+  {#snippet actions()}
+    {#if target === null}
+      <Button variant="ghost" onclick={onclose}>{$LL.cancel()}</Button>
+      <Button disabled={!ready} onclick={start}>{$LL.iperfStart()}</Button>
+    {/if}
+  {/snippet}
+</Dialog>

@@ -6,8 +6,6 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `options`
-
 /// The vendored yabs release, for the attribution the page shows.
 String benchUpstreamVersion() =>
     RustLib.instance.api.crateApiBenchBenchUpstreamVersion();
@@ -34,20 +32,22 @@ bool benchScriptInstalled({required String output}) =>
     RustLib.instance.api.crateApiBenchBenchScriptInstalled(output: output);
 
 /// The directory a run happens in: the filesystem fio measures.
-String benchRunDir({required String optionsJson}) =>
-    RustLib.instance.api.crateApiBenchBenchRunDir(optionsJson: optionsJson);
+String benchRunDir({required BenchOptions options}) =>
+    RustLib.instance.api.crateApiBenchBenchRunDir(options: options);
 
 /// The launcher, sent on stdin to [`bench_start_entry`].
-String benchLauncher({required String optionsJson}) =>
-    RustLib.instance.api.crateApiBenchBenchLauncher(optionsJson: optionsJson);
+String benchLauncher({required BenchOptions options}) =>
+    RustLib.instance.api.crateApiBenchBenchLauncher(options: options);
 
 /// Writes the launcher and starts it detached; read the answer with
 /// [`bench_started`].
-String benchStartEntry({required String optionsJson, required String runId}) =>
-    RustLib.instance.api.crateApiBenchBenchStartEntry(
-      optionsJson: optionsJson,
-      runId: runId,
-    );
+String benchStartEntry({
+  required BenchOptions options,
+  required String runId,
+}) => RustLib.instance.api.crateApiBenchBenchStartEntry(
+  options: options,
+  runId: runId,
+);
 
 bool benchStarted({required String output}) =>
     RustLib.instance.api.crateApiBenchBenchStarted(output: output);
@@ -72,6 +72,53 @@ String? benchCleanupCommand({required String runDir, required String runId}) =>
       runDir: runDir,
       runId: runId,
     );
+
+class BenchOptions {
+  final bool disk;
+  final bool network;
+  final bool reducedNetwork;
+  final bool cpu;
+  final GeekbenchVersion geekbenchVersion;
+  final bool ipInfo;
+  final bool preferPrecompiledBinaries;
+  final String workDir;
+
+  const BenchOptions({
+    required this.disk,
+    required this.network,
+    required this.reducedNetwork,
+    required this.cpu,
+    required this.geekbenchVersion,
+    required this.ipInfo,
+    required this.preferPrecompiledBinaries,
+    required this.workDir,
+  });
+
+  @override
+  int get hashCode =>
+      disk.hashCode ^
+      network.hashCode ^
+      reducedNetwork.hashCode ^
+      cpu.hashCode ^
+      geekbenchVersion.hashCode ^
+      ipInfo.hashCode ^
+      preferPrecompiledBinaries.hashCode ^
+      workDir.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BenchOptions &&
+          runtimeType == other.runtimeType &&
+          disk == other.disk &&
+          network == other.network &&
+          reducedNetwork == other.reducedNetwork &&
+          cpu == other.cpu &&
+          geekbenchVersion == other.geekbenchVersion &&
+          ipInfo == other.ipInfo &&
+          preferPrecompiledBinaries == other.preferPrecompiledBinaries &&
+          workDir == other.workDir;
+}
 
 /// What a poll printed.
 class BenchPoll {
@@ -133,3 +180,5 @@ class BenchPoll {
           finished == other.finished &&
           diedWithoutReporting == other.diedWithoutReporting;
 }
+
+enum GeekbenchVersion { v4, v5, v6, v7 }

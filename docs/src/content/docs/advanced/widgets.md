@@ -3,13 +3,13 @@ title: Home Screen Widgets
 description: Add server status widgets to your home screen
 ---
 
-Install [Monitor agent](/docs/advanced/monitor-agent/) on the server, then add
+Install the [Monitor](/docs/advanced/monitor-agent/) on the server, then add
 it to the App. The App passes its configured Monitor servers to the widgets.
 
 ## How widgets work
 
-Widgets request data directly from Monitor agent, so the App does not need to
-be open. For each server configured with Monitor agent, the App publishes its
+Widgets request data directly from the Monitor, so the App does not need to
+be open. For each server configured with the Monitor, the App publishes its
 name, address, and a short-lived read-only token. The token is stored in the
 platform's secure credential storage.
 
@@ -34,7 +34,7 @@ Medium widgets show charts for several metrics.
 
 ### Notes
 
-- Add the server to the App with Monitor agent configured.
+- Add the server to the App with the Monitor configured.
 - The App applies that server's `allowInsecure` setting. Use HTTPS unless you intentionally need plaintext HTTP for a non-loopback connection.
 - iOS chooses when widgets refresh; it does not guarantee a fixed interval.
 - Add multiple widgets to show different servers.
@@ -51,12 +51,12 @@ Medium widgets show charts for several metrics.
 
 Every Android widget instance keeps its own server and metric selection, so
 widgets can show different information. The App supplies the server list. If
-it is empty, add a server configured with Monitor agent first.
+it is empty, add a server configured with the Monitor first.
 
 ## Watch app
 
 The Watch app requires watchOS 10 or later and reads data directly from
-Monitor agent. It can show only servers configured with Monitor agent in the
+the Monitor. It can show only servers configured with the Monitor in the
 App. Those servers sync by default. To exclude one, open **iOS Settings → App
 → iOS → Watch app**.
 
@@ -75,20 +75,20 @@ a server there; it has no separate setting in Server Box.
 
 ### Widgets or the Watch app do not update
 
-- Make sure Monitor agent is running and reachable at the configured address.
-- Check the Monitor username, password, certificate, and `allowInsecure` setting in the App.
+- Make sure the Monitor is running and reachable at the configured address.
+- Check the Monitor password, certificate, and `allowInsecure` setting in the App.
 - iOS controls the refresh schedule. Wait for another refresh, or remove and add the widget again.
 - Tap an Android widget to refresh it. Open its configuration to confirm the selected server and metric.
 - Pair the Watch with an iPhone. After changing server settings, open Server Box on the iPhone and wait for sync.
 
 ### A widget shows an error or no servers
 
-- Add at least one Monitor agent server in the App.
-- Check the agent's HTTPS configuration, saved credentials, and network reachability.
-- Widgets use the App's server list instead of manually entered `/status` URLs. TODO: Remove the one-time migration prompt when supported upgrade paths no longer contain old URLs. If one appears, follow it to configure the server again.
+- Add at least one Monitor server in the App.
+- Check the Monitor's HTTPS configuration, saved credentials, and network reachability.
+- Widgets use the App's server list instead of manually entered `/status` URLs. If a one-time migration prompt appears, follow it to configure the server again.
 
 ## Security
 
 - Prefer HTTPS.
-- To use plaintext HTTP with a non-loopback address, enable **Allow insecure HTTP** for that server in the App. Widget endpoints (`/api/v1/metrics`, `/api/v1/metrics/history`, and `/api/v1/watch-token`) have no agent-side switch. The agent's `allow_insecure` options apply to `[remote_access.terminal]` and `[remote_access.fs]` only.
+- To use plaintext HTTP with a non-loopback address, enable **Allow insecure HTTP** for that server in the App. Widget endpoints (`/api/v1/metrics`, `/api/v1/metrics/history`, and `/api/v1/watch-token`) have no Monitor-side switch. The Monitor's `allow_insecure` options apply to `[remote_access.terminal]` and `[remote_access.fs]` only.
 - Keep Monitor credentials and widget tokens out of public documentation and version control.

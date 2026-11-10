@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,10 +53,6 @@ class MacOSMenuBarManager {
           PlatformMenuItem(
             label: l10n.menuGitHubRepository,
             onSelected: () => _openURL(Urls.thisRepo),
-          ),
-          PlatformMenuItem(
-            label: libL10n.menuWiki,
-            onSelected: () => _openURL(Urls.appWiki),
           ),
           PlatformMenuItem(
             label: libL10n.menuHelp,

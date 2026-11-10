@@ -1,33 +1,33 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmL10nX;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/screen.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
-import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/data/model/app/feature.dart';
-import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/page/server/full_screen.dart';
+import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
+import 'package:server_box/view/page/ssh/widget/session_keep_alive_notice.dart';
+import 'package:server_box/view/widget/column_inset.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
-import 'package:server_box/view/widget/session_keep_alive_notice.dart';
+import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'intro.dart';
 
@@ -145,6 +145,7 @@ class _MyAppState extends State<MyApp> {
     required ThemeData dark,
   }) {
     final themeMode = ThemePackages.effectiveMode;
+    ServerFullScreenTheme.dark = dark;
     final locale = Stores.setting.locale.fetch().toLocale;
 
     return MaterialApp(
@@ -168,11 +169,15 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        final content = ToastHost(
-          // Under the host, whose toasts it raises, and over every page:
-          // a remote session closes as idle whichever page is showing.
-          child: SessionKeepAliveNotices(
-            child: ResponsivePoints.builder(ctx, child),
+        // Above everything that reads the padding, toasts included — see
+        // [WindowCornerInsets].
+        final content = WindowCornerInsets(
+          child: ToastHost(
+            // Under the host, whose toasts it raises, and over every page:
+            // a remote session closes as idle whichever page is showing.
+            child: SessionKeepAliveNotices(
+              child: ResponsivePoints.builder(ctx, child),
+            ),
           ),
         );
         // The one background the whole app stands on. A page takes a copy of

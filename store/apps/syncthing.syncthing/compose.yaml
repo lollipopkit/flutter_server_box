@@ -1,0 +1,57 @@
+# Syncthing v2.1.6 (MPL-2.0), https://github.com/syncthing/syncthing/tree/v2.1.6
+# Based on the official Docker image and README-Docker.md. Adjusted for ServerBox Monitor:
+# - seed-config generates the initial GUI credentials, then sets the selected sync and discovery ports;
+# - no project/container name is fixed; the Monitor supplies the Compose project name;
+# - the GUI listens on 8384 in the container, published on loopback unless expose_web is on;
+# - the folder every app shares is mounted at /var/syncthing/shared, to sync it to other devices.
+
+services:
+  seed-config:
+    image: syncthing/syncthing:${SYNCTHING_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      GUI_PASSWORD: ${GUI_PASSWORD}
+      SYNCTHING_SYNC_PORT: ${SYNCTHING_SYNC_PORT}
+      SYNCTHING_DISCOVERY_PORT: ${SYNCTHING_DISCOVERY_PORT}
+    volumes:
+      - ${SYNCTHING_DATA}:/var/syncthing
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        config=/var/syncthing/config/config.xml
+        if [ ! -f "$${config}" ]; then
+          syncthing generate --home=/var/syncthing/config --gui-user=admin --gui-password="$${GUI_PASSWORD}" --no-port-probing
+          grep -q '<listenAddress>default</listenAddress>' "$${config}"
+          grep -q '<localAnnouncePort>21027</localAnnouncePort>' "$${config}"
+          sed -i \
+            -e "s#<listenAddress>default</listenAddress>#<listenAddress>tcp://0.0.0.0:$${SYNCTHING_SYNC_PORT}</listenAddress><listenAddress>quic://0.0.0.0:$${SYNCTHING_SYNC_PORT}</listenAddress><listenAddress>dynamic+https://relays.syncthing.net/endpoint</listenAddress>#" \
+            -e "s#<localAnnouncePort>21027</localAnnouncePort>#<localAnnouncePort>$${SYNCTHING_DISCOVERY_PORT}</localAnnouncePort>#" \
+            "$${config}"
+        fi
+    restart: "no"
+
+  syncthing:
+    image: syncthing/syncthing:${SYNCTHING_VERSION}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+      STHOMEDIR: /var/syncthing/config
+      STGUIADDRESS: 0.0.0.0:8384
+    volumes:
+      - ${SYNCTHING_DATA}:/var/syncthing
+      - ${SYNCTHING_SHARED}:/var/syncthing/shared
+    depends_on:
+      seed-config:
+        condition: service_completed_successfully
+    ports:
+      - '${SYNCTHING_WEB_BIND}:${SYNCTHING_WEB_PORT}:8384'
+      - '${SYNCTHING_SYNC_PORT}:${SYNCTHING_SYNC_PORT}/tcp'
+      - '${SYNCTHING_SYNC_PORT}:${SYNCTHING_SYNC_PORT}/udp'
+      - '${SYNCTHING_DISCOVERY_PORT}:${SYNCTHING_DISCOVERY_PORT}/udp'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o --color=never OK || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3

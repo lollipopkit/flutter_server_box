@@ -8,16 +8,16 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/selection.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
+import 'package:server_box/view/page/server/widget/server_globe.dart';
 import 'package:server_box/view/widget/globe/view.dart';
-import 'package:server_box/view/widget/server_globe.dart';
 
 import '../helpers/geo_fixture.dart';
 import '../helpers/spi_fixture.dart';
@@ -473,8 +473,7 @@ void main() {
   /// `pump` above only counts out one — so every test here pumps past that on
   /// purpose, and every other test in this file is unaffected by design.
   group('the guide', () {
-    const body =
-        'Tap here to see your servers on a globe, at where their addresses are.';
+    final body = l10n.globeGuide;
 
     /// Past the delay in `_scheduleGlobeGuide`, and then through the card's
     /// own fade.

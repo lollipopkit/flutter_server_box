@@ -12,25 +12,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashCollect => '诊断信息';
 
   @override
-  String get crashCollectIntro =>
-      'ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。';
+  String get crashCollectIntro => 'ServerBox 会记录运行时信息，帮助我们排查和修复问题。';
 
   @override
   String get crashCollectNone => '不发送';
 
   @override
-  String get crashCollectNoneTip => '报告会保留在本机；发生崩溃后，你可手动发送。';
+  String get crashCollectNoneTip => '崩溃报告仅保存在本地，可在发生崩溃后手动发送。';
 
   @override
   String get crashCollectBasic => '基本信息';
 
   @override
   String get crashCollectBasicTip =>
-      '只包含崩溃信息，不包含日志或性能数据。**这些信息可帮助我们改进 App 并修复问题。**';
+      '只包含崩溃信息，不包含日志或性能数据。**这些信息有助于改进 App 和修复问题。**';
 
   @override
-  String get crashCollectFooter =>
-      '无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。';
+  String get crashCollectFooter => '所有收集级别均会自动脱敏已知的服务器名称、地址和用户名。你可随时在设置中修改此项。';
 
   @override
   String get privacy => '隐私';
@@ -46,7 +44,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但其中可能仍包含其他信息。提交前请仔细阅读。';
+      '以下为上次运行的日志。已知的服务器名称和地址已脱敏，但日志中仍可能包含其他敏感信息，提交前请先确认。';
 
   @override
   String get crashReportSubmit => '复制并反馈';
@@ -80,12 +78,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiRiskDestructive => '高风险';
-
-  @override
-  String get askAiAutoRunSafeCommands => '自动执行只读命令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '仅当模型与本地安全检查都判定命令为只读时自动执行';
 
   @override
   String get askAiHistory => '对话历史';
@@ -142,7 +134,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentAuthMethod => '认证方式';
 
   @override
-  String get agentSshConnectTip => 'Agent 想要建立 SSH 连接。请在此输入密码。';
+  String get agentSshConnectTip => 'Agent 请求建立 SSH 连接。请在此输入密码。';
 
   @override
   String get agentAdHocSessions => '临时连接';
@@ -151,16 +143,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSaveServerTitle => '保存为服务器';
 
   @override
-  String get agentSaveServerTip => '这台主机和你输入的密码将保存在本设备上';
+  String get agentSaveServerTip => '这台主机的信息和你输入的密码将保存在本设备上。';
 
   @override
-  String get agentMonitorOptional => 'Monitor 代理（可选）';
+  String get agentMonitorOptional => 'Monitor（可选）';
 
   @override
   String get authFailTip => '认证失败，请检查信息是否正确';
-
-  @override
-  String get autoBackupConflict => '仅可启用一个自动备份任务';
 
   @override
   String get autoConnect => '自动连接';
@@ -178,10 +167,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupEncrypted => '备份已加密';
 
   @override
-  String get backupNotEncrypted => '备份未加密';
+  String get backupPassword => '备份密码';
 
   @override
-  String get backupPassword => '备份密码';
+  String get backupPasswordRemoveSynced =>
+      '这将移除同一 iCloud 钥匙串下所有设备的备份密码。重新设置密码前，这些设备将暂停同步。';
 
   @override
   String get backupPasswordRemoved => '备份密码已移除';
@@ -190,7 +180,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordSet => '备份密码已设置';
 
   @override
-  String get backupPasswordTip => '设置密码以加密备份文件。留空则禁用加密。';
+  String get backupPasswordTip =>
+      '用于加密备份与同步数据。各设备需使用相同密码，在一台设备上修改后，请在其他设备上输入新密码。';
 
   @override
   String get backupPasswordWrong => '备份密码错误';
@@ -206,23 +197,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get distIconIntroLegal =>
-      '标识只根据本设备从远程系统读取的信息显示。这些信息可能不准确或已过期，也不代表某个衍生版本、重构版本或特定版本。无法识别时会显示通用图标。\n\n各标识均为其所有者的商标，此处仅用于说明对应的系统。';
+      '系统图标仅根据从远程主机读取的系统信息推断显示，可能存在误差，也不代表具体发行版分支或版本；无法识别时将显示通用图标。\n\n各图标均为对应所有者的商标，此处仅用于标识系统类型。';
 
   @override
-  String get distIconTip => '在每台服务器旁显示一个小标识，表示它可能运行的系统';
+  String get distIconTip => '在服务器旁显示其操作系统图标';
 
   @override
   String get distNameMap => '名称映射';
 
   @override
   String get distNameMapTip =>
-      '仅用于「托管处的文件名和本应用使用的名称对不上」的发行版。键是本应用使用的名称，值是实际要取的名称。没有缺图就不用填。';
+      '仅当自定义图标文件名与 App 内置发行版名称不一致时才需配置：键填写 App 识别的名称，值填写实际文件名。';
 
   @override
   String get logoUrl => 'Logo 地址';
 
   @override
-  String get logoUrlTip => '服务器详情页顶部的大图，按原色显示。';
+  String get logoUrlTip => '显示在服务器详情页顶部的横幅图片，保持原色。';
 
   @override
   String get globe => '地球仪';
@@ -235,10 +226,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markUrl => '标识地址';
 
   @override
-  String get markUrlTip => '列表中服务器名字旁边的小标识。留空则不显示。\n\n和 Logo 不是同一张图';
+  String get markUrlTip => '显示在服务器列表名称旁的小图标，留空则不显示（与详情页顶部大图相互独立）。';
 
   @override
-  String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
+  String get navTabMenuTip => '长按标签栏中的标签，或用鼠标右键点击，可一次性连接或断开该标签下的所有服务器。';
 
   @override
   String nTags(int count) {
@@ -249,66 +240,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
-  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已允许 HTTP。';
+  String get monitorHttpsRequired =>
+      '连接远程 Monitor 默认需要 HTTPS，除非已在设置中允许明文 HTTP。';
 
   @override
   String get monitorAllowInsecureHttp => '允许 HTTP';
 
   @override
-  String get plainHttpTitle => '这个 agent 走的是明文 HTTP';
+  String get plainHttpTitle => '当前 Monitor 使用未加密的 HTTP 连接';
 
   @override
-  String get plainHttpTip => '密码和这个应用取的所有内容都会以明文传输。目前还没有发出任何东西。';
+  String get plainHttpTip => '连接密码及所有传输数据均以明文发送。在你确认允许前，不会发送任何请求。';
 
   @override
-  String get allowForThisServer => '只对这台服务器允许';
+  String get allowForThisServer => '仅允许此服务器';
 
   @override
   String get viewError => '查看错误';
 
   @override
-  String get monitorAllowInsecureHttpTip =>
-      '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
+  String get monitorAllowInsecureHttpTip => '仅建议在已具备传输层加密的可信专网（如 Tailscale）中开启';
 
   @override
   String monitorHttpTip(String url) {
-    return '通过 **monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 monitor]($url)';
+    return '通过 **Monitor** 的 HTTP 接口获取服务器状态，无需通过 SSH 执行采样脚本。\n\n需先在服务器上安装 Monitor；历史趋势图、Watch 应用和桌面小组件均依赖此服务。\n\n[查看部署指南]($url)';
   }
 
   @override
   String get backupThemesNotRestored => '已恢复，但以下主题除外。请从主题商店或原始文件重新安装。';
 
   @override
-  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '备份状态';
-
-  @override
-  String get icloudBackupStatusLoading => '正在读取 iCloud 备份状态...';
-
-  @override
-  String get icloudBackupStatusError => '无法读取 iCloud 备份元数据';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未发现 iCloud 备份文件';
-
-  @override
-  String get icloudBackupStateUploading => '上传中';
-
-  @override
   String get icloudBackupStateConflict => '检测到冲突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上传';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最后备份：$lastModified\n状态：$remoteState';
-  }
 
   @override
   String get bgRun => '后台运行';
@@ -331,7 +293,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      '每台服务器显示一行，不显示图表。Linux 的面板菜单通过 D-Bus 传递标签而非自定义布局，因此始终使用单行布局，但仍可将所选图表作为图片显示。';
+      '每台服务器仅显示单行摘要，不展开图表。Linux 系统托盘受限于 D-Bus 菜单协议，固定使用单行文本，但仍可将所选图表渲染为图片项。';
 
   @override
   String get trayKeepRunning => '在托盘中继续运行';
@@ -348,6 +310,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearAllStatsTitle => '清空所有统计';
+
+  @override
+  String get clearAllSettings => '清除所有设置';
 
   @override
   String clearServerStatsContent(String serverName) {
@@ -379,13 +344,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerTrySudoTip =>
-      '例如：在应用内将用户设置为 aaa，但是 Docker 安装在root用户下，这时就需要启用此选项';
+      '例如，应用中设置的用户名是 aaa，而 Docker 安装在 root 用户下，此时需要启用此选项。';
 
   @override
-  String get containerSudoPasswordRequired => '需要 sudo 密码才能访问 Docker。请输入您的密码。';
+  String get containerSudoPasswordRequired => '访问 Docker 需要 sudo 密码。请输入密码。';
 
   @override
-  String get containerSudoPasswordIncorrect => 'sudo 密码错误或无权限。请重试。';
+  String get containerSudoPasswordIncorrect => 'sudo 密码错误或当前账户无权使用 sudo。请重试。';
 
   @override
   String get copyPath => '复制路径';
@@ -403,13 +368,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dirEmpty => '请确保目录为空';
 
   @override
-  String get discoverSshServers => '发现SSH服务器';
+  String get discoverSshServers => '发现 SSH 服务器';
 
   @override
   String get discoveryFailed => '发现失败';
-
-  @override
-  String get discoverySettings => '发现设置';
 
   @override
   String get distro => '发行版';
@@ -433,19 +395,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dockerPruneTip => '清理未使用的数据以释放磁盘空间';
 
   @override
-  String get dockerStatistics => 'Docker 统计';
-
-  @override
   String get editVirtKeys => '虚拟按键';
 
   @override
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
-
-  @override
-  String get enableMdns => '启用mDNS';
-
-  @override
-  String get enableMdnsDesc => '使用mDNS/Bonjour发现SSH服务';
 
   @override
   String get envVars => '环境变量';
@@ -457,11 +410,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fallbackSshDest => '备选 SSH 目标';
 
   @override
-  String get fdroidReleaseTip => '如果你是从 F-Droid 下载的本应用，推荐关闭此选项';
+  String fileTooLarge(String file, String size, String sizeMax) {
+    return '文件“$file”大小为 $size，超过上限 $sizeMax。';
+  }
 
   @override
-  String fileTooLarge(String file, String size, String sizeMax) {
-    return '文件 \'$file\' 过大 \'$size\'，超过了 $sizeMax';
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' 在打开后已被服务器上的其他操作修改。要覆盖吗？';
   }
 
   @override
@@ -474,34 +429,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fullScreen => '全屏';
 
   @override
-  String get fullScreenJitter => '全屏模式抖动';
+  String get fullScreenAllServers => '全部服务器';
 
   @override
-  String get fullScreenJitterHelp => '用于防止屏幕烧屏';
+  String get fullScreenOneServer => '单台服务器';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 已连接';
+  }
+
+  @override
+  String get fullScreenExit => '退出全屏';
+
+  @override
+  String get fullScreenJitter => '防烧屏';
 
   @override
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID（可选）';
-
-  @override
-  String get githubGistToken => 'GitHub Gist Token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token 为空';
-
-  @override
-  String get githubGistIdInvalid =>
-      '这既不是 Gist ID，也不是 Gist 链接。请使用 gist 地址的最后一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次备份时创建新的私密 gist。';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub 找不到此 token 可读取的该 ID 对应 gist：ID 可能有误，gist 可能已被删除，或属于其他账户。请将 ID 留空，以便在首次备份时创建新的私密 gist。';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub 拒绝了此 token：它可能有误、已过期或已撤销，也可能缺少 gist 权限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '前往';
@@ -513,26 +458,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
 
   @override
-  String get ignoreCert => '忽略证书';
-
-  @override
   String get image => '镜像';
 
   @override
   String get macDmgBody =>
-      'App Store 要求本应用沙盒运行，而沙盒内无法开启终端。DMG 版可以开启。\n\nApp Store 版以后可能停止更新。';
+      '受 macOS App Store 沙盒限制，商店版本无法使用本机终端。改用 DMG 版本即可使用完整功能。\n\nApp Store 版本后续可能停止更新。';
 
   @override
-  String get macDmgImportDenied => 'macOS 不允许读取此前安装版本的数据';
+  String get macDmgImportDenied => 'macOS 拒绝了读取旧版本数据的权限请求';
 
   @override
-  String get macDmgImported => '已导入此前安装版本的数据';
+  String get macDmgImported => '已导入旧版本数据';
 
   @override
-  String get macDmgImportFailed => '读不到此前安装版本的数据';
+  String get macDmgImportFailed => '无法读取旧版本数据';
 
   @override
-  String get macDmgTip => '本机终端、在本机运行 snippet(DMG 版)';
+  String get macDmgTip => 'DMG 版支持本机终端和在本机运行代码片段';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -577,7 +519,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rememberKeyPassphraseTip =>
-      '将加密私钥的口令保存在本设备的系统钥匙串中，重启后无需再次输入。备份中的私钥仍保持加密。关闭后会删除已保存的口令。';
+      '保存加密私钥的口令，重启应用后无需再次输入。关闭后将删除本机已保存的口令。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -656,7 +598,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '跳板服务器与 ProxyCommand 不能同时使用。';
 
   @override
-  String get noConnectionMethod => '请配置 SSH、Monitor 或两者';
+  String get noConnectionMethod => '请配置 SSH、Monitor，或两者都配置';
 
   @override
   String get keepForeground => '请将应用保持在前台运行';
@@ -683,21 +625,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
-  String get linuxShellTip => '终端用什么 shell 启动。留空恢复 /bin/sh。';
+  String get linuxShellTip => '本机终端默认启动的 Shell，留空则使用 /bin/sh。';
 
   @override
-  String get linuxNetTip => 'DNS 服务器。留空恢复默认值';
+  String get linuxDnsTip => 'DNS 服务器。留空则使用默认设置。';
 
   @override
-  String madeWithLove(String myGithub) {
-    return '用❤️制作 by $myGithub';
+  String get linuxMirrorTip => '所选发行版的软件包镜像。留空则使用默认镜像。';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 镜像';
   }
 
   @override
-  String get maxConcurrency => '最大并发数';
+  String madeWithLove(String myGithub) {
+    return '由 $myGithub 用 ❤️ 制作';
+  }
 
   @override
-  String get maxRetryCount => '服务器尝试重连次数';
+  String get maxRetryCount => '服务器重连尝试次数上限';
 
   @override
   String get mirror => '镜像';
@@ -758,10 +705,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcPowerDone => '电源状态已改变';
 
   @override
-  String get bmcPowerAccepted => '操作已接受，但电源状态尚未改变。正常关机或重启是否成功取决于操作系统。';
+  String get bmcPowerAccepted => '指令已发送，正等待操作系统完成关机或重启。';
 
   @override
-  String get bmcPowerUnsupported => '该服务不允许这个操作的任何类型';
+  String get bmcPowerUnsupported => '该服务不支持此类操作';
 
   @override
   String get bmcUnauthorized => 'BMC 拒绝了这个账号';
@@ -776,13 +723,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcPowerOff => '已关机';
 
   @override
-  String get bmcCertRejected => '证书被拒绝——请在服务器设置里确认';
+  String get bmcCertRejected => '证书未获信任，请在服务器设置中确认';
 
   @override
   String get bmcNotAService => '该地址上没有 Redfish 服务';
 
   @override
-  String get bmcNoSystem => '该服务没有报告任何 system';
+  String get bmcNoSystem => '该服务未报告任何系统';
 
   @override
   String get bmcSensorsTruncated => '只显示了前面若干个传感器';
@@ -798,35 +745,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcCert => '证书';
 
   @override
-  String get bmcCertPinned => '已确认并钉住';
+  String get bmcCertPinned => '已信任并固定';
 
   @override
-  String get bmcCertUnreviewed => '尚未确认——点击查看证书';
-
-  @override
-  String get bmcCertReview => '收到自签名证书。接受前请核对指纹；接受后将只信任这张证书。';
-
-  @override
-  String get bmcCertChanged => '证书不一致。请核对。';
+  String get bmcCertUnreviewed => '尚未确认，点击查看证书';
 
   @override
   String get bmcCertExpired => '已过期。';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '之前接受的：$fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC 地址必须是 URL，例如 https://10.0.0.9';
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本运行在沙盒中：命令使用的是空白家目录，因此依赖 ~/.ssh 的命令会失败。DMG 版不受此限制。';
+      '此版本运行在沙盒中，命令使用的是空白的 home 目录。因此，依赖 ~/.ssh 的命令会失败。DMG 版不受此限制。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
-    return '无法读取私钥文件 $path:$reason';
+    return '无法读取私钥文件 $path：$reason';
   }
 
   @override
@@ -856,9 +792,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '在手机上，该命令会在所选的 Linux 系统中运行。请先在其中安装命令用到的工具（nc、socat 等）。';
 
   @override
-  String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密码，请在服务器设置中填写。';
 
   @override
@@ -880,7 +813,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveInvalidResponseBody => 'PVE 登录返回了无效的响应内容。';
 
   @override
-  String get pveInvalidResponseData => 'PVE 登录响应中缺少有效的 data 数据。';
+  String get pveInvalidResponseData => 'PVE 登录响应中缺少有效的 data 字段。';
 
   @override
   String get pveMissingAuthTicket => 'PVE 登录成功，但未返回认证票据。';
@@ -892,10 +825,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pvePassword => 'PVE 密码';
 
   @override
-  String get pvePasswordHint => '使用密钥认证时需要填写';
+  String get pvePasswordHint => '使用 SSH 密钥认证时也需要填写';
 
   @override
-  String get read => '读';
+  String get read => '读取';
 
   @override
   String get recentConnections => '最近连接记录';
@@ -904,7 +837,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rememberPwdInMem => '在内存中记住密码';
 
   @override
-  String get rememberPwdInMemTip => '用于容器、挂起等';
+  String get rememberPwdInMemTip => '容器管理、挂起等操作需要使用此密码。';
 
   @override
   String get remotePath => '远端路径';
@@ -916,7 +849,7 @@ class AppLocalizationsZh extends AppLocalizations {
     String latest,
     String pm,
   ) {
-    return '已安装 $distro $installed，新版本为 $latest。更新会重新下载并替换整个容器，$pm 中的数据将丢失。';
+    return '当前安装的是 $distro $installed，可更新到 $latest。更新会重新下载并替换整个容器，因此 $pm 中的数据会丢失。';
   }
 
   @override
@@ -933,14 +866,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get sameIdServerExist => '已存在相同 id 的服务器';
+  String get sameIdServerExist => '已存在 ID 相同的服务器';
 
   @override
   String get second => '秒';
 
   @override
   String get serverFilesUnavailableTip =>
-      '需要能通过 SSH 连接这台服务器，或者安装 Monitor agent 并开启文件 API。';
+      '需通过 SSH 连接此服务器，或安装并启用 Monitor 的文件 API。';
 
   @override
   String get back => '返回';
@@ -975,10 +908,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverTabEmpty => '还没有服务器';
 
   @override
-  String get serverTabConnBadge => '服务器标签页上的连接数';
+  String get serverTabConnBadge => '服务器标签页上显示的连接数';
 
   @override
-  String get serverTabConnBadgeTip => '已连接的服务器数量，例如 2/4';
+  String get serverTabConnBadgeTip => '已连接的服务器数量，例如 2/4。';
 
   @override
   String get serverTabRequired => '服务器标签不能被移除';
@@ -1042,7 +975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareTooNew => '此分享由较新版本的 ServerBox 创建，请升级应用后再打开。';
 
   @override
-  String get shareUnreadable => '这不是有效的 ServerBox 分享内容。';
+  String get shareUnreadable => '不是有效的 ServerBox 分享。';
 
   @override
   String get shareVia => '分享方式';
@@ -1052,7 +985,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      '如果为空，使用App内置的文件编辑器.  例如 `vim` (建议根据 `EDITOR` 自动获取).';
+      '留空则使用 App 内置的文件编辑器。也可以指定编辑器，例如 `vim`（建议根据 `EDITOR` 环境变量自动设置）。';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
@@ -1079,18 +1012,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
+      '开启后，温度值会按摄氏度读取，而不是按千分之一摄氏度读取。仅当温度显示异常时再开启（例如显示 0.1°C，而实际应为 58°C）。';
 
   @override
   String get diskCountsNetwork => '网络文件系统计入总量';
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。仅在通过 SSH 采集状态时生效；通过 monitor agent 采集时，由 agent 自己的设置决定。';
+      'NFS、SMB 等网络挂载始终会列在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。此设置仅在通过 SSH 采集状态时生效；通过 Monitor 采集时，则由 Monitor 自身的设置决定。';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。agent 记录的历史数据和磁盘告警都使用这个总量。';
+      'NFS、SMB 等网络挂载始终会显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。Monitor 记录历史数据和判断磁盘告警时使用的也是此总量。';
 
   @override
   String spentTime(String time) {
@@ -1098,40 +1031,20 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return '所有服务器已存在（发现 $duplicateCount 个重复项）';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount 个重复项将被跳过';
-  }
-
-  @override
-  String get sshConfigFound => '我们在您的系统中发现了 SSH 配置。';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '发现 $totalCount 个服务器';
-  }
+  String get sshConfigFound => '在系统中发现了 SSH 配置。';
 
   @override
   String get sshConfigImport => 'SSH 配置导入';
 
   @override
-  String get sshConfigImportPermission => '是否允许读取 ~/.ssh/config 并自动导入服务器设置？';
+  String get sshConfigImportPermission => '是否允许读取 ~/.ssh/config 并自动导入其中的服务器设置？';
 
   @override
   String get sshConfigImportTip => '首次创建服务器时提示读取 ~/.ssh/config';
 
   @override
-  String sshConfigImported(int count) {
-    return '从 SSH 配置导入了 $count 个服务器';
-  }
-
-  @override
   String sshHostKeyChangedDesc(String serverName) {
-    return '服务器 $serverName 的 SSH 主机密钥已更改，仅在信任该服务器时继续。';
+    return '服务器 $serverName 的 SSH 主机密钥已更改。只有确认信任该服务器后，才可继续连接。';
   }
 
   @override
@@ -1145,7 +1058,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
+    return '收到了来自 $serverName 的新 SSH 主机密钥。请先核对指纹，再决定是否信任。';
   }
 
   @override
@@ -1160,15 +1073,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
 
   @override
-  String get sshConfigNoServers => 'SSH 配置中未找到服务器';
-
-  @override
   String get sshConfigPermissionDenied => '由于 macOS 权限限制，无法访问 SSH 配置文件。';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount 个服务器将被导入';
-  }
 
   @override
   String get sshTermHelp =>
@@ -1181,7 +1086,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportFmtArgs => '支持以下格式化参数：';
 
   @override
-  String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
+  String get suspendTip => 'suspend 功能需要 root 权限和 systemd。';
 
   @override
   String switchTo(String val) {
@@ -1189,10 +1094,25 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => '同步应用设置';
+  String get syncedData => '同步内容';
 
   @override
-  String get syncAppSettingsTip => '在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。';
+  String get syncSecrets => 'sudo 密码与 API 密钥';
+
+  @override
+  String get keyPassphrases => '私钥口令';
+
+  @override
+  String get syncFiles => '字体、图片与 Skills';
+
+  @override
+  String get syncRemoteTooNew => '同步数据来自更高版本的 ServerBox，请更新应用后继续同步。';
+
+  @override
+  String get syncPasswordMismatch => '同步数据使用了其他备份密码加密，请输入与其他设备一致的备份密码。';
+
+  @override
+  String get syncUnreachable => '无法连接同步服务，请检查网络后重试。';
 
   @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
@@ -1213,7 +1133,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateServerStatusInterval => '服务器状态刷新间隔';
 
   @override
-  String get useNoPwd => '将会使用无密码';
+  String get useNoPwd => '不使用密码';
 
   @override
   String get usePodmanByDefault => '默认使用 Podman';
@@ -1266,38 +1186,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtKeyRowsTip => '超出单页的可横向滑动切换';
-
-  @override
-  String get keyArrowDown => '下箭头';
-
-  @override
-  String get keyArrowLeft => '左箭头';
-
-  @override
-  String get keyArrowRight => '右箭头';
-
-  @override
-  String get keyArrowUp => '上箭头';
-
-  @override
-  String get keyControl => 'Ctrl 键';
-
-  @override
-  String get keyEscape => 'Esc 键';
-
-  @override
-  String get keyPageDown => '向下翻页';
-
-  @override
-  String get keyPageUp => '向上翻页';
-
-  @override
-  String get termTextView => '以文本查看';
-
-  @override
-  String termTextLetGo(int count) {
-    return '更早的输出已不再保留：$count 行';
-  }
 
   @override
   String get waitConnection => '请等待连接建立';
@@ -1456,17 +1344,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchServers => '手表上的服务器';
 
   @override
-  String get watchServersTip => '手表独立向 monitor 取数据，所以只能选择已配置 monitor 的服务器。';
+  String get watchServersTip => '手表独立从 Monitor 获取数据，所以只能选择已配置 Monitor 的服务器。';
 
   @override
-  String get watchNoMonitorServer => '没有服务器配置了 monitor';
+  String get watchNoMonitorServer => '没有服务器配置了 Monitor';
 
   @override
   String get legacyStatusGoneTitle => '状态链接已失效';
 
   @override
   String get legacyStatusGoneBody =>
-      '手表 App 和桌面小组件此前读取的是手动填写的 `/status` 地址。该接口已移除：它只能以文本形式返回当前值，这也是它们始终无法显示曲线的原因。\n\n现在它们读取 Monitor 的认证接口，可以绘制曲线，并自动与 App 保持同步。在 App 内配置一次服务器，所有手表和小组件都会自动获取。';
+      '旧版 Watch 应用和桌面小组件通过手动填写的 `/status` 接口获取文本状态，因此无法绘制历史曲线。\n\n新版已升级为读取 Monitor 认证接口，支持历史趋势图并与 App 自动同步。只需在 App 中为服务器配置好 Monitor，手表和小组件即可直接使用。';
 
   @override
   String get services => '服务';
@@ -1511,7 +1399,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get systemdUserScopeMissing => '未列出用户 unit';
 
   @override
-  String get systemdUserScopeMissingTip => '该账户在服务器上没有用户会话总线，因此只显示系统 unit。';
+  String get systemdUserScopeMissingTip =>
+      '当前登录账户未启动 systemd 用户会话总线（user session bus），因此仅显示系统级单元。';
 
   @override
   String get serviceSearchHint => '单元名';
@@ -1538,17 +1427,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String serviceUpFor(String duration) {
-    return '运行 $duration';
+    return '已运行 $duration';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return '停止 $duration';
+    return '已停止 $duration';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return '下次 $duration';
+    return '下次运行：$duration 后';
   }
 
   @override
@@ -1579,14 +1468,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverUnreachable => '无法在此服务器上执行命令';
 
   @override
-  String get containerNoRuntime => '此处没有容器运行时';
+  String get containerNoRuntime => '未检测到容器运行时';
 
   @override
   String get containerNoRuntimeTip =>
-      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试使用 sudo」。';
+      '当前服务器上 `docker` 与 `podman` 均无响应。若容器安装在 root 账户下，请在设置中开启「尝试使用 sudo」。';
 
   @override
-  String get containerUnreadable => '容器运行时返回了无法解析的内容';
+  String get containerUnreadable => '无法解析容器运行时返回的数据';
 
   @override
   String get power => '电源';
@@ -1610,11 +1499,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip => '允许 Agent 在运行 ServerBox 的这台机器上工作。只读的命令也需要审核';
+  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本地命令，并受权限模式控制';
 
   @override
   String get agentLocalExecRootfsTip =>
-      '让 Agent 在本机运行，但只能操作 ServerBox 安装的 Linux 容器。';
+      '仅允许 Agent 在 ServerBox 内置的本地 Linux 容器中执行命令。';
 
   @override
   String macDmgImportedPartly(String path) {
@@ -1625,26 +1514,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcAccount => '账户';
 
   @override
-  String get bmcAccountUnset => '未选择 — 点击选择或新建';
+  String get bmcAccountUnset => '未选择，点击选择或新建';
 
   @override
   String bmcAccountShared(int count) {
-    return '$count 台服务器在用';
+    return '$count 台服务器正在使用';
   }
 
   @override
   String get bmcAccounts => 'BMC 账户';
 
   @override
-  String get bmcAccountSharedTip => '在这里修改会改变所有这些服务器使用的账户。';
+  String get bmcAccountSharedTip => '修改此账户将同步影响所有关联的服务器。';
 
   @override
   String bmcAccountInUse(int count) {
-    return '$count 台服务器在用。它们会保留地址，但失去账户。';
+    return '正被 $count 台服务器使用。删除后这些服务器将保留 BMC 地址，但需重新绑定账户。';
   }
 
   @override
-  String get bmcStaleWrite => 'BMC 上的内容在写入期间被改动过，请重试。';
+  String get bmcStaleWrite => 'BMC 配置在保存期间已被其他客户端修改，请刷新后重试。';
 
   @override
   String get privacyBlur => '后台隐私保护';
@@ -1682,7 +1571,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoData => '城市级数据';
 
   @override
-  String get geoDataTip => '下载后，所有地理位置查询都使用保存在本机的数据，不会向下载服务发送服务器地址或查询活动。';
+  String get geoDataTip => '下载后所有 IP 归属地查询均在本地离线完成，不会向外部服务发送服务器地址。';
 
   @override
   String get geoDataMissing => '未下载';
@@ -1700,7 +1589,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String geoDataConsent(String download, String disk) {
-    return '**下载大小：$download · 本机占用：$disk。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。';
+    return '**下载大小：$download · 本地占用：$disk。** 数据包保存在本机，后续所有地理位置查询均在本地离线完成，不会向外部发送任何服务器地址。\n\n数据库每月更新一次并自动覆盖旧版本，你可随时在设置中删除。';
   }
 
   @override
@@ -1708,7 +1597,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkIntro =>
-      '在此服务器上运行 Yet Another Bench Script：磁盘、网络与 CPU。完整跑一次需要 10–20 分钟，离开本页或关闭 App 都不会中断。';
+      '在服务器上运行 Yet Another Bench Script（YABS），测试磁盘 I/O、网络带宽与 CPU 性能。完整测试约需 10–20 分钟，后台运行不受切出页面或关闭应用影响。';
 
   @override
   String get benchmarkNoRuns => '还没有测试记录。';
@@ -1726,11 +1615,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkDeleteConfirm => '删除此条测试结果？';
 
   @override
-  String get benchmarkNothingSelected => '所有项目均已关闭，本次只会采集系统信息，几秒即可完成。';
+  String get benchmarkNothingSelected => '未勾选任何测试项，本次仅采集系统基本信息，几秒内即可完成。';
 
   @override
   String get benchmarkDiskTip =>
-      'fio 四种 block size，约 3 分钟。会在工作目录写入 2 GB 测试文件，需要相应的空闲空间。';
+      '使用 fio 测试 4 种块大小，耗时约 3 分钟。测试期间会在工作目录写入 2 GB 临时文件，请确保空间充足。';
 
   @override
   String get benchmarkNetworkTip => 'iperf3 对测公共服务器，约 4 分钟。';
@@ -1762,13 +1651,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkPreferBinTip =>
-      '从 GitHub 下载，而不使用主机自带的软件包。仅在主机两者都没有安装时开启。';
+      '直接下载官方预编译二进制文件，而不使用系统安装的软件包。仅建议在服务器未安装 fio 或 iperf3 时开启。';
 
   @override
   String get benchmarkWorkDir => '工作目录';
 
   @override
-  String get benchmarkWorkDirTip => '决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。';
+  String get benchmarkWorkDirTip => '磁盘测试将对该目录所在的文件系统进行读写。留空则默认使用当前登录账户的主目录。';
 
   @override
   String benchmarkEstimatedTime(int minutes) {
@@ -1844,18 +1733,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tagsEmptyTip => '还没有标签。编辑服务器时添加标签，它就会显示在这里。';
 
   @override
-  String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
+  String get benchmarkNoServers => '请先添加服务器，再运行性能测试。';
 
   @override
-  String get schemaTooNewTitle => '这些数据比当前应用新';
+  String get schemaTooNewTitle => '数据版本高于当前应用';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return '这些数据由更新版本的 ServerBox 写入（存储版本 v$stored）。当前版本最高支持 v$supported，数据未被改动。';
+    return '当前本地数据由更高版本的 ServerBox 创建（存储格式 v$stored），而本版本最高仅支持 v$supported。现有数据完好无损。';
   }
 
   @override
-  String get schemaTooNewReinstall => '请重新安装更新的版本，即可再次打开全部数据。';
+  String get schemaTooNewReinstall => '请升级到最新版本的 ServerBox 以正常读取全部数据。';
 
   @override
   String get schemaTooNewExportPlain => '导出无密码副本';
@@ -1875,8 +1764,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get schemaTooNewWipeDone => '数据已删除。请重新打开应用，从头开始。';
 
   @override
-  String get schemaTooNewWipeFailed =>
-      '部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。';
+  String get schemaTooNewWipeFailed => '部分数据清理失败。请安装最新版本的 ServerBox 以正常读取数据。';
 
   @override
   String get systemUsers => '用户';
@@ -1963,44 +1851,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get userPasswordEditTip => '密码留空将保留现有密码。';
 
   @override
-  String get systemGroups => '用户组';
-
-  @override
-  String get userGid => 'GID';
-
-  @override
-  String get userGroupMembers => '成员';
-
-  @override
-  String get userPrimaryMembers => '主组成员';
-
-  @override
-  String get userSystemGroup => '系统组';
-
-  @override
-  String get userMembersHint => 'alice,bob';
-
-  @override
-  String get userRegularGroup => '普通组';
-
-  @override
   String funcUnavailableFmt(String func) {
     return '此服务器的连接方式不提供$func。';
   }
-
-  @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func需要在 Monitor agent 中开启 $setting。';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor agent。';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      '通过 Monitor agent 进行远程转发需要更新版本的 agent，请在服务器上更新。';
 
   @override
   String get rangeLive => '实时';
@@ -2018,7 +1871,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cores => '核心';
 
   @override
-  String get historyNoStored => '只有 monitor agent 会存储历史。此连接只保留本应用连接后看到的部分。';
+  String get historyNoStored => '仅 Monitor 连接支持持久保存历史记录；当前连接仅展示本次打开应用后采集的数据。';
 
   @override
   String get noHistoryYet => '还没有采样';
@@ -2033,11 +1886,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get to => '止';
 
   @override
-  String get beyondRetention => '超出这个 agent 保留的范围';
+  String get beyondRetention => '超出此 Monitor 已保存的数据范围';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'agent 保留 $kept';
+    return 'Monitor 的数据保留时间：$kept';
   }
 
   @override
@@ -2045,13 +1898,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentServerToolsTip =>
-      '在服务器上执行命令、读写文件，通过 SSH 连接其他主机，并使用 ServerBox 自身的操作。';
+      '在服务器上执行命令、读写文件、通过 SSH 连接其他主机，也可以使用 ServerBox 自身的功能。';
 
   @override
   String get agentTerminalTools => '终端';
 
   @override
-  String get agentTerminalToolsTip => '在终端自己的对话中：读取终端显示的内容，并在其服务器上执行命令。';
+  String get agentTerminalToolsTip => '在终端会话中读取屏幕内容，并在对应服务器上执行命令。';
 
   @override
   String get agentToolTerminalScreen => '读取屏幕';
@@ -2069,7 +1922,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
 
   @override
-  String get agentSnippetToolsTip => '列出、新增、修改和删除 snippet；修改前会询问。';
+  String get agentSnippetToolsTip => '查看、创建、编辑和删除代码片段。';
 
   @override
   String get agentVirtToolsTip => '读取虚拟化标签页已加载的虚拟机和容器。';
@@ -2081,7 +1934,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentRemoteDesktopToolsTip => '列出远程桌面配置；经你批准后连接或断开。';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => '技能';
 
   @override
   String get agentSkillsTip => '特定任务的操作说明，可从 GitHub 或链接安装';
@@ -2090,10 +1943,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentPermissions => '权限';
 
   @override
-  String get agentEmptyHint => '询问你的服务器，或让 Agent 在服务器上完成某项操作。';
+  String get agentEmptyHint => '询问服务器状态，或让 Agent 协助排查与执行操作。';
 
   @override
-  String get agentTerminalEmptyHint => '询问这台服务器。Agent 可以读取当前终端，并在这里执行命令。';
+  String get agentTerminalEmptyHint => '可结合当前终端上下文提问，或让 Agent 在此终端中执行命令。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2101,7 +1954,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get rangeEndsBeforeItStarts => '区间的结束必须晚于开始。';
+  String get rangeEndsBeforeItStarts => '结束时间必须晚于开始时间。';
 
   @override
   String get samples => '采样';
@@ -2110,7 +1963,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unavailable => '不可用';
 
   @override
-  String get metricUnavailableTip => '页面其余部分不受影响。到主机上检查这项读数所用的命令。';
+  String get metricUnavailableTip => '不影响页面其他指标，请在服务器上检查对应采集命令是否可用。';
 
   @override
   String get waitingFirstSample => '等待第一次采样';
@@ -2125,12 +1978,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String lastSampleFmt(String ago) {
-    return '最近采样于$ago';
+    return '最近一次采样：$ago';
   }
 
   @override
   String staleSinceFmt(String ago, String time) {
-    return '以下全部是 $time 的数据，$ago。';
+    return '当前显示的是 $time（$ago）的数据。';
   }
 
   @override
@@ -2185,6 +2038,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String countOfFmt(int count, String what) {
     return '$count 个$what';
   }
+
+  @override
+  String get filesystems => '文件系统';
+
+  @override
+  String get blockDevices => '块设备';
+
+  @override
+  String get notMounted => '未挂载';
 
   @override
   String get unitDevices => '设备';
@@ -2289,49 +2151,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connection => '连接方式';
 
   @override
-  String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
+  String get connectionTip => '可同时启用多种方式，连接时按列表顺序依次尝试。';
 
   @override
-  String get transportNoneOn => '两个都关闭了 —— 这台服务器无法连接。';
+  String get transportNoneOn => '请至少启用一种连接方式。';
 
   @override
   String get thisDevice => '本机';
 
   @override
   String get localServerTip =>
-      '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor HTTP，二者的设置会保留。';
+      '直接在本机执行采集脚本获取系统状态，不使用 SSH 或 Monitor（原有连接配置仍会保留）。';
 
   @override
   String get localServerUnsupported =>
-      '当前平台无法将本机作为服务器读取。Linux、Windows 和 macOS DMG 版本支持。';
+      '当前平台不支持添加本机作为服务器（仅支持 Linux、Windows 及 macOS DMG 版）。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor agent 转发，桌面端口无需对网络开放。';
+  String get transportSectionOff => '当前未启用，下方配置将保留以便日后重新开启。';
 
   @override
-  String get remoteDesktopIntroProfiles =>
-      '在服务器的「远程桌面」按钮或「远程桌面」标签页中，为每个桌面保存一个配置。';
-
-  @override
-  String get localServerIntro =>
-      '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor agent。';
-
-  @override
-  String get localServerAdd => '添加本机';
-
-  @override
-  String get localServerIntroFooter => '之后也可以在服务器编辑页的「连接方式」中开启。';
-
-  @override
-  String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
-
-  @override
-  String get monitorAgent => 'Monitor 代理';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。';
+      '密码与监控数据将以明文在网络中传输。仅建议在局域网、Tailscale 等可信网络中开启，或为 Monitor 配置 HTTPS。';
 
   @override
   String get behaviour => '行为';
@@ -2379,7 +2223,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get tagOnThisServer => '在这台上';
+  String get tagOnThisServer => '当前服务器';
 
   @override
   String tagServersFmt(int count) {
@@ -2388,7 +2232,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String tagOnThisServerFmt(int count) {
-    return '这台上有 $count 个';
+    return '当前服务器已选 $count 个';
   }
 
   @override
@@ -2396,7 +2240,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagEditorTip =>
-      '输入会过滤列表；按钮新建标签并直接加到这台服务器上。铅笔是重命名，会改掉所有用到它的服务器。没有服务器再用的标签会在保存时消失。';
+      '输入文字可筛选或新建标签；点击铅笔图标可全局重命名标签。未被任何服务器使用的标签会在保存后自动清理。';
 
   @override
   String get tagRenamesOnSave => '重命名在保存时生效';
@@ -2501,7 +2345,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return '每小时的 :$minute';
+    return '每小时第 $minute 分钟';
   }
 
   @override
@@ -2511,7 +2355,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return '每 $hours 小时的 :$minute';
+    return '每隔 $hours 小时，在第 $minute 分钟执行';
   }
 
   @override
@@ -2538,10 +2382,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorSettings => 'Monitor 设置';
 
   @override
-  String get monitorAgentDefault => 'agent 默认值';
+  String get monitorAgentDefault => 'Monitor 默认值';
 
   @override
-  String get monitorNeedsRestart => 'agent 重启后生效';
+  String get monitorNeedsRestart => 'Monitor 重启后生效';
 
   @override
   String get monitorCollection => '采集';
@@ -2554,7 +2398,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get idlePauseTip =>
-      '扩展采集会调用 smartctl、sensors 和 amd-smi。没有客户端轮询时暂停，可以避免为无人查看的数据唤醒硬盘。';
+      '扩展采集会调用 smartctl、sensors 和 amd-smi。无客户端查看时自动暂停，可避免频繁唤醒机械硬盘。';
 
   @override
   String get idlePauseThreshold => '闲置判定时长';
@@ -2591,26 +2435,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => '已在 agent 上设置，不显示';
+  String get pushSecretSet => '已保存在 Monitor 中（出于安全原因不回显）';
 
   @override
   String get pushSecretKeep => '留空则保持不变';
 
   @override
-  String get pushTestTip => '按当前页面上的配置发送一条通知，无论是否已保存。';
+  String get pushTestTip => '使用当前表单填写的配置立即发送一条测试通知（无需先保存）。';
 
   @override
-  String get pushTestSent => '渠道已接受';
+  String get pushTestSent => '测试通知已发送';
 
   @override
-  String get pushTestFailed => '渠道拒绝了这条通知';
+  String get pushTestFailed => '测试通知发送失败';
 
   @override
   String get pushTestMessage => '来自 ServerBox Monitor 的测试通知';
 
   @override
   String get pushUnknownType =>
-      '此 agent 没有该类型的发送实现，因此不显示其配置。可以在这里删除，或在 agent 的 config.toml 中编辑。';
+      '当前版本的 Monitor 暂不支持此类型的通知渠道。你可在此将其删除，或直接编辑服务器上的 config.toml。';
 
   @override
   String get pushJsonInvalid => '不是合法的 JSON';
@@ -2619,7 +2463,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataRetention => '数据保留';
 
   @override
-  String get dataRetentionTip => '关闭表示 agent 不会删除任何数据，其数据库会无限增长。';
+  String get dataRetentionTip => '关闭后 Monitor 将永久保留所有历史数据，数据库体积会持续增长。';
 
   @override
   String get retentionMetrics => '指标保留';
@@ -2637,19 +2481,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get corsOrigins => 'CORS 允许来源';
 
   @override
-  String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
+  String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 Monitor。留空表示仅同源。';
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+      '此 Monitor 拒绝通过明文 HTTP 执行监控以外的操作。请改用 HTTPS 连接，或在 Monitor（[remote_access] allow_insecure）和本 App 中同时允许 HTTP。';
 
   @override
   String get monitorAgentTooOld =>
-      '此 Monitor agent 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 agent。';
+      '此 Monitor 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 Monitor。';
 
   @override
-  String get monitorClientTooOld =>
-      '此 Monitor agent 已不再支持当前版本的 ServerBox。请更新 App。';
+  String get monitorClientTooOld => '此 Monitor 已不再支持当前版本的 ServerBox。请更新 App。';
 
   @override
   String get alerts => '告警';
@@ -2673,10 +2516,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disconnect => '断开';
 
   @override
-  String get searchServerTip => '搜索名称和地址，也就是编辑页最先问的两项。';
+  String get searchServerTip => '按服务器名称或地址搜索';
 
   @override
-  String get addServerTip => '手动填写、扫描二维码，或导入别人分享的文件。';
+  String get addServerTip => '手动填写连接信息、扫描二维码，或导入他人分享的配置文件。';
 
   @override
   String get move => '移动';
@@ -2691,7 +2534,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupByTag => '按标签分组';
 
   @override
-  String get groupByTagTip => '标签是在服务器自己的编辑页里加的。';
+  String get groupByTagTip => '可在服务器的编辑页面中添加和管理标签。';
 
   @override
   String get connecting => '连接中…';
@@ -2792,7 +2635,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      '目标地址由 SSH 服务器或 Monitor Agent 解析，localhost 指向该服务器。';
+      '目标地址由 SSH 服务器或 Monitor 解析，localhost 指向该服务器。';
 
   @override
   String get remoteDesktopDomain => '域（可选）';
@@ -2835,6 +2678,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopHostInvalid => '目标主机不能包含空格或换行。';
 
   @override
+  String get remoteDesktopProtocolInvalid => '不支持的协议。';
+
+  @override
   String get remoteDesktopCredentialInvalid => '用户名和域最多 256 个字符，不能换行。';
 
   @override
@@ -2848,6 +2694,94 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '服务器仅提供 Standard RDP Security（RC4），不受支持。请在 xrdp.ini 中设置 security_layer=tls（或 negotiate），并确保 xrdp 能读取其 TLS 证书。';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '服务器没有 TLS 证书。请在服务器上安装证书；xrdp 请在 xrdp.ini 中设置 certificate 和 key_file。';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '服务器要求客户端证书（智能卡登录），不受支持。';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '用户名或密码错误。';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut => '账户已被锁定。请稍后再试，或请管理员解锁。';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '账户已被禁用。';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '账户已过期。';
+
+  @override
+  String get remoteDesktopFailPasswordExpired => '密码已过期或必须修改。请先在服务器上修改密码。';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '该账户在此时间或从此设备不允许登录，或其空密码不允许远程登录。';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '该账户不允许通过远程桌面登录。请在服务器上将其加入 Remote Desktop Users 组。';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '服务器不接受已保存的凭据。请重新输入密码。';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '会话因达到服务器的空闲时间限制而断开。';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '会话已达到服务器的时间限制。';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection => '另一个连接接管了此会话。';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '会话在服务器上被断开。';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '管理员注销了此会话。';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '会话已注销。';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '服务器正在关机。';
+
+  @override
+  String get remoteDesktopFailServerReboot => '服务器正在重启。';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '服务器拒绝了连接。';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '服务器的远程桌面授权失败。请检查其许可证服务器和客户端访问许可证（CAL）。';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 服务器未提供受支持的安全类型；仅支持 VNC 密码或无认证。TigerVNC 请设置 SecurityTypes=VncAuth。';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 服务器需要密码。';
+
+  @override
+  String get tcpTargetUnreachable => '服务器无法连接到此地址。请检查服务是否在运行并监听该端口。';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 服务器拒绝转发此连接。请检查其 sshd_config 中的 AllowTcpForwarding 和 PermitOpen，以及 authorized_keys 中该密钥的 no-port-forwarding 或 permitopen 选项。';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Monitor 拒绝了此连接：密码已变更，或未允许通过明文 HTTP 执行此操作。请重新验证密码或改用 HTTPS。';
 
   @override
   String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
@@ -2868,6 +2802,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => '信任并重新连接';
+
+  @override
+  String get certTrust => '信任';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
@@ -2900,16 +2837,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pveAuthToken => 'API token';
+  String get pveAuthToken => 'API 令牌';
 
   @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
-  String get pveTokenId => 'Token ID';
+  String get pveTokenId => '令牌 ID';
 
   @override
-  String get pveTokenSecret => 'Token secret';
+  String get pveTokenSecret => '令牌密钥';
 
   @override
   String get pveTokenTip =>
@@ -2945,31 +2882,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtualization => '虚拟化';
 
   @override
-  String get virtIntro =>
-      '管理 Proxmox VE 和 libvirt/KVM 主机上的虚拟机和容器：查看状态、执行电源操作、打开控制台。';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE 已从服务器页面移到此标签页。服务器的 PVE 卡片会在这里打开它。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安装了 libvirt 的 virsh 的服务器会显示为主机，并列出其 QEMU/KVM 虚拟机。';
-
-  @override
-  String get virtIntroTransports => '两者都可以通过 SSH、Monitor agent 或在本设备上使用。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登录，无需密码。在服务器编辑页面的 PVE 部分设置。';
-
-  @override
-  String get virtIntroInBar => '已添加到标签栏。';
-
-  @override
-  String get virtIntroInMore => '位于“更多”中。可在设置的“主页标签”中将其移到标签栏。';
-
-  @override
   String get virtGuests => '虚拟机';
 
   @override
@@ -2993,7 +2905,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtProbeContainerTip => '这台服务器运行在容器里，本身不是宿主机。请在运行它的宿主机上管理。';
+  String get virtProbeContainerTip =>
+      '当前服务器本身运行在容器内，无法作为虚拟化宿主机。请连接其所在的物理宿主机进行管理。';
 
   @override
   String get virtProbePve => 'PVE，未配置';
@@ -3008,7 +2921,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtNoHostsTip =>
-      '运行 Proxmox VE 且填写了 API 访问信息的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
+      '配置了 Proxmox VE API 的服务器，或安装了 virsh 的服务器会自动识别为宿主机；你也可以在宿主机列表中手动检测其他服务器。';
 
   @override
   String get virtNoGuests => '没有虚拟机或容器';
@@ -3047,7 +2960,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtConsoleGraphical => '图形';
 
   @override
-  String get virtVncPasswordNeeded => '这个显示需要密码';
+  String get virtVncPasswordNeeded => '此控制台需要密码';
 
   @override
   String get virtConsoleSerialTip =>
@@ -3067,7 +2980,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtConsoleEnterNow => '立即';
+  String get virtConsoleEnterNow => '立即发送';
 
   @override
   String get virtOffTip => '启动后在这里显示实时 CPU、内存、磁盘和网络。';
@@ -3105,10 +3018,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrCertChanged => '宿主机的证书已更改';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor agent 不转发连接';
+  String get virtErrRelayNotGranted => '当前连接不允许通过 Monitor 转发 TCP 流量';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor agent 不执行命令';
+  String get virtErrExecNotGranted => '当前连接不允许通过 Monitor 执行命令';
 
   @override
   String get virtErrNotInstalled => '此服务器上未安装 virsh';
@@ -3133,7 +3046,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      '离开远程桌面或虚拟机控制台后,连接保持多久。关闭前会显示提示,10 秒内可选择保持连接。';
+      '离开远程桌面或虚拟机控制台后，连接会保持一段时间。关闭前会显示提示，你可以在 10 秒内选择继续保持连接。';
 
   @override
   String get remoteSessionKeepAlive => '保持连接';
@@ -3268,7 +3181,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNoTemplates => '这台主机上没有容器模板。可以在 PVE 中存储的 CT 模板里下载。';
 
   @override
-  String get virtNoDiskStorage => '这台主机上没有可以创建新磁盘的存储';
+  String get virtNoDiskStorage => '该主机上没有可用于创建新磁盘的存储池';
 
   @override
   String get virtStartAfterCreate => '创建后启动';
@@ -3315,10 +3228,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCreateCoresInvalid => '超出了这台主机允许的核心数。';
 
   @override
-  String get virtCreateMemoryInvalid => '内存不足。';
+  String get virtCreateMemoryInvalid => '可用内存不足。';
 
   @override
-  String get virtCreateStorageMissing => '选择磁盘的存放位置。';
+  String get virtCreateStorageMissing => '请选择磁盘的存放位置。';
 
   @override
   String get virtCreateDiskInvalid => '范围为 1 GiB 到 64 TiB。';
@@ -3327,7 +3240,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCreateTemplateMissing => '选择一个模板。';
 
   @override
-  String get virtCreateCredentialsMissing => '设置 root 密码或 SSH 公钥。';
+  String get virtCreateCredentialsMissing => '请设置 root 密码或 SSH 公钥。';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -3341,7 +3254,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtDeleteDisks => '同时删除磁盘卷';
 
   @override
-  String get virtDeleteDisksPve => '磁盘会随它一起删除，安装介质会保留。';
+  String get virtDeleteDisksPve => '虚拟机的磁盘将一并删除，ISO 安装介质会保留。';
 
   @override
   String virtDeleted(String name) {
@@ -3364,7 +3277,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrConflict => '已在别处修改';
 
   @override
-  String get virtErrConflictTip => '此配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+  String get virtErrConflictTip => '该配置在读取后已被其他操作修改，本次更改未保存。现已刷新为最新配置，请确认后重试。';
 
   @override
   String get virtHardware => '硬件';
@@ -3600,7 +3513,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwRevertAll => '全部撤销';
 
   @override
-  String get virtSetRenameStopped => '关机后才能改名：libvirt 只能重命名未运行的虚拟机。';
+  String get virtSetRenameStopped => 'libvirt 仅支持在虚拟机关机状态下重命名。';
 
   @override
   String virtSetIssueDescription(int max) {
@@ -3623,7 +3536,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtSetDeleteStopFirst => '先关机再删除。';
 
   @override
-  String get virtSetDeleteProtected => '已开启保护，先在常规里关闭。';
+  String get virtSetDeleteProtected => '该虚拟机已开启保护，请先在「常规」设置中关闭保护。';
 
   @override
   String get virtSetDeleteAgain => '再点一次确认';
@@ -3662,7 +3575,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtHwVolumeKept => '已移除，但运行中的虚拟机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
+  String get virtHwVolumeKept =>
+      '已移除磁盘配置，但运行中的虚拟机仍在使用该磁盘，因此暂时保留对应的卷。虚拟机下次启动时，该卷会被分离。';
 
   @override
   String get virtHwBus => '总线';
@@ -3734,7 +3648,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwMappingsOnly =>
-      '这里只能使用资源映射：PVE 只允许以密码登录的 root@pam 直通原始设备。可在 数据中心 → 资源映射 中创建映射。';
+      '当前认证方式仅支持使用资源映射（PVE 仅允许以密码登录的 root@pam 直接直通原始硬件）。请在 PVE「数据中心 → 资源映射」中创建映射。';
 
   @override
   String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
@@ -3771,7 +3685,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwSecureBootNote => '只引导已签名的内核和引导程序';
 
   @override
-  String get virtHwFirmwareWarnTitle => '已安装系统不要切换固件';
+  String get virtHwFirmwareWarnTitle => '请勿为已安装系统的虚拟机切换固件';
 
   @override
   String get virtHwFirmwareWarnBody => '在 UEFI 和 BIOS 之间切换会导致现有系统无法引导。';
@@ -3838,7 +3752,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupNoPlanShort => '无计划';
 
   @override
-  String get virtBackupNoPlan => '没有包含它的定时备份任务。';
+  String get virtBackupNoPlan => '当前虚拟机未加入任何定时备份任务。';
 
   @override
   String get virtBackupKeep => '保留';
@@ -3860,7 +3774,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupNoStorage => '这个节点上没有能存放备份的存储。';
 
   @override
-  String get virtBackupLiveTip => '运行中用 snapshot 模式，不停机';
+  String get virtBackupLiveTip => '虚拟机运行时使用 snapshot 模式备份，无需停机';
 
   @override
   String get virtBackupStoppedTip => '已关机：按当前状态备份';
@@ -3952,7 +3866,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtPoolDeleteAsk(String name) {
-    return '删除存储池 $name？会删除它的定义，卷保留在原处。';
+    return '确定删除存储池 $name？仅移除存储池定义，原有磁盘卷将保留在原位置。';
   }
 
   @override
@@ -4248,15 +4162,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCloudImageTip =>
-      '已装好系统的磁盘：复制一份，扩到「存储」里的容量，首次启动时由 cloud-init 配置。镜像本身保持不变。';
+      '这是已安装系统的磁盘镜像。创建虚拟机时会先复制镜像，再扩展到「存储」中指定的容量；首次启动时由 cloud-init 完成配置。原镜像不会改变。';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      '这里没有云镜像：把 qcow2 或 raw 镜像放进一个存储池（可在「存储」里上传），且没有虚拟机在用它。';
+      '没有可用的云镜像。请将 qcow2 或 raw 镜像放入存储池（可在「存储」中上传），并确保没有虚拟机正在使用该镜像。';
 
   @override
   String get virtNoCloudImagesPve =>
-      '这里没有云镜像：把 qcow2、raw 或 vmdk 镜像上传到内容类型含「导入」(Import) 的存储（PVE 8.2+）。';
+      '没有可用的云镜像。请将 qcow2、raw 或 vmdk 镜像上传到内容类型包含「导入」（Import）的存储中（需要 PVE 8.2 或更高版本）。';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
@@ -4276,7 +4190,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCreateImageMissing => '选择一个云镜像。';
 
   @override
-  String get virtCreateIncomplete => '先补全标橙色的部分。';
+  String get virtCreateIncomplete => '请先填写所有橙色标记的项目。';
 
   @override
   String virtCreateOn(String host) {
@@ -4284,7 +4198,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtCiTip => '一个带 sudo 的账户，可用密码、SSH 密钥或两者登录。';
+  String get virtCiTip => '创建一个带 sudo 权限的账户，可使用密码、SSH 密钥或两者登录。';
 
   @override
   String get virtCiUserInvalid => '小写字母、数字、_ 和 -，以字母或 _ 开头';
@@ -4314,14 +4228,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtCiSearch => '搜索域';
 
   @override
-  String get virtCiSeedNote => '写入磁盘旁的一个小 ISO，作为光驱挂载，随虚拟机一起删除。只保存密码的哈希。';
+  String get virtCiSeedNote =>
+      '设置会写入一个小型 ISO 文件，并作为光驱挂载；删除虚拟机时也会删除该文件。密码只保存哈希值。';
 
   @override
   String get virtCiNoToolTitle => '宿主机上没有制作 cloud-init 数据的工具';
 
   @override
   String virtCiNoToolBody(String tools) {
-    return '在宿主机上安装 $tools 之一。没有 cloud-init，镜像启动后没有可登录的账户。';
+    return '请在宿主机上安装 $tools 中的任意一个工具。否则 cloud-init 无法生成配置，镜像启动后也不会有可登录的账户。';
   }
 
   @override
@@ -4332,18 +4247,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtCreateDiskKept(String size) {
-    return '磁盘保持为镜像本身的 $size，大于所选容量：磁盘不会被裁得比其中的系统还小。';
+    return '所选容量小于镜像大小，磁盘已保持为镜像原有的 $size。';
   }
 
   @override
-  String get virtCiEditTip => 'cloud-init 在这台虚拟机里配置的内容：带 sudo 的账户、登录方式、主机名和地址。';
+  String get virtCiEditTip =>
+      '配置此虚拟机的 cloud-init 设置，包括带 sudo 权限的账户、登录方式、主机名和地址。';
 
   @override
   String get virtCiForeignTitle => '这份 seed 包含本应用不写入的设置';
 
   @override
   String get virtCiForeignBody =>
-      '在别处写入的设置（软件包、命令、其他账户）不在这里显示。保存后，seed 会被替换为这里显示的内容。';
+      '其他工具写入的设置（例如软件包、命令和其他账户）不会显示在这里。保存后，seed 将被替换为当前页面中的设置。';
 
   @override
   String get virtCiPasswordKept => '已设置，留空则保持不变';
@@ -4356,7 +4272,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCiKeysAdded =>
-      '密钥会添加到账户。在这里删掉的密钥仍留在系统内，需要在系统内删除；改用户名会新建一个账户，旧账户保留。';
+      '密钥会添加到账户。从此处移除密钥不会将其从系统中删除，需另行删除。更改用户名会新建账户，原账户会保留。';
 
   @override
   String get virtCiEffectTitle => '下次启动时生效';
@@ -4366,11 +4282,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCiEffectPve =>
-      'PVE 会立即重写它的 cloud-init 驱动器，实例 ID 由这些设置计算得出，因此这里的任何改动都会产生新的实例 ID。';
+      'PVE 会立即重写 cloud-init 驱动器。实例 ID 根据这些设置生成，因此任何改动都会生成新的实例 ID。';
 
   @override
   String get virtCiNewInstance =>
-      '下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。';
+      '下次启动时，cloud-init 会将系统视为新实例：重新应用主机名、创建用户、设置密码与 SSH 密钥，并重写网络配置与 SSH 主机密钥（SSH 客户端连接时会提示主机密钥变更）。重启前不会产生任何影响。';
 
   @override
   String get virtCiSaved => '已保存，下次启动时生效。';
@@ -4380,7 +4296,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtSnapshotExternalTip =>
-      '虚拟机继续运行。每块磁盘在所选存储池中得到一个 qcow2 覆盖层，虚拟机停留在链上。';
+      '虚拟机会继续运行。每块磁盘都会在所选存储池中创建一个 qcow2 覆盖层，虚拟机之后会继续使用这条快照链。';
 
   @override
   String get virtSnapshotFormInternal => '内部（镜像内）';
@@ -4416,7 +4332,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtSnapshotRevertChain =>
-      '在链上恢复会把运行中的覆盖层合并进镜像，并让之后的所有快照无法使用。只能恢复到最新的快照。';
+      '恢复链中的快照会将运行中的覆盖层合并进镜像，并使此后创建的快照无法使用。只能恢复到最新的快照。';
 
   @override
   String get virtSnapshotRevertHasChildren => '后面还有快照时不可恢复。';
@@ -4655,11 +4571,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtNetEditAsk(int count) {
-    return '运行中的网络在重启前保持原样。重启会中断其上的 $count 台虚拟机。';
+    return '重启前，当前运行中的网络不会改变。重启会中断网络上的 $count 台虚拟机。';
   }
 
   @override
-  String get virtNetEditAskNoGuest => '运行中的网络在重启前保持原样。';
+  String get virtNetEditAskNoGuest => '重启前，当前运行中的网络不会改变。';
 
   @override
   String get virtNetEditRestart => '立即重启以生效';
@@ -4699,22 +4615,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNetHostName => '名称（可选）';
 
   @override
-  String get virtNetHostEmpty => '未给任何 MAC 分配固定地址：所有虚拟机都从 DHCP 范围中获取。';
+  String get virtNetHostEmpty =>
+      '尚未为任何 MAC 地址分配固定 IP；所有虚拟机都会从 DHCP 地址范围中获取 IP。';
 
   @override
   String get virtNetHostOthers => '其余虚拟机都从 DHCP 范围中获取地址。';
 
   @override
-  String get virtNetHostInvalid => '宿主机会拒绝的 MAC、地址或名称，或同一个 MAC 出现两次。';
+  String get virtNetHostInvalid => 'MAC 地址、IP 地址或主机名格式无效，或存在重复的 MAC 地址。';
 
   @override
-  String get virtNetManagementIface => '此接口承载宿主机自身的地址。编辑或应用它会中断宿主机的连接。';
+  String get virtNetManagementIface => '此网卡承载宿主机的管理连接，修改或重载配置可能导致宿主机失联。';
 
   @override
-  String get virtNetManagementTip => '它承载宿主机的管理流量，或位于承载管理流量的接口之下：应用不会编辑它。';
+  String get virtNetManagementTip => '此接口承载宿主机的管理流量，或是管理接口的下层接口；应用不会修改它。';
 
   @override
-  String get virtNetPhysicalTip => '物理接口属于宿主机本身：应用只编辑网桥。';
+  String get virtNetPhysicalTip => '物理网卡归属宿主机管理，此处仅支持编辑网桥。';
 
   @override
   String get virtNetVlanAware => 'VLAN 感知';
@@ -4757,7 +4674,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '宿主机的固件描述文件中没有带已注册密钥的 Secure Boot 固件，开启后虚拟机无法启动。';
 
   @override
-  String get virtCreateSecureBoot => 'Secure Boot';
+  String get virtCreateSecureBoot => '安全启动';
 
   @override
   String get virtCreateSecureBootNote => '只引导已签名的内核和引导程序。';
@@ -4772,7 +4689,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtHwRevertPendingBody(String name) {
-    return '$name 将回到正在运行的状态：用运行中的定义重新写入配置，下次启动得到的与这次完全相同。其 NVRAM 文件与固件保持不变。';
+    return '将丢弃 $name 的所有待生效更改，恢复为当前运行配置。NVRAM 与固件保持不变。';
   }
 
   @override
@@ -4804,34 +4721,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copyLink => '复制链接';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor agent 上的账号没有 $func 的权限，请联系该 agent 的管理员。';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
-    return '$func 需要通过 HTTPS 连接此 Monitor agent，或在 agent 和本 App 中同时允许 HTTP。';
+    return '$func 需要通过 HTTPS 连接此 Monitor，或在 Monitor 和本 App 中都允许 HTTP。';
   }
-
-  @override
-  String funcNeedsAgentSetup(String func) {
-    return '此 Monitor agent 尚未配置 $func，需要由其运维人员配置。';
-  }
-
-  @override
-  String get monitorFilesReadOnly => '只读：此账号可以浏览 agent 上的文件，但不能修改。';
 
   @override
   String get monitorAccess => '访问';
-
-  @override
-  String get monitorAccounts => '账号';
-
-  @override
-  String get monitorRoles => '角色';
-
-  @override
-  String get monitorRole => '角色';
 
   @override
   String get monitorChangePassword => '修改密码';
@@ -4843,9 +4738,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorCurrentPassword => '你当前的密码';
 
   @override
-  String get monitorReauthTip => '修改访问权限需要再次输入你的密码。';
-
-  @override
   String get monitorPasswordTooShort => '至少 8 个字符';
 
   @override
@@ -4855,75 +4747,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorErrReauth => '密码错误。';
 
   @override
-  String get monitorErrLastAdmin => 'agent 至少需要一个管理员账号。';
-
-  @override
-  String get monitorErrConflict => '已存在，或仍在使用中。';
-
-  @override
-  String get monitorErrForbidden => '只有管理员可以执行此操作。';
-
-  @override
-  String get monitorRoleNameRule => '小写字母、数字、- 和 _，最多 32 个字符';
-
-  @override
-  String get monitorGrantShell => 'Shell 和命令';
-
-  @override
-  String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行';
-
-  @override
-  String get monitorGrantSshTerminal => '面板 SSH 终端';
-
-  @override
-  String get monitorGrantVirt => '虚拟化';
-
-  @override
-  String get monitorGrantVirtTip => 'agent 网页面板中连接的 Proxmox VE、libvirt 和 BMC';
-
-  @override
-  String get monitorGrantFiles => '文件';
-
-  @override
-  String get monitorGrantConnect => '出站连接';
-
-  @override
-  String get monitorGrantConnectTip => '本地和动态端口转发、远程桌面';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '允许的目标（IP 或 CIDR，可带 :端口 或 :起-止；每行一个，留空表示任意）';
-
-  @override
-  String get monitorGrantListen => '在服务器上监听';
-
-  @override
-  String get monitorGrantListenTip => '远程端口转发';
-
-  @override
-  String get monitorGrantListenPublic => '非 loopback 地址';
-
-  @override
-  String get monitorGrantPorts => '端口范围（留空表示任意）';
-
-  @override
-  String get monitorGrantOff => '关闭';
-
-  @override
-  String get monitorBuiltin => '内置';
-
-  @override
-  String get monitorAdminRoleTip => '管理账号、角色和 agent 的设置';
-
-  @override
-  String get monitorYou => '你';
-
-  @override
-  String get monitorNoAccessToSettings => '只有管理员可以修改此 agent 的设置。';
-
-  @override
   String get monitorPasswordNotSaved =>
-      'agent 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
+      'Monitor 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
 
   @override
   String get firewall => '防火墙';
@@ -5037,7 +4862,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '此服务器未安装 ufw 或 firewalld。可用系统的包管理器安装其中一个，例如 `apt install ufw` 或 `dnf install firewalld`。';
 
   @override
-  String get firewallKeepAccess => '先保持本 App 使用的端口开放';
+  String get firewallKeepAccess => '请确保当前连接所用的端口保持放行';
 
   @override
   String firewallWillRefuseFmt(String access) {
@@ -5046,7 +4871,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access：本 App 的新连接可能被拒绝，取决于连接来源地址或进入的网络接口，本 App 无法判断。';
+    return '$access：本 App 的新连接可能会被拒绝，具体取决于连接的来源 IP 或入站网络接口；本 App 无法预先判断。';
   }
 
   @override
@@ -5056,19 +4881,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get firewallConflict =>
-      'ufw 和 firewalld 同时开启。两者都会写入内核规则，最后加载的一方决定放行什么。';
+      'ufw 与 firewalld 同时处于启用状态。两者均会写入内核防火墙规则，实际放行策略取决于最后加载的一方。';
 
   @override
   String get firewallDefaultZone => '默认 zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => '区域';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => '目标策略';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'IP 伪装';
 
   @override
   String get firewallServices => '服务';
@@ -5083,7 +4908,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallInterfaces => '网络接口';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => '富规则';
 
   @override
   String get firewallForwardPorts => '端口转发';
@@ -5101,11 +4926,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallDefaultTag => '默认';
 
   @override
-  String get firewallDrift => '当前生效的配置与已保存的不一致。reload 或重启后将改为已保存的配置。';
+  String get firewallDrift => '当前运行配置与永久配置不一致，重新加载防火墙或重启系统后将恢复为已保存的永久配置。';
 
   @override
   String firewallDriftLockoutFmt(String access) {
-    return 'reload 或重启后，$access 将被拒绝：已保存的配置没有放行它。';
+    return '已保存的永久配置未放行 $access，重新加载防火墙或重启系统后该连接将被阻断。';
   }
 
   @override
@@ -5135,23 +4960,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
 
   @override
-  String get monitorSyncNeedsServer => '请选择存放备份的服务器（使用其 Monitor 代理）。';
-
-  @override
-  String get monitorBackupUnsupported => '此 Monitor 代理不支持存放备份，请更新代理。';
-
-  @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理员账户可以在其上存放备份。';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '备份超过了 Monitor 代理允许的大小（$max）。';
-  }
-
-  @override
-  String get monitorBackupTooMany => 'Monitor 代理存放的备份数量已达上限，请先删除一个。';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID 须在 100 到 999999999 之间。';
 
   @override
@@ -5176,7 +4984,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtGuestIsTemplate => '它已经是模板。';
 
   @override
-  String get virtCreateImageBigger => '镜像比磁盘大：磁盘至少要和镜像一样大。';
+  String get virtCreateImageBigger => '磁盘容量不能小于镜像本身的大小。';
 
   @override
   String get virtBackupIssueStorage => '该存储在此节点上不存放备份。';
@@ -5188,16 +4996,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupIssueNodeOffline => '此任务的节点不在线。';
 
   @override
-  String get programWaiting => '正在等待你';
+  String get programWaiting => '等待你的操作';
 
   @override
-  String get programWaitingPermission => '正在等待你批准';
+  String get programWaitingPermission => '等待你批准';
 
   @override
-  String get programWaitingQuestion => '正在等待你回答';
+  String get programWaitingQuestion => '等待你回答';
 
   @override
-  String get programWaitingAuth => '正在等待你登录';
+  String get programWaitingAuth => '等待你登录';
 
   @override
   String get programStatus => '程序状态';
@@ -5223,11 +5031,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get programStatusAlerts => '程序需要你时通知';
+  String get programStatusAlerts => '终端等待输入或命令完成时通知';
 
   @override
   String get programStatusAlertsTip =>
-      '对于当前不可见的终端：程序报告正在等待你、已完成或失败时（OSC 7501、OSC 9;4），或者运行至少 30 秒的命令结束时（OSC 133）通知你。';
+      '当后台终端中的程序等待输入、执行完成或失败（OSC 7501、OSC 9;4），以及运行超过 30 秒的命令结束时（OSC 133）发送通知。';
 
   @override
   String get termLineHeight => '行高';
@@ -5275,7 +5083,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workspaceClosed(String what) {
-    return '已关闭$what';
+    return '已关闭 $what';
   }
 
   @override
@@ -5342,7 +5150,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceNoMatch => '没有匹配的结果';
 
   @override
-  String get workspaceNothingToReopen => '没有可以重新打开的标签';
+  String get workspaceNothingToReopen => '没有可重新打开的标签页';
 
   @override
   String workspacePane(int index) {
@@ -5595,6 +5403,1208 @@ class AppLocalizationsZh extends AppLocalizations {
   String get kbServerClose => '服务器：关闭详情';
 
   @override
+  String get storageTitle => '存储';
+
+  @override
+  String get storageLinuxOnly => '存储管理目前仅支持 Linux 服务器。';
+
+  @override
+  String get storageDisks => '磁盘';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS 存储池';
+
+  @override
+  String get storageNoFilesystem => '无文件系统';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '已用 $used / $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size 可用';
+  }
+
+  @override
+  String get storageBusyMounted => '使用中';
+
+  @override
+  String get storageBusySwap => '交换空间';
+
+  @override
+  String get storageBusyRaid => '属于阵列';
+
+  @override
+  String get storageBusyPool => '属于存储池';
+
+  @override
+  String get storageBusyVolume => '承载卷';
+
+  @override
+  String get storageBusyReadOnly => '只读';
+
+  @override
+  String get storageBusySystem => '系统分区';
+
+  @override
+  String get storageSystemMount => '系统正在使用此挂载点，不能卸载。';
+
+  @override
+  String get storageNotMounted => '该位置已没有挂载。';
+
+  @override
+  String get storageMount => '挂载';
+
+  @override
+  String get storageUnmount => '卸载';
+
+  @override
+  String get storageFormat => '格式化';
+
+  @override
+  String get storageInitialize => '初始化';
+
+  @override
+  String get storageSmartTest => 'SMART 自检';
+
+  @override
+  String get storageFilesystem => '文件系统';
+
+  @override
+  String get storageLabel => '卷标';
+
+  @override
+  String get storageMountpoint => '挂载点';
+
+  @override
+  String get storageMountPersist => '每次开机自动挂载（/etc/fstab）';
+
+  @override
+  String get storageMountOwn => '授权 ServerBox 写入（用于备份）';
+
+  @override
+  String get storageName => '名称';
+
+  @override
+  String get storageLevel => '级别';
+
+  @override
+  String get storageLayout => '布局';
+
+  @override
+  String storagePickDevices(Object count) {
+    return '至少选择 $count 个设备。设备上的数据会丢失。';
+  }
+
+  @override
+  String get storageCreateRaid => '创建阵列';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '用 $devices 创建 /dev/$name（RAID $level）。设备上的数据会全部丢失。';
+  }
+
+  @override
+  String get storageCreatePool => '创建存储池';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '用 $devices 创建存储池 $name（$layout）。设备上的数据会全部丢失。';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '在 $device 上创建新的文件系统。上面的数据会全部丢失。';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '清空 $device，并创建一个占满整个磁盘的分区。上面的数据会全部丢失。';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '将 $device 挂载到 $mountpoint。';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '卸载 $mountpoint，并不再开机自动挂载。';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '在 $device 上启动简短自检，需要几分钟，进度和结果显示在这里。';
+  }
+
+  @override
+  String get storageAddMember => '添加磁盘';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '将 $device 加入 /dev/$array：替换故障成员，或作为热备盘。上面的数据会丢失。';
+  }
+
+  @override
+  String get storageRemoveMember => '移除';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '将 $device 标记为故障并从 /dev/$array 移除。阵列会继续运行；如果它是工作成员，阵列会降级。';
+  }
+
+  @override
+  String get storageDeleteRaid => '删除阵列';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '停止 /dev/$array 并清除成员上的 RAID 标记。其中的数据会丢失。';
+  }
+
+  @override
+  String get storageDestroyPool => '销毁存储池';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '销毁存储池 $name 及其中的所有数据。';
+  }
+
+  @override
+  String get storageScrub => '数据校验';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '读取存储池 $name 的全部数据并修复可修复的错误，在后台运行。';
+  }
+
+  @override
+  String get storageState => '状态';
+
+  @override
+  String get storageHealthy => '正常';
+
+  @override
+  String get storageDegraded => '已降级';
+
+  @override
+  String storageSync(Object action) {
+    return '同步（$action）';
+  }
+
+  @override
+  String get storageFaulty => '故障';
+
+  @override
+  String get storageSpare => '热备';
+
+  @override
+  String get storageActive => '工作中';
+
+  @override
+  String get storageScan => '上次扫描';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count 个错误';
+  }
+
+  @override
+  String get storageNoDisks => '没有磁盘';
+
+  @override
+  String get storageNoArrays => '没有阵列';
+
+  @override
+  String get storageNoPools => '没有存储池';
+
+  @override
+  String get storageNoMdadm => '未安装 mdadm，无法在此创建或修改阵列。';
+
+  @override
+  String get storageNoZfs => '未安装 ZFS（zfsutils）。';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '输入 $word 以确认';
+  }
+
+  @override
+  String get storageConfirmationMismatch => '输入的确认内容不匹配。';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device 正在使用中。';
+  }
+
+  @override
+  String get storageBusy => '另一项磁盘操作正在进行。';
+
+  @override
+  String get storageHealthRead => '读取磁盘健康';
+
+  @override
+  String get storageHealthWearing => '有损耗';
+
+  @override
+  String get storageHealthFailing => '故障';
+
+  @override
+  String get storageHealthAsleep => '休眠中';
+
+  @override
+  String get storageHealthUnsupported => '无 SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '通电 $hours 小时';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count 个坏扇区';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return '自检中：剩余 $percent%';
+  }
+
+  @override
+  String get storageGrowPartition => '扩展分区';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '把 $device 扩展到其后的空闲空间，之后再扩展其文件系统。';
+  }
+
+  @override
+  String get storageEncrypt => '加密（LUKS）';
+
+  @override
+  String get storagePassphrase => '密码短语';
+
+  @override
+  String get storagePassphraseAgain => '再次输入';
+
+  @override
+  String get storagePassphraseHint => '至少 8 个字符。没有它数据将无法读取，请妥善保管。';
+
+  @override
+  String get storageInvalidPassphrase => '密码短语需为 8 到 512 个字符，且不能换行。';
+
+  @override
+  String get storagePassphrasesDiffer => '两次输入的密码短语不一致。';
+
+  @override
+  String get storageEncrypted => '已加密';
+
+  @override
+  String get storageLocked => '已锁定';
+
+  @override
+  String get storageUnlock => '解锁';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '用密码短语打开 $device。';
+  }
+
+  @override
+  String get storageLock => '锁定';
+
+  @override
+  String storageLockBody(Object device) {
+    return '关闭 $device。需要先卸载其文件系统。';
+  }
+
+  @override
+  String get storageReplace => '替换';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '用 $replacement 替换存储池 $name 中的 $old。存储池会把数据复制到新盘上，$replacement 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAttach => '镜像';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '把 $existing 镜像到 $replacement。$replacement 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAddSpare => '添加热备盘';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '把 $devices 作为热备盘加入存储池 $name。这些盘上的数据会丢失。';
+  }
+
+  @override
+  String get storageRemoveDevice => '移除';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '把 $device 移出存储池 $name。';
+  }
+
+  @override
+  String get storageOnline => '恢复在线';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '让 $device 重新加入存储池 $name，并扩展到整块硬盘。';
+  }
+
+  @override
+  String get storageDetails => '详情';
+
+  @override
+  String get storageAttributes => '属性';
+
+  @override
+  String get storageAttrValue => '当前值';
+
+  @override
+  String get storageAttrWorst => '最差值';
+
+  @override
+  String get storageAttrThresh => '阈值';
+
+  @override
+  String get storageSelfTests => '自检记录';
+
+  @override
+  String get storageTestShort => '简短';
+
+  @override
+  String get storageTestLong => '完整';
+
+  @override
+  String get storageTestPassed => '通过';
+
+  @override
+  String get storageTestFailed => '失败';
+
+  @override
+  String get storageTestAborted => '已中止';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '于 $hours 小时';
+  }
+
+  @override
+  String get storageNothingToShow => '没有可显示的内容';
+
+  @override
+  String get storageLongTest => '完整自检';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '在 $device 上启动完整自检，会读取整块硬盘，大容量硬盘需要几个小时。';
+  }
+
+  @override
+  String get storageMountedInside => '请先卸载其文件系统。';
+
+  @override
+  String get storageNotRemovable => '此处仅支持移除热备盘或缓存盘。';
+
+  @override
+  String get storageNotGrowable => '无法在此扩容该设备。';
+
+  @override
+  String get storageOverlapping => '请选择互不重叠的设备。';
+
+  @override
+  String get storageInvalidDevice => '设备无效或已不可用。';
+
+  @override
+  String get storageInvalidMountpoint => '挂载点无效。';
+
+  @override
+  String get storageInvalidName => '名称无效。';
+
+  @override
+  String get storageInvalidFilesystem => '不支持该文件系统。';
+
+  @override
+  String get storageInvalidLabel => '卷标无效。';
+
+  @override
+  String get storageInvalidLevel => 'RAID 级别或存储池布局无效。';
+
+  @override
+  String get storageTooFewDevices => '所选的有效设备数量不足。';
+
+  @override
+  String get storageKeyRequired => '需要输入密码短语。';
+
+  @override
+  String get storageExpand => '扩展';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '把 $device 上的文件系统扩展到整个设备，期间保持挂载。';
+  }
+
+  @override
+  String get storageGrowRaid => '扩容';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '把 $device 作为新的工作成员加入 /dev/$array。RAID 1 会多一份镜像；RAID 5 和 6 在重塑完成后增加容量，重塑可能需要几个小时，完成后再扩展其文件系统。$device 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAddToPool => '添加磁盘';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '把 $devices 以 $layout 加入存储池 $name 以增加容量。加入后无法移除，磁盘上的数据会丢失。';
+  }
+
+  @override
+  String get sharingTitle => '共享';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => '服务';
+
+  @override
+  String get sharingRunning => '运行中';
+
+  @override
+  String get sharingStopped => '已停止';
+
+  @override
+  String get sharingNfsServer => 'NFS 服务器';
+
+  @override
+  String get sharingNoSamba => '未安装 Samba。Windows、macOS 和 Linux 都能打开 SMB 共享。';
+
+  @override
+  String get sharingNoNfs => '未安装 NFS 服务器。Linux 和 macOS 可以挂载 NFS 导出。';
+
+  @override
+  String get sharingInstallSamba => '安装 Samba';
+
+  @override
+  String get sharingInstallSambaBody => '使用系统的包管理器安装 Samba。';
+
+  @override
+  String get sharingInstallNfs => '安装 NFS 服务器';
+
+  @override
+  String get sharingInstallNfsBody => '使用系统的包管理器安装 NFS 服务器。';
+
+  @override
+  String get sharingAddShare => '添加共享';
+
+  @override
+  String get sharingAddExport => '添加导出';
+
+  @override
+  String get sharingEdit => '编辑';
+
+  @override
+  String get sharingRemove => '移除';
+
+  @override
+  String get sharingSave => '保存';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '通过 SMB 以 $name 共享 $path，然后重新加载 Samba。';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '通过 NFS 导出 $path，然后重新加载导出列表。';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '停止共享 $name。文件夹和其中的文件会保留。';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '停止导出 $path。文件夹和其中的文件会保留。';
+  }
+
+  @override
+  String get sharingElsewhere => '在 ServerBox 之外设置';
+
+  @override
+  String get sharingNoShares => '没有 SMB 共享';
+
+  @override
+  String get sharingNoExports => '没有 NFS 导出';
+
+  @override
+  String get sharingReadOnly => '只读';
+
+  @override
+  String get sharingReadWrite => '读写';
+
+  @override
+  String get sharingGuest => '访客';
+
+  @override
+  String get sharingGuestLabel => '允许网络中的任何人无需账户访问';
+
+  @override
+  String get sharingUsersHint => '允许访问的账户（都不勾选：所有设置了 SMB 密码的账户）：';
+
+  @override
+  String get sharingFolder => '文件夹';
+
+  @override
+  String get sharingFolderHint => '服务器上的文件夹，例如在存储中挂载的硬盘。';
+
+  @override
+  String get sharingComment => '描述';
+
+  @override
+  String get sharingPasswords => 'SMB 密码';
+
+  @override
+  String get sharingPasswordsBody => 'Samba 使用独立的密码：为每个要连接的账户设置一个。';
+
+  @override
+  String get sharingSetPassword => '设置密码';
+
+  @override
+  String get sharingNewPassword => '新的 SMB 密码';
+
+  @override
+  String get sharingNewPasswordAgain => '再次输入';
+
+  @override
+  String get sharingPasswordsDiffer => '两次输入的密码不一致。';
+
+  @override
+  String get sharingClientsHint =>
+      '允许挂载的客户端：* 表示任何人，也可以是主机名、地址或网段，例如 192.168.1.0/24。';
+
+  @override
+  String get sharingClient => '客户端';
+
+  @override
+  String get sharingAddClient => '添加客户端';
+
+  @override
+  String get sharingSquashRoot => 'root 映射为 nobody';
+
+  @override
+  String get sharingSquashAll => '所有用户映射为 nobody';
+
+  @override
+  String get sharingSquashNone => 'root 保持 root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path 不是服务器上的文件夹。';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '新配置未通过检查，已恢复原配置：$detail';
+  }
+
+  @override
+  String get sharingDuplicate => '已有共享使用这个名称或文件夹。';
+
+  @override
+  String get sharingInvalidName => '名称只能包含字母、数字和 _ . -，最多 32 个字符。';
+
+  @override
+  String get sharingInvalidPath => '文件夹必须是绝对路径，不能包含引号、反斜杠或 ..';
+
+  @override
+  String get sharingInvalidClient => '客户端可以是 *、主机名、地址或网段。';
+
+  @override
+  String get sharingInvalidPassword => '不能使用这个密码。';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine 备份（Mac）';
+
+  @override
+  String get sharingRecycleOption => '将删除的文件保留在 .recycle 中';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => '回收站';
+
+  @override
+  String get sharingConnectedNow => '当前连接';
+
+  @override
+  String get sharingNobodyConnected => '当前没有连接';
+
+  @override
+  String get sharingShowConnections => '查看连接';
+
+  @override
+  String get sharingShowConnectionsBody => '以 root 身份读取当前连接信息。';
+
+  @override
+  String get sharingConnectionsLinuxOnly => '共享管理目前仅支持 Linux 服务器。';
+
+  @override
+  String get agentThisDevice => '本机';
+
+  @override
+  String get agentSource => '来源';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '该任务将在 $server 上删除。';
+  }
+
+  @override
+  String get agentPlan => '计划';
+
+  @override
+  String get agentRemoteGone => '服务器上已没有这个任务。';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '回复 $server 上的任务';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '排队中',
+      'running': '运行中',
+      'waiting': '等待你操作',
+      'done': '已完成',
+      'failed': '失败',
+      'cancelled': '已停止',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '始终允许 $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '输入 $name 以运行';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '仍然运行';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user 的密码';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '密码错误';
+
+  @override
+  String get agentRemoteSudoRemember => '记住 15 分钟';
+
+  @override
+  String agentNewOn(String place) {
+    return '新建于 $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '向 $server 上的 agent 提问，或交给它一个任务。';
+  }
+
+  @override
+  String get agentModeBypassWarn => '全部放行：删除、重启和修改配置都会直接执行，不再询问。';
+
+  @override
+  String get webApps => 'Web 应用';
+
+  @override
+  String get webAppUnhealthy => '异常';
+
+  @override
+  String get webAppDown => '不可用';
+
+  @override
+  String get webAppInstalling => '正在安装';
+
+  @override
+  String get webAppsEmpty => '还没有 Web 应用。请在 Monitor 面板的 App Store 中部署。';
+
+  @override
+  String get deskAppOpensInPanel => '在面板中打开';
+
+  @override
+  String get webAppVersion => '版本';
+
+  @override
+  String get webAppHomepage => '主页';
+
+  @override
+  String webAppUpdate(String version) {
+    return '有新版本 $version，请在 Monitor 面板中更新。';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app已停止运行';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '未运行的服务：$services。';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '没有容器在运行。';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app运行异常';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '健康检查失败的服务：$services。';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app已恢复运行';
+  }
+
+  @override
+  String get noticeStackBackBody => '所有容器均已运行。';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app有可用更新';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '可安装$project $version（当前版本：$current）。';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 已降级';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody => '有成员故障或缺失，阵列当前没有冗余。';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 已恢复正常';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '所有成员都在工作。';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '存储池 $pool 状态为 $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '请打开「存储」查看异常设备。';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '存储池 $pool 已恢复在线';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '所有设备都在工作。';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 即将故障';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody => 'SMART 健康检查或自检未通过，请尽快迁移数据并更换磁盘。';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device 有 $count 个坏扇区';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '此前为 $was 个。坏扇区数量增加通常预示磁盘即将损坏，请及时备份数据。';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '存储维护未能运行：$task';
+  }
+
+  @override
+  String get storageTaskScrub => '校验存储池和阵列';
+
+  @override
+  String get storageTaskSmartShort => 'SMART 简短自检';
+
+  @override
+  String get storageTaskSmartLong => 'SMART 完整自检';
+
+  @override
+  String get storageNeedsSudo =>
+      '执行此操作需要免密 sudo 权限。请以 root 身份运行 Monitor，或按上方说明配置 sudoers。';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '概览';
+
+  @override
+  String get monitorNotices => '通知';
+
+  @override
+  String get monitorAudit => '审计日志';
+
+  @override
+  String get monitorLive => '会话与设备';
+
+  @override
+  String get monitorNoAgents => '还没有通过 Monitor 连接的服务器。';
+
+  @override
+  String get monitorNotOffered => '此 Monitor 版本不提供该功能，请更新 Monitor。';
+
+  @override
+  String get monitorAlertsNotOffered => '此 Monitor 版本不报告告警。';
+
+  @override
+  String get monitorAlertsNone => '没有正在触发的规则。';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '已持续 $duration';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '可更新到 $version';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count 条未读';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '异常应用：$count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '应用更新：$count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '仅看有更新';
+
+  @override
+  String get monitorNoUpdates => '没有可更新的应用。';
+
+  @override
+  String get monitorNoticesEmpty => '没有通知。';
+
+  @override
+  String get monitorMarkAllRead => '全部标为已读';
+
+  @override
+  String get monitorAuditExec => '命令';
+
+  @override
+  String get monitorAuditMachine => '主机管理';
+
+  @override
+  String get monitorAuditListen => '监听端口';
+
+  @override
+  String get monitorAuditTicket => '连接票据';
+
+  @override
+  String get monitorAuditPush => '通知渠道';
+
+  @override
+  String get monitorAuditAdmin => '账户';
+
+  @override
+  String get monitorAuditDenied => '已拒绝';
+
+  @override
+  String get monitorLoadMore => '加载更多';
+
+  @override
+  String get monitorLiveSessions => '终端会话';
+
+  @override
+  String get monitorLiveConnections => '连接';
+
+  @override
+  String get monitorLiveWatchTokens => '手表与小组件令牌';
+
+  @override
+  String get monitorLiveDevices => '已登录的设备';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '移除设备记录后，该设备下次登录将重新受账户级失败次数限制；但已保存密码的客户端仍会自动重新登录。如需彻底阻止某台设备访问，请修改 Monitor 密码。';
+
+  @override
+  String get monitorLiveAttached => '已连接';
+
+  @override
+  String get monitorLiveDetached => '已断开';
+
+  @override
+  String get monitorLiveEnd => '结束';
+
+  @override
+  String get monitorLiveRevoke => '撤销';
+
+  @override
+  String get monitorLiveForget => '忘记';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '结束终端会话“$name”？其中运行的程序会停止。';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '结束到 $name 的连接？';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '撤销 $name 的令牌？在重新设置之前它将停止更新。';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '忘记 $name？';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time 过期';
+  }
+
+  @override
+  String get monitorLiveStream => '中转连接';
+
+  @override
+  String get monitorLiveAccepted => '转发连接';
+
+  @override
+  String get monitorLiveConsole => '控制台';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count 个 Monitor';
+  }
+
+  @override
+  String get monitorStatOnline => '在线';
+
+  @override
+  String get monitorStatFiring => '正在告警';
+
+  @override
+  String get monitorStatUnread => '未读通知';
+
+  @override
+  String get monitorStatUpdates => '应用更新';
+
+  @override
+  String get monitorAuditEmpty => '没有符合条件的记录。';
+
+  @override
+  String get monitorLiveNoSessions => '没有打开的终端会话。';
+
+  @override
+  String get monitorLiveNoConnections => '没有转发或中转的连接。';
+
+  @override
+  String get monitorLiveNoTokens => '没有配对的手表或小组件。';
+
+  @override
+  String get monitorLiveNoDevices => '没有登录过的设备。';
+
+  @override
+  String get monitorUpdateAgent => '更新 Monitor';
+
+  @override
+  String get monitorAgentTooOldTip => '更新步骤见 Monitor 标签页。';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '此 Monitor 版本过旧，尚不支持单密码登录。升级后将默认使用原首个管理员账户的密码。';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '已发布 $latest，此 Monitor 运行的是 $running。';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '在服务器上，以安装 Monitor 时所用的账户运行：';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '将在终端中执行升级脚本。若 Monitor 为系统级服务，请按终端提示输入 sudo 密码。';
+
+  @override
+  String get monitorUpdateNoSsh => 'App 无法在此服务器上打开终端，请自行在服务器上运行。';
+
+  @override
+  String get monitorUpdateDocker => '用 Docker 运行？请拉取新镜像并重建容器。';
+
+  @override
+  String get monitorUpdateAfter => 'Monitor 重启后，刷新 Monitor 标签页。';
+
+  @override
+  String get monitorUpdateInTerminal => '在终端中运行';
+
+  @override
+  String get monitorHowToUpdate => '如何更新';
+
+  @override
+  String get monitorUpdateNix => '通过 NixOS 模块安装：请在系统配置中更新并重新 rebuild。';
+
+  @override
+  String get noticeAgentUpdate => 'Monitor 有可用更新';
+
+  @override
+  String get monitorUpdateLegacyUser => '账户名';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '这个 Monitor 仍需账户名和密码登录：填写 App 之前使用的账户名（通常是 admin），密码使用已保存的密码。';
+
+  @override
+  String get monitorUpdateNow => '立即更新';
+
+  @override
+  String get monitorUpdating => '正在更新…';
+
+  @override
+  String get monitorUpdateRestarting => 'Monitor 正在重启，连接几秒后恢复…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '已更新：Monitor 现在运行 $version。';
+  }
+
+  @override
+  String get monitorUpdateFailed => '更新失败，输出见上方。';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      '升级脚本在独立会话中运行，Monitor 重启不会中断升级流程。重启期间连接会短暂断开几秒，随后自动恢复。';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 密码';
+
+  @override
+  String get monitorUpdateSudoHint => '更新 OpenRC 服务需要 root 权限。密码仅本次使用，不会保存。';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo 不接受这个密码。';
+
+  @override
+  String get monitorUpdateNoAnswer => 'Monitor 没有恢复，请到服务器上检查。';
+
+  @override
+  String get keyArrowDown => '下箭头';
+
+  @override
+  String get keyArrowLeft => '左箭头';
+
+  @override
+  String get keyArrowRight => '右箭头';
+
+  @override
+  String get keyArrowUp => '上箭头';
+
+  @override
+  String get keyControl => 'Ctrl 键';
+
+  @override
+  String get keyEscape => 'Esc 键';
+
+  @override
+  String get keyPageDown => '向下翻页';
+
+  @override
+  String get keyPageUp => '向上翻页';
+
+  @override
+  String get termTextView => '以文本查看';
+
+  @override
+  String termTextLetGo(int count) {
+    return '更早的输出已不再保留：$count 行';
+  }
+
+  @override
+  String get systemGroups => '用户组';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成员';
+
+  @override
+  String get userPrimaryMembers => '主组成员';
+
+  @override
+  String get userSystemGroup => '系统组';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '普通组';
+
+  @override
   String get termMetricsBar => '终端下方显示服务器状态';
 
   @override
@@ -5616,7 +6626,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
+      '未检测到可恢复的 tmux 会话，重新连接将终止当前 Shell 及其中的运行程序，并清空屏幕输出。';
+
+  @override
+  String get handedness => '惯用手';
+
+  @override
+  String get handednessLeft => '左手';
+
+  @override
+  String get handednessRight => '右手';
+
+  @override
+  String get handednessTip => '当所选惯用手一侧存在系统侧栏时，将导航栏停靠在同一侧，方便单手操作。';
 
   @override
   String get storeUnreadableTitle => '无法打开之前的数据';
@@ -5665,10 +6687,161 @@ class AppLocalizationsZh extends AppLocalizations {
       '不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
 
   @override
-  String get hostCertAuthorityNoHosts => '请填写它担保的主机，例如 *';
+  String get hostCertAuthorityNoHosts => '请填写适用的主机匹配规则，例如 *';
 
   @override
   String get hostCertAuthorityExists => '已在列表中';
+
+  @override
+  String get addToHomeScreen => '添加到主屏幕';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 个传输';
+  }
+
+  @override
+  String get syncKeyRotate => '更换同步密钥';
+
+  @override
+  String get discoverIntro => '找到可以添加为服务器的机器。';
+
+  @override
+  String get lan => '局域网';
+
+  @override
+  String get discoveryScan => '扫描';
+
+  @override
+  String get discoveryScanAgain => '重新扫描';
+
+  @override
+  String get discoveryScanning => '正在扫描…';
+
+  @override
+  String discoveryFound(int count) {
+    return '找到 $count 台';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '已选 $count 台';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '添加 $count 台';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '已添加 $count 台';
+  }
+
+  @override
+  String get discoveryAdded => '已添加';
+
+  @override
+  String get discoveryExists => '已存在';
+
+  @override
+  String get localServerNoSsh => '无需 SSH';
+
+  @override
+  String get introWelcome =>
+      '通过 SSH 或 Monitor 查看 Linux、Unix 和 Windows 服务器的状态，并使用终端、文件和容器管理。';
+
+  @override
+  String get security => '安全';
+
+  @override
+  String get sshConfig => 'SSH 配置';
+
+  @override
+  String get tailscaleStopped => 'Tailscale 未运行';
+
+  @override
+  String get tailscaleStoppedTip => '本机已安装 Tailscale，但未连接到 tailnet。';
+
+  @override
+  String get cloudflareApiToken => 'API 令牌';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      '需要 Account · Cloudflare Tunnel · Read 权限。';
+
+  @override
+  String get discoveryChooseFile => '选择文件';
+
+  @override
+  String get discoveryOnline => '在线';
+
+  @override
+  String get discoveryOffline => '离线';
+
+  @override
+  String get discoverySelectAll => '全选';
+
+  @override
+  String get discoveryFilter => '按名称或地址筛选';
+
+  @override
+  String get discoverySameMachine => '同一台机器，多个地址';
+
+  @override
+  String get discoveryPrimaryAddress => '主地址';
+
+  @override
+  String get discoveryAlternateAddress => '备用地址';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '放弃未保存的修改？';
+
+  @override
+  String get syncAuto => '自动同步';
+
+  @override
+  String get syncOff => '关闭';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '将停止与 $name 自动同步，已保存在 $name 的备份不会删除。';
+  }
+
+  @override
+  String get bakPwdSet => '已设置';
+
+  @override
+  String get bakPwdNotSet => '未设置';
+
+  @override
+  String get syncChannel => '渠道';
+
+  @override
+  String get syncStateFailed => '同步失败';
+
+  @override
+  String get syncStatePassword => '密码不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5679,24 +6852,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get crashCollect => '診斷資料';
 
   @override
-  String get crashCollectIntro => 'ServerBox 會記錄執行期間發生的情況，以便修正問題。你可以選擇要傳送多少資料。';
+  String get crashCollectIntro => 'ServerBox 會記錄執行期間的資訊，幫助我們診斷和修正問題。';
 
   @override
   String get crashCollectNone => '不傳送';
 
   @override
-  String get crashCollectNoneTip => '報告仍會保留在本機；當機後你仍可手動傳送。';
+  String get crashCollectNoneTip => '報告只保存在本機。發生崩潰後，你可以手動傳送。';
 
   @override
   String get crashCollectBasic => '基本資料';
 
   @override
   String get crashCollectBasicTip =>
-      '只包含當機資訊，不包含日誌或效能資料。**這有助於我們改善 App 和修正錯誤。**';
+      '只包含崩潰資訊，不包含日誌或效能資料。**這些資訊有助於改善 App 和修正問題。**';
 
   @override
   String get crashCollectFooter =>
-      '無論選擇哪個等級，記錄時都會將已知伺服器名稱、位址和使用者名稱替換為預留位置。之後可在設定中更改收集等級。';
+      '無論選擇哪個等級，記錄資訊時都會將已知的伺服器名稱、地址和使用者名稱替換為預留位置。之後可以在設定中更改收集等級。';
 
   @override
   String get privacy => '隱私';
@@ -5746,12 +6919,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiRiskDestructive => '高風險';
-
-  @override
-  String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '僅當模型與本機安全檢查都判定命令為唯讀時自動執行';
 
   @override
   String get askAiHistory => '對話歷史';
@@ -5808,7 +6975,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentAuthMethod => '認證方式';
 
   @override
-  String get agentSshConnectTip => 'Agent 想要建立 SSH 連線。請在此輸入密碼。';
+  String get agentSshConnectTip => 'Agent 請求建立 SSH 連線。請在此輸入密碼。';
 
   @override
   String get agentAdHocSessions => '暫時連線';
@@ -5817,16 +6984,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentSaveServerTitle => '儲存為伺服器';
 
   @override
-  String get agentSaveServerTip => '這台主機和你輸入的密碼將儲存在本裝置上';
+  String get agentSaveServerTip => '這臺主機的資訊和你輸入的密碼將保存在本設備上。';
 
   @override
-  String get agentMonitorOptional => 'Monitor 代理（選填）';
+  String get agentMonitorOptional => 'Monitor（選填）';
 
   @override
   String get authFailTip => '認證失敗，請檢查資訊是否正確';
-
-  @override
-  String get autoBackupConflict => '僅能啟用一項自動備份任務';
 
   @override
   String get autoConnect => '自動連線';
@@ -5844,10 +7008,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupEncrypted => '備份已加密';
 
   @override
-  String get backupNotEncrypted => '備份未加密';
+  String get backupPassword => '備份密碼';
 
   @override
-  String get backupPassword => '備份密碼';
+  String get backupPasswordRemoveSynced =>
+      '這將移除同一 iCloud 鑰匙圈下所有裝置的備份密碼。重新設定密碼前，這些裝置將暫停同步。';
 
   @override
   String get backupPasswordRemoved => '備份密碼已移除';
@@ -5856,7 +7021,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupPasswordSet => '備份密碼已設定';
 
   @override
-  String get backupPasswordTip => '設定密碼來加密備份檔案。留空則停用加密。';
+  String get backupPasswordTip =>
+      '用於加密備份與同步資料。各裝置需使用相同密碼，在一台裝置上修改後，請在其他裝置上輸入新密碼。';
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';
@@ -5882,7 +7048,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distNameMapTip =>
-      '僅用於「託管處的檔名和本應用使用的名稱對不上」的發行版。鍵是本應用使用的名稱，值是實際要取的名稱。沒有缺圖就不用填。';
+      '僅當發行版標識檔案在託管位置使用的名稱與 App 中的名稱不一致時才需要設定。鍵填寫 App 使用的名稱，值填寫實際檔名。沒有缺失標識時無需填寫。';
 
   @override
   String get logoUrl => 'Logo 位址';
@@ -5904,7 +7070,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get markUrlTip => '清單中伺服器名稱旁邊的小標識。留空則不顯示。\n\n和 Logo 不是同一張圖';
 
   @override
-  String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';
+  String get navTabMenuTip => '長按標籤欄中的標籤，或用鼠標右鍵點擊，可一次性連線或斷開該標籤下的所有伺服器。';
 
   @override
   String nTags(int count) {
@@ -5915,16 +7081,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
 
   @override
-  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。';
+  String get monitorHttpsRequired => '遠端 Monitor 必須使用 HTTPS，除非已允許它使用 HTTP。';
 
   @override
   String get monitorAllowInsecureHttp => '允許 HTTP';
 
   @override
-  String get plainHttpTitle => '這個 agent 走的是明文 HTTP';
+  String get plainHttpTitle => '此 Monitor 使用未加密的 HTTP';
 
   @override
-  String get plainHttpTip => '密碼和這個應用取的所有內容都會以明文傳輸。目前還沒有送出任何東西。';
+  String get plainHttpTip => '密碼和 App 要求的所有資料都會以未加密的方式傳送。在你允許連線前，不會傳送任何資料。';
 
   @override
   String get allowForThisServer => '只對這台伺服器允許';
@@ -5938,43 +7104,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String monitorHttpTip(String url) {
-    return '透過 **monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是經由 SSH 執行指令。\n\n需要先在伺服器上安裝 monitor；曲線、手錶 App 與桌面小工具都依賴它。\n\n[如何部署 monitor]($url)';
+    return '透過 **Monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是透過 SSH 執行指令。\n\n請先在伺服器上安裝 Monitor。圖表、Watch App 和桌面小工具都需要它。\n\n[如何安裝 Monitor]($url)';
   }
 
   @override
   String get backupThemesNotRestored => '已還原，但以下主題除外。請從主題商店或原始檔案重新安裝。';
 
   @override
-  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
-
-  @override
-  String get icloudBackupStatusTitle => '備份狀態';
-
-  @override
-  String get icloudBackupStatusLoading => '正在讀取 iCloud 備份狀態...';
-
-  @override
-  String get icloudBackupStatusError => '無法讀取 iCloud 備份中繼資料';
-
-  @override
-  String get icloudBackupStatusEmpty => '尚未找到 iCloud 備份檔案';
-
-  @override
-  String get icloudBackupStateUploading => '上傳中';
-
-  @override
   String get icloudBackupStateConflict => '偵測到衝突';
-
-  @override
-  String get icloudBackupStateUploaded => '已上傳';
-
-  @override
-  String get icloudBackupStateWaiting => '等待 iCloud 同步';
-
-  @override
-  String icloudBackupStatusSummary(String lastModified, String remoteState) {
-    return '最後備份：$lastModified\n狀態：$remoteState';
-  }
 
   @override
   String get bgRun => '背景執行';
@@ -6016,6 +7153,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get clearAllStatsTitle => '清空所有統計';
 
   @override
+  String get clearAllSettings => '清除所有設定';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
   }
@@ -6045,13 +7185,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get containerTrySudoTip =>
-      '例如：App 內設定使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項';
+      '例如，App中設定的使用者名稱是 aaa，而 Docker 安裝在 root 使用者下，此時需要啟用此選項。';
 
   @override
-  String get containerSudoPasswordRequired => '需要 sudo 密碼才能存取 Docker。請輸入您的密碼。';
+  String get containerSudoPasswordRequired => '訪問 Docker 需要 sudo 密碼。請輸入密碼。';
 
   @override
-  String get containerSudoPasswordIncorrect => 'sudo 密碼錯誤或無權限。請重試。';
+  String get containerSudoPasswordIncorrect => 'sudo 密碼錯誤或當前賬戶無權使用 sudo。請重試。';
 
   @override
   String get copyPath => '複製路徑';
@@ -6069,13 +7209,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dirEmpty => '請確保目錄為空';
 
   @override
-  String get discoverSshServers => '發現SSH服務器';
+  String get discoverSshServers => '發現 SSH 伺服器';
 
   @override
   String get discoveryFailed => '發現失敗';
-
-  @override
-  String get discoverySettings => '發現設定';
 
   @override
   String get distro => '發行版';
@@ -6099,19 +7236,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dockerPruneTip => '清理未使用的資料以釋放磁碟空間';
 
   @override
-  String get dockerStatistics => 'Docker 統計';
-
-  @override
   String get editVirtKeys => '虛擬按鍵';
 
   @override
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
-
-  @override
-  String get enableMdns => '啟用mDNS';
-
-  @override
-  String get enableMdnsDesc => '使用mDNS/Bonjour發現SSH服務';
 
   @override
   String get envVars => '環境變數';
@@ -6123,11 +7251,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fallbackSshDest => '備選 SSH 目標';
 
   @override
-  String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本App，推薦關閉此選項';
+  String fileTooLarge(String file, String size, String sizeMax) {
+    return '檔案“$file”大小為 $size，超過上限 $sizeMax。';
+  }
 
   @override
-  String fileTooLarge(String file, String size, String sizeMax) {
-    return '檔案 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' 在開啟後已在伺服器上被修改。要覆寫嗎？';
   }
 
   @override
@@ -6140,34 +7270,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fullScreen => '全螢幕';
 
   @override
-  String get fullScreenJitter => '全螢幕模式抖動';
+  String get fullScreenAllServers => '全部伺服器';
 
   @override
-  String get fullScreenJitterHelp => '防止螢幕烙印';
+  String get fullScreenOneServer => '單台伺服器';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 已連線';
+  }
+
+  @override
+  String get fullScreenExit => '結束全螢幕';
+
+  @override
+  String get fullScreenJitter => '防烙印';
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
-
-  @override
-  String get githubGistIdOptional => 'Gist ID（選填）';
-
-  @override
-  String get githubGistToken => 'GitHub Gist Token';
-
-  @override
-  String get githubGistTokenEmpty => 'Token 為空';
-
-  @override
-  String get githubGistIdInvalid =>
-      '這既不是 Gist ID，也不是 Gist 連結。請使用 gist 位址的最後一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次備份時建立新的私人 gist。';
-
-  @override
-  String get githubGistNotFound =>
-      'GitHub 找不到此 token 可讀取的該 ID 對應 gist：ID 可能有誤、gist 可能已遭刪除，或屬於其他帳戶。請將 ID 留空，以便在首次備份時建立新的私人 gist。';
-
-  @override
-  String get githubGistTokenRejected =>
-      'GitHub 拒絕了此 token：它可能有誤、已過期或已撤銷，也可能缺少 gist 權限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '前往';
@@ -6177,9 +7297,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
-
-  @override
-  String get ignoreCert => '忽略憑證';
 
   @override
   String get image => '映像檔';
@@ -6198,7 +7315,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get macDmgImportFailed => '讀不到此前安裝版本的資料';
 
   @override
-  String get macDmgTip => '本機終端、在本機執行 snippet（DMG 版）';
+  String get macDmgTip => 'DMG 版支持本機終端和在本機運行代碼片段';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -6239,15 +7356,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshKeyRecommended => '推薦';
 
   @override
-  String get rememberKeyPassphrase => '記住私鑰密語';
+  String get rememberKeyPassphrase => '記住私鑰通行密碼';
 
   @override
   String get rememberKeyPassphraseTip =>
-      '將加密私鑰的密語保存在本裝置的系統鑰匙圈中，重新啟動後無需再次輸入。備份中的私鑰仍保持加密。關閉後會刪除已保存的密語。';
+      '儲存加密私鑰的通行密碼，重新啟動應用程式後無需再次輸入。關閉後將刪除此裝置已儲存的通行密碼。';
 
   @override
   String sshKeyUnlockTip(String name) {
-    return '請輸入私密金鑰 [$name] 的通行密碼。';
+    return '請輸入私鑰 [$name] 的通行密碼。';
   }
 
   @override
@@ -6322,7 +7439,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '跳板伺服器與 ProxyCommand 不能同時使用。';
 
   @override
-  String get noConnectionMethod => '請設定 SSH、Monitor 或兩者';
+  String get noConnectionMethod => '請設定 SSH、Monitor，或兩者都設定';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';
@@ -6352,18 +7469,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get linuxShellTip => '終端用什麼 shell 啟動。留空恢復 /bin/sh。';
 
   @override
-  String get linuxNetTip => 'DNS 伺服器。留空恢復預設值';
+  String get linuxDnsTip => 'DNS 伺服器。留空則使用默認設定。';
 
   @override
-  String madeWithLove(String myGithub) {
-    return '用❤️製作 by $myGithub';
+  String get linuxMirrorTip => '所選發行版的軟體套件鏡像。留空則使用預設鏡像。';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 鏡像';
   }
 
   @override
-  String get maxConcurrency => '最大並發數';
+  String madeWithLove(String myGithub) {
+    return '由 $myGithub 用 ❤️ 製作';
+  }
 
   @override
-  String get maxRetryCount => '伺服器嘗試重連次數';
+  String get maxRetryCount => '伺服器重連嘗試次數上限';
 
   @override
   String get mirror => '鏡像';
@@ -6427,7 +7549,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcPowerAccepted => '操作已接受，但電源狀態尚未改變。正常關機或重新啟動是否成功取決於作業系統。';
 
   @override
-  String get bmcPowerUnsupported => '該服務不允許這個操作的任何類型';
+  String get bmcPowerUnsupported => '該服務不支持此類操作';
 
   @override
   String get bmcUnauthorized => 'BMC 拒絕了這個帳號';
@@ -6442,13 +7564,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcPowerOff => '已關機';
 
   @override
-  String get bmcCertRejected => '憑證被拒絕——請在伺服器設定裡確認';
+  String get bmcCertRejected => '憑證遭拒，請在伺服器設定中確認';
 
   @override
   String get bmcNotAService => '該位址上沒有 Redfish 服務';
 
   @override
-  String get bmcNoSystem => '該服務沒有回報任何 system';
+  String get bmcNoSystem => '該服務未報告任何系統';
 
   @override
   String get bmcSensorsTruncated => '只顯示了前面若干個感測器';
@@ -6464,35 +7586,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcCert => '憑證';
 
   @override
-  String get bmcCertPinned => '已確認並釘住';
+  String get bmcCertPinned => '已信任並固定';
 
   @override
-  String get bmcCertUnreviewed => '尚未確認——點擊查看憑證';
-
-  @override
-  String get bmcCertReview => '收到自簽憑證。接受前請核對指紋；接受後將只信任這張憑證。';
-
-  @override
-  String get bmcCertChanged => '憑證不一致。請核對。';
+  String get bmcCertUnreviewed => '尚未確認，點選查看憑證';
 
   @override
   String get bmcCertExpired => '已過期。';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '之前接受的：$fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC 位址必須是 URL，例如 https://10.0.0.9';
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本執行在沙盒中：命令使用的是空白家目錄，因此依賴 ~/.ssh 的命令會失敗。DMG 版不受此限制。';
+      '此版本運行在沙盒中，命令使用的是空白的 home 目錄。因此，依賴 ~/.ssh 的命令會失敗。DMG 版不受此限制。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
-    return '無法讀取私鑰檔案 $path:$reason';
+    return '無法讀取私鑰檔案 $path：$reason';
   }
 
   @override
@@ -6522,9 +7633,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '在手機上，該指令會在所選的 Linux 系統中執行。請先在其中安裝指令用到的工具（nc、socat 等）。';
 
   @override
-  String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
-
-  @override
   String get pvePasswordRequired => '需要提供 PVE 密碼，請在伺服器設定中填寫。';
 
   @override
@@ -6546,7 +7654,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pveInvalidResponseBody => 'PVE 登入返回了無效的回應內容。';
 
   @override
-  String get pveInvalidResponseData => 'PVE 登入回應中缺少有效的 data 資料。';
+  String get pveInvalidResponseData => 'PVE 登錄響應中缺少有效的 data 字段。';
 
   @override
   String get pveMissingAuthTicket => 'PVE 登入成功，但未返回認證票據。';
@@ -6558,7 +7666,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pvePassword => 'PVE 密碼';
 
   @override
-  String get pvePasswordHint => '使用密鑰認證時需要填寫';
+  String get pvePasswordHint => '使用 SSH 密鑰認證時也需要填寫';
 
   @override
   String get read => '讀取';
@@ -6570,7 +7678,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get rememberPwdInMem => '在記憶體中記住密碼';
 
   @override
-  String get rememberPwdInMemTip => '用於容器、暫停等';
+  String get rememberPwdInMemTip => 'Container管理、掛起等操作需要使用此密碼。';
 
   @override
   String get remotePath => '遠端路徑';
@@ -6582,7 +7690,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
     String latest,
     String pm,
   ) {
-    return '已安裝 $distro $installed，現有 $latest。更新會重新下載並替換整個容器：$pm 資料會遺失';
+    return '當前安裝的是 $distro $installed，可更新到 $latest。更新會重新下載並替換整個Container，因此 $pm 中的資料會丟失。';
   }
 
   @override
@@ -6599,14 +7707,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get sameIdServerExist => '已存在相同 ID 的伺服器';
+  String get sameIdServerExist => '已存在 ID 相同的伺服器';
 
   @override
   String get second => '秒';
 
   @override
   String get serverFilesUnavailableTip =>
-      '需要能連上這台伺服器的 SSH，或者安裝 server_box_monitor 並開啟檔案 API。';
+      '需通過 SSH 連線此伺服器，或安裝並啟用 Monitor 的檔案 API。';
 
   @override
   String get back => '返回';
@@ -6641,10 +7749,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serverTabEmpty => '還沒有伺服器';
 
   @override
-  String get serverTabConnBadge => '伺服器分頁的連線數';
+  String get serverTabConnBadge => '伺服器標籤頁上顯示的連線數';
 
   @override
-  String get serverTabConnBadgeTip => '已連線的伺服器數量，例如 2/4';
+  String get serverTabConnBadgeTip => '已連線的伺服器數量，例如 2/4。';
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';
@@ -6708,7 +7816,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get shareTooNew => '此分享由較新版本的 ServerBox 建立，請更新 App 後再開啟。';
 
   @override
-  String get shareUnreadable => '這不是有效的 ServerBox 分享內容。';
+  String get shareUnreadable => '不是有效的 ServerBox 分享。';
 
   @override
   String get shareVia => '分享方式';
@@ -6718,7 +7826,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sftpEditorTip =>
-      '如果為空，使用 App 內建的檔案編輯器。 例如 `vim`（建議根據 `EDITOR` 自動取得）。';
+      '留空則使用 App 內置的檔案編輯器。也可以指定編輯器，例如 `vim`（建議根據 `EDITOR` 環境變量自動設定）。';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除檔案夾';
@@ -6745,18 +7853,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tempIsCelsiusTip =>
-      '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
+      '開啟後，溫度值會按攝氏度讀取，而不是按千分之一攝氏度讀取。僅當溫度顯示異常時再開啟（例如顯示 0.1°C，而實際應為 58°C）。';
 
   @override
   String get diskCountsNetwork => '網路檔案系統計入總量';
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。僅在透過 SSH 收集狀態時生效；透過 monitor agent 收集時，由 agent 自己的設定決定。';
+      'NFS、SMB 等網路掛載始終會列在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。此設定僅在透過 SSH 採集狀態時生效；透過 Monitor 採集時，則由 Monitor 自身的設定決定。';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。agent 記錄的歷史資料和磁碟警示都使用這個總量。';
+      'NFS、SMB 等網路掛載始終會顯示在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。Monitor 記錄歷史資料和判斷磁碟告警時使用的也是此總量。';
 
   @override
   String spentTime(String time) {
@@ -6764,40 +7872,20 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return '所有伺服器均已存在（發現$duplicateCount個重複項）';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '將跳過$duplicateCount個重複項';
-  }
-
-  @override
-  String get sshConfigFound => '我們在您的系統中發現了SSH設定';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '發現$totalCount個伺服器';
-  }
+  String get sshConfigFound => '在系統中發現了 SSH 設定。';
 
   @override
   String get sshConfigImport => '匯入SSH設定';
 
   @override
-  String get sshConfigImportPermission => '您是否希望允許讀取 ~/.ssh/config 並自動匯入伺服器設定？';
+  String get sshConfigImportPermission => '是否允許讀取 ~/.ssh/config 並自動導入其中的伺服器設定？';
 
   @override
   String get sshConfigImportTip => '在建立第一個伺服器時提示讀取 ~/.ssh/config';
 
   @override
-  String sshConfigImported(int count) {
-    return '已從SSH設定匯入$count個伺服器';
-  }
-
-  @override
   String sshHostKeyChangedDesc(String serverName) {
-    return '伺服器 $serverName 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。';
+    return '伺服器 $serverName 的 SSH 主機密鑰已更改。只有確認信任該伺服器後，才可繼續連線。';
   }
 
   @override
@@ -6811,7 +7899,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return '收到來自 $serverName 的新 SSH 主機金鑰，信任前請先檢查指紋。';
+    return '收到了來自 $serverName 的新 SSH 主機密鑰。請先核對指紋，再決定是否信任。';
   }
 
   @override
@@ -6826,15 +7914,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';
 
   @override
-  String get sshConfigNoServers => 'SSH設定中未找到伺服器';
-
-  @override
   String get sshConfigPermissionDenied => '由於 macOS 權限限制，無法存取 SSH 設定檔案。';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '將匯入$importCount個伺服器';
-  }
 
   @override
   String get sshTermHelp =>
@@ -6847,7 +7927,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
-  String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支援。';
+  String get suspendTip => 'suspend 功能需要 root 權限和 systemd。';
 
   @override
   String switchTo(String val) {
@@ -6855,10 +7935,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get syncAppSettings => '同步 App 設定';
+  String get syncedData => '同步內容';
 
   @override
-  String get syncAppSettingsTip => '將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。';
+  String get syncSecrets => 'sudo 密碼與 API 金鑰';
+
+  @override
+  String get keyPassphrases => '私鑰通行密碼';
+
+  @override
+  String get syncFiles => '字型、圖片與 Skills';
+
+  @override
+  String get syncRemoteTooNew => '同步資料來自較新版本的 ServerBox，請更新應用程式以繼續同步。';
+
+  @override
+  String get syncPasswordMismatch => '同步資料使用了其他備份密碼加密，請輸入與其他裝置一致的備份密碼。';
+
+  @override
+  String get syncUnreachable => '無法連線至同步服務，請檢查網路後重試。';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
@@ -6879,7 +7974,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
 
   @override
-  String get useNoPwd => '將使用無密碼';
+  String get useNoPwd => '不使用密碼';
 
   @override
   String get usePodmanByDefault => '預設使用 Podman';
@@ -6932,38 +8027,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtKeyRowsTip => '其餘的放在單獨一頁，橫向滑動切換。';
-
-  @override
-  String get keyArrowDown => '下箭頭';
-
-  @override
-  String get keyArrowLeft => '左箭頭';
-
-  @override
-  String get keyArrowRight => '右箭頭';
-
-  @override
-  String get keyArrowUp => '上箭頭';
-
-  @override
-  String get keyControl => 'Ctrl 鍵';
-
-  @override
-  String get keyEscape => 'Esc 鍵';
-
-  @override
-  String get keyPageDown => '向下翻頁';
-
-  @override
-  String get keyPageUp => '向上翻頁';
-
-  @override
-  String get termTextView => '以文字檢視';
-
-  @override
-  String termTextLetGo(int count) {
-    return '更早的輸出已不再保留：$count 行';
-  }
 
   @override
   String get waitConnection => '請等待連線建立';
@@ -7122,10 +8185,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchServers => '手錶上的伺服器';
 
   @override
-  String get watchServersTip => '手錶獨立向 monitor 取資料，所以只能選擇已設定 monitor 的伺服器。';
+  String get watchServersTip => '手錶獨立從 Monitor 取得資料，所以只能選擇已設定 Monitor 的伺服器。';
 
   @override
-  String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
+  String get watchNoMonitorServer => '沒有伺服器設定了 Monitor';
 
   @override
   String get legacyStatusGoneTitle => '狀態連結已失效';
@@ -7191,7 +8254,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => '單元';
 
   @override
   String get serviceUnitType => '類型';
@@ -7204,7 +8267,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String serviceUpFor(String duration) {
-    return '已執行 $duration';
+    return '已運行 $duration';
   }
 
   @override
@@ -7214,7 +8277,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String serviceNextIn(String duration) {
-    return '$duration 後執行';
+    return '下次運行：$duration 後';
   }
 
   @override
@@ -7276,7 +8339,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentLocalExec => '在本機執行命令';
 
   @override
-  String get agentLocalExecTip => '允許 Agent 在執行 ServerBox 的這台機器上工作。唯讀的命令也需要審核';
+  String get agentLocalExecTip => '允許 Agent 在目前裝置上執行本機指令，並受權限模式控制';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -7291,7 +8354,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcAccount => '帳戶';
 
   @override
-  String get bmcAccountUnset => '未選擇 — 點擊選擇或新增';
+  String get bmcAccountUnset => '未選擇，點選以選擇或新增';
 
   @override
   String bmcAccountShared(int count) {
@@ -7306,7 +8369,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String bmcAccountInUse(int count) {
-    return '$count 台伺服器在用。它們會保留位址，但失去帳戶。';
+    return '正被 $count 台伺服器使用。刪除後這些伺服器將保留 BMC 位址，但需重新綁定帳戶。';
   }
 
   @override
@@ -7509,7 +8572,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagsEmptyTip => '尚無標籤。編輯伺服器時新增標籤，就會顯示在這裡。';
 
   @override
-  String get benchmarkNoServers => '請先新增伺服器，再返回執行效能測試。';
+  String get benchmarkNoServers => '請先新增伺服器，再執行效能測試。';
 
   @override
   String get schemaTooNewTitle => '這些資料比目前 App 新';
@@ -7628,44 +8691,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get userPasswordEditTip => '密碼留空將保留現有密碼。';
 
   @override
-  String get systemGroups => '群組';
-
-  @override
-  String get userGid => 'GID';
-
-  @override
-  String get userGroupMembers => '成員';
-
-  @override
-  String get userPrimaryMembers => '主要成員';
-
-  @override
-  String get userSystemGroup => '系統群組';
-
-  @override
-  String get userMembersHint => 'alice,bob';
-
-  @override
-  String get userRegularGroup => '一般群組';
-
-  @override
   String funcUnavailableFmt(String func) {
     return '此伺服器的連線方式不提供$func。';
   }
-
-  @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func需要在 Monitor agent 中開啟 $setting。';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor agent。';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      '透過 Monitor agent 進行遠端轉發需要較新版本的 agent，請在伺服器上更新。';
 
   @override
   String get rangeLive => '即時';
@@ -7683,7 +8711,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cores => '核心';
 
   @override
-  String get historyNoStored => '只有 monitor agent 會儲存歷史。此連線只保留本應用連線後看到的部分。';
+  String get historyNoStored => '只有 Monitor 會保存歷史資料。目前連線只保留本 App 連線後採集到的資料。';
 
   @override
   String get noHistoryYet => '還沒有取樣';
@@ -7698,11 +8726,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get to => '迄';
 
   @override
-  String get beyondRetention => '超出這個 agent 保留的範圍';
+  String get beyondRetention => '超出此 Monitor 已保存的資料範圍';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'agent 保留 $kept';
+    return 'Monitor 的資料保留時間：$kept';
   }
 
   @override
@@ -7710,13 +8738,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentServerToolsTip =>
-      '在伺服器上執行指令、讀寫檔案，透過 SSH 連線其他主機，並使用 ServerBox 本身的操作。';
+      '在伺服器上執行命令、讀寫檔案、通過 SSH 連線其他主機，也可以使用 ServerBox 自身的功能。';
 
   @override
   String get agentTerminalTools => '終端';
 
   @override
-  String get agentTerminalToolsTip => '在終端自己的對話中：讀取終端顯示的內容，並在其伺服器上執行指令。';
+  String get agentTerminalToolsTip => '在終端會話中讀取屏幕內容，並在對應伺服器上執行命令。';
 
   @override
   String get agentToolTerminalScreen => '讀取螢幕';
@@ -7734,7 +8762,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 伺服器';
 
   @override
-  String get agentSnippetToolsTip => '列出、新增、修改和刪除 snippet；修改前會詢問。';
+  String get agentSnippetToolsTip => '列出、新增、修改和刪除 snippet。';
 
   @override
   String get agentVirtToolsTip => '讀取虛擬化分頁已載入的虛擬機和容器。';
@@ -7746,7 +8774,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentRemoteDesktopToolsTip => '列出遠端桌面設定；經你核准後連線或中斷。';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => '技能';
 
   @override
   String get agentSkillsTip => '特定任務的操作說明，可從 GitHub 或連結安裝';
@@ -7755,10 +8783,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentPermissions => '權限';
 
   @override
-  String get agentEmptyHint => '詢問你的伺服器，或讓 Agent 在伺服器上完成某項操作。';
+  String get agentEmptyHint => '詢問你的伺服器，或讓 Agent 在伺服器上執行操作。';
 
   @override
-  String get agentTerminalEmptyHint => '詢問這台伺服器。Agent 可以讀取目前的終端，並在這裡執行指令。';
+  String get agentTerminalEmptyHint => '詢問此伺服器。Agent 可以讀取此終端機，並在這裡執行命令。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -7790,7 +8818,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String lastSampleFmt(String ago) {
-    return '最近取樣於$ago';
+    return '最近一次採樣：$ago';
   }
 
   @override
@@ -7850,6 +8878,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String countOfFmt(int count, String what) {
     return '$count 個$what';
   }
+
+  @override
+  String get filesystems => '檔案系統';
+
+  @override
+  String get blockDevices => '區塊裝置';
+
+  @override
+  String get notMounted => '未掛載';
 
   @override
   String get unitDevices => '裝置';
@@ -7954,49 +8991,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get connection => '連線方式';
 
   @override
-  String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
+  String get connectionTip => '可同時啟用多種方式，連線時依列表順序依次嘗試。';
 
   @override
-  String get transportNoneOn => '兩個都關閉了 —— 這台伺服器無法連線。';
+  String get transportNoneOn => '請至少啟用一種連線方式。';
 
   @override
   String get thisDevice => '本機';
 
   @override
-  String get localServerTip =>
-      '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor HTTP，兩者的設定會保留。';
+  String get localServerTip => '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor，兩者的設定會保留。';
 
   @override
   String get localServerUnsupported =>
       '目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor agent 轉送，桌面連接埠無需對網路開放。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '在伺服器的「遠端桌面」按鈕或「遠端桌面」分頁中，為每個桌面儲存一個設定檔。';
-
-  @override
-  String get localServerIntro =>
-      '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor agent。';
-
-  @override
-  String get localServerAdd => '新增本機';
-
-  @override
-  String get localServerIntroFooter => '之後也可以在伺服器編輯頁的「連線方式」中開啟。';
-
-  @override
   String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';
 
   @override
-  String get monitorAgent => 'Monitor 代理';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。';
+      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把 Monitor 放到 TLS 後面。';
 
   @override
   String get behaviour => '行為';
@@ -8044,7 +9062,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get tagOnThisServer => '在這台上';
+  String get tagOnThisServer => '目前伺服器';
 
   @override
   String tagServersFmt(int count) {
@@ -8053,7 +9071,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String tagOnThisServerFmt(int count) {
-    return '這台上有 $count 個';
+    return '此伺服器上有 $count 個';
   }
 
   @override
@@ -8061,7 +9079,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tagEditorTip =>
-      '輸入會過濾清單；按鈕會新增標籤並直接加到這台伺服器上。鉛筆是重新命名，會改掉所有用到它的伺服器。沒有伺服器再使用的標籤會在儲存時消失。';
+      '輸入文字可篩選或新增標籤；點選鉛筆圖示可全域重新命名標籤。未被任何伺服器使用的標籤會在儲存後自動清理。';
 
   @override
   String get tagRenamesOnSave => '重新命名在儲存時生效';
@@ -8166,7 +9184,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return '每小時的 :$minute';
+    return '每小時第 $minute 分鐘';
   }
 
   @override
@@ -8176,7 +9194,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return '每 $hours 小時的 :$minute';
+    return '每隔 $hours 小時，在第 $minute 分鐘執行';
   }
 
   @override
@@ -8203,10 +9221,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorSettings => 'Monitor 設定';
 
   @override
-  String get monitorAgentDefault => 'agent 預設值';
+  String get monitorAgentDefault => 'Monitor 預設值';
 
   @override
-  String get monitorNeedsRestart => 'agent 重啟後生效';
+  String get monitorNeedsRestart => 'Monitor 重啟後生效';
 
   @override
   String get monitorCollection => '採集';
@@ -8256,7 +9274,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => '已在 agent 上設定，不顯示';
+  String get pushSecretSet => '已在 Monitor 上設定，不顯示';
 
   @override
   String get pushSecretKeep => '留空則保持不變';
@@ -8275,7 +9293,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pushUnknownType =>
-      '此 agent 沒有該類型的發送實作，因此不顯示其設定。可以在這裡刪除，或在 agent 的 config.toml 中編輯。';
+      '此 Monitor 沒有該類型頻道的傳送實作，因此不顯示其設定。可以在此刪除，或在 Monitor 的 config.toml 中編輯。';
 
   @override
   String get pushJsonInvalid => '不是合法的 JSON';
@@ -8284,7 +9302,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dataRetention => '資料保留';
 
   @override
-  String get dataRetentionTip => '關閉表示 agent 不會刪除任何資料，其資料庫會無限成長。';
+  String get dataRetentionTip => '關閉後，Monitor 不會刪除任何資料，其資料庫會無限增長。';
 
   @override
   String get retentionMetrics => '指標保留';
@@ -8302,19 +9320,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get corsOrigins => 'CORS 允許來源';
 
   @override
-  String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
+  String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 Monitor。留空表示僅同源。';
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+      '此 Monitor 拒絕透過明文 HTTP 執行監控以外的操作。請改用 HTTPS 連線，或在 Monitor（[remote_access] allow_insecure）和本 App 中同時允許 HTTP。';
 
   @override
   String get monitorAgentTooOld =>
-      '此 Monitor agent 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 agent。';
+      '此 Monitor 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 Monitor。';
 
   @override
-  String get monitorClientTooOld =>
-      '此 Monitor agent 已不再支援目前版本的 ServerBox。請更新 App。';
+  String get monitorClientTooOld => '此 Monitor 已不再支援目前版本的 ServerBox。請更新 App。';
 
   @override
   String get alerts => '警示';
@@ -8338,7 +9355,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get disconnect => '中斷連線';
 
   @override
-  String get searchServerTip => '搜尋名稱和位址——編輯頁最先詢問的兩項資料。';
+  String get searchServerTip => '依伺服器名稱或位址搜尋';
 
   @override
   String get addServerTip => '填寫其中一項、掃描 QR code，或匯入他人分享的檔案。';
@@ -8356,7 +9373,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get groupByTag => '依標籤分組';
 
   @override
-  String get groupByTagTip => '標籤是在伺服器自己的編輯頁裡加的。';
+  String get groupByTagTip => '可在伺服器的編輯頁面中新增與管理標籤。';
 
   @override
   String get connecting => '連線中…';
@@ -8457,7 +9474,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopTargetTip =>
-      '目標由 SSH 伺服器或 Monitor Agent 解析，localhost 指向該伺服器。';
+      '目標由 SSH 伺服器或 Monitor 解析，localhost 指向該伺服器。';
 
   @override
   String get remoteDesktopDomain => '網域（選填）';
@@ -8500,6 +9517,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteDesktopHostInvalid => '目標主機不能包含空格或換行。';
 
   @override
+  String get remoteDesktopProtocolInvalid => '不支援的協定。';
+
+  @override
   String get remoteDesktopCredentialInvalid => '使用者名稱和網域最多 256 個字元，不能換行。';
 
   @override
@@ -8513,6 +9533,94 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '伺服器僅提供 Standard RDP Security（RC4），不受支援。請在 xrdp.ini 中設定 security_layer=tls（或 negotiate），並確保 xrdp 能讀取其 TLS 憑證。';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '伺服器沒有 TLS 憑證。請在伺服器上安裝憑證；xrdp 請在 xrdp.ini 中設定 certificate 與 key_file。';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '伺服器要求用戶端憑證（智慧卡登入），不受支援。';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '使用者名稱或密碼錯誤。';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut => '帳戶已被鎖定。請稍後再試，或請管理員解除鎖定。';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '帳戶已被停用。';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '帳戶已過期。';
+
+  @override
+  String get remoteDesktopFailPasswordExpired => '密碼已過期或必須變更。請先在伺服器上變更密碼。';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '此帳戶在此時間或從此裝置不允許登入，或其空白密碼不允許遠端登入。';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '此帳戶不允許透過遠端桌面登入。請在伺服器上將其加入 Remote Desktop Users 群組。';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '伺服器不接受已儲存的認證。請重新輸入密碼。';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '工作階段因達到伺服器的閒置時間限制而中斷。';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '工作階段已達到伺服器的時間限制。';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection => '另一個連線接管了此工作階段。';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '工作階段在伺服器上被中斷。';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '管理員登出了此工作階段。';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '工作階段已登出。';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '伺服器正在關機。';
+
+  @override
+  String get remoteDesktopFailServerReboot => '伺服器正在重新啟動。';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '伺服器拒絕了連線。';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '伺服器的遠端桌面授權失敗。請檢查其授權伺服器與用戶端存取授權（CAL）。';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 伺服器未提供支援的安全性類型；僅支援 VNC 密碼或無驗證。TigerVNC 請設定 SecurityTypes=VncAuth。';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 伺服器需要密碼。';
+
+  @override
+  String get tcpTargetUnreachable => '伺服器無法連線到此位址。請檢查服務是否正在執行並監聽該連接埠。';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 伺服器拒絕轉送此連線。請檢查其 sshd_config 中的 AllowTcpForwarding 與 PermitOpen，以及 authorized_keys 中該金鑰的 no-port-forwarding 或 permitopen 選項。';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Monitor 拒絕了此連線：密碼已變更，或未允許透過明文 HTTP 執行此操作。請重新驗證密碼或改用 HTTPS。';
 
   @override
   String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';
@@ -8533,6 +9641,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopTrustReconnect => '信任並重新連線';
+
+  @override
+  String get certTrust => '信任';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
@@ -8565,16 +9676,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get pveAuthToken => 'API token';
+  String get pveAuthToken => 'API 權杖';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
 
   @override
-  String get pveTokenId => 'Token ID';
+  String get pveTokenId => '權杖 ID';
 
   @override
-  String get pveTokenSecret => 'Token secret';
+  String get pveTokenSecret => '權杖密鑰';
 
   @override
   String get pveTokenTip =>
@@ -8608,30 +9719,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtualization => '虛擬化';
-
-  @override
-  String get virtIntro =>
-      '管理 Proxmox VE 與 libvirt/KVM 主機上的虛擬機器和容器：查看狀態、執行電源操作、開啟主控台。';
-
-  @override
-  String get virtIntroPveMoved => 'Proxmox VE 已從伺服器頁面移到此分頁。伺服器的 PVE 卡片會在這裡開啟它。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
-
-  @override
-  String get virtIntroTransports => '兩者都可以透過 SSH、Monitor agent 或在本裝置上使用。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登入，無需密碼。請在伺服器編輯頁面的 PVE 部分設定。';
-
-  @override
-  String get virtIntroInBar => '已新增到分頁列。';
-
-  @override
-  String get virtIntroInMore => '位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。';
 
   @override
   String get virtGuests => '虛擬機';
@@ -8769,10 +9856,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtErrCertChanged => '主機的憑證已變更';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor agent 不轉送連線';
+  String get virtErrRelayNotGranted => 'Monitor 不會透過這條連線從伺服器發起 TCP 連線';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor agent 不執行命令';
+  String get virtErrExecNotGranted => 'Monitor 不執行命令';
 
   @override
   String get virtErrNotInstalled => '此伺服器上未安裝 virsh';
@@ -8797,7 +9884,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      '離開遠端桌面或虛擬機主控台後,連線保持多久。關閉前會顯示提示,10 秒內可選擇保持連線。';
+      '離開遠程桌面或虛擬機控制檯後，連線會保持一段時間。關閉前會顯示提示，你可以在 10 秒內選擇繼續保持連線。';
 
   @override
   String get remoteSessionKeepAlive => '保持連線';
@@ -8979,10 +10066,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCreateCoresInvalid => '超出了這台主機允許的核心數。';
 
   @override
-  String get virtCreateMemoryInvalid => '記憶體不足。';
+  String get virtCreateMemoryInvalid => '可用內存不足。';
 
   @override
-  String get virtCreateStorageMissing => '選擇磁碟的存放位置。';
+  String get virtCreateStorageMissing => '請選擇磁碟的存放位置。';
 
   @override
   String get virtCreateDiskInvalid => '範圍為 1 GiB 到 64 TiB。';
@@ -8991,7 +10078,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCreateTemplateMissing => '選擇一個範本。';
 
   @override
-  String get virtCreateCredentialsMissing => '設定 root 密碼或 SSH 公鑰。';
+  String get virtCreateCredentialsMissing => '請設定 root 密碼或 SSH 公鑰。';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -9326,7 +10413,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get virtHwVolumeKept => '已移除，但執行中的虛擬機器仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
+  String get virtHwVolumeKept =>
+      '已移除磁碟設定，但運行中的虛擬機仍在使用該磁碟，因此暫時保留對應的卷。虛擬機下次啟動時，該卷會被分離。';
 
   @override
   String get virtHwBus => '匯流排';
@@ -9525,7 +10613,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupNoStorage => '這個節點上沒有能存放備份的儲存。';
 
   @override
-  String get virtBackupLiveTip => '執行中用 snapshot 模式，不停機';
+  String get virtBackupLiveTip => '虛擬機運行時使用 snapshot 模式備份，無需停機';
 
   @override
   String get virtBackupStoppedTip => '已關機：按目前狀態備份';
@@ -9913,15 +11001,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCloudImageTip =>
-      '已裝好系統的磁碟：複製一份，擴充到「儲存」中的容量，首次啟動時由 cloud-init 設定。映像本身保持不變。';
+      '這是已安裝系統的磁碟鏡像。創建虛擬機時會先複製鏡像，再擴展到「儲存」中指定的容量；首次啟動時由 cloud-init 完成設定。原鏡像不會改變。';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      '這裡沒有雲端映像：把 qcow2 或 raw 映像放進一個儲存池（可在「儲存」中上傳），且沒有虛擬機器在使用它。';
+      '沒有可用的雲鏡像。請將 qcow2 或 raw 鏡像放入儲存池（可在「儲存」中上傳），並確保沒有虛擬機正在使用該鏡像。';
 
   @override
   String get virtNoCloudImagesPve =>
-      '這裡沒有雲端映像：把 qcow2、raw 或 vmdk 映像上傳到內容類型含「匯入」(Import) 的儲存（PVE 8.2+）。';
+      '沒有可用的雲鏡像。請將 qcow2、raw 或 vmdk 鏡像上傳到內容類型包含「導入」（Import）的儲存中（需要 PVE 8.2 或更高版本）。';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11 需要 UEFI + TPM 2.0';
@@ -9941,7 +11029,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCreateImageMissing => '選擇一個雲端映像。';
 
   @override
-  String get virtCreateIncomplete => '先補齊標為橘色的部分。';
+  String get virtCreateIncomplete => '請先填寫所有橙色標記的項目。';
 
   @override
   String virtCreateOn(String host) {
@@ -9949,7 +11037,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get virtCiTip => '一個帶 sudo 的帳戶，可用密碼、SSH 金鑰或兩者登入。';
+  String get virtCiTip => '創建一個帶 sudo 權限的賬戶，可使用密碼、SSH 密鑰或兩者登錄。';
 
   @override
   String get virtCiUserInvalid => '小寫字母、數字、_ 和 -，以字母或 _ 開頭';
@@ -9979,14 +11067,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtCiSearch => '搜尋網域';
 
   @override
-  String get virtCiSeedNote => '寫入磁碟旁的一個小 ISO，作為光碟機掛載，隨虛擬機器一起刪除。只儲存密碼的雜湊。';
+  String get virtCiSeedNote =>
+      '設定會寫入一個小型 ISO 檔案，並作為光驅掛載；刪除虛擬機時也會刪除該檔案。密碼只保存哈希值。';
 
   @override
   String get virtCiNoToolTitle => '主機上沒有製作 cloud-init 資料的工具';
 
   @override
   String virtCiNoToolBody(String tools) {
-    return '在主機上安裝 $tools 之一。沒有 cloud-init，映像啟動後沒有可登入的帳戶。';
+    return '請在宿主機上安裝 $tools 中的任意一個工具。否則 cloud-init 無法生成設定，鏡像啟動後也不會有可登錄的賬戶。';
   }
 
   @override
@@ -10002,14 +11091,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCiEditTip =>
-      'cloud-init 在這台虛擬機器裡設定的內容：帶 sudo 的帳戶、登入方式、主機名稱和位址。';
+      '設定此虛擬機的 cloud-init 設定，包括帶 sudo 權限的賬戶、登錄方式、主機名和地址。';
 
   @override
   String get virtCiForeignTitle => '這份 seed 包含本應用程式不寫入的設定';
 
   @override
   String get virtCiForeignBody =>
-      '在別處寫入的設定（套件、命令、其他帳戶）不在這裡顯示。儲存後，seed 會被替換為這裡顯示的內容。';
+      '其他工具寫入的設定（例如軟件包、命令和其他賬戶）不會顯示在這裡。保存後，seed 將被替換為當前頁面中的設定。';
 
   @override
   String get virtCiPasswordKept => '已設定，留空則保持不變';
@@ -10022,7 +11111,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCiKeysAdded =>
-      '金鑰會新增到帳戶。在這裡刪掉的金鑰仍留在系統內，需要在系統內刪除；改使用者名稱會新建一個帳戶，舊帳戶保留。';
+      '密鑰會添加到賬戶。從此處移除密鑰不會將其從系統中刪除，需另行刪除。更改使用者名稱會新建賬戶，原賬戶會保留。';
 
   @override
   String get virtCiEffectTitle => '下次啟動時生效';
@@ -10032,7 +11121,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCiEffectPve =>
-      'PVE 會立即重寫它的 cloud-init 磁碟機，執行個體 ID 由這些設定計算得出，因此這裡的任何變更都會產生新的執行個體 ID。';
+      'PVE 會立即重寫 cloud-init 驅動器。實例 ID 根據這些設定生成，因此任何改動都會生成新的實例 ID。';
 
   @override
   String get virtCiNewInstance =>
@@ -10046,7 +11135,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtSnapshotExternalTip =>
-      '虛擬機器繼續運行。每顆磁碟在所選儲存池中得到一個 qcow2 覆蓋層，虛擬機器停留在鏈上。';
+      '虛擬機會繼續運行。每塊磁碟都會在所選儲存池中創建一個 qcow2 覆蓋層，虛擬機之後會繼續使用這條快照鏈。';
 
   @override
   String get virtSnapshotFormInternal => '內部（映像內）';
@@ -10082,7 +11171,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtSnapshotRevertChain =>
-      '在鏈上恢復會把運行中的覆蓋層合併進映像，並讓之後的所有快照無法使用。只能恢復到最新的快照。';
+      '恢復鏈中的快照會將運行中的覆蓋層合併進鏡像，並使此後創建的快照無法使用。只能恢復到最新的快照。';
 
   @override
   String get virtSnapshotRevertHasChildren => '後面還有快照時不可恢復。';
@@ -10321,11 +11410,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String virtNetEditAsk(int count) {
-    return '執行中的網路在重新啟動前維持原樣。重新啟動會中斷其上的 $count 台虛擬機器。';
+    return '重啟前，當前運行中的網絡不會改變。重啟會中斷網絡上的 $count 臺虛擬機。';
   }
 
   @override
-  String get virtNetEditAskNoGuest => '執行中的網路在重新啟動前維持原樣。';
+  String get virtNetEditAskNoGuest => '重啟前，當前運行中的網絡不會改變。';
 
   @override
   String get virtNetEditRestart => '立即重新啟動以生效';
@@ -10365,7 +11454,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtNetHostName => '名稱（選填）';
 
   @override
-  String get virtNetHostEmpty => '未給任何 MAC 分配固定位址：所有虛擬機器都從 DHCP 範圍中取得。';
+  String get virtNetHostEmpty =>
+      '尚未為任何 MAC 地址分配固定 IP；所有虛擬機都會從 DHCP 地址範圍中獲取 IP。';
 
   @override
   String get virtNetHostOthers => '其餘虛擬機器都從 DHCP 範圍中取得位址。';
@@ -10377,7 +11467,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtNetManagementIface => '此介面承載主機系統本身的位址。編輯或套用它會中斷主機系統的連線。';
 
   @override
-  String get virtNetManagementTip => '它承載主機的管理流量，或位於承載管理流量的介面之下：應用程式不會編輯它。';
+  String get virtNetManagementTip => '此接口承載宿主機的管理流量，或是管理接口的下層接口；App不會修改它。';
 
   @override
   String get virtNetPhysicalTip => '實體介面屬於主機本身：應用程式只編輯網橋。';
@@ -10423,7 +11513,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '主機系統的韌體描述檔中沒有帶已註冊金鑰的 Secure Boot 韌體，開啟後虛擬機器無法啟動。';
 
   @override
-  String get virtCreateSecureBoot => 'Secure Boot';
+  String get virtCreateSecureBoot => '安全啟動';
 
   @override
   String get virtCreateSecureBootNote => '只引導已簽署的核心與引導程式。';
@@ -10470,34 +11560,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get copyLink => '複製連結';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor agent 上的帳號沒有 $func 的權限，請聯絡該 agent 的管理員。';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
-    return '$func 需要透過 HTTPS 連線此 Monitor agent，或在 agent 和本 App 中同時允許 HTTP。';
+    return '$func 需要透過 HTTPS 連線至此 Monitor；或者，在 Monitor 和本 App 中都允許使用 HTTP。';
   }
-
-  @override
-  String funcNeedsAgentSetup(String func) {
-    return '此 Monitor agent 尚未設定 $func，需要由其維運人員設定。';
-  }
-
-  @override
-  String get monitorFilesReadOnly => '唯讀：此帳號可以瀏覽 agent 上的檔案，但不能修改。';
 
   @override
   String get monitorAccess => '存取';
-
-  @override
-  String get monitorAccounts => '帳號';
-
-  @override
-  String get monitorRoles => '角色';
-
-  @override
-  String get monitorRole => '角色';
 
   @override
   String get monitorChangePassword => '變更密碼';
@@ -10509,9 +11577,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorCurrentPassword => '你目前的密碼';
 
   @override
-  String get monitorReauthTip => '變更存取權限需要再次輸入你的密碼。';
-
-  @override
   String get monitorPasswordTooShort => '至少 8 個字元';
 
   @override
@@ -10521,75 +11586,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorErrReauth => '密碼錯誤。';
 
   @override
-  String get monitorErrLastAdmin => 'agent 至少需要一個管理員帳號。';
-
-  @override
-  String get monitorErrConflict => '已存在，或仍在使用中。';
-
-  @override
-  String get monitorErrForbidden => '只有管理員可以執行此操作。';
-
-  @override
-  String get monitorRoleNameRule => '小寫字母、數字、- 和 _，最多 32 個字元';
-
-  @override
-  String get monitorGrantShell => 'Shell 和指令';
-
-  @override
-  String get monitorGrantShellTip => '終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行';
-
-  @override
-  String get monitorGrantSshTerminal => '面板 SSH 終端機';
-
-  @override
-  String get monitorGrantVirt => '虛擬化';
-
-  @override
-  String get monitorGrantVirtTip => 'agent 網頁面板中連接的 Proxmox VE、libvirt 和 BMC';
-
-  @override
-  String get monitorGrantFiles => '檔案';
-
-  @override
-  String get monitorGrantConnect => '對外連線';
-
-  @override
-  String get monitorGrantConnectTip => '本機和動態連接埠轉發、遠端桌面';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '允許的目標（IP 或 CIDR，可帶 :連接埠 或 :起-迄；每行一個，留空表示任意）';
-
-  @override
-  String get monitorGrantListen => '在伺服器上監聽';
-
-  @override
-  String get monitorGrantListenTip => '遠端連接埠轉發';
-
-  @override
-  String get monitorGrantListenPublic => '非 loopback 位址';
-
-  @override
-  String get monitorGrantPorts => '連接埠範圍（留空表示任意）';
-
-  @override
-  String get monitorGrantOff => '關閉';
-
-  @override
-  String get monitorBuiltin => '內建';
-
-  @override
-  String get monitorAdminRoleTip => '管理帳號、角色和 agent 的設定';
-
-  @override
-  String get monitorYou => '你';
-
-  @override
-  String get monitorNoAccessToSettings => '只有管理員可以變更此 agent 的設定。';
-
-  @override
   String get monitorPasswordNotSaved =>
-      'agent 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
+      'Monitor 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
 
   @override
   String get firewall => '防火牆';
@@ -10712,7 +11710,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access：本 App 的新連線可能被拒絕，取決於連線來源位址或進入的網路介面，本 App 無法判斷。';
+    return '$access：本 App 的新連線可能會被拒絕，具體取決於連線的來源 IP 或入站網絡接口；本 App 無法預先判斷。';
   }
 
   @override
@@ -10728,13 +11726,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewallDefaultZone => '預設 zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => '區域';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => '目標原則';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'IP 偽裝';
 
   @override
   String get firewallServices => '服務';
@@ -10749,7 +11747,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewallInterfaces => '網路介面';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => '富規則';
 
   @override
   String get firewallForwardPorts => '連接埠轉送';
@@ -10801,23 +11799,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。';
 
   @override
-  String get monitorSyncNeedsServer => '請選擇存放備份的伺服器（使用其 Monitor 代理）。';
-
-  @override
-  String get monitorBackupUnsupported => '此 Monitor 代理不支援存放備份，請更新代理。';
-
-  @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理員帳戶可以在其上存放備份。';
-
-  @override
-  String monitorBackupTooLarge(String max) {
-    return '備份超過了 Monitor 代理允許的大小（$max）。';
-  }
-
-  @override
-  String get monitorBackupTooMany => 'Monitor 代理存放的備份數量已達上限，請先刪除一個。';
-
-  @override
   String get virtCreateVmidInvalid => 'VMID 須介於 100 到 999999999。';
 
   @override
@@ -10854,16 +11835,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtBackupIssueNodeOffline => '此工作的節點不在線上。';
 
   @override
-  String get programWaiting => '正在等待您';
+  String get programWaiting => '等待你的操作';
 
   @override
-  String get programWaitingPermission => '正在等待您核准';
+  String get programWaitingPermission => '等待你批准';
 
   @override
-  String get programWaitingQuestion => '正在等待您回答';
+  String get programWaitingQuestion => '等待你回答';
 
   @override
-  String get programWaitingAuth => '正在等待您登入';
+  String get programWaitingAuth => '等待你登錄';
 
   @override
   String get programStatus => '程式狀態';
@@ -10941,7 +11922,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String workspaceClosed(String what) {
-    return '已關閉$what';
+    return '已關閉 $what';
   }
 
   @override
@@ -11266,6 +12247,1208 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get kbServerClose => '伺服器：關閉詳情';
 
   @override
+  String get storageTitle => '儲存空間';
+
+  @override
+  String get storageLinuxOnly => '儲存管理目前僅支援 Linux 伺服器。';
+
+  @override
+  String get storageDisks => '磁碟';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS 儲存池';
+
+  @override
+  String get storageNoFilesystem => '無檔案系統';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '已用 $used / $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size 可用';
+  }
+
+  @override
+  String get storageBusyMounted => '使用中';
+
+  @override
+  String get storageBusySwap => '交換空間';
+
+  @override
+  String get storageBusyRaid => '屬於陣列';
+
+  @override
+  String get storageBusyPool => '屬於儲存池';
+
+  @override
+  String get storageBusyVolume => '承載卷';
+
+  @override
+  String get storageBusyReadOnly => '唯讀';
+
+  @override
+  String get storageBusySystem => '系統分割區';
+
+  @override
+  String get storageSystemMount => '系統正在使用此掛載點，不能卸載。';
+
+  @override
+  String get storageNotMounted => '該位置已沒有掛載。';
+
+  @override
+  String get storageMount => '掛載';
+
+  @override
+  String get storageUnmount => '卸載';
+
+  @override
+  String get storageFormat => '格式化';
+
+  @override
+  String get storageInitialize => '初始化';
+
+  @override
+  String get storageSmartTest => 'SMART 自我檢測';
+
+  @override
+  String get storageFilesystem => '檔案系統';
+
+  @override
+  String get storageLabel => '標籤';
+
+  @override
+  String get storageMountpoint => '掛載點';
+
+  @override
+  String get storageMountPersist => '每次開機自動掛載（/etc/fstab）';
+
+  @override
+  String get storageMountOwn => '授權 ServerBox 寫入（用於備份）';
+
+  @override
+  String get storageName => '名稱';
+
+  @override
+  String get storageLevel => '等級';
+
+  @override
+  String get storageLayout => '配置';
+
+  @override
+  String storagePickDevices(Object count) {
+    return '至少選擇 $count 個裝置。裝置上的資料會遺失。';
+  }
+
+  @override
+  String get storageCreateRaid => '建立陣列';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '用 $devices 建立 /dev/$name（RAID $level）。裝置上的資料會全部遺失。';
+  }
+
+  @override
+  String get storageCreatePool => '建立儲存池';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '用 $devices 建立儲存池 $name（$layout）。裝置上的資料會全部遺失。';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '在 $device 上建立新的檔案系統。上面的資料會全部遺失。';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '清空 $device，並建立一個佔滿整個磁碟的分割區。上面的資料會全部遺失。';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '將 $device 掛載到 $mountpoint。';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '卸載 $mountpoint，並不再開機自動掛載。';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '在 $device 上啟動簡短自我檢測，需要幾分鐘；進度和結果會顯示在這裡。';
+  }
+
+  @override
+  String get storageAddMember => '新增磁碟';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '將 $device 加入 /dev/$array：取代故障成員，或作為熱備援。上面的資料會遺失。';
+  }
+
+  @override
+  String get storageRemoveMember => '移除';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '將 $device 標記為故障並從 /dev/$array 移除。陣列會繼續運作；如果它是運作中的成員，陣列會降級。';
+  }
+
+  @override
+  String get storageDeleteRaid => '刪除陣列';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '停止 /dev/$array 並清除成員上的 RAID 標記。其中的資料會遺失。';
+  }
+
+  @override
+  String get storageDestroyPool => '銷毀儲存池';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '銷毀儲存池 $name 及其中的所有資料。';
+  }
+
+  @override
+  String get storageScrub => '資料清理';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '讀取儲存池 $name 的全部資料並修復可修復的錯誤，在背景執行。';
+  }
+
+  @override
+  String get storageState => '狀態';
+
+  @override
+  String get storageHealthy => '正常';
+
+  @override
+  String get storageDegraded => '已降級';
+
+  @override
+  String storageSync(Object action) {
+    return '同步（$action）';
+  }
+
+  @override
+  String get storageFaulty => '故障';
+
+  @override
+  String get storageSpare => '熱備援';
+
+  @override
+  String get storageActive => '運作中';
+
+  @override
+  String get storageScan => '上次掃描';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count 個錯誤';
+  }
+
+  @override
+  String get storageNoDisks => '沒有磁碟';
+
+  @override
+  String get storageNoArrays => '沒有陣列';
+
+  @override
+  String get storageNoPools => '沒有儲存池';
+
+  @override
+  String get storageNoMdadm => '未安裝 mdadm，無法在此建立或修改陣列。';
+
+  @override
+  String get storageNoZfs => '未安裝 ZFS（zfsutils）。';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '輸入 $word 以確認';
+  }
+
+  @override
+  String get storageConfirmationMismatch => '輸入的確認內容不相符。';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device 正在使用中。';
+  }
+
+  @override
+  String get storageBusy => '另一項磁碟操作正在進行。';
+
+  @override
+  String get storageHealthRead => '讀取磁碟健康狀態';
+
+  @override
+  String get storageHealthWearing => '有損耗';
+
+  @override
+  String get storageHealthFailing => '故障';
+
+  @override
+  String get storageHealthAsleep => '休眠中';
+
+  @override
+  String get storageHealthUnsupported => '無 SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '通電 $hours 小時';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count 個壞扇區';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return '自我檢測中：剩餘 $percent%';
+  }
+
+  @override
+  String get storageGrowPartition => '擴充分割區';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '將 $device 擴充至後方的可用空間。之後再擴充檔案系統。';
+  }
+
+  @override
+  String get storageEncrypt => '加密（LUKS）';
+
+  @override
+  String get storagePassphrase => '密語';
+
+  @override
+  String get storagePassphraseAgain => '再次輸入';
+
+  @override
+  String get storagePassphraseHint => '至少 8 個字元。沒有密語就無法讀取資料，請妥善保管。';
+
+  @override
+  String get storageInvalidPassphrase => '密語必須是單行且介於 8 到 512 個字元。';
+
+  @override
+  String get storagePassphrasesDiffer => '兩次密語不相符。';
+
+  @override
+  String get storageEncrypted => '已加密';
+
+  @override
+  String get storageLocked => '已鎖定';
+
+  @override
+  String get storageUnlock => '解鎖';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '使用密語開啟 $device。';
+  }
+
+  @override
+  String get storageLock => '鎖定';
+
+  @override
+  String storageLockBody(Object device) {
+    return '關閉 $device。必須先卸載其檔案系統。';
+  }
+
+  @override
+  String get storageReplace => '取代';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '以 $replacement 取代儲存池 $name 中的 $old。儲存池會將資料複製到新裝置，$replacement 的內容將會遺失。';
+  }
+
+  @override
+  String get storageAttach => '鏡像';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '將 $existing 鏡像至 $replacement。$replacement 的內容將會遺失。';
+  }
+
+  @override
+  String get storageAddSpare => '新增備援裝置';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '將 $devices 作為備援裝置加入儲存池 $name。裝置中的資料將會遺失。';
+  }
+
+  @override
+  String get storageRemoveDevice => '移除';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '將 $device 從儲存池 $name 移除。';
+  }
+
+  @override
+  String get storageOnline => '恢復上線';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '將 $device 加回儲存池 $name，並擴充至整顆磁碟。';
+  }
+
+  @override
+  String get storageDetails => '詳細資料';
+
+  @override
+  String get storageAttributes => '屬性';
+
+  @override
+  String get storageAttrValue => '值';
+
+  @override
+  String get storageAttrWorst => '最差值';
+
+  @override
+  String get storageAttrThresh => '門檻';
+
+  @override
+  String get storageSelfTests => '自我測試';
+
+  @override
+  String get storageTestShort => '短測試';
+
+  @override
+  String get storageTestLong => '長測試';
+
+  @override
+  String get storageTestPassed => '通過';
+
+  @override
+  String get storageTestFailed => '失敗';
+
+  @override
+  String get storageTestAborted => '已停止';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '於 $hours 小時';
+  }
+
+  @override
+  String get storageNothingToShow => '沒有可顯示的內容';
+
+  @override
+  String get storageLongTest => '長時間測試';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '在 $device 上啟動長時間自我測試。測試會讀取整顆磁碟，大容量磁碟可能需要數小時。';
+  }
+
+  @override
+  String get storageMountedInside => '請先卸載檔案系統。';
+
+  @override
+  String get storageNotRemovable => '此處只能移除備援或快取裝置。';
+
+  @override
+  String get storageNotGrowable => '無法在此擴充該裝置。';
+
+  @override
+  String get storageOverlapping => '請選擇互不重疊的裝置。';
+
+  @override
+  String get storageInvalidDevice => '裝置無效或已無法使用。';
+
+  @override
+  String get storageInvalidMountpoint => '掛載點無效。';
+
+  @override
+  String get storageInvalidName => '名稱無效。';
+
+  @override
+  String get storageInvalidFilesystem => '不支援該檔案系統。';
+
+  @override
+  String get storageInvalidLabel => '標籤無效。';
+
+  @override
+  String get storageInvalidLevel => 'RAID 等級或儲存池配置無效。';
+
+  @override
+  String get storageTooFewDevices => '所選的有效裝置數量不足。';
+
+  @override
+  String get storageKeyRequired => '需要輸入密碼短語。';
+
+  @override
+  String get storageExpand => '擴展';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '將 $device 上的檔案系統擴展到整個裝置，期間保持掛載。';
+  }
+
+  @override
+  String get storageGrowRaid => '擴容';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '把 $device 作為新的工作成員加入 /dev/$array。RAID 1 會多一份鏡像；RAID 5 和 6 在重塑完成後增加容量，重塑可能需要幾個小時，完成後再擴展其檔案系統。$device 上的資料會遺失。';
+  }
+
+  @override
+  String get storageAddToPool => '新增磁碟';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '把 $devices 以 $layout 加入儲存池 $name 以增加容量。加入後無法移除，磁碟上的資料會遺失。';
+  }
+
+  @override
+  String get sharingTitle => '分享';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => '服務';
+
+  @override
+  String get sharingRunning => '執行中';
+
+  @override
+  String get sharingStopped => '已停止';
+
+  @override
+  String get sharingNfsServer => 'NFS 伺服器';
+
+  @override
+  String get sharingNoSamba => '未安裝 Samba。Windows、macOS 和 Linux 都能開啟 SMB 分享。';
+
+  @override
+  String get sharingNoNfs => '未安裝 NFS 伺服器。Linux 和 macOS 可以掛載 NFS 匯出。';
+
+  @override
+  String get sharingInstallSamba => '安裝 Samba';
+
+  @override
+  String get sharingInstallSambaBody => '使用系統的套件管理器安裝 Samba。';
+
+  @override
+  String get sharingInstallNfs => '安裝 NFS 伺服器';
+
+  @override
+  String get sharingInstallNfsBody => '使用系統的套件管理器安裝 NFS 伺服器。';
+
+  @override
+  String get sharingAddShare => '新增分享';
+
+  @override
+  String get sharingAddExport => '新增匯出';
+
+  @override
+  String get sharingEdit => '編輯';
+
+  @override
+  String get sharingRemove => '移除';
+
+  @override
+  String get sharingSave => '儲存';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '透過 SMB 以 $name 分享 $path，然後重新載入 Samba。';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '透過 NFS 匯出 $path，然後重新載入匯出清單。';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '停止分享 $name。資料夾和其中的檔案會保留。';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '停止匯出 $path。資料夾和其中的檔案會保留。';
+  }
+
+  @override
+  String get sharingElsewhere => '在 ServerBox 之外設定';
+
+  @override
+  String get sharingNoShares => '沒有 SMB 分享';
+
+  @override
+  String get sharingNoExports => '沒有 NFS 匯出';
+
+  @override
+  String get sharingReadOnly => '唯讀';
+
+  @override
+  String get sharingReadWrite => '讀寫';
+
+  @override
+  String get sharingGuest => '訪客';
+
+  @override
+  String get sharingGuestLabel => '允許網路中的任何人無需帳號存取';
+
+  @override
+  String get sharingUsersHint => '允許存取的帳號（都不勾選：所有設定了 SMB 密碼的帳號）：';
+
+  @override
+  String get sharingFolder => '資料夾';
+
+  @override
+  String get sharingFolderHint => '伺服器上的資料夾，例如在儲存空間中掛載的磁碟。';
+
+  @override
+  String get sharingComment => '描述';
+
+  @override
+  String get sharingPasswords => 'SMB 密碼';
+
+  @override
+  String get sharingPasswordsBody => 'Samba 使用獨立的密碼：為每個要連線的帳號設定一個。';
+
+  @override
+  String get sharingSetPassword => '設定密碼';
+
+  @override
+  String get sharingNewPassword => '新的 SMB 密碼';
+
+  @override
+  String get sharingNewPasswordAgain => '再次輸入';
+
+  @override
+  String get sharingPasswordsDiffer => '兩次輸入的密碼不一致。';
+
+  @override
+  String get sharingClientsHint =>
+      '允許掛載的用戶端：* 表示任何人，也可以是主機、位址或網段，例如 192.168.1.0/24。';
+
+  @override
+  String get sharingClient => '用戶端';
+
+  @override
+  String get sharingAddClient => '新增用戶端';
+
+  @override
+  String get sharingSquashRoot => 'root 對應為 nobody';
+
+  @override
+  String get sharingSquashAll => '所有人對應為 nobody';
+
+  @override
+  String get sharingSquashNone => 'root 保持為 root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path 不是伺服器上的資料夾。';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '新設定未通過檢查，已恢復原設定：$detail';
+  }
+
+  @override
+  String get sharingDuplicate => '已有其他分享使用這個名稱或資料夾。';
+
+  @override
+  String get sharingInvalidName => '名稱只能包含字母、數字和 _ . -，最多 32 個字元。';
+
+  @override
+  String get sharingInvalidPath => '資料夾必須是絕對路徑，不能包含引號、反斜線或 ..';
+
+  @override
+  String get sharingInvalidClient => '用戶端可以是 *、主機、位址或網段。';
+
+  @override
+  String get sharingInvalidPassword => '不能使用這個密碼。';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine 備份（Mac）';
+
+  @override
+  String get sharingRecycleOption => '將已刪除的檔案保留在 .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => '回收桶';
+
+  @override
+  String get sharingConnectedNow => '目前連線';
+
+  @override
+  String get sharingNobodyConnected => '目前沒有人連線';
+
+  @override
+  String get sharingShowConnections => '顯示連線';
+
+  @override
+  String get sharingShowConnectionsBody => '以 root 身分讀取目前連線資訊。';
+
+  @override
+  String get sharingConnectionsLinuxOnly => '共享管理目前僅支援 Linux 伺服器。';
+
+  @override
+  String get agentThisDevice => '本機';
+
+  @override
+  String get agentSource => '來源';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '任務將從 $server 刪除。';
+  }
+
+  @override
+  String get agentPlan => '計畫';
+
+  @override
+  String get agentRemoteGone => '伺服器上已沒有這個任務。';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '回覆 $server 上的任務';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '排隊中',
+      'running': '執行中',
+      'waiting': '等待你操作',
+      'done': '已完成',
+      'failed': '失敗',
+      'cancelled': '已停止',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '一律允許 $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '輸入 $name 以執行';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '仍要執行';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user 的密碼';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '密碼錯誤';
+
+  @override
+  String get agentRemoteSudoRemember => '記住 15 分鐘';
+
+  @override
+  String agentNewOn(String place) {
+    return '在 $place 開始新對話';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '向 $server 上的 agent 提問，或交給它一項任務。';
+  }
+
+  @override
+  String get agentModeBypassWarn => '全部允許：刪除、重新啟動和設定變更都會直接執行，不再詢問。';
+
+  @override
+  String get webApps => 'Web 應用程式';
+
+  @override
+  String get webAppUnhealthy => '異常';
+
+  @override
+  String get webAppDown => '無法使用';
+
+  @override
+  String get webAppInstalling => '正在安裝';
+
+  @override
+  String get webAppsEmpty => '尚無 Web 應用程式。請在 Monitor 面板的 App Store 中部署。';
+
+  @override
+  String get deskAppOpensInPanel => '在面板中開啟';
+
+  @override
+  String get webAppVersion => '版本';
+
+  @override
+  String get webAppHomepage => '首頁';
+
+  @override
+  String webAppUpdate(String version) {
+    return '有新版本 $version，請在 Monitor 面板中更新。';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app已停止執行';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '未執行的服務：$services。';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '沒有任何容器正在執行。';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app運作異常';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '健康檢查失敗的服務：$services。';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app已恢復執行';
+  }
+
+  @override
+  String get noticeStackBackBody => '所有容器都在執行。';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app有可用更新';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '可安裝$project $version（目前版本：$current）。';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 已降級';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody => '有成員故障或缺失，陣列目前沒有備援。';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 已恢復正常';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '所有成員都在運作。';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '儲存池 $pool 狀態為 $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '開啟儲存空間查看是哪個裝置。';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '儲存池 $pool 已恢復上線';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '所有裝置都在運作。';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 即將故障';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody => 'SMART 檢查或自我檢測未通過：請把資料複製到別處並更換磁碟。';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device 有 $count 個壞扇區';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '之前是 $was 個。壞扇區增加的磁碟通常很快會故障。';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '儲存維護未能執行：$task';
+  }
+
+  @override
+  String get storageTaskScrub => '校驗儲存池和陣列';
+
+  @override
+  String get storageTaskSmartShort => 'SMART 簡短自我檢測';
+
+  @override
+  String get storageTaskSmartLong => 'SMART 完整自我檢測';
+
+  @override
+  String get storageNeedsSudo =>
+      '執行此操作需要免密碼 sudo 權限。請以 root 身分執行 Monitor，或依上方說明設定 sudoers。';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '概覽';
+
+  @override
+  String get monitorNotices => '通知';
+
+  @override
+  String get monitorAudit => '稽核日誌';
+
+  @override
+  String get monitorLive => '工作階段與裝置';
+
+  @override
+  String get monitorNoAgents => '還沒有透過 Monitor 連線的伺服器。';
+
+  @override
+  String get monitorNotOffered => '此 Monitor 版本不提供此功能，請更新 Monitor。';
+
+  @override
+  String get monitorAlertsNotOffered => '此 Monitor 版本不回報告警。';
+
+  @override
+  String get monitorAlertsNone => '沒有正在觸發的規則。';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '已持續 $duration';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '可更新至 $version';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count 則未讀';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '異常應用程式：$count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '應用程式更新：$count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '僅顯示有更新';
+
+  @override
+  String get monitorNoUpdates => '沒有可更新的應用程式。';
+
+  @override
+  String get monitorNoticesEmpty => '沒有通知。';
+
+  @override
+  String get monitorMarkAllRead => '全部標為已讀';
+
+  @override
+  String get monitorAuditExec => '指令';
+
+  @override
+  String get monitorAuditMachine => '主機管理';
+
+  @override
+  String get monitorAuditListen => '監聽連接埠';
+
+  @override
+  String get monitorAuditTicket => '連線票證';
+
+  @override
+  String get monitorAuditPush => '通知管道';
+
+  @override
+  String get monitorAuditAdmin => '帳戶';
+
+  @override
+  String get monitorAuditDenied => '已拒絕';
+
+  @override
+  String get monitorLoadMore => '載入更多';
+
+  @override
+  String get monitorLiveSessions => '終端機工作階段';
+
+  @override
+  String get monitorLiveConnections => '連線';
+
+  @override
+  String get monitorLiveWatchTokens => '手錶與小工具權杖';
+
+  @override
+  String get monitorLiveDevices => '已登入的裝置';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '忘記裝置後，它下次登入會計入帳戶層級的失敗嘗試限制。這不會讓裝置登出：保存了密碼的裝置會再次登入。要阻止某台裝置，請變更密碼。';
+
+  @override
+  String get monitorLiveAttached => '已連接';
+
+  @override
+  String get monitorLiveDetached => '已中斷';
+
+  @override
+  String get monitorLiveEnd => '結束';
+
+  @override
+  String get monitorLiveRevoke => '撤銷';
+
+  @override
+  String get monitorLiveForget => '忘記';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '結束終端機工作階段「$name」？其中執行的程式會停止。';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '結束至 $name 的連線？';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '撤銷 $name 的權杖？在重新設定之前它將停止更新。';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '忘記 $name？';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time 到期';
+  }
+
+  @override
+  String get monitorLiveStream => '中繼連線';
+
+  @override
+  String get monitorLiveAccepted => '轉送連線';
+
+  @override
+  String get monitorLiveConsole => '主控台';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count 個 Monitor';
+  }
+
+  @override
+  String get monitorStatOnline => '線上';
+
+  @override
+  String get monitorStatFiring => '正在警示';
+
+  @override
+  String get monitorStatUnread => '未讀通知';
+
+  @override
+  String get monitorStatUpdates => '應用程式更新';
+
+  @override
+  String get monitorAuditEmpty => '沒有符合條件的紀錄。';
+
+  @override
+  String get monitorLiveNoSessions => '沒有開啟的終端機工作階段。';
+
+  @override
+  String get monitorLiveNoConnections => '沒有轉送或中繼的連線。';
+
+  @override
+  String get monitorLiveNoTokens => '沒有配對的手錶或小工具。';
+
+  @override
+  String get monitorLiveNoDevices => '沒有登入過的裝置。';
+
+  @override
+  String get monitorUpdateAgent => '更新 Monitor';
+
+  @override
+  String get monitorAgentTooOldTip => '更新步驟見 Monitor 分頁。';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '此 Monitor 版本過舊，尚不支援單一密碼登入。升級後將預設沿用原首個管理員帳戶的密碼。';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '已發布 $latest，此 Monitor 執行的是 $running。';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '在伺服器上，以安裝 Monitor 時所用的帳戶執行：';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '終端機會執行它。系統層級安裝的 Monitor 透過 SSH 終端機更新時，sudo 會在終端機裡要求輸入密碼。';
+
+  @override
+  String get monitorUpdateNoSsh => 'App 無法在此伺服器上開啟終端機，請自行在伺服器上執行。';
+
+  @override
+  String get monitorUpdateDocker => '用 Docker 執行？請拉取新映像並重建容器。';
+
+  @override
+  String get monitorUpdateAfter => 'Monitor 重新啟動後，重新整理 Monitor 分頁。';
+
+  @override
+  String get monitorUpdateInTerminal => '在終端機中執行';
+
+  @override
+  String get monitorHowToUpdate => '如何更新';
+
+  @override
+  String get monitorUpdateNix => '透過 NixOS 模組安裝：請在系統設定中更新並重新 rebuild。';
+
+  @override
+  String get noticeAgentUpdate => 'Monitor 有可用更新';
+
+  @override
+  String get monitorUpdateLegacyUser => '帳戶名稱';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '這個 Monitor 仍需帳戶名稱和密碼登入：填寫 App 之前使用的帳戶名稱（通常是 admin），密碼使用已儲存的密碼。';
+
+  @override
+  String get monitorUpdateNow => '立即更新';
+
+  @override
+  String get monitorUpdating => '正在更新…';
+
+  @override
+  String get monitorUpdateRestarting => 'Monitor 正在重新啟動，連線幾秒後恢復…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '已更新：Monitor 現在執行 $version。';
+  }
+
+  @override
+  String get monitorUpdateFailed => '更新失敗，輸出見上方。';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Monitor 會在自身行程之外執行安裝腳本，因此重新啟動不會中斷更新。重新啟動期間到 Monitor 的連線會中斷幾秒，此視窗會跨越重新啟動繼續追蹤進度。';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 密碼';
+
+  @override
+  String get monitorUpdateSudoHint => '這裡的安裝腳本需要 root（OpenRC 服務）。密碼只用一次，不會儲存。';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo 不接受這個密碼。';
+
+  @override
+  String get monitorUpdateNoAnswer => 'Monitor 沒有恢復，請到伺服器上檢查。';
+
+  @override
+  String get keyArrowDown => '下箭頭';
+
+  @override
+  String get keyArrowLeft => '左箭頭';
+
+  @override
+  String get keyArrowRight => '右箭頭';
+
+  @override
+  String get keyArrowUp => '上箭頭';
+
+  @override
+  String get keyControl => 'Ctrl 鍵';
+
+  @override
+  String get keyEscape => 'Esc 鍵';
+
+  @override
+  String get keyPageDown => '向下翻頁';
+
+  @override
+  String get keyPageUp => '向上翻頁';
+
+  @override
+  String get termTextView => '以文字檢視';
+
+  @override
+  String termTextLetGo(int count) {
+    return '更早的輸出已不再保留：$count 行';
+  }
+
+  @override
+  String get systemGroups => '群組';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成員';
+
+  @override
+  String get userPrimaryMembers => '主要成員';
+
+  @override
+  String get userSystemGroup => '系統群組';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般群組';
+
+  @override
   String get termMetricsBar => '終端下方顯示伺服器狀態';
 
   @override
@@ -11288,6 +13471,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get reconnectEndsShell =>
       '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
+
+  @override
+  String get handedness => '慣用手';
+
+  @override
+  String get handednessLeft => '左手';
+
+  @override
+  String get handednessRight => '右手';
+
+  @override
+  String get handednessTip => '選擇的手所在一側有系統直欄時，分頁列放在狀態列下方的直欄裡，與系統內建的列一致。';
 
   @override
   String get storeUnreadableTitle => '無法開啟先前的資料';
@@ -11336,8 +13531,159 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
 
   @override
-  String get hostCertAuthorityNoHosts => '請填寫它擔保的主機，例如 *';
+  String get hostCertAuthorityNoHosts => '請填寫適用的主機比對規則，例如 *';
 
   @override
   String get hostCertAuthorityExists => '已在清單中';
+
+  @override
+  String get addToHomeScreen => '加入主畫面';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 個傳輸';
+  }
+
+  @override
+  String get syncKeyRotate => '更換同步金鑰';
+
+  @override
+  String get discoverIntro => '找到可以新增為伺服器的機器。';
+
+  @override
+  String get lan => '區域網路';
+
+  @override
+  String get discoveryScan => '掃描';
+
+  @override
+  String get discoveryScanAgain => '重新掃描';
+
+  @override
+  String get discoveryScanning => '正在掃描…';
+
+  @override
+  String discoveryFound(int count) {
+    return '找到 $count 台';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '已選 $count 台';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '新增 $count 台';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '已新增 $count 台';
+  }
+
+  @override
+  String get discoveryAdded => '已新增';
+
+  @override
+  String get discoveryExists => '已存在';
+
+  @override
+  String get localServerNoSsh => '無需 SSH';
+
+  @override
+  String get introWelcome =>
+      '透過 SSH 或 Monitor 檢視 Linux、Unix 和 Windows 伺服器的狀態，並使用終端機、檔案和容器管理。';
+
+  @override
+  String get security => '安全性';
+
+  @override
+  String get sshConfig => 'SSH 設定';
+
+  @override
+  String get tailscaleStopped => 'Tailscale 未執行';
+
+  @override
+  String get tailscaleStoppedTip => '本機已安裝 Tailscale，但未連線到 tailnet。';
+
+  @override
+  String get cloudflareApiToken => 'API 權杖';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      '需要 Account · Cloudflare Tunnel · Read 權限。';
+
+  @override
+  String get discoveryChooseFile => '選擇檔案';
+
+  @override
+  String get discoveryOnline => '線上';
+
+  @override
+  String get discoveryOffline => '離線';
+
+  @override
+  String get discoverySelectAll => '全選';
+
+  @override
+  String get discoveryFilter => '依名稱或位址篩選';
+
+  @override
+  String get discoverySameMachine => '同一台機器，多個位址';
+
+  @override
+  String get discoveryPrimaryAddress => '主要位址';
+
+  @override
+  String get discoveryAlternateAddress => '備用位址';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get discardUnsaved => '放棄未儲存的修改？';
+
+  @override
+  String get syncAuto => '自動同步';
+
+  @override
+  String get syncOff => '關閉';
+
+  @override
+  String get syncDone => '已同步';
+
+  @override
+  String syncLastAt(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
+  String get syncNow => '立即同步';
+
+  @override
+  String syncSwitchBody(String name) {
+    return '將停止與 $name 自動同步，已儲存在 $name 的備份不會刪除。';
+  }
+
+  @override
+  String get bakPwdSet => '已設定';
+
+  @override
+  String get bakPwdNotSet => '未設定';
+
+  @override
+  String get syncChannel => '管道';
+
+  @override
+  String get syncStateFailed => '同步失敗';
+
+  @override
+  String get syncStatePassword => '密碼不一致';
+
+  @override
+  String get syncStateUpdate => '需要更新';
+
+  @override
+  String get syncStateRunning => '同步中';
 }

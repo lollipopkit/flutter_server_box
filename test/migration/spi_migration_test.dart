@@ -32,7 +32,7 @@ void main() {
       expect(ssh.pwd, 'secret');
       expect(ssh.keyId, 'key-1');
       expect(ssh.alterUrl, 'deploy@10.0.0.2:22');
-      expect(ssh.jumpId, 'jump-1');
+      expect(ssh.resolvedJumpIds.firstOrNull, 'jump-1');
       expect(ssh.jumpIds, ['jump-1', 'jump-2']);
       expect(ssh.proxyCommand, 'nc %h %p');
       // Non-SSH fields stay put

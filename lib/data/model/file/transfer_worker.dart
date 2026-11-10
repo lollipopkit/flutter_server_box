@@ -6,15 +6,16 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/utils/file_transfer_timeout.dart';
-import 'package:server_box/core/utils/local_file_backend.dart';
-import 'package:server_box/core/utils/monitor_file_backend.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/sftp_file_backend.dart';
-import 'package:server_box/core/utils/sftp_timeout.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
-import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/client.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
+import 'package:server_box/core/ssh/native_crypto.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
+import 'package:server_box/data/model/file/backend/monitor.dart';
+import 'package:server_box/data/model/file/backend/sftp.dart';
+import 'package:server_box/data/model/file/backend/sftp_timeout.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
+import 'package:server_box/data/model/file/backend/transfer_timeout.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -372,7 +373,7 @@ Future<void> _download(
       _prepareTimeout(job),
     )).size;
     if (size == null) {
-      throw Exception('can\'t get file size: ${from.path}');
+      throw FileSystemException('The server reported no size', from.path);
     }
 
     mainSendPort.send(size);

@@ -49,7 +49,7 @@ fn is_physical_disk(device: &str) -> bool {
 }
 
 pub fn parse(raw: &str) -> Vec<DiskSmart> {
-    let normalized = raw.replace("\r\n", "\n");
+    let normalized = crate::common::normalize_newlines(raw);
     normalized
         .split("\n\n")
         .filter(|s| !s.trim().is_empty())
@@ -91,7 +91,6 @@ fn parse_block(block: &str) -> Option<DiskSmart> {
             .as_i64()
             .or_else(|| attributes.get("Power_Cycle_Count")?.raw_value.as_i64()),
         smart_attributes: attributes,
-        raw_data: data,
         device,
     })
 }

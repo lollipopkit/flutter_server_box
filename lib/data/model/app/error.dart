@@ -1,7 +1,22 @@
+import 'package:dartssh2/dartssh2.dart' show SSHChannelOpenError;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/transport.dart';
 import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
+
+// Which kind a new failure is:
+//
+// - An `Err<Type>` here when the user is told what to do about it: a
+//   connection, a transport or a server's own refusal, whose `solution` is the
+//   advice. One enum per subsystem, matched by type, never by message.
+// - Otherwise a typed `Exception` beside the service that throws it — a sealed
+//   family where there are several reasons (`SharesFailure`, `StorageFailure`),
+//   its `toString` already the user's words. A refusal from `sbm_parser` is its
+//   own FRB enum (`ShareError`, `UserError`), matched by case, never a string
+//   code. Sudo refusing the password is `SudoRejected`.
+// - `StateError` and `ArgumentError` only for a programming error: never shown
+//   as a message, never caught to decide anything. A bare `Exception('...')`
+//   or a thrown `String` is neither, and is not used.
 
 /// Remote sync needs a backup password, and none is set.
 ///
@@ -12,6 +27,19 @@ class RemoteBackupPasswordMissing implements Exception {
 
   @override
   String toString() => l10n.remoteBackupPasswordRequired;
+}
+
+/// The backup password here does not open the sync key of [id]'s remote
+/// (`SyncKey`), and nothing changed here explains it: another device sealed
+/// it with another password. Nothing syncs there until the one here is it.
+class SyncPasswordMismatch implements Exception {
+  const SyncPasswordMismatch(this.id);
+
+  /// The key file's (`SyncKeyFile.id`).
+  final String id;
+
+  @override
+  String toString() => l10n.syncPasswordMismatch;
 }
 
 enum SSHErrType {
@@ -26,7 +54,11 @@ enum SSHErrType {
 }
 
 class SSHErr extends Err<SSHErrType> {
-  const SSHErr({required super.type, super.message});
+  const SSHErr({required super.type, super.message, this.cause});
+
+  /// What was thrown, where there was something: kept for the log and the
+  /// crash report, which a message alone does not let anyone trace.
+  final Object? cause;
 
   @override
   String? get solution => switch (type) {
@@ -59,6 +91,18 @@ class LocalServerErr extends Err<LocalServerErrType> {
     LocalServerErrType.unsupported => l10n.localServerUnsupported,
     LocalServerErrType.writeScript => l10n.writeScriptFailTip,
     LocalServerErrType.getStatus => null,
+  };
+}
+
+enum ScriptErrType { writeScript }
+
+/// The status script could not be written, whichever transport carried it.
+class ScriptErr extends Err<ScriptErrType> {
+  const ScriptErr({required super.type, super.message});
+
+  @override
+  String? get solution => switch (type) {
+    ScriptErrType.writeScript => l10n.writeScriptFailTip,
   };
 }
 
@@ -114,54 +158,95 @@ enum MonitorHttpErrType {
   auth,
   invalidResponse,
 
-  /// The agent answered, and its `remote_access` grants withhold what was
-  /// asked for: a command, a terminal, or a relayed connection. A 403 from
-  /// `/exec` or `/ws-ticket` — never retried, since only its config changes
-  /// the answer.
+  /// The agent answered, and refuses what was asked for over this connection
+  /// (plaintext HTTP): a command, a terminal, or a relayed connection. A 403
+  /// from `/exec` or `/ws-ticket` — never retried, since only the link or its
+  /// config changes the answer.
   notGranted,
 
-  /// An account or role request was refused: this account is not an admin.
+  /// A request was refused.
   forbidden,
 
-  /// The admin's current password, which every change of access asks for,
-  /// was missing or wrong.
+  /// The current password, which some changes ask for again, was missing or
+  /// wrong.
   reauth,
 
-  /// The account or role exists already, or a role is still in use.
+  /// The change conflicts with the agent's state.
   conflict,
 
-  /// The change would leave the agent with no admin.
-  lastAdmin,
+  /// A file write that named the version it was based on found the file
+  /// changed since: the agent's `409 {"error":"modified"}`.
+  modified,
 
-  /// No such account or role.
+  /// No such thing on the agent.
   notFound,
 
-  /// The agent rejected the request's contents — a name, a password too short.
+  /// The agent rejected the request's contents — a password too short, say.
   badRequest,
 
-  /// The agent is older than this app reads (`sbm_parser::protocol`).
+  /// The agent has to be updated before this app can reach it: older than
+  /// this app reads (`sbm_parser::protocol`), or from before it had one
+  /// account and wanting a user name to sign in.
   agentTooOld,
 
   /// The agent no longer answers this app: `426`, or what `/health` said.
   clientTooOld,
+
+  /// Starting the agent's update needs root, and sudo refused the password
+  /// given (or none was).
+  sudoRefused,
+
+  /// The Monitor could not connect to the address a relay names: the stream's
+  /// `connect_failed`.
+  targetUnreachable,
+
+  /// The Monitor would not relay: the stream's `forbidden`, sent when its
+  /// password changed or the link may not act (plain HTTP).
+  relayForbidden,
+
+  /// The agent's certificate is not one the system trusts, and none has been
+  /// accepted for it: [MonitorHttpErr.cert] is what it presented.
+  certUnconfirmed,
+
+  /// The agent's certificate is not the one accepted before:
+  /// [MonitorHttpErr.previousFingerprint] was pinned, [MonitorHttpErr.cert]
+  /// is presented.
+  certChanged,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {
-  const MonitorHttpErr({required super.type, super.message});
+  const MonitorHttpErr({
+    required super.type,
+    super.message,
+    this.cert,
+    this.previousFingerprint,
+  });
+
+  /// The certificate the agent presented, for [MonitorHttpErrType.certUnconfirmed]
+  /// and [MonitorHttpErrType.certChanged].
+  final CertInfo? cert;
+
+  /// The fingerprint that was pinned, for [MonitorHttpErrType.certChanged].
+  final String? previousFingerprint;
 
   @override
   String? get solution => switch (type) {
     MonitorHttpErrType.auth => l10n.authFailTip,
     MonitorHttpErrType.notGranted => l10n.monitorNoRemoteAccess,
-    MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOld,
+    MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOldTip,
     MonitorHttpErrType.clientTooOld => l10n.monitorClientTooOld,
+    MonitorHttpErrType.targetUnreachable => l10n.tcpTargetUnreachable,
+    MonitorHttpErrType.relayForbidden => l10n.monitorRelayForbidden,
+    MonitorHttpErrType.certUnconfirmed => l10n.virtErrCertUnconfirmed,
+    MonitorHttpErrType.certChanged => l10n.virtErrCertChanged,
     _ => null,
   };
 }
 
 enum ServerTcpErrType {
-  /// The agent will not relay a connection: its `stream` grant is off, or it
-  /// predates the endpoint. Decided before anything is dialled.
+  /// The agent will not relay a connection over this link (plaintext HTTP
+  /// without its `allow_insecure`). Decided before anything is dialled when
+  /// the agent's answer is known.
   relayNotGranted,
 
   /// The caller does not use this transport for what it is connecting — a
@@ -202,9 +287,30 @@ class ServerTcpErr extends Err<ServerTcpErrType> {
 
   @override
   String? get solution => switch (type) {
-    ServerTcpErrType.relayNotGranted => l10n.monitorNoRemoteAccess,
+    // Refused by the Monitor itself, which may have said why.
+    ServerTcpErrType.relayNotGranted =>
+      (cause is Err ? (cause as Err).solution : null) ??
+          l10n.monitorNoRemoteAccess,
     ServerTcpErrType.localUnsupported => l10n.localServerUnsupported,
-    _ => cause is Err ? (cause as Err).solution : null,
+    _ => switch (cause) {
+      final Err err => err.solution,
+      // RFC 4254 §5.1's reason codes.
+      SSHChannelOpenError(code: 1) => l10n.sshTcpForwardingProhibited,
+      SSHChannelOpenError(code: 2) => l10n.tcpTargetUnreachable,
+      _ => null,
+    },
+  };
+
+  /// Whether trying again soon may succeed: not when a server's settings
+  /// refused the connection. A target not listening yet may be starting.
+  bool get retryable => switch (type) {
+    ServerTcpErrType.relayNotGranted ||
+    ServerTcpErrType.notOffered ||
+    ServerTcpErrType.localUnsupported => false,
+    ServerTcpErrType.dial => switch (cause) {
+      SSHChannelOpenError(code: 1) => false,
+      _ => true,
+    },
   };
 
   @override
@@ -249,8 +355,8 @@ enum VirtErrType {
   /// reaches the PVE API.
   relayNotGranted,
 
-  /// The monitor agent does not run commands (`full_access` is off), and
-  /// nothing else reaches `virsh`.
+  /// The monitor agent refuses commands over this link, and nothing else
+  /// reaches `virsh`.
   execNotGranted,
 
   /// `virsh` is not installed.
@@ -325,7 +431,9 @@ class VirtErr extends Err<VirtErrType> {
 
   @override
   String? get solution => switch (type) {
-    VirtErrType.relayNotGranted ||
+    VirtErrType.relayNotGranted =>
+      (cause is Err ? (cause as Err).solution : null) ??
+          l10n.monitorNoRemoteAccess,
     VirtErrType.execNotGranted => l10n.monitorNoRemoteAccess,
     VirtErrType.unreachable => cause is Err ? (cause as Err).solution : null,
     _ => null,

@@ -12,22 +12,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
@@ -38,10 +39,12 @@ import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/full_screen.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
+import '../helpers/l10n.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -187,7 +190,7 @@ void main() {
     // draws a sentence where the chart goes, which is a different thing again.
     final now = DateTime.now().subtract(ago).millisecondsSinceEpoch;
     for (var i = 0; i < 8; i++) {
-      status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
+      status.history.add(StatusHistorySample(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50));
     }
     final notifier = container.read(serverProvider(id).notifier);
     notifier.updateStatus(status);
@@ -319,36 +322,54 @@ void main() {
     expect(find.byType(ServerPage, skipOffstage: false), findsOneWidget);
   });
 
-  testWidgets('and so does the full-screen pager, however wide it is', (
-    tester,
-  ) async {
-    // The pager draws one card at a time and no grid, so there is nothing for
-    // a card to grow out of and nowhere for the detail to be drawn. The tap
-    // asked the window's width instead of the layout, so in a wide window it
-    // selected the server and started the movement with nothing on screen to
-    // show either: the tap did nothing visible, and the selection it left
-    // behind opened that server the next time the list was the layout.
+  testWidgets('and so does full screen, however wide it is', (tester) async {
+    // Full screen draws no grid for a card to grow out of and nowhere for the
+    // detail to be drawn, so what a tap opens is a page.
     addServers();
-    Stores.setting.fullScreen.put(true);
     await pump(tester, size: const Size(1200, 700));
-    expect(find.byType(PageView), findsOneWidget);
-
-    await tester.tap(find.text('web'));
+    await tester.tap(find.byTooltip(l10n.fullScreen));
     await settle(tester);
+    expect(find.byType(ServerFullScreenOne), findsNothing);
 
     // Never connected, so what the tap offers is the editor, as a page.
+    await tester.tap(find.text('web'));
+    await settle(tester);
     expect(openId(tester), isNull);
     expect(find.byType(ServerEditPage), findsOneWidget);
 
-    // And one that has answered gets its own page, pushed the same way.
+    // One that has answered is shown alone, and its name opens its page.
     tester.state<NavigatorState>(find.byType(Navigator).first).pop();
     await settle(tester);
     await answer(tester);
     await tester.tap(find.text('web'));
     await settle(tester);
+    expect(find.byType(ServerFullScreenOne), findsOneWidget);
 
+    await tester.tap(find.text('web'));
+    await settle(tester);
     expect(openId(tester), isNull);
     expect(find.byType(ServerDetailPage), findsOneWidget);
+
+    // Escape leaves full screen.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(tester);
+    expect(find.byType(ServerFullScreenOne), findsNothing);
+    expect(find.byTooltip(l10n.fullScreen), findsOneWidget);
+  });
+
+  testWidgets('back leaves full screen rather than the page', (tester) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 700));
+    await tester.tap(find.byTooltip(l10n.fullScreen));
+    await settle(tester);
+    expect(find.byTooltip(l10n.fullScreen), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(find.byTooltip(l10n.fullScreen), findsOneWidget);
+    expect(find.byType(ServerPage), findsOneWidget);
   });
 
   testWidgets('escape is the same way back as the arrow', (tester) async {
@@ -688,7 +709,7 @@ void main() {
     // The card's line, not the strip's pill, which says the same thing.
     final lastSample = find.descendant(
       of: find.byType(ServerCardStale),
-      matching: find.textContaining(RegExp(r'^last sample')),
+      matching: find.textContaining(startOf(l10n.lastSampleFmt(l10nHole))),
     );
     expect(lastSample, findsOneWidget);
     expect(find.text(libL10n.refresh), findsNothing);
@@ -700,7 +721,9 @@ void main() {
         find.descendant(of: find.byType(AnimatedMasonry), matching: f);
     Finder inPage(Finder f) =>
         find.descendant(of: find.byType(ServerDetailPage), matching: f);
-    final said = find.textContaining(RegExp(r'^Everything below is from'));
+    final said = find.textContaining(
+      startOf(l10n.staleSinceFmt(l10nHole, l10nHole)),
+    );
 
     final grownIcon = tester.getRect(inCard(find.byIcon(Icons.schedule)));
     final grownSaid = tester.getRect(inCard(said));

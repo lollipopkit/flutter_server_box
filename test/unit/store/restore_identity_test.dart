@@ -8,9 +8,10 @@ import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Who a restored record *is*, and what a restore is allowed to overwrite.
 ///
@@ -80,6 +81,41 @@ void main() {
 
       expect(Stores.server.fetchOneRaw('srv-a')?.ssh?.ip, '10.0.0.1');
       expect(Stores.server.fetchOneRaw('srv-b')?.ssh?.ip, '10.0.0.2');
+    });
+
+    BackupV2 holding(List<Spi> servers) => BackupV2(
+      version: BackupV2.formatVer,
+      date: DateTime.now().millisecondsSinceEpoch,
+      spis: {for (final s in servers) s.id: encoded(s)},
+      snippets: const {},
+      keys: const {},
+      container: const {},
+      history: const {},
+      settings: const {},
+    );
+
+    test('two of the same name, one of them here: both are restored, as themselves', () async {
+      const a = Spi(id: 'srv-a', name: 'web', ssh: SshCredential(ip: '10.0.0.1'));
+      const b = Spi(id: 'srv-b', name: 'web', ssh: SshCredential(ip: '10.0.0.2'));
+      Stores.server.put(b);
+
+      // `a` matched by name onto `b`, which the backup also holds: both
+      // restored to one id, refused as a malformed backup.
+      await holding([a, b]).merge(force: true);
+      Stores.server.dropCache();
+      expect(Stores.server.fetchOneRaw('srv-a')?.ssh?.ip, '10.0.0.1');
+      expect(Stores.server.fetchOneRaw('srv-b')?.ssh?.ip, '10.0.0.2');
+    });
+
+    test("in a sync, another device's server of the same name is another server", () async {
+      const here = Spi(id: 'srv-here', name: 'web', ssh: SshCredential(ip: '10.0.0.1'));
+      const there = Spi(id: 'srv-there', name: 'web', ssh: SshCredential(ip: '10.0.0.2'));
+      Stores.server.put(here);
+
+      await holding([there]).merge();
+      Stores.server.dropCache();
+      expect(Stores.server.fetchOneRaw('srv-here')?.ssh?.ip, '10.0.0.1');
+      expect(Stores.server.fetchOneRaw('srv-there')?.ssh?.ip, '10.0.0.2');
     });
 
     test('an ambiguous name resolves to nothing rather than to one of them', () {
@@ -160,7 +196,7 @@ void main() {
         ssh: SshCredential(ip: '10.0.0.1', keyId: 'mykey'),
       );
 
-      final backup = Backup(
+      final backup = BackupV1(
         version: 1,
         date: '',
         spis: const [spi],
@@ -182,6 +218,35 @@ void main() {
       expect(restored, isNotNull, reason: 'the restore failed outright');
       expect(restored!.ssh?.keyId, Stores.key.fetchByName('mykey')?.id);
       expect(Stores.key.fetchOneRaw(restored.ssh!.keyId!), isNotNull);
+    });
+
+    test('leaves every restored server without PVE', () async {
+      const spi = Spi(id: 'srv-1', name: 'pve', ssh: SshCredential(ip: '10.0.0.1'));
+      Stores.server.put(spi);
+      Stores.pve.put(spi.id, const PveConfig(addr: 'https://h:8006'));
+      final record = json.decode(json.encode(spi.toJson())) as Map;
+      // What that build kept inside `custom`; not read any more.
+      record['custom'] = {'pveAddr': 'https://10.0.0.9:8006', 'pvePwd': 'p'};
+
+      final backup = BackupV1.fromJson(
+        json.decode(
+          json.encode({
+            'version': 1,
+            'date': '',
+            'spis': [record],
+            'snippets': [],
+            'keys': [],
+            'container': {},
+            'history': {},
+            'settings': null,
+            'lastModTime': DateTime.now().millisecondsSinceEpoch,
+          }),
+        ) as Map<String, dynamic>,
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.server.fetchOneRaw(spi.id)?.name, 'pve');
+      expect(Stores.pve.fetchAll(), isEmpty);
     });
   });
 

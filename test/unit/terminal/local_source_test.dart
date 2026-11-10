@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 
 /// What a saved terminal tab names, now that there can be several Linux
 /// systems installed at once.

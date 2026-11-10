@@ -1,1 +1,1 @@
-A server status & toolbox app using Flutter
+Server monitoring and management toolkit

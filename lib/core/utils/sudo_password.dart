@@ -1,6 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///
@@ -20,17 +23,8 @@ abstract final class SudoPassword {
   static String? typed(String serverId) => _typed[serverId];
 
   /// What to try before asking: the one typed this session, else the one
-  /// saved with the server; null when there is neither, or the saved one
-  /// could not be read (the secure store is rate-limited).
-  static Future<String?> known(String serverId) async {
-    if (_typed[serverId] case final typed?) return typed;
-    try {
-      return await readOverride(serverId);
-    } catch (e, s) {
-      Loggers.app.warning('Reading the saved sudo password', e, s);
-      return null;
-    }
-  }
+  /// saved with the server; null when there is neither.
+  static String? known(String serverId) => _typed[serverId] ?? saved(serverId);
 
   /// Keeps [password] for [serverId] for this session.
   static void remember(String serverId, String password) {
@@ -78,7 +72,7 @@ abstract final class SudoPassword {
   }) async {
     var result = await attempt(null);
     if (result == null || !rejected(result)) return result;
-    if (await known(serverId) case final pwd?) {
+    if (known(serverId) case final pwd?) {
       if (!context.mounted) return null;
       result = await attempt(pwd);
       if (result == null || !rejected(result)) return result;
@@ -92,34 +86,90 @@ abstract final class SudoPassword {
     return result;
   }
 
-  static SecureProp secureProp(String serverId) {
-    return SecureProp('sudo_pwd_$serverId');
+  /// [retry] for an [attempt] that throws [SudoRejected] rather than
+  /// answering a result that says so. Only [SudoRejected] moves on to the next
+  /// password; the last one is rethrown, and every other exception propagates
+  /// at once. Null when the user declined to type one.
+  static Future<T?> retryOnRejected<T extends Object>(
+    BuildContext context,
+    String serverId, {
+    required Future<T> Function(String? password) attempt,
+    String? label,
+  }) async {
+    final outcome = await retry<_Tried<T>>(
+      context,
+      serverId,
+      label: label,
+      attempt: (password) async {
+        try {
+          return _Tried.value(await attempt(password));
+        } on SudoRejected catch (e, s) {
+          return _Tried.rejected(e, s);
+        }
+      },
+      rejected: (tried) => tried.rejection != null,
+    );
+    return outcome?.unwrap();
   }
 
-  static Future<String?> readOverride(String serverId) async {
-    final value = await secureProp(serverId).read();
-    if (value == null || value.isEmpty) return null;
-    return value;
+  /// The one saved with [serverId] (the server editor's), if any.
+  static String? saved(String serverId) {
+    final value = Stores.sudoPassword.get<String>(serverId);
+    return value == null || value.isEmpty ? null : value;
   }
 
-  static Future<void> writeOverride(String serverId, String value) async {
+  /// Saves [value] with [serverId]; empty removes it.
+  static void save(String serverId, String value) {
     if (value.isEmpty) {
-      await clearOverride(serverId);
-      return;
+      unsave(serverId);
+    } else {
+      Stores.sudoPassword.set(serverId, value);
     }
-    await secureProp(serverId).write(value);
   }
 
-  static Future<void> clearOverride(String serverId) {
-    return secureProp(serverId).write(null);
+  static void unsave(String serverId) => Stores.sudoPassword.remove(serverId);
+
+  /// Moves the ones builds before kept in the keychain into the store, and
+  /// removes them there; once, or again at the next launch when the keychain
+  /// fails.
+  /// TODO: remove with [_adopted] once no install can still hold them.
+  static Future<void> adoptKeychain() => _adopting ??= _adopt();
+
+  static Future<void>? _adopting;
+
+  /// The servers whose one in the keychain could not be read: unknown, so
+  /// nothing stands in for it ([resolveForTerminal]).
+  static final _unread = <String>{};
+
+  static Future<void> _adopt() async {
+    if (_adopted.get()) return;
+    for (final id in Stores.server.fetch().map((e) => e.id)) {
+      final key = 'sudo_pwd_$id';
+      try {
+        final value = await SecureStore.storage.read(key: key);
+        if (value == null) continue;
+        if (saved(id) == null && value.isNotEmpty) {
+          SyncRecorder.adopt(Stores.sudoPassword, id, value);
+        }
+        await SecureStore.storage.delete(key: key);
+      } catch (e, s) {
+        _unread.add(id);
+        Loggers.app.warning('Move the sudo password of $id out of the keychain', e, s);
+      }
+    }
+    if (_unread.isEmpty) await _adopted.set(true);
   }
+
+  static const _adopted = PrefPropDefault('sudo_pwd_adopted', false, updateLastUpdateTsOnSetProp: false);
 
   /// The typed one, else the saved one, else the SSH login's. Throws when
   /// the saved one cannot be read: falling through would type the login's
   /// password where the saved one was meant.
   static Future<String?> resolveForTerminal(Spi spi) async {
     if (_typed[spi.id] case final typed?) return typed;
-    if (await readOverride(spi.id) case final saved?) return saved;
+    await _adopting;
+    if (saved(spi.id) case final saved?) return saved;
+    if (_unread.contains(spi.id)) throw StateError('The saved sudo password of ${spi.id} is unreadable');
 
     final pwd = spi.ssh?.pwd;
     if (pwd == null || pwd.isEmpty) return null;
@@ -150,5 +200,22 @@ abstract final class SudoPassword {
         .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n');
+  }
+}
+
+final class _Tried<T extends Object> {
+  const _Tried.value(T this.value) : rejection = null, stackTrace = null;
+  const _Tried.rejected(SudoRejected this.rejection, StackTrace this.stackTrace)
+    : value = null;
+
+  final T? value;
+  final SudoRejected? rejection;
+  final StackTrace? stackTrace;
+
+  T unwrap() {
+    if (rejection case final rejection?) {
+      Error.throwWithStackTrace(rejection, stackTrace!);
+    }
+    return value!;
   }
 }

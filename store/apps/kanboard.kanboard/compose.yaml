@@ -1,0 +1,57 @@
+# Kanboard 1.2.54 (MIT), https://github.com/kanboard/kanboard/tree/v1.2.54
+#
+# Adapted from the release's docker-compose.yml for ServerBox Monitor
+# (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release (upstream: kanboard:latest); bind mounts
+#   from the env file instead of named volumes; its own HTTPS (a self-signed
+#   certificate) not published: the agent's proxy is the window's HTTPS;
+# - seed-admin is a one-shot job that runs first: Kanboard's database starts
+#   with admin/admin, so before Kanboard answers anyone it sets the generated
+#   password with Kanboard's own CLI (user:reset-password, read from stdin),
+#   while admin still has the default one.
+
+services:
+  seed-admin:
+    image: kanboard/kanboard:${KANBOARD_VERSION}
+    environment:
+      ADMIN_PASSWORD: ${KANBOARD_PASSWORD}
+    volumes:
+      - ${KANBOARD_DATA}:/var/www/app/data
+    working_dir: /var/www/app
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        default=1
+        if [ -f data/db.sqlite ]; then
+          php -r '$$db = new PDO("sqlite:data/db.sqlite");
+            $$q = $$db->prepare("SELECT password FROM users WHERE username = ?");
+            $$q->execute(["admin"]);
+            $$h = $$q->fetchColumn();
+            exit($$h !== false && password_verify("admin", $$h) ? 0 : 1);' || default=0
+        fi
+        if [ "$$default" = 1 ]; then
+          printf '%s\n%s\n' "$$ADMIN_PASSWORD" "$$ADMIN_PASSWORD" | php cli user:reset-password admin | grep -q 'Password updated'
+        fi
+        chown -R nginx:nginx data
+    restart: "no"
+
+  kanboard:
+    image: kanboard/kanboard:${KANBOARD_VERSION}
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+    environment:
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${KANBOARD_DATA}:/var/www/app/data
+      - ${KANBOARD_PLUGINS}:/var/www/app/plugins
+    ports:
+      - '${KANBOARD_BIND}:${KANBOARD_PORT}:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthcheck.php"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

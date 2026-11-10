@@ -1,11 +1,11 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/data/model/virt/ffi_num.dart';
 import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
+import 'package:server_box/src/rust/api/virt_view.dart' as vv;
 
 part 'virt_resources.freezed.dart';
 
@@ -507,7 +507,7 @@ enum VirtExternalIssue {
 /// (`sbm_virt::resource::volume_resizable`).
 bool virtVolumeResizable(VirtStoragePool pool, VirtHostKind host) =>
     res.virtVolumeResizable(
-      poolJson: jsonEncode(VirtRust.poolJson(pool)),
+      pool: pool.ffi,
       pve: host == VirtHostKind.pve,
     );
 
@@ -550,17 +550,6 @@ String? virtSnapshotSupportIssue({
   return '${guest.name}$where';
 }
 
-/// Whether a disk on a storage of [content] kinds can be snapshotted on PVE.
-///
-/// PVE has no `snapshot` content kind: `content` lists what may be *stored*
-/// (`images`, `rootdir`, `iso`, ...), and snapshot support follows the
-/// storage's type and the disk's format instead — a `dir` storage holds raw
-/// files, an `lvmthin` or `zfspool` one makes a snapshot per volume. So this
-/// is a hint for the form, never a refusal: the host's own answer
-/// (`snapshotSupported`) is what decides.
-bool virtPveStorageMaySnapshot(String type) =>
-    type == 'lvmthin' || type == 'zfspool' || type == 'rbd' || type == 'btrfs';
-
 /// What one difference between a snapshot's configuration and the guest's
 /// current one is about, as the view groups it.
 enum VirtSnapDiffGroup {
@@ -598,4 +587,210 @@ abstract class VirtSnapDiff with _$VirtSnapDiff {
 
   /// The value is new since the snapshot.
   bool get added => before == null && after != null;
+}
+
+// --- FFI: `sbm_virt::resource`, and a guest's snapshots ---
+
+extension SnapshotsVirt on List<vv.Snapshot> {
+  List<VirtGuestSnapshot> get virt => [
+    for (final s in this)
+      VirtGuestSnapshot(
+        name: s.name,
+        parent: s.parent,
+        description: s.description,
+        createdAt: s.createdAt?.unixTime,
+        current: s.current,
+        withMemory: s.withMemory,
+        external: s.external_,
+        layers: [for (final l in s.layers) VirtSnapshotLayer(target: l.target, file: l.file, external: l.external_)],
+      ),
+  ];
+}
+
+extension SnapDiffsVirt on List<vv.Diff> {
+  List<VirtSnapDiff> get virt => [
+    for (final d in this)
+      VirtSnapDiff(
+        group: VirtSnapDiffGroup.values.byName(d.group.name),
+        key: d.key,
+        before: d.before,
+        after: d.after,
+      ),
+  ];
+}
+
+extension SnapChainVirt on vv.Chain {
+  VirtSnapChain get virt => VirtSnapChain(
+    pools: pools,
+    refusal: refusal,
+    externalRefusal: externalRefusal,
+    disks: [
+      for (final d in disks)
+        VirtSnapChainDisk(
+          target: d.target,
+          pool: d.pool,
+          error: d.error,
+          files: [
+            for (final f in d.files)
+              VirtSnapChainFile(
+                path: f.path,
+                format: f.format,
+                allocation: f.allocation?.toInt(),
+                backing: f.backing,
+                snap: f.snap,
+                active: f.active,
+              ),
+          ],
+        ),
+    ],
+  );
+}
+
+extension GuestRefVirt on vm.GuestRef {
+  VirtGuestRef get virt => VirtGuestRef(guestId: guestId, vmid: vmid, device: device, mac: mac, ip: ip);
+}
+
+extension VirtGuestRefFfi on VirtGuestRef {
+  vm.GuestRef get ffi => vm.GuestRef(guestId: guestId, vmid: vmid, device: device, mac: mac, ip: ip);
+}
+
+extension ResourcePoolVirt on vm.ResourcePool {
+  VirtStoragePool get virt => VirtStoragePool(
+    id: id,
+    name: name,
+    node: node,
+    type: poolType,
+    path: path,
+    source: source,
+    capacity: capacity?.toInt(),
+    used: used?.toInt(),
+    available: available?.toInt(),
+    active: active,
+    autostart: autostart,
+    enabled: enabled,
+    shared: shared,
+    content: content,
+    volumeCount: volumeCount?.toInt(),
+  );
+}
+
+extension ResourcePoolsVirt on List<vm.ResourcePool> {
+  List<VirtStoragePool> get virt => [for (final p in this) p.virt];
+}
+
+extension VirtStoragePoolFfi on VirtStoragePool {
+  /// As `sbm_virt::resource::Pool`.
+  vm.ResourcePool get ffi => vm.ResourcePool(
+    id: id,
+    name: name,
+    node: node,
+    poolType: type,
+    path: path,
+    source: source,
+    capacity: capacity?.big,
+    used: used?.big,
+    available: available?.big,
+    active: active,
+    autostart: autostart,
+    enabled: enabled,
+    shared: shared,
+    content: content,
+    volumeCount: volumeCount?.big,
+  );
+}
+
+extension VolumesVirt on List<vm.Volume> {
+  List<VirtVolume> get virt => [
+    for (final v in this)
+      VirtVolume(
+        id: v.id,
+        name: v.name,
+        path: v.path,
+        format: v.format,
+        content: v.content,
+        capacity: v.capacity?.toInt(),
+        allocation: v.allocation?.toInt(),
+        backing: v.backing,
+        createdAt: v.createdAt?.unixTime,
+        users: [for (final r in v.users) r.virt],
+        backs: v.backs,
+      ),
+  ];
+}
+
+extension VirtVolumeFfi on VirtVolume {
+  /// As `sbm_virt::resource::Volume`.
+  vm.Volume get ffi => vm.Volume(
+    id: id,
+    name: name,
+    path: path,
+    format: format,
+    content: content,
+    capacity: capacity?.big,
+    allocation: allocation?.big,
+    backing: backing,
+    createdAt: createdAt?.unixSeconds,
+    users: [for (final r in users) r.ffi],
+    backs: backs,
+  );
+}
+
+extension NetworksVirt on List<vm.Network> {
+  List<VirtNetwork> get virt => [
+    for (final n in this)
+      VirtNetwork(
+        id: n.id,
+        name: n.name,
+        node: n.node,
+        mode: n.mode,
+        bridge: n.bridge,
+        cidrs: n.cidrs,
+        gateway: n.gateway,
+        dhcpRanges: n.dhcpRanges,
+        ports: n.ports,
+        vlanAware: n.vlanAware,
+        vlanId: n.vlanId,
+        vlanDevice: n.vlanDevice,
+        bondMode: n.bondMode,
+        active: n.active,
+        autostart: n.autostart,
+        comment: n.comment,
+        hosts: [for (final h in n.hosts) VirtNetHost(mac: h.mac, ip: h.ip, name: h.name)],
+        xml: n.xml,
+        pendingRestart: n.pendingRestart,
+        managementEditable: n.managementEditable,
+        users: [for (final r in n.users) r.virt],
+      ),
+  ];
+}
+
+extension VirtNetHostFfi on VirtNetHost {
+  vm.NetHost get ffi => vm.NetHost(mac: mac, ip: ip, name: name);
+}
+
+extension VirtNetworkFfi on VirtNetwork {
+  /// As `sbm_virt::resource::Network`.
+  vm.Network get ffi => vm.Network(
+    id: id,
+    name: name,
+    node: node,
+    mode: mode,
+    bridge: bridge,
+    cidrs: cidrs,
+    gateway: gateway,
+    dhcpRanges: dhcpRanges,
+    ports: ports,
+    vlanAware: vlanAware,
+    vlanId: vlanId,
+    vlanDevice: vlanDevice,
+    bondMode: bondMode,
+    active: active,
+    autostart: autostart,
+    comment: comment,
+    hosts: [for (final h in hosts) h.ffi],
+    xml: xml,
+    pendingRestart: pendingRestart,
+    managementEditable: managementEditable,
+    users: [for (final r in users) r.ffi],
+  );
 }

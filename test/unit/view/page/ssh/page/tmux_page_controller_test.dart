@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
 import 'package:server_box/view/page/ssh/page/tmux_page_controller.dart';
 import 'package:test/test.dart';
 
@@ -12,10 +12,7 @@ void main() {
       final shell = _FakeShellSession();
       final client = TmuxControlClient(shell);
       final phases = <TmuxPageLifecyclePhase>[];
-      final controller = TmuxPageController(
-        onSnapshot: (_) {},
-        onPhaseChanged: phases.add,
-      );
+      final controller = TmuxPageController(onPhaseChanged: phases.add);
 
       controller.attach(client);
       expect(controller.phase, TmuxPageLifecyclePhase.attached);

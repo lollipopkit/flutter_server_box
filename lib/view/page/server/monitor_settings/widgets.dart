@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 
 /// What the settings form and the list pages it opens both draw.
 ///
@@ -79,6 +79,17 @@ abstract final class MonitorUi {
         ),
       ],
     );
+  }
+
+  /// Whether unsaved edits may be dropped, asked before a page with them is
+  /// left.
+  static Future<bool> confirmDiscard(BuildContext context) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(l10n.discardUnsaved),
+      actions: Btnx.cancelRedOk,
+    );
+    return ok == true;
   }
 
   /// The server editor's add button — an icon beside the label, rather than a

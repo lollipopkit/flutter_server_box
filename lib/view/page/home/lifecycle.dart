@@ -9,9 +9,6 @@ extension _HomePageLifecycle on _HomePageState {
   void _handleMobileLifecycle(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        // Before anything else, so the foreground service can be let go while
-        // the app is allowed to ask for it again.
-        TermSessionManager.setBackgrounded(false);
         _lastFullscreenMode = null;
         if (_shouldAuth) {
           final delay = Stores.setting.delayBioAuthLock.fetch();
@@ -32,6 +29,7 @@ extension _HomePageLifecycle on _HomePageState {
         }
         unawaited(_restartServerRefreshCycle());
         unawaited(MethodChans.updateHomeWidget());
+        unawaited(_androidSystem.onResumed());
         _syncFullscreenSystemUi();
         break;
       case AppLifecycleState.paused:
@@ -48,20 +46,8 @@ extension _HomePageLifecycle on _HomePageState {
           _stopServerRefreshCycle();
         }
         break;
-      case AppLifecycleState.inactive:
-        // Not in `paused`, which is too late. Android refuses to *start* a
-        // foreground service for an app that is already in the background, and
-        // `paused` is delivered from `onStop` — by then the activity is gone.
-        // `inactive` comes from `onPause`, while it is still visible, which is
-        // the last moment the request is allowed.
-        //
-        // The cost is that pulling down the notification shade also reads as
-        // leaving, so a device with nothing connected can show the keep-alive
-        // notification for as long as the shade is open. That is the same
-        // notification `bgRun` asks for anyway, and the alternative is a
-        // request the system turns down.
-        TermSessionManager.setBackgrounded(true);
-        break;
+      // Leaving and coming back are reported natively on Android: see
+      // `TermSessionManager.setBackgrounded`.
       default:
         break;
     }
@@ -109,13 +95,16 @@ extension _HomePageLifecycle on _HomePageState {
   }
 
   /// Takes in what the platform handed this app, if anything is waiting: a
-  /// `.sbxsrv`, then a `serverbox://` link.
+  /// `.sbxsrv`, then a `serverbox://` link, then what another app shared.
   ///
   /// One method for both because they share every constraint below — the
   /// lock screen, the launch ordering, the re-entry guard — and two copies
   /// would be two places for those to drift.
   Future<void> _consumePending() async {
-    if (_consumingPending) return;
+    if (_consumingPending) {
+      _consumeAgain = true;
+      return;
+    }
     // Before the launch path has decided whether there is a lock, [_authed] is
     // null and awaiting it waits for nothing — so a `resumed` edge arriving
     // first (a cold launch on macOS, where opening the file is what activates
@@ -125,11 +114,15 @@ extension _HomePageLifecycle on _HomePageState {
     // have made that call a no-op instead.
     if (_authed == null) return;
     _consumingPending = true;
+    // Taken from the native inbox, so lost unless opened: its copies are
+    // discarded on any way out that did not get that far.
+    Map<String, Object?>? incoming;
     try {
       final text = await MethodChans.takeOpenedShare();
       final link = await MethodChans.takeOpenedLink();
+      incoming = await MethodChans.takeIncoming();
       final hasText = text != null && text.isNotEmpty;
-      if ((!hasText && link == null) || !mounted) return;
+      if ((!hasText && link == null && incoming == null) || !mounted) return;
       // Behind the lock screen for the same reason the launch notices are: it
       // is a root-navigator dialog, and the lock page is on that navigator.
       //
@@ -143,11 +136,21 @@ extension _HomePageLifecycle on _HomePageState {
       if (hasText) {
         await ServerShareUi.consume(context, ref, text, digitsOnly: false);
       }
-      if (link != null && mounted) await AppLinkUi.open(context, ref, link);
+      if (link != null && mounted) await AppLinkRouter.open(context, ref, link);
+      if (incoming != null && mounted) {
+        final taken = incoming;
+        incoming = null;
+        await IncomingUi.open(context, ref, taken);
+      }
     } catch (e, s) {
       Loggers.app.warning('Consume what was opened', e, s);
     } finally {
+      if (incoming != null) IncomingUi.discard(incoming);
       _consumingPending = false;
+      if (_consumeAgain && mounted) {
+        _consumeAgain = false;
+        unawaited(_consumePending());
+      }
     }
   }
 
@@ -190,37 +193,9 @@ extension _HomePageLifecycle on _HomePageState {
     // this branch exists for. The future completes once the pop has.
     await LocalAuthPage.route.go(
       context,
-      args: LocalAuthPageArgs(
-        onAuthSuccess: () => _shouldAuth = false,
-        onUnavailable: _onAuthUnavailable,
-      ),
+      args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
     );
     if (showGuide) await _maybeShowNavGuide();
-  }
-
-  /// This device cannot answer the lock, so stop asking it.
-  ///
-  /// The setting is only ever true here because it arrived from somewhere else:
-  /// a backup taken on a phone, restored onto a machine with no sensor. The
-  /// lock screen has no way to open on such a machine, and the settings page
-  /// hides the switch when `LocalAuth.isAvail` is false — so the one control
-  /// that would turn it off is missing on exactly the devices that need it,
-  /// and the app was unusable (#1406).
-  ///
-  /// Written without a sync timestamp. This is a fact about *this* machine, and
-  /// stamping it would let the next sync carry it to the phone the backup came
-  /// from and silently unlock that too.
-  void _onAuthUnavailable() {
-    _shouldAuth = false;
-    final prop = Stores.setting.useBioAuth;
-    final saved = prop.store.set(prop.key, false, updateLastUpdateTsOnSet: false);
-    // `set` answers false rather than throwing. Worth a line and nothing more:
-    // the app is already past the lock either way, and the cost of a failed
-    // write is being asked once more on the next launch.
-    if (saved != true) {
-      Loggers.app.warning('Could not turn ${prop.key} off on a device '
-          'that cannot authenticate');
-    }
   }
 
   /// Let the native privacy cover come off, now that either the lock screen is
@@ -262,13 +237,12 @@ extension _HomePageLifecycle on _HomePageState {
   }
 
   bool get _isServerFullscreenMode {
-    if (!Stores.setting.fullScreen.fetch()) return false;
     if (_tabs.isEmpty) return false;
     final selectedIndex = _selectIndex.value;
     if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
-    return isLandscape && _tabs[selectedIndex] == AppTab.server;
+    return _tabs[selectedIndex] == AppTab.server &&
+        _serverFullScreen &&
+        !_settingsOpen;
   }
 
   void _syncFullscreenSystemUi({bool? forceHide}) {

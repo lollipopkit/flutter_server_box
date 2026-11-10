@@ -1,9 +1,14 @@
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/src/rust/api/exec_session.dart' show SudoEntry, sudoEntry;
 
 abstract final class PrivilegedExec {
   static const _passwordlessProbe = 'true';
-  static const _passwordlessEntry = 'sudo -n sh';
-  static const _passwordEntry = "sudo -S -p '' sh";
+
+  // The shell the script is fed to, in each of the ways into root
+  // (`sbm_parser::sudo`).
+  static final _direct = sudoEntry(entry: SudoEntry.direct, body: 'sh');
+  static final _withPassword = sudoEntry(entry: SudoEntry.sudoPassword, body: 'sh');
+  static final _passwordless = sudoEntry(entry: SudoEntry.sudoNoPassword, body: 'sh');
 
   /// Runs [script] as root without ever offering the script itself to sudo as
   /// a possible password.
@@ -19,20 +24,20 @@ abstract final class PrivilegedExec {
     required bool isRoot,
     String? password,
   }) async {
-    if (isRoot) return exec.run(script, entry: 'sh');
+    if (isRoot) return exec.run(script, entry: _direct);
     if (password != null) {
       return exec.runWithSudo(
         script,
         password: password,
-        entry: _passwordEntry,
+        entry: _withPassword,
       );
     }
 
     final probe = await exec.runWithSudo(
       _passwordlessProbe,
-      entry: _passwordlessEntry,
+      entry: _passwordless,
     );
     if (!probe.succeeded) return probe;
-    return exec.run(script, entry: _passwordlessEntry);
+    return exec.run(script, entry: _passwordless);
   }
 }

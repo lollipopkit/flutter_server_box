@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,56 +14,8 @@ import 'package:server_box/core/utils/logo_url.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-
-/// The address a server's mark is fetched from, or null if there is none.
-///
-/// Four marks ship with the app — the ones whose artwork carries a licence
-/// permitting it, see [Dist.markAsset] — and everything else is drawn from an
-/// address the user configured. This resolves that address; the shipped files
-/// are the fallback when there is none.
-///
-/// **A mark is not the logo.** The logo is the large image at the top of a
-/// server's own page and comes from `serverLogoUrl`; this is the small one
-/// beside its name in a list, and comes from `serverMarkUrl`. Two addresses
-/// because they want two pictures: artwork that reads at full width is a
-/// smudge at 20px, and an icon that works at 20px is lost on a detail page.
-///
-/// Null in three cases, all of which draw nothing: no address configured, an
-/// address that wants `{DIST}` for a machine whose distribution is not known,
-/// and one whose scheme is neither http nor https. The last is a guard rather
-/// than a nicety — the value is user-entered and reaches an image loader.
-String? distMarkUrl({required Dist? dist, required bool dark}) {
-  final configured = Stores.setting.serverMarkUrl.fetch();
-  if (configured.isEmpty) return null;
-
-  var url = resolveLogoUrl(configured);
-  if (url.contains(_distToken)) {
-    if (dist == null) return null;
-    url = url.replaceAll(_distToken, distFileName(dist));
-  }
-  url = url.replaceAll(_brightToken, dark ? 'dark' : 'light');
-  if (!isFetchableLogoUrl(url)) return null;
-  return url;
-}
-
-/// What `{DIST}` becomes for [dist] — its own case name unless the user has
-/// said otherwise.
-///
-/// The case name is the app's published contract and cannot change. But it
-/// only matches the file names of the collection it was written against, and
-/// the collection is now the user's choice: font-logos names Arch `archlinux`
-/// and RHEL `redhat`, so somebody pointing `{DIST}` at it needs those two
-/// renamed and the other sixty-odd left alone.
-///
-/// No table is shipped for this on purpose. There is no single right one — a
-/// mapping correct for one collection is wrong for the next — and a wrong
-/// entry would be worse than none, since it silently fetches the wrong logo
-/// rather than nothing. `Stores.setting.distNameMap` is where the exceptions
-/// go, edited by hand.
-String distFileName(Dist dist) =>
-    Stores.setting.distNameMap.fetch()[dist.name] ?? dist.name;
 
 /// Whether the address names an SVG, which needs a different loader.
 ///
@@ -72,9 +25,6 @@ bool _isSvgUrl(String url) {
   final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
   return path.endsWith('.svg');
 }
-
-const _distToken = '{DIST}';
-const _brightToken = '{BRIGHT}';
 
 /// The mark for a server, or **null** when marks are switched off.
 ///
@@ -88,6 +38,17 @@ Widget? distIcon(String serverId, {double size = 20}) =>
 /// [distIcon] for a caller that already knows the distribution.
 Widget? distIconOf(Dist? dist, {double size = 20}) =>
     Stores.setting.showDistMark.fetch() ? DistIconOf(dist, size: size) : null;
+
+/// [distIconOf] for a Linux system on this device.
+///
+/// By name, and no mark for anything unmatched: the two enums are separate
+/// lists that happen to overlap — one is what can be installed here, the
+/// other everything a server might report — and a system whose distribution
+/// has no mark simply gets no mark.
+Widget? linuxDistIcon(LinuxDistro distro, {double size = 20}) => distIconOf(
+  Dist.values.firstWhereOrNull((e) => e.name == distro.name),
+  size: size,
+);
 
 /// Which distribution a server runs, as the mark its own project publishes —
 /// fetched from wherever the person using this app pointed it.
@@ -116,11 +77,13 @@ class DistIcon extends ConsumerWidget {
     // Read off the map rather than `serverProvider(id)`, which throws for an
     // id it does not know — the known-hosts page lists ids of servers that may
     // since have been deleted.
-    final known = ref.watch(serversProvider).servers.containsKey(serverId);
+    // Selected, both: every icon in every list is rebuilt otherwise on every
+    // status poll of every server.
+    final known = ref.watch(serversProvider.select((s) => s.servers.containsKey(serverId)));
     // The live reading first: it is the newer of the two, and on a server
     // being polled right now it is what the cache is about to be set to.
     final live = known
-        ? ref.watch(serverProvider(serverId)).status.dist
+        ? ref.watch(serverProvider(serverId).select((s) => s.status.dist))
         : null;
 
     // Rebuilt when the cache changes, so a row drawn before the first poll

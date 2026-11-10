@@ -9,11 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/core/utils/app_auth.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
-import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -133,17 +133,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // key's own comment is inside the part that gets encrypted.
       _commentController.text =
           pki.comment ?? describeSshKey(pki.key).comment ?? '';
-      KeyPassphrases.read(pki.key).then((kept) {
-        // Not over what was typed while it was read, nor for a key no longer
-        // the one in the editor.
-        if (kept == null || !mounted) return;
-        if (_pwdController.text.isNotEmpty || _keyController.text != pki.key) {
-          return;
-        }
+      if (KeyPassphrases.read(pki.key) case final kept?) {
         _kept = kept;
         _pwdController.text = kept;
         _pwdShown.value = false;
-      });
+      }
       // The kept one is for these bytes: another key needs its own. One the
       // user has typed over is theirs, and stays.
       _keyController.addListener(() {
@@ -468,13 +462,13 @@ extension _Actions on _PrivateKeyEditPageState {
       }
       final originPki = this.pki;
       if (originPki != null) {
-        await _notifier.update(originPki, pki);
+        _notifier.update(originPki, pki);
       } else {
-        await _notifier.add(pki);
+        _notifier.add(pki);
       }
       // Only for a key that was stored.
       if (pwd.isNotEmpty && opened != key) {
-        unawaited(KeyPassphrases.write(key, pwd));
+        KeyPassphrases.write(key, pwd);
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema, so this is where a collision is

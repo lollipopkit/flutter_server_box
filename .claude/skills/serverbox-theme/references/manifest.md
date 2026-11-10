@@ -71,7 +71,7 @@ Where a role name is accepted as a color (components, `icons.colors`,
 | `colors` | key → ARGB or role name; only keys that `images` carries (schema 2) |
 
 Keys: `tab.<t>` and `tab.<t>.selected` for `server ssh file snippet agent
-benchmark remoteDesktop virt`; `nav.more nav.settings nav.tune nav.privacy
+benchmark remoteDesktop virt workspace monitor`; `nav.more nav.settings nav.tune nav.privacy
 nav.agent nav.tabs nav.server nav.sort nav.terminal nav.folder nav.cloud
 nav.snippet nav.inbox nav.key nav.info nav.download nav.desktop`; Files
 window `file.dir file.link file.default` and `file.<ext>` (`file.py`,
@@ -225,7 +225,7 @@ theme, uploads it to the repository's `themes` pre-release and appends the
 entry. List every version still offered: each app installs the newest one its
 schema range can read. Never change the bytes behind a recorded version; publish a new
 version instead. To appear in the app's store, open a pull request adding
-`[[repo]] url = "…"` to `assets/catalog/repos.toml` in flutter_server_box.
+`[[repo]] url = "…"` to `assets/catalog/repos.toml` in the ServerBox repository.
 Limits: tree ≤ 16 MiB compressed, 64 MiB unpacked, 8 MiB per file.
 
 ## Icon packs

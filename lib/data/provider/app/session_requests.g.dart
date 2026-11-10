@@ -328,6 +328,72 @@ abstract class _$ImmersiveTab extends $Notifier<AppTab?> {
   }
 }
 
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
+
+@ProviderFor(ServerFullScreen)
+final serverFullScreenProvider = ServerFullScreenProvider._();
+
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
+final class ServerFullScreenProvider
+    extends $NotifierProvider<ServerFullScreen, bool> {
+  /// Whether the server tab is in full screen, by its button or by a phone
+  /// turned to landscape: the status bar, the navigation and the tab's insets
+  /// follow it.
+  ServerFullScreenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serverFullScreenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverFullScreenHash();
+
+  @$internal
+  @override
+  ServerFullScreen create() => ServerFullScreen();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$serverFullScreenHash() => r'6c4da2ea2892dc06ef054823678b442926880a9b';
+
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
+
+abstract class _$ServerFullScreen extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// A server waiting to be opened on the server tab.
 ///
 /// A request rather than a call for two reasons. The tab may not exist yet —

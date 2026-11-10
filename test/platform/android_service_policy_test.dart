@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/ssh/android_service_policy.dart';
+import 'package:server_box/data/terminal/android_service_policy.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +78,28 @@ void main() {
         backgrounded: true,
       ),
       AndroidSessionServiceAction.none,
+    );
+  });
+
+  test('Stop All lets an idle service go even in the background', () {
+    expect(
+      decideAndroidSessionServiceAction(
+        wanted: false,
+        running: true,
+        backgrounded: true,
+        stoodDown: true,
+      ),
+      AndroidSessionServiceAction.stop,
+    );
+    // A transfer still running keeps it, stand-down or not.
+    expect(
+      decideAndroidSessionServiceAction(
+        wanted: true,
+        running: true,
+        backgrounded: true,
+        stoodDown: true,
+      ),
+      AndroidSessionServiceAction.update,
     );
   });
 

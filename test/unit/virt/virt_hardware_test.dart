@@ -3,13 +3,11 @@
 /// and what each issue says.
 library;
 
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' as fm;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -77,40 +75,36 @@ void main() {
 
   test('a change crosses with what it names by id', () {
     const iso = VirtVolume(id: 'a.iso', name: 'a.iso');
-    expect(VirtRust.hwChangeJson(const VirtHwAddDisk(storage: pool, gib: 4)), {
-      'op': 'add_disk',
-      'pool': 'images',
-      'gib': 4,
-      'mount_point': null,
-    });
-    expect(VirtRust.hwChangeJson(const VirtHwSetMedia(key: 'hdc', media: (pool: pool, volume: iso))), {
-      'op': 'set_media',
-      'key': 'hdc',
-      'media': {'pool': 'images', 'volume': 'a.iso'},
-    });
     expect(
-      VirtRust.hwChangeJson(
-        const VirtHwAddDevice(
-          kind: VirtHwDeviceKind.usb,
-          host: VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1, usbDevice: 4),
-          usbNaming: VirtUsbNaming.address,
-        ),
-      ),
-      containsPair('usb_naming', 'address'),
+      const VirtHwAddDisk(storage: pool, gib: 4).ffi,
+      fm.HwChange.addDisk(pool: 'images', gib: BigInt.from(4)),
     );
-    expect(VirtRust.hwChangeJson(const VirtHwSetCpu(sockets: 1, cores: 2, type: 'host'))['type'], 'host');
+    expect(
+      const VirtHwSetMedia(key: 'hdc', media: (pool: pool, volume: iso)).ffi,
+      const fm.HwChange.setMedia(key: 'hdc', media: fm.VolumeRef(pool: 'images', volume: 'a.iso')),
+    );
+    expect(
+      const VirtHwAddDevice(
+        kind: VirtHwDeviceKind.usb,
+        host: VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1, usbDevice: 4),
+        usbNaming: VirtUsbNaming.address,
+      ).ffi,
+      isA<fm.HwChange_AddDevice>().having((c) => c.usbNaming, 'usbNaming', fm.UsbNaming.address),
+    );
+    expect(
+      const VirtHwSetCpu(sockets: 1, cores: 2, type: 'host').ffi,
+      isA<fm.HwChange_SetCpu>().having((c) => c.cpuType, 'cpuType', 'host'),
+    );
   });
 
   test('a read crosses back as it went', () {
-    final again = VirtRust.hardware(jsonDecode(jsonEncode(VirtRust.hardwareJson(vm))));
-    expect(again, vm);
+    expect(vm.ffi.virt, vm);
   });
 
   test('an issue sbm_virt names maps back; each one is said', () {
-    expect(VirtHwIssue.ofRust('disk_shrink'), VirtHwIssue.diskShrink);
-    expect(VirtHwIssue.ofRust('not_offered'), VirtHwIssue.notOffered);
-    expect(VirtHwIssue.ofRust('what'), VirtHwIssue.unsupported);
-    expect(VirtHwIssue.ofRust(null), isNull);
+    expect(VirtHwIssue.of(fm.HwIssue.diskShrink), VirtHwIssue.diskShrink);
+    expect(VirtHwIssue.of(fm.HwIssue.notOffered), VirtHwIssue.notOffered);
+    expect(VirtHwIssue.of(null), isNull);
     for (final i in VirtHwIssue.values) {
       expect(virtHwIssueText(i), isNotEmpty, reason: i.name);
     }

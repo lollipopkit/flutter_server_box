@@ -6,8 +6,6 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `manager`, `unit`
-
 /// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
 String serviceDetectScript() =>
     RustLib.instance.api.crateApiServiceServiceDetectScript();
@@ -17,65 +15,71 @@ ServiceProbe serviceParseProbe({required String raw}) =>
 
 /// The commands one listing of `manager` is read from. They are independent
 /// of each other: run them at once.
-List<ServiceCommand> serviceListingCommands({required String managerName}) =>
-    RustLib.instance.api.crateApiServiceServiceListingCommands(
-      managerName: managerName,
-    );
-
-/// The listing those commands' outputs make → `ServiceListing` JSON. `Err`
-/// is a listing that could not be read at all, in the machine's words.
-Future<String> serviceParseListingJson({
-  required String managerName,
-  required List<ServiceCommandOutput> outputs,
-}) => RustLib.instance.api.crateApiServiceServiceParseListingJson(
-  managerName: managerName,
-  outputs: outputs,
+List<ServiceCommand> serviceListingCommands({
+  required ServiceManagerType manager,
+}) => RustLib.instance.api.crateApiServiceServiceListingCommands(
+  manager: manager,
 );
 
-/// The command for `action` (`start`, `stop`, `restart`, `enable`,
-/// `disable`) on the unit, without `sudo`: whether it needs root is
-/// [`service_needs_root`].
+/// The listing those commands' outputs make, its times moved from the
+/// machine's clock onto this device's: by the difference between
+/// `now_millis` (this device's clock as the answers arrived) and the
+/// listing's `sampled_at_millis`, which is then `None`. `sbm_parser` leaves
+/// the shift to its caller, whose clock it is. `Err` is a listing that could
+/// not be read at all, in the machine's words.
+Future<ServiceListing> serviceParseListing({
+  required ServiceManagerType manager,
+  required List<ServiceCommandOutput> outputs,
+  required PlatformInt64 nowMillis,
+}) => RustLib.instance.api.crateApiServiceServiceParseListing(
+  manager: manager,
+  outputs: outputs,
+  nowMillis: nowMillis,
+);
+
+/// The command for `action` on the unit, without `sudo`: whether it needs
+/// root is [`service_needs_root`].
 String serviceCommand({
-  required String managerName,
-  required String unitJson,
-  required String action,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
+  required ServiceAction action,
 }) => RustLib.instance.api.crateApiServiceServiceCommand(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
   action: action,
 );
 
 /// A systemd user unit is the one that must not: `sudo systemctl --user`
 /// talks to root's user manager, not this account's.
 bool serviceNeedsRoot({
-  required String managerName,
-  required String unitJson,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
 }) => RustLib.instance.api.crateApiServiceServiceNeedsRoot(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
 );
 
 /// The unit's last `lines` of log; `None` where the manager keeps none by
-/// unit. Read by [`service_parse_recent_log_json`].
+/// unit. Read by [`service_parse_recent_log`].
 String? serviceRecentLogCommand({
-  required String managerName,
-  required String unitJson,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
   required int lines,
 }) => RustLib.instance.api.crateApiServiceServiceRecentLogCommand(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
   lines: lines,
 );
 
-/// What [`service_recent_log_command`] printed → `ServiceLog` JSON, or
-/// `None` where the machine has no log to ask for by unit.
-String? serviceParseRecentLogJson({
-  required String managerName,
+/// What [`service_recent_log_command`] printed, or `None` where the machine
+/// has no log to ask for by unit.
+ServiceLog? serviceParseRecentLog({
+  required ServiceManagerType manager,
   required String stdout,
   required String stderr,
   required bool succeeded,
-}) => RustLib.instance.api.crateApiServiceServiceParseRecentLogJson(
-  managerName: managerName,
+}) => RustLib.instance.api.crateApiServiceServiceParseRecentLog(
+  manager: manager,
   stdout: stdout,
   stderr: stderr,
   succeeded: succeeded,
@@ -83,29 +87,29 @@ String? serviceParseRecentLogJson({
 
 /// The whole log, for a terminal; `None` with no such log.
 String? serviceLogCommand({
-  required String managerName,
-  required String unitJson,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
 }) => RustLib.instance.api.crateApiServiceServiceLogCommand(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
 );
 
 /// What prints the unit's definition, for a terminal.
 String serviceDefinitionCommand({
-  required String managerName,
-  required String unitJson,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
 }) => RustLib.instance.api.crateApiServiceServiceDefinitionCommand(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
 );
 
 /// What the manager itself says about the unit, for a terminal.
 String serviceUnitStatusCommand({
-  required String managerName,
-  required String unitJson,
+  required ServiceManagerType manager,
+  required ServiceUnit unit,
 }) => RustLib.instance.api.crateApiServiceServiceUnitStatusCommand(
-  managerName: managerName,
-  unitJson: unitJson,
+  manager: manager,
+  unit: unit,
 );
 
 /// `command` as typed into a terminal: `sudo` in front where it needs root
@@ -120,15 +124,25 @@ String serviceTerminalCommand({
   isRoot: isRoot,
 );
 
-/// What may be done to a unit in `state` (`running`, `stopped`, ...) with
-/// startup registration `enabled`: the rule every listing's `actions` is.
-List<String> serviceActions({required String state, bool? enabled}) => RustLib
-    .instance
-    .api
-    .crateApiServiceServiceActions(state: state, enabled: enabled);
+/// What may be done to a unit in `state` with startup registration
+/// `enabled`: the rule every listing's `actions` is.
+List<ServiceAction> serviceActions({
+  required ServiceState state,
+  bool? enabled,
+}) => RustLib.instance.api.crateApiServiceServiceActions(
+  state: state,
+  enabled: enabled,
+);
+
+/// Whether a unit in `state` is listed first: the rule every listing's
+/// `needs_attention` is.
+bool serviceNeedsAttention({required ServiceState state}) =>
+    RustLib.instance.api.crateApiServiceServiceNeedsAttention(state: state);
+
+enum ServiceAction { start, stop, restart, enable, disable }
 
 /// One command a listing is read from, by the name its output goes back
-/// under ([`service_parse_listing_json`]). `None`: none for this manager.
+/// under ([`service_parse_listing`]). `None`: none for this manager.
 class ServiceCommand {
   final String name;
   final String? command;
@@ -177,10 +191,81 @@ class ServiceCommandOutput {
           succeeded == other.succeeded;
 }
 
+class ServiceListing {
+  final List<ServiceUnit> units;
+  final ServiceListingNotice? notice;
+  final String? detail;
+  final PlatformInt64? sampledAtMillis;
+
+  const ServiceListing({
+    required this.units,
+    this.notice,
+    this.detail,
+    this.sampledAtMillis,
+  });
+
+  @override
+  int get hashCode =>
+      units.hashCode ^
+      notice.hashCode ^
+      detail.hashCode ^
+      sampledAtMillis.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ServiceListing &&
+          runtimeType == other.runtimeType &&
+          units == other.units &&
+          notice == other.notice &&
+          detail == other.detail &&
+          sampledAtMillis == other.sampledAtMillis;
+}
+
+enum ServiceListingNotice { userScopeUnavailable, detailsUnavailable }
+
+class ServiceLog {
+  final List<ServiceLogLine> lines;
+  final bool unreadable;
+
+  const ServiceLog({required this.lines, required this.unreadable});
+
+  @override
+  int get hashCode => lines.hashCode ^ unreadable.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ServiceLog &&
+          runtimeType == other.runtimeType &&
+          lines == other.lines &&
+          unreadable == other.unreadable;
+}
+
+class ServiceLogLine {
+  final String? time;
+  final String text;
+
+  const ServiceLogLine({this.time, required this.text});
+
+  @override
+  int get hashCode => time.hashCode ^ text.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ServiceLogLine &&
+          runtimeType == other.runtimeType &&
+          time == other.time &&
+          text == other.text;
+}
+
+enum ServiceManagerType { systemd, procd, openrc }
+
 /// Which manager the machine runs, from [`service_detect_script`]'s output.
 class ServiceProbe {
-  /// `systemd`, `procd` or `openrc`; `None` for one this build cannot list.
-  final String? manager;
+  /// `None` for one this build cannot list.
+  final ServiceManagerType? manager;
 
   /// What the machine called it, with its OS: `systemd (Debian GNU/Linux)`.
   final String description;
@@ -198,3 +283,88 @@ class ServiceProbe {
           manager == other.manager &&
           description == other.description;
 }
+
+enum ServiceScope { system, user }
+
+enum ServiceState { running, stopped, failed, starting, stopping, unknown }
+
+class ServiceUnit {
+  final String name;
+  final String fullName;
+  final ServiceUnitType unitType;
+  final ServiceScope scope;
+  final ServiceState state;
+  final String? description;
+  final bool? enabled;
+  final String? unitFileState;
+  final String? subState;
+  final String? result;
+  final int? exitStatus;
+  final PlatformInt64? memoryBytes;
+  final PlatformInt64? sinceMillis;
+  final PlatformInt64? nextElapseMillis;
+  final List<ServiceAction> actions;
+  final bool needsAttention;
+
+  const ServiceUnit({
+    required this.name,
+    required this.fullName,
+    required this.unitType,
+    required this.scope,
+    required this.state,
+    this.description,
+    this.enabled,
+    this.unitFileState,
+    this.subState,
+    this.result,
+    this.exitStatus,
+    this.memoryBytes,
+    this.sinceMillis,
+    this.nextElapseMillis,
+    required this.actions,
+    required this.needsAttention,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      fullName.hashCode ^
+      unitType.hashCode ^
+      scope.hashCode ^
+      state.hashCode ^
+      description.hashCode ^
+      enabled.hashCode ^
+      unitFileState.hashCode ^
+      subState.hashCode ^
+      result.hashCode ^
+      exitStatus.hashCode ^
+      memoryBytes.hashCode ^
+      sinceMillis.hashCode ^
+      nextElapseMillis.hashCode ^
+      actions.hashCode ^
+      needsAttention.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ServiceUnit &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          fullName == other.fullName &&
+          unitType == other.unitType &&
+          scope == other.scope &&
+          state == other.state &&
+          description == other.description &&
+          enabled == other.enabled &&
+          unitFileState == other.unitFileState &&
+          subState == other.subState &&
+          result == other.result &&
+          exitStatus == other.exitStatus &&
+          memoryBytes == other.memoryBytes &&
+          sinceMillis == other.sinceMillis &&
+          nextElapseMillis == other.nextElapseMillis &&
+          actions == other.actions &&
+          needsAttention == other.needsAttention;
+}
+
+enum ServiceUnitType { service, socket, mount, timer }

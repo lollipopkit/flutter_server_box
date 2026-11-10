@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync/key.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/sync_key.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -30,43 +34,41 @@ void main() {
   });
 
   tearDown(() async {
+    SyncKey.resetForTest();
     await getIt.reset();
     await SqliteDb.close();
   });
 
-  test('remote backup writes require a non-empty password', () async {
-    final path = tempDir.path.joinPath('missing-password.json');
-
-    await expectLater(
-      bakSync.writeEncryptedBackup(name: 'missing-password.json'),
-      throwsA(isA<RemoteBackupPasswordMissing>()),
-    );
-
-    expect(File(path).existsSync(), isFalse);
-  });
-
-  test('every new remote backup write is encrypted', () async {
+  test('the synced backup is sealed to the key; an export to the password, as age -d opens it', () async {
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
+    final key = await SyncKey.of(MemoryKeyFile());
 
-    final path = await bakSync.writeEncryptedBackup(name: 'encrypted.json');
-    final content = await File(path).readAsString();
+    final synced = await File(await BackupV2.backup(null, null, key: key)).readAsBytes();
+    expect(SyncKey.sealedToKey(synced), isTrue);
+    await expectLater(BackupV2.unlock(synced, 'remote-password'), throwsA(isA<Object>()));
+    expect(BackupV2.fromPlainBytes(await key.open(synced)).version, BackupV2.formatVer);
 
-    expect(Cryptor.isEncrypted(content), isTrue);
+    final export = await BackupV2.backup(null, 'remote-password');
+    expect(export, endsWith(Miscs.exportBakFileName));
+    final content = await File(export).readAsString();
+    // Armored age, as `age -p -a` writes it.
+    expect(content, startsWith(AgeCryptor.armorHeader));
+    expect(SyncKey.sealedToKey(utf8.encode(content)), isFalse);
     expect(
-      BackupV2.fromJsonString(content, 'remote-password').version,
+      (await BackupV2.open(utf8.encode(content), 'remote-password')).version,
       BackupV2.formatVer,
     );
   });
 
-  test('a legacy plaintext remote backup remains readable', () async {
+  test('a v4 remote, sealed with the password, and a plaintext one are read to be inherited', () async {
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
     await PrefProps.syncAppSettings.set(true);
     addTearDown(() => PrefProps.syncAppSettings.set(false));
-    final plaintext = BackupV2(
+    final backup = BackupV2(
       version: BackupV2.formatVer,
       date: 123,
       spis: const {},
@@ -75,30 +77,16 @@ void main() {
       container: const {},
       history: const {},
       settings: const {'timeOut': 17},
-    ).toJsonString();
-    final legacyFile = File(tempDir.path.joinPath('legacy-plaintext.json'));
-    await legacyFile.writeAsString(plaintext);
-
-    final restored = await bakSync.fromFile(legacyFile.path);
-
-    expect(restored, isA<BackupV2>());
-    final legacyBackup = restored as BackupV2;
-    expect(legacyBackup.date, 123);
-    expect(legacyBackup.settings['timeOut'], 17);
-    await legacyBackup.merge(force: true);
-
-    final replacementPath = await bakSync.writeEncryptedBackup(
-      name: 'replacement.json',
     );
-    final replacement = await File(replacementPath).readAsString();
-    expect(Cryptor.isEncrypted(replacement), isTrue);
-    expect(
-      BackupV2.fromJsonString(
-        replacement,
-        'remote-password',
-      ).settings['timeOut'],
-      17,
-      reason: 'the encrypted replacement must retain the restored data',
-    );
+    final plainFile = File(tempDir.path.joinPath('legacy-plaintext.json'));
+    await plainFile.writeAsString(backup.toJsonString());
+    final v4 = File(tempDir.path.joinPath('v4.age'));
+    await v4.writeAsString(await AgeCryptor.encrypt(gzip.encode(utf8.encode(backup.toJsonString())), 'remote-password'));
+
+    for (final file in [plainFile, v4]) {
+      final restored = await bakSync.fromFile(file.path);
+      expect(restored, isA<BackupV2>(), reason: file.path);
+      expect((restored as BackupV2).settings['timeOut'], 17, reason: file.path);
+    }
   });
 }

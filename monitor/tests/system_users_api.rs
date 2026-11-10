@@ -18,32 +18,8 @@ use common::machine::{audit, call, server};
 
 const PATH: &str = "/api/v1/system-users";
 
-async fn act(srv: &TestServer, user: &str, body: Value) -> (u16, Value) {
-    call(srv, Some(user), Method::POST, PATH, Some(body)).await
-}
-
-#[ntex::test]
-async fn both_halves_need_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, PATH, None).await;
-    assert_eq!(status, 401);
-
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, PATH, None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) = act(
-        &srv,
-        "viewer",
-        json!({"action": "create", "draft": {"name": "svc", "password": "hunter2"}, "password": "sudo-secret"}),
-    )
-    .await;
-    assert_eq!(status, 403);
-
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 2, "{rows:?}");
-    assert!(rows.iter().all(|(action, _, subject, _)| action == "denied" && subject.as_deref() == Some("viewer")));
-    // The action and the account, and neither password.
-    let detail = rows[1].3.as_deref().unwrap();
-    assert_eq!(detail, "system-users create svc: shell not_granted");
+async fn act(srv: &TestServer, body: Value) -> (u16, Value) {
+    call(srv, true, Method::POST, PATH, Some(body)).await
 }
 
 /// A listing on Linux, and a reason everywhere else. A read is not audited, so
@@ -51,7 +27,7 @@ async fn both_halves_need_the_shell_grant() {
 #[ntex::test]
 async fn the_read_lists_the_machine_or_says_why_not() {
     let (srv, db) = server().await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (status, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["part"], "list");
     assert!(body["users"].is_array(), "{body}");
@@ -74,12 +50,12 @@ async fn the_read_lists_the_machine_or_says_why_not() {
 #[ntex::test]
 async fn a_detail_needs_an_account_and_names_one_it_cannot_find() {
     let (srv, _) = server().await;
-    let (status, _) = call(&srv, Some("admin"), Method::GET, &format!("{PATH}?part=detail"), None).await;
+    let (status, _) = call(&srv, true, Method::GET, &format!("{PATH}?part=detail"), None).await;
     assert_eq!(status, 400);
 
     let (status, body) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::GET,
         &format!("{PATH}?part=detail&name=sbm-no-such-account"),
         None,
@@ -112,7 +88,7 @@ async fn a_write_the_endpoint_will_not_build_is_refused_and_recorded() {
         (json!({"action": "delete", "kind": "group", "name": "sbm-no-such-group"}), 404, "noSuchGroup"),
     ];
     for (body, status, code) in cases {
-        let (got_status, got) = act(&srv, "admin", body).await;
+        let (got_status, got) = act(&srv, body).await;
         if system_type() != SystemType::Linux {
             assert_eq!((got_status, got["error"].as_str()), (400, Some("unsupportedPlatform")), "{got}");
             continue;

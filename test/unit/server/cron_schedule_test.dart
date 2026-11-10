@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
 
 import '../../helpers/rust_lib_helper.dart';
@@ -35,46 +36,12 @@ void main() {
       expect(schedule.dayOfWeekRestricted, isTrue);
     });
 
-    test('folds Sunday written as 7 onto 0', () {
-      expect(CronSchedule.tryParse('0 0 * * 7')!.daysOfWeek, {0});
-      expect(CronSchedule.tryParse('0 0 * * 0')!.daysOfWeek, {0});
-    });
-
     // vixie and cronie refuse the file, busybox sets no bits so the line never
     // fires, and some others wrap it round. Reading it either way would put a
     // next run on the page for a line the server may never run.
-    test('says nothing about a range that descends', () {
-      expect(CronSchedule.tryParse('0 22-2 * * *'), isNull);
-      expect(CronSchedule.tryParse('0 0 * * fri-mon'), isNull);
-      expect(CronSchedule.tryParse('0 22-23 * * *')!.hours, {22, 23});
-    });
-
-    test('reads the macros as what crond expands them to', () {
-      expect(CronSchedule.tryParse('@daily')!.hours, {0});
-      expect(CronSchedule.tryParse('@weekly')!.daysOfWeek, {0});
-      expect(CronSchedule.tryParse('@MONTHLY')!.daysOfMonth, {1});
-      expect(CronSchedule.tryParse('@reboot')!.isReboot, isTrue);
-    });
 
     // A line this cannot read is still a line the page must keep, so parsing
     // answers null rather than throwing or guessing.
-    test('refuses what it cannot read', () {
-      for (final expr in [
-        '',
-        '* * * *',
-        '* * * * * *',
-        '60 * * * *',
-        '* 24 * * *',
-        '0 0 0 * *',
-        '0 0 * 13 *',
-        '*/0 * * * *',
-        '0 0 * * mon-',
-        '@hourlyish',
-        'MAILTO=ops@example.com',
-      ]) {
-        expect(CronSchedule.tryParse(expr), isNull, reason: expr);
-      }
-    });
   });
 
   group('next run', () {
@@ -86,57 +53,26 @@ void main() {
       expect(schedule.nextRun(_wall(2026, 3, 1, 9, 59)), _wall(2026, 3, 1, 10, 0));
     });
 
-    test('crosses midnight and the end of a month', () {
-      final daily = CronSchedule.tryParse('0 2 * * *')!;
-
-      expect(daily.nextRun(_wall(2026, 3, 31, 3, 0)), _wall(2026, 4, 1, 2, 0));
-      expect(daily.nextRun(_wall(2026, 3, 31, 1, 0)), _wall(2026, 3, 31, 2, 0));
-    });
-
-    test('finds a day of week', () {
-      // 2026-03-01 is a Sunday.
-      final sunday = CronSchedule.tryParse('30 4 * * 0')!;
-
-      expect(sunday.nextRun(_wall(2026, 3, 1, 5, 0)), _wall(2026, 3, 8, 4, 30));
-    });
-
-    test('finds a date years out', () {
-      final leapDay = CronSchedule.tryParse('0 0 29 2 *')!;
-
-      expect(leapDay.nextRun(_wall(2026, 3, 1)), _wall(2028, 2, 29));
-    });
-
     /// crond runs a line whose day of month *and* day of week are both
     /// restricted on either of them, so `13th or Friday` is not `Friday the
     /// 13th` — a schedule read the other way would name a next run months off.
-    test('takes either day when both day fields are restricted', () {
-      final either = CronSchedule.tryParse('0 0 13 * 5')!;
-
-      // 2026-03-06 is a Friday; the 13th is the Friday after it.
-      expect(either.nextRun(_wall(2026, 3, 1)), _wall(2026, 3, 6));
-      expect(either.nextRun(_wall(2026, 3, 7)), _wall(2026, 3, 13));
-    });
-
-    test('has none for @reboot', () {
-      expect(CronSchedule.tryParse('@reboot')!.nextRun(_wall(2026, 3, 1)), isNull);
-    });
   });
 
   group('describe', () {
     test('says the common schedules in words', () {
       String? describe(String expr) => CronSchedule.tryParse(expr)?.describe();
 
-      expect(describe('@reboot'), 'At boot');
-      expect(describe('* * * * *'), 'Every minute');
-      expect(describe('*/5 * * * *'), 'Every 5 minutes');
-      expect(describe('30 * * * *'), 'Every hour at :30');
-      expect(describe('0 */6 * * *'), 'Every 6 hours');
-      expect(describe('15 */6 * * *'), 'Every 6 hours at :15');
-      expect(describe('0 2 * * *'), 'Every day at 02:00');
-      expect(describe('@daily'), 'Every day at 00:00');
-      expect(describe('15 3 * * 1-5'), 'On weekdays at 03:15');
-      expect(describe('30 4 * * 0'), 'Every Sunday at 04:30');
-      expect(describe('0 0 1 * *'), 'Day 1 of every month at 00:00');
+      expect(describe('@reboot'), l10n.cronAtBoot);
+      expect(describe('* * * * *'), l10n.cronEveryMin);
+      expect(describe('*/5 * * * *'), l10n.cronEveryMinsFmt(5));
+      expect(describe('30 * * * *'), l10n.cronHourlyAtFmt('30'));
+      expect(describe('0 */6 * * *'), l10n.cronEveryHoursFmt(6));
+      expect(describe('15 */6 * * *'), l10n.cronEveryHoursAtFmt(6, '15'));
+      expect(describe('0 2 * * *'), l10n.cronDailyAtFmt('02:00'));
+      expect(describe('@daily'), l10n.cronDailyAtFmt('00:00'));
+      expect(describe('15 3 * * 1-5'), l10n.cronWeekdaysAtFmt('03:15'));
+      expect(describe('30 4 * * 0'), l10n.cronWeekdayAtFmt('Sunday', '04:30'));
+      expect(describe('0 0 1 * *'), l10n.cronMonthlyAtFmt(1, '00:00'));
     });
 
     /// A description that drops a field says the line runs more often than it

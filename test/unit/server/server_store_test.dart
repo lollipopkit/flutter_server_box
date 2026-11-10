@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -53,7 +53,6 @@ void main() {
     ),
     wolCfg: WakeOnLanCfg(mac: 'AA:BB:CC:DD:EE:FF', ip: '10.0.0.255'),
     custom: ServerCustom(
-      cmds: {'up': 'uptime'},
       tempIsCelsius: false,
       netDev: 'eth0',
     ),
@@ -78,8 +77,14 @@ void main() {
     expect(got.ssh?.pwd, 'hunter2');
     expect(got.ssh?.proxyCommand, 'nc %h %p');
     expect(got.wolCfg?.mac, 'AA:BB:CC:DD:EE:FF');
-    expect(got.custom?.cmds, {'up': 'uptime'});
     expect(got.custom?.tempIsCelsius, isFalse);
+
+    // Value equality: two reads build two objects from the same rows.
+    store.invalidate();
+    final again = store.fetchOneRaw('srv-1')!;
+    expect(identical(again, got), isFalse);
+    expect(again, got);
+    expect(again.hashCode, got.hashCode);
   });
 
   test('a monitor server round trips too', () {
@@ -119,7 +124,7 @@ void main() {
     store.invalidate();
 
     final ssh = store.fetchOneRaw('multi-key')!.ssh!;
-    expect(ssh.keyPath, paths.first);
+    expect(ssh.resolvedIdentityFiles.firstOrNull, paths.first);
     expect(ssh.resolvedIdentityFiles, paths);
   });
 

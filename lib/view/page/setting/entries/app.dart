@@ -7,7 +7,10 @@ extension _App on _AppSettingsPageState {
 
   List<SettingsGroup> _buildApp() {
     return [
-      SettingsGroup(libL10n.general, [_buildLocale(), _buildCollapseUI()]),
+      SettingsGroup(libL10n.general, [
+        SettingsRow(libL10n.language, () => const LocaleTile()),
+        _buildCollapseUI(),
+      ]),
       SettingsGroup(libL10n.update, [_buildCheckUpdate(), _buildBeta()]),
       // Everything about the machine the app happens to be on, which is why
       // every row in it is behind a platform test. It is also where the rows
@@ -20,10 +23,11 @@ extension _App on _AppSettingsPageState {
         if (isDesktop) _buildHideTitleBar(),
         _buildMotion(),
         if (DmgNotice.applies) _buildDmgNotice(),
-        // Debug only, which is where it was moved to while these rows were
-        // flat. Naming the group does not put it back in a release build.
-        if (kDebugMode) _buildEditRawSettings(),
+        // Not in a release build: debug and profile builds, the ones tested
+        // on a device, can read and edit the raw settings.
+        if (!kReleaseMode) _buildEditRawSettings(),
       ]),
+      SettingsGroup(libL10n.reset, [_buildClearSettings()]),
     ];
   }
 
@@ -37,11 +41,7 @@ extension _App on _AppSettingsPageState {
   List<SettingsGroup> _buildAppearance() {
     // The rows themselves are shared with the other apps on fl_lib; which page
     // they are on, and the groups they are read in, are this app's.
-    final appearance = ThemeAppearance(
-      context,
-      setStateSafe,
-      storeTarget: _SettingsWidth.pageTarget(context),
-    );
+    final appearance = ThemeAppearance(context, setStateSafe);
     SettingsRow row(ThemeSettingRow r) =>
         SettingsRow(r.label, r.build, keywords: r.keywords);
     return [
@@ -127,75 +127,18 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  SettingsRow _buildCheckUpdate() {
-    final label = libL10n.checkUpdate;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.update),
-        title: Text(label),
-        subtitle: ValBuilder(
-          listenable: AppUpdateIface.newestBuild,
-          builder: (val) {
-            String display;
-            if (val != null) {
-              if (val > BuildData.build) {
-                display = libL10n.versionHasUpdate(val);
-              } else {
-                display = libL10n.versionUpdated(BuildData.build);
-              }
-            } else {
-              display = libL10n.versionUnknownUpdate(BuildData.build);
-            }
-            return Text(display, style: UIs.textGrey);
-          },
-        ),
-        onTap: () => Fns.throttle(
-          () => AppUpdateIface.doUpdate(
-            context: context,
-            build: BuildData.build,
-            githubReleasesUrl: Urls.githubReleasesApi,
-            storeUrl: Urls.appStore,
-            force: BuildMode.isDebug,
-            noticeBuilder: (ctx) => DmgNotice.forUpdate(
-              ctx,
-              build: AppUpdateIface.newestBuild.value ?? BuildData.build,
-            ),
-          ),
-        ),
-        trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
-      ),
-      // The version is on this row, so it is what somebody typing one is
-      // looking for.
-      keywords: 'v${BuildData.build}',
-    );
-  }
+  SettingsRow _buildCheckUpdate() => SettingsRow(
+    libL10n.checkUpdate,
+    () => const CheckUpdateTile(),
+    // The version is on this row, so it is what somebody typing one is
+    // looking for.
+    keywords: 'v${BuildData.build}',
+  );
 
-  SettingsRow _buildUpdateInterval() {
-    final label = l10n.updateServerStatusInterval;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.timer_outlined),
-        title: Text(label),
-        onTap: () async {
-          final val = await context.showPickSingleDialog(
-            title: libL10n.setting,
-            items: List.generate(10, (idx) => idx == 1 ? null : idx),
-            initial: _setting.serverStatusUpdateInterval.fetch(),
-            display: (p0) => p0 == 0 ? libL10n.manual : '$p0 ${l10n.second}',
-          );
-          if (val != null) {
-            _setting.serverStatusUpdateInterval.put(val);
-          }
-        },
-        trailing: ValBuilder(
-          listenable: _setting.serverStatusUpdateInterval.listenable(),
-          builder: (val) => Text('$val ${l10n.second}', style: UIs.text15),
-        ),
-      ),
-    );
-  }
+  SettingsRow _buildUpdateInterval() => SettingsRow(
+    l10n.updateServerStatusInterval,
+    () => const UpdateIntervalTile(),
+  );
 
   SettingsRow _buildMaxRetry() {
     final label = l10n.maxRetryCount;
@@ -223,68 +166,12 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  /// Over the device's own "reduce motion", in either direction — see
-  /// `AppMotion`.
-  SettingsRow _buildMotion() {
-    final label = l10n.reduceMotion;
-    String name(MotionPref pref) => switch (pref) {
-      MotionPref.system => libL10n.followSystem,
-      MotionPref.reduce => libL10n.enabled,
-      MotionPref.full => libL10n.disabled,
-    };
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.animation),
-        title: Text(label),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: label,
-            items: MotionPref.values,
-            display: name,
-            initial: _setting.motionPref.fetch(),
-          );
-          if (selected != null) _setting.motionPref.put(selected);
-        },
-        trailing: ValBuilder(
-          listenable: _setting.motionPref.listenable(),
-          builder: (pref) => Text(name(pref), style: UIs.text15),
-        ),
-      ),
-      keywords: 'animation',
-    );
-  }
+  SettingsRow _buildMotion() => SettingsRow(
+    l10n.reduceMotion,
+    () => const MotionPrefTile(),
+    keywords: 'animation',
+  );
 
-  SettingsRow _buildLocale() {
-    final label = libL10n.language;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(IonIcons.language),
-        title: Text(label),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: label,
-            items: AppLocalizations.supportedLocales,
-            display: (p0) => p0.nativeName,
-            initial: _setting.locale.fetch().toLocale,
-          );
-          if (selected != null) {
-            _setting.locale.put(selected.code);
-            // No `pop`: the picker has already closed — that is what `await`
-            // returning a selection means — so popping here closed the settings
-            // page behind it. `notify` is what makes the new language take
-            // effect; nothing has to be dismissed for that.
-            unawaited(RNodes.app.notify());
-          }
-        },
-        trailing: ListenBuilder(
-          listenable: _setting.locale.listenable(),
-          builder: () => Text(context.localeNativeName, style: UIs.text15),
-        ),
-      ),
-    );
-  }
 
   /// Its own page rather than two rows under the app's own settings, because
   /// what it decides is not the same kind of thing as the rows it sat among.
@@ -440,6 +327,58 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  SettingsRow _buildClearSettings() {
+    final label = l10n.clearAllSettings;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: Icon(
+          Icons.delete_forever,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        title: Text(label),
+        onTap: _askClearSettings,
+      ),
+      keywords: libL10n.reset,
+    );
+  }
+
+  void _askClearSettings() {
+    context.showRoundDialog(
+      title: libL10n.attention,
+      child: SimpleMarkdown(
+        data: libL10n.askContinue(
+          '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+        ),
+      ),
+      actions: [
+        CountDownBtn(
+          onTap: () {
+            context.popDialog();
+            _clearSettings();
+          },
+          afterColor: Colors.red,
+        ),
+      ],
+    );
+  }
+
+  /// Only the settings table: servers, keys and the rest live in stores of
+  /// their own.
+  Future<void> _clearSettings() async {
+    try {
+      if (!await Stores.setting.clear()) {
+        Toast.error(libL10n.fail);
+        return;
+      }
+      unawaited(RNodes.app.notify());
+      Toast.success(libL10n.success);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear settings', e, s);
+      Toast.error(libL10n.fail);
+    }
+  }
+
   SettingsRow _buildEditRawSettings() {
     const label = '(Dev) Edit raw json';
     return SettingsRow(
@@ -462,8 +401,6 @@ extension _App on _AppSettingsPageState {
     String? passwordUsed;
 
     Future<String?> resolvePassword() async {
-      final saved = await _setting.backupPassword.read();
-      if (saved?.isNotEmpty == true) return saved;
       final backupPwd = await SecureStoreProps.bakPwd.read();
       if (backupPwd?.isNotEmpty == true) return backupPwd;
       final controller = TextEditingController();
@@ -512,15 +449,21 @@ extension _App on _AppSettingsPageState {
             _showInvalidDialog();
             return;
           }
-        } catch (e, stack) {
-          final msg =
-              e.toString().contains('Failed to decrypt') ||
-                  e.toString().contains('incorrect password')
-              ? l10n.backupPasswordWrong
-              : '${libL10n.error}:\n$e';
+        } on WrongPasswordException catch (e, stack) {
           Loggers.app.warning('Decrypt raw settings failed', e, stack);
           if (!mounted) return;
-          await context.showRoundDialog(title: libL10n.fail, child: Text(msg));
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text(l10n.backupPasswordWrong),
+          );
+          return;
+        } catch (e, stack) {
+          Loggers.app.warning('Decrypt raw settings failed', e, stack);
+          if (!mounted) return;
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text('${libL10n.error}:\n$e'),
+          );
           return;
         }
       }
@@ -605,7 +548,6 @@ extension _App on _AppSettingsPageState {
     final editorFont = _setting.editorFontFamily.fetch();
     await EditorPage.route.go(
       context,
-      target: _SettingsWidth.pageTarget(context),
       args: EditorPageArgs(
         text: text,
         lang: ProgLang.json,
@@ -625,3 +567,4 @@ extension _App on _AppSettingsPageState {
     );
   }
 }
+

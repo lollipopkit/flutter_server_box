@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_listener.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/monitor/listener.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// A remote forward through the agent, against a stand-in for its

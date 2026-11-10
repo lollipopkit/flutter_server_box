@@ -13,23 +13,36 @@
     <string name="widget_configure_server">サーバー</string>
     <string name="widget_configure_metric">主な指標</string>
     <string name="widget_configure_save">保存</string>
-    <string name="widget_configure_empty">monitor を設定したサーバーがまだありません。\nServerBox で追加してから戻ってください。</string>
+    <string name="widget_configure_empty">ServerBox Monitor を設定したサーバーがありません。\nServerBox でサーバーを追加してから、ここに戻ってください。</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">メモリ</string>
     <string name="widget_metric_disk">ディスク</string>
     <string name="widget_metric_network">ネットワーク</string>
     <string name="widget_err_not_configured">タップしてサーバーを選択</string>
-    <string name="widget_err_no_token">認証情報がありません — ServerBox を開いてください</string>
+    <string name="widget_err_no_token">アクセス用の認証情報がありません — ServerBox を開いてください</string>
     <string name="widget_err_insecure">HTTPS が必要です</string>
     <string name="widget_err_network">ネットワークエラー</string>
     <string name="widget_err_timeout">タイムアウトしました</string>
-    <string name="widget_no_history">履歴なし</string>
     <string name="widget_chart_desc">ステータスのグラフ</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">メモリ使用率</string>
-    <string name="widget_disk_desc">ディスク使用率</string>
-    <string name="widget_net_desc">ネットワーク使用量</string>
     <string name="widget_refresh_desc">更新</string>
     <string name="widget_small_label">サーバーの数値</string>
     <string name="widget_medium_label">サーバーのグラフ</string>
+    <string name="widget_label">サーバーの状態</string>
+    <string name="widget_description">CPU、メモリ、ディスク、ネットワークの状態をひと目で確認できます。ウィジェットを拡大すると詳細が表示されます。</string>
+
+    <string name="process_text_label">コードコードスニペットとして保存</string>
+    <string name="tile_no_sessions">実行中のセッションはありません</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 件のセッション</item>
+    </plurals>
+    <string name="channel_transfers">ファイル転送</string>
+    <string name="incoming_failed">共有されたファイルを受け取れませんでした</string>
+    <string name="shortcut_server_gone">サーバーは削除されました</string>
+    <string name="notification_disconnect_all">すべて切断</string>
+    <string name="session_connected">接続済み</string>
+    <string name="session_connecting">接続中</string>
+    <string name="session_disconnected">切断</string>
+    <plurals name="notification_more">
+        <item quantity="other">…他 %d 件</item>
+    </plurals>
 </resources>

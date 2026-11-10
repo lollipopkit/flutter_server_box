@@ -37,7 +37,7 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// TODO: drop the flag reads here and the two keys from `removeRetiredKeys`
 /// once no install and no backup can still be carrying them.
-class SettingsFixupsMigration implements SchemaMigration {
+class SettingsFixupsMigration implements SettingsMigration {
   const SettingsFixupsMigration();
 
 
@@ -56,6 +56,7 @@ class SettingsFixupsMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
+  @override
   void applySync() {
     final store = SettingStore.instance;
     _migrateSshConnectionMode(store);

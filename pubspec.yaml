@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: "none"
-version: 1.0.1844+1844
+version: 1.0.1856+1856
 
 environment:
   sdk: ">=3.11.0"
@@ -12,12 +12,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  # Reading an OCI image layout and unpacking a rootfs — see
-  # `lib/core/utils/oci_image.dart`. Direct because this code imports it: as a
-  # transitive one it is whatever some other package happens to want, and a
-  # tar reader deciding what a hard link is has already cost this app a
-  # release.
-  archive: ^4.5.2
   choice: ^2.3.2
   # The time `SessionKeepAlive` measures an idle session against. Read through
   # `clock` rather than `DateTime.now` so a test's fake time moves it too.
@@ -57,15 +51,17 @@ dependencies:
   riverpod_annotation: ^4.0.2
   # Direct, though `SqliteStore` lives in fl_lib: `hooks.user_defines` below is
   # only honoured for this package's own dependencies, and the Hive migration
-  # opens the database from here too.
-  sqlite3: ^3.6.0
+  # opens the database from here too. 3.7.1 or later: SQLite 3.54.0, which
+  # opens a WAL database on Windows while another process maps its `-shm`
+  # (#1860).
+  sqlite3: ^3.8.0
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
   drift: ^2.34.4
   wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
-  webdav_client_plus: ^2.0.0
+  webdav_client_plus: ^3.0.0
   # Already here through fl_lib, which does the syncing; named directly only
   # so the crash-report filter can recognise its "not signed in to iCloud"
   # exception by type.
@@ -73,8 +69,6 @@ dependencies:
   url_launcher: ^6.2.6
   dartssh2:
     path: packages/dartssh2
-  circle_chart:
-    path: packages/circle_chart
   icons_plus:
     git:
       url: https://github.com/lollipopkit/icons_plus
@@ -108,7 +102,7 @@ dependencies:
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
   material_ui: ^1.5.0
-  # The LLM layer, shared with GPT Box: pi's agent loop and providers in
+  # The LLM layer, shared with LLMBox: pi's agent loop and providers in
   # QuickJS, built by its own hook like `sbm_ffi` (`fl_pi_llm`), and the
   # chats, tools and provider settings over it (`fl_pi_llm_ui`). A submodule
   # like fl_lib.
@@ -129,15 +123,11 @@ dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:
     path: packages/fl_lib
-  # For flutter_markdown_plus_latex, in fl_pi_llm_ui: only the root can
-  # override it.
-  flutter_math_fork: ^0.7.4
 
 dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_native_splash: ^2.1.6
-  hive_ce_generator: ^1.11.0
   # 2.15 is the floor, not the lockfile's opinion: `--delete-conflicting-outputs`
   # was removed there, and every command this repo documents omits it. On an
   # earlier resolution that flag is live, and without it a conflicting output
@@ -159,6 +149,8 @@ dev_dependencies:
   # own theme files; the app reads them through fl_lib.
   toml: ^0.18.0
   xml: ^7.0.1
+  # Theme packages (`.fsbt`, zip) built for the sync tests, as fl_lib's do.
+  archive: ^4.0.0
   # The QR encoder, so `server_share_qr_test.dart` can hold the share's
   # capacity cap against what actually gets drawn. fl_lib depends on it too,
   # and `QrView` is the only thing in the app that draws one.
@@ -201,9 +193,6 @@ flutter:
     # The theme catalog's floor: whose repositories the store offers when its
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
-    # Store themes shipped with the app, installed once on first launch as if
-    # from the store — see `ThemePackages.seedBundled`.
-    - assets/store_themes/
     # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
     # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
     # on the server: `curl | bash` fixes no version and verifies nothing, and

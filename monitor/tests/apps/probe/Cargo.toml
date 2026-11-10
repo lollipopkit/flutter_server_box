@@ -1,0 +1,18 @@
+[package]
+name = "sbm_app_probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# A backend `tests/apps_api.rs` builds for wasm32-wasip2 and drives.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = { version = "0.63", default-features = false, features = ["macros", "realloc"] }
+
+[profile.release]
+opt-level = "s"
+panic = "abort"

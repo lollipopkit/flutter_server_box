@@ -303,6 +303,13 @@ class KvToTablesMigration implements SchemaMigration {
       .select('PRAGMA table_info(server);')
       .any((row) => row['name'] == 'pve_addr');
 
+  /// Whether `server` still has `monitor_ignore_cert`, which m035 drops: for
+  /// the same reason as [_serverHasPveColumns]. Nothing replaces it here — a
+  /// switch that accepted any certificate unseen pins none.
+  bool get _serverHasMonitorIgnoreCert => _db
+      .select('PRAGMA table_info(server);')
+      .any((row) => row['name'] == 'monitor_ignore_cert');
+
   ({String id, String? storedId, List<String> jumps})? _migrateServerRow(
     ({String key, Map<String, dynamic> value, int updatedAt}) row,
     Map<String, String> keyIds,
@@ -357,6 +364,7 @@ class KvToTablesMigration implements SchemaMigration {
     // an older build created and left before this step finished still has the
     // columns, and m030 moves them out afterwards.
     final pveInServer = _serverHasPveColumns;
+    final ignoreCertInServer = _serverHasMonitorIgnoreCert;
     final pveAddr = custom['pveAddr'] as String?;
     final pvePwd = custom['pvePwd'] as String?;
     _db.execute(
@@ -364,13 +372,15 @@ class KvToTablesMigration implements SchemaMigration {
       'id, name, auto_connect, system_type, '
       'ssh_ip, ssh_port, ssh_user, ssh_pwd, ssh_key_id, ssh_key_path, '
       'ssh_alter_url, ssh_proxy_command, '
-      'monitor_addr, monitor_user, monitor_pwd, monitor_ignore_cert, '
+      'monitor_addr, monitor_user, monitor_pwd, '
+      '${ignoreCertInServer ? 'monitor_ignore_cert, ' : ''}'
       'monitor_allow_insecure, '
       'wol_mac, wol_ip, wol_pwd, '
       '${pveInServer ? 'pve_addr, pve_ignore_cert, pve_pwd, ' : ''}'
       'prefer_temp_dev, '
       'temp_is_celsius, logo_url, net_dev, script_dir, updated_at'
-      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
+      '${ignoreCertInServer ? '?, ' : ''}?, ?, ?, '
       '?, ${pveInServer ? '?, ?, ?, ' : ''}?, ?, ?, ?, ?, ?);',
       [
         id,
@@ -388,7 +398,7 @@ class KvToTablesMigration implements SchemaMigration {
         hasMonitor ? monitorAddr : null,
         monitor?['user'] as String?,
         monitor?['pwd'] as String?,
-        hasMonitor ? _bool(monitor?['ignoreCert']) : null,
+        if (ignoreCertInServer) hasMonitor ? _bool(monitor?['ignoreCert']) : null,
         hasMonitor ? _bool(monitor?['allowInsecure']) : null,
         wol?['mac'] as String?,
         wol?['ip'] as String?,
@@ -435,13 +445,7 @@ class KvToTablesMigration implements SchemaMigration {
         cmd,
       ]);
     }
-    (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-      _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-        id,
-        '$k',
-        '$val',
-      ]);
-    });
+    // `custom.cmds` is not carried: custom commands live on the server.
 
     // Held back: a jump host is a server, so the row it points at may not have
     // been inserted yet — and its id may not be known yet either.

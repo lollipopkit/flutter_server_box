@@ -1,0 +1,24 @@
+[package]
+name = "sbm_app_tailscale"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Its own workspace: built for wasm32-wasip2 (`cargo build --target wasm32-wasip2 --release`).
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+sbm_parser = { path = "../../../crates/sbm_parser" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wit-bindgen = { version = "0.63", default-features = false, features = ["macros", "realloc"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

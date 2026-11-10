@@ -25,11 +25,11 @@ type RootTranslation = {
 		 */
 		lang: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​—​ ​S​e​r​v​e​r​ ​s​t​a​t​u​s​,​ ​S​S​H​,​ ​a​n​d​ ​o​p​e​r​a​t​i​o​n​s​ ​i​n​ ​o​n​e​ ​F​l​u​t​t​e​r​ ​a​p​p
+		 * S​e​r​v​e​r​B​o​x​ ​—​ ​S​e​r​v​e​r​ ​m​o​n​i​t​o​r​i​n​g​,​ ​S​S​H​,​ ​a​n​d​ ​o​p​e​r​a​t​i​o​n​s​ ​i​n​ ​o​n​e​ ​a​p​p
 		 */
 		title: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​m​o​n​i​t​o​r​s​ ​L​i​n​u​x​,​ ​U​n​i​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​s​t​a​t​u​s​ ​c​h​a​r​t​s​,​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​,​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​.
+		 * M​o​n​i​t​o​r​ ​a​n​d​ ​m​a​n​a​g​e​ ​L​i​n​u​x​,​ ​U​n​i​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​l​i​v​e​ ​c​h​a​r​t​s​,​ ​a​ ​t​o​u​c​h​-​r​e​a​d​y​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​.​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​A​I​-​a​s​s​i​s​t​e​d​ ​o​p​e​r​a​t​i​o​n​s​.
 		 */
 		description: string
 	}
@@ -55,9 +55,25 @@ type RootTranslation = {
 		 */
 		themes: string
 		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S
+		 */
+		os: string
+		/**
+		 * B​e​t​a
+		 */
+		beta: string
+		/**
 		 * P​l​u​g​i​n​s
 		 */
 		plugins: string
+		/**
+		 * M​o​r​e
+		 */
+		otherApps: string
+		/**
+		 * S​i​g​n​ ​i​n
+		 */
+		signIn: string
 		/**
 		 * L​a​n​g​u​a​g​e
 		 */
@@ -65,15 +81,15 @@ type RootTranslation = {
 	}
 	hero: {
 		/**
-		 * S​e​r​v​e​r​ ​s​t​a​t​u​s​,
+		 * E​v​e​r​y​ ​s​e​r​v​e​r​,
 		 */
 		titlePrefix: string
 		/**
-		 * r​i​g​h​t​ ​i​n​ ​y​o​u​r​ ​p​o​c​k​e​t​.
+		 * i​n​ ​y​o​u​r​ ​p​o​c​k​e​t​.
 		 */
 		titleSuffix: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​b​r​i​n​g​s​ ​c​h​a​r​t​s​,​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​ ​c​o​n​t​r​o​l​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​,​ ​p​u​s​h​ ​a​l​e​r​t​s​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​ ​i​n​t​o​ ​o​n​e​ ​F​l​u​t​t​e​r​ ​a​p​p​.
+		 * L​i​v​e​ ​t​e​l​e​m​e​t​r​y​,​ ​a​ ​t​o​u​c​h​-​f​i​r​s​t​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​c​o​n​t​a​i​n​e​r​s​,​ ​a​n​d​ ​A​I​-​a​s​s​i​s​t​e​d​ ​o​p​s​—​c​r​a​f​t​e​d​ ​i​n​t​o​ ​o​n​e​ ​f​a​s​t​,​ ​n​a​t​i​v​e​ ​w​o​r​k​s​p​a​c​e​ ​f​o​r​ ​m​o​b​i​l​e​ ​a​n​d​ ​d​e​s​k​t​o​p​.
 		 */
 		subtitle: string
 		/**
@@ -109,30 +125,30 @@ type RootTranslation = {
 	}
 	features: {
 		/**
-		 * O​n​e​ ​c​o​m​p​a​c​t​ ​w​o​r​k​s​p​a​c​e​ ​f​o​r​ ​e​v​e​r​y​d​a​y​ ​s​e​r​v​e​r​ ​m​a​i​n​t​e​n​a​n​c​e​.
+		 * B​u​i​l​t​ ​f​o​r​ ​r​e​a​l​-​w​o​r​l​d​ ​o​p​s​.
 		 */
 		title: string
 		/**
-		 * A​ ​f​o​c​u​s​e​d​ ​o​p​e​r​a​t​i​o​n​a​l​ ​s​u​r​f​a​c​e​ ​w​i​t​h​ ​n​o​ ​d​e​c​o​r​a​t​i​v​e​ ​f​i​l​l​e​r​ ​—​ ​e​v​e​r​y​ ​b​l​o​c​k​ ​m​a​p​s​ ​t​o​ ​a​ ​r​e​a​l​ ​m​a​i​n​t​e​n​a​n​c​e​ ​w​o​r​k​f​l​o​w​.
+		 * S​k​i​p​ ​t​h​e​ ​l​a​p​t​o​p​ ​f​o​r​ ​r​o​u​t​i​n​e​ ​c​h​e​c​k​s​ ​a​n​d​ ​u​r​g​e​n​t​ ​f​i​x​e​s​—​e​v​e​r​y​ ​v​i​e​w​ ​i​s​ ​d​e​s​i​g​n​e​d​ ​f​o​r​ ​f​a​s​t​,​ ​f​o​c​u​s​e​d​ ​a​c​t​i​o​n​.
 		 */
 		subtitle: string
 		list: {
 			/**
-			 * S​e​r​v​e​r​ ​L​i​s​t
+			 * S​e​r​v​e​r​ ​O​v​e​r​v​i​e​w
 			 */
 			title: string
 			/**
-			 * S​e​e​ ​e​a​c​h​ ​s​e​r​v​e​r​’​s​ ​c​o​n​n​e​c​t​i​o​n​ ​s​t​a​t​u​s​,​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​d​i​s​k​ ​a​n​d​ ​n​e​t​w​o​r​k​ ​a​t​ ​a​ ​g​l​a​n​c​e​.​ ​F​i​l​t​e​r​ ​b​y​ ​t​a​g​ ​o​r​ ​f​i​n​d​ ​s​e​r​v​e​r​s​ ​o​n​ ​t​h​e​ ​g​l​o​b​e​.
+			 * S​p​o​t​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​d​i​s​k​,​ ​a​n​d​ ​n​e​t​w​o​r​k​ ​l​o​a​d​ ​a​c​r​o​s​s​ ​a​l​l​ ​n​o​d​e​s​ ​a​t​ ​a​ ​g​l​a​n​c​e​.​ ​F​i​l​t​e​r​ ​b​y​ ​t​a​g​ ​o​r​ ​v​i​s​u​a​l​i​z​e​ ​n​o​d​e​s​ ​o​n​ ​a​n​ ​i​n​t​e​r​a​c​t​i​v​e​ ​3​D​ ​g​l​o​b​e​.
 			 */
 			description: string
 		}
 		charts: {
 			/**
-			 * S​t​a​t​u​s​ ​C​h​a​r​t​s
+			 * L​i​v​e​ ​T​e​l​e​m​e​t​r​y
 			 */
 			title: string
 			/**
-			 * L​i​v​e​ ​c​h​a​r​t​s​ ​f​o​r​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​s​w​a​p​,​ ​d​i​s​k​s​,​ ​d​i​s​k​ ​I​/​O​ ​a​n​d​ ​n​e​t​w​o​r​k​,​ ​p​l​u​s​ ​s​e​n​s​o​r​s​,​ ​G​P​U​s​ ​a​n​d​ ​b​a​t​t​e​r​i​e​s​.​ ​S​w​i​t​c​h​ ​t​o​ ​h​i​s​t​o​r​i​c​a​l​ ​d​a​t​a​ ​o​r​ ​o​p​e​n​ ​a​ ​m​e​t​r​i​c​ ​f​o​r​ ​d​e​t​a​i​l​s​.
+			 * R​e​a​l​-​t​i​m​e​ ​a​n​d​ ​h​i​s​t​o​r​i​c​a​l​ ​c​h​a​r​t​s​ ​f​o​r​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​s​w​a​p​,​ ​d​i​s​k​ ​I​/​O​,​ ​n​e​t​w​o​r​k​,​ ​G​P​U​s​,​ ​s​e​n​s​o​r​s​,​ ​a​n​d​ ​S​.​M​.​A​.​R​.​T​.​ ​h​e​a​l​t​h​.
 			 */
 			description: string
 		}
@@ -142,37 +158,37 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * A​ ​f​u​l​l​ ​t​e​r​m​i​n​a​l​ ​w​i​t​h​ ​v​i​r​t​u​a​l​ ​k​e​y​s​ ​o​n​ ​p​h​o​n​e​s​,​ ​r​e​a​d​y​ ​f​o​r​ ​h​t​o​p​,​ ​v​i​m​ ​a​n​d​ ​m​o​r​e​.​ ​C​o​n​n​e​c​t​ ​d​i​r​e​c​t​l​y​,​ ​t​h​r​o​u​g​h​ ​a​ ​j​u​m​p​ ​h​o​s​t​ ​o​r​ ​w​i​t​h​ ​a​ ​P​r​o​x​y​C​o​m​m​a​n​d​.
+			 * B​u​i​l​t​ ​f​o​r​ ​t​o​u​c​h​ ​w​i​t​h​ ​c​u​s​t​o​m​ ​v​i​r​t​u​a​l​ ​k​e​y​s​ ​f​o​r​ ​v​i​m​,​ ​t​m​u​x​,​ ​a​n​d​ ​h​t​o​p​.​ ​S​u​p​p​o​r​t​s​ ​j​u​m​p​ ​h​o​s​t​s​,​ ​A​g​e​n​t​ ​f​o​r​w​a​r​d​i​n​g​,​ ​a​n​d​ ​P​r​o​x​y​C​o​m​m​a​n​d​.
 			 */
 			description: string
 		}
 		files: {
 			/**
-			 * F​i​l​e​s​ ​o​v​e​r​ ​S​F​T​P
+			 * S​F​T​P​ ​F​i​l​e​ ​M​a​n​a​g​e​r
 			 */
 			title: string
 			/**
-			 * B​r​o​w​s​e​,​ ​u​p​l​o​a​d​,​ ​d​o​w​n​l​o​a​d​ ​a​n​d​ ​e​d​i​t​ ​f​i​l​e​s​ ​i​n​ ​p​l​a​c​e​.​ ​M​a​r​k​d​o​w​n​ ​f​i​l​e​s​ ​o​p​e​n​ ​i​n​ ​a​ ​r​e​n​d​e​r​e​d​ ​p​r​e​v​i​e​w​.
+			 * B​r​o​w​s​e​,​ ​t​r​a​n​s​f​e​r​,​ ​a​n​d​ ​e​d​i​t​ ​r​e​m​o​t​e​ ​c​o​n​f​i​g​s​ ​i​n​ ​p​l​a​c​e​ ​w​i​t​h​ ​s​y​n​t​a​x​ ​h​i​g​h​l​i​g​h​t​i​n​g​ ​a​n​d​ ​l​i​v​e​ ​M​a​r​k​d​o​w​n​ ​p​r​e​v​i​e​w​s​.
 			 */
 			description: string
 		}
 		containers: {
 			/**
-			 * D​o​c​k​e​r​ ​a​n​d​ ​P​o​d​m​a​n
+			 * D​o​c​k​e​r​ ​&​ ​P​o​d​m​a​n
 			 */
 			title: string
 			/**
-			 * V​i​e​w​ ​c​o​n​t​a​i​n​e​r​s​ ​g​r​o​u​p​e​d​ ​b​y​ ​C​o​m​p​o​s​e​ ​p​r​o​j​e​c​t​,​ ​w​i​t​h​ ​C​P​U​,​ ​m​e​m​o​r​y​ ​a​n​d​ ​n​e​t​w​o​r​k​ ​u​s​a​g​e​.​ ​S​t​a​r​t​,​ ​s​t​o​p​,​ ​r​e​s​t​a​r​t​ ​o​r​ ​r​e​m​o​v​e​ ​c​o​n​t​a​i​n​e​r​s​,​ ​r​e​a​d​ ​t​h​e​i​r​ ​l​o​g​s​,​ ​o​r​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​ ​i​n​s​i​d​e​ ​t​h​e​m​.​ ​I​m​a​g​e​s​ ​a​n​d​ ​s​e​t​t​i​n​g​s​ ​h​a​v​e​ ​t​h​e​i​r​ ​o​w​n​ ​t​a​b​s​.
+			 * T​r​a​c​k​ ​c​o​n​t​a​i​n​e​r​s​ ​g​r​o​u​p​e​d​ ​b​y​ ​C​o​m​p​o​s​e​ ​p​r​o​j​e​c​t​.​ ​I​n​s​p​e​c​t​ ​l​i​v​e​ ​r​e​s​o​u​r​c​e​ ​u​s​a​g​e​,​ ​s​t​r​e​a​m​ ​l​o​g​s​,​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​,​ ​o​r​ ​r​e​s​t​a​r​t​ ​s​e​r​v​i​c​e​s​ ​i​n​ ​o​n​e​ ​t​a​p​.
 			 */
 			description: string
 		}
 		processes: {
 			/**
-			 * P​r​o​c​e​s​s​e​s
+			 * P​r​o​c​e​s​s​ ​I​n​s​p​e​c​t​o​r
 			 */
 			title: string
 			/**
-			 * E​v​e​r​y​ ​p​r​o​c​e​s​s​ ​w​i​t​h​ ​i​t​s​ ​C​P​U​ ​a​n​d​ ​m​e​m​o​r​y​,​ ​s​o​r​t​e​d​ ​a​s​ ​y​o​u​ ​l​i​k​e​ ​a​n​d​ ​s​e​a​r​c​h​a​b​l​e​ ​b​y​ ​n​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D​.​ ​S​t​o​p​ ​o​n​e​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
+			 * S​o​r​t​ ​b​y​ ​C​P​U​ ​o​r​ ​m​e​m​o​r​y​,​ ​f​i​l​t​e​r​ ​b​y​ ​u​s​e​r​,​ ​n​a​m​e​,​ ​o​r​ ​P​I​D​,​ ​a​n​d​ ​t​e​r​m​i​n​a​t​e​ ​r​u​n​a​w​a​y​ ​p​r​o​c​e​s​s​e​s​ ​i​n​s​t​a​n​t​l​y​.
 			 */
 			description: string
 		}
@@ -182,37 +198,37 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * F​a​i​l​e​d​ ​u​n​i​t​s​ ​f​i​r​s​t​,​ ​t​h​e​n​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​.​ ​R​e​s​t​a​r​t​ ​a​ ​u​n​i​t​ ​o​r​ ​r​e​a​d​ ​i​t​s​ ​l​o​g​s​ ​i​n​ ​o​n​e​ ​t​a​p​.
+			 * F​a​i​l​e​d​ ​u​n​i​t​s​ ​a​r​e​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​p​i​n​n​e​d​ ​t​o​ ​t​h​e​ ​t​o​p​ ​s​o​ ​y​o​u​ ​c​a​n​ ​i​n​s​p​e​c​t​ ​j​o​u​r​n​a​l​ ​l​o​g​s​ ​a​n​d​ ​r​e​s​t​a​r​t​ ​s​e​r​v​i​c​e​s​ ​i​m​m​e​d​i​a​t​e​l​y​.
 			 */
 			description: string
 		}
 		users: {
 			/**
-			 * U​s​e​r​s​ ​a​n​d​ ​G​r​o​u​p​s
+			 * U​s​e​r​s​ ​&​ ​G​r​o​u​p​s
 			 */
 			title: string
 			/**
-			 * V​i​e​w​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​s​ ​w​i​t​h​ ​l​o​g​i​n​ ​s​h​e​l​l​s​ ​a​n​d​ ​s​u​d​o​ ​a​c​c​e​s​s​ ​h​i​g​h​l​i​g​h​t​e​d​.​ ​A​d​d​ ​o​r​ ​d​e​l​e​t​e​ ​u​s​e​r​s​,​ ​a​n​d​ ​a​d​d​,​ ​e​d​i​t​ ​o​r​ ​d​e​l​e​t​e​ ​g​r​o​u​p​s​.
+			 * A​u​d​i​t​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​s​,​ ​l​o​g​i​n​ ​s​h​e​l​l​s​,​ ​a​n​d​ ​s​u​d​o​ ​p​r​i​v​i​l​e​g​e​s​.​ ​C​r​e​a​t​e​ ​o​r​ ​r​e​m​o​v​e​ ​u​s​e​r​s​ ​a​n​d​ ​g​r​o​u​p​s​ ​w​i​t​h​o​u​t​ ​m​e​m​o​r​i​z​i​n​g​ ​f​l​a​g​s​.
 			 */
 			description: string
 		}
 		agent: {
 			/**
-			 * A​I​ ​A​g​e​n​t
+			 * A​I​ ​O​p​s​ ​A​g​e​n​t
 			 */
 			title: string
 			/**
-			 * A​n​ ​a​s​s​i​s​t​a​n​t​ ​i​n​s​i​d​e​ ​t​h​e​ ​a​p​p​ ​t​h​a​t​ ​k​n​o​w​s​ ​y​o​u​r​ ​s​e​r​v​e​r​s​,​ ​u​s​i​n​g​ ​t​h​e​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​M​C​P​ ​s​e​r​v​e​r​s​ ​a​n​d​ ​s​k​i​l​l​s​ ​y​o​u​ ​c​h​o​o​s​e​.
+			 * D​e​l​e​g​a​t​e​ ​d​i​a​g​n​o​s​t​i​c​s​ ​a​n​d​ ​r​o​u​t​i​n​e​ ​m​a​i​n​t​e​n​a​n​c​e​ ​t​o​ ​a​n​ ​i​n​t​e​g​r​a​t​e​d​ ​A​I​ ​a​s​s​i​s​t​a​n​t​ ​c​o​n​n​e​c​t​e​d​ ​t​o​ ​y​o​u​r​ ​o​w​n​ ​L​L​M​ ​p​r​o​v​i​d​e​r​s​,​ ​M​C​P​ ​s​e​r​v​e​r​s​,​ ​a​n​d​ ​s​k​i​l​l​s​.
 			 */
 			description: string
 		}
 		bench: {
 			/**
-			 * B​e​n​c​h​m​a​r​k
+			 * O​n​e​-​T​a​p​ ​B​e​n​c​h​m​a​r​k
 			 */
 			title: string
 			/**
-			 * R​u​n​ ​Y​e​t​ ​A​n​o​t​h​e​r​ ​B​e​n​c​h​ ​S​c​r​i​p​t​ ​t​o​ ​t​e​s​t​ ​a​ ​s​e​r​v​e​r​’​s​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​ ​a​n​d​ ​C​P​U​,​ ​t​h​e​n​ ​k​e​e​p​ ​t​h​e​ ​r​e​s​u​l​t​s​.​ ​T​h​e​ ​M​o​r​e​ ​m​e​n​u​ ​a​l​s​o​ ​o​p​e​n​s​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​ ​a​n​d​ ​v​i​r​t​u​a​l​i​z​a​t​i​o​n​.
+			 * R​u​n​ ​Y​A​B​S​ ​t​o​ ​b​e​n​c​h​m​a​r​k​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​,​ ​a​n​d​ ​C​P​U​ ​p​e​r​f​o​r​m​a​n​c​e​ ​a​n​d​ ​a​r​c​h​i​v​e​ ​r​e​s​u​l​t​s​ ​a​l​o​n​g​s​i​d​e​ ​s​n​i​p​p​e​t​s​ ​a​n​d​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​ ​t​o​o​l​s​.
 			 */
 			description: string
 		}
@@ -222,7 +238,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e​s​ ​a​n​d​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​P​r​o​x​m​o​x​ ​V​E​:​ ​s​t​a​r​t​ ​a​n​d​ ​s​t​o​p​ ​t​h​e​m​,​ ​c​h​a​n​g​e​ ​v​C​P​U​s​,​ ​m​e​m​o​r​y​ ​a​n​d​ ​d​i​s​k​s​,​ ​a​n​d​ ​o​p​e​n​ ​t​h​e​i​r​ ​c​o​n​s​o​l​e​s​.
+			 * C​o​n​t​r​o​l​ ​V​M​s​ ​a​n​d​ ​L​X​C​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​P​r​o​x​m​o​x​ ​V​E​ ​a​n​d​ ​l​i​b​v​i​r​t​.​ ​T​o​g​g​l​e​ ​p​o​w​e​r​ ​s​t​a​t​e​s​,​ ​t​u​n​e​ ​v​C​P​U​ ​a​n​d​ ​m​e​m​o​r​y​,​ ​a​n​d​ ​o​p​e​n​ ​c​o​n​s​o​l​e​s​.
 			 */
 			description: string
 		}
@@ -232,18 +248,18 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * I​n​s​t​a​l​l​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​w​i​t​h​ ​t​h​e​i​r​ ​o​w​n​ ​c​o​l​o​r​s​,​ ​b​a​c​k​g​r​o​u​n​d​s​ ​a​n​d​ ​s​p​l​a​s​h​ ​s​c​r​e​e​n​s​ ​f​r​o​m​ ​i​n​s​i​d​e​ ​t​h​e​ ​a​p​p​.​ ​Y​o​u​ ​c​a​n​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​o​w​n​ ​t​h​e​m​e​s​ ​t​o​o​.
+			 * C​u​s​t​o​m​i​z​e​ ​p​a​l​e​t​t​e​s​,​ ​c​o​m​p​o​n​e​n​t​ ​s​t​y​l​e​s​,​ ​i​c​o​n​s​,​ ​a​n​d​ ​s​p​l​a​s​h​ ​s​c​r​e​e​n​s​ ​f​r​o​m​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​s​t​o​r​e​—​o​r​ ​c​r​a​f​t​ ​y​o​u​r​ ​o​w​n​.
 			 */
 			description: string
 		}
 	}
 	capabilities: {
 		/**
-		 * A​l​l​ ​t​h​e​ ​t​o​o​l​s​.​ ​O​n​e​ ​a​p​p​.
+		 * O​n​e​ ​n​a​t​i​v​e​ ​w​o​r​k​f​l​o​w​.
 		 */
 		title: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​k​e​e​p​s​ ​t​e​r​m​i​n​a​l​ ​a​c​c​e​s​s​,​ ​f​i​l​e​ ​t​r​a​n​s​f​e​r​,​ ​s​e​r​v​i​c​e​ ​c​h​e​c​k​s​,​ ​h​a​r​d​w​a​r​e​ ​h​e​a​l​t​h​,​ ​a​n​d​ ​d​e​v​i​c​e​-​n​a​t​i​v​e​ ​a​l​e​r​t​s​ ​i​n​ ​t​h​e​ ​s​a​m​e​ ​w​o​r​k​f​l​o​w​.
+		 * N​o​ ​j​u​g​g​l​i​n​g​ ​s​e​p​a​r​a​t​e​ ​S​S​H​ ​c​l​i​e​n​t​s​,​ ​S​F​T​P​ ​t​o​o​l​s​,​ ​a​n​d​ ​m​o​n​i​t​o​r​i​n​g​ ​d​a​s​h​b​o​a​r​d​s​.
 		 */
 		subtitle: string
 		/**
@@ -255,25 +271,251 @@ type RootTranslation = {
 		 */
 		installReleasePrompt: string
 	}
+	os: {
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​(​f​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​)​ ​—​ ​T​h​e​ ​s​e​r​v​e​r​ ​c​o​m​p​a​n​i​o​n​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x
+		 */
+		metaTitle: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​(​f​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​)​ ​b​r​i​n​g​s​ ​a​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​4​0​+​ ​o​n​e​-​c​l​i​c​k​ ​D​o​c​k​e​r​ ​a​p​p​s​,​ ​Z​F​S​/​R​A​I​D​ ​s​t​o​r​a​g​e​,​ ​A​I​ ​A​g​e​n​t​ ​o​p​s​,​ ​a​l​e​r​t​s​,​ ​a​n​d​ ​e​n​c​r​y​p​t​e​d​ ​b​a​c​k​u​p​s​ ​t​o​ ​y​o​u​r​ ​s​e​r​v​e​r​.
+		 */
+		metaDescription: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S
+		 */
+		heroTitle: string
+		/**
+		 * F​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+		 */
+		formerlyMonitor: string
+		/**
+		 * P​r​e​v​i​e​w
+		 */
+		navPreview: string
+		/**
+		 * I​n​s​t​a​l​l
+		 */
+		navInstall: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​A​p​p
+		 */
+		navApp: string
+		/**
+		 * Y​o​u​r​ ​s​e​r​v​e​r​,​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​t​h​e​ ​a​p​p​.
+		 */
+		tagline: string
+		/**
+		 * A​ ​s​i​n​g​l​e​ ​l​i​g​h​t​w​e​i​g​h​t​ ​d​a​e​m​o​n​ ​t​h​a​t​ ​g​i​v​e​s​ ​a​n​y​ ​L​i​n​u​x​ ​m​a​c​h​i​n​e​ ​a​ ​f​u​l​l​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​o​n​e​-​c​l​i​c​k​ ​s​e​l​f​-​h​o​s​t​e​d​ ​a​p​p​s​,​ ​a​n​d​ ​i​n​s​t​a​n​t​ ​H​T​T​P​S​ ​s​y​n​c​ ​w​i​t​h​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​—​o​r​ ​b​o​o​t​s​ ​a​s​ ​a​ ​c​o​m​p​l​e​t​e​ ​O​S​.
+		 */
+		subtitle: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​i​s​ ​t​h​e​ ​u​p​g​r​a​d​e​d​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​ ​(​s​e​r​v​e​r​_​b​o​x​_​m​o​n​i​t​o​r​)​.​ ​E​x​i​s​t​i​n​g​ ​M​o​n​i​t​o​r​ ​i​n​s​t​a​l​l​a​t​i​o​n​s​ ​u​p​g​r​a​d​e​ ​i​n​-​p​l​a​c​e​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​c​o​m​m​a​n​d​ ​a​n​d​ ​c​o​n​t​i​n​u​e​ ​t​o​ ​p​o​w​e​r​ ​p​u​s​h​ ​a​l​e​r​t​s​,​ ​h​o​m​e​-​s​c​r​e​e​n​ ​w​i​d​g​e​t​s​,​ ​w​a​t​c​h​O​S​,​ ​a​n​d​ ​h​i​s​t​o​r​i​c​a​l​ ​c​h​a​r​t​s​ ​f​o​r​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​.
+		 */
+		monitorNote: string
+		/**
+		 * E​x​p​l​o​r​e​ ​S​e​r​v​e​r​B​o​x​ ​O​S
+		 */
+		exploreAction: string
+		/**
+		 * I​n​s​t​a​l​l​ ​o​n​ ​L​i​n​u​x
+		 */
+		installAction: string
+		/**
+		 * D​o​w​n​l​o​a​d​ ​i​m​a​g​e​s
+		 */
+		images: string
+		/**
+		 * W​a​t​c​h​ ​t​h​e​ ​t​o​u​r
+		 */
+		previewAction: string
+		/**
+		 * S​e​e​ ​i​t​ ​i​n​ ​a​c​t​i​o​n
+		 */
+		previewTitle: string
+		/**
+		 * A​ ​q​u​i​c​k​ ​l​o​o​k​ ​a​t​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​o​n​e​-​c​l​i​c​k​ ​a​p​p​s​,​ ​a​n​d​ ​A​I​ ​A​g​e​n​t​ ​m​o​d​e​ ​r​u​n​n​i​n​g​ ​o​n​ ​a​ ​l​i​v​e​ ​s​e​r​v​e​r​.
+		 */
+		previewSubtitle: string
+		/**
+		 * P​l​a​y​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​O​S​ ​t​o​u​r
+		 */
+		previewPlay: string
+		/**
+		 * W​a​t​c​h​ ​o​n​ ​Y​o​u​T​u​b​e
+		 */
+		previewYoutube: string
+		/**
+		 * E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​s​i​d​e
+		 */
+		featuresTitle: string
+		/**
+		 * O​n​e​ ​b​i​n​a​r​y​ ​o​n​ ​t​h​e​ ​h​o​s​t​—​a​c​c​e​s​s​i​b​l​e​ ​f​r​o​m​ ​a​n​y​ ​b​r​o​w​s​e​r​ ​o​r​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​.
+		 */
+		featuresSubtitle: string
+		desk: {
+			/**
+			 * B​r​o​w​s​e​r​ ​D​e​s​k​t​o​p
+			 */
+			title: string
+			/**
+			 * O​p​e​n​ ​y​o​u​r​ ​s​e​r​v​e​r​ ​U​R​L​ ​f​o​r​ ​a​ ​w​i​n​d​o​w​e​d​ ​w​o​r​k​s​p​a​c​e​ ​w​i​t​h​ ​l​i​v​e​ ​m​e​t​r​i​c​s​,​ ​f​i​l​e​s​,​ ​t​e​r​m​i​n​a​l​,​ ​c​o​n​t​a​i​n​e​r​s​,​ ​p​r​o​c​e​s​s​e​s​,​ ​a​n​d​ ​s​e​r​v​i​c​e​s​.
+			 */
+			description: string
+		}
+		apps: {
+			/**
+			 * O​n​e​-​C​l​i​c​k​ ​A​p​p​ ​S​t​o​r​e
+			 */
+			title: string
+			/**
+			 * D​e​p​l​o​y​ ​4​0​+​ ​s​e​l​f​-​h​o​s​t​e​d​ ​s​t​a​c​k​s​ ​v​i​a​ ​D​o​c​k​e​r​ ​C​o​m​p​o​s​e​—​I​m​m​i​c​h​,​ ​J​e​l​l​y​f​i​n​,​ ​G​i​t​e​a​,​ ​H​o​m​e​ ​A​s​s​i​s​t​a​n​t​—​p​l​u​s​ ​T​a​i​l​s​c​a​l​e​,​ ​r​e​v​e​r​s​e​ ​p​r​o​x​i​e​s​,​ ​a​n​d​ ​l​o​c​a​l​ ​L​L​M​s​.
+			 */
+			description: string
+		}
+		storage: {
+			/**
+			 * S​t​o​r​a​g​e​ ​&​ ​N​A​S​ ​S​h​a​r​i​n​g
+			 */
+			title: string
+			/**
+			 * P​a​r​t​i​t​i​o​n​ ​a​n​d​ ​m​o​u​n​t​ ​d​i​s​k​s​,​ ​b​u​i​l​d​ ​R​A​I​D​ ​a​r​r​a​y​s​ ​a​n​d​ ​Z​F​S​ ​p​o​o​l​s​,​ ​m​o​n​i​t​o​r​ ​S​.​M​.​A​.​R​.​T​.​,​ ​a​n​d​ ​s​h​a​r​e​ ​f​o​l​d​e​r​s​ ​o​v​e​r​ ​S​M​B​ ​a​n​d​ ​N​F​S​.
+			 */
+			description: string
+		}
+		agent: {
+			/**
+			 * A​u​t​o​n​o​m​o​u​s​ ​A​g​e​n​t​ ​M​o​d​e
+			 */
+			title: string
+			/**
+			 * A​s​s​i​g​n​ ​t​a​s​k​s​ ​t​o​ ​a​n​ ​A​I​ ​a​g​e​n​t​ ​t​h​a​t​ ​p​l​a​n​s​ ​s​t​e​p​s​,​ ​a​s​k​s​ ​b​e​f​o​r​e​ ​r​i​s​k​y​ ​c​o​m​m​a​n​d​s​,​ ​g​a​t​e​s​ ​s​u​d​o​ ​b​e​h​i​n​d​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l​,​ ​a​n​d​ ​t​a​l​k​s​ ​t​o​ ​a​p​p​s​ ​v​i​a​ ​M​C​P​.
+			 */
+			description: string
+		}
+		alerts: {
+			/**
+			 * M​u​l​t​i​-​C​h​a​n​n​e​l​ ​A​l​e​r​t​s
+			 */
+			title: string
+			/**
+			 * P​u​s​h​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​d​i​s​k​,​ ​a​n​d​ ​s​e​r​v​i​c​e​ ​a​l​e​r​t​s​ ​t​o​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​,​ ​T​e​l​e​g​r​a​m​,​ ​D​i​s​c​o​r​d​,​ ​n​t​f​y​,​ ​B​a​r​k​,​ ​S​e​r​v​e​r​C​h​a​n​,​ ​e​m​a​i​l​,​ ​o​r​ ​w​e​b​h​o​o​k​s​.
+			 */
+			description: string
+		}
+		backups: {
+			/**
+			 * E​n​c​r​y​p​t​e​d​ ​B​a​c​k​u​p​s
+			 */
+			title: string
+			/**
+			 * B​a​c​k​ ​u​p​ ​s​e​t​t​i​n​g​s​ ​t​o​ ​W​e​b​D​A​V​ ​w​i​t​h​ ​a​g​e​ ​e​n​c​r​y​p​t​i​o​n​,​ ​a​n​d​ ​s​c​h​e​d​u​l​e​ ​a​u​t​o​m​a​t​e​d​ ​c​o​n​t​a​i​n​e​r​ ​v​o​l​u​m​e​ ​s​n​a​p​s​h​o​t​s​ ​t​o​ ​l​o​c​a​l​ ​o​r​ ​e​x​t​e​r​n​a​l​ ​d​i​s​k​s​.
+			 */
+			description: string
+		}
+		security: {
+			/**
+			 * A​u​d​i​t​e​d​ ​&​ ​E​n​c​r​y​p​t​e​d
+			 */
+			title: string
+			/**
+			 * S​i​n​g​l​e​-​a​c​c​o​u​n​t​ ​a​u​t​h​ ​w​i​t​h​ ​H​T​T​P​S​ ​e​n​f​o​r​c​e​m​e​n​t​ ​f​o​r​ ​m​u​t​a​t​i​o​n​s​,​ ​e​n​c​r​y​p​t​e​d​ ​c​r​e​d​e​n​t​i​a​l​s​ ​a​t​ ​r​e​s​t​,​ ​a​n​d​ ​f​u​l​l​ ​a​u​d​i​t​ ​l​o​g​s​ ​f​o​r​ ​s​i​g​n​-​i​n​s​ ​a​n​d​ ​r​o​o​t​ ​a​c​t​i​o​n​s​.
+			 */
+			description: string
+		}
+		app: {
+			/**
+			 * S​e​a​m​l​e​s​s​ ​A​p​p​ ​S​y​n​c
+			 */
+			title: string
+			/**
+			 * C​o​n​n​e​c​t​ ​f​r​o​m​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​ ​o​v​e​r​ ​H​T​T​P​S​ ​a​l​o​n​g​s​i​d​e​ ​o​r​ ​i​n​s​t​e​a​d​ ​o​f​ ​S​S​H​ ​f​o​r​ ​h​i​s​t​o​r​i​c​a​l​ ​c​h​a​r​t​s​,​ ​p​u​s​h​ ​a​l​e​r​t​s​,​ ​A​g​e​n​t​ ​t​a​s​k​s​,​ ​a​n​d​ ​w​e​b​ ​a​p​p​s​.
+			 */
+			description: string
+		}
+		/**
+		 * T​w​o​ ​w​a​y​s​ ​t​o​ ​d​e​p​l​o​y
+		 */
+		installTitle: string
+		/**
+		 * I​n​s​t​a​l​l​ ​a​s​ ​a​ ​s​e​r​v​i​c​e​ ​o​n​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​L​i​n​u​x​ ​d​i​s​t​r​o​,​ ​o​r​ ​b​o​o​t​ ​t​h​e​ ​d​e​d​i​c​a​t​e​d​ ​a​p​p​l​i​a​n​c​e​ ​i​m​a​g​e​.
+		 */
+		installSubtitle: string
+		/**
+		 * O​n​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​L​i​n​u​x​ ​s​e​r​v​e​r
+		 */
+		linuxTitle: string
+		/**
+		 * #​ ​s​y​s​t​e​m​d​:​ ​u​s​e​r​ ​s​e​r​v​i​c​e​ ​u​n​d​e​r​ ​y​o​u​r​ ​o​w​n​ ​a​c​c​o​u​n​t
+		 */
+		promptUser: string
+		/**
+		 * #​ ​O​p​e​n​R​C​ ​(​A​l​p​i​n​e​)​:​ ​r​e​g​i​s​t​e​r​e​d​ ​b​y​ ​r​o​o​t​,​ ​r​u​n​s​ ​a​s​ ​y​o​u​r​ ​u​s​e​r
+		 */
+		promptOpenrc: string
+		/**
+		 * #​ ​s​y​s​t​e​m​d​ ​o​r​ ​O​p​e​n​R​C​:​ ​s​y​s​t​e​m​-​w​i​d​e​ ​s​e​r​v​i​c​e​ ​a​s​ ​r​o​o​t
+		 */
+		promptRoot: string
+		/**
+		 * P​e​r​m​i​s​s​i​o​n​s​ ​m​a​t​c​h​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​i​t​ ​r​u​n​s​ ​u​n​d​e​r​.​ ​R​e​p​l​a​c​e​ ​i​n​s​t​a​l​l​ ​w​i​t​h​ ​u​p​g​r​a​d​e​ ​o​r​ ​u​n​i​n​s​t​a​l​l​ ​a​n​y​t​i​m​e​.
+		 */
+		linuxNote: string
+		/**
+		 * C​o​p​y​ ​i​n​s​t​a​l​l​ ​c​o​m​m​a​n​d
+		 */
+		copy: string
+		/**
+		 * B​o​o​t​ ​a​s​ ​a​ ​d​e​d​i​c​a​t​e​d​ ​O​S
+		 */
+		imageTitle: string
+		/**
+		 * F​l​a​s​h​ ​a​n​ ​i​m​a​g​e​ ​t​o​ ​U​S​B​ ​(​d​d​,​ ​E​t​c​h​e​r​,​ ​V​e​n​t​o​y​)​ ​o​r​ ​a​t​t​a​c​h​ ​i​t​ ​t​o​ ​a​ ​V​M​.
+		 */
+		stepWrite: string
+		/**
+		 * B​o​o​t​ ​t​h​e​ ​m​a​c​h​i​n​e​—​t​h​e​ ​c​o​n​s​o​l​e​ ​p​r​i​n​t​s​ ​t​h​e​ ​w​e​b​ ​U​R​L​,​ ​T​L​S​ ​f​i​n​g​e​r​p​r​i​n​t​,​ ​a​n​d​ ​i​n​i​t​i​a​l​ ​p​a​s​s​w​o​r​d​ ​l​o​c​a​t​i​o​n​.
+		 */
+		stepBoot: string
+		/**
+		 * R​u​n​ ​s​b​m​-​i​n​s​t​a​l​l​ ​<​d​i​s​k​>​ ​t​o​ ​i​n​s​t​a​l​l​ ​p​e​r​m​a​n​e​n​t​l​y​ ​t​o​ ​d​i​s​k​.
+		 */
+		stepInstall: string
+		/**
+		 * B​e​f​o​r​e​ ​d​i​s​k​ ​i​n​s​t​a​l​l​a​t​i​o​n​,​ ​s​b​O​S​ ​r​u​n​s​ ​i​n​ ​l​i​v​e​ ​R​A​M​ ​m​o​d​e​—​c​h​a​n​g​e​s​ ​r​e​s​e​t​ ​o​n​ ​r​e​b​o​o​t​.
+		 */
+		liveNote: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​i​s​ ​f​r​e​e​ ​a​n​d​ ​o​p​e​n​ ​s​o​u​r​c​e​ ​u​n​d​e​r​ ​A​G​P​L​v​3​.
+		 */
+		note: string
+		/**
+		 * M​o​n​i​t​o​r​ ​d​o​c​s
+		 */
+		docs: string
+		/**
+		 * G​e​t​ ​t​h​e​ ​a​p​p
+		 */
+		appAction: string
+	}
 	themes: {
 		/**
 		 * M​a​k​e​ ​i​t​ ​y​o​u​r​s​.
 		 */
 		title: string
 		/**
-		 * O​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​t​h​e​ ​s​a​m​e​ ​o​n​e​s​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​f​f​e​r​s​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​a​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 * P​r​e​v​i​e​w​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​l​i​v​e​ ​b​e​l​o​w​.​ ​I​n​s​t​a​l​l​ ​i​n​ ​o​n​e​ ​t​a​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​,​ ​o​r​ ​i​m​p​o​r​t​ ​a​ ​.​f​s​b​t​ ​p​a​c​k​a​g​e​.
 		 */
 		subtitle: string
 		/**
-		 * N​o​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​y​e​t​.​ ​A​ ​t​h​e​m​e​ ​i​s​ ​a​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​a​ ​m​a​n​i​f​e​s​t​.​t​o​m​l​:​ ​c​o​l​o​r​s​ ​f​o​r​ ​l​i​g​h​t​ ​a​n​d​ ​d​a​r​k​,​ ​c​o​m​p​o​n​e​n​t​ ​s​t​y​l​e​s​,​ ​i​c​o​n​s​,​ ​a​ ​b​a​c​k​g​r​o​u​n​d​ ​a​n​d​ ​a​ ​s​p​l​a​s​h​.​ ​T​h​e​ ​g​u​i​d​e​ ​c​o​v​e​r​s​ ​m​a​k​i​n​g​ ​o​n​e​ ​a​n​d​ ​g​e​t​t​i​n​g​ ​i​t​ ​i​n​t​o​ ​t​h​e​ ​s​t​o​r​e​.
+		 * N​o​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​y​e​t​.​ ​C​h​e​c​k​ ​t​h​e​ ​t​h​e​m​e​ ​a​u​t​h​o​r​i​n​g​ ​g​u​i​d​e​ ​t​o​ ​b​u​i​l​d​ ​a​n​d​ ​s​u​b​m​i​t​ ​y​o​u​r​ ​o​w​n​.
 		 */
 		empty: string
 		/**
-		 * T​h​e​ ​a​p​p​ ​c​h​e​c​k​s​ ​e​v​e​r​y​ ​s​t​o​r​e​ ​p​a​c​k​a​g​e​ ​a​g​a​i​n​s​t​ ​i​t​s​ ​S​H​A​-​2​5​6​ ​b​e​f​o​r​e​ ​i​n​s​t​a​l​l​i​n​g​ ​i​t​.
+		 * E​v​e​r​y​ ​s​t​o​r​e​ ​p​a​c​k​a​g​e​ ​i​s​ ​v​e​r​i​f​i​e​d​ ​a​g​a​i​n​s​t​ ​i​t​s​ ​S​H​A​-​2​5​6​ ​c​h​e​c​k​s​u​m​ ​b​e​f​o​r​e​ ​i​n​s​t​a​l​l​a​t​i​o​n​.
 		 */
 		note: string
 		/**
-		 * M​a​k​e​ ​a​ ​t​h​e​m​e
+		 * T​h​e​m​e​ ​g​u​i​d​e
 		 */
 		authoring: string
 		/**
@@ -317,19 +559,19 @@ type RootTranslation = {
 		 */
 		sortUpdated: string
 		/**
-		 * N​o​ ​t​h​e​m​e​ ​m​a​t​c​h​e​s​.​ ​T​r​y​ ​a​n​o​t​h​e​r​ ​n​a​m​e​ ​o​r​ ​m​o​d​e​.
+		 * N​o​ ​m​a​t​c​h​i​n​g​ ​t​h​e​m​e​s​.​ ​T​r​y​ ​a​n​o​t​h​e​r​ ​k​e​y​w​o​r​d​ ​o​r​ ​m​o​d​e​.
 		 */
 		noMatch: string
 		/**
-		 * T​h​e​m​e​ ​s​t​o​r​e
+		 * T​h​e​m​e​ ​S​t​o​r​e
 		 */
 		storeTitle: string
 		/**
-		 * E​v​e​r​y​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​t​h​e​m​e​,​ ​d​r​a​w​n​ ​t​h​e​ ​w​a​y​ ​t​h​e​ ​a​p​p​ ​d​r​a​w​s​ ​i​t​:​ ​i​t​s​ ​c​o​l​o​r​s​,​ ​c​o​m​p​o​n​e​n​t​s​,​ ​i​c​o​n​s​ ​a​n​d​ ​s​p​l​a​s​h​.​ ​I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​.
+		 * E​x​p​l​o​r​e​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​t​h​e​m​e​s​ ​a​n​d​ ​i​c​o​n​ ​p​a​c​k​s​ ​r​e​n​d​e​r​e​d​ ​l​i​v​e​ ​w​i​t​h​ ​t​h​e​i​r​ ​r​e​a​l​ ​p​a​l​e​t​t​e​s​,​ ​c​o​m​p​o​n​e​n​t​s​,​ ​a​n​d​ ​i​c​o​n​s​.
 		 */
 		storeSubtitle: string
 		/**
-		 * O​p​e​n​ ​t​h​e​ ​t​h​e​m​e​ ​s​t​o​r​e
+		 * B​r​o​w​s​e​ ​T​h​e​m​e​ ​S​t​o​r​e
 		 */
 		browse: string
 		/**
@@ -345,15 +587,15 @@ type RootTranslation = {
 		 */
 		icons: string
 		/**
-		 * T​a​b​s​,​ ​a​n​d​ ​w​h​e​n​ ​s​e​l​e​c​t​e​d
+		 * T​a​b​ ​b​a​r​ ​&​ ​a​c​t​i​v​e​ ​s​t​a​t​e​s
 		 */
 		tabIcons: string
 		/**
-		 * S​y​m​b​o​l​s
+		 * N​a​v​i​g​a​t​i​o​n​ ​s​y​m​b​o​l​s
 		 */
 		navIcons: string
 		/**
-		 * P​a​l​e​t​t​e
+		 * C​o​l​o​r​ ​P​a​l​e​t​t​e
 		 */
 		palette: string
 		/**
@@ -369,7 +611,7 @@ type RootTranslation = {
 		 */
 		install: string
 		/**
-		 * I​n​ ​t​h​e​ ​a​p​p​,​ ​o​p​e​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​a​n​d​ ​p​i​c​k​ ​{​n​a​m​e​}​.​ ​O​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 * I​n​ ​S​e​r​v​e​r​B​o​x​,​ ​g​o​ ​t​o​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​ ​a​n​d​ ​p​i​c​k​ ​{​n​a​m​e​}​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​.​f​s​b​t​ ​f​i​l​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​T​h​e​m​e​ ​→​ ​F​i​l​e​.
 		 * @param {unknown} name
 		 */
 		installSteps: RequiredParams<'name'>
@@ -390,33 +632,29 @@ type RootTranslation = {
 		 */
 		disabled: string
 		/**
-		 * T​h​i​s​ ​t​h​e​m​e​'​s​ ​p​r​e​v​i​e​w​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+		 * C​o​u​l​d​ ​n​o​t​ ​l​o​a​d​ ​t​h​e​m​e​ ​p​r​e​v​i​e​w​.
 		 */
 		loadFailed: string
 		/**
-		 * T​r​y​ ​a​g​a​i​n
+		 * R​e​t​r​y
 		 */
 		retry: string
 		/**
-		 * P​r​e​v​i​e​w​s​ ​s​h​o​w​ ​t​h​e​ ​t​h​e​m​e​'​s​ ​i​c​o​n​s​ ​a​n​d​ ​c​o​l​o​r​s​;​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​ ​i​s​ ​i​l​l​u​s​t​r​a​t​i​v​e​.
-		 */
-		previewNote: string
-		/**
-		 * I​c​o​n​ ​p​a​c​k​s
+		 * I​c​o​n​ ​P​a​c​k​s
 		 */
 		iconPacks: string
 		/**
-		 * I​c​o​n​s​ ​c​h​o​s​e​n​ ​a​p​a​r​t​ ​f​r​o​m​ ​t​h​e​ ​t​h​e​m​e​ ​a​n​d​ ​d​r​a​w​n​ ​o​v​e​r​ ​w​h​i​c​h​e​v​e​r​ ​o​n​e​ ​i​s​ ​i​n​ ​u​s​e​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​→​ ​I​c​o​n​ ​p​a​c​k​s​.
+		 * M​i​x​ ​a​n​d​ ​m​a​t​c​h​ ​i​c​o​n​ ​p​a​c​k​s​ ​w​i​t​h​ ​a​n​y​ ​t​h​e​m​e​ ​v​i​a​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​ ​→​ ​I​c​o​n​ ​P​a​c​k​s​.
 		 */
 		iconPacksSubtitle: string
 	}
 	plugins: {
 		/**
-		 * P​l​u​g​i​n​s​.
+		 * E​x​t​e​n​d​ ​S​e​r​v​e​r​B​o​x
 		 */
 		title: string
 		/**
-		 * O​f​f​i​c​i​a​l​ ​p​l​u​g​i​n​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​p​l​u​g​i​n​ ​s​t​o​r​e​.
+		 * A​d​d​ ​n​e​w​ ​c​a​p​a​b​i​l​i​t​i​e​s​ ​w​i​t​h​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​p​l​u​g​i​n​s​.
 		 */
 		subtitle: string
 		/**
@@ -430,43 +668,143 @@ type RootTranslation = {
 	}
 	download: {
 		/**
-		 * E​v​e​r​y​ ​p​l​a​t​f​o​r​m​,​ ​e​v​e​r​y​ ​s​o​u​r​c​e​.
+		 * N​a​t​i​v​e​ ​o​n​ ​e​v​e​r​y​ ​p​l​a​t​f​o​r​m​.
 		 */
 		title: string
 		/**
-		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​c​o​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​o​r​ ​a​s​ ​a​n​ ​u​n​s​i​g​n​e​d​ ​.​i​p​a​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​t​h​a​t​ ​y​o​u​ ​s​i​g​n​ ​y​o​u​r​s​e​l​f​.​ ​m​a​c​O​S​ ​b​u​i​l​d​s​ ​f​o​r​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​a​n​d​ ​I​n​t​e​l​ ​a​r​e​ ​o​n​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​a​n​d​ ​H​o​m​e​b​r​e​w​.​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​.
+		 * P​i​c​k​ ​y​o​u​r​ ​p​l​a​t​f​o​r​m​ ​a​n​d​ ​p​r​e​f​e​r​r​e​d​ ​p​a​c​k​a​g​e​ ​s​o​u​r​c​e​ ​b​e​l​o​w​.
 		 */
 		subtitle: string
 		/**
-		 * I​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​ ​c​o​p​i​e​d
+		 * C​o​m​m​a​n​d​ ​c​o​p​i​e​d
 		 */
 		copied: string
 		/**
-		 * C​o​p​y​ ​t​h​i​s​ ​i​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​:
+		 * C​o​p​y​ ​i​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​:
 		 */
 		copyPrompt: string
 		/**
-		 * O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
+		 * F​o​r​ ​p​u​s​h​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​,​ ​h​o​m​e​ ​s​c​r​e​e​n​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​h​i​s​t​o​r​i​c​a​l​ ​c​h​a​r​t​s​ ​w​i​t​h​o​u​t​ ​k​e​e​p​i​n​g​ ​S​S​H​ ​o​p​e​n​,​ ​p​a​i​r​ ​t​h​e​ ​a​p​p​ ​w​i​t​h​ ​S​e​r​v​e​r​B​o​x​ ​O​S​.
 		 */
 		note: string
 	}
 	cta: {
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​i​s​ ​f​r​e​e​ ​a​n​d​ ​o​p​e​n​ ​s​o​u​r​c​e​ ​u​n​d​e​r​ ​A​G​P​L​v​3​.
+		 * F​r​e​e​ ​&​ ​o​p​e​n​ ​s​o​u​r​c​e​ ​u​n​d​e​r​ ​A​G​P​L​v​3​.
 		 */
 		title: string
 		/**
-		 * I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​F​-​D​r​o​i​d​ ​o​r​ ​O​p​e​n​A​P​K​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​s​o​u​r​c​e​s​ ​y​o​u​ ​t​r​u​s​t​.
+		 * I​n​s​p​e​c​t​ ​t​h​e​ ​c​o​d​e​,​ ​c​o​n​t​r​i​b​u​t​e​ ​o​n​ ​G​i​t​H​u​b​,​ ​o​r​ ​g​r​a​b​ ​t​h​e​ ​l​a​t​e​s​t​ ​r​e​l​e​a​s​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.
 		 */
 		subtitle: string
 		/**
-		 * O​p​e​n​ ​A​p​p​ ​S​t​o​r​e
+		 * A​p​p​ ​S​t​o​r​e
 		 */
 		appStoreAction: string
 		/**
-		 * D​o​w​n​l​o​a​d​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s
+		 * G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s
 		 */
 		githubAction: string
+	}
+	pride: {
+		/**
+		 * L​G​B​T​Q​+​ ​F​r​i​e​n​d​l​y
+		 */
+		badge: string
+		/**
+		 * B​u​i​l​t​ ​w​i​t​h​ ​P​r​i​d​e​.
+		 */
+		title: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​p​r​o​u​d​l​y​ ​s​u​p​p​o​r​t​s​ ​t​h​e​ ​L​G​B​T​Q​+​ ​c​o​m​m​u​n​i​t​y​.​ ​T​h​e​ ​o​f​f​i​c​i​a​l​ ​P​r​i​d​e​ ​t​h​e​m​e​ ​s​h​i​p​s​ ​i​n​ ​t​h​e​ ​T​h​e​m​e​ ​S​t​o​r​e​ ​w​i​t​h​ ​R​a​i​n​b​o​w​,​ ​T​r​a​n​s​,​ ​a​n​d​ ​N​o​n​b​i​n​a​r​y​ ​f​l​a​g​ ​v​a​r​i​a​n​t​s​.
+		 */
+		description: string
+		/**
+		 * R​a​i​n​b​o​w
+		 */
+		rainbow: string
+		/**
+		 * T​r​a​n​s
+		 */
+		trans: string
+		/**
+		 * N​o​n​b​i​n​a​r​y
+		 */
+		nonbinary: string
+	}
+	otherApps: {
+		/**
+		 * M​o​r​e​ ​f​r​o​m​ ​l​o​l​l​i​p​o​p​k​i​t​.
+		 */
+		title: string
+		/**
+		 * C​o​m​p​a​n​i​o​n​ ​c​l​o​u​d​ ​s​e​r​v​i​c​e​s​ ​a​n​d​ ​n​a​t​i​v​e​ ​a​p​p​s​ ​b​u​i​l​t​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​f​o​c​u​s​ ​o​n​ ​s​p​e​e​d​ ​a​n​d​ ​c​l​e​a​n​ ​d​e​s​i​g​n​.
+		 */
+		subtitle: string
+		/**
+		 * S​e​r​v​i​c​e​s
+		 */
+		servicesHeading: string
+		/**
+		 * A​p​p​s
+		 */
+		appsHeading: string
+		llmapi: {
+			/**
+			 * L​L​M​ ​A​P​I
+			 */
+			title: string
+			/**
+			 * U​n​i​f​i​e​d​ ​A​P​I​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​f​r​o​n​t​i​e​r​ ​L​L​M​s​—​p​l​u​g​ ​s​t​r​a​i​g​h​t​ ​i​n​t​o​ ​S​e​r​v​e​r​B​o​x​ ​A​I​ ​A​g​e​n​t​,​ ​G​P​T​ ​B​o​x​,​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​t​o​o​l​s​.
+			 */
+			description: string
+		}
+		uptimer: {
+			/**
+			 * U​p​t​i​m​e​r
+			 */
+			title: string
+			/**
+			 * L​i​g​h​t​w​e​i​g​h​t​ ​u​p​t​i​m​e​ ​m​o​n​i​t​o​r​i​n​g​ ​a​n​d​ ​s​t​a​t​u​s​ ​p​a​g​e​s​ ​f​o​r​ ​y​o​u​r​ ​w​e​b​s​i​t​e​s​,​ ​A​P​I​s​,​ ​a​n​d​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​i​n​s​t​a​n​t​ ​a​l​e​r​t​s​.
+			 */
+			description: string
+		}
+		llmbox: {
+			/**
+			 * G​P​T​ ​B​o​x
+			 */
+			title: string
+			/**
+			 * i​O​S​ ​·​ ​A​n​d​r​o​i​d​ ​·​ ​m​a​c​O​S​ ​·​ ​L​i​n​u​x​ ​·​ ​W​i​n​d​o​w​s
+			 */
+			tag: string
+			/**
+			 * A​ ​f​a​s​t​,​ ​n​a​t​i​v​e​ ​t​h​i​r​d​-​p​a​r​t​y​ ​c​l​i​e​n​t​ ​f​o​r​ ​O​p​e​n​A​I​ ​a​n​d​ ​c​o​m​p​a​t​i​b​l​e​ ​L​L​M​ ​A​P​I​s​,​ ​f​e​a​t​u​r​i​n​g​ ​l​o​c​a​l​-​f​i​r​s​t​ ​c​h​a​t​ ​h​i​s​t​o​r​y​,​ ​t​o​o​l​ ​c​a​l​l​i​n​g​,​ ​a​n​d​ ​c​u​s​t​o​m​ ​e​n​d​p​o​i​n​t​s​.
+			 */
+			description: string
+			/**
+			 * G​i​t​H​u​b
+			 */
+			action: string
+		}
+		mfuse: {
+			/**
+			 * M​F​u​s​e
+			 */
+			title: string
+			/**
+			 * m​a​c​O​S​ ​·​ ​F​i​l​e​ ​P​r​o​v​i​d​e​r
+			 */
+			tag: string
+			/**
+			 * M​o​u​n​t​ ​S​F​T​P​,​ ​S​3​,​ ​W​e​b​D​A​V​,​ ​a​n​d​ ​r​e​m​o​t​e​ ​s​t​o​r​a​g​e​ ​d​i​r​e​c​t​l​y​ ​i​n​s​i​d​e​ ​m​a​c​O​S​ ​F​i​n​d​e​r​ ​t​h​r​o​u​g​h​ ​A​p​p​l​e​’​s​ ​n​a​t​i​v​e​ ​F​i​l​e​ ​P​r​o​v​i​d​e​r​—​n​o​ ​k​e​r​n​e​l​ ​e​x​t​e​n​s​i​o​n​s​ ​r​e​q​u​i​r​e​d​.
+			 */
+			description: string
+			/**
+			 * m​f​u​s​e​.​l​o​l​l​i​p​o​p​k​i​t​.​c​o​m
+			 */
+			action: string
+		}
 	}
 	footer: {
 		/**
@@ -491,11 +829,11 @@ export type TranslationFunctions = {
 		 */
 		lang: () => LocalizedString
 		/**
-		 * ServerBox — Server status, SSH, and operations in one Flutter app
+		 * ServerBox — Server monitoring, SSH, and operations in one app
 		 */
 		title: () => LocalizedString
 		/**
-		 * ServerBox monitors Linux, Unix, and Windows servers with status charts, SSH terminal, SFTP, Docker, process, systemd, S.M.A.R.T, push, widgets, and watchOS support.
+		 * Monitor and manage Linux, Unix, and Windows servers with live charts, a touch-ready SSH terminal, SFTP, Docker, systemd, S.M.A.R.T., widgets, and AI-assisted operations.
 		 */
 		description: () => LocalizedString
 	}
@@ -521,9 +859,25 @@ export type TranslationFunctions = {
 		 */
 		themes: () => LocalizedString
 		/**
+		 * ServerBox OS
+		 */
+		os: () => LocalizedString
+		/**
+		 * Beta
+		 */
+		beta: () => LocalizedString
+		/**
 		 * Plugins
 		 */
 		plugins: () => LocalizedString
+		/**
+		 * More
+		 */
+		otherApps: () => LocalizedString
+		/**
+		 * Sign in
+		 */
+		signIn: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -531,15 +885,15 @@ export type TranslationFunctions = {
 	}
 	hero: {
 		/**
-		 * Server status,
+		 * Every server,
 		 */
 		titlePrefix: () => LocalizedString
 		/**
-		 * right in your pocket.
+		 * in your pocket.
 		 */
 		titleSuffix: () => LocalizedString
 		/**
-		 * ServerBox brings charts, SSH terminal, SFTP, Docker, process control, systemd, S.M.A.R.T, push alerts, widgets, and watchOS support into one Flutter app.
+		 * Live telemetry, a touch-first SSH terminal, SFTP, containers, and AI-assisted ops—crafted into one fast, native workspace for mobile and desktop.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -575,30 +929,30 @@ export type TranslationFunctions = {
 	}
 	features: {
 		/**
-		 * One compact workspace for everyday server maintenance.
+		 * Built for real-world ops.
 		 */
 		title: () => LocalizedString
 		/**
-		 * A focused operational surface with no decorative filler — every block maps to a real maintenance workflow.
+		 * Skip the laptop for routine checks and urgent fixes—every view is designed for fast, focused action.
 		 */
 		subtitle: () => LocalizedString
 		list: {
 			/**
-			 * Server List
+			 * Server Overview
 			 */
 			title: () => LocalizedString
 			/**
-			 * See each server’s connection status, CPU, memory, disk and network at a glance. Filter by tag or find servers on the globe.
+			 * Spot CPU, memory, disk, and network load across all nodes at a glance. Filter by tag or visualize nodes on an interactive 3D globe.
 			 */
 			description: () => LocalizedString
 		}
 		charts: {
 			/**
-			 * Status Charts
+			 * Live Telemetry
 			 */
 			title: () => LocalizedString
 			/**
-			 * Live charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs and batteries. Switch to historical data or open a metric for details.
+			 * Real-time and historical charts for CPU, memory, swap, disk I/O, network, GPUs, sensors, and S.M.A.R.T. health.
 			 */
 			description: () => LocalizedString
 		}
@@ -608,37 +962,37 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * A full terminal with virtual keys on phones, ready for htop, vim and more. Connect directly, through a jump host or with a ProxyCommand.
+			 * Built for touch with custom virtual keys for vim, tmux, and htop. Supports jump hosts, Agent forwarding, and ProxyCommand.
 			 */
 			description: () => LocalizedString
 		}
 		files: {
 			/**
-			 * Files over SFTP
+			 * SFTP File Manager
 			 */
 			title: () => LocalizedString
 			/**
-			 * Browse, upload, download and edit files in place. Markdown files open in a rendered preview.
+			 * Browse, transfer, and edit remote configs in place with syntax highlighting and live Markdown previews.
 			 */
 			description: () => LocalizedString
 		}
 		containers: {
 			/**
-			 * Docker and Podman
+			 * Docker & Podman
 			 */
 			title: () => LocalizedString
 			/**
-			 * View containers grouped by Compose project, with CPU, memory and network usage. Start, stop, restart or remove containers, read their logs, or open a shell inside them. Images and settings have their own tabs.
+			 * Track containers grouped by Compose project. Inspect live resource usage, stream logs, open a shell, or restart services in one tap.
 			 */
 			description: () => LocalizedString
 		}
 		processes: {
 			/**
-			 * Processes
+			 * Process Inspector
 			 */
 			title: () => LocalizedString
 			/**
-			 * Every process with its CPU and memory, sorted as you like and searchable by name, user or PID. Stop one from the list.
+			 * Sort by CPU or memory, filter by user, name, or PID, and terminate runaway processes instantly.
 			 */
 			description: () => LocalizedString
 		}
@@ -648,37 +1002,37 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Failed units first, then everything else. Restart a unit or read its logs in one tap.
+			 * Failed units are automatically pinned to the top so you can inspect journal logs and restart services immediately.
 			 */
 			description: () => LocalizedString
 		}
 		users: {
 			/**
-			 * Users and Groups
+			 * Users & Groups
 			 */
 			title: () => LocalizedString
 			/**
-			 * View system accounts with login shells and sudo access highlighted. Add or delete users, and add, edit or delete groups.
+			 * Audit system accounts, login shells, and sudo privileges. Create or remove users and groups without memorizing flags.
 			 */
 			description: () => LocalizedString
 		}
 		agent: {
 			/**
-			 * AI Agent
+			 * AI Ops Agent
 			 */
 			title: () => LocalizedString
 			/**
-			 * An assistant inside the app that knows your servers, using the model providers, MCP servers and skills you choose.
+			 * Delegate diagnostics and routine maintenance to an integrated AI assistant connected to your own LLM providers, MCP servers, and skills.
 			 */
 			description: () => LocalizedString
 		}
 		bench: {
 			/**
-			 * Benchmark
+			 * One-Tap Benchmark
 			 */
 			title: () => LocalizedString
 			/**
-			 * Run Yet Another Bench Script to test a server’s disk, network and CPU, then keep the results. The More menu also opens snippets, remote desktop and virtualization.
+			 * Run YABS to benchmark disk, network, and CPU performance and archive results alongside snippets and remote desktop tools.
 			 */
 			description: () => LocalizedString
 		}
@@ -688,7 +1042,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Virtual machines and containers on libvirt and Proxmox VE: start and stop them, change vCPUs, memory and disks, and open their consoles.
+			 * Control VMs and LXC containers on Proxmox VE and libvirt. Toggle power states, tune vCPU and memory, and open consoles.
 			 */
 			description: () => LocalizedString
 		}
@@ -698,18 +1052,18 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Install official themes with their own colors, backgrounds and splash screens from inside the app. You can create your own themes too.
+			 * Customize palettes, component styles, icons, and splash screens from the built-in store—or craft your own.
 			 */
 			description: () => LocalizedString
 		}
 	}
 	capabilities: {
 		/**
-		 * All the tools. One app.
+		 * One native workflow.
 		 */
 		title: () => LocalizedString
 		/**
-		 * ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.
+		 * No juggling separate SSH clients, SFTP tools, and monitoring dashboards.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -721,25 +1075,251 @@ export type TranslationFunctions = {
 		 */
 		installReleasePrompt: () => LocalizedString
 	}
+	os: {
+		/**
+		 * ServerBox OS (formerly ServerBox Monitor) — The server companion for ServerBox
+		 */
+		metaTitle: () => LocalizedString
+		/**
+		 * ServerBox OS (formerly ServerBox Monitor) brings a browser desktop, 40+ one-click Docker apps, ZFS/RAID storage, AI Agent ops, alerts, and encrypted backups to your server.
+		 */
+		metaDescription: () => LocalizedString
+		/**
+		 * ServerBox OS
+		 */
+		heroTitle: () => LocalizedString
+		/**
+		 * Formerly ServerBox Monitor
+		 */
+		formerlyMonitor: () => LocalizedString
+		/**
+		 * Preview
+		 */
+		navPreview: () => LocalizedString
+		/**
+		 * Install
+		 */
+		navInstall: () => LocalizedString
+		/**
+		 * ServerBox App
+		 */
+		navApp: () => LocalizedString
+		/**
+		 * Your server, in the browser and the app.
+		 */
+		tagline: () => LocalizedString
+		/**
+		 * A single lightweight daemon that gives any Linux machine a full browser desktop, one-click self-hosted apps, and instant HTTPS sync with the ServerBox app—or boots as a complete OS.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * ServerBox OS is the upgraded ServerBox Monitor (server_box_monitor). Existing Monitor installations upgrade in-place with the same command and continue to power push alerts, home-screen widgets, watchOS, and historical charts for the ServerBox app.
+		 */
+		monitorNote: () => LocalizedString
+		/**
+		 * Explore ServerBox OS
+		 */
+		exploreAction: () => LocalizedString
+		/**
+		 * Install on Linux
+		 */
+		installAction: () => LocalizedString
+		/**
+		 * Download images
+		 */
+		images: () => LocalizedString
+		/**
+		 * Watch the tour
+		 */
+		previewAction: () => LocalizedString
+		/**
+		 * See it in action
+		 */
+		previewTitle: () => LocalizedString
+		/**
+		 * A quick look at the browser desktop, one-click apps, and AI Agent mode running on a live server.
+		 */
+		previewSubtitle: () => LocalizedString
+		/**
+		 * Play the ServerBox OS tour
+		 */
+		previewPlay: () => LocalizedString
+		/**
+		 * Watch on YouTube
+		 */
+		previewYoutube: () => LocalizedString
+		/**
+		 * Everything on the server side
+		 */
+		featuresTitle: () => LocalizedString
+		/**
+		 * One binary on the host—accessible from any browser or directly from the ServerBox app.
+		 */
+		featuresSubtitle: () => LocalizedString
+		desk: {
+			/**
+			 * Browser Desktop
+			 */
+			title: () => LocalizedString
+			/**
+			 * Open your server URL for a windowed workspace with live metrics, files, terminal, containers, processes, and services.
+			 */
+			description: () => LocalizedString
+		}
+		apps: {
+			/**
+			 * One-Click App Store
+			 */
+			title: () => LocalizedString
+			/**
+			 * Deploy 40+ self-hosted stacks via Docker Compose—Immich, Jellyfin, Gitea, Home Assistant—plus Tailscale, reverse proxies, and local LLMs.
+			 */
+			description: () => LocalizedString
+		}
+		storage: {
+			/**
+			 * Storage & NAS Sharing
+			 */
+			title: () => LocalizedString
+			/**
+			 * Partition and mount disks, build RAID arrays and ZFS pools, monitor S.M.A.R.T., and share folders over SMB and NFS.
+			 */
+			description: () => LocalizedString
+		}
+		agent: {
+			/**
+			 * Autonomous Agent Mode
+			 */
+			title: () => LocalizedString
+			/**
+			 * Assign tasks to an AI agent that plans steps, asks before risky commands, gates sudo behind your approval, and talks to apps via MCP.
+			 */
+			description: () => LocalizedString
+		}
+		alerts: {
+			/**
+			 * Multi-Channel Alerts
+			 */
+			title: () => LocalizedString
+			/**
+			 * Push CPU, memory, disk, and service alerts to the ServerBox app, Telegram, Discord, ntfy, Bark, ServerChan, email, or webhooks.
+			 */
+			description: () => LocalizedString
+		}
+		backups: {
+			/**
+			 * Encrypted Backups
+			 */
+			title: () => LocalizedString
+			/**
+			 * Back up settings to WebDAV with age encryption, and schedule automated container volume snapshots to local or external disks.
+			 */
+			description: () => LocalizedString
+		}
+		security: {
+			/**
+			 * Audited & Encrypted
+			 */
+			title: () => LocalizedString
+			/**
+			 * Single-account auth with HTTPS enforcement for mutations, encrypted credentials at rest, and full audit logs for sign-ins and root actions.
+			 */
+			description: () => LocalizedString
+		}
+		app: {
+			/**
+			 * Seamless App Sync
+			 */
+			title: () => LocalizedString
+			/**
+			 * Connect from the ServerBox app over HTTPS alongside or instead of SSH for historical charts, push alerts, Agent tasks, and web apps.
+			 */
+			description: () => LocalizedString
+		}
+		/**
+		 * Two ways to deploy
+		 */
+		installTitle: () => LocalizedString
+		/**
+		 * Install as a service on your existing Linux distro, or boot the dedicated appliance image.
+		 */
+		installSubtitle: () => LocalizedString
+		/**
+		 * On an existing Linux server
+		 */
+		linuxTitle: () => LocalizedString
+		/**
+		 * # systemd: user service under your own account
+		 */
+		promptUser: () => LocalizedString
+		/**
+		 * # OpenRC (Alpine): registered by root, runs as your user
+		 */
+		promptOpenrc: () => LocalizedString
+		/**
+		 * # systemd or OpenRC: system-wide service as root
+		 */
+		promptRoot: () => LocalizedString
+		/**
+		 * Permissions match the account it runs under. Replace install with upgrade or uninstall anytime.
+		 */
+		linuxNote: () => LocalizedString
+		/**
+		 * Copy install command
+		 */
+		copy: () => LocalizedString
+		/**
+		 * Boot as a dedicated OS
+		 */
+		imageTitle: () => LocalizedString
+		/**
+		 * Flash an image to USB (dd, Etcher, Ventoy) or attach it to a VM.
+		 */
+		stepWrite: () => LocalizedString
+		/**
+		 * Boot the machine—the console prints the web URL, TLS fingerprint, and initial password location.
+		 */
+		stepBoot: () => LocalizedString
+		/**
+		 * Run sbm-install <disk> to install permanently to disk.
+		 */
+		stepInstall: () => LocalizedString
+		/**
+		 * Before disk installation, sbOS runs in live RAM mode—changes reset on reboot.
+		 */
+		liveNote: () => LocalizedString
+		/**
+		 * ServerBox OS is free and open source under AGPLv3.
+		 */
+		note: () => LocalizedString
+		/**
+		 * Monitor docs
+		 */
+		docs: () => LocalizedString
+		/**
+		 * Get the app
+		 */
+		appAction: () => LocalizedString
+	}
 	themes: {
 		/**
 		 * Make it yours.
 		 */
 		title: () => LocalizedString
 		/**
-		 * Official themes for ServerBox, the same ones the app's theme store offers. Install them in the app from Settings → Appearance → Theme store, or download a package and choose Install theme → File.
+		 * Preview official themes live below. Install in one tap from Settings → Appearance → Theme Store, or import a .fsbt package.
 		 */
 		subtitle: () => LocalizedString
 		/**
-		 * No official themes yet. A theme is a folder with a manifest.toml: colors for light and dark, component styles, icons, a background and a splash. The guide covers making one and getting it into the store.
+		 * No official themes yet. Check the theme authoring guide to build and submit your own.
 		 */
 		empty: () => LocalizedString
 		/**
-		 * The app checks every store package against its SHA-256 before installing it.
+		 * Every store package is verified against its SHA-256 checksum before installation.
 		 */
 		note: () => LocalizedString
 		/**
-		 * Make a theme
+		 * Theme guide
 		 */
 		authoring: () => LocalizedString
 		/**
@@ -783,19 +1363,19 @@ export type TranslationFunctions = {
 		 */
 		sortUpdated: () => LocalizedString
 		/**
-		 * No theme matches. Try another name or mode.
+		 * No matching themes. Try another keyword or mode.
 		 */
 		noMatch: () => LocalizedString
 		/**
-		 * Theme store
+		 * Theme Store
 		 */
 		storeTitle: () => LocalizedString
 		/**
-		 * Every official ServerBox theme, drawn the way the app draws it: its colors, components, icons and splash. Install from the app's theme store or download the package.
+		 * Explore official ServerBox themes and icon packs rendered live with their real palettes, components, and icons.
 		 */
 		storeSubtitle: () => LocalizedString
 		/**
-		 * Open the theme store
+		 * Browse Theme Store
 		 */
 		browse: () => LocalizedString
 		/**
@@ -811,15 +1391,15 @@ export type TranslationFunctions = {
 		 */
 		icons: () => LocalizedString
 		/**
-		 * Tabs, and when selected
+		 * Tab bar & active states
 		 */
 		tabIcons: () => LocalizedString
 		/**
-		 * Symbols
+		 * Navigation symbols
 		 */
 		navIcons: () => LocalizedString
 		/**
-		 * Palette
+		 * Color Palette
 		 */
 		palette: () => LocalizedString
 		/**
@@ -835,7 +1415,7 @@ export type TranslationFunctions = {
 		 */
 		install: () => LocalizedString
 		/**
-		 * In the app, open Settings → Appearance → Theme store and pick {name}. Or download the package and choose Install theme → File.
+		 * In ServerBox, go to Settings → Appearance → Theme Store and pick {name}, or download the .fsbt file and choose Install Theme → File.
 		 */
 		installSteps: (arg: { name: unknown }) => LocalizedString
 		/**
@@ -855,33 +1435,29 @@ export type TranslationFunctions = {
 		 */
 		disabled: () => LocalizedString
 		/**
-		 * This theme's preview could not be loaded.
+		 * Could not load theme preview.
 		 */
 		loadFailed: () => LocalizedString
 		/**
-		 * Try again
+		 * Retry
 		 */
 		retry: () => LocalizedString
 		/**
-		 * Previews show the theme's icons and colors; the rest of the interface is illustrative.
-		 */
-		previewNote: () => LocalizedString
-		/**
-		 * Icon packs
+		 * Icon Packs
 		 */
 		iconPacks: () => LocalizedString
 		/**
-		 * Icons chosen apart from the theme and drawn over whichever one is in use. Install them in the app from Settings → Appearance → Theme store → Icon packs.
+		 * Mix and match icon packs with any theme via Settings → Appearance → Theme Store → Icon Packs.
 		 */
 		iconPacksSubtitle: () => LocalizedString
 	}
 	plugins: {
 		/**
-		 * Plugins.
+		 * Extend ServerBox
 		 */
 		title: () => LocalizedString
 		/**
-		 * Official plugins for ServerBox, installed from the app's plugin store.
+		 * Add new capabilities with official ServerBox plugins.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -895,43 +1471,143 @@ export type TranslationFunctions = {
 	}
 	download: {
 		/**
-		 * Every platform, every source.
+		 * Native on every platform.
 		 */
 		title: () => LocalizedString
 		/**
-		 * Choose a trusted source for your device. iOS comes from the App Store, or as an unsigned .ipa from GitHub Releases that you sign yourself. macOS builds for Apple silicon and Intel are on GitHub Releases and Homebrew. Android, Linux and Windows have direct downloads.
+		 * Pick your platform and preferred package source below.
 		 */
 		subtitle: () => LocalizedString
 		/**
-		 * Install command copied
+		 * Command copied
 		 */
 		copied: () => LocalizedString
 		/**
-		 * Copy this install command:
+		 * Copy install command:
 		 */
 		copyPrompt: () => LocalizedString
 		/**
-		 * Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
+		 * For push notifications, home screen widgets, and historical charts without keeping SSH open, pair the app with ServerBox OS.
 		 */
 		note: () => LocalizedString
 	}
 	cta: {
 		/**
-		 * ServerBox is free and open source under AGPLv3.
+		 * Free & open source under AGPLv3.
 		 */
 		title: () => LocalizedString
 		/**
-		 * Install from the App Store, GitHub Releases, F-Droid or OpenAPK. Only download packages from sources you trust.
+		 * Inspect the code, contribute on GitHub, or grab the latest release for your device.
 		 */
 		subtitle: () => LocalizedString
 		/**
-		 * Open App Store
+		 * App Store
 		 */
 		appStoreAction: () => LocalizedString
 		/**
-		 * Download from GitHub Releases
+		 * GitHub Releases
 		 */
 		githubAction: () => LocalizedString
+	}
+	pride: {
+		/**
+		 * LGBTQ+ Friendly
+		 */
+		badge: () => LocalizedString
+		/**
+		 * Built with Pride.
+		 */
+		title: () => LocalizedString
+		/**
+		 * ServerBox proudly supports the LGBTQ+ community. The official Pride theme ships in the Theme Store with Rainbow, Trans, and Nonbinary flag variants.
+		 */
+		description: () => LocalizedString
+		/**
+		 * Rainbow
+		 */
+		rainbow: () => LocalizedString
+		/**
+		 * Trans
+		 */
+		trans: () => LocalizedString
+		/**
+		 * Nonbinary
+		 */
+		nonbinary: () => LocalizedString
+	}
+	otherApps: {
+		/**
+		 * More from lollipopkit.
+		 */
+		title: () => LocalizedString
+		/**
+		 * Companion cloud services and native apps built with the same focus on speed and clean design.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * Services
+		 */
+		servicesHeading: () => LocalizedString
+		/**
+		 * Apps
+		 */
+		appsHeading: () => LocalizedString
+		llmapi: {
+			/**
+			 * LLM API
+			 */
+			title: () => LocalizedString
+			/**
+			 * Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, LLMBox, or your own tools.
+			 */
+			description: () => LocalizedString
+		}
+		uptimer: {
+			/**
+			 * Uptimer
+			 */
+			title: () => LocalizedString
+			/**
+			 * Lightweight uptime monitoring and status pages for your websites, APIs, and servers with instant alerts.
+			 */
+			description: () => LocalizedString
+		}
+		llmbox: {
+			/**
+			 * LLMBox
+			 */
+			title: () => LocalizedString
+			/**
+			 * iOS · Android · macOS · Linux · Windows
+			 */
+			tag: () => LocalizedString
+			/**
+			 * A fast, native third-party client for OpenAI and compatible LLM APIs, featuring local-first chat history, tool calling, and custom endpoints.
+			 */
+			description: () => LocalizedString
+			/**
+			 * GitHub
+			 */
+			action: () => LocalizedString
+		}
+		mfuse: {
+			/**
+			 * MFuse
+			 */
+			title: () => LocalizedString
+			/**
+			 * macOS · File Provider
+			 */
+			tag: () => LocalizedString
+			/**
+			 * Mount SFTP, S3, WebDAV, and remote storage directly inside macOS Finder through Apple’s native File Provider—no kernel extensions required.
+			 */
+			description: () => LocalizedString
+			/**
+			 * mfuse.lollipopkit.com
+			 */
+			action: () => LocalizedString
+		}
 	}
 	footer: {
 		/**

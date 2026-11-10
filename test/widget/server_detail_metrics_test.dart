@@ -13,28 +13,29 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/gpu.dart';
-import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/battery.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/gpu.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/focus_parts.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -249,11 +250,11 @@ void main() {
         final status = statusOf();
         final now = DateTime.now().millisecondsSinceEpoch;
         for (var i = 0; i < 4; i++) {
-          status.history.add(
+          status.history.add(StatusHistorySample(
             timeMs: now - (4 - i) * 3000,
             cpu: 10.0 + i,
             mem: 50,
-          );
+          ));
         }
         return status;
       },
@@ -439,11 +440,11 @@ void main() {
         final status = richStatus();
         final now = DateTime.now().millisecondsSinceEpoch;
         for (var i = 0; i < 4; i++) {
-          status.history.add(
+          status.history.add(StatusHistorySample(
             timeMs: now - (4 - i) * 3000,
             cpu: 10.0 + i,
             temp: 60.0 + i,
-          );
+          ));
         }
         return status;
       },
@@ -580,7 +581,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('NVIDIA T4 · 0'), findsWidgets);
     // The readings the row had no room for.
-    expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text(app_locale.l10n.vendor), findsOneWidget);
     expect(find.text('nvidia'), findsOneWidget);
     expect(find.text('2150 / 16384 MiB'), findsWidgets);
   });
@@ -609,10 +610,10 @@ void main() {
         }
         // The buffer the live window is: what the sources append on a poll.
         for (var i = 1; i <= 3; i++) {
-          status.history.add(
+          status.history.add(StatusHistorySample(
             timeMs: i,
             diskWrites: {'sda': 1000.0 * i, 'sdb': 2000.0 * i},
-          );
+          ));
         }
         return status;
       },

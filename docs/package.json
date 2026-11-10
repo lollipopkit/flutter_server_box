@@ -5,14 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "node scripts/check-locale-parity.mjs && astro build",
+    "build": "sh ../scripts/check-lfs.sh docs && node scripts/check-locale-parity.mjs && astro build",
     "check-locale-parity": "node scripts/check-locale-parity.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.42.6",
-    "astro": "^7.4.0",
+    "@astrojs/starlight": "^0.42.8",
+    "astro": "^7.4.4",
     "sharp": "^0.35.5"
   },
   "overrides": {

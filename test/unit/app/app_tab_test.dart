@@ -4,8 +4,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
@@ -33,6 +33,7 @@ void main() {
         AppTab.remoteDesktop,
         AppTab.virt,
         AppTab.workspace,
+        AppTab.monitor,
       ]);
     });
 
@@ -52,8 +53,8 @@ void main() {
       expect(availableHomeTabs(AppTab.values), isEmpty);
     });
 
-    /// The declaration order is the `@HiveField` index and what an `int` in a
-    /// stored record resolves against, so it is not free to follow the bar.
+    /// The declaration order is what an `int` in a stored record resolves
+    /// against, so it is not free to follow the bar.
     test('is allowed to differ from the declaration order', () {
       expect(AppTab.defaultOrder, isNot(AppTab.values));
       expect(AppTab.server.index, 0);
@@ -150,6 +151,7 @@ void main() {
       AppTab.remoteDesktop,
       AppTab.virt,
       AppTab.workspace,
+      AppTab.monitor,
     ]);
   });
 
@@ -282,6 +284,7 @@ void main() {
         AppTab.benchmark,
         AppTab.virt,
         AppTab.workspace,
+        AppTab.monitor,
       });
     });
 

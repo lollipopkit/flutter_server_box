@@ -20,8 +20,8 @@ import 'package:material_ui/material_ui.dart'
     show FilledButton, LinearProgressIndicator;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/view/page/rescue_app.dart';
-import 'package:server_box/view/page/schema_too_new.dart';
+import 'package:server_box/view/page/rescue/rescue_app.dart';
+import 'package:server_box/view/page/rescue/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/deny_file_deletion.dart';

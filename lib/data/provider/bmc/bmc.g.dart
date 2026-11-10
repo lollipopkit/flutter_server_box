@@ -73,7 +73,7 @@ final class BmcNotifierProvider
   }
 }
 
-String _$bmcNotifierHash() => r'ba35d79713a63773bee3d924f1b8e99ce18fe229';
+String _$bmcNotifierHash() => r'6201dfa2676adb92304a5db904cb327bc63bfac4';
 
 /// One server's BMC.
 ///

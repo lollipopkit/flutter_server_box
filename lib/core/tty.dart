@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/core/chan.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Hands fl_tty what it reads of ServerBox. Before `Rootfs.prepare`.
 void configFlTty() {
@@ -11,6 +11,8 @@ void configFlTty() {
   FlTty.brand = 'serverbox';
   FlTty.appName = 'ServerBox';
   FlTty.onSystemsChanged = () => unawaited(MethodChans.linuxSystemsChanged());
+  // Shared with `ios/LinuxFiles`, which lists the systems in the Files app.
+  FlTty.iosAppGroup = 'group.com.lollipopkit.toolbox';
 }
 
 /// fl_tty's settings, in the keys ServerBox has always kept them under.

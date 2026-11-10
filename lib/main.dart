@@ -4,6 +4,7 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show StoreCredentials;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +16,6 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -23,29 +23,39 @@ import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/native_crypto.dart';
+import 'package:server_box/core/sync/file_log.dart';
+import 'package:server_box/core/sync/lkc.dart';
+import 'package:server_box/core/sync/lkc_log.dart';
+import 'package:server_box/core/sync/remotes.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_skills.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 import 'package:server_box/data/store/tables.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/data/terminal/session_manager.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
-import 'package:server_box/view/page/launch_failed.dart';
-import 'package:server_box/view/page/rescue_app.dart';
-import 'package:server_box/view/page/schema_too_new.dart';
-import 'package:server_box/view/page/store_key_lost.dart';
+import 'package:server_box/view/agent/host.dart';
+import 'package:server_box/view/page/rescue/launch_failed.dart';
+import 'package:server_box/view/page/rescue/rescue_app.dart';
+import 'package:server_box/view/page/rescue/schema_too_new.dart';
+import 'package:server_box/view/page/rescue/store_key_lost.dart';
+import 'package:server_box/view/widget/host_key_dialog.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
@@ -60,7 +70,7 @@ Future<void> main() async {
       // to reinstall the newer build.
       //
       // Caught here rather than made non-fatal further down, because nothing
-      // after `_doDbMigrate` may run: the refusal is only worth anything while
+      // after `_migrateStorage` may run: the refusal is only worth anything while
       // nothing has been written. See [SchemaTooNewException].
       Loggers.app.severe('Storage is newer than this build', e);
       await _showRescueWindow();
@@ -167,6 +177,13 @@ Future<void> _initApp(ProviderContainer container) async {
   // As early as there is a binding: until the first report arrives, a bar is
   // laid out as if nothing covered it.
   MethodChans.watchWindowControls();
+  // Before anything connects: a host key question with no dialog is refused.
+  installHostKeyDialog();
+  // Before anything restores or syncs, the two things a restore asks of the
+  // layers above it: providers reload what it rewrote, and theme packages kept
+  // on LK Cloud are fetched from there.
+  installStoreReload();
+  installThemeBlobs();
 
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the
@@ -193,19 +210,25 @@ Future<void> _initApp(ProviderContainer container) async {
   // `PathDir` belongs to other apps on fl_lib, and creating them here would
   // only leave empty directories beside the boxes.
   //
-  // `bakName` is versioned on purpose. Sync is a single shared file on
-  // iCloud/WebDAV/Gist, and `SyncIface._sync` uploads unconditionally after a
-  // failed merge — so a build that cannot read the remote copy overwrites it.
-  // Builds already released have no version check and cannot be given one, and
-  // the only thing that stops them is not seeing the file at all.
+  // `iosFilesApp`: the device's files are what the Files app lists under On My
+  // iPhone (`UIFileSharingEnabled`), so the app's own data is not there.
   //
-  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
-  // install can still be writing `srvbox_bak.json`.
+  // `bakName` is versioned on purpose. Sync is a single shared file on
+  // iCloud/WebDAV/LK Cloud, and a build that cannot read the
+  // remote copy must never overwrite it. `SyncIface._sync` returns before
+  // uploading when the merge fails, but a release that predates a format has
+  // no version check and cannot be given one: the only thing certain to stop
+  // it is not seeing the file at all. Each format is a name: v3 the nested
+  // `Spi`, v4 the age envelope.
+  //
+  // TODO: drop the legacy names (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing them.
   await Paths.init(
     BuildData.name,
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
     fileInUserDocuments: false,
+    iosFilesApp: true,
   );
   await CrashLog.attach(Paths.doc.joinPath('logs'));
   // Which release a report came from is the first thing asked about one and
@@ -232,7 +255,7 @@ Future<void> _initApp(ProviderContainer container) async {
   await AppMotion.init();
   await _initWindow();
 
-  await _doPlatformRelated();
+  await _startBackgroundServices();
 
   // Initialize platform session notifications and Live Activities.
   await TermSessionManager.init();
@@ -243,6 +266,8 @@ Future<void> _openStores({required bool fromImport}) async {
   try {
     await Stores.init();
   } catch (e, s) {
+    // A newer build's data is neither an import to undo nor a lost key.
+    if (e is SchemaTooNewException) rethrow;
     if (!fromImport && e is! StoreUnreadableException) rethrow;
 
     // Closed before the files are deleted or moved. `Stores.init` may have got
@@ -312,14 +337,11 @@ Future<void> _initData() async {
   // TODO: drop this, `lib/hive/` and the `hive_ce*` dependencies together with
   // `HiveImport`, once no supported install can still be on Hive.
   await Hive.initFlutter();
-  Hive.registerAdapters();
-  // Reads every released server-record layout. The generated adapters no
-  // longer own the frozen type IDs because nothing writes Hive any more.
+  // Every record layout a released build wrote, frozen.
   registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await SecureStoreProps.migrateLegacyPrefs();
-  await Future.wait([Webdav.initShared(), GistRs.initShared()]);
 
   // Before a box is opened, because it rewrites the files they are made of.
   // After the preferences, because the data it copies may be encrypted with a
@@ -327,9 +349,9 @@ Future<void> _initData() async {
   final imported = await SandboxImport.run();
   await _openStores(fromImport: imported == SandboxImportResult.imported);
 
-  // It may effect the following logic, so await it.
-  // DO DB migration before load any provider.
-  await _doDbMigrate();
+  await _migrateStorage();
+  await SyncRemotes.adopt();
+  await SyncRemotes.dropRetired();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
@@ -337,16 +359,15 @@ Future<void> _initData() async {
   initThemeHost();
 
   // Before the fonts and the theme read the paths it fixes.
-  StoredPaths.repair(alsoRepair: [Stores.setting.fontPath]);
+  StoredPaths.repair(
+    alsoRepair: [Stores.setting.fontPath, Stores.setting.sshBgImage],
+  );
 
   // Not awaited: only the terminal uses it, and a broken font file is the
   // user's, not a defect to report — the settings page says it failed.
   unawaited(TerminalFont.load(Stores.setting.fontPath.fetch()));
   await ThemePackages.prepareSelectedTheme();
   ThemePackages.reconcileSelection();
-  // Not awaited: a bundled theme is one more choice in the picker, and the
-  // first frame does not wait for it.
-  unawaited(ThemePackages.seedBundled());
   await AppFont.loadStored();
 }
 
@@ -358,7 +379,7 @@ void _setupDebug() {
   CrashLog.handleErrors();
   // Before the first error can arrive, so the marker knows from the outset
   // whether anything else is hearing about a crash. Answers false for most of
-  // startup — the sink goes in at the end of `_doPlatformRelated` — which is
+  // startup — the sink goes in at the end of `_startBackgroundServices` — which is
   // exactly the window whose crashes nothing used to report.
   CrashLog.uploadsNow = () => DiagnosticsUpload.uploading;
   // Local only, and that is the whole of it: nothing is sent anywhere, so
@@ -396,7 +417,9 @@ void _setupDebug() {
   );
 }
 
-Future<void> _doPlatformRelated() async {
+/// What runs once the stores are open: crash reporting, the Linux userland,
+/// sync and the platform integrations, mostly without holding up the launch.
+Future<void> _startBackgroundServices() async {
   if (isAndroid) {
     // try switch to highest refresh rate
     try {
@@ -474,14 +497,37 @@ Future<void> _doPlatformRelated() async {
     );
   }
 
-  // Off the launch path: it reads the keychain and asks homebase who is signed in.
-  if (Lkc.enabled) unawaited(Lkc.init());
+  // Off the launch path: it reads the keychain and asks homebase who is signed
+  // in. LK Cloud sync waits for the session; its first connection syncs.
+  if (Lkc.enabled) {
+    unawaited(
+      Lkc.init().then((_) {
+        LkcLogSync.init();
+        LkcSyncWatch.init(
+          // Not held back: another device's write is the whole reason to sync,
+          // and a sync already running takes it on when it ends. Only while LK
+          // Cloud is where the backup syncs: another remote ranks above it.
+          onRemoteChange: () {
+            if (bakSync.remoteStorage is LkcRemoteStorage) {
+              bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+            }
+          },
+        );
+      }),
+    );
+  }
+  BakSyncer.watchEdits(() => bakSync.syncSoon());
+  FileLogSync.init();
+  SyncSkills.follow();
+  SyncThemes.follow();
   unawaited(KeyPassphrases.init());
+  unawaited(SudoPassword.adoptKeychain());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
   // restored watch configure itself.
   if (isIOS) {
+    MethodChans.listenPastes();
     unawaited(
       (() async {
         try {
@@ -523,17 +569,23 @@ Future<void> _doPlatformRelated() async {
     );
   }
 
-  // Status parsing used to run on this pool, which is why its size followed
-  // the server count. It now runs on the Rust thread pool, while the remaining
-  // Computer tasks (backup parsing, editor work and PVE responses) are
-  // occasional and already queue safely. Starting several otherwise idle
-  // isolates before the first frame only makes a larger server list slower and
-  // more memory-hungry to open.
+  // Only for fl_lib's editor, the last user of the pool; this app's own
+  // background work goes through `compute`.
+  // TODO: drop with the `computer` dependency once fl_lib's editor moves off.
   await Computer.shared.turnOn(workersCount: 1);
 }
 
-// It may contains some async heavy funcs.
-Future<void> _doDbMigrate() async {
+/// The storage layout brought up to this build's, before any provider loads.
+Future<void> _migrateStorage() async {
+  // fl_lib's Rust stamps synced changes (`SyncRecorder`), and the storage step
+  // below seeds those stamps (`m033`). Without it nothing is stamped and the
+  // app still starts.
+  try {
+    await FlRust.ensureInitialized();
+  } catch (e, s) {
+    Loggers.app.warning('fl_lib Rust', e, s);
+  }
+
   // Storage layout first: it must finish before anything decodes a record as
   // its current type. Throws SchemaTooNewException when the data was written
   // by a newer build — that must not be swallowed, since continuing would let
@@ -541,11 +593,14 @@ Future<void> _doDbMigrate() async {
   //
   // First in this function, and not after the feature bump below, because that
   // refusal is only worth anything if nothing has been written yet. Run second,
-  // it left `autoAddNewCards`, `autoAddNewFuncs` and a rewritten `lastVer`
+  // it left `autoAddNewCards`, `addNewServerFuncs` and a rewritten `lastVer`
   // behind on a database it then declined to touch — so a downgrade destroyed
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
+  SyncRecorder.install();
+  // TODO: remove with `StoreCredentials.adoptKeychain`.
+  StoreCredentials.adopt = SyncRecorder.adopt;
 
   migrateBuildFeatures(BuildData.build);
 

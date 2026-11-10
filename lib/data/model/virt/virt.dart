@@ -1,8 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/utils/version.dart';
+import 'package:server_box/data/model/virt/ffi_num.dart';
+import 'package:server_box/src/rust/api/virt_view.dart' as vv;
 
 part 'virt.freezed.dart';
-part 'virt.g.dart';
 
 /// Which kind of hypervisor manager a virtualization host is reached as.
 enum VirtHostKind {
@@ -127,8 +128,6 @@ abstract class VirtNode with _$VirtNode {
     Duration? uptime,
   }) = _VirtNode;
 
-  factory VirtNode.fromJson(Map<String, dynamic> json) =>
-      _$VirtNodeFromJson(json);
 }
 
 /// A virtualization host: one server, and what manages its guests.
@@ -148,8 +147,6 @@ abstract class VirtHost with _$VirtHost {
     @Default(<VirtNode>[]) List<VirtNode> nodes,
   }) = _VirtHost;
 
-  factory VirtHost.fromJson(Map<String, dynamic> json) =>
-      _$VirtHostFromJson(json);
 
   /// More than one node, so a guest's node is worth naming.
   bool get isCluster => nodes.length > 1;
@@ -207,8 +204,6 @@ abstract class VirtGuest with _$VirtGuest {
     @Default(<VirtPowerAction>{}) Set<VirtPowerAction> actions,
   }) = _VirtGuest;
 
-  factory VirtGuest.fromJson(Map<String, dynamic> json) =>
-      _$VirtGuestFromJson(json);
 }
 
 /// One reading of a guest's usage. Throughputs are rates, bytes per second.
@@ -232,8 +227,6 @@ abstract class VirtStats with _$VirtStats {
     double? netOut,
   }) = _VirtStats;
 
-  factory VirtStats.fromJson(Map<String, dynamic> json) =>
-      _$VirtStatsFromJson(json);
 }
 
 /// What the app can do with a host. The UI shows or hides by these, never by
@@ -383,8 +376,6 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     @Default(false) bool networkRestart,
   }) = _VirtCapabilities;
 
-  factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>
-      _$VirtCapabilitiesFromJson(json);
 }
 
 /// What one load of a host yields.
@@ -407,4 +398,162 @@ enum VirtHistoryWindow {
   week;
 
   String get pveTimeframe => name;
+}
+
+// --- FFI: `sbm_virt::model` as `virt_view` mirrors it ---
+
+extension GuestKindVirt on vv.GuestKind {
+  VirtGuestKind get virt => switch (this) {
+    vv.GuestKind.lxc => VirtGuestKind.lxc,
+    vv.GuestKind.qemu => VirtGuestKind.qemu,
+  };
+}
+
+extension VirtGuestKindFfi on VirtGuestKind {
+  vv.GuestKind get ffi => vv.GuestKind.values.byName(name);
+}
+
+extension VirtHostReportVirt on vv.VirtHostReport {
+  /// What [serverId]'s host reported.
+  VirtSnapshot snapshotOf(String serverId) => VirtSnapshot(
+    host: VirtHost(
+      serverId: serverId,
+      kind: switch (host.kind) {
+        vv.HostKind.pve => VirtHostKind.pve,
+        vv.HostKind.libvirt => VirtHostKind.libvirt,
+      },
+      version: host.version,
+      hypervisor: host.hypervisor,
+      nodes: [for (final n in host.nodes) n.virt],
+    ),
+    guests: [for (final g in guests) g.virt],
+    stats: {for (final (id, s) in stats) id: s.virt},
+    capabilities: capabilities.virt,
+  );
+}
+
+extension NodeVirt on vv.Node {
+  VirtNode get virt => VirtNode(
+    name: name,
+    online: online,
+    cpu: cpu,
+    maxCpu: maxCpu,
+    memUsed: memUsed?.toInt(),
+    memTotal: memTotal?.toInt(),
+    uptime: uptime?.toInt().positiveSeconds,
+  );
+}
+
+extension VirtNodeFfi on VirtNode {
+  /// As `sbm_virt::model::Node`.
+  vv.Node get ffi => vv.Node(
+    name: name,
+    online: online,
+    cpu: cpu,
+    maxCpu: maxCpu,
+    memUsed: memUsed?.big,
+    memTotal: memTotal?.big,
+    uptime: uptime?.inSeconds.big,
+  );
+}
+
+extension GuestReportVirt on vv.VirtGuestReport {
+  VirtGuest get virt => VirtGuest(
+    id: id,
+    name: name,
+    kind: kind.virt,
+    state: VirtGuestState.values.byName(state.name),
+    stateReason: stateReason,
+    vmid: vmid,
+    node: node,
+    vcpu: vcpu,
+    memBytes: memBytes?.toInt(),
+    uptime: uptime?.toInt().positiveSeconds,
+    tags: tags,
+    template: template,
+    autostart: autostart,
+    actions: {for (final a in actions) VirtPowerAction.values.byName(a.name)},
+  );
+}
+
+extension VirtGuestFfi on VirtGuest {
+  /// As `sbm_virt::model::Guest`.
+  vv.VirtGuestReport get ffi => vv.VirtGuestReport(
+    id: id,
+    name: name,
+    kind: kind.ffi,
+    state: vv.GuestState.values.byName(state.name),
+    stateReason: stateReason,
+    vmid: vmid,
+    node: node,
+    vcpu: vcpu,
+    memBytes: memBytes?.big,
+    uptime: uptime?.inSeconds.big,
+    tags: tags,
+    template: template,
+    autostart: autostart,
+    actions: [for (final a in actions) vv.PowerAction.values.byName(a.name)],
+  );
+}
+
+extension StatsVirt on vv.Stats {
+  VirtStats get virt => VirtStats(
+    at: DateTime.fromMillisecondsSinceEpoch(at),
+    cpu: cpu,
+    memUsed: memUsed?.toInt(),
+    memTotal: memTotal?.toInt(),
+    diskUsed: diskUsed?.toInt(),
+    diskTotal: diskTotal?.toInt(),
+    diskRead: diskRead,
+    diskWrite: diskWrite,
+    netIn: netIn,
+    netOut: netOut,
+  );
+}
+
+extension StatsListVirt on List<vv.Stats> {
+  /// Oldest first.
+  List<VirtStats> get virt => [for (final s in this) s.virt];
+}
+
+extension CapabilitiesVirt on vv.Capabilities {
+  VirtCapabilities get virt => VirtCapabilities(
+    lxc: lxc,
+    pause: pause,
+    snapshots: snapshots,
+    snapshotMemoryRequired: snapshotMemoryRequired,
+    snapshotExternal: snapshotExternal,
+    snapshotSupported: snapshotSupported,
+    storage: storage,
+    network: network,
+    backup: backup,
+    clone: clone,
+    linkedClone: linkedClone,
+    template: template,
+    cloneTarget: cloneTarget,
+    backupJobs: backupJobs,
+    cluster: cluster,
+    serialConsole: serialConsole,
+    vncConsole: vncConsole,
+    termConsole: termConsole,
+    storedHistory: storedHistory,
+    create: create,
+    deleteKeepsDisks: deleteKeepsDisks,
+    hardware: hardware,
+    hardwareRevert: hardwareRevert,
+    hardwareRevertPending: hardwareRevertPending,
+    storageEdit: storageEdit,
+    poolTypes: poolTypes,
+    poolAutostart: poolAutostart,
+    poolDeleteStorage: poolDeleteStorage,
+    volumeResize: volumeResize,
+    volumeClone: volumeClone,
+    upload: upload,
+    networkEdit: networkEdit,
+    networkModes: networkModes,
+    networkStart: networkStart,
+    networkApply: networkApply,
+    networkEditExisting: networkEditExisting,
+    networkRestart: networkRestart,
+  );
 }

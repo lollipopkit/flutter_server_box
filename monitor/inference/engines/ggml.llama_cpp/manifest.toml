@@ -1,0 +1,124 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# llama.cpp's server, a model server: deployed with Docker Compose from the
+# files beside this one, its OpenAI-compatible API offered to Agent mode. The
+# Inference app picks the model for this machine.
+
+schema = 1
+publisher = "ggml"
+name = "llama_cpp"
+project = "llama.cpp"
+developer = "ggml.ai and contributors"
+version = "b11347"
+homepage = "https://github.com/ggml-org/llama.cpp"
+source = "https://github.com/ggml-org/llama.cpp/tree/b11347"
+glyph = "memory"
+tone = "teal"
+categories = ["ai"]
+notices = ["pullsImages", "bindsPaths", "gpuDevices", "publishesPort"]
+
+[title]
+en = "llama.cpp"
+
+[description]
+en = "Serve one GGUF model with llama.cpp on the CPU or any GPU, behind an OpenAI-compatible API that Agent mode can use."
+zh = "用 llama.cpp 在 CPU 或任意 GPU 上运行一个 GGUF 模型，提供 Agent 模式可用的 OpenAI 兼容 API。"
+zh-TW = "用 llama.cpp 在 CPU 或任意 GPU 上執行一個 GGUF 模型，提供 Agent 模式可用的 OpenAI 相容 API。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/ggml-org/llama.cpp/blob/b11347/LICENSE"
+
+[requirements]
+memory_min_mib = 2048
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[llm]
+port = "port"
+path = "/v1"
+model = "model"
+key = "API_KEY"
+
+# The key the API asks for.
+[[secrets]]
+env = "API_KEY"
+length = 48
+
+[login]
+password = "API_KEY"
+note = { en = "No account: the password shown here is the API key. Send it as Authorization: Bearer <key>. Agent mode is given it on its own.", zh = "没有账号：这里显示的密码就是 API 密钥，以 Authorization: Bearer <密钥> 发送。Agent 模式会自动获得它。", zh-TW = "沒有帳號：這裡顯示的密碼就是 API 金鑰，以 Authorization: Bearer <金鑰> 傳送。Agent 模式會自動取得它。" }
+
+[[settings]]
+key = "model"
+type = "text"
+env = "MODEL"
+default = "unsloth/Qwen3-0.6B-GGUF:Q4_K_M"
+pattern = "[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+(:[A-Za-z0-9_]+)?"
+label = { en = "Model", zh = "模型", zh-TW = "模型" }
+help = { en = "A GGUF repository on Hugging Face and its quantization (unsloth/Qwen3-8B-GGUF:Q4_K_M). The Inference app suggests one that fits.", zh = "Hugging Face 上的 GGUF 仓库及其量化（unsloth/Qwen3-8B-GGUF:Q4_K_M）。推理 app 会推荐适合这台机器的模型。", zh-TW = "Hugging Face 上的 GGUF 儲存庫及其量化（unsloth/Qwen3-8B-GGUF:Q4_K_M）。推理 app 會推薦適合這台機器的模型。" }
+
+[[settings]]
+key = "context"
+type = "text"
+env = "CONTEXT"
+default = "8192"
+pattern = "[1-9][0-9]{2,6}"
+label = { en = "Context length", zh = "上下文长度", zh-TW = "上下文長度" }
+help = { en = "Tokens per request. Longer takes more memory.", zh = "每个请求的 token 数。越长占用的内存越多。", zh-TW = "每個請求的 token 數。越長佔用的記憶體越多。" }
+
+[[settings]]
+key = "models"
+type = "path"
+env = "MODELS_LOCATION"
+default = "{shared}/models/llama.cpp"
+label = { en = "Models", zh = "模型", zh-TW = "模型" }
+help = { en = "Where downloaded models are kept, shared with other installs of llama.cpp.", zh = "下载的模型存放在这里。", zh-TW = "下載的模型存放在這裡。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "LLAMA_PORT"
+default = 8080
+label = { en = "API port", zh = "API 端口", zh-TW = "API 連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Requests still need the API key, shown under the first sign-in. Off: this machine only.", zh = "请求仍需 API 密钥，可在首次登录信息中查看。关闭时仅限本机。", zh-TW = "請求仍需 API 金鑰，可在首次登入資訊中檢視。關閉時僅限本機。" }
+on = { LLAMA_BIND = "0.0.0.0" }
+off = { LLAMA_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "accel"
+type = "choice"
+default = "cpu"
+label = { en = "Acceleration", zh = "加速", zh-TW = "加速" }
+help = { en = "NVIDIA needs the NVIDIA Container Toolkit on the host; AMD needs a GPU ROCm supports; Vulkan works with most other GPUs.", zh = "NVIDIA 需要主机安装 NVIDIA Container Toolkit；AMD 需要 ROCm 支持的 GPU；Vulkan 适用于其他大多数 GPU。", zh-TW = "NVIDIA 需要主機安裝 NVIDIA Container Toolkit；AMD 需要 ROCm 支援的 GPU；Vulkan 適用於其他大多數 GPU。" }
+
+  [[settings.options]]
+  value = "cpu"
+  label = { en = "CPU", zh = "CPU", zh-TW = "CPU" }
+  env = { LLAMA_ACCEL = "cpu", LLAMA_IMAGE_TAG = "server-b11347" }
+
+  [[settings.options]]
+  value = "nvidia"
+  label = { en = "NVIDIA (CUDA)", zh = "NVIDIA（CUDA）", zh-TW = "NVIDIA（CUDA）" }
+  env = { LLAMA_ACCEL = "nvidia", LLAMA_IMAGE_TAG = "server-cuda-b11347" }
+  suggest = { gpu = "nvidia" }
+
+  [[settings.options]]
+  value = "rocm"
+  label = { en = "AMD (ROCm)", zh = "AMD（ROCm）", zh-TW = "AMD（ROCm）" }
+  env = { LLAMA_ACCEL = "rocm", LLAMA_IMAGE_TAG = "server-rocm-b11347" }
+  suggest = { gpu = "amd", wsl = false }
+
+  [[settings.options]]
+  value = "vulkan"
+  label = { en = "Vulkan", zh = "Vulkan", zh-TW = "Vulkan" }
+  env = { LLAMA_ACCEL = "vulkan", LLAMA_IMAGE_TAG = "server-vulkan-b11347" }
+  suggest = { gpu = "intel", wsl = false }

@@ -1,12 +1,12 @@
-import 'package:server_box/core/utils/monitor_exec.dart';
+import 'package:server_box/core/monitor/exec.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
-import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// Reads status from a `monitor` agent's HTTP API.
 ///
@@ -15,10 +15,11 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// switching the user to a different data source with different semantics.
 class MonitorHttpDataSource implements ServerDataSource {
   MonitorHttpDataSource(this.credential)
-    : _client = MonitorHttpClient(credential.monitor);
+    : _lease = MonitorClientLease(credential.monitor);
 
   final ServerConnectCredentialMonitorHttp credential;
-  final MonitorHttpClient _client;
+  final MonitorClientLease _lease;
+  MonitorHttpClient get _client => _lease.client;
 
   /// Whether this source was built from the same connection config, i.e.
   /// whether it can be reused across a refresh or must be rebuilt (and
@@ -35,8 +36,7 @@ class MonitorHttpDataSource implements ServerDataSource {
   /// Cheap and already authenticated, so it rides along with the status poll
   /// rather than being a connect-time step that could go stale the moment the
   /// agent's config changes.
-  Future<MonitorCapabilities> fetchCapabilities() =>
-      _client.fetchCapabilities();
+  Future<MonitorCapabilities> capabilities() => _client.capabilities();
 
   /// How long the last [fetchStatus] spent on its request, in milliseconds.
   ///
@@ -50,7 +50,7 @@ class MonitorHttpDataSource implements ServerDataSource {
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {
     final request = Stopwatch()..start();
-    final metrics = await _client.fetchStatus();
+    final metrics = await _client.metrics();
     request.stop();
     _lastRequestMs = request.elapsedMilliseconds;
     final status = applyMonitorMetrics(into, metrics);
@@ -71,7 +71,7 @@ class MonitorHttpDataSource implements ServerDataSource {
     DateTime? from,
     DateTime? to,
   }) async {
-    final points = await _client.fetchHistory(
+    final points = await _client.history(
       minutes: minutes,
       maxPoints: maxPoints,
       from: from,
@@ -96,7 +96,7 @@ class MonitorHttpDataSource implements ServerDataSource {
   }
 
   @override
-  void close() => _client.dispose();
+  void close() => _lease.release();
 
   static int? _epochMs(String iso) =>
       DateTime.tryParse(iso)?.millisecondsSinceEpoch;

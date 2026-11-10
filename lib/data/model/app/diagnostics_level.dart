@@ -28,9 +28,6 @@ enum DiagnosticsLevel {
   /// Whether anything is sent at all.
   bool get uploads => this != DiagnosticsLevel.none;
 
-  /// Whether breadcrumbs accompany an error.
-  bool get sendsBreadcrumbs => this != DiagnosticsLevel.none;
-
   /// Reads a stored name.
   ///
   /// By name rather than index, per the store's rule: an index silently

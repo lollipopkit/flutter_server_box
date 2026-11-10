@@ -80,9 +80,6 @@ abstract final class SandboxImport {
     'webdav_pwd': String,
     'webdav_sync': bool,
     'icloud_sync': bool,
-    'github_token': String,
-    'gist_id': String,
-    'gist_sync': bool,
     'sync_app_settings': bool,
     'last_ver': int,
   };

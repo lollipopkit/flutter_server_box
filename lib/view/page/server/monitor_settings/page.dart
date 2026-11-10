@@ -1,8 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/view/page/server/monitor_settings/view.dart';
+import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
 
 final class MonitorSettingsArgs {
   final MonitorHttpCredential monitor;
@@ -43,13 +44,6 @@ final class MonitorSettingsPage extends StatefulWidget {
 final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
   final _ctrl = MonitorSettingsController();
 
-  /// Set once the user has agreed to lose the edits.
-  ///
-  /// The view still reports dirty — nothing here can clear its form — so
-  /// without this the pop that follows the confirmation is intercepted by the
-  /// same `canPop` that asked for it, and the dialog reopens itself.
-  bool _discarding = false;
-
   @override
   void dispose() {
     _ctrl.dispose();
@@ -60,11 +54,9 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: _ctrl,
-      builder: (context, _) => PopScope(
-        canPop: _discarding || !_ctrl.dirty,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _confirmDiscard();
-        },
+      builder: (context, _) => PopGuard(
+        enabled: _ctrl.dirty,
+        confirm: () => MonitorUi.confirmDiscard(context),
         child: Scaffold(
           appBar: CustomAppBar(
             title: TwoLineText(
@@ -105,22 +97,5 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
         ),
       ),
     );
-  }
-
-  /// Closing the page is this side's job, which is why the dialog is here and
-  /// not in the view: the tab has nothing to pop.
-  Future<void> _confirmDiscard() async {
-    final ok = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: Text(libL10n.askContinue(libL10n.delete)),
-      actions: Btnx.cancelRedOk,
-    );
-    if (ok != true || !mounted) return;
-    setState(() => _discarding = true);
-    // `canPop` is read while the route builds, so the pop has to come after
-    // the frame that rebuilds it with the flag set.
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
-    context.pop();
   }
 }

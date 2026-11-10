@@ -13,10 +13,6 @@
         configuration screen actually shows.
     -->
     <string name="widget_chart_desc">Status charts</string>
-    <string name="widget_cpu_desc">CPU usage</string>
-    <string name="widget_mem_desc">Memory usage</string>
-    <string name="widget_disk_desc">Disk usage</string>
-    <string name="widget_net_desc">Network usage</string>
     <string name="widget_refresh_desc">Refresh</string>
 
     <string name="widget_configure_title">Widget</string>
@@ -24,12 +20,12 @@
     <string name="widget_configure_metric">Leading metric</string>
     <string name="widget_configure_save">Save</string>
     <!--
-        Shown when the app has published no server with a monitor agent. The
+        Shown when the app has not published any server with ServerBox Monitor enabled. The
         widget reads a list this app writes, so there is nothing to pick from
-        until one exists — and it has to be added in the app, since reaching an
-        agent needs a login the widget has nowhere to keep.
+        until one exists. Add servers in the app because accessing a Monitor
+        requires login credentials that the widget cannot store.
     -->
-    <string name="widget_configure_empty">No server with a monitor agent yet.\nAdd one in ServerBox, then come back.</string>
+    <string name="widget_configure_empty">No server with ServerBox Monitor enabled yet.\nAdd a server in ServerBox, then come back here.</string>
 
 
     <string name="widget_metric_cpu">CPU</string>
@@ -38,23 +34,35 @@
     <string name="widget_metric_network">Network</string>
 
     <string name="widget_err_not_configured">Tap to pick a server</string>
-    <string name="widget_err_no_token">No credential — open ServerBox</string>
+    <string name="widget_err_no_token">Missing access credentials. Open ServerBox.</string>
     <string name="widget_err_insecure">HTTPS required</string>
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
-    <string name="widget_no_history">No history</string>
-
-    <!--
-        Row labels, matching the abbreviations the iOS widget draws. Not
-        translated on either platform: they are read as symbols beside an icon,
-        and a translated one would be the only thing on the row wide enough to
-        push the value off it.
-    -->
-    <string name="widget_row_cpu" translatable="false">CPU</string>
-    <string name="widget_row_mem" translatable="false">Mem</string>
-    <string name="widget_row_disk" translatable="false">Disk</string>
-    <string name="widget_row_net" translatable="false">Net</string>
 
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>
+    <string name="widget_label">Server status</string>
+    <string name="widget_description">Quickly view CPU, memory, disk, and network status. Resize the widget to see more.</string>
+
+    <!-- Quick Settings tile, the transfer notification's channel, the text
+         selection entry, and what a share that could not be read says. Native,
+         since the tile and the channel exist without the Flutter engine. -->
+    <string name="process_text_label">Save as snippet</string>
+    <string name="tile_no_sessions">No running sessions</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <string name="channel_transfers">File transfers</string>
+    <string name="incoming_failed">Could not take in the shared files</string>
+    <string name="shortcut_server_gone">Server removed</string>
+    <!-- The sessions notification. -->
+    <string name="notification_disconnect_all">Disconnect all</string>
+    <string name="session_connected">Connected</string>
+    <string name="session_connecting">Connecting</string>
+    <string name="session_disconnected">Disconnected</string>
+    <plurals name="notification_more">
+        <item quantity="one">…and %d more</item>
+        <item quantity="other">…and %d more</item>
+    </plurals>
 </resources>

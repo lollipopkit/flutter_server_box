@@ -1,16 +1,19 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Bmc from '../pages/Bmc.svelte'
+import Bmc from '../desk/apps/bmc/BmcApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { bmcErrorText, keepPasswords, prettyFingerprint } from '../lib/bmc'
-import { enabledFeatures } from '../lib/features'
+import bmcApp from '../desk/apps/bmc/manifest'
 import type { BmcStatus, BmcTarget, Capabilities } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getBmc: vi.fn(), updateBmc: vi.fn(), probeBmc: vi.fn(), bmcStatus: vi.fn(), bmcPower: vi.fn() },
 }))
+const ll = get(LL)
 const getBmc = vi.mocked(api.getBmc)
 const updateBmc = vi.mocked(api.updateBmc)
 const bmcStatus = vi.mocked(api.bmcStatus)
@@ -46,18 +49,21 @@ const status: BmcStatus = {
 }
 
 describe('the BMC helpers', () => {
-  it('offers the page to a role with virt on an agent that serves it', () => {
-    const caps = (features: string[], virt: boolean) =>
-      ({ features, grants: { virt: { ok: virt } } }) as unknown as Capabilities
-    expect(enabledFeatures(caps(['bmc'], true)).map((f) => f.id)).toEqual(['bmc'])
-    expect(enabledFeatures(caps(['bmc'], false))).toEqual([])
+  it('offers the page on an agent that serves it, over a link the account may act on', () => {
+    const caps = (features: string[], ok: boolean) => ({ features, access: { ok } }) as unknown as Capabilities
+    expect(bmcApp.available(caps(['bmc'], true))).toBe(true)
+    expect(bmcApp.available(caps(['bmc'], false))).toBe(false)
   })
 
   it('phrases the BMC failure the agent passes on, not its 502', () => {
     const e = new ApiError('bmc', 502, undefined, { error: 'bmc', failure: 'unauthorized', detail: null })
-    expect(bmcErrorText(e)).toMatch(/user name or password/)
+    expect(bmcErrorText(e)).toBe(ll.bmcUnauthorized())
     const odd = new ApiError('bmc', 502, undefined, { error: 'bmc', failure: 'somethingNew', detail: 'x' })
     expect(bmcErrorText(odd)).toBe('somethingNew: x')
+    const lost = new ApiError('passwordRequired', 409, undefined, { error: 'passwordRequired' })
+    expect(bmcErrorText(lost)).toContain(ll.bmcPasswordRequired())
+    const moved = new ApiError('passwordRequired', 400, undefined, { error: 'passwordRequired', index: 0 })
+    expect(bmcErrorText(moved)).toContain(ll.bmcPasswordAgain())
   })
 
   it('keeps every stored password on a write and shows a fingerprint as a console does', () => {
@@ -82,30 +88,30 @@ describe('the BMC page', () => {
   afterEach(() => vi.useRealTimers())
 
   it('shows the selected target’s state and offers only the actions it answers', async () => {
-    render(Bmc, { onback: () => {} })
+    render(Bmc)
     expect(await screen.findByText('R740')).toBeInTheDocument()
-    expect(screen.getByText('On')).toBeInTheDocument()
+    expect(screen.getByText(ll.bmcStateOn())).toBeInTheDocument()
     expect(screen.getByText('180 W')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /force off/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /power cycle/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.bmcIntentForceOff() })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.bmcIntentPowerCycle() })).not.toBeInTheDocument()
   })
 
   it('asks before a power action and then sends it', async () => {
     bmcPower.mockResolvedValue({ outcome: { kind: 'done' } })
-    render(Bmc, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /force off/i }))
+    render(Bmc)
+    await fireEvent.click(await screen.findByRole('button', { name: ll.bmcIntentForceOff() }))
     expect(bmcPower).not.toHaveBeenCalled()
-    const buttons = screen.getAllByRole('button', { name: /force off/i })
+    const buttons = screen.getAllByRole('button', { name: ll.bmcIntentForceOff() })
     await fireEvent.click(buttons[buttons.length - 1])
     await waitFor(() => expect(bmcPower).toHaveBeenCalledWith('t1', 'forceOff'))
   })
 
   it('removes a target by sending the set without it, passwords kept', async () => {
     updateBmc.mockResolvedValue({ targets: [], editable: true })
-    render(Bmc, { onback: () => {} })
+    render(Bmc)
     await screen.findByText('R740')
-    await fireEvent.click(screen.getByRole('button', { name: /remove bmc/i }))
-    const confirm = screen.getAllByRole('button', { name: /remove bmc/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.bmcRemove() }))
+    const confirm = screen.getAllByRole('button', { name: ll.bmcRemove() })
     await fireEvent.click(confirm[confirm.length - 1])
     await waitFor(() => expect(updateBmc).toHaveBeenCalledWith([]))
   })

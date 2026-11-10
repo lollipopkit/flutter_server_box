@@ -1,6 +1,6 @@
 //! Structured status types and diff helpers
 //!
-//! Semantic reference: flutter_server_box `lib/data/model/server/`
+//! Semantic reference: the app's `lib/data/model/server/`
 //! (cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
 
 use serde::{Deserialize, Serialize};
@@ -112,6 +112,36 @@ impl Swap {
             1.0 - self.free as f64 / self.total as f64
         }
     }
+}
+
+/// One block device as `lsblk` lists it, whether or not anything is mounted
+/// from it: what a disk is, how it is split, and which parts are in use.
+///
+/// The filesystems the disk totals are made of are [`Disk`]; this is the
+/// hardware under them, so a disk with no filesystem yet is here and not
+/// there.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BlockDevice {
+    /// `lsblk` NAME, e.g. `sda1`, `nvme0n1`, `pve-root`
+    pub name: String,
+    pub path: String,
+    /// `lsblk` TYPE: `disk`, `part`, `lvm`, `crypt`, `raid1`, `rom`, ...
+    pub kind: String,
+    /// Set on whole disks only.
+    pub model: Option<String>,
+    /// Bytes
+    pub size: u64,
+    /// Transport: `sata`, `nvme`, `usb`, ...; top-level devices only.
+    pub tran: Option<String>,
+    pub fs_type: Option<String>,
+    /// `[SWAP]` for an active swap area.
+    pub mount: Option<String>,
+    /// Mounted, or something is built on it (partitions, an LVM volume, an
+    /// array) or it is a member of one (an LVM physical volume, a RAID or LUKS
+    /// member). `false` is a device nothing uses: blank, or a filesystem
+    /// nothing mounts.
+    pub in_use: bool,
+    pub children: Vec<BlockDevice>,
 }
 
 /// One filesystem, sizes in KiB (Dart `Disk`, from df -k / lsblk / WMI)
@@ -466,7 +496,9 @@ pub struct GpuMem {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GpuMemProcess {
     pub pid: i64,
+    /// Empty when the driver would not say (WDDM without privilege).
     pub name: String,
+    /// MiB; 0 when the driver does not report it, as under WDDM and WSL.
     pub memory: i64,
 }
 
@@ -480,7 +512,6 @@ pub struct DiskSmart {
     pub serial: Option<String>,
     pub power_on_hours: Option<i64>,
     pub power_cycle_count: Option<i64>,
-    pub raw_data: serde_json::Value,
     pub smart_attributes: BTreeMap<String, SmartAttribute>,
 }
 

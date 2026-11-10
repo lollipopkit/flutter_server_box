@@ -1,0 +1,27 @@
+name: Install the pinned Android SDK and NDK
+description: >-
+  The platform, build tools and NDK the checkout at `directory` pins
+  (android/{compile-sdk,build-tools,ndk}-version.txt). Sets ANDROID_NDK_HOME
+  and APKSIGNER for the rest of the job.
+inputs:
+  directory:
+    description: The checkout whose android/ pins are read.
+    default: .
+runs:
+  using: composite
+  steps:
+    - name: Install the pinned Android SDK and NDK
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      run: |
+        set -euo pipefail
+        compile_sdk="$(tr -d '[:space:]' < android/compile-sdk-version.txt)"
+        build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
+        ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
+        sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+        "$sdkmanager" \
+          "platforms;android-$compile_sdk" \
+          "build-tools;$build_tools" \
+          "ndk;$ndk_version"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
+        echo "APKSIGNER=$ANDROID_HOME/build-tools/$build_tools/apksigner" >> "$GITHUB_ENV"

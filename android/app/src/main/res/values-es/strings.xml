@@ -13,23 +13,38 @@
     <string name="widget_configure_server">Servidor</string>
     <string name="widget_configure_metric">Métrica principal</string>
     <string name="widget_configure_save">Guardar</string>
-    <string name="widget_configure_empty">Aún no hay ningún servidor con agente monitor.\nAñade uno en ServerBox y vuelve aquí.</string>
+    <string name="widget_configure_empty">Aún no hay ningún servidor con ServerBox Monitor activado.\nAñade un servidor en ServerBox y vuelve aquí.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memoria</string>
     <string name="widget_metric_disk">Disco</string>
     <string name="widget_metric_network">Red</string>
     <string name="widget_err_not_configured">Toca para elegir un servidor</string>
-    <string name="widget_err_no_token">Sin credencial: abre ServerBox</string>
+    <string name="widget_err_no_token">Faltan las credenciales de acceso. Abre ServerBox.</string>
     <string name="widget_err_insecure">Se requiere HTTPS</string>
     <string name="widget_err_network">Error de red</string>
     <string name="widget_err_timeout">Tiempo agotado</string>
-    <string name="widget_no_history">Sin historial</string>
     <string name="widget_chart_desc">Gráficos de estado</string>
-    <string name="widget_cpu_desc">Uso de CPU</string>
-    <string name="widget_mem_desc">Uso de memoria</string>
-    <string name="widget_disk_desc">Uso de disco</string>
-    <string name="widget_net_desc">Uso de red</string>
     <string name="widget_refresh_desc">Actualizar</string>
     <string name="widget_small_label">Valores del servidor</string>
     <string name="widget_medium_label">Gráficos del servidor</string>
+    <string name="widget_label">Estado del servidor</string>
+    <string name="widget_description">Consulta rápidamente el estado de la CPU, la memoria, el disco y la red. Amplía el widget para ver más información.</string>
+
+    <string name="process_text_label">Guardar como fragmento de código</string>
+    <string name="tile_no_sessions">No hay sesiones en ejecución</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d sesión</item>
+        <item quantity="other">%d sesiones</item>
+    </plurals>
+    <string name="channel_transfers">Transferencias de archivos</string>
+    <string name="incoming_failed">No se pudieron recibir los archivos compartidos</string>
+    <string name="shortcut_server_gone">Servidor eliminado</string>
+    <string name="notification_disconnect_all">Desconectar todo</string>
+    <string name="session_connected">Conectado</string>
+    <string name="session_connecting">Conectando</string>
+    <string name="session_disconnected">Desconectado</string>
+    <plurals name="notification_more">
+        <item quantity="one">…y %d más</item>
+        <item quantity="other">…y %d más</item>
+    </plurals>
 </resources>

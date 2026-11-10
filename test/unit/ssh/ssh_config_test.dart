@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/core/ssh/config.dart';
 
 void main() {
   group('SSHConfig Tests', () {
@@ -212,7 +212,7 @@ Host keyserver
       final server = servers.first;
       // A path, never a key-store id — asserting `keyId` here is what let the
       // bug ship: every reader looks that field up in `Stores.key`.
-      expect(server.ssh?.keyPath, '~/.ssh/special_key');
+      expect(server.ssh?.resolvedIdentityFiles.firstOrNull, '~/.ssh/special_key');
       expect(server.ssh?.keyId, isNull);
     });
 
@@ -233,7 +233,7 @@ Host escaped
 ''');
 
       final servers = await SSHConfig.parseConfig(configFile.path);
-      final paths = {for (final s in servers) s.name: s.ssh?.keyPath};
+      final paths = {for (final s in servers) s.name: s.ssh?.resolvedIdentityFiles.firstOrNull};
 
       expect(paths['win'], r'C:\Users\me\.ssh\id_ed25519');
       expect(paths['quoted'], r'C:\Program Files\keys\a b');
@@ -266,7 +266,7 @@ Host keyserver
 ''');
 
       final server = (await SSHConfig.parseConfig(configFile.path)).single;
-      expect(server.ssh?.keyPath, '~/.ssh/key with spaces');
+      expect(server.ssh?.resolvedIdentityFiles.firstOrNull, '~/.ssh/key with spaces');
       expect(server.ssh?.identityFiles, [
         '~/.ssh/key with spaces',
         '~/.ssh/fallback',
@@ -288,7 +288,7 @@ Host "server with spaces"
       expect(server.name, 'server with spaces');
       expect(server.ssh?.ip, '192.168.1.100');
       expect(server.ssh?.user, 'admin user');
-      expect(server.ssh?.keyPath, '~/.ssh/key with spaces');
+      expect(server.ssh?.resolvedIdentityFiles.firstOrNull, '~/.ssh/key with spaces');
       expect(server.ssh?.keyId, isNull);
     });
 
@@ -485,7 +485,7 @@ Host internal-server
       expect(prodWeb.ssh?.ip, '10.0.1.100');
       expect(prodWeb.ssh?.user, 'deploy');
       expect(prodWeb.ssh?.port, 22);
-      expect(prodWeb.ssh?.keyPath, '~/.ssh/production.pem');
+      expect(prodWeb.ssh?.resolvedIdentityFiles.firstOrNull, '~/.ssh/production.pem');
       expect(prodWeb.ssh?.keyId, isNull);
 
       final prodDb = servers.firstWhere((s) => s.name == 'prod-db-01');
@@ -497,7 +497,7 @@ Host internal-server
       expect(dev.ssh?.ip, 'dev.example.com');
       expect(dev.ssh?.user, 'developer');
       expect(dev.ssh?.port, 22);
-      expect(dev.ssh?.keyPath, isNull);
+      expect(dev.ssh?.resolvedIdentityFiles.firstOrNull, isNull);
       expect(dev.ssh?.keyId, isNull);
     });
 

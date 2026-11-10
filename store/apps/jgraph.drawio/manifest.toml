@@ -1,0 +1,58 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# draw.io: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "jgraph"
+name = "drawio"
+project = "draw.io"
+developer = "JGraph"
+version = "32.4.1"
+homepage = "https://www.drawio.com"
+source = "https://github.com/jgraph/drawio/tree/v32.4.1"
+glyph = "schema"
+tone = "amber"
+categories = ["productivity", "tools"]
+notices = ["pullsImages", "publishesPort"]
+
+[title]
+en = "draw.io"
+
+[description]
+en = "Draw flowcharts, network and architecture diagrams, UML and org charts. Diagrams are saved on the device that draws them or to a file; the server keeps nothing."
+zh = "绘制流程图、网络与架构图、UML 和组织结构图。图表保存在绘制它的设备上或保存为文件，服务器不保存任何内容。"
+zh-TW = "繪製流程圖、網路與架構圖、UML 和組織圖。圖表儲存在繪製它的裝置上或儲存為檔案，伺服器不保存任何內容。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/jgraph/drawio/blob/v32.4.1/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+DRAWIO_VERSION = "32.4.1"
+
+[[settings]]
+key = "port"
+type = "port"
+env = "DRAWIO_PORT"
+default = 8085
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { DRAWIO_BIND = "0.0.0.0" }
+off = { DRAWIO_BIND = "127.0.0.1" }

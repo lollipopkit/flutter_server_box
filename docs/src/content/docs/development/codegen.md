@@ -4,7 +4,7 @@ description: Generate Dart, Flutter, and Rust binding code
 ---
 
 The project generates immutable model code, JSON serializers, Riverpod
-providers, Hive adapters, localization code, and Rust bindings. Run the
+providers, localization code, and Rust bindings. Run the
 generator that matches the source you changed.
 
 ## When to run code generation
@@ -13,15 +13,9 @@ Run code generation after changing any of these inputs:
 
 - Models with `@freezed`
 - Classes with `@JsonSerializable`
-- Hive models in the current generated-adapter list
 - Providers with `@riverpod`
 - ARB localization files
 - Rust APIs under `crates/sbm_ffi/src/api`
-
-TODO: Remove Hive migration readers when the supported upgrade window no
-longer requires them. The frozen adapters in
-`lib/hive/legacy_adapters.dart` are excluded from generation because they read
-boxes created by earlier releases; do not regenerate them from current models.
 
 ## Dart generation
 
@@ -91,24 +85,15 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive adapters (`*.g.dart`)
+### Hive readers
 
-Hive adapter generation includes only models in the current generated list:
-
-```dart
-@HiveType(typeId: 0)
-class ServerModel {
-  @HiveField(0)
-  final String id;
-}
-```
-
-Adapters in `lib/hive/legacy_adapters.dart` are frozen readers. Do not
-regenerate them from current models or add a model with new fields to the
-legacy generated list. Old boxes do not contain those fields, and a new
-non-nullable field can make an old box unreadable. Change a frozen reader only
-when data written by a released version requires it, and update its migration
-test at the same time.
+Nothing generates a Hive adapter, and no model carries a Hive annotation. The
+readers in `lib/hive/` (`legacy_adapters.dart`, `frozen_adapters.dart`,
+`spi_legacy_adapter.dart`) are hand-written and frozen: each reads the bytes a
+released build wrote. Old boxes do not contain fields added since, so a reader
+built from a current model can make an old box unreadable. Change one only when
+data written by a released version requires it, and update its migration test
+at the same time.
 
 ## Rust bindings (flutter_rust_bridge)
 

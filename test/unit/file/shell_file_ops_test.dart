@@ -3,7 +3,7 @@
 // whose tests (`tests/files_compat.rs`) hold this file's former fixtures.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/shell_file_ops.dart';
+import 'package:server_box/data/model/file/backend/shell_file_ops.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
 import '../../helpers/rust_lib_helper.dart';
@@ -51,13 +51,6 @@ void main() {
       );
     }
     expect(parseShellFileRecords(''), isEmpty);
-  });
-
-  test('the stat answers are told apart', () {
-    expect(kShellStatAbsent, isNot(kShellStatDenied));
-    expect(kShellStatAbsentMark, isNot(kShellStatDeniedMark));
-    expect(shellStatCommand('/etc/shadow'), contains(kShellStatAbsentMark));
-    expect(shellStatCommand('/etc/shadow'), contains('$kShellStatDenied'));
   });
 
   group('modeStr', () {

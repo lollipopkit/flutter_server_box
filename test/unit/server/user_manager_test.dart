@@ -1,9 +1,9 @@
 import 'dart:collection';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system_user.dart';
-import 'package:server_box/data/service/user_manager.dart';
 import 'package:server_box/src/rust/api/users.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -57,7 +57,7 @@ users:x:1000:admin
 docker:x:998:admin,deploy
 ''';
 
-  const admin = ServerUser(
+  const admin = SystemUser(
     name: 'admin',
     uid: 1000,
     gid: 1000,
@@ -68,11 +68,11 @@ docker:x:998:admin,deploy
     supplementaryGroups: ['docker'],
   );
 
-  ServerUserDraft draft({
+  UserDraft draft({
     String name = 'deploy',
     String comment = '',
     String? password,
-  }) => ServerUserDraft(
+  }) => UserDraft(
     name: name,
     comment: comment,
     home: '/srv/deploy',
@@ -191,7 +191,7 @@ SrvBoxUserDetail.Sudo
 ''',
       'admin',
     );
-    expect(detail.passwordState, ServerUserPasswordState.set);
+    expect(detail.passwordState, PasswordState.set_);
     expect(detail.passwordChanged, DateTime.utc(2024, 10, 4));
     expect(detail.expires, DateTime.utc(2025, 1, 12));
     expect(detail.neverExpires, isFalse);
@@ -234,7 +234,7 @@ SrvBoxUserDetail.Sudo
         ),
       ),
     );
-    const root = ServerUser(
+    const root = SystemUser(
       name: 'root',
       uid: 0,
       gid: 0,
@@ -271,11 +271,11 @@ SrvBoxUserDetail.Sudo
     expect(script, contains("chpasswd <<'SrvBoxUserPassword'\ndeploy:secret\n"));
   });
 
-  ServerGroupDraft groupDraft({
+  GroupDraft groupDraft({
     String name = 'ops',
     List<String> members = const [],
     bool system = false,
-  }) => ServerGroupDraft(name: name, members: members, system: system);
+  }) => GroupDraft(name: name, members: members, system: system);
 
   test('a group draft reaches Rust whole', () async {
     final catalog = await UserManager.parse(listing);
@@ -302,7 +302,7 @@ SrvBoxUserDetail.Sudo
 
   test('an edit keeps a name and members the machine already has', () async {
     final catalog = await UserManager.parse(listing);
-    const original = ServerGroup(
+    const original = SystemGroup(
       name: 'Debian-exim',
       gid: 105,
       members: ['Gone'],

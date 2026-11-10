@@ -9,49 +9,52 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/provider/server/sort.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/server/add_menu.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
 import 'package:server_box/view/page/server/detail/bar_actions.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/full_screen.dart';
+import 'package:server_box/view/page/server/state_ui.dart';
 import 'package:server_box/view/page/server/tab/empty.dart';
 import 'package:server_box/view/page/server/tab/func_bar.dart';
 import 'package:server_box/view/page/server/tab/group_heading.dart';
 import 'package:server_box/view/page/server/tab/selection_bar.dart';
 import 'package:server_box/view/page/server/tab/strip.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
-import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/server/widget/server_globe.dart';
+import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/server_globe.dart';
-import 'package:server_box/view/widget/server_share.dart';
-import 'package:server_box/view/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/tag_switcher.dart';
+import 'package:window_manager/window_manager.dart';
 
 part 'bar.dart';
 part 'bulk.dart';
 part 'detail_host.dart';
 part 'grid.dart';
-part 'landscape.dart';
+part 'full_screen.dart';
 part 'pane.dart';
 part 'sheets.dart';
 part 'utils.dart';
@@ -61,8 +64,6 @@ class ServerPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ServerPage> createState() => _ServerPageState();
-
-  static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
 
 /// How long a card takes to grow into the page, and to shrink back.
@@ -135,11 +136,41 @@ Widget _viewSwapTransition(Widget child, Animation<double> animation) {
 Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
     Stack(fit: StackFit.expand, children: [...previous, ?current]);
 
+/// How far burn-in protection moves full screen's content, each way.
+const _kBurnInShift = 7.0;
+
 class _ServerPageState extends ConsumerState<ServerPage>
-    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
-  final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
+    with
+        AutomaticKeepAliveClientMixin,
+        TickerProviderStateMixin,
+        WindowListener {
+  final _offsetNotifier = ValueNotifier(Offset.zero);
   PageController? _landscapeController;
   String? _landscapeSeenId;
+
+  /// Full screen asked for by the bar's button rather than by turning the
+  /// device.
+  final _fsManual = ValueNotifier(false);
+
+  /// Whether full screen shows every server, or null for what the window
+  /// suits — see [_FullScreen._fsShowsAll].
+  bool? _fsAll;
+
+  /// Whether full screen's controls are showing.
+  final _fsBar = ValueNotifier(false);
+
+  /// Full screen's key bindings, focused on entering it.
+  final _fsKeys = FocusNode(debugLabel: 'server full screen');
+
+  /// Whether the window was full screen before the button made it so, and so
+  /// stays that way after.
+  bool _fsWindowWasFull = false;
+
+  /// What [ServerFullScreen] has last been told.
+  bool _fsPublished = false;
+
+  /// Between [deactivate] and [activate]: no timer is started.
+  bool _inactive = false;
 
   late final ValueNotifier<Set<String>> _tags;
 
@@ -212,6 +243,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// page, so nothing else would tell it: the cards stayed as they were until
   /// something unrelated happened to build the grid.
   void _uiFoldListener() => _sortVersion.notify();
+
+  /// Burn-in protection, switched: the shift starts or stops, and full screen
+  /// changes colour.
+  void _burnInListener() {
+    _timer?.cancel();
+    _timer = null;
+    if (!mounted) return;
+    if (Stores.setting.fullScreenJitter.fetch()) {
+      _updateOffset();
+      if (!_inactive) _startAvoidJitterTimer();
+    } else {
+      _offsetNotifier.value = Offset.zero;
+    }
+    setState(() {});
+  }
+
+  /// The window left full screen some other way: the page follows it.
+  @override
+  void onWindowLeaveFullScreen() =>
+      unawaited(_exitFullScreen(window: false));
 
   /// What the globe guide points at: the globe button in the tag bar's
   /// [_Bar._listActions]. Null context when that button is not built — the
@@ -422,6 +473,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _globe.dispose();
     _tag.dispose();
     _tags.dispose();
+    Stores.setting.fullScreenJitter.listenable().removeListener(
+      _burnInListener,
+    );
+    if (isDesktop) windowManager.removeListener(this);
+    if (_fsManual.value && isDesktop && !_fsWindowWasFull) {
+      unawaited(windowManager.setFullScreen(false));
+    }
+    _fsKeys.dispose();
+    _fsManual.dispose();
+    _fsBar.dispose();
     _offsetNotifier.dispose();
     _landscapeController?.dispose();
     super.dispose();
@@ -444,6 +505,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     });
     Stores.setting.globeEnabled.listenable().addListener(_globeEnabledListener);
     Stores.setting.collapseUIDefault.listenable().addListener(_uiFoldListener);
+    Stores.setting.fullScreenJitter.listenable().addListener(_burnInListener);
+    if (isDesktop) windowManager.addListener(this);
     _startAvoidJitterTimer();
     _scheduleGlobeGuide();
   }
@@ -456,6 +519,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   void deactivate() {
+    _inactive = true;
     _timer?.cancel();
     _timer = null;
     super.deactivate();
@@ -464,6 +528,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void activate() {
     super.activate();
+    _inactive = false;
     _startAvoidJitterTimer();
   }
 
@@ -473,15 +538,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // Listen to provider changes and update the ValueNotifier
     ref.listen(serversProvider, (previous, next) => _tags.value = next.tags);
     return OrientationBuilder(
-      builder: (_, orientation) {
-        if (orientation == Orientation.landscape) {
-          final useFullScreen = Stores.setting.fullScreen.fetch();
-          // Only enter landscape mode when the screen is wide enough and the
-          // full screen mode is enabled.
-          if (useFullScreen) return _buildLandscape();
-        }
-        return _buildPortrait();
-      },
+      builder: (_, orientation) => ValueListenableBuilder(
+        valueListenable: _fsManual,
+        builder: (_, manual, _) {
+          // A phone turned to landscape, with the setting on.
+          final turned =
+              isMobile &&
+              orientation == Orientation.landscape &&
+              Stores.setting.fullScreen.fetch();
+          _publishFullScreen(manual || turned);
+          if (manual || turned) return _buildFullScreen(manual: manual);
+          return _buildPortrait();
+        },
+      ),
     );
   }
 
@@ -508,11 +577,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // under a card's rings — so turning it up left every other word on the
       // page the size it was.
       body: ServerTextScale(
-        // The bar above spends the top inset, as an app bar does; this is
-        // what is left, and what it still has to clear is the home indicator
-        // — especially with [bare] on, since the navigation that used to sit
-        // between the two is gone.
-        child: SafeArea(top: false, child: child),
+        // The bar above spends the top inset, as an app bar does, and these
+        // the sides. Not the bottom: under a rail rather than a bottom bar
+        // the home indicator's inset reaches here, and taken as a margin it
+        // cut both panes short of the window's edge — a column and a page
+        // stopping a band above the screen's foot, a seam ending in the air.
+        // What scrolls runs under it and keeps its last row clear, and what
+        // floats sits above it (the grid, the column, the readings, and
+        // [ServerFuncBar]).
+        child: SafeArea(top: false, bottom: false, child: child),
       ),
     );
   }

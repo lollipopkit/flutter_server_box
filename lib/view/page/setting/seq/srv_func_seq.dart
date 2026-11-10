@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 class ServerFuncBtnsOrderPage extends StatefulWidget {
     /// Whether it is being shown inside the settings pane rather than pushed.

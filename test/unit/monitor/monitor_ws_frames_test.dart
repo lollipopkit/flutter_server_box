@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_ws_frames.dart';
+import 'package:server_box/core/monitor/ws_frames.dart';
 
 class _RealHttp extends HttpOverrides {}
 
-/// The frames a write becomes, as the peer receives them: an agent before its
-/// own upgrade drops the connection on one over 64 KiB, so a terminal paste
-/// and a relayed upload are both split.
+/// The frames a write becomes, as the peer receives them: the agent drops the
+/// connection on one over its limit, so a terminal paste and a relayed upload
+/// are both split.
 void main() {
   Future<List<int>> framesOf(List<int> data) => HttpOverrides.runWithHttpOverrides(
     () async {
@@ -49,6 +49,13 @@ void main() {
   test('a write over the limit goes as frames of the limit and a remainder', () async {
     final data = List.generate(2 * monitorWsMaxFrameBytes + 1, (i) => i % 251);
     expect(await framesOf(data), [monitorWsMaxFrameBytes, monitorWsMaxFrameBytes, 1]);
+  });
+
+  test('the limit is the agent\'s', () {
+    final upgrade = File('monitor/src/api/ws/upgrade.rs').readAsStringSync();
+    final shift = RegExp(r'pub const MAX_FRAME: usize = 4 << 20;').hasMatch(upgrade);
+    expect(shift, isTrue, reason: 'monitor/src/api/ws/upgrade.rs changed its MAX_FRAME');
+    expect(monitorWsMaxFrameBytes, 4 << 20);
   });
 
   test('a write within the limit is one frame', () async {

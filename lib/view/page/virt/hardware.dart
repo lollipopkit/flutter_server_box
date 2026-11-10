@@ -19,7 +19,6 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
-import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
@@ -125,8 +124,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// ([_saveDraft]).
   final _drafted = <String, VirtHardware>{};
 
-  /// The add block that is open: `disk` or `nic`.
-  String? _adding;
+  /// The add block that is open.
+  _HwAdd? _adding;
+
+  /// [setState] for the extensions below, which may not call it themselves.
+  void _rebuild(VoidCallback fn) => setState(fn);
   List<VirtStoragePool>? _addPools;
   VirtStoragePool? _addPool;
   int _addGib = 32;
@@ -590,14 +592,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           (p) =>
               _placeOf(hw, p.key) == _PendingPlace.disk && hw.disk(p.key) == null,
         ),
-        if (_adding == 'disk')
+        if (_adding == _HwAdd.disk)
           ..._addDiskRows(hw, busy)
         else
           _empty(
             _lxc ? l10n.virtHwMountFromPool : l10n.virtHwDiskHotplug,
             _lxc ? l10n.virtHwAddMount : l10n.virtHwAddDisk,
             key: 'hw:disk:add',
-            onTap: busy ? null : () => _openAdd('disk'),
+            onTap: busy ? null : () => _openAdd(_HwAdd.disk),
           ),
       ],
     );
@@ -815,14 +817,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           (p) =>
               _placeOf(hw, p.key) == _PendingPlace.nic && hw.nic(p.key) == null,
         ),
-        if (_adding == 'nic')
+        if (_adding == _HwAdd.nic)
           ..._addNicRows(hw, busy)
         else
           _empty(
             l10n.virtHwNicHotplug,
             l10n.virtHwAddNic,
             key: 'hw:nic:add',
-            onTap: busy ? null : () => _openAdd('nic'),
+            onTap: busy ? null : () => _openAdd(_HwAdd.nic),
           ),
       ],
     );
@@ -1088,7 +1090,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           ]),
         ],
         for (final d in hw.devices) ..._deviceRows(hw, d, busy),
-        if (_adding == 'dev')
+        if (_adding == _HwAdd.dev)
           ..._addDeviceRows(hw, kinds, busy)
         else if (kinds.isNotEmpty)
           _empty(
@@ -1708,10 +1710,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 // --- Actions ---
 
 extension _Actions on _VirtHardwareViewState {
-  /// Opens the add block for `disk` or `nic`, with what it offers read now.
-  Future<void> _openAdd(String kind) async {
-    // ignore: invalid_use_of_protected_member
-    setState(() {
+  /// Opens the add block for a disk or a NIC, with what it offers read now.
+  Future<void> _openAdd(_HwAdd kind) async {
+    _rebuild(() {
       _adding = kind;
       _addPools = null;
       _addPool = null;
@@ -1721,7 +1722,7 @@ extension _Actions on _VirtHardwareViewState {
     final host = ref.read(virtHostProvider(widget.serverId)).kind;
     if (host == null) return;
     try {
-      if (kind == 'disk') {
+      if (kind == _HwAdd.disk) {
         final pools = virtDiskStorages(
           await ref.read(virtStoragePoolsProvider(widget.serverId).future),
           host: host,
@@ -1729,16 +1730,14 @@ extension _Actions on _VirtHardwareViewState {
           node: widget.guest.node,
         );
         if (!mounted) return;
-        // ignore: invalid_use_of_protected_member
-        setState(() {
+        _rebuild(() {
           _addPools = pools;
           _addPool = pools.firstOrNull;
         });
       } else if (_nets == null) {
         await _loadNets(host);
         if (!mounted) return;
-        // ignore: invalid_use_of_protected_member
-        setState(() => _addNet = _nets?.firstOrNull);
+        _rebuild(() => _addNet = _nets?.firstOrNull);
       }
     } on VirtErr catch (e) {
       Toast.error(e.title, body: e.detail);
@@ -1754,8 +1753,7 @@ extension _Actions on _VirtHardwareViewState {
       node: widget.guest.node,
     );
     if (!mounted) return;
-    // ignore: invalid_use_of_protected_member
-    setState(() => _nets = nets);
+    _rebuild(() => _nets = nets);
   }
 
   /// [_readIsos], its failure left to the picker that shows it rather than
@@ -1825,8 +1823,7 @@ extension _Actions on _VirtHardwareViewState {
                     // The storages are read again too: their read may be
                     // what failed.
                     ref.invalidate(virtStoragePoolsProvider(widget.serverId));
-                    // ignore: invalid_use_of_protected_member
-                    setState(() {
+                    _rebuild(() {
                       _isos = _loadIsos();
                     });
                   },
@@ -1915,9 +1912,8 @@ extension _Actions on _VirtHardwareViewState {
   }
 
   Future<void> _openAddDevice(_NewDevice kind) async {
-    // ignore: invalid_use_of_protected_member
-    setState(() {
-      _adding = 'dev';
+    _rebuild(() {
+      _adding = _HwAdd.dev;
       _devKind = kind;
       _devPick = null;
       _cdMedia = null;
@@ -1957,8 +1953,7 @@ extension _Actions on _VirtHardwareViewState {
         node: widget.guest.node,
       );
       if (!mounted) return;
-      // ignore: invalid_use_of_protected_member
-      setState(() {
+      _rebuild(() {
         _addPools = pools;
         _addPool ??= pools.firstOrNull;
       });
@@ -2094,3 +2089,5 @@ extension on String {
   /// This, or [other] when this is empty.
   String ifEmpty(String other) => isEmpty ? other : this;
 }
+
+enum _HwAdd { disk, nic, dev }

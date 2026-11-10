@@ -1,11 +1,17 @@
 import 'dart:convert';
 
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmEffect, LlmException;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/local_device.dart';
+import 'package:server_box/core/local/device.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  // The command risk is `sbm_parser::command_risk`, over FFI.
+  setUpAll(initRustLibForTest);
+
   test('global Agent instructions expose exact live server IDs', () {
     final instructions = buildGlobalAgentInstructions(
       localeHint: 'zh-CN',
@@ -148,7 +154,7 @@ void main() {
     test('a call that names no machine is refused', () {
       expect(
         () => AgentSshTarget.fromArguments(shell({'command': 'uptime'})),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -159,7 +165,7 @@ void main() {
         () => AgentSshTarget.fromArguments(
           shell({'server_id': '   ', 'command': 'uptime'}),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -173,7 +179,7 @@ void main() {
 
       expect(
         () => AgentSshTarget.fromArguments(proposal),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
   });
@@ -206,7 +212,7 @@ void main() {
             'command': 'uptime',
           }),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -237,7 +243,7 @@ void main() {
         () => AgentSshTarget.fromArguments(
           shell({'server_id': null, 'session_id': null, 'command': 'uptime'}),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -256,13 +262,13 @@ void main() {
       // The same read-only command. On a vetted server it may auto-run; on a
       // machine the user has only just handed a password to it may not.
       expect(onServer.risk, AskAiCommandRisk.readOnly);
-      expect(onServer.canAutoRun, isTrue);
+      expect(onServer.claimedEffect, LlmEffect.read);
       // Neither `caution` nor `unknown`: the command is read-only and
       // recognised as such, and the host is what has not been vetted. Its own
       // verdict, so the badge can say which of the two it is.
       expect(onAdHoc.risk, AskAiCommandRisk.unvettedHost);
       expect(onAdHoc.intrinsicRisk, AskAiCommandRisk.readOnly);
-      expect(onAdHoc.canAutoRun, isFalse);
+      expect(onAdHoc.claimedEffect, LlmEffect.change);
     });
 
     test('the floor does not lower a destructive command', () {
@@ -274,7 +280,7 @@ void main() {
 
       expect(proposal.risk, AskAiCommandRisk.destructive);
       expect(proposal.risk, proposal.intrinsicRisk);
-      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.claimedEffect, LlmEffect.danger);
     });
 
     test('reading a file on an ad-hoc host is not auto-runnable either', () {
@@ -296,8 +302,8 @@ void main() {
       );
 
       expect(onAdHoc.risk, AskAiCommandRisk.unvettedHost);
-      expect(onAdHoc.canAutoRun, isFalse);
-      expect(onServer.canAutoRun, isTrue);
+      expect(onAdHoc.claimedEffect, LlmEffect.change);
+      expect(onServer.claimedEffect, LlmEffect.read);
     });
   });
 
@@ -319,7 +325,7 @@ void main() {
       });
 
       expect(proposal.risk, AskAiCommandRisk.destructive);
-      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.claimedEffect, LlmEffect.danger);
     });
 
     test('what the user reviews is the host, not an empty line', () {
@@ -400,7 +406,7 @@ void main() {
       );
 
       expect(proposal.risk, AskAiCommandRisk.caution);
-      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.claimedEffect, LlmEffect.change);
       expect(proposal.displayValue, 'sess-1');
     });
   });
@@ -450,10 +456,9 @@ void main() {
           serverbox.parameters['properties'] as Map<String, dynamic>;
 
       // Its address is a fact the Agent may have learned by installing it; the
-      // user and password are secrets, and go the same way the SSH password
-      // does — through a dialog, never through the transcript.
+      // password is a secret, and goes the same way the SSH password does —
+      // through a dialog, never through the transcript.
       expect(properties.keys, contains('monitor_addr'));
-      expect(properties.keys, isNot(contains('monitor_user')));
       expect(properties.keys, isNot(contains('monitor_pwd')));
       expect(properties.keys, isNot(contains('monitor_password')));
     });
@@ -461,7 +466,7 @@ void main() {
     test('saving a host is reviewed, and never automatic', () {
       final proposal = command('add_server', modelSafeToRun: true);
       expect(proposal.risk, AskAiCommandRisk.caution);
-      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.claimedEffect, LlmEffect.change);
     });
 
     test('the model is told the app collects monitor credentials', () {
@@ -488,7 +493,7 @@ void main() {
       // not something to do without being asked.
       final proposal = command('open_server', modelSafeToRun: true);
       expect(proposal.risk, AskAiCommandRisk.caution);
-      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.claimedEffect, LlmEffect.change);
     });
 
     test('the model is told what open_server is for', () {
@@ -531,14 +536,14 @@ void main() {
         'safe_to_run': true,
       });
 
-      // The same command. `askAiAutoRunSafeCommands` is a convenience for a
-      // machine the user added on purpose and that is somewhere else; this one
-      // holds the app's own stores and the user's keys.
+      // The same command. A server was added on purpose and is somewhere
+      // else; this device holds the app's own stores and the user's keys, so
+      // a read there is not claimed as one.
       expect(onServer.risk, AskAiCommandRisk.readOnly);
-      expect(onServer.canAutoRun, isTrue);
+      expect(onServer.claimedEffect, LlmEffect.read);
       expect(onDevice.risk, AskAiCommandRisk.readOnly);
       expect(onDevice.onThisDevice, isTrue);
-      expect(onDevice.canAutoRun, isFalse);
+      expect(onDevice.claimedEffect, LlmEffect.change);
     });
 
     test('the model is not told about it unless it is available', () {

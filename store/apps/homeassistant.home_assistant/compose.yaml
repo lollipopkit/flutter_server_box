@@ -1,0 +1,67 @@
+# Home Assistant 2026.10.1 (Apache-2.0), https://github.com/home-assistant/core/tree/2026.10.1
+#
+# Written for ServerBox Monitor from upstream's container install
+# (https://www.home-assistant.io/installation/linux/): the ghcr.io image, the
+# /config volume and the host's /etc/localtime.
+#
+# - network_mode: host. Device discovery (mDNS, SSDP, DHCP) needs the host's
+#   network. There are no published ports: Home Assistant listens on its own
+#   port (HA_PORT) on every address; its Settings > System > Network "Listen
+#   addresses" can restrict that.
+# - not privileged. USB sticks (Zigbee, Z-Wave) and Bluetooth need their device
+#   mapped by hand (`devices:`), or `privileged: true` as upstream's examples use.
+# - SETUP_PORT is the image's startup override of the server port.
+# - seed-config trusts the agent's proxy (loopback) to forward the browser's
+#   address, without which every request through the desk is refused (400).
+#   Since 2026.10 Home Assistant keeps its HTTP settings in .storage/http (a
+#   confirmed "stable" set and an unconfirmed "pending" one); YAML's `http:` is
+#   only imported as pending and reverted unless confirmed in its UI within
+#   5 minutes. So the stable set is written, by Home Assistant's own schema
+#   (defaults filled, SETUP_PORT the port), on the first deployment only: an
+#   existing configuration.yaml or .storage/http is never touched. Home
+#   Assistant writes its own default configuration.yaml on first start.
+
+services:
+  seed-config:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION}
+    network_mode: none
+    environment:
+      SETUP_PORT: ${HA_PORT}
+    volumes:
+      - ${HA_CONFIG_LOCATION}:/config
+    entrypoint: ["python3", "-c"]
+    command:
+      - |
+        import json, os
+        from homeassistant.components.http.config import HTTP_STORAGE_SCHEMA, STORAGE_KEY, STORAGE_MINOR_VERSION, STORAGE_VERSION
+        from homeassistant.util import dt
+        path = "/config/.storage/" + STORAGE_KEY
+        if not os.path.exists("/config/configuration.yaml") and not os.path.exists(path):
+            stable = HTTP_STORAGE_SCHEMA({"use_x_forwarded_for": True, "trusted_proxies": ["127.0.0.1", "::1"]})
+            stable.update(created_at=dt.utcnow().isoformat(), error=None, error_message=None)
+            data = {"stable": stable, "pending": None, "yaml_migration_done": True}
+            os.makedirs("/config/.storage", exist_ok=True)
+            with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as f:
+                json.dump({"version": STORAGE_VERSION, "minor_version": STORAGE_MINOR_VERSION, "key": STORAGE_KEY, "data": data}, f, indent=2)
+    restart: "no"
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION}
+    network_mode: host
+    environment:
+      TZ: ${SBM_TZ}
+      SETUP_PORT: ${HA_PORT}
+    volumes:
+      - ${HA_CONFIG_LOCATION}:/config
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      seed-config:
+        condition: service_completed_successfully
+    healthcheck:
+      # The image has python3 (Home Assistant is Python); no curl is assumed.
+      test: ["CMD", "python3", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ['SETUP_PORT'] + '/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped

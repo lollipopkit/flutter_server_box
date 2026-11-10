@@ -20,7 +20,7 @@ extension _Init on SSHPageState {
   /// [_awaitServerClient] — and a connection of the terminal's own otherwise.
   Future<ShellBackend> _connectBackend() async {
     final granted = switch (widget.args.spi) {
-      final spi? => ref.readPresentServer(spi.id)?.remoteAccess,
+      final spi? => ref.readPresentServer(spi.id)?.agentAccess,
       null => null,
     };
     final shared = await _awaitServerClient();
@@ -59,8 +59,10 @@ extension _Init on SSHPageState {
     // how to re-attach one. It no longer does: a raw shell reconnects to a
     // fresh shell, which is the ordinary case for a link that dropped while
     // the app was in someone's pocket.
+    //
+    // Not after Stop All, which may close a client shared with the poller.
     final transportClosed = _backend != null && _backend!.isClosed;
-    if (mounted && transportClosed) {
+    if (mounted && transportClosed && !_endRequested) {
       unawaited(_onConnectionLossSuspected());
       return;
     }
@@ -293,6 +295,17 @@ extension _Init on SSHPageState {
     }
   }
 
+  Future<void> _toggleTmuxZoom() async {
+    final control = _tmuxControl;
+    if (control == null) return;
+    try {
+      await control.toggleZoom();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to toggle tmux zoom', e, st);
+      if (mounted) Toast.error(libL10n.fail);
+    }
+  }
+
   Future<ShellSession?> _openForegroundSession() async {
     final plan = await _resolveForegroundLaunchPlan();
 
@@ -329,7 +342,7 @@ extension _Init on SSHPageState {
     // Where there are virtual keys, the walkthrough says all of this and says
     // it beside the keys it is naming. This paragraph is what a desktop gets
     // instead, having no such row to point at.
-    if (_virtKeysHeight > 0 && !Stores.setting.virtKeyIntroShown.fetch()) {
+    if (_virtKeysHeight > 0 && !Stores.setting.virtualKeyIntroShown.fetch()) {
       Stores.setting.sshTermHelpShown.put(true);
       return;
     }
@@ -351,6 +364,7 @@ extension _Init on SSHPageState {
 
   Future<void> _initTerminal() async {
     if (_openingTerminal) return;
+    _endRequested = false;
     // A session handed to this page is already connected and already running
     // something — the dialog that started it did all of this. Opening a second
     // shell here would replace what the user asked to carry on watching.
@@ -617,7 +631,7 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _onConnectionLossSuspected() async {
-    if (!mounted || _disconnectDialogOpen) return;
+    if (!mounted || _disconnectDialogOpen || _endRequested) return;
 
     _disconnectDialogOpen = true;
     _reportedDisconnected = true;
@@ -663,6 +677,7 @@ extension _Init on SSHPageState {
   Future<void> reconnect() async {
     if (!mounted || !widget.args.canReconnect) return;
     if (_disconnectDialogOpen || _openingTerminal) return;
+    _endRequested = false;
     // Never connected: there is no shell to end, and the first connection is
     // what the overlay's retry makes.
     if (!_adopted && _connectionStep != TerminalConnectionStep.ready) {
@@ -967,11 +982,15 @@ extension _Init on SSHPageState {
       if (!available) return false;
 
       final tmuxBin = control.scanner.tmuxBin ?? 'tmux';
-      final List<TmuxSessionInfo> sessions;
+      final List<TmuxSessionInfo>? sessions;
       try {
         sessions = await control.sessions;
       } catch (e, st) {
         Loggers.app.warning('tmux list sessions on reconnect failed', e, st);
+        return false;
+      }
+      if (sessions == null) {
+        Loggers.app.warning('tmux list sessions on reconnect failed');
         return false;
       }
       TmuxSessionInfo? restoredSession;
@@ -1022,7 +1041,6 @@ extension _Init on SSHPageState {
   /// longer be restored, e.g. after it was killed server-side).
   void _clearTmuxState() {
     _tmuxPageController.clear();
-    widget.args.onTmuxStateChanged?.call();
   }
 
   /// After a reconnect that did not restore the terminal — see
@@ -1052,21 +1070,16 @@ extension _Init on SSHPageState {
 
   void _writeLn(String p0) => _sess.writeLn(p0);
 
-  TmuxRestoreState get _restoreTmuxState {
-    return resolveTmuxRestoreState(
-      argsSession: widget.args.tmuxSession,
-      argsWindow: widget.args.tmuxWindow,
-      restorableSession: _tmuxPageController.restorableSessionName,
-      restorableWindow: _tmuxPageController.restorableWindowIndex,
-    );
-  }
+  TmuxRestoreState get _restoreTmuxState => TmuxRestoreState(
+    sessionName: _tmuxPageController.restorableSessionName,
+    windowIndex: _tmuxPageController.restorableWindowIndex,
+  );
 
   void _saveTmuxState({required String sessionName, int? windowIndex}) {
     _tmuxPageController.saveState(
       sessionName: sessionName,
       windowIndex: windowIndex,
     );
-    widget.args.onTmuxStateChanged?.call();
   }
 
   /// Only where [_canTmux] says so — every caller checks, and the null
@@ -1130,6 +1143,12 @@ extension _Init on SSHPageState {
       }
       final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';
       final sessions = await _loadTmuxSessions(tmuxSession);
+      // A listing that failed is not "no sessions": the shell opens plainly
+      // rather than a picker that reads as an empty server.
+      if (sessions == null) {
+        Toast.error('tmux: ${libL10n.fail}');
+        return const TmuxLaunchPlan.none();
+      }
 
       final restoredPlan = await _buildRestoredForegroundLaunchPlan(
         tmuxSession,
@@ -1148,15 +1167,17 @@ extension _Init on SSHPageState {
     }
   }
 
-  Future<List<TmuxSessionInfo>> _loadTmuxSessions(
+  /// Null when the listing failed.
+  Future<List<TmuxSessionInfo>?> _loadTmuxSessions(
     TmuxSession tmuxSession,
   ) async {
     try {
-      return await tmuxSession.sessions;
+      if (await tmuxSession.sessions case final sessions?) return sessions;
+      Loggers.app.warning('tmux list sessions failed');
     } catch (e, st) {
       Loggers.app.warning('tmux list sessions failed', e, st);
-      return const [];
     }
+    return null;
   }
 
   Future<TmuxLaunchPlan> _buildRestoredForegroundLaunchPlan(
@@ -1318,6 +1339,10 @@ extension _Init on SSHPageState {
 
       final sessions = await tmuxSession.sessions;
       if (!mounted) return;
+      if (sessions == null) {
+        Toast.error(libL10n.fail);
+        return;
+      }
 
       final defaultName = Stores.setting.tmuxSessionName.fetch();
       final sessionName = defaultName.isEmpty ? 'server_box' : defaultName;
@@ -1352,6 +1377,9 @@ extension _Init on SSHPageState {
 
 extension on SSHPageState {
   void _disconnectFromNotification() {
+    // Stop All runs every disconnect in one synchronous pass; the shell's
+    // `done` arrives after it, whichever closed the shared client first.
+    _endRequested = true;
     // Update observers before closing the channel so the UI and notification
     // respond immediately.
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);

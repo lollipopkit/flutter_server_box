@@ -15,8 +15,8 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/pve_console.dart';
-import 'package:server_box/core/utils/pve_termproxy.dart';
+import 'package:server_box/core/pve/console.dart';
+import 'package:server_box/core/pve/termproxy.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/virt.dart';

@@ -6,13 +6,17 @@ English | [简体中文](README_zh.md)
   <a href="https://lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/license-AGPLv3-yellow">
-  <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+</div>
+<div align="center">
+  <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-Group-pink"></a>
+  <a href="https://t.me/lpktg"><img alt="telegram" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
+  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
 <p align="center">
 A Flutter+Rust project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
 <br>
-Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
+Read the <a href="https://serverbox.lollipopkit.com/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
 </p>
 
 ## Acknowledgements
@@ -67,14 +71,14 @@ Download packages only from sources you trust.
 
 **Connecting**
 
-- Connect directly over SSH, through a jump host or with a `ProxyCommand`; You can also connect over HTTP through the [Monitor agent](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/) when you do not want to expose a host's SSH port. A server can use both methods, with automatic fallback if one is unavailable.
+- Connect directly over SSH, through a jump host or with a `ProxyCommand`. You can also connect over HTTP through the [Monitor](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/) when you do not want to expose a host's SSH port. A server can use both methods, with automatic fallback if one is unavailable.
 - Open a shell on this device or install a Linux userland ([local terminal](https://serverbox.lollipopkit.com/docs/advanced/local-terminal/)) on supported platforms.
 
 **Watching**
 
 - Live and historical charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs (NVIDIA, AMD), batteries and disk S.M.A.R.T.
 - See all servers at a glance, filter them by tag or view them on a [globe](https://serverbox.lollipopkit.com/docs/advanced/globe/).
-- Push alerts, [home-screen widgets](https://serverbox.lollipopkit.com/docs/advanced/widgets/) and a watchOS app. The Monitor agent keeps these features working while the app is closed.
+- Push alerts, [home-screen widgets](https://serverbox.lollipopkit.com/docs/advanced/widgets/) and a watchOS app. The Monitor keeps these features working while the app is closed.
 
 **Working on a server**
 
@@ -89,31 +93,23 @@ Download packages only from sources you trust.
 **Making it yours**
 
 - Install [themes and icon packs](https://serverbox.lollipopkit.com/docs/advanced/theme-packages/) from the built-in store, or make your own.
-- Biometric app lock, and backups to iCloud, WebDAV, GitHub Gist or a Monitor agent, encrypted with a password you choose.
-- iOS, Android, macOS, Linux and Windows, in 16 languages.
+- Biometric app lock, and backups to iCloud or WebDAV, encrypted with a password you choose.
+- iOS, Android, macOS, Linux and Windows, in 17 languages.
 
 ## Help
 
-<div align="center">
-  <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-Group-pink"></a>
-  <a href="https://t.me/lpktg"><img alt="donate" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
-  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
-</div>
-
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection.  
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is a component you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel.
 - **Agent skills:** This repository includes three skills for AI agents. Add them with
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
   ```
 
-  which lists them and lets you pick, or add one with `--skill <name>`:
-
-  - [`serverbox-help`](.claude/skills/serverbox-help): using the app and deploying and configuring Monitor agent — adding servers, why a feature is missing for a server, permissions, alerts, widgets, backups. The app's own Agent ships with it.
+  - [`serverbox-help`](.claude/skills/serverbox-help): using the app and deploying and configuring the Monitor — adding servers, why a feature is missing for a server, permissions, alerts, widgets, backups. The app's own Agent ships with it.
   - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding): working on the code — setting up the Flutter + Rust + Node environment, building and testing, and how the project works.
   - [`serverbox-theme`](.claude/skills/serverbox-theme): making a theme package (`.fsbt`), validating it and publishing it to the theme store.
 
-  Their source is in this repository, so you can read what they will tell your agent before installing them.
+  Their source is in this repository, so you can read what they will tell your Monitor before installing them.
 
 Before opening an issue, please:
 
@@ -128,6 +124,11 @@ Before opening an issue, please:
 Contributors sign the [CLA](CLA.md) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
+
+## My other apps
+
+- [LLMBox](https://github.com/lollipopkit/llmbox): a third-party client for the OpenAI API.
+- [MFuse](https://mfuse.lollipopkit.com): mounts SFTP, S3, WebDAV and more in macOS Finder through File Provider.
 
 ## License
 

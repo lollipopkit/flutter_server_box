@@ -1,5 +1,6 @@
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/sftp_escalation.dart';
+import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
 
 class _Escalation implements SftpEscalation {
   _Escalation({
@@ -54,8 +55,8 @@ void main() {
       // Four spellings, because that is how many the app had to learn.
       expect(isPermissionDenied('Permission denied'), isTrue);
       expect(isPermissionDenied('Access denied'), isTrue);
-      expect(isPermissionDenied('SftpStatusError: code 3'), isTrue);
-      expect(isPermissionDenied('failure'), isTrue);
+      expect(isPermissionDenied(SftpStatusError(SftpStatusCode.permissionDenied, '')), isTrue);
+      expect(isPermissionDenied(SftpStatusError(SftpStatusCode.failure, '')), isTrue);
     });
 
     test('leaves other failures alone', () {

@@ -331,3 +331,119 @@ fn an_apfs_container_read_a_moment_apart_counts_once() {
     let disks = [volume("/dev/disk3s1s1", 100), volume("/dev/disk3s5", 98)];
     assert_eq!(disk_total(&disks, false), DiskTotal { used: 900, size: 1000, avail: 100 });
 }
+
+/// Every device `lsblk` lists, whether or not a filesystem is on it or mounted
+/// (#1829): a blank disk with its model, a partition nothing mounts, an active
+/// zram swap. Loop devices are not disks and are left out. The filesystem list
+/// is unchanged: the blank disk and the swap are not storage to count.
+#[test]
+fn block_devices_list_what_is_not_mounted() {
+    let raw = include_str!("fixtures/lsblk_block_devices.txt");
+    let devices = linux::parse_block_devices(raw);
+
+    let names: Vec<&str> = devices.iter().map(|d| d.name.as_str()).collect();
+    assert_eq!(names, ["sda", "nvme0n1", "zram0"]);
+
+    let sda = &devices[0];
+    assert_eq!(sda.kind, "disk");
+    assert_eq!(sda.model.as_deref(), Some("WDC WD40EFRX-68N32N0"));
+    assert_eq!(sda.tran.as_deref(), Some("sata"));
+    assert_eq!(sda.size, 4_000_787_030_016);
+    assert_eq!(sda.mount, None);
+    assert!(!sda.in_use, "a blank disk");
+    assert!(sda.children.is_empty());
+
+    let parts = &devices[1].children;
+    assert_eq!(parts.len(), 3);
+    assert_eq!(parts[0].mount.as_deref(), Some("/boot/efi"));
+    assert_eq!(parts[0].size, 536_870_912, "a size lsblk printed as a string");
+    assert_eq!(parts[2].fs_type.as_deref(), Some("ntfs"));
+    assert_eq!(parts[2].mount, None);
+    assert!(!parts[2].in_use, "a filesystem nothing mounts");
+    assert!(parts[1].in_use);
+    assert!(devices[1].in_use, "in use through its partitions");
+    assert_eq!(parts[2].model, None);
+
+    assert_eq!(devices[2].mount.as_deref(), Some("[SWAP]"));
+
+    let mounts: Vec<String> = linux::parse_disk(raw).iter().flat_map(flat_mounts).collect();
+    assert_eq!(mounts, ["/boot/efi", "/"]);
+}
+
+fn flat_mounts(d: &Disk) -> Vec<String> {
+    let mut out = vec![d.mount.clone()];
+    out.extend(d.children.iter().flat_map(flat_mounts));
+    out.retain(|m| !m.is_empty());
+    out
+}
+
+/// Output from before the lsblk half, or a host without `lsblk`: no devices.
+#[test]
+fn block_devices_need_lsblk() {
+    assert!(linux::parse_block_devices("").is_empty());
+    let df = "Filesystem 1K-blocks Used Available Use% Mounted on\n/dev/sda1 100 50 50 50% /\n";
+    assert!(linux::parse_block_devices(&format!("{DISK_DF_MARKER}\n{df}")).is_empty());
+    assert!(linux::parse_block_devices(df).is_empty());
+}
+
+/// A Proxmox VE thin pool, which `lsblk` lists under both `_tmeta` and
+/// `_tdata`: listed once, under the first, so a client keying rows by path
+/// never sees one twice. The transport newer `lsblk` repeats on every
+/// partition stays on the disk.
+#[test]
+fn block_devices_list_a_shared_device_once() {
+    let dev = |name: &str, kind: &str, children: &str| {
+        format!(
+            r#"{{"path":"/dev/mapper/{name}","name":"{name}","type":"{kind}","size":1,"tran":"nvme","children":[{children}]}}"#
+        )
+    };
+    let pool = || dev("pve-data-tpool", "lvm", &dev("pve-vm--100--disk--0", "lvm", ""));
+    let raw = format!(
+        r#"{{"blockdevices":[{{"path":"/dev/nvme0n1","name":"nvme0n1","type":"disk","size":1,"tran":"nvme","children":[
+            {}]}}]}}"#,
+        dev(
+            "nvme0n1p3",
+            "part",
+            &format!(
+                "{},{}",
+                dev("pve-data_tmeta", "lvm", &pool()),
+                dev("pve-data_tdata", "lvm", &pool())
+            )
+        )
+    );
+    let devices = linux::parse_block_devices(&raw);
+
+    let mut paths = Vec::new();
+    fn walk(d: &[sbm_parser::types::BlockDevice], out: &mut Vec<String>) {
+        for d in d {
+            out.push(d.path.clone());
+            walk(&d.children, out);
+        }
+    }
+    walk(&devices, &mut paths);
+    let unique: std::collections::HashSet<_> = paths.iter().collect();
+    assert_eq!(unique.len(), paths.len(), "{paths:?}");
+    assert!(paths.contains(&"/dev/mapper/pve-vm--100--disk--0".to_string()));
+
+    let disk = &devices[0];
+    assert_eq!(disk.tran.as_deref(), Some("nvme"));
+    assert_eq!(disk.children[0].tran, None);
+    let tmeta = &disk.children[0].children[0];
+    let tdata = &disk.children[0].children[1];
+    assert_eq!(tmeta.children.len(), 1);
+    assert!(tdata.children.is_empty());
+    assert!(tdata.in_use, "the pool it carries is listed under tmeta");
+}
+
+/// A physical volume with no logical volumes yet, and a RAID member, are part
+/// of something whether or not `lsblk` lists it: in use, not free.
+#[test]
+fn block_devices_members_are_in_use() {
+    let raw = r#"{"blockdevices":[
+        {"path":"/dev/sdb","name":"sdb","type":"disk","fstype":"LVM2_member","size":1},
+        {"path":"/dev/sdc","name":"sdc","type":"disk","fstype":"linux_raid_member","size":1},
+        {"path":"/dev/sdd","name":"sdd","type":"disk","fstype":"swap","size":1}
+    ]}"#;
+    let in_use: Vec<bool> = linux::parse_block_devices(raw).iter().map(|d| d.in_use).collect();
+    assert_eq!(in_use, [true, true, false], "an inactive swap area is unused");
+}

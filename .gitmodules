@@ -14,10 +14,6 @@
 	path = packages/fl_build
 	url = https://github.com/lollipopkit/fl_build.git
 	branch = main
-[submodule "circle_chart"]
-	path = packages/circle_chart
-	url = https://github.com/lollipopkit/circle_chart
-	branch = main
 [submodule "plain_notification_token"]
 	path = packages/plain_notification_token
 	url = https://github.com/lollipopkit/plain_notification_token

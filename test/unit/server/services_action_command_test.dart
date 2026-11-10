@@ -16,10 +16,10 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/services.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/service.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -65,7 +65,7 @@ void main() {
     // an unlistened provider is disposed in the meantime.
     container.listen(servicesProvider(spi), (_, _) {});
     final notifier = container.read(servicesProvider(spi).notifier);
-    await notifier.getServices();
+    await notifier.refresh();
     final unit = container
         .read(servicesProvider(spi))
         .units
@@ -112,7 +112,7 @@ class _FakeServerNotifier extends ServerNotifier {
 
 /// A systemd host whose account has [uid], recording what it was asked to run.
 Map<String, String?> get _commands => {
-  for (final c in ffi.serviceListingCommands(managerName: 'systemd')) c.name: c.command,
+  for (final c in ffi.serviceListingCommands(manager: ffi.ServiceManagerType.systemd)) c.name: c.command,
 };
 
 class _SystemdExec implements CommandExec {

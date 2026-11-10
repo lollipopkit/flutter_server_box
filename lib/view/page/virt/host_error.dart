@@ -2,17 +2,14 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/bmc.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/widget/cert_dialog.dart';
 
 /// A host's failure where its guests would be, with the one action that
 /// answers it.
@@ -161,65 +158,12 @@ Future<void> virtConfirmCert(
 ) async {
   final cert = err.cert;
   if (cert == null) return;
-  final changed = err.type == VirtErrType.certChanged;
-  final previous = err.previousFingerprint;
-  final fmt = DateFormat.yMMMd(l10n.localeName);
-  final accepted = await context.showRoundDialog<bool>(
-    title: changed
-        ? l10n.virtErrCertChanged
-        : l10n.remoteDesktopTrustCertificate,
-    barrierDismiss: false,
-    child: SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            changed
-                ? l10n.remoteDesktopCertificateChangedTip
-                : l10n.remoteDesktopCertificateUnverifiedTip,
-          ),
-          UIs.height13,
-          SelectableText('SHA-256\n${cert.prettyFingerprint}'),
-          if (changed && previous != null) ...[
-            UIs.height7,
-            SelectableText(
-              l10n.remoteDesktopPreviousCertificate(
-                prettyCertFingerprint(previous),
-              ),
-            ),
-          ],
-          UIs.height7,
-          SelectableText(l10n.remoteDesktopCertificateSubject(cert.subject)),
-          SelectableText(l10n.remoteDesktopCertificateIssuer(cert.issuer)),
-          SelectableText(
-            l10n.remoteDesktopCertificateValidity(
-              fmt.format(cert.startValidity),
-              fmt.format(cert.endValidity),
-            ),
-          ),
-          if (cert.isExpired) ...[
-            UIs.height7,
-            Text(
-              l10n.bmcCertExpired,
-              style: const TextStyle(color: StatePalette.warn),
-            ),
-          ],
-        ],
-      ),
-    ),
-    actions: [
-      Btn.cancel(),
-      Btn.text(
-        text: changed
-            ? l10n.remoteDesktopReplaceTrust
-            : l10n.remoteDesktopTrustReconnect,
-        textStyle: changed ? UIs.textRed : null,
-        onTap: () => context.popDialog(true),
-      ),
-    ],
+  final accepted = await showCertTrustDialog(
+    context,
+    cert: cert,
+    previous: err.type == VirtErrType.certChanged ? err.previousFingerprint : null,
   );
-  if (accepted != true || !context.mounted) return;
+  if (!accepted || !context.mounted) return;
   await context.showLoadingDialog(
     fn: () => notifier.confirmCert(cert.fingerprint),
   );

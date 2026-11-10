@@ -8,11 +8,12 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 
 Spi _ssh({String user = 'me'}) => Spi(
   id: 's-1',
@@ -33,8 +34,8 @@ void main() {
     test('is offered nothing that needs a server', () {
       // The report this exists for: on a Linux system installed in the app,
       // the file, sudo and tmux keys were all dead buttons.
-      expect(VirtKey.sftp.worksOn(_local), isFalse);
-      expect(VirtKey.sudo.worksOn(_local), isFalse);
+      expect(VirtualKey.sftp.worksOn(_local), isFalse);
+      expect(VirtualKey.sudo.worksOn(_local), isFalse);
     });
 
     test('drives tmux, except where a command is cmd', () {
@@ -42,7 +43,7 @@ void main() {
       // terminal, which is all tmux needs; Windows runs `cmd /C`. iOS is off
       // for now, and this suite does not run there.
       for (final source in [_local, const LocalSource(rootfs: true)]) {
-        expect(VirtKey.tmux.worksOn(source), !Platform.isWindows);
+        expect(VirtualKey.tmux.worksOn(source), !Platform.isWindows);
       }
     });
 
@@ -51,13 +52,13 @@ void main() {
       // there, and the ones naming no server run here perfectly well. That key
       // used to bail for want of a server it never needed.
       for (final key in [
-        VirtKey.snippet,
-        VirtKey.ime,
-        VirtKey.ctrl,
-        VirtKey.esc,
-        VirtKey.up,
-        VirtKey.f1,
-        VirtKey.slash,
+        VirtualKey.snippet,
+        VirtualKey.ime,
+        VirtualKey.ctrl,
+        VirtualKey.esc,
+        VirtualKey.up,
+        VirtualKey.f1,
+        VirtualKey.slash,
       ]) {
         expect(
           key.worksOn(_local),
@@ -70,7 +71,7 @@ void main() {
 
   group('a server over SSH', () {
     test('is offered all of them', () {
-      for (final key in VirtKey.values) {
+      for (final key in VirtualKey.values) {
         expect(key.worksOn(ServerSource(_ssh())), isTrue, reason: key.name);
       }
     });
@@ -78,7 +79,7 @@ void main() {
     test('except sudo where the session is already root', () {
       // The same rule the toolbar's own sudo button applies, so the two cannot
       // disagree about the same server.
-      expect(VirtKey.sudo.worksOn(ServerSource(_ssh(user: 'root'))), isFalse);
+      expect(VirtualKey.sudo.worksOn(ServerSource(_ssh(user: 'root'))), isFalse);
     });
   });
 
@@ -87,11 +88,11 @@ void main() {
       final spi = _monitor();
       // tmux needs a channel that does not echo what is written into it, and
       // the agent carries no exec channel at all.
-      expect(VirtKey.tmux.worksOn(ServerSource(spi)), isFalse);
+      expect(VirtualKey.tmux.worksOn(ServerSource(spi)), isFalse);
       // The file key opens `ServerFilePage`, which serves a monitor server
       // from the agent's own file API.
-      expect(VirtKey.sftp.worksOn(ServerSource(spi)), isTrue);
-      expect(VirtKey.snippet.worksOn(ServerSource(spi)), isTrue);
+      expect(VirtualKey.sftp.worksOn(ServerSource(spi)), isTrue);
+      expect(VirtualKey.snippet.worksOn(ServerSource(spi)), isTrue);
     });
 
     test('and nothing to insert a sudo password from', () {
@@ -101,7 +102,7 @@ void main() {
       // another dead button, on the one kind of session that has no password to
       // offer.
       expect(_monitor().ssh, isNull);
-      expect(VirtKey.sudo.worksOn(ServerSource(_monitor())), isFalse);
+      expect(VirtualKey.sudo.worksOn(ServerSource(_monitor())), isFalse);
     });
   });
 }

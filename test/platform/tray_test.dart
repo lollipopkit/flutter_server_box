@@ -1,13 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/tray.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
 
 /// What the tray shows, without the tray.
 ///
@@ -86,8 +87,8 @@ void main() {
 
     test('and for a series too short to be a trend', () {
       final status = _emptyStatus();
-      status.history.add(timeMs: 1, cpu: 10);
-      status.history.add(timeMs: 2, cpu: 20);
+      status.history.add(StatusHistorySample(timeMs: 1, cpu: 10));
+      status.history.add(StatusHistorySample(timeMs: 2, cpu: 20));
 
       expect(trayChart(status: status, metric: TrayMetric.cpu), isEmpty);
     });
@@ -99,7 +100,7 @@ void main() {
       // Rising timestamps: a repeated instant is dropped, since it means the
       // source has not advanced.
       for (final (i, v) in [1.0, 2.0, 3.0, 2.0].indexed) {
-        status.history.add(timeMs: i + 1, cpu: v);
+        status.history.add(StatusHistorySample(timeMs: i + 1, cpu: v));
       }
 
       final chart = trayChart(status: status, metric: TrayMetric.cpu);
@@ -115,7 +116,7 @@ void main() {
         (20.0, 80.0),
         (30.0, 70.0),
       ].indexed) {
-        status.history.add(timeMs: i + 1, mem: values.$1, swap: values.$2);
+        status.history.add(StatusHistorySample(timeMs: i + 1, mem: values.$1, swap: values.$2));
       }
 
       expect(trayChart(status: status, metric: TrayMetric.swap), [
@@ -129,9 +130,9 @@ void main() {
       'the network chart combines both directions and scales to its peak',
       () {
         final status = _emptyStatus();
-        status.history.add(timeMs: 1, netRx: 100, netTx: 0);
-        status.history.add(timeMs: 2, netRx: 100, netTx: 100);
-        status.history.add(timeMs: 3, netRx: 100, netTx: 300);
+        status.history.add(StatusHistorySample(timeMs: 1, netRx: 100, netTx: 0));
+        status.history.add(StatusHistorySample(timeMs: 2, netRx: 100, netTx: 100));
+        status.history.add(StatusHistorySample(timeMs: 3, netRx: 100, netTx: 300));
 
         expect(trayChart(status: status, metric: TrayMetric.net), [
           0.25,
@@ -143,10 +144,10 @@ void main() {
 
     test('the network chart omits samples with neither direction measured', () {
       final status = _emptyStatus();
-      status.history.add(timeMs: 1);
-      status.history.add(timeMs: 2, netRx: 10);
-      status.history.add(timeMs: 3, netTx: 20);
-      status.history.add(timeMs: 4, netRx: 30, netTx: 10);
+      status.history.add(StatusHistorySample(timeMs: 1));
+      status.history.add(StatusHistorySample(timeMs: 2, netRx: 10));
+      status.history.add(StatusHistorySample(timeMs: 3, netTx: 20));
+      status.history.add(StatusHistorySample(timeMs: 4, netRx: 30, netTx: 10));
 
       expect(trayChart(status: status, metric: TrayMetric.net), [
         0.25,

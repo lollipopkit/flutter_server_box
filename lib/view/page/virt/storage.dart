@@ -189,7 +189,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   /// is left over, not in use.
   List<VirtGuestRef> _users(VirtHostState host, VirtVolume v) => [
     for (final u in v.users)
-      if (u.guestId != null || virtGuestOf(host, u) != null) u,
+      if (u.guestId != null || virtGuestOf(host.guests, u) != null) u,
   ];
 
   // --- Usage ---
@@ -456,7 +456,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     // attached to nothing and is still far from unused.
     final usersText = [
       for (final u in users)
-        [virtGuestLabel(host, u), ?u.device].join(' · '),
+        [virtGuestLabel(host.guests, u), ?u.device].join(' · '),
       if (v.backs.isNotEmpty)
         l10n.virtVolBackingOf(v.backs.map(_basename).join(', ')),
     ].join(', ');
@@ -534,7 +534,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 
   bool _running(VirtHostState host, VirtGuestRef u) =>
-      virtGuestOf(host, u)?.state.isActive ?? true;
+      virtGuestOf(host.guests, u)?.state.isActive ?? true;
 
   List<Widget> _resizeRows(
     VirtStoragePool pool,
@@ -608,7 +608,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     // corrupt every volume made on it.
     if (!iso && !(disk && !v.inUse)) return const [];
     final guests = [
-      for (final g in host.data?.guests ?? const <VirtGuest>[])
+      for (final g in host.guests)
         if (g.kind == VirtGuestKind.qemu &&
             !g.template &&
             (pool.node == null || g.node == pool.node))

@@ -1,0 +1,36 @@
+# Stirling-PDF 3.1.0, ultra-lite build, https://github.com/Stirling-Tools/Stirling-PDF/releases/tag/v3.1.0
+#
+# Modified from the release's docker/compose/docker-compose.ultra-lite.yml:
+# - no `name:`, no `container_name:`, no `build:`: the image is the Docker Hub
+#   tag from the env file (stirlingtools/stirling-pdf, amd64 and arm64);
+# - the published address and port come from the env file;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ).
+# DISABLE_ADDITIONAL_FEATURES must stay "true": the image's entrypoint
+# downloads the proprietary jar when it is "false".
+
+services:
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:${STIRLING_IMAGE_TAG}
+    environment:
+      DISABLE_ADDITIONAL_FEATURES: "true"
+      SECURITY_ENABLELOGIN: "false"
+      # Upstream asks on first start whether to send usage analytics; nothing
+      # leaves unasked here.
+      SYSTEM_ENABLEANALYTICS: "false"
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${CONFIG_LOCATION}:/configs
+    ports:
+      - '${STIRLING_BIND}:${STIRLING_PORT}:8080'
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8080/api/v1/info/status | grep -q 'UP'"]
+      interval: 5s
+      timeout: 10s
+      retries: 16

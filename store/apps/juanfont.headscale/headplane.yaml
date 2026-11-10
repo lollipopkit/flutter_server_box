@@ -1,0 +1,18 @@
+# Written for ServerBox Monitor: Headplane's configuration, from the release's
+# config.example.yaml (0.8.1), with no integration (Headplane manages users,
+# machines, keys and access rules through Headscale's API). The cookie secret
+# comes from the environment (HEADPLANE_SERVER__COOKIE_SECRET).
+server:
+  host: "0.0.0.0"
+  port: 3000
+  base_url: "http://localhost:3000"
+  # The agent's proxy marks cookies Secure itself over HTTPS.
+  cookie_secure: false
+  cookie_max_age: 86400
+  data_path: "/var/lib/headplane"
+
+headscale:
+  url: "http://headscale:8080"
+  # Read-only: Headplane shows these settings but cannot change them.
+  config_path: "/etc/headscale/config.yaml"
+

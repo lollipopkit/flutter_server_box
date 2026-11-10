@@ -1,0 +1,122 @@
+# AFFiNE 0.27.4 (MIT, server under the AFFiNE Community license), https://github.com/toeverything/AFFiNE/tree/v0.27.4
+#
+# Adapted from the release's docker-compose.yml (a release asset) for
+# ServerBox Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: affine:stable, redis, pgvector:pg16); bind mounts
+#   from the env file; the database asks for a generated password
+#   (upstream trusts every connection);
+# - sign-up is off: seed-admin, a one-shot job after the migration job,
+#   writes config.json with auth.allowSignup false once, and before AFFiNE
+#   answers anyone runs its server alone in the job's container on loopback
+#   and makes the administrator with the generated password
+#   (/api/setup/create-admin-user, which answers only while there is no
+#   user), then stops it.
+
+services:
+  affine:
+    image: ghcr.io/toeverything/affine:${AFFINE_VERSION}
+    ports:
+      - '${AFFINE_BIND}:${AFFINE_PORT}:3010'
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      seed-admin:
+        condition: service_completed_successfully
+    volumes:
+      - ${AFFINE_DATA}/storage:/root/.affine/storage
+      - ${AFFINE_DATA}/config:/root/.affine/config
+    environment: &affine-env
+      TZ: ${SBM_TZ}
+      REDIS_SERVER_HOST: redis
+      DATABASE_URL: postgresql://affine:${POSTGRES_PASSWORD}@postgres:5432/affine
+      AFFINE_INDEXER_ENABLED: 'false'
+      AFFINE_SERVER_EXTERNAL_URL: ${AFFINE_URL}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3010/info').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  affine_migration:
+    image: ghcr.io/toeverything/affine:${AFFINE_VERSION}
+    volumes:
+      - ${AFFINE_DATA}/storage:/root/.affine/storage
+      - ${AFFINE_DATA}/config:/root/.affine/config
+    command: ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    environment: *affine-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+
+  seed-admin:
+    image: ghcr.io/toeverything/affine:${AFFINE_VERSION}
+    volumes:
+      - ${AFFINE_DATA}/storage:/root/.affine/storage
+      - ${AFFINE_DATA}/config:/root/.affine/config
+    environment:
+      <<: *affine-env
+      ADMIN_EMAIL: ${AFFINE_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${AFFINE_PASSWORD}
+    depends_on:
+      affine_migration:
+        condition: service_completed_successfully
+    entrypoint: ["node", "-e"]
+    command:
+      - |
+        const fs = require("fs"), cp = require("child_process");
+        const config = "/root/.affine/config/config.json";
+        if (!fs.existsSync(config)) {
+          fs.writeFileSync(config, JSON.stringify({ $$schema: "https://github.com/toeverything/affine/releases/latest/download/config.schema.json", auth: { allowSignup: false } }, null, 2) + "\n");
+        }
+        const { ADMIN_EMAIL: email, ADMIN_PASSWORD: password, ...env } = process.env;
+        const server = cp.spawn("node", ["./dist/main.js"], { stdio: "inherit", env: { ...env, LISTEN_ADDR: "127.0.0.1", AFFINE_SERVER_PORT: "3999" } });
+        const base = "http://127.0.0.1:3999";
+        (async () => {
+          for (let i = 0; ; i++) {
+            try { if ((await fetch(base + "/info")).ok) break; } catch {}
+            if (i > 180) throw new Error("the server did not start");
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+          const made = await fetch(base + "/api/setup/create-admin-user", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "Admin", email, password }) });
+          // Answers only while there is no user.
+          if (!made.ok && made.status !== 403) throw new Error("create-admin-user: HTTP " + made.status + " " + (await made.text()));
+        })().then(
+          () => { server.kill(); process.exit(0); },
+          (e) => { console.error(e.message); server.kill(); process.exit(1); },
+        );
+    restart: "no"
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    volumes:
+      - ${AFFINE_DATA}/redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:${PGVECTOR_VERSION}
+    volumes:
+      - ${AFFINE_DATA}/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: affine
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: affine
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'affine', '-d', 'affine']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped

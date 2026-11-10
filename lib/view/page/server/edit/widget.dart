@@ -11,13 +11,21 @@ enum _Method {
   };
 
   String get label => switch (this) {
-    _Method.monitorHttp => 'Monitor HTTP',
+    _Method.monitorHttp => l10n.monitorAgent,
     _Method.ssh => 'SSH',
+  };
+
+  /// What the method is, where it needs saying: the agent has to be
+  /// installed first, and the docs say how.
+  String? get tip => switch (this) {
+    _Method.monitorHttp => l10n.monitorHttpTip(Urls.monitorAgentDoc),
+    _Method.ssh => null,
   };
 }
 
 extension _Widgets on _ServerEditPageState {
-  Widget _buildGroupTitle(String title) => GroupTitle(title);
+  Widget _buildGroupTitle(String title, {String? tip}) =>
+      GroupTitle(title, tip: tip);
 
   /// A line of explanation under a group, in the form's own voice.
   Widget _buildGroupNote(String text) => Padding(
@@ -215,15 +223,25 @@ extension _Widgets on _ServerEditPageState {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        method.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: on ? null : UIs.textGrey.color,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              method.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: on ? null : UIs.textGrey.color,
+                              ),
+                            ),
+                          ),
+                          if (method.tip case final tip?) ...[
+                            const SizedBox(width: 5),
+                            TipButton(tip, isMarkdown: true),
+                          ],
+                        ],
                       ),
                       if (summary.isNotEmpty)
                         Text(
@@ -264,15 +282,12 @@ extension _Widgets on _ServerEditPageState {
         _preferMonitorHttp,
       ]),
       builder: (_, _) {
-        final title = switch (method) {
-          _Method.monitorHttp => l10n.monitorAgent,
-          _Method.ssh => 'SSH',
-        };
+        final title = method.label;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGroupTitle(title),
+            _buildGroupTitle(title, tip: method.tip),
             if (!_methodOn(method))
               _buildGroupNote(l10n.transportSectionOff)
             else
@@ -310,6 +325,7 @@ extension _Widgets on _ServerEditPageState {
     final password = Input(
       controller: _passwordController,
       obscureText: true,
+      onReveal: _revealStored(_passwordController),
       type: TextInputType.text,
       label: libL10n.pwd,
       icon: Icons.password,
@@ -952,6 +968,7 @@ extension _Widgets on _ServerEditPageState {
           label: l10n.pveTokenSecret,
           hint: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
           obscureText: true,
+          onReveal: _revealStored(_pveTokenSecretCtrl),
           suggestion: false,
         ),
       ],
@@ -971,6 +988,7 @@ extension _Widgets on _ServerEditPageState {
         label: l10n.pvePassword,
         hint: l10n.pvePasswordHint,
         obscureText: true,
+        onReveal: _revealStored(_pvePwdCtrl),
         suggestion: false,
       );
     });
@@ -1083,54 +1101,18 @@ extension _Widgets on _ServerEditPageState {
               hint: addr,
               suggestion: false,
             ),
-            // Prefixed to say which account this is: the agent's panel login,
-            // not a system account on the far host. A server reached this way
-            // has no system account configured here at all.
-            Input(
-              controller: _monitorUserCtrl,
-              type: TextInputType.text,
-              icon: MingCute.user_2_line,
-              label: 'Monitor ${libL10n.user}',
-              suggestion: false,
-            ),
+            // Prefixed to say which password this is: the agent's own login,
+            // not a system account's on the far host.
             Input(
               controller: _monitorPwdCtrl,
               type: TextInputType.visiblePassword,
               icon: MingCute.lock_line,
               label: 'Monitor ${libL10n.pwd}',
               obscureText: true,
+              onReveal: _revealStored(_monitorPwdCtrl),
               suggestion: false,
             ),
-            // What a monitor agent *is*, where there is not one yet. It is the
-            // only way in on this page that does not exist until something has
-            // been installed on the server, which no switch can convey — and
-            // once an address is typed the question has been answered, so the
-            // explanation goes rather than sitting there for good.
-            if (_monitorAddrCtrl.text.trim().isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
-                child: SimpleMarkdown(
-                  data: l10n.monitorHttpTip(Urls.monitorAgentDoc),
-                ),
-              ),
-            if (!plain)
-              ListTile(
-                leading: const Icon(MingCute.certificate_line),
-                title: TipText(
-                  'Monitor ${l10n.ignoreCert}',
-                  l10n.pveIgnoreCertTip,
-                ),
-                trailing: _monitorIgnoreCert.listenVal(
-                  (v) => SwitchX(
-                    value: v,
-                    onChanged: (val) {
-                      _monitorIgnoreCert.value = val;
-                    },
-                  ),
-                ),
-              ).cardx
-            else
-              _buildPlainHttpCallout(),
+            if (!plain) _buildMonitorCert() else _buildPlainHttpCallout(),
           ],
         );
       },
@@ -1412,6 +1394,36 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
+  /// The certificate accepted for an agent the system does not trust. Tapping
+  /// reads the one it presents now; connecting asks too, so nothing has to be
+  /// set here.
+  Widget _buildMonitorCert() {
+    return _monitorCert.listenVal((stored) {
+      // Rebuilt with the URL field (`_buildMonitorHttpFields`): a pin taken
+      // at another address is not this one's.
+      final pinned = _monitorCertAddr?.trim() == _monitorAddrCtrl.text.trim() ? stored : null;
+      final has = pinned != null && pinned.isNotEmpty;
+      return ListTile(
+        leading: Icon(has ? Icons.verified_user : MingCute.certificate_line),
+        title: Text('Monitor ${l10n.bmcCert}'),
+        subtitle: has
+            ? SelectableText(
+                'SHA-256: ${prettyCertFingerprint(pinned)}',
+                style: UIs.textGrey,
+              )
+            : Text(l10n.pveCertUnpinned, style: UIs.textGrey),
+        trailing: has
+            ? Btn.icon(
+                text: libL10n.delete,
+                icon: const Icon(Icons.delete_outline),
+                onTap: () => _monitorCert.value = null,
+              )
+            : const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapMonitorCert,
+      ).cardx;
+    });
+  }
+
   /// The certificate the BMC presents, and whether it has been reviewed.
   ///
   /// A step of its own because it has to be: the TLS callbacks that decide
@@ -1461,6 +1473,7 @@ extension _Widgets on _ServerEditPageState {
           controller: _wolPwdCtrl,
           type: TextInputType.text,
           obscureText: true,
+          onReveal: _revealStored(_wolPwdCtrl),
           label: libL10n.pwd,
           icon: Icons.password,
           suggestion: false,

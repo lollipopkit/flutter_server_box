@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'server_share.freezed.dart';
 part 'server_share.g.dart';
@@ -69,9 +69,8 @@ abstract class ServerShare with _$ServerShare {
     @Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys,
 
     /// [spi]'s PVE configuration, which is a table of its own rather than
-    /// part of [Spi]. A payload from before that carries it inside
-    /// `spi.custom`, which [_readSharedPve] reads instead.
-    @JsonKey(readValue: _readSharedPve) PveConfig? pve,
+    /// part of [Spi].
+    PveConfig? pve,
 
     /// Unix milliseconds, or null for a payload with no deadline.
     ///
@@ -89,19 +88,6 @@ abstract class ServerShare with _$ServerShare {
   /// trap as `BackupV2.fromJson`.
   factory ServerShare.fromJson(Map<String, dynamic> json) =>
       _$ServerShareFromJson(json);
-
-  /// What is encoded: [toJson], with [pve] also written into `spi.custom`
-  /// the way a build from before `server_pve` reads it — see
-  /// `PveConfig.toLegacyCustom`. Such a build ignores [pve].
-  // TODO(migration): back to plain `toJson` after 5 releases.
-  Map<String, dynamic> toWireJson() {
-    final out = toJson();
-    final pve = this.pve;
-    if (pve != null) {
-      out['spi'] = PveConfig.withLegacyCustom(spi.toJson(), pve);
-    }
-    return out;
-  }
 
   /// Bumped when the shape changes in a way an older reader would get wrong.
   static const formatVer = 1;
@@ -170,6 +156,17 @@ abstract class ServerShare with _$ServerShare {
     );
   }
 
+  /// Whether a password, token or key goes along by value.
+  bool get carriesSecret =>
+      keys.isNotEmpty ||
+      [
+        spi.ssh?.pwd,
+        spi.monitorHttp?.pwd,
+        spi.wolCfg?.pwd,
+        pve?.pwd,
+        pve?.tokenSecret,
+      ].any((it) => it != null && it.isNotEmpty);
+
   /// Whether this payload's deadline has passed.
   ///
   /// A payload with no deadline never expires. [now] is injectable so the test
@@ -184,12 +181,4 @@ abstract class ServerShare with _$ServerShare {
   void validate() {
     if (version > formatVer) throw ServerShareTooNewException(version);
   }
-}
-
-// TODO(migration): drop the `spi.custom` fallback after 5 releases, with
-// `PveConfig.fromLegacyRecord`.
-Object? _readSharedPve(Map json, String key) {
-  final pve = json[key];
-  if (pve != null) return pve;
-  return PveConfig.fromLegacyRecord(json['spi'])?.toJson();
 }

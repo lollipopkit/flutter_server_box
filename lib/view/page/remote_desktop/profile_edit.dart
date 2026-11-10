@@ -4,12 +4,11 @@
 // `setState` from one of them.
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -69,6 +68,9 @@ class _RemoteDesktopProfileEditPageState
   late bool _shared;
   late bool _savePassword;
 
+  /// Opened with a saved password, shown only after [AppAuth.confirm].
+  late final bool _storedPassword;
+
   /// The id this form will be saved under, made once.
   ///
   /// Not per save: connecting from here opens a session keyed by the profile's
@@ -93,6 +95,7 @@ class _RemoteDesktopProfileEditPageState
     _viewOnly = existing?.viewOnly ?? false;
     _shared = existing?.shared ?? true;
     _savePassword = existing?.password != null;
+    _storedPassword = existing?.password?.isNotEmpty ?? false;
   }
 
   @override
@@ -198,6 +201,7 @@ extension _Widgets on _RemoteDesktopProfileEditPageState {
                     : null,
                 icon: Icons.password,
                 obscureText: true,
+                onReveal: _storedPassword ? AppAuth.confirm : null,
                 suggestion: false,
               ),
               _buildSwitch(
@@ -561,30 +565,33 @@ String? validateRemoteDesktopProfileInput({
   String domain = '',
 }) {
   final rdp = protocol == RemoteDesktopProtocol.rdp;
-  final code =
-      ffi.desktopValidateProfile(
-        inputJson: jsonEncode({
-          // What the profile will carry: the rules refuse untrimmed values.
-          'name': name.trim(),
-          'protocol': protocol.name,
-          'host': host.trim(),
-          'port': port,
-          // A VNC profile keeps neither.
-          'username': rdp ? username.trim() : null,
-          'domain': rdp ? domain.trim() : null,
-        }),
-      ) ??
-      (rdp ? null : ffi.desktopValidateVncPassword(password: password));
-  return switch (code) {
+  final refused = ffi.desktopValidateProfile(
+    input: ffi.ProfileInput(
+      // What the profile will carry: the rules refuse untrimmed values.
+      name: name.trim(),
+      protocol: protocol.name,
+      host: host.trim(),
+      port: port,
+      // A VNC profile keeps neither.
+      username: rdp ? username.trim() : null,
+      domain: rdp ? domain.trim() : null,
+    ),
+  );
+  if (refused != null) {
+    return switch (refused) {
+      ffi.ProfileError.nameRequired => l10n.remoteDesktopNameRequired,
+      ffi.ProfileError.invalidName => l10n.remoteDesktopNameInvalid,
+      ffi.ProfileError.invalidProtocol => l10n.remoteDesktopProtocolInvalid,
+      ffi.ProfileError.hostRequired => l10n.remoteDesktopHostRequired,
+      ffi.ProfileError.invalidHost => l10n.remoteDesktopHostInvalid,
+      ffi.ProfileError.invalidPort => l10n.remoteDesktopPortRequired,
+      ffi.ProfileError.usernameRequired => l10n.remoteDesktopUsernameRequired,
+      ffi.ProfileError.invalidCredential => l10n.remoteDesktopCredentialInvalid,
+    };
+  }
+  if (rdp) return null;
+  return switch (ffi.desktopValidateVncPassword(password: password)) {
     null => null,
-    'nameRequired' => l10n.remoteDesktopNameRequired,
-    'invalidName' => l10n.remoteDesktopNameInvalid,
-    'hostRequired' => l10n.remoteDesktopHostRequired,
-    'invalidHost' => l10n.remoteDesktopHostInvalid,
-    'invalidPort' => l10n.remoteDesktopPortRequired,
-    'usernameRequired' => l10n.remoteDesktopUsernameRequired,
-    'invalidCredential' => l10n.remoteDesktopCredentialInvalid,
-    'vncPasswordAscii' => l10n.remoteDesktopVncPasswordAscii,
-    _ => code,
+    ffi.VncPasswordError.notAscii => l10n.remoteDesktopVncPasswordAscii,
   };
 }

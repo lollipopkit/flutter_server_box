@@ -5,13 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 
 part 'remote_desktop.g.dart';
@@ -100,7 +102,9 @@ class RemoteDesktopSessionView {
     BigInt? frameSequence,
     this.cursor = const RemoteDesktopCursor(),
     this.error,
+    this.hint,
     this.endReason,
+    this.failure,
     this.certificate,
     this.visible = false,
     bool? viewOnly,
@@ -116,7 +120,14 @@ class RemoteDesktopSessionView {
   final BigInt frameSequence;
   final RemoteDesktopCursor cursor;
   final String? error;
+
+  /// What to do about [error], where the app knows; set with it.
+  final String? hint;
   final ffi.RemoteDesktopEndReason? endReason;
+
+  /// What the session ended on, where the protocol named it; set with
+  /// [endReason].
+  final ffi.RemoteDesktopFailure? failure;
   final RemoteDesktopCertificatePrompt? certificate;
   final bool visible;
   final bool viewOnly;
@@ -136,8 +147,10 @@ class RemoteDesktopSessionView {
     BigInt? frameSequence,
     RemoteDesktopCursor? cursor,
     String? error,
+    String? hint,
     bool clearError = false,
     ffi.RemoteDesktopEndReason? endReason,
+    ffi.RemoteDesktopFailure? failure,
     bool clearEndReason = false,
     RemoteDesktopCertificatePrompt? certificate,
     bool clearCertificate = false,
@@ -153,7 +166,11 @@ class RemoteDesktopSessionView {
     frameSequence: frameSequence ?? this.frameSequence,
     cursor: cursor ?? this.cursor,
     error: clearError ? null : (error ?? this.error),
+    hint: clearError ? null : (error != null ? hint : this.hint),
     endReason: clearEndReason ? null : (endReason ?? this.endReason),
+    failure: clearEndReason
+        ? null
+        : (endReason != null ? failure : this.failure),
     certificate: clearCertificate ? null : (certificate ?? this.certificate),
     visible: visible ?? this.visible,
     viewOnly: viewOnly ?? this.viewOnly,
@@ -668,20 +685,13 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
           'error': Redact.error(error),
         },
       );
-      _replaceView(
-        entry.profile.id,
-        (view) => view.copyWith(
-          connectionState: ffi.RemoteDesktopConnectionState.disconnected,
-          error: error.toString(),
-          endReason: ffi.RemoteDesktopEndReason.transportError,
-        ),
-      );
       await _connectionEnded(
         entry,
         generation,
         ffi.RemoteDesktopEndReason.transportError,
         error.toString(),
-        retryable: true,
+        hint: error is Err ? error.solution : null,
+        retryable: error is! ServerTcpErr || error.retryable,
       );
     }
   }
@@ -697,8 +707,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   Future<SshLocalTunnel?> _openTunnel(_SessionEntry entry) async {
     final spi = ref.read(serversProvider).servers[entry.profile.serverId];
     if (spi == null) return null;
-    final dialer = ServerTcpDialer.of(
-      ref,
+    final dialer = ref.serverTcpDialer(
       spi,
       transports: const {ServerTransport.ssh, ServerTransport.monitorHttp},
     );
@@ -840,27 +849,49 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
             entry.profile.id,
             (view) => view.copyWith(error: message),
           );
-        case ffi.RemoteDesktopEvent_Ended(:final reason, :final message):
+        case ffi.RemoteDesktopEvent_Ended(
+          :final reason,
+          :final failure,
+          :final message,
+        ):
           await _connectionEnded(
             entry,
             generation,
             reason,
             message,
-            retryable:
-                entry.lastErrorRetryable ||
-                reason == ffi.RemoteDesktopEndReason.transportError ||
-                reason == ffi.RemoteDesktopEndReason.serverDisconnected,
+            failure: failure,
+            retryable: retriesAfter(
+              reason,
+              failure,
+              lastErrorRetryable: entry.lastErrorRetryable,
+            ),
           );
           return;
       }
     }
   }
 
+  /// Whether a session that ended so is connected again on its own. A
+  /// failure the protocol named is not: the same server answers the same
+  /// way, and one taken over by another connection would take it back.
+  @visibleForTesting
+  static bool retriesAfter(
+    ffi.RemoteDesktopEndReason reason,
+    ffi.RemoteDesktopFailure? failure, {
+    required bool lastErrorRetryable,
+  }) =>
+      failure == null &&
+      (lastErrorRetryable ||
+          reason == ffi.RemoteDesktopEndReason.transportError ||
+          reason == ffi.RemoteDesktopEndReason.serverDisconnected);
+
   Future<void> _connectionEnded(
     _SessionEntry entry,
     int generation,
     ffi.RemoteDesktopEndReason reason,
     String? message, {
+    ffi.RemoteDesktopFailure? failure,
+    String? hint,
     required bool retryable,
   }) async {
     if (!_isCurrent(entry, generation)) return;
@@ -870,7 +901,9 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       (view) => view.copyWith(
         connectionState: ffi.RemoteDesktopConnectionState.disconnected,
         endReason: reason,
+        failure: failure,
         error: message,
+        hint: hint,
       ),
     );
     if (!retryable || entry.closed || entry.retryCount >= _retryDelays.length) {

@@ -1,0 +1,13 @@
+/* The panel's first icon font: Material Symbols Rounded with only the glyphs
+   its own source names (`scripts/icons.py`, `fonts/core-icons.txt`), so the
+   first screen does not wait for the whole font. The whole one is added once
+   the panel is up (`lib/iconFont.ts`), under the same family, and takes over:
+   an icon named at run time (an app's glyph) draws then.
+   Apache-2.0: `fonts/LICENSE-material-symbols`. */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url('./fonts/material-symbols-rounded-core.woff2') format('woff2');
+}

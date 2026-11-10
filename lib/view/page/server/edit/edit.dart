@@ -9,21 +9,22 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/bmc.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/service/ssh_discovery_sources.dart';
+import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
+import 'package:server_box/core/ssh/jump_chain.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
-import 'package:server_box/core/utils/jump_chain.dart';
-import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/core/utils/server_dedup.dart';
-import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/geo.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -32,15 +33,16 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
+import 'package:server_box/view/widget/cert_dialog.dart';
 import 'package:server_box/view/widget/group_title.dart';
-import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
+import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -125,7 +127,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// then. Otherwise saving keeps the stored one (see `_pveConfigToSave`).
   bool _pveCertForgot = false;
   final _monitorAddrCtrl = TextEditingController();
-  final _monitorUserCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
@@ -179,7 +180,17 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _keyPath = ValueNotifier<String?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
-  final _monitorIgnoreCert = ValueNotifier(false);
+
+  /// Whether this device has a discovery source at all.
+  late final _discoverable = availableSshDiscoveries().then(
+    (sources) => sources.isNotEmpty,
+  );
+  /// `MonitorHttpCredential.certSha256`: the agent's own certificate,
+  /// accepted here or on connecting.
+  final _monitorCert = ValueNotifier<String?>(null);
+
+  /// The monitor URL [_monitorCert] was read at.
+  String? _monitorCertAddr;
   final _monitorAllowInsecure = ValueNotifier(false);
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
@@ -224,14 +235,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _diskCountsNetwork = ValueNotifier(false);
   final _env = <String, String>{}.vn;
 
-  /// Custom commands an older version of the app stored here, carried through
-  /// a save unchanged so that editing anything else on this page does not
-  /// discard them before the first connection moves them to the server.
-  ///
-  /// Not edited here any more — the editor writes the server directly, since
-  /// the directory there is the only copy.
-  // TODO(migration): delete with [ServerCustom.cmds].
-  final _unmigratedCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
 
   /// Tag renames made in the tag editor, from the old name to the new one,
@@ -242,6 +245,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _disabledCmdTypes = <String>{}.vn;
   final _hasStoredSudoPassword = ValueNotifier<bool?>(null);
   String? _pendingSudoPassword;
+
+  /// Fields [_initWithSpi] filled with a saved secret; see [_revealStored].
+  final _storedSecrets = <TextEditingController>{};
   bool _sudoPasswordDirty = false;
 
   @override
@@ -256,7 +262,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       'edit opened',
       data: {'mode': widget.args?.spi == null ? 'new' : 'existing'},
     );
-    unawaited(_refreshStoredSudoPasswordState());
+    _refreshStoredSudoPasswordState();
   }
 
   @override
@@ -293,14 +299,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _pveUseToken.dispose();
     _pveCert.dispose();
     _monitorAddrCtrl.dispose();
-    _monitorUserCtrl.dispose();
     _monitorPwdCtrl.dispose();
 
     _keyIdx.dispose();
     _keyPath.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
-    _monitorIgnoreCert.dispose();
+    _monitorCert.dispose();
     _monitorAllowInsecure.dispose();
     _useSsh.dispose();
     _useMonitorHttp.dispose();
@@ -311,7 +316,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _tempIsCelsius.dispose();
     _diskCountsNetwork.dispose();
     _env.dispose();
-    _unmigratedCmds.dispose();
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();
@@ -334,7 +338,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       // Only while adding. Sweeping the network for hosts is how someone with
       // an empty form finds what to put in it; on a server that already exists
       // it answers a question nobody is asking.
-      if (spi == null) _buildDiscoverBtn(),
+      if (spi == null)
+        FutureBuilder(
+          future: _discoverable,
+          builder: (_, snap) =>
+              snap.data == true ? _buildDiscoverBtn() : UIs.placeholder,
+        ),
       _buildWriteScriptTip(),
       if (spi != null) _buildDelBtn(),
       // In the bar, beside the rest of what is done to this page rather than

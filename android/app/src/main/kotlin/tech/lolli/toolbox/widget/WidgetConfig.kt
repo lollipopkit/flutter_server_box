@@ -1,6 +1,7 @@
 package tech.lolli.toolbox.widget
 
 import android.content.Context
+import tech.lolli.toolbox.R
 
 /**
  * What one placed widget was configured to show.
@@ -63,42 +64,23 @@ enum class WidgetMetric {
         val rotation = listOf(CPU, MEMORY, DISK, NETWORK)
     }
 
-    /** [count] metrics beginning at this one, wrapping around. */
+    /** Its name, as the widget and its settings screen both say it. */
+    val labelRes: Int
+        get() = when (this) {
+            CPU -> R.string.widget_metric_cpu
+            MEMORY -> R.string.widget_metric_memory
+            DISK -> R.string.widget_metric_disk
+            NETWORK -> R.string.widget_metric_network
+        }
+
+    /** Whether it is a share of something, drawn as a meter and on 0..100. */
+    val isPercent: Boolean get() = this != NETWORK
+
+        /** [count] metrics beginning at this one, wrapping around. */
     fun following(count: Int): List<WidgetMetric> {
         val start = rotation.indexOf(this).coerceAtLeast(0)
         return (0 until minOf(count, rotation.size)).map {
             rotation[(start + it) % rotation.size]
         }
-    }
-}
-
-/**
- * Which of the two widgets this is.
- *
- * Two fixed providers rather than one that resizes. The size and what it can
- * show are the same decision — a 2x2 holds readings and a 4x2 holds charts —
- * so binding them removes the case where a layout was chosen and the size
- * quietly overruled it. It is also what puts both in the launcher's picker as
- * separate entries, which is where someone chooses a widget.
- */
-enum class WidgetKind {
-    /** 2x2, readings as text. Nothing to configure beyond the server. */
-    SMALL,
-
-    /** 4x2, one chart per metric. */
-    MEDIUM;
-
-    val drawsCharts: Boolean get() = this == MEDIUM
-
-    companion object {
-        /**
-         * Every metric, always.
-         *
-         * Not a choice. A medium widget has room for the four panels and no
-         * reason to draw fewer — asking how many charts someone wants is a
-         * question with one sensible answer, and a setting whose only effect
-         * is to show less.
-         */
-        const val CHART_COUNT = 4
     }
 }

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/sftp_file_backend.dart';
+import 'package:server_box/data/model/file/backend/sftp.dart';
 
 void main() {
   test('only a missing path is reported as absent', () async {

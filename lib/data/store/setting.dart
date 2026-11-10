@@ -7,11 +7,11 @@ import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/server/server_sort.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
@@ -110,7 +110,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   // Disabled detail cards (for persistence when toggling visibility)
   late final detailCardDisabled = listProperty<String>('detailCardDisabled');
 
-  /// Virtual keys the user has hidden, by [VirtKey.name] — see [sshVirtKeys]
+  /// Virtual keys the user has hidden, by [VirtualKey.name] — see [sshVirtKeys]
   /// for why not by index.
   late final sshVirtKeysDisabled = listProperty<String>(
     'sshVirtKeysDisabled',
@@ -223,21 +223,45 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
 
-  /// The order the virtual keys are drawn in, by [VirtKey.name].
+  /// The order the virtual keys are drawn in, by [VirtualKey.name].
   ///
   /// By name, never by index. An index changes meaning the moment a case is
-  /// inserted into [VirtKey] — every stored arrangement then names different
+  /// inserted into [VirtualKey] — every stored arrangement then names different
   /// keys, silently, with nothing to say it happened — and this value outlives
   /// the build that wrote it, through a backup and through a sync. It was a
   /// list of indices; [VirtKeyNamesMigration] is the one pass that converts.
   ///
   /// A name this build cannot place reads as absent rather than as a key,
-  /// which is what [VirtKeyX.loadFromStore] drops.
+  /// which is what [virtualKeys] drops.
   late final sshVirtKeys = listProperty<String>(
     'sshVirtKeys',
-    defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
+    defaultValue: VirtualKeyX.defaultOrder.map((e) => e.name).toList(),
     fromObj: _virtKeyNames,
   );
+
+  /// [sshVirtKeys] as keys: [VirtualKeyX.fromNames], the default when nothing
+  /// in it is drawable.
+  ///
+  /// Only what was dropped is written back, and only when something was: the
+  /// unknown key is then gone for good, which is the price of not carrying a
+  /// name nothing can render. An empty result is a stored value that says
+  /// nothing at all, and falls back to the default without being saved over.
+  /// [persistRepairs] off reads without writing, for a caller that only wants
+  /// to know what is stored.
+  List<VirtualKey> virtualKeys({bool persistRepairs = true}) {
+    try {
+      final names = sshVirtKeys.fetch();
+      final keys = VirtualKeyX.fromNames(names);
+      if (keys.isEmpty) return VirtualKeyX.defaultOrder;
+      if (persistRepairs && keys.length != names.length) {
+        sshVirtKeys.put(keys.map((e) => e.name).toList());
+      }
+      return keys;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to load sshVirtKeys', e, s);
+      return VirtualKeyX.defaultOrder;
+    }
+  }
 
   // Only valid on iOS
   late final autoUpdateHomeWidget = propertyDefault(
@@ -377,12 +401,10 @@ class SettingStore extends SqliteStore with ThemeSettings {
     0,
   );
 
-  /// The revision of the feature pages in the intro this install has seen.
+  /// The revision of the intro's feature pages this install has seen.
   ///
-  /// Its own counter for `diagnosticsConsentVer`'s reason: `introVer` holds a
-  /// build number, which is above any small constant, so a page keyed on it
-  /// could never appear for anyone who has finished an intro. Each page names
-  /// the revision it arrived in, and completing the intro records the latest.
+  /// TODO: remove with the key; the intro has had no feature pages since its
+  /// redesign, and nothing reads this.
   late final featureIntroVer = propertyDefault('featureIntroVer', 0);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
@@ -399,6 +421,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// it — anyone who has dragged a divider has a number of their own stored,
   /// and moving that under them would undo the choice this exists to keep.
   late final paneListWidth = propertyDefault('paneListWidth', 220.0);
+
+  /// Which hand the tab rail is for, where the system keeps a column of its own
+  /// bars at one side — iPhone Duo. The rail stands in that column when it is
+  /// on this hand's side, as the system's own bars do; otherwise it is where
+  /// it is on every other device. Right by default: the column is on the right
+  /// unless the window is the left one of two.
+  late final rightHanded = propertyDefault('rightHanded', true);
 
   /// Whether that column is folded away entirely.
   ///
@@ -447,20 +476,12 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  /// Whether a command the Agent proposes may run on a *server* without being
-  /// asked, when it is clearly read-only — see `AskAiCommand.canAutoRun`.
-  /// Running on this device is [agentLocalExec], and never runs unasked.
-  late final agentAutoRunSafe = propertyDefault('agentAutoRunSafe', false);
-
   /// Whether the Agent may run commands on this device.
   ///
   /// Off until asked for, unlike a configured server. A server was added
   /// deliberately and is somewhere else; this machine is where the app's own
   /// stores, private keys and keychain live, and nobody opted into a model
   /// touching those by adding a server.
-  ///
-  /// Auto-running stays off here whatever [agentAutoRunSafe] says — that
-  /// setting is about servers. See `AskAiCommand.canAutoRun`.
   ///
   /// Device-local — see [deviceLocalKeys]: this is what the app will let a
   /// model do to this machine, and a restore should not carry it.
@@ -491,22 +512,65 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
-    // Whether this device's vault keeps key passphrases: the vault is not in
-    // the backup, so the answer is not either.
+    // Whether this device keeps key passphrases: one that does not neither
+    // sends nor takes them (`SyncCategory.passphrases`).
     'rememberKeyPassphrase',
     // Where this device installed the selected theme, and its background
     // inside that: the backup carries the themes themselves (`themes`), and a
     // restore points these at this device's copy — `ThemeBackup.reselect`.
     'appThemePackage',
     'appBackgroundPath',
-    // TODO(appearance): carry a custom background image and an imported font
-    // in backups; until then they are files only this device has.
+    // This device's copy of a picked file; the file syncs (`PickedFiles`).
     'appCustomBackgroundPath',
     'appImportedFontPath',
     'themeStoreCache',
     // What this device's themes directory holds, like `appThemePackage`.
+    // TODO: remove with the key; no theme is bundled any more, it only
+    // records the ones seeded before.
     'bundledThemesSeeded',
+    // The rootfs manifest this device last verified: a cache, re-verified
+    // when read.
+    'rootfsManifestSerial',
+    'rootfsManifestCache',
+    'rootfsManifestCacheSig',
+    // The build this install last ran: another device's newer one makes
+    // `migrateBuildFeatures` skip the upgrade it gates.
+    'lastVer',
+    // What this install has been shown or asked.
+    'introVer',
+    'featureIntroVer',
+    'diagnosticsConsentVer',
+    'dmgTipBuild',
+    'legacyStatusNoticePending',
+    'firstTimeReadSSHCfg',
+    // This device's copy of a picked file, as above.
+    'fontPath',
+    'sshBgImage',
+    // This device's screen, hardware and network.
+    'windowState',
+    'agentShell',
+    'terminalShell',
+    'useBioAuth',
+    'delayBioAuthLock',
+    'bgRun',
+    // A profile installed on this device, and the network it is on.
+    'linuxProfile',
+    'linuxDns',
+    // Sized for this device's screen: a phone's and a desktop's differ.
+    'textFactor',
+    'termFontSize',
+    'editorFontSize',
+    'paneListWidth',
+    'paneListCollapsed',
+    'fullScreen',
+    'rightHanded',
   };
+
+  /// [deviceLocalKeys]: neither stamped nor counted — a change to one is not
+  /// an edit a sync moves, and stamping it moved [Stores.lastModTime]
+  /// (`windowState` on every resize) and with it a whole sync and upload.
+  @override
+  bool isDeviceLocalKey(String key) => deviceLocalKeys.contains(key);
 
   /// The floating Agent's placement and size, as one row.
   ///
@@ -626,7 +690,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Separate from [sshTermHelpShown], which gates a dialog about the terminal
   /// body and is the only guidance a desktop gets — there are no virtual keys
   /// there to walk through.
-  late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
+  late final virtualKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
 
   /// How many rows of virtual keys the terminal shows at once, 0 for all.
   ///
@@ -634,7 +698,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// switch meaning "one row, scrolled sideways", which is this set to 1 —
   /// with the difference that a swipe now lands on whole rows rather than
   /// leaving the row halfway between two keys. See [VirtKeyRowsMigration].
-  late final virtKeyRows = propertyDefault('virtKeyRows', 0);
+  late final virtualKeyRows = propertyDefault('virtKeyRows', 0);
 
   /// general wake lock
   late final generalWakeLock = propertyDefault('generalWakeLock', false);
@@ -642,8 +706,8 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
 
-  /// Keep the passphrases of encrypted private keys in the system vault, so
-  /// they are not asked for again after a restart. See `KeyPassphrases`.
+  /// Keep the passphrases of encrypted private keys, so they are not asked
+  /// for again after a restart. See `KeyPassphrases`.
   late final rememberKeyPassphrase = propertyDefault(
     'rememberKeyPassphrase',
     true,
@@ -717,9 +781,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
-
-  /// The backup password
-  late final backupPassword = SecureProp('bakPasswd');
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
@@ -960,7 +1021,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   ///
   /// TODO: [serverPageSortBy] and [serverPageSortAsc] are only still read as
   /// this map's empty-key default, for installs that chose before it existed.
-  /// Delete both, and the fallback in `ServerSortOrder.of`, a few releases on.
+  /// Delete both, and the fallback in `ServerSortOrder.of`, 5 releases after v1.0.1715.
   late final serverListSort = propertyDefault<Map<String, String>>(
     'serverListSort',
     const {},
@@ -1040,13 +1101,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
-    // Nothing is deleted from storage this build cannot read. `Stores.init`
-    // calls this before `SchemaVersion.migrate` gets to refuse the downgrade,
-    // so without this the refusal arrived after the keys were already gone —
-    // and "retired here" says nothing about whether the build that wrote them
-    // still reads them.
-    if (schemaVersion.fetch() > SchemaVersion.current) return;
-
+    // Only ever after `Stores.init` has refused storage a newer build wrote.
     for (final key in const [
       'moveOutServerTabFuncBtns',
       'forceSinglePane',
@@ -1110,7 +1165,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
       );
     }
 
-    // The switch `virtKeyRows` replaced, for the same reason and on the same
+    // The switch `virtualKeyRows` replaced, for the same reason and on the same
     // terms: the step that reads it runs after this does, and a restore of an
     // older backup writes it back long after that step can run again.
     //

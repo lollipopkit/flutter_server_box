@@ -8,21 +8,22 @@ import 'dart:typed_data';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/host.dart';
-import 'package:server_box/core/llm/scope.dart';
-import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/snippet.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/host.dart';
 
+import '../../helpers/llm_lib_helper.dart';
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
@@ -137,13 +138,6 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
   return (server, seen);
 }
 
-ExternalLibrary _nativeLib() => ExternalLibrary.open(switch (Platform
-    .operatingSystem) {
-  'macos' => 'build/native_assets/macos/libfl_pi_llm.dylib',
-  'windows' => 'build/native_assets/windows/fl_pi_llm.dll',
-  _ => 'build/native_assets/linux/libfl_pi_llm.so',
-});
-
 /// The `Authorization` of each chat request, beside [_mockServer]'s bodies.
 final _keys = <String>[];
 
@@ -161,6 +155,8 @@ void main() {
   final chats = Directory.systemTemp.createTempSync('llm_agent_test');
 
   setUpAll(() async {
+    // Whether a command runs by itself is `sbm_parser::command_risk`, over FFI.
+    await initRustLibForTest();
     (server, seen) = await _mockServer();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
@@ -188,7 +184,7 @@ void main() {
       // The chat files' key, which an app reads from the keychain.
       key: Uint8List(32),
       credentials: credentials,
-      externalLibrary: _nativeLib(),
+      externalLibrary: llmNativeLib(),
       // An OpenAI-compatible gateway, as a shell exports it.
       environment: () => {
         'OPENAI_BASE_URL': 'http://127.0.0.1:${server.port}/v1',
@@ -270,14 +266,14 @@ void main() {
 
     test('snippets: read freely, changed with a yes, never set to run by themselves', () async {
       final snippet = tool('snippet');
-      expect(await snippet.preApprove({'action': 'list'}, 'c'), isNotNull);
-      expect(await snippet.preApprove({'action': 'add'}, 'c'), isNull);
+      expect(snippet.effect({'action': 'list'}), LlmEffect.read);
+      expect(snippet.effect({'action': 'add'}), LlmEffect.change);
 
       // One the user set to run on a server when it connects — a server the
       // database has, which the setting points at.
       Stores.server.put(spiFixture(name: 'web', id: 'srv-1', ip: '10.0.0.1'));
       addTearDown(() => Stores.server.deleteById('srv-1'));
-      await AgentScope.container.read(snippetProvider.notifier).add(
+      AgentScope.container.read(snippetProvider.notifier).add(
         const Snippet(id: 'sn-1', name: 'uptime', script: 'uptime', autoRunOn: ['srv-1']),
       );
       expect(text(await snippet.run({'action': 'list'}, ctx)), isNot(contains('autoRunOn')));
@@ -315,7 +311,7 @@ void main() {
       ));
       addTearDown(() => Stores.remoteDesktop.deleteById('rd-1'));
       expect(text(await rd.run({'action': 'list'}, ctx)), contains('"password_saved":false'));
-      expect(rd.preApprove({'action': 'connect', 'profile_id': 'rd-1'}, 'c'), isNull);
+      expect(rd.effect({'action': 'connect', 'profile_id': 'rd-1'}), LlmEffect.change);
       await expectLater(rd.run({'action': 'connect', 'profile_id': 'rd-1'}, ctx), throwsA(isA<LlmException>()));
       await expectLater(rd.run({'action': 'connect', 'profile_id': 'nope'}, ctx), throwsA(isA<LlmException>()));
     });
@@ -323,8 +319,8 @@ void main() {
     test('benchmark: read freely, a run never allowed for good', () async {
       final bench = tool('benchmark');
       expect(bench.allowAlways, isFalse);
-      expect(bench.preApprove({'action': 'run'}, 'c'), isNull);
-      expect(bench.preApprove({'action': 'read'}, 'c'), isNotNull);
+      expect(bench.effect({'action': 'run'}), LlmEffect.change);
+      expect(bench.effect({'action': 'read'}), LlmEffect.read);
       await expectLater(bench.run({'action': 'list', 'server_id': 'nope'}, ctx), throwsA(isA<LlmException>()));
     });
   });
@@ -387,7 +383,7 @@ void main() {
 
   group('the settings from before fl_pi_llm', () {
     test('become a provider, its key a credential', () async {
-      final provider = LlmStores.llm.customProviders.get()!.single;
+      final provider = LlmStores.llm.customProviders.single;
       expect(provider.id, LegacyAskAiMigration.providerId);
       expect(provider.api, LlmApi.openaiCompletions);
       expect(provider.baseUrl, 'http://127.0.0.1:${server.port}/v1');
@@ -404,7 +400,6 @@ void main() {
 
     test('and the row, key and all, is gone from the database', () {
       expect(Stores.setting.get<Object>(LegacyAskAiMigration.key), isNull);
-      expect(Stores.setting.agentAutoRunSafe.fetch(), isTrue);
     });
   });
 
@@ -422,11 +417,18 @@ void main() {
       );
     });
 
-    test('runs a read-only command by itself, and reads its result', () async {
+    test('asks about a read as about any command, and reads its result', () async {
       ran.clear();
       final id = Chats.create(scope: scope);
       final chat = await Chats.open(id);
-      await Chats.send(id, 'list files');
+      final sending = Chats.send(id, 'list files');
+
+      while (chat.approvals.value.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(ran, isEmpty);
+      Chats.answer(id, ApprovalAnswer.once);
+      await sending;
 
       expect(ran, ['ls']);
       expect(chat.approvals.value, isEmpty);
@@ -435,19 +437,30 @@ void main() {
       expect(chat.entries.value.last.message!.text, 'Done.');
     });
 
-    test('runs no more than a few by itself for one message', () async {
+    test('refuses what a deny rule names, whatever the mode', () async {
       ran.clear();
+      LlmApprovals.store(const LlmPermissions(defaultMode: LlmPermissionMode.bypass, deny: ['rm -rf *']));
+      addTearDown(() => LlmApprovals.store(const LlmPermissions()));
       final id = Chats.create(scope: scope);
       final chat = await Chats.open(id);
-      final sending = Chats.send(id, 'keep listing');
+      await Chats.send(id, 'wipe it');
 
-      while (chat.approvals.value.isEmpty) {
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-      }
-      expect(ran, List.filled(AgentTools.maxAutoRuns, 'ls'));
-      Chats.answer(id, ApprovalAnswer.deny);
-      await sending;
-      expect(ran, hasLength(AgentTools.maxAutoRuns));
+      expect(ran, isEmpty);
+      expect(chat.approvals.value, isEmpty);
+      final result = chat.entries.value.firstWhere((e) => e.message?.role == 'toolResult').message!.text;
+      expect(result, contains('rm -rf *'));
+    });
+
+    test('runs a destructive one unasked when all is allowed', () async {
+      ran.clear();
+      LlmApprovals.pickMode(LlmPermissionMode.bypass);
+      addTearDown(() => LlmApprovals.store(const LlmPermissions()));
+      final id = Chats.create(scope: scope);
+      final chat = await Chats.open(id);
+      await Chats.send(id, 'wipe it');
+
+      expect(ran, ['rm -rf /srv']);
+      expect(chat.approvals.value, isEmpty);
     });
 
     test('asks before anything destructive, and a no runs nothing', () async {

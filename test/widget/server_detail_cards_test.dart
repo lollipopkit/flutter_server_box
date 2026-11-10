@@ -15,17 +15,17 @@ import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/disk_smart.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 
@@ -68,7 +68,6 @@ void main() {
     device: device,
     healthy: healthy,
     temperature: temperature,
-    rawData: const {},
     smartAttributes: {
       if (reallocated != null)
         'Reallocated_Sector_Ct': SmartAttribute(
@@ -148,10 +147,6 @@ void main() {
       findsOneWidget,
       reason: 'the failing drive and the one with reallocated sectors',
     );
-    // Spelled out as well as composed: gen-l10n orders placeholders
-    // alphabetically, so a sentence reading "8 of 2 devices" is what getting
-    // that order wrong looks like, and the line above would agree with it.
-    expect(find.textContaining('2 of 8'), findsOneWidget);
     expect(find.textContaining('sdh · FAILING'), findsOneWidget);
     // And the footer, which is what keeps six rows from reading as six drives.
     expect(

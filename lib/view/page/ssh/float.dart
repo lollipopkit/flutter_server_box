@@ -6,16 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
+import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 import 'package:server_box/view/widget/float_shell.dart';
-import 'package:server_box/view/widget/virt_key_semantics.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -116,7 +117,8 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
                 // and paste when nothing is.
                 onSecondaryTapUp: (_, _) => unawaited(_clipboardAction()),
                 onCopied: _onCopied,
-                onPaste: _paste,
+                onCopyFailed: (e, s) =>
+                    context.showErrDialog(e, s, libL10n.copy),
                 onSelectAll: () =>
                     _termKey.currentState?.renderTerminal.selectAll(),
                 autofocus: false,
@@ -138,14 +140,14 @@ extension _Utils on _FloatTerminalState {
   /// password, the tmux switcher — and every one of them opens a page or a
   /// dialog belonging to the terminal *page*, which is not what is in this
   /// window. Left in, they would be buttons that take a tap and do nothing,
-  /// which is the failure `VirtKeyX.worksOn` exists to avoid; so they are not
+  /// which is the failure `VirtualKeySupport.worksOn` exists to avoid; so they are not
   /// drawn here, on the same terms.
   ///
   /// Read on every build rather than cached: this is a short list behind a
   /// widget that rebuilds only when a modifier is armed, and a strip that went
   /// stale the moment the keys were reordered in the settings would be the
   /// more surprising of the two.
-  List<VirtKey> get _keys {
+  List<VirtualKey> get _keys {
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
     final spi = widget.session.spi;
     // The same answer the strip on the page reaches, from the same field, so
@@ -154,9 +156,9 @@ extension _Utils on _FloatTerminalState {
         spi != null &&
         serverShellUsesAgent(
           spi,
-          ref.readPresentServer(spi.id)?.remoteAccess,
+          ref.readPresentServer(spi.id)?.agentAccess,
         );
-    return VirtKeyX.loadFromStore(persistRepairs: false)
+    return Stores.setting.virtualKeys(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))
         .where(
           (key) => key.worksOn(
@@ -189,8 +191,8 @@ extension _Widgets on _FloatTerminalState {
   Widget _buildKeys() {
     return Consumer(
       builder: (context, ref, _) {
-        final state = ref.watch(virtKeyboardProvider);
-        final notifier = ref.read(virtKeyboardProvider.notifier);
+        final state = ref.watch(virtualKeyboardProvider);
+        final notifier = ref.read(virtualKeyboardProvider.notifier);
         // The modifiers are the terminal's, not the strip's, and while this
         // window is up the tab is drawing a placeholder — so nothing else is
         // setting this.
@@ -214,9 +216,9 @@ extension _Widgets on _FloatTerminalState {
   }
 
   Widget _buildKey(
-    VirtKey item,
+    VirtualKey item,
     VirtKeyState state,
-    VirtKeyboard notifier,
+    VirtualKeyboard notifier,
     bool isDark,
   ) {
     final armed = switch (item.key) {
@@ -227,7 +229,7 @@ extension _Widgets on _FloatTerminalState {
     };
     final color = isDark ? Colors.white : Colors.black;
 
-    return VirtKeySemantics(
+    return VirtualKeySemantics(
       item: item,
       armed: armed,
       child: InkWell(
@@ -256,7 +258,7 @@ extension _Widgets on _FloatTerminalState {
 }
 
 extension _Actions on _FloatTerminalState {
-  void _press(VirtKey item, VirtKeyboard notifier) {
+  void _press(VirtualKey item, VirtualKeyboard notifier) {
     switch (item.func) {
       case VirtualKeyFunc.toggleIME:
         HapticFeedback.mediumImpact();
@@ -293,27 +295,15 @@ extension _Actions on _FloatTerminalState {
     }
   }
 
-  void _onCopied() {
-    if (mounted) Toast.success(libL10n.success);
-    _controller.clearSelection();
-  }
+  void _onCopied() => _controller.clearSelection();
 
-  Future<void> _paste() async {
-    final value = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = value?.text;
-    if (text == null) return;
-    // `paste`, not `textInput`: it brackets the text when the program asked
-    // for that (DECSET 2004).
-    _terminal.paste(text);
-    _controller.clearSelection();
-  }
+  Future<void> _paste() => pasteClipboard(_terminal, _controller);
 
   Future<void> _clipboardAction() async {
     if (_controller.selection != null) {
       final selected = _termKey.currentState?.renderTerminal.selectedText;
       if (selected != null && selected.isNotEmpty) {
-        await Clipboard.setData(ClipboardData(text: selected));
-        _onCopied();
+        _termKey.currentState?.copySelection();
       }
       return;
     }

@@ -8,48 +8,34 @@
 mod common;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
+use server_box_monitor::api::server::Agent;
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
-/// An agent whose `files` root is one real directory, with the admin role
-/// holding the write it does.
-async fn server(root: &str) -> TestServer {
+/// An agent with its account.
+async fn server() -> TestServer {
     let _ = rustls::crypto::ring::default_provider().install_default();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.fs.enabled = Some(true);
-    remote.fs.roots = vec![root.to_string()];
-    config.remote_access = Some(remote);
-    let state = common::upgraded_state(config).await;
-    assert!(
-        common::grants_of(&state.db, "admin")
-            .await
-            .files
-            .unwrap()
-            .allows_write(),
-        "the admin role the suite seeds must be able to write"
-    );
-    web_test::server(move || {
+    let state = common::owned_state(config).await;
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route(
-                        "/fs/write",
-                        web::put().to(server_box_monitor::api::fs::write),
-                    )
-                    .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route(
+                    "/fs/write",
+                    web::put().to(server_box_monitor::api::fs::write),
+                )
+                .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
+        ))
     })
-    .await
 }
 
 /// One request with a bearer token, and its status and JSON body.
@@ -64,7 +50,7 @@ async fn call(
         .timeout(std::time::Duration::from_secs(30))
         .header(
             "Authorization",
-            format!("Bearer {}", generate_token("admin", SECRET).unwrap()),
+            format!("Bearer {}", generate_token(SECRET).unwrap()),
         );
     let resp = match body {
         Some(body) => req.send_body(body.as_bytes().to_vec()).await.unwrap(),
@@ -110,8 +96,16 @@ async fn version_of(srv: &TestServer, path: &str) -> String {
 
 /// Enough of percent-encoding for a path or a token in a query string: a temp
 /// path carries `/` (legal unencoded) and the token carries `-`.
+/// Every byte but RFC 3986's unreserved ones: a Windows path's `\` is not
+/// allowed in a request target, and ntex 4 refuses it.
 fn urlencode(value: &str) -> String {
-    value.replace(' ', "%20")
+    value
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
 }
 
 #[ntex::test]
@@ -119,8 +113,7 @@ async fn a_matching_version_writes() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "before").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
     let version = version_of(&srv, path.to_str().unwrap()).await;
 
     let (status, _) = write(&srv, path.to_str().unwrap(), Some(&version), "after").await;
@@ -130,12 +123,29 @@ async fn a_matching_version_writes() {
 }
 
 #[ntex::test]
+async fn a_write_answers_with_the_version_it_left() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("note.txt");
+    std::fs::write(&path, "before").unwrap();
+    let srv = server().await;
+    let first = version_of(&srv, path.to_str().unwrap()).await;
+
+    let (status, body) = write(&srv, path.to_str().unwrap(), Some(&first), "after, longer").await;
+    assert_eq!(status, 200, "{body}");
+    let next = body["version"].as_str().expect("a version").to_owned();
+
+    // What the editor saves with next time, and the file as it now is.
+    assert_eq!(next, version_of(&srv, path.to_str().unwrap()).await);
+    let (status, _) = write(&srv, path.to_str().unwrap(), Some(&next), "again").await;
+    assert_eq!(status, 200);
+}
+
+#[ntex::test]
 async fn a_mismatched_version_is_refused_and_leaves_the_file_alone() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "before").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
 
     let (status, body) = write(&srv, path.to_str().unwrap(), Some("1-1"), "after").await;
 
@@ -152,8 +162,7 @@ async fn a_second_write_in_the_same_second_is_refused() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "x").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
     let version = version_of(&srv, path.to_str().unwrap()).await;
 
     // The larger body makes this deterministic even on a filesystem whose
@@ -171,8 +180,7 @@ async fn no_parameter_writes_as_before() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "before").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
 
     let (status, _) = write(&srv, path.to_str().unwrap(), None, "after").await;
 
@@ -184,8 +192,7 @@ async fn no_parameter_writes_as_before() {
 async fn a_deleted_file_with_the_parameter_is_refused() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("gone.txt");
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
 
     let (status, body) = write(&srv, path.to_str().unwrap(), Some("1-1"), "new").await;
 
@@ -203,8 +210,7 @@ async fn the_version_changes_when_the_file_does() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "one").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
 
     let first = version_of(&srv, path.to_str().unwrap()).await;
     let (status, _) = write(&srv, path.to_str().unwrap(), Some(&first), "one!").await;
@@ -226,8 +232,7 @@ async fn two_saves_of_one_version_land_once() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");
     std::fs::write(&path, "start").unwrap();
-    let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
     let p = path.to_str().unwrap();
 
     for round in 0..20 {
@@ -251,11 +256,11 @@ async fn an_abandoned_upload_leaves_no_staged_file() {
 
     let dir = tempfile::tempdir().unwrap();
     let root = std::fs::canonicalize(dir.path()).unwrap();
-    let srv = server(&root.to_string_lossy()).await;
+    let srv = server().await;
     let target = root.join("big.bin");
 
     let mut socket = std::net::TcpStream::connect(srv.addr()).unwrap();
-    let token = generate_token("admin", SECRET).unwrap();
+    let token = generate_token(SECRET).unwrap();
     write!(
         socket,
         "PUT /api/v1/fs/write?path={} HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {token}\r\nContent-Length: 1000000\r\n\r\n",

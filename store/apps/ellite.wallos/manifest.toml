@@ -1,0 +1,85 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Wallos: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "ellite"
+name = "wallos"
+project = "Wallos"
+developer = "Miguel Ribeiro"
+version = "5.10.0"
+homepage = "https://wallosapp.com"
+source = "https://github.com/ellite/Wallos/tree/v5.10.0"
+glyph = "subscriptions"
+tone = "violet"
+categories = ["productivity", "home"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Wallos"
+
+[description]
+en = "Track subscriptions and recurring payments: what each costs per month and year, in your currency, with reminders before they renew."
+zh = "记录订阅和定期付款：以你的货币计算每项每月和每年的花费，并在续费前提醒。"
+zh-TW = "記錄訂閱和定期付款：以你的貨幣計算每項每月和每年的花費，並在續費前提醒。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/ellite/Wallos/blob/v5.10.0/LICENSE.md"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+WALLOS_VERSION = "5.10.0"
+
+[[secrets]]
+env = "WALLOS_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "WALLOS_PASSWORD"
+note = { en = "The password is set when Wallos is first set up; change it later in Profile. Registration is closed: open it in Admin to add people.", zh = "密码在首次部署时设置，之后请在 Profile 中修改。注册已关闭：如需添加他人，请在 Admin 中开放注册。", zh-TW = "密碼在首次部署時設定，之後請在 Profile 中修改。註冊已關閉：如需新增他人，請在 Admin 中開放註冊。" }
+
+[[settings]]
+key = "db"
+type = "path"
+env = "WALLOS_DB"
+default = "{stack}/db"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "logos"
+type = "path"
+env = "WALLOS_LOGOS"
+default = "{stack}/logos"
+data = true
+label = { en = "Logos", zh = "图标", zh-TW = "圖示" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "WALLOS_PORT"
+default = 8282
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { WALLOS_BIND = "0.0.0.0" }
+off = { WALLOS_BIND = "127.0.0.1" }

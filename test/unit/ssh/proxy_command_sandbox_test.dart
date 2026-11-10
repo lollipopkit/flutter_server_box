@@ -21,7 +21,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/proxy_command_socket.dart';
+import 'package:server_box/core/ssh/proxy_command_socket.dart';
 
 void main() {
   group('the sandbox note', () {

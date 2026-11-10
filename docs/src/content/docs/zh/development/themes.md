@@ -9,13 +9,7 @@ description: 内置主题如何打包、加载与分发
 
 ## 内置主题
 
-`BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）列出本构建内置的主题及其在
-选择器中的标签，只包含离线也必须可用的主题。`Default` 是 Dart const，不读取 asset，
-它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。TODO：支持的升级路径不再包含旧版
-AMOLED 模式后，删除对应的迁移逻辑。AMOLED 主题源目录为
-`packages/fl_lib/assets/themes/amoled/`，其 `manifest.toml` 已在 fl_lib 的 `pubspec.yaml` 中
-注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
-预设指向本构建已不再内置的主题，会回退到 Default（`ThemePackages.reconcileSelection`）。
+`BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）定义了随安装包内置的主题及其在选择器中的显示名称，仅包含离线状态下也必须可用的基础主题。其中 `Default` 是 Dart 常量，不读取外部资源文件，其显示名称通过 `fl_lib` 的 `defaultLabel` 本地化。AMOLED 纯黑主题的源文件位于 `packages/fl_lib/assets/themes/amoled/`，其 `manifest.toml` 已在 `fl_lib` 的 `pubspec.yaml` 中注册。其余所有官方主题均通过主题商店分发（见[官方主题](#官方主题)）；若已保存的预设指向当前构建不再内置的主题，会自动回退至默认主题（`ThemePackages.reconcileSelection`）。
 
 内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持
 相同的字段。这些目录以源码形式入库，由 Flutter 直接打包；仓库不提交对应的压缩包或
@@ -85,21 +79,9 @@ listing 的 `description` 可以是字符串，也可以是以语言标签为键
 使用同一段代码。预设值以 `package:<installation id>#<key>` 携带变体；`appThemePackage`
 只保存 installation id。
 
-## 随应用附带的商店主题
+## 商店主题不随应用附带
 
-商店主题可以随应用附带：`assets/store_themes/<id>.fsbt`，即 `scripts/publish-themes.py`
-从 `store/themes/<id>/` 构建出的同一个包（打包是确定性的，因此 digest 与 listing 记录的
-一致）。`ThemePackages.seedBundled` 在启动时把每个包安装一次到普通主题目录；若设备上已有
-相同 manifest id 的主题则跳过，并记录在 `SettingStore.bundledThemesSeeded`（仅本设备）中，
-用户删除后不会再次安装。之后它就是普通的已安装主题；当 release 的 digest 与 installation
-id 不同时，商店会提供更新。
-
-附带的包与其 store 文件夹不再逐字节一致时，`test/unit/theme_bundled_test.dart` 会失败：
-修改这类主题后，用 serverbox-theme skill 的 `scripts/pack.py -o
-assets/store_themes/<id>.fsbt` 重新打包。
-
-安装已安装的 manifest id 会替换之前的安装（`_replaceOlder`），若旧安装正在使用，会把选择
-转移到新安装。
+商店主题不再打包进应用：仓库里的 `.fsbt` 是 git 无法 diff 的二进制文件。以前附带主题时生成的备份（`ThemeBackup` 中的 `bundled`）会从商店恢复，按安装 id（即发布包的 digest）找到对应版本。
 
 ## 官方主题
 
@@ -108,12 +90,14 @@ assets/store_themes/<id>.fsbt` 重新打包。
 `test/unit/theme_store_tree_test.dart` 使用商店的读取器检查该目录。读取器拒绝的 listing
 会导致测试失败，不会悄悄从商店列表中消失。
 
-应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，用 `git archive` 把
-`HEAD` 的 `store/` 写成 `public/store.tar.gz`，catalog 列出的地址是
+应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，把 `HEAD` 提交的
+`store/` 打包成 `public/store.tar.gz`，catalog 列出的地址是
 `https://serverbox.lollipopkit.com/store.tar.gz`。对 `store/` 的改动在官网部署后生效：
 Cloudflare Pages 项目在 `store/`、`website/` 和 `docs/` 有改动时都会重新构建。同一次构建
 也会在官网上列出这些主题（`website/store-data.js`）。
-使用 `git archive` 而不是 `tar`，是因为 macOS `tar` 会写入读取器拒绝的二进制 xattr 记录。
+图片和主题包是 Git LFS 对象，`git archive` 只会写入它们的 pointer，所以脚本从工作区打包：
+`store/` 与 `HEAD` 不一致或仍是 pointer 时拒绝，用 Python 的 `tarfile` 写归档（排序，不写
+xattr 记录；macOS `tar` 会写入读取器拒绝的这类记录）。
 
 `scripts/publish-themes.py` 一次发布所有自最新记录版本以来有变化的主题。它以 `store/`
 作为主题 repository，调用 serverbox-theme skill 的 `scripts/publish.py`；第三方作者在

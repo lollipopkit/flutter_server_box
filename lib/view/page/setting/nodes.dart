@@ -47,12 +47,6 @@ List<SettingsNode> _buildNodes() {
           icon: Icons.privacy_tip_outlined,
           page: () => const AppSettingsPage(section: SettingsSection.privacy),
         ),
-        SettingsNode.leaf(
-          id: 'app.ai',
-          title: libL10n.ai,
-          icon: Icons.auto_awesome_outlined,
-          page: () => const AppSettingsPage(section: SettingsSection.ai),
-        ),
         // A tab of its own rather than a row leading out of the general
         // page: pushed from there it drew a second title bar under the one
         // this page already has, naming the same thing twice.
@@ -85,17 +79,21 @@ List<SettingsNode> _buildNodes() {
             page: () => const DesktopSettingsPage(embedded: true),
           ),
 
-        // Fullscreen mode lets a mobile device serve as a dedicated status
-        // display.
-        if (isMobile)
-          SettingsNode.leaf(
-            id: 'app.fullScreen',
-            title: l10n.fullScreen,
-            icon: Icons.fullscreen,
-            page: () =>
-                const AppSettingsPage(section: SettingsSection.fullScreen),
-          ),
+        // Full screen lets a device serve as a dedicated status display.
+        SettingsNode.leaf(
+          id: 'app.fullScreen',
+          title: l10n.fullScreen,
+          icon: Icons.fullscreen,
+          page: () =>
+              const AppSettingsPage(section: SettingsSection.fullScreen),
+        ),
       ],
+    ),
+    SettingsNode.leaf(
+      id: 'ai',
+      title: libL10n.ai,
+      icon: Icons.auto_awesome_outlined,
+      page: () => const AppSettingsPage(section: SettingsSection.ai),
     ),
     SettingsNode.branch(
       id: 'server',
@@ -166,7 +164,7 @@ List<SettingsNode> _buildNodes() {
           id: 'terminal.virtKey',
           title: l10n.editVirtKeys,
           icon: Icons.keyboard_outlined,
-          page: () => const SSHVirtKeySettingPage(embedded: true),
+          page: () => const SSHVirtualKeySettingPage(embedded: true),
         ),
       ],
     ),

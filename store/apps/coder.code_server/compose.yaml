@@ -1,0 +1,26 @@
+# code-server 4.141.0 (MIT), https://github.com/coder/code-server/releases/tag/v4.141.0
+#
+# Image: the official codercom/code-server release image (amd64, arm64; Debian).
+# Its upstream Docker guide runs it as the host's uid with `-u` and the
+# image's entrypoint (fixuid) maps its `coder` user to that uid; this file
+# does the same with the agent's SBM_UID/SBM_GID.
+# Written for ServerBox Monitor's Code app: no `name:` and no `container_name`.
+
+services:
+  code-server:
+    image: codercom/code-server:${CODE_SERVER_IMAGE_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      # Read at start; overrides the password in the config file.
+      PASSWORD: ${CODE_SERVER_PASSWORD}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${CODE_SERVER_HOME}:/home/coder
+    ports:
+      - '${CODE_SERVER_BIND}:${CODE_SERVER_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

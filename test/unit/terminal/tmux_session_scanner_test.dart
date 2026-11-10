@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:server_box/data/ssh/persistent_shell.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
-import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
+import 'package:server_box/data/terminal/persistent_shell.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/tmux/tmux_session_scanner.dart';
 import 'package:test/test.dart';
 
 import '../../helpers/fake_stream_sink.dart';
@@ -14,7 +14,7 @@ void main() {
   setUpAll(initRustLibForTest);
 
   group('TmuxSessionScanner', () {
-    test('listSessions resolves tmux binary before listing', () async {
+    test('tryListSessions resolves tmux binary before listing', () async {
       final session = _FakePersistentShellSession(
         responses: [
           '/opt/bin/tmux\n',
@@ -25,7 +25,7 @@ void main() {
         PersistentShell(null, sessionFactory: () async => session),
       );
 
-      final sessions = await scanner.listSessions();
+      final sessions = (await scanner.tryListSessions())!;
 
       expect(sessions.single.id, TmuxSessionId(r'$0'));
       expect(sessions.single.name, 'main|with:colon');
@@ -53,7 +53,7 @@ void main() {
         PersistentShell(null, sessionFactory: () async => session),
       );
 
-      final one = (await scanner.listSessions()).single;
+      final one = (await scanner.tryListSessions())!.single;
 
       expect(one.createdAt, 1717200000);
       expect(one.lastAttached, isNull);
@@ -78,6 +78,46 @@ void main() {
         session.writes.last,
         contains("'/opt/bin/tmux' -u list-windows -t 'main'"),
       );
+    });
+
+    TmuxSessionScanner scannerOf(List<String> responses, List<int> exitCodes) {
+      final session = _FakePersistentShellSession(
+        responses: responses,
+        exitCodes: exitCodes,
+      );
+      return TmuxSessionScanner(
+        PersistentShell(null, sessionFactory: () async => session),
+      );
+    }
+
+    test('a failed session listing is null, not empty', () async {
+      final scanner = scannerOf(
+        ['/opt/bin/tmux\n', 'unknown option -- F'],
+        [0, 1],
+      );
+
+      expect(await scanner.tryListSessions(), isNull);
+    });
+
+    test('a listing where no line reads as a session is null', () async {
+      final scanner = scannerOf(['/opt/bin/tmux\n', 'garbage'], [0, 0]);
+
+      expect(await scanner.tryListSessions(), isNull);
+    });
+
+    test('no server running is no sessions', () async {
+      final scanner = scannerOf(
+        ['/opt/bin/tmux\n', 'no server running on /tmp/tmux-1000/default'],
+        [0, 1],
+      );
+
+      expect(await scanner.tryListSessions(), isEmpty);
+    });
+
+    test('no tmux is no sessions', () async {
+      final scanner = scannerOf([''], [1]);
+
+      expect(await scanner.tryListSessions(), isEmpty);
     });
 
     test(

@@ -11,10 +11,9 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,8 +21,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// wrote.
 ///
 /// The SQLite layout has never shipped, so **every** install in the field is
-/// on Hive and any released version is a migration source. `hive_adapters.g
-/// .dart` is byte-identical across 1466, 1480 and 1491, so the three share one
+/// on Hive and any released version is a migration source. The generated
+/// adapters were byte-identical across 1466, 1480 and 1491, so the three share one
 /// set of assertions — but 1491 also shipped an `agent_conversation` box, so
 /// each gets a fixture of its own rather than the later ones being assumed
 /// equal to the first.
@@ -54,7 +53,6 @@ void main() {
     await PrefStore.shared.init();
 
     Hive.init(tempDir.path);
-    Hive.registerAdapters();
     registerHiveLegacyAdapters();
   });
 
@@ -179,7 +177,6 @@ void main() {
               auth: PveAuth.password,
             ),
           );
-          expect(custom.cmds, {'uptime': 'uptime -p', 'who': 'w'});
           expect(custom.preferTempDev, 'coretemp');
           expect(custom.tempIsCelsius, isFalse);
           expect(custom.logoUrl, 'https://example.com/logo.png');
@@ -194,7 +191,7 @@ void main() {
 
         test('jump hosts and proxy command land on the credential', () {
           final jump = Stores.server.fetchOneRaw('srv-jump')!;
-          expect(jump.ssh?.jumpId, 'srv-pwd');
+          expect(jump.ssh?.resolvedJumpIds.firstOrNull, 'srv-pwd');
           expect(jump.ssh?.jumpIds, ['srv-pwd', 'srv-key']);
           expect(jump.ssh?.proxyCommand, isNull);
 
@@ -286,7 +283,7 @@ void main() {
           ]);
           // Written as `[0, 1, 2, 13, 14]` by that release and converted to
           // names by m013 — an index stops meaning the same key the moment a
-          // case is inserted into `VirtKey`.
+          // case is inserted into `VirtualKey`.
           expect(Stores.setting.sshVirtKeys.get(), [
             'esc',
             'alt',

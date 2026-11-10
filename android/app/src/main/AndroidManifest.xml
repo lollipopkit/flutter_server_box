@@ -18,6 +18,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16 Live Updates: the transfer notification asks to be
+         promoted (`TransferNotification`). A normal permission. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
     <!-- Guards the in-process broadcast the notification's "Stop All" action
          sends. `RECEIVER_NOT_EXPORTED` only exists from API 33, so on anything
@@ -56,6 +59,7 @@
         credential on the wire for a server whose owner never agreed to it.
     -->
     <application
+        android:supportsRtl="true"
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
@@ -64,7 +68,8 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:hasFragileUserData="true"
         android:usesCleartextTraffic="true"
-        tools:targetApi="s">
+        android:localeConfig="@xml/locales_config"
+        tools:targetApi="tiramisu">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -146,11 +151,24 @@
         </activity>
 
         <!--
-            Two providers, so the launcher's picker offers two widgets. The size
-            and what it shows are one decision: 2x2 holds readings, 4x2 holds
-            charts, and neither resizes. One resizable provider meant a layout
-            could be chosen and then silently overruled by the size.
+            One widget, at any size: the size decides what it shows, so there
+            is no layout to choose and nothing for the size to overrule.
         -->
+        <receiver
+            android:name=".widget.StatusWidget"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
+                <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_status" />
+        </receiver>
+
+        <!-- TODO: remove with `widget_small`/`widget_medium`; see there. -->
         <receiver
             android:name=".widget.StatusWidgetSmall"
             android:exported="false"
@@ -184,6 +202,46 @@
             android:enabled="true"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
+
+        <!-- Shares and selected text from other apps (`IncomingActivity`),
+             apart from MainActivity so they never start a second one in the
+             sender's task. Shared text becomes a snippet draft, shared files
+             go wherever the user picks; `IncomingFiles` refuses `file://` and
+             this app's own providers. -->
+        <activity
+            android:name=".incoming.IncomingActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/process_text_label">
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- Exported as a tile service has to be, and guarded by the
+             permission only System UI holds. -->
+        <service
+            android:name=".SessionsTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_terminal"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
 
         <!-- The Linux systems in the system file picker (#1583). Exported, as
              a documents provider has to be, and guarded by MANAGE_DOCUMENTS,

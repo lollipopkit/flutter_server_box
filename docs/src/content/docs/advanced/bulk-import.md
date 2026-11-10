@@ -41,10 +41,9 @@ complete.
 SSH settings belong in the `ssh` object. This nested layout is used by the
 App's exports and by the import dialog example.
 
-TODO: Remove support for the legacy flat layout after the migration window.
-For now, imports accept older files with fields such as `ip`, `port`, and
-`user` at the top level, including files imported from `~/.ssh/config`. New
-exports use the nested layout above.
+Imports also accept older files with fields such as `ip`, `port`, and `user`
+at the top level, including files imported from `~/.ssh/config`. New exports
+use the nested layout above.
 
 ## Fields
 
@@ -52,7 +51,7 @@ exports use the nested layout above.
 |---|---|---|
 | `name` | Yes | Server name shown in the App |
 | `ssh` | No | SSH configuration; omit for a server configured only through Monitor HTTP |
-| `monitorHttp` | No | Monitor agent configuration: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
+| `monitorHttp` | No | Monitor configuration: `addr`, `user`, `pwd`, `certSha256`, `allowInsecure` |
 | `preferredTransport` | No | Which transport leads when both SSH and Monitor HTTP are configured: `ssh` or `monitorHttp`. SSH leads when omitted |
 | `tags` | No | Tags used to group servers |
 | `autoConnect` | No | Connect automatically when the App starts |
@@ -90,17 +89,15 @@ The following fields belong inside `pve`:
 | `pwd` | No | For `password`: the PVE password of the SSH user in the `pam` realm. Omit it to reuse the SSH password |
 | `certSha256` | No | SHA-256 of the certificate to trust, lowercase hex. Omit it to confirm the certificate on the first connection |
 
-TODO: Remove these legacy PVE fields after the migration window. Older exports
-may put `pveAddr`, `pveIgnoreCert`, and `pvePwd` inside `custom`; imports
-convert them to password authentication without a pinned certificate. Current
-exports use `pve`.
+Older exports put `pveAddr`, `pveIgnoreCert`, and `pvePwd` inside `custom`;
+imports ignore them. Move them into a `pve` object to keep PVE.
 
 A server needs at least one connection method. If both `ssh` and
 `monitorHttp` are omitted, the imported record cannot connect to a host.
 
 `allowInsecure` defaults to `false`. Set it only if you intend this Monitor
 connection to use plaintext HTTP, including when the address is a private
-non-loopback IP. The Monitor agent separately enforces its own
+non-loopback IP. The Monitor separately enforces its own
 `allow_insecure` setting for sensitive endpoints.
 
 ## Import steps

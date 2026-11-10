@@ -24,9 +24,10 @@ const SCALE: u64 = 10_000;
 
 pub struct State {
     system: System,
-    disks: Disks,
-    networks: Networks,
-    components: Components,
+    /// `None` where this platform does not support the kind.
+    disks: Option<Disks>,
+    networks: Option<Networks>,
+    components: Option<Components>,
     /// sysinfo's first CPU reading has no prior sample to diff against
     primed: bool,
     /// Refreshing the CPU list resets sysinfo's usage baseline, so only do it
@@ -34,23 +35,23 @@ pub struct State {
     cpu_count_hint: usize,
 }
 
-impl Default for State {
-    fn default() -> Self {
-        let mut system = System::new();
-        // sysinfo 0.39 separates CPU list and usage refresh. Without an
+impl State {
+    pub fn new() -> Result<Self, sysinfo::Error> {
+        let mut system = System::new()?;
+        // sysinfo separates CPU list and usage refresh. Without an
         // explicit list refresh an initially empty System never populates
         // system.cpus(), so the first usage refresh yields no cores and the
         // second (primed) sample still reports empty/0.
         system.refresh_cpu_list(CpuRefreshKind::everything());
         let cpu_count_hint = logical_cpu_count().unwrap_or_else(|| system.cpus().len());
-        Self {
+        Ok(Self {
             system,
-            disks: Disks::new(),
-            networks: Networks::new(),
-            components: Components::new(),
+            disks: Disks::new().ok(),
+            networks: Networks::new().ok(),
+            components: Components::new().ok(),
             primed: false,
             cpu_count_hint,
-        }
+        })
     }
 }
 
@@ -123,7 +124,7 @@ fn cpu_cores(system: &System) -> Vec<CpuCore> {
     let per_core_pct: Vec<f64> = system
         .cpus()
         .iter()
-        .map(|c| c.cpu_usage().clamp(0.0, 100.0) as f64)
+        .map(|c| c.usage().clamp(0.0, 100.0) as f64)
         .collect();
     if per_core_pct.is_empty() {
         return Vec::new();
@@ -163,7 +164,7 @@ fn cpu_cores(system: &System) -> Vec<CpuCore> {
 /// [`State`]: callers need this at startup, before any sampling state is
 /// constructed, and refreshing memory once is cheap.
 pub fn total_memory() -> Option<u64> {
-    let mut system = System::new();
+    let mut system = System::new().ok()?;
     system.refresh_memory();
     Some(system.total_memory()).filter(|&t| t > 0)
 }
@@ -178,9 +179,15 @@ pub fn sample(state: &mut State) -> ServerStatus {
     }
     state.system.refresh_cpu_usage();
     state.system.refresh_memory();
-    state.disks.refresh(true);
-    state.networks.refresh(true);
-    state.components.refresh(true);
+    if let Some(disks) = &mut state.disks {
+        disks.refresh(true);
+    }
+    if let Some(networks) = &mut state.networks {
+        networks.refresh(true);
+    }
+    if let Some(components) = &mut state.components {
+        components.refresh(true);
+    }
 
     let first_call = !state.primed;
     state.primed = true;
@@ -208,8 +215,8 @@ pub fn sample(state: &mut State) -> ServerStatus {
 
     let keyed_disks: Vec<_> = state
         .disks
-        .list()
         .iter()
+        .flat_map(|d| d.iter())
         .map(|disk| {
             let mount = disk.mount_point().to_string_lossy().into_owned();
             let device = device_for_mount(&mount);
@@ -266,17 +273,17 @@ pub fn sample(state: &mut State) -> ServerStatus {
 
     let net: Vec<NetIface> = state
         .networks
-        .list()
         .iter()
+        .flat_map(|n| n.iter())
         .map(|(name, data)| NetIface {
-            device: name.clone(),
+            device: name.to_string_lossy().into_owned(),
             rx_bytes: data.total_received(),
             tx_bytes: data.total_transmitted(),
         })
         .collect();
 
     let mut temps = Temperatures::default();
-    for component in state.components.list() {
+    for component in state.components.iter().flat_map(|c| c.iter()) {
         if let Some(t) = component.temperature()
             && is_plausible_temp(t as f64)
         {
@@ -293,9 +300,9 @@ pub fn sample(state: &mut State) -> ServerStatus {
         diskio,
         net,
         temps,
-        uptime: Some(format_uptime(System::uptime())),
-        host: System::host_name(),
-        sys: System::long_os_version().or_else(System::os_version),
+        uptime: System::uptime().ok().map(format_uptime),
+        host: System::host_name().ok(),
+        sys: System::long_os_version().or_else(|_| System::os_version()).ok(),
         ..ServerStatus::default()
     }
 }
@@ -329,7 +336,7 @@ mod tests {
 
     #[test]
     fn sample_produces_plausible_data() {
-        let mut state = State::default();
+        let mut state = State::new().unwrap();
         sample(&mut state); // primes the CPU baseline
         std::thread::sleep(std::time::Duration::from_millis(250));
         let status = sample(&mut state);
@@ -353,7 +360,7 @@ mod tests {
 
     #[test]
     fn topology_refresh_suppresses_the_reset_usage_sample() {
-        let mut state = State::default();
+        let mut state = State::new().unwrap();
         sample(&mut state);
         state.primed = true;
         state.cpu_count_hint = 0;
@@ -372,11 +379,11 @@ mod tests {
     /// breaks the Svelte keyed-each render (real bug hit on a real machine)
     #[test]
     fn disks_and_diskio_have_unique_keys() {
-        let mut state = State::default();
+        let mut state = State::new().unwrap();
         let status = sample(&mut state);
 
-        assert_eq!(status.disks.len(), state.disks.list().len());
-        assert_eq!(status.diskio.len(), state.disks.list().len());
+        assert_eq!(status.disks.len(), state.disks.as_ref().map_or(0, |d| d.len()));
+        assert_eq!(status.diskio.len(), state.disks.as_ref().map_or(0, |d| d.len()));
 
         let disk_paths: Vec<&str> = status.disks.iter().map(|d| d.path.as_str()).collect();
         let mut unique_paths = disk_paths.clone();
@@ -407,7 +414,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn disks_carry_a_device_not_a_volume_label() {
-        let mut state = State::default();
+        let mut state = State::new().unwrap();
         let status = sample(&mut state);
 
         let root = status

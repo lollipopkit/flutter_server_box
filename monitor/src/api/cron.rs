@@ -26,10 +26,11 @@
 //!
 //! # Privilege
 //!
-//! The `shell` grant for both halves (`api::machine::gate`). Writing it is
+//! The transport rule, both ways (`api::machine::gate`). Writing it is
 //! arranging for code to run on a timer as the agent's account; reading it is
 //! reading commands, which is where an argument-borne token sits.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -39,7 +40,6 @@ use super::exec::{ExecResponse, Limits, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 
 /// The listing is one crontab, so this is generous; the cap is here so a
@@ -144,9 +144,9 @@ struct ErrorResponse {
 /// Reads the crontab and reports it.
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "cron list").await {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "cron list").await {
         return Ok(refused);
     }
     Ok(HttpResponse::Ok().json(&read_crontab(&state.remote_access.exec).await))
@@ -156,11 +156,11 @@ pub async fn list(
 pub async fn edit(
     req: HttpRequest,
     body: web::types::Json<CronEdit>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let edit = body.into_inner();
     let what = format!("cron {}", edit.subject());
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -213,14 +213,12 @@ pub async fn edit(
     };
 
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(&what)
         .record(&state.db)
         .await;
     if let Err(unavailable) = write_document(&document.render(), exec).await {
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip)
             .detail(format!("{what}: write failed ({:?})", unavailable.kind))
             .record(&state.db)

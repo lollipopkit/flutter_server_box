@@ -5,16 +5,18 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_terminal.dart';
+import 'package:server_box/core/monitor/terminal.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/redrawing_shell.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/fake_shell.dart';
 import '../../helpers/idle_ssh_socket.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -59,6 +61,26 @@ class _FakeShell implements ShellSession {
   }
 }
 
+/// A shell that marks some of its output as redraws, as tmux's replays are.
+class _RedrawingShell extends _FakeShell implements RedrawingShell {
+  final _output = StreamController<ShellOutput>();
+
+  @override
+  Stream<ShellOutput> get output => _output.stream;
+
+  @override
+  void emitBytes(List<int> data) =>
+      _output.add(ShellOutput(Uint8List.fromList(data)));
+
+  void emitRedraw(String data, {bool switched = false}) => _output.add(
+    ShellOutput(
+      Uint8List.fromList(utf8.encode(data)),
+      redraw: true,
+      switched: switched,
+    ),
+  );
+}
+
 /// Long enough for the session's own output flush, which batches a frame's
 /// worth rather than writing every packet straight through.
 Future<void> flushed() =>
@@ -78,6 +100,40 @@ void main() {
     id: 'agent',
     monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
   );
+
+  group('where the shell says it is', () {
+    test('an OSC 7 report sets the working directory; a later one replaces it', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      expect(session.workingDirectory, isNull);
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+      // Percent-encoded, as the shells send a space.
+      session.terminal.write('\x1b]7;file://box/home/me/My%20Files\x1b\\');
+      expect(session.workingDirectory, '/home/me/My Files');
+      // Not a file URL: the last one stands.
+      session.terminal.write('\x1b]7;https://example.com/x\x07');
+      expect(session.workingDirectory, '/home/me/My Files');
+    });
+
+    test('a report from another host is another machine: its path is not taken', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      // `ssh other` typed into the shell; the far shell reports too.
+      session.terminal.write('\x1b]7;file://other/var/log\x07');
+      expect(session.workingDirectory, isNull);
+      // Back on this one.
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+    });
+
+    test('only a file URL with an absolute path is read', () {
+      expect(TerminalSession.osc7Report(['file:///tmp']), (host: '', path: '/tmp'));
+      expect(TerminalSession.osc7Report(['file://host/a;b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['file://host/a', 'b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['relative']), null);
+      expect(TerminalSession.osc7Report(['']), null);
+    });
+  });
 
   group('the shell on screen', () {
     test('typing reaches every typed listener, and one leaving leaves the rest', () {
@@ -148,6 +204,66 @@ void main() {
 
       expect(session.terminal.buffer.currentLine.toString().trim(), 'fresh');
       expect(session.outputTail, 'fresh');
+      session.dispose();
+    });
+
+    test('a redraw reaches the terminal whole, after a character cut off', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _RedrawingShell();
+      session.bindForeground(shell);
+
+      // The first two bytes of 中, then a replay longer than the output cap.
+      shell.emitBytes([0xe4, 0xb8]);
+      final rows = [for (var i = 0; i < 600; i++) '${'$i'.padLeft(4)}${'x' * 60}'];
+      shell.emitRedraw('\x1bcfirst\r\n${rows.join('\r\n')}\r\nlast');
+      await flushed();
+
+      final lines = [
+        for (var i = 0; i < session.terminal.buffer.lines.length; i++)
+          session.terminal.buffer.lines[i].toString().trim(),
+      ].where((line) => line.isNotEmpty).toList();
+      expect(lines.first, 'first');
+      expect(lines.last, 'last');
+      expect(lines, hasLength(602));
+      expect(lines.join(), isNot(contains('\uFFFD')));
+      session.dispose();
+    });
+
+    test('only a redraw of another pane says the view switched', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _RedrawingShell();
+      var switches = 0;
+      session.onSwitched = () => switches++;
+      session.bindForeground(shell);
+
+      shell
+        ..emitRedraw('\x1bcsame pane')
+        ..emitBytes(utf8.encode('output'));
+      await flushed();
+      expect(switches, 0);
+
+      shell.emitRedraw('\x1bcother pane', switched: true);
+      await flushed();
+      expect(switches, 1);
+      session.dispose();
+    });
+
+    test('a new shell starts on the main screen in the default colors', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final old = _FakeShell();
+      session.bindForeground(old);
+      old.emit('\x1b[?1049h\x1b[31m\x1b[?2004hvim');
+      await flushed();
+      expect(session.terminal.isUsingAltBuffer, isTrue);
+
+      session.bindForeground(_FakeShell()..emit('Last login'));
+      await flushed();
+
+      expect(session.terminal.isUsingAltBuffer, isFalse);
+      expect(session.terminal.bracketedPasteMode, isFalse);
+      final line = session.terminal.buffer.lines[0];
+      expect(line.toString().trim(), 'Last login');
+      expect(line.getForeground(0), 0);
       session.dispose();
     });
 
@@ -392,14 +508,15 @@ void main() {
       () async {
         final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
         addTearDown(() => server.close(force: true));
-        server.listen((request) {
+        server.listen((request) async {
+          if (await answerAgentHealth(request)) return;
           request.response.headers.contentType = ContentType.json;
           request.response.write(
             request.uri.path == '/api/v1/login'
                 ? '{"token":"test"}'
-                : '{"remote_access":{"terminal":true,"full_access":true}}',
+                : '{"access":{"ok":true}}',
           );
-          request.response.close();
+          await request.response.close();
         });
 
         final spi = Spi(
@@ -419,14 +536,15 @@ void main() {
     test('a denied grant does not fall back to disabled SSH', () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(() => server.close(force: true));
-      server.listen((request) {
+      server.listen((request) async {
+        if (await answerAgentHealth(request)) return;
         request.response.headers.contentType = ContentType.json;
         request.response.write(
           request.uri.path == '/api/v1/login'
               ? '{"token":"test"}'
-              : '{"remote_access":{"terminal":false,"full_access":false}}',
+              : '{"access":{"ok":false,"why":"insecure_transport"}}',
         );
-        request.response.close();
+        await request.response.close();
       });
 
       final spi = Spi(
@@ -447,11 +565,11 @@ void main() {
       );
     });
 
-    test('an agent granting terminal and full access is a shell source', () {
+    test('an agent granting access is a shell source', () {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       expect(session.backend, isNotNull);
@@ -462,7 +580,7 @@ void main() {
 
     test('an agent that granted nothing is not', () {
       final session = TerminalSession(source: ServerSource(monitor));
-      session.adopt(null, granted: MonitorRemoteAccess.none);
+      session.adopt(null, granted: MonitorAccess.none);
 
       expect(session.backend, isNull);
     });
@@ -471,7 +589,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(ssh));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       // The grant is the agent's, and this server has no agent. Answering
@@ -483,7 +601,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       session.close();
@@ -636,6 +754,19 @@ void main() {
         const MonitorHttpErr(type: MonitorHttpErrType.net),
       ),
       isTrue,
+    );
+    // A relayed target that is not listening yet, typed apart from `net`.
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.targetUnreachable),
+      ),
+      isTrue,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.relayForbidden),
+      ),
+      isFalse,
     );
     expect(
       isRetryableTerminalConnectionError(

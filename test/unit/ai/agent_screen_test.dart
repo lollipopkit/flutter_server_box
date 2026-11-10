@@ -5,21 +5,21 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/scope.dart';
-import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/workspace.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/view/agent/screen.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
@@ -37,7 +37,10 @@ const _firewall = AppRouteArg<void, SpiRequiredArgs>(
   page: _page,
   path: '/firewall',
 );
-const _settings = AppRouteNoArg<void>(page: _plain, path: '/settings');
+const _transfers = AppRouteNoArg<void>(
+  page: _plain,
+  path: '/files/transfers',
+);
 
 void main() {
   setUp(() async {
@@ -130,9 +133,9 @@ void main() {
     expect(at(), contains('server "web-prod" (server_id: s1)'));
 
     // Over every tab.
-    unawaited(_settings.go(root.currentContext!));
+    unawaited(_transfers.go(root.currentContext!));
     await settle();
-    expect(at(), 'On screen: the settings.');
+    expect(at(), 'On screen: the transfer list.');
     root.currentState!.pop();
     tab.currentState!
       ..pop()
@@ -140,10 +143,14 @@ void main() {
     await settle();
     expect(at(), 'On screen: Server tab, the list of servers.');
 
-    // In place of the tabs, in a wide window.
-    AgentScreen.settingsOpen = true;
+    // Pushed over the tabs.
+    final settings = AppPageRoute<void>(
+      settings: const RouteSettings(name: AgentScreen.settingsRoute),
+      builder: (_) => const SizedBox(),
+    );
+    AgentScreen.settingsObserver.didPush(settings, null);
     expect(at(), 'On screen: Settings.');
-    AgentScreen.settingsOpen = false;
+    AgentScreen.settingsObserver.didPop(settings, null);
 
     go(AppTab.ssh);
     expect(at(), 'On screen: Terminal tab, picking a server to open.');

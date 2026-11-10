@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/service/scoped_token.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/core/utils/coalesced.dart';
+import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Keeps the home-screen widgets' idea of the server list in step with this
 /// app's, and gives them a credential to fetch with.
@@ -49,8 +51,7 @@ final class WidgetSync {
 
   StreamSubscription<dynamic>? _serverStoreSub;
   Timer? _pushDebouncer;
-  Future<void>? _pushing;
-  bool _pushDirty = false;
+  late final _pushes = Coalesced(_pushOnce);
 
   bool get _supported => isIOS || isAndroid;
 
@@ -67,21 +68,9 @@ final class WidgetSync {
   /// those.
   Future<void> push() {
     if (!_supported) return Future.value();
-    _pushDirty = true;
-    return _pushing ??= _drainPush();
+    return _pushes();
   }
 
-  Future<void> _drainPush() async {
-    try {
-      while (_pushDirty) {
-        _pushDirty = false;
-        await _pushOnce();
-      }
-    } finally {
-      _pushing = null;
-      if (_pushDirty) _pushing = _drainPush();
-    }
-  }
 
   Future<void> _pushOnce() async {
     final servers = monitorServers();
@@ -111,9 +100,9 @@ final class WidgetSync {
           await MonitorHttpClient(
             MonitorHttpCredential(
               addr: previous.endpoint,
-              user: monitor.user,
               pwd: monitor.pwd,
-              ignoreCert: monitor.ignoreCert,
+              legacyUser: monitor.legacyUser,
+              certSha256: monitor.certSha256,
               allowInsecure: monitor.allowInsecure,
             ),
           ).revokeWatchToken(widgetClientId(spi.id));
@@ -227,7 +216,9 @@ final class WidgetSync {
         if (token != null && !token.isEmpty && !token.opaque)
           'token': token.token,
         'expiresAt': token?.expiresAt ?? 0,
-        'ignoreCert': monitor.ignoreCert,
+        // The certificate this app accepted for a self-signed agent, checked
+        // natively where the system does not trust the certificate.
+        'certSha256': ?monitor.certSha256,
         // Whether this server was opted in to plaintext HTTP. The widget
         // asks the same question the app does before every request: Android's
         // `usesCleartextTraffic` lets the *process* speak plaintext, and is
@@ -278,7 +269,7 @@ final class WidgetSync {
   void dispose() {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
-    _pushDirty = false;
+    _pushes.cancelPending();
     unawaited(_serverStoreSub?.cancel());
     _serverStoreSub = null;
   }

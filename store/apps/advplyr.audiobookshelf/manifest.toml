@@ -1,0 +1,103 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Audiobookshelf, an audiobook and podcast server: deployed with Docker
+# Compose from compose.yaml beside this file, shown in a desk window through
+# the agent.
+
+schema = 1
+publisher = "advplyr"
+name = "audiobookshelf"
+project = "Audiobookshelf"
+developer = "advplyr"
+version = "2.37.1"
+homepage = "https://www.audiobookshelf.org"
+source = "https://github.com/advplyr/audiobookshelf/tree/v2.37.1"
+glyph = "headphones"
+tone = "amber"
+categories = ["media"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Audiobookshelf"
+
+[description]
+en = "Listen to your audiobooks and podcasts in the browser or in its phone apps, with progress kept across devices. Podcasts are downloaded on a schedule."
+zh = "在浏览器或手机应用中收听有声书和播客，进度在各设备间同步。播客按计划自动下载。"
+zh-TW = "在瀏覽器或手機應用程式中收聽有聲書和 Podcast，進度在各裝置間同步。Podcast 依排程自動下載。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/advplyr/audiobookshelf/blob/v2.37.1/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-root"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+AUDIOBOOKSHELF_VERSION = "2.37.1"
+
+[[secrets]]
+env = "AUDIOBOOKSHELF_ROOT_PASSWORD"
+length = 32
+
+[login]
+user = "root"
+password = "AUDIOBOOKSHELF_ROOT_PASSWORD"
+note = { en = "Add the audiobooks and podcasts folders as libraries after signing in: /audiobooks and /podcasts.", zh = "登录后将有声书和播客文件夹添加为媒体库：/audiobooks 和 /podcasts。", zh-TW = "登入後將有聲書和 Podcast 資料夾新增為媒體庫：/audiobooks 和 /podcasts。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "AUDIOBOOKSHELF_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "metadata"
+type = "path"
+env = "AUDIOBOOKSHELF_METADATA"
+default = "{stack}/metadata"
+data = true
+label = { en = "Metadata and covers", zh = "元数据和封面", zh-TW = "中繼資料和封面" }
+help = { en = "Covers, the cache, backups and logs.", zh = "封面、缓存、备份和日志。", zh-TW = "封面、快取、備份和日誌。" }
+
+[[settings]]
+key = "audiobooks"
+type = "path"
+env = "AUDIOBOOKSHELF_AUDIOBOOKS"
+default = "{shared}/media/audiobooks"
+label = { en = "Audiobooks", zh = "有声书", zh-TW = "有聲書" }
+help = { en = "At /audiobooks. Audiobookshelf writes covers and metadata here only when told to in its settings.", zh = "位于 /audiobooks。只有在其设置中开启后，Audiobookshelf 才会在这里写入封面和元数据。", zh-TW = "位於 /audiobooks。只有在其設定中開啟後，Audiobookshelf 才會在這裡寫入封面和中繼資料。" }
+
+[[settings]]
+key = "podcasts"
+type = "path"
+env = "AUDIOBOOKSHELF_PODCASTS"
+default = "{shared}/media/podcasts"
+label = { en = "Podcasts", zh = "播客", zh-TW = "Podcast" }
+help = { en = "At /podcasts, where episodes are downloaded.", zh = "位于 /podcasts，剧集下载到这里。", zh-TW = "位於 /podcasts，集數下載到這裡。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "AUDIOBOOKSHELF_PORT"
+default = 13378
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the Audiobookshelf phone apps. Off: only through the desk.", zh = "供 Audiobookshelf 手机应用连接。关闭时只能通过桌面访问。", zh-TW = "供 Audiobookshelf 手機應用程式連線。關閉時只能透過桌面存取。" }
+on = { AUDIOBOOKSHELF_BIND = "0.0.0.0" }
+off = { AUDIOBOOKSHELF_BIND = "127.0.0.1" }

@@ -2,6 +2,7 @@ import UIKit
 import WidgetKit
 import Flutter
 import ActivityKit
+import FileProvider
 import UserNotifications
 
 @main
@@ -139,13 +140,13 @@ import UserNotifications
         // Pushed on change, and readable once: the first layout can report
         // before Dart has set its handler, and a push nobody hears is lost.
         let windowControlsChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/window_controls", binaryMessenger: binaryMessenger)
-        WindowControls.shared.onChange = { zones in
-            windowControlsChannel.invokeMethod("changed", arguments: zones)
+        WindowControls.shared.onChange = { state in
+            windowControlsChannel.invokeMethod("changed", arguments: state)
         }
         windowControlsChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             switch call.method {
-            case "zones":
-                result(WindowControls.shared.zones)
+            case "state":
+                result(WindowControls.shared.state)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -165,6 +166,13 @@ import UserNotifications
                 result(FlutterMethodNotImplemented)
             }
         })
+
+        // Sent synchronously from `sendAction`, so it is queued before the
+        // text view's insert of the same paste.
+        let textInputChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/text_input", binaryMessenger: binaryMessenger)
+        SBApplication.onPaste = { text in
+            textInputChannel.invokeMethod("paste", arguments: text)
+        }
 
         let mainChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/main_chan", binaryMessenger: binaryMessenger)
         mainChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
@@ -233,6 +241,10 @@ import UserNotifications
                    let fg = args["fg"] as? Int {
                     DynamicIslandBrand.shared.setColors(background: bg, foreground: fg)
                 }
+                result(nil)
+            // The Files app lists the systems again (`ios/LinuxFiles`).
+            case "linuxSystemsChanged":
+                NSFileProviderManager.default.signalEnumerator(for: .rootContainer) { _ in }
                 result(nil)
             // Whether something is in flight that suspension would cut off:
             // see [InFlightWork].
@@ -306,7 +318,7 @@ import UserNotifications
                     id: id,
                     name: entry["name"] as? String ?? addr,
                     addr: addr,
-                    ignoreCert: entry["ignoreCert"] as? Bool ?? false,
+                    certSha256: entry["certSha256"] as? String,
                     allowInsecure: entry["allowInsecure"] as? Bool ?? false,
                     // Kept from the stored entry when this push brought no
                     // token, so a transient failure does not read as "the
@@ -410,5 +422,29 @@ private enum InFlightWork {
         guard id != .invalid else { return }
         UIApplication.shared.endBackgroundTask(id)
         if task == id { task = .invalid }
+    }
+}
+
+/// The app's `UIApplication`, for the one action it has to see first: paste.
+///
+/// The system edit menu's Paste and ⌘V reach Flutter's text view as
+/// `insertText` of the clipboard, which Dart cannot tell from typing. The
+/// terminal has to: a paste is sent bracketed, so a shell does not run its
+/// lines as it receives them. Told here, before `super` delivers the action,
+/// the message reaches Dart ahead of the insert it describes.
+@objc(SBApplication)
+final class SBApplication: UIApplication {
+    static var onPaste: ((String) -> Void)?
+
+    override func sendAction(_ action: Selector, to target: Any?, from sender: Any?, for event: UIEvent?) -> Bool {
+        // Read in the paste the user asked for, as the text view's own read
+        // is, so no permission prompt. The text is what lets Dart tell the
+        // insert from an update that comes before it.
+        if action == #selector(UIResponderStandardEditActions.paste(_:)),
+           UIPasteboard.general.hasStrings,
+           let text = UIPasteboard.general.string {
+            SBApplication.onPaste?(text)
+        }
+        return super.sendAction(action, to: target, from: sender, for: event)
     }
 }

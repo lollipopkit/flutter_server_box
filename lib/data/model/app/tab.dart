@@ -1,22 +1,10 @@
-import 'package:hive_ce_flutter/adapters.dart';
-
-part 'tab.g.dart';
-
-@HiveType(typeId: 103)
 enum AppTab {
-  @HiveField(0)
   server,
-  @HiveField(1)
   ssh,
-  @HiveField(2)
   file,
-  @HiveField(3)
   snippet,
-  @HiveField(4)
   agent,
-  @HiveField(5)
   benchmark,
-  @HiveField(6)
   remoteDesktop,
 
   /// Libvirt/KVM and Proxmox VE guests.
@@ -24,12 +12,14 @@ enum AppTab {
   /// Index 7 by position, the one `monitorSettings` held — see
   /// [_retiredIndices], which is why an integer 7 still resolves to nothing
   /// rather than to this.
-  @HiveField(7)
   virt,
 
   /// Several views of several servers at once, split into panes.
-  @HiveField(8)
-  workspace;
+  workspace,
+
+  /// The servers' monitor agents: their state and alerts, the web apps
+  /// they deployed, their notifications, audit logs and sessions.
+  monitor;
 
   /// Indices that named a tab which no longer exists, and so are never
   /// resolved as an integer.
@@ -57,9 +47,9 @@ enum AppTab {
   /// enforces, but it is the number kept to.
   ///
   /// **Not the declaration order, and it cannot be.** The declaration order is
-  /// the `@HiveField` index and what `_parseAppTabFromElement` resolves an
-  /// `int` against, so moving a case there would silently re-point every
-  /// integer an older record holds at a different tab.
+  /// what `_parseAppTabFromElement` resolves an `int` against, so moving a
+  /// case there would silently re-point every integer an older record holds at
+  /// a different tab.
   ///
   /// Snippets are out because they are a library rather than a place: one is
   /// run against a server, from the server's own page, and the tab is where
@@ -76,8 +66,8 @@ enum AppTab {
   ///
   /// Settings is not among them, and is not an [AppTab] at all: it is a
   /// destination the bar pins to its end, never stored, never arranged, and
-  /// never read back from a record. As a case here it would have been a
-  /// `@HiveField`, a line in the parser removing it again, a branch in every
+  /// never read back from a record. As a case here it would have been a line
+  /// in the parser removing it again, a branch in every
   /// exhaustive switch, and a second list saying which cases are real — all of
   /// it to express that this one is not like the others. It is what keeps the
   /// way back to the arranging page reachable when every tab is turned on and

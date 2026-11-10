@@ -4,9 +4,9 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/data/model/app/tray.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/tray.dart';
 
 /// What only a desktop has, which for now is the status icon.
 ///

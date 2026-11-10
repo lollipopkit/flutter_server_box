@@ -1,0 +1,80 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Memos, as the Monitor's Notes app: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "usememos"
+name = "memos"
+project = "Memos"
+developer = "Memos (usememos)"
+version = "0.31.0"
+homepage = "https://www.usememos.com"
+source = "https://github.com/usememos/memos/tree/v0.31.0"
+glyph = "sticky_note_2"
+tone = "amber"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Memos"
+
+[description]
+en = "Keep short notes with Markdown, tags, attachments and a timeline, all on your own server."
+zh = "在自己的服务器上记录短笔记，支持 Markdown、标签、附件和时间线。"
+zh-TW = "在自己的伺服器上記錄短筆記，支援 Markdown、標籤、附件和時間軸。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/usememos/memos/blob/v0.31.0/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+MEMOS_VERSION = "0.31.0"
+
+[login]
+note = { en = "No account is seeded: the first account signed up becomes the administrator. Sign up right after deploying, then turn off sign-ups in the app's settings if others can reach it.", zh = "不会预设账号：第一个注册的账号成为管理员。部署后请立即注册；如果其他人也能访问，请在应用设置中关闭注册。", zh-TW = "不會預設帳號：第一個註冊的帳號成為管理員。部署後請立即註冊；如果其他人也能存取，請在應用設定中關閉註冊。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "MEMOS_DATA_LOCATION"
+default = "{stack}/memos"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The SQLite database and uploaded attachments.", zh = "SQLite 数据库和上传的附件。", zh-TW = "SQLite 資料庫和上傳的附件。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "MEMOS_WEB_PORT"
+default = 5230
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { MEMOS_WEB_BIND = "0.0.0.0" }
+off = { MEMOS_WEB_BIND = "127.0.0.1" }
+
+# Memos' own MCP server (since 0.27), asked with a personal access token the
+# admin makes once signed up.
+[[mcp]]
+port = "port"
+path = "/mcp"
+publisher = "builtin"
+[mcp.auth]
+scheme = "Bearer"
+asked = { en = "In Memos, open Settings > My Account > Personal Access Tokens, create a token, and paste it here.", zh = "在 Memos 中打开「设置 > 我的账号 > 个人访问令牌」，创建一个令牌并粘贴到这里。", zh-TW = "在 Memos 中開啟「設定 > 我的帳號 > 個人存取權杖」，建立一個權杖並貼到這裡。" }

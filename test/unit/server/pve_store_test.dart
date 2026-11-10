@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 
@@ -200,101 +200,17 @@ void main() {
         expect(PveConfig.fromServerRecord(record), _token);
       });
 
-      test('from an older build, inside `custom`', () {
-        final record = {
-          ..._server.toJson(),
-          'custom': {
-            'pveAddr': 'https://10.0.0.9:8006',
-            'pveIgnoreCert': true,
-            'pvePwd': 'p',
-          },
-        };
-        // No PVE password: this server's SSH logs in with a password, and
-        // that is what a PVE login sends.
-        expect(
-          PveConfig.fromServerRecord(record),
-          const PveConfig(addr: 'https://10.0.0.9:8006'),
-        );
-        final keyed = {
-          ...record,
-          'ssh': const SshCredential(ip: '10.0.0.5', keyId: 'k'),
-        };
-        expect(
-          PveConfig.fromServerRecord(keyed),
-          const PveConfig(addr: 'https://10.0.0.9:8006', pwd: 'p'),
-        );
-      });
-
-      test('an empty or missing address is none', () {
+      test('no `pve` object is none, whatever `custom` holds', () {
         expect(PveConfig.fromServerRecord(_server.toJson()), isNull);
+        // The fields an older build kept inside `custom` are not read.
         expect(
           PveConfig.fromServerRecord({
-            'custom': {'pveAddr': ' ', 'pvePwd': 'p'},
+            ..._server.toJson(),
+            'custom': {'pveAddr': 'https://10.0.0.9:8006', 'pvePwd': 'p'},
           }),
           isNull,
         );
       });
-    });
-  });
-
-  group('legacy fields', () {
-    Map<String, Object?> record({String? keyId, bool flat = false}) {
-      const custom = {'pveAddr': 'https://h:8006', 'pvePwd': 'pve-pw'};
-      if (flat) {
-        return {'ip': '10.0.0.1', 'pubKeyId': ?keyId, 'custom': custom};
-      }
-      return {
-        'ssh': {'ip': '10.0.0.1', 'pubKeyId': ?keyId},
-        'custom': custom,
-      };
-    }
-
-    test('the PVE password is read only where SSH uses a key', () {
-      expect(PveConfig.fromLegacyRecord(record(keyId: 'k'))?.pwd, 'pve-pw');
-      expect(
-        PveConfig.fromLegacyRecord(record(keyId: 'k', flat: true))?.pwd,
-        'pve-pw',
-        reason: 'the pre-v3 flat layout',
-      );
-      expect(PveConfig.fromLegacyRecord(record())?.pwd, isNull);
-      expect(PveConfig.fromLegacyRecord(record())?.addr, 'https://h:8006');
-    });
-
-    test('written the way an older build reads them', () {
-      // A pin never becomes "accept any certificate" on an older build.
-      expect(_token.toLegacyCustom(), {
-        'pveAddr': 'https://localhost:8006',
-        'pveIgnoreCert': false,
-      });
-      expect(
-        const PveConfig(addr: 'https://h:8006', pwd: 'p').toLegacyCustom(),
-        {'pveAddr': 'https://h:8006', 'pveIgnoreCert': false, 'pvePwd': 'p'},
-      );
-    });
-
-    test('merged onto what is here, never replacing it', () {
-      const legacy = PveConfig(addr: 'https://localhost:8006');
-      expect(PveConfig.mergeLegacy(_token, legacy), _token);
-      expect(PveConfig.mergeLegacy(null, legacy), legacy);
-
-      final moved = PveConfig.mergeLegacy(
-        _token,
-        const PveConfig(addr: 'https://10.0.0.9:8006'),
-      );
-      // The token was never on the older device; carried to an address it
-      // chose, it would be sent to that host.
-      expect(moved, const PveConfig(addr: 'https://10.0.0.9:8006'));
-      expect(moved.tokenSecret, isNull);
-      expect(moved.certSha256, isNull, reason: 'a pin names one address');
-
-      const pwd = PveConfig(addr: 'https://h:8006', pwd: 'old');
-      expect(
-        PveConfig.mergeLegacy(
-          pwd,
-          const PveConfig(addr: 'https://h:8006', pwd: 'new'),
-        ).pwd,
-        'new',
-      );
     });
   });
 

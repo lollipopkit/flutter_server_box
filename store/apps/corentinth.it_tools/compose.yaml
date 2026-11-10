@@ -1,0 +1,25 @@
+# IT-Tools 2024.10.22-7ca5933 (GPL-3.0), https://github.com/CorentinTh/it-tools/tree/v2024.10.22-7ca5933
+# Built on the machine from it-tools.Dockerfile beside this file.
+#
+# Written for ServerBox Monitor (2026-10-17):
+# - no `name:` and no `container_name`: the agent names the project;
+# - a static page with no data: nothing is mounted;
+# - runs as the shared folder's owner, listening on 8080 inside.
+
+services:
+  it-tools:
+    image: localhost/corentinth-it_tools:${IT_TOOLS_VERSION}
+    build:
+      context: .
+      dockerfile: it-tools.Dockerfile
+      args:
+        IT_TOOLS_VERSION: ${IT_TOOLS_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    ports:
+      - '${IT_TOOLS_BIND}:${IT_TOOLS_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

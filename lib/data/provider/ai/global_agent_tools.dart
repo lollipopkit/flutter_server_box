@@ -6,30 +6,35 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' hide Provider;
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmException;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
-import 'package:server_box/core/utils/local_device.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/local/device.dart';
+import 'package:server_box/core/ssh/adhoc_prompt.dart';
+import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/client.dart';
+import 'package:server_box/core/ssh/exec.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
+import 'package:server_box/data/provider/ai/agent_target.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
+
+export 'package:server_box/data/provider/ai/agent_target.dart';
 
 const globalAgentConversationScope = '__global_agent__';
 const _maxGlobalAgentShellOutputCharacters = 32000;
@@ -416,7 +421,7 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
         'monitor_addr': {
           'type': 'string',
           'description':
-              'For add_server: the monitor agent\'s base URL if one was '
+              'For add_server: the Monitor\'s base URL if one was '
               'installed, e.g. http://127.0.0.1:3770. Never its credentials — '
               'the app asks the user for those. Use an empty string otherwise.',
         },
@@ -498,7 +503,7 @@ String buildGlobalAgentInstructions({
       'Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
     )
     ..writeln(
-      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
+      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read the Monitor\'s credentials off the machine to pass them here; the app asks the user for them.',
     )
     ..writeln(
       'One tool call per turn. Every call is reviewed by the user, one at a time, so a turn carrying several asks them to decide all of it before you have seen a single result.',
@@ -656,111 +661,14 @@ class AgentToolExecutionResult {
   }
 }
 
-/// A machine a tool call is about, ready to be worked on.
-///
-/// [exec] is how a command runs there. It is the interface the process,
-/// service and container pages already use, which is what lets a server
-/// reached only over its monitor agent answer at all — it has no `SSHClient`
-/// to hand anybody, and asking for one is what used to refuse it.
-///
-/// [client] is the SSH connection when there is one, and only the file tools
-/// need it: SFTP is a byte stream, and there is no equivalent over the agent's
-/// HTTP API. Null means those tools have to say so rather than assume.
-///
-/// [serverId] is null for a connection that is not a configured server — it is
-/// what makes a result say "no particular server" rather than name someone
-/// else's.
-/// [fileTransport] is which protocol carries this host's files, so the file
-/// tools open a backend rather than insisting on SFTP — a server told to use
-/// `scp` has no subsystem to open.
-///
-/// [expectedSpi] is the server as it was when this handle was resolved, and
-/// null where there is no configured server to compare against. Every await in
-/// a tool re-checks it: an edit or a disconnect mid-operation would otherwise
-/// leave the tool finishing against the host it started on and reporting the
-/// result under the new one's name.
-typedef AgentShellHandle = ({
-  CommandExec exec,
-  SSHClient? client,
-  String? serverId,
-  SshFileTransport fileTransport,
-  Spi? expectedSpi,
-});
-
-/// Which machine a shell or file tool call is about.
-///
-/// The three tools that run something take an [AgentShellHandle] and never ask
-/// how the connection behind it was reached. That is the whole point of the
-/// type: remote execution is not the same thing as "a server in the list", and
-/// the tools have stopped assuming it is.
-@immutable
-sealed class AgentSshTarget {
-  const AgentSshTarget();
-
-  /// Reads the target out of a tool call.
-  ///
-  /// One place, so that a second kind of target is one case here rather than
-  /// a condition in each of the three tools that run something.
-  ///
-  /// Exactly one, never a default: a call naming both is a model that has lost
-  /// track of which machine it is on, and picking one of them for it would run
-  /// the command somewhere nobody chose.
-  factory AgentSshTarget.fromArguments(AskAiCommand proposal) {
-    final serverId = proposal.serverId;
-    final sessionId = proposal.sessionId;
-    if (serverId != null && sessionId != null) {
-      throw const FormatException(
-        'Name either server_id or session_id, not both. Drop the one that is '
-        'not the machine you mean and call this again.',
-      );
-    }
-    if (sessionId != null) return AdHocSessionTarget(sessionId);
-    if (serverId == LocalDevice.id) return const LocalTarget();
-    if (serverId != null) return ConfiguredServerTarget(serverId);
-    // Says what to do about it, because this is read by the model as the
-    // tool's output and it is the whole of what it gets to work from. An
-    // omitted argument and an empty one arrive here the same way, so neither
-    // is worth naming separately.
-    throw const FormatException(
-      'Name the machine this is for: server_id for a server in the list, or '
-      'session_id for a connection opened with ssh_connect. Exactly one of '
-      'the two, and not an empty string.',
-    );
-  }
-}
-
-/// A server the user has configured in the app.
-final class ConfiguredServerTarget extends AgentSshTarget {
-  const ConfiguredServerTarget(this.serverId);
-
-  final String serverId;
-}
-
-/// The machine the app is running on.
-///
-/// Named through `server_id` rather than a field of its own, so the tools'
-/// schema is unchanged and the model has one place to say which machine it
-/// means. The reserved id cannot collide with a configured server's — see
-/// [LocalDevice.id].
-final class LocalTarget extends AgentSshTarget {
-  const LocalTarget();
-}
-
-/// A host connected to for this conversation only.
-final class AdHocSessionTarget extends AgentSshTarget {
-  const AdHocSessionTarget(this.sessionId);
-
-  final String sessionId;
-}
-
 /// What the file tools say when there is no byte stream to carry a file.
 ///
 /// Told as a way forward rather than as a refusal: the machine is reachable
 /// and `cat` and `tee` are right there, so a model that reads this can finish
 /// the job instead of reporting the server unusable.
-final _noSftp = StateError(
+const _noSftp = LlmException(
   'Reading and writing files here needs a byte stream, which travels over '
-  'SSH. This server is reached only through its monitor agent, which carries '
+  'SSH. This server is reached only through its Monitor, which carries '
   'none. Use run_shell_command instead — `cat path` to read, and a heredoc '
   'into `tee path` to write.',
 );
@@ -859,12 +767,12 @@ class GlobalAgentToolService {
   AgentShellHandle _thisDevice() {
     final exec = LocalExec.forThisDevice();
     if (exec == null) {
-      throw StateError(
+      throw LlmException(
         'This build cannot run commands on the device it is installed on.',
       );
     }
     if (!Stores.setting.agentLocalExec.fetch()) {
-      throw StateError(
+      throw LlmException(
         'Running commands on this device is turned off. The user can enable '
         'it in ServerBox settings; do not ask again in this conversation if '
         'they decline.',
@@ -876,7 +784,7 @@ class GlobalAgentToolService {
     // filesystem with none of that in it, and it was built to be that
     // boundary.
     if (exec.inRootfs && !Rootfs.isReady) {
-      throw StateError(
+      throw LlmException(
         'This device runs Agent commands inside its Linux userland, and there '
         'is none installed. The user can install it from the terminal tab; do '
         'not propose commands for this device until they have.',
@@ -904,14 +812,14 @@ class GlobalAgentToolService {
   AgentShellHandle _adHocSession(String sessionId) {
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     if (session == null) {
-      throw StateError(
+      throw LlmException(
         'No open connection with id $sessionId. Ad-hoc connections are not '
         'kept across app restarts; open a new one with ssh_connect.',
       );
     }
     if (session.client.isClosed) {
       _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
-      throw StateError(
+      throw LlmException(
         'The connection to ${session.label} has closed. Open a new one with '
         'ssh_connect.',
       );
@@ -972,12 +880,13 @@ class GlobalAgentToolService {
       exec = await notifier.ensureExec(
         onSshDial: () => _ref.read(agentShellProvider.notifier).show(),
       );
-    } catch (e) {
-      throw StateError('Cannot run commands on ${state.spi.name}: $e');
+    } catch (e, s) {
+      Loggers.app.warning('Agent ensureExec on ${state.spi.name}', e, s);
+      throw LlmException('Cannot run commands on ${state.spi.name}: $e');
     }
     final stored = _ref.read(serversProvider).servers[serverId];
     if (stored != spi || !notifier.isExecCurrent(exec, spi)) {
-      throw StateError('${spi.name} changed while connecting; try again.');
+      throw LlmException('${spi.name} changed while connecting; try again.');
     }
     return (
       exec: exec,
@@ -997,16 +906,16 @@ class GlobalAgentToolService {
     final notifier = _ref.read(serverProvider(serverId).notifier);
     final stored = _ref.read(serversProvider).servers[serverId];
     if (stored != spi || !notifier.isExecCurrent(handle.exec, spi)) {
-      throw StateError('${spi.name} changed while the operation was running.');
+      throw LlmException('${spi.name} changed while the operation was running.');
     }
   }
 
   ServerState _server(String? serverId) {
     if (serverId == null || serverId.isEmpty) {
-      throw const FormatException('server_id is required');
+      throw const LlmException('server_id is required');
     }
     if (!_ref.read(serversProvider).servers.containsKey(serverId)) {
-      throw StateError('Configured server not found: $serverId');
+      throw LlmException('Configured server not found: $serverId');
     }
     return _ref.read(serverProvider(serverId));
   }
@@ -1027,7 +936,7 @@ class GlobalAgentToolService {
     final exec = handle.exec;
     final serverId = handle.serverId;
     final command = proposal.argumentString('command');
-    if (command == null) throw const FormatException('command is required');
+    if (command == null) throw const LlmException('command is required');
 
     final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
@@ -1118,7 +1027,7 @@ class GlobalAgentToolService {
     final client = handle.client;
     final serverId = handle.serverId;
     final path = proposal.path;
-    if (path == null) throw const FormatException('path is required');
+    if (path == null) throw const LlmException('path is required');
     if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
     if (client == null) throw _noSftp;
     // Through the backend rather than through `client.sftp()` directly, which
@@ -1134,8 +1043,8 @@ class GlobalAgentToolService {
       _requireCurrent(handle);
       final entry = await backend.stat(path);
       _requireCurrent(handle);
-      if (entry == null) throw StateError('No such file: $path');
-      if (entry.isDir) throw StateError('$path is a directory, not a file.');
+      if (entry == null) throw LlmException('No such file: $path');
+      if (entry.isDir) throw LlmException('$path is a directory, not a file.');
       final size = entry.size;
       final bytes = BytesBuilder(copy: false);
       // Bounded per chunk. The SFTP path this replaced read with an explicit
@@ -1194,7 +1103,7 @@ class GlobalAgentToolService {
   }) async {
     final host = await exec.hostPathOf(path, forWrite: forWrite);
     if (host == null) {
-      throw StateError(
+      throw LlmException(
         'This device only exposes its Linux userland, and $path is not inside '
         'it. Use a path within the container.',
       );
@@ -1226,7 +1135,7 @@ class GlobalAgentToolService {
       // absence — and a model told a file does not exist goes and creates it.
       size = await file.length();
     } on PathNotFoundException {
-      throw StateError('No such file on this device: $path');
+      throw LlmException('No such file on this device: $path');
     }
     final truncated = size > _maxReadBytes;
     // Only what is going to be shown. A log the size of memory is a plausible
@@ -1264,17 +1173,17 @@ class GlobalAgentToolService {
       files.filesCappedReadCommand(path: path, maxBytes: _maxReadBytes),
     );
     if (result.outputIncomplete) {
-      throw StateError('The Linux userland returned incomplete file data.');
+      throw LlmException('The Linux userland returned incomplete file data.');
     }
     final [isDirExit, missingExit] = files.filesCappedReadExits();
     if (result.exitCode == isDirExit) {
-      throw StateError('$path is a directory, not a file.');
+      throw LlmException('$path is a directory, not a file.');
     }
     if (result.exitCode == missingExit) {
-      throw StateError('No such file on this device: $path');
+      throw LlmException('No such file on this device: $path');
     }
     if (result.exitCode != 0) {
-      throw StateError(
+      throw LlmException(
         result.stderr.trim().isEmpty
             ? 'Could not read $path inside the Linux userland.'
             : result.stderr.trim(),
@@ -1288,7 +1197,7 @@ class GlobalAgentToolService {
         maxBytes: _maxReadBytes,
       );
     } on String catch (e) {
-      throw StateError('The Linux userland returned $e.');
+      throw LlmException('The Linux userland returned $e.');
     }
     final size = read.size;
     final data = read.data;
@@ -1327,7 +1236,7 @@ class GlobalAgentToolService {
     LocalExec exec,
   ) async {
     if (bytes.length > _maxWriteBytes) {
-      throw StateError(
+      throw LlmException(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
@@ -1377,7 +1286,7 @@ class GlobalAgentToolService {
       stdin: base64.encode(bytes),
     );
     if (result.outputIncomplete || result.exitCode != 0) {
-      throw StateError(
+      throw LlmException(
         result.stderr.trim().isEmpty
             ? 'Could not write $path inside the Linux userland.'
             : result.stderr.trim(),
@@ -1403,15 +1312,15 @@ class GlobalAgentToolService {
     final serverId = handle.serverId;
     final path = proposal.path;
     final content = proposal.arguments['content'];
-    if (path == null) throw const FormatException('path is required');
-    if (content is! String) throw const FormatException('content is required');
+    if (path == null) throw const LlmException('path is required');
+    if (content is! String) throw const LlmException('content is required');
     final bytes = Uint8List.fromList(utf8.encode(content));
     if (exec is LocalExec) {
       return _writeLocalFile(proposal, watch, path, bytes, exec);
     }
     if (client == null) throw _noSftp;
     if (bytes.length > _maxWriteBytes) {
-      throw StateError(
+      throw LlmException(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
@@ -1426,7 +1335,7 @@ class GlobalAgentToolService {
       // written out here; the backend does all three, and removes its own
       // leftovers when the write fails.
       await backend
-          .write(path, Stream<List<int>>.value(bytes), size: bytes.length)
+          .write(path, () => Stream<List<int>>.value(bytes), size: bytes.length)
           .timeout(_operationTimeout);
       // After, not only before. The write is the long await here, and a server
       // edited while it ran is one whose result must not be reported under the
@@ -1464,12 +1373,12 @@ class GlobalAgentToolService {
   ) async {
     final host = proposal.argumentString('host');
     final user = proposal.argumentString('user');
-    if (host == null) throw const FormatException('host is required');
-    if (user == null) throw const FormatException('user is required');
+    if (host == null) throw const LlmException('host is required');
+    if (user == null) throw const LlmException('user is required');
     final rawPort = proposal.arguments['port'];
     final port = rawPort is num ? rawPort.toInt() : 22;
     if (port <= 0 || port > 65535) {
-      throw FormatException('port $port is not a port');
+      throw LlmException('port $port is not a port');
     }
 
     // Before the dialogs, not after: this may be running while the Agent tab
@@ -1517,11 +1426,12 @@ class GlobalAgentToolService {
       // `genClient` hands back a client before it has authenticated; without
       // this a wrong password is a session id that fails on first use.
       await opened.authenticated;
-    } catch (e) {
+    } catch (e, s) {
       // The socket is up by the time authentication fails, and nothing else
       // holds this client — it never reached the registry.
       opened?.close();
-      throw StateError('Cannot connect to $user@$host:$port: $e');
+      Loggers.app.warning('Agent ssh_connect', e, s);
+      throw LlmException('Cannot connect to $user@$host:$port: $e');
     }
     final client = opened;
 
@@ -1555,7 +1465,7 @@ class GlobalAgentToolService {
   ) {
     final sessionId = proposal.sessionId;
     if (sessionId == null) {
-      throw const FormatException('session_id is required');
+      throw const LlmException('session_id is required');
     }
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
@@ -1588,11 +1498,11 @@ class GlobalAgentToolService {
   ) async {
     final sessionId = proposal.sessionId;
     if (sessionId == null) {
-      throw const FormatException('session_id is required for add_server');
+      throw const LlmException('session_id is required for add_server');
     }
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     if (session == null) {
-      throw StateError(
+      throw LlmException(
         'No open connection with id $sessionId. Ad-hoc connections are not '
         'kept across app restarts; open a new one with ssh_connect.',
       );
@@ -1605,7 +1515,7 @@ class GlobalAgentToolService {
         .where((spi) => spi.isSameAs(session.spi))
         .firstOrNull;
     if (existing != null) {
-      throw StateError(
+      throw LlmException(
         '${session.label} is already configured as "${existing.name}" '
         '(id ${existing.id}). Use that server instead of adding it again.',
       );
@@ -1634,7 +1544,6 @@ class GlobalAgentToolService {
           ? null
           : MonitorHttpCredential(
               addr: monitorAddr,
-              user: saved.monitorUser,
               pwd: saved.monitorPwd,
             ),
     );
@@ -1752,7 +1661,7 @@ class GlobalAgentToolService {
           data: _statusJson(disconnected),
         );
       default:
-        throw FormatException('Unsupported serverbox action: $action');
+        throw LlmException('Unsupported serverbox action: $action');
     }
   }
 

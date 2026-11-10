@@ -13,23 +13,38 @@
     <string name="widget_configure_server">Server</string>
     <string name="widget_configure_metric">Führender Messwert</string>
     <string name="widget_configure_save">Sichern</string>
-    <string name="widget_configure_empty">Noch kein Server mit monitor-Agent.\nRichte einen in ServerBox ein und komm zurück.</string>
+    <string name="widget_configure_empty">Noch kein Server mit Monitor eingerichtet. Füge in ServerBox einen Server hinzu und kehre dann hierher zurück.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Speicher</string>
     <string name="widget_metric_disk">Datenträger</string>
     <string name="widget_metric_network">Netzwerk</string>
     <string name="widget_err_not_configured">Tippen, um einen Server zu wählen</string>
-    <string name="widget_err_no_token">Keine Zugangsdaten – ServerBox öffnen</string>
+    <string name="widget_err_no_token">Anmeldedaten fehlen – ServerBox öffnen</string>
     <string name="widget_err_insecure">HTTPS erforderlich</string>
     <string name="widget_err_network">Netzwerkfehler</string>
     <string name="widget_err_timeout">Zeitüberschreitung</string>
-    <string name="widget_no_history">Kein Verlauf</string>
     <string name="widget_chart_desc">Statusdiagramme</string>
-    <string name="widget_cpu_desc">CPU-Auslastung</string>
-    <string name="widget_mem_desc">Speicherauslastung</string>
-    <string name="widget_disk_desc">Datenträgerauslastung</string>
-    <string name="widget_net_desc">Netzwerkauslastung</string>
     <string name="widget_refresh_desc">Aktualisieren</string>
     <string name="widget_small_label">Server-Messwerte</string>
     <string name="widget_medium_label">Server-Diagramme</string>
+    <string name="widget_label">Serverstatus</string>
+    <string name="widget_description">CPU, Arbeitsspeicher, Datenträger und Netzwerk auf einen Blick. Vergrößere das Widget, um mehr Details zu sehen.</string>
+
+    <string name="process_text_label">Als Code-Snippet speichern</string>
+    <string name="tile_no_sessions">Keine laufenden Sitzungen</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d Sitzung</item>
+        <item quantity="other">%d Sitzungen</item>
+    </plurals>
+    <string name="channel_transfers">Dateiübertragungen</string>
+    <string name="incoming_failed">Geteilte Dateien konnten nicht übernommen werden</string>
+    <string name="shortcut_server_gone">Server entfernt</string>
+    <string name="notification_disconnect_all">Alle trennen</string>
+    <string name="session_connected">Verbunden</string>
+    <string name="session_connecting">Verbindung wird hergestellt</string>
+    <string name="session_disconnected">Getrennt</string>
+    <plurals name="notification_more">
+        <item quantity="one">…und %d weitere</item>
+        <item quantity="other">…und %d weitere</item>
+    </plurals>
 </resources>

@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -19,12 +17,10 @@ import 'package:sqlite3/sqlite3.dart';
 
 /// Servers, as rows in `server` plus the child tables hanging off it.
 ///
-/// A [Spi] is assembled from six tables, but never six queries per server:
+/// A [Spi] is assembled from seven tables, but never six queries per server:
 /// [readAll] reads each child table once and groups in Dart, so the cost is
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
-  static const _identityFilesPrefix = 'server-box:identity-files:';
-
   ServerStore({
     PortForwardStore? portForwards,
     RemoteDesktopStore? remoteDesktops,
@@ -95,15 +91,14 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id, jump_id FROM server_jump ORDER BY ord;',
       'jump_id',
     );
+    final identityFiles = _group(
+      'SELECT server_id, path FROM server_identity_file ORDER BY ord;',
+      'path',
+    );
     final envs = _pairs(
       'SELECT server_id, key, value FROM server_env;',
       'key',
       'value',
-    );
-    final cmds = _pairs(
-      'SELECT server_id, name, cmd FROM server_custom_cmd;',
-      'name',
-      'cmd',
     );
 
     return [
@@ -113,8 +108,8 @@ class ServerStore extends EntityStore<Spi> {
           tags: tags[row['id']],
           disabled: disabled[row['id']],
           jumps: jumps[row['id']],
+          identityFiles: identityFiles[row['id']],
           envs: envs[row['id']],
-          cmds: cmds[row['id']],
         ),
     ];
   }
@@ -141,11 +136,10 @@ class ServerStore extends EntityStore<Spi> {
     List<String>? tags,
     List<String>? disabled,
     List<String>? jumps,
+    List<String>? identityFiles,
     Map<String, String>? envs,
-    Map<String, String>? cmds,
   }) {
     final sshIp = row['ssh_ip'] as String?;
-    final identityFiles = _decodeIdentityFiles(row['ssh_key_path'] as String?);
     final monitorAddr = row['monitor_addr'] as String?;
     return Spi(
       id: row['id'] as String,
@@ -165,8 +159,7 @@ class ServerStore extends EntityStore<Spi> {
               user: row['ssh_user'] as String? ?? 'root',
               pwd: row['ssh_pwd'] as String?,
               keyId: row['ssh_key_id'] as String?,
-              keyPath: identityFiles.$1,
-              identityFiles: identityFiles.$2,
+              identityFiles: identityFiles,
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
               // By name, never by index — and null for every row written
@@ -181,7 +174,6 @@ class ServerStore extends EntityStore<Spi> {
               // those builds proposed: false.
               allowLegacyAlgorithms:
                   (row['ssh_allow_legacy_algorithms'] as int? ?? 0) == 1,
-              jumpId: jumps?.firstOrNull,
               jumpIds: jumps,
             ),
       preferredTransport: ServerTransport.fromName(row['preferred_transport']),
@@ -194,9 +186,9 @@ class ServerStore extends EntityStore<Spi> {
           ? null
           : MonitorHttpCredential(
               addr: monitorAddr,
-              user: row['monitor_user'] as String?,
+              legacyUser: row['monitor_user'] as String?,
               pwd: row['monitor_pwd'] as String?,
-              ignoreCert: (row['monitor_ignore_cert'] as int? ?? 0) == 1,
+              certSha256: row['monitor_cert_sha256'] as String?,
               allowInsecure: (row['monitor_allow_insecure'] as int? ?? 0) == 1,
             ),
       wolCfg: row['wol_mac'] == null
@@ -218,36 +210,8 @@ class ServerStore extends EntityStore<Spi> {
               credId: row['bmc_cred_id'] as String?,
               certSha256: row['bmc_cert_sha256'] as String?,
             ),
-      custom: _customOf(row, cmds),
+      custom: _customOf(row),
     );
-  }
-
-  static (String?, List<String>?) _decodeIdentityFiles(String? stored) {
-    if (stored == null || !stored.startsWith(_identityFilesPrefix)) {
-      return (stored, null);
-    }
-    try {
-      final decoded = jsonDecode(stored.substring(_identityFilesPrefix.length));
-      if (decoded is! List) return (stored, null);
-      final paths = decoded
-          .whereType<String>()
-          .where((e) => e.isNotEmpty)
-          .toList();
-      if (paths.isEmpty) return (null, null);
-      return (paths.first, paths);
-    } catch (_) {
-      // Preserve an old or manually edited literal rather than making its key
-      // disappear because it happens to share the reserved prefix.
-      return (stored, null);
-    }
-  }
-
-  static String? _encodeIdentityFiles(SshCredential? ssh) {
-    if (ssh == null) return null;
-    final paths = ssh.resolvedIdentityFiles;
-    if (paths.isEmpty) return null;
-    if (paths.length == 1) return paths.first;
-    return '$_identityFilesPrefix${jsonEncode(paths)}';
   }
 
   /// Null when the record says nothing beyond the defaults.
@@ -255,7 +219,7 @@ class ServerStore extends EntityStore<Spi> {
   /// `temp_is_celsius` always has a value — it is `NOT NULL` with a default —
   /// so building a [ServerCustom] unconditionally would give every server a
   /// non-null `custom` it did not have before, and put it in every backup.
-  static ServerCustom? _customOf(Row row, Map<String, String>? cmds) {
+  static ServerCustom? _customOf(Row row) {
     const strings = [
       'prefer_temp_dev',
       'logo_url',
@@ -276,15 +240,13 @@ class ServerStore extends EntityStore<Spi> {
     // Field by field rather than against `const ServerCustom()`: that value's
     // `tempIsCelsius` is false, while the column's default — and what an empty
     // record means here — is true, so the two would never match.
-    if (cmds == null &&
-        tempIsCelsius &&
+    if (tempIsCelsius &&
         !diskCountsNetwork &&
         geo == null &&
         strings.every((c) => row[c] == null)) {
       return null;
     }
     return ServerCustom(
-      cmds: cmds,
       preferTempDev: row['prefer_temp_dev'] as String?,
       tempIsCelsius: tempIsCelsius,
       logoUrl: row['logo_url'] as String?,
@@ -323,7 +285,7 @@ class ServerStore extends EntityStore<Spi> {
       'monitor_addr',
       'monitor_user',
       'monitor_pwd',
-      'monitor_ignore_cert',
+      'monitor_cert_sha256',
       'monitor_allow_insecure',
       'wol_mac',
       'wol_ip',
@@ -350,7 +312,9 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.user,
       ssh?.pwd,
       ssh?.keyId,
-      _encodeIdentityFiles(ssh),
+      // TODO(migration): unused since `server_identity_file` (v35); dropped
+      // with the next rebuild of `server`.
+      null,
       ssh?.alterUrl,
       ssh?.proxyCommand,
       ssh?.fileTransport.name,
@@ -370,9 +334,9 @@ class ServerStore extends EntityStore<Spi> {
       item.monitorEnabled ? 1 : 0,
       item.local ? 1 : 0,
       monitor?.addr,
-      monitor?.user,
+      monitor?.legacyUser,
       monitor?.pwd,
-      monitor == null ? null : (monitor.ignoreCert ? 1 : 0),
+      monitor?.certSha256,
       monitor == null ? null : (monitor.allowInsecure ? 1 : 0),
       item.wolCfg?.mac,
       item.wolCfg?.ip,
@@ -396,8 +360,8 @@ class ServerStore extends EntityStore<Spi> {
       'server_tag',
       'server_env',
       'server_jump',
+      'server_identity_file',
       'server_disabled_cmd',
-      'server_custom_cmd',
     ]) {
       db.execute('DELETE FROM $t WHERE server_id = ?;', [item.id]);
     }
@@ -415,19 +379,20 @@ class ServerStore extends EntityStore<Spi> {
         v,
       ]);
     });
+    var ord = 0;
+    for (final path in item.ssh?.resolvedIdentityFiles ?? const <String>[]) {
+      db.execute('INSERT INTO server_identity_file VALUES (?, ?, ?);', [
+        item.id,
+        ord++,
+        path,
+      ]);
+    }
     for (final cmd in item.disabledCmdTypes ?? const <String>[]) {
       db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
         item.id,
         cmd,
       ]);
     }
-    (custom?.cmds ?? const <String, String>{}).forEach((k, v) {
-      db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-        item.id,
-        k,
-        v,
-      ]);
-    });
   }
 
   /// A jump host is a server, so the row it names may not have been written
@@ -494,7 +459,7 @@ class ServerStore extends EntityStore<Spi> {
     );
     final hadPve = _hasPve(id);
     SqliteStore.transact(() {
-      final at = DateTimeX.timestamp;
+      final at = SyncClock.now();
       for (final pfId in pfIds) {
         db.execute(
           'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
@@ -561,7 +526,7 @@ class ServerStore extends EntityStore<Spi> {
 
     try {
       SqliteStore.transact(() {
-        final at = DateTimeX.timestamp;
+        final at = SyncClock.now();
         // Free a same-name replacement without deleting the old parent first.
         db.execute('UPDATE server SET name = ? WHERE id = ?;', [
           '__server_rename_${ShortId.generate()}',

@@ -6,15 +6,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/core/local/server.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 
@@ -105,7 +105,7 @@ void main() {
   ) async {
     await pumpEditor(tester, both);
 
-    expect(find.text('Monitor HTTP'), findsOneWidget);
+    expect(find.text(app_locale.l10n.monitorAgent), findsOneWidget);
     expect(find.text('SSH'), findsWidgets);
     expect(find.text(app_locale.l10n.connection.toUpperCase()), findsOneWidget);
     // Order and addresses remain visible without redundant role labels: the
@@ -133,8 +133,8 @@ void main() {
 
     // The agent's switch. Both rows carry one, so it is found by its row.
     final agentRow = find.ancestor(
-      of: find.text('Monitor HTTP'),
-      matching: find.byType(Row),
+      of: find.text(app_locale.l10n.monitorAgent),
+      matching: find.byType(CardX),
     );
     await tester.tap(
       find.descendant(of: agentRow.first, matching: find.byType(Switch)).first,
@@ -163,9 +163,9 @@ void main() {
   testWidgets('a server with both switched off is not saved', (tester) async {
     final persisted = await pumpEditor(tester, both);
 
-    for (final label in ['Monitor HTTP', 'SSH']) {
+    for (final label in [app_locale.l10n.monitorAgent, 'SSH']) {
       final row = find
-          .ancestor(of: find.text(label), matching: find.byType(Row))
+          .ancestor(of: find.text(label), matching: find.byType(CardX))
           .first;
       await tester.tap(
         find.descendant(of: row, matching: find.byType(Switch)).first,

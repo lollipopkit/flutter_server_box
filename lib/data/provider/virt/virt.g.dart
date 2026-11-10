@@ -178,7 +178,7 @@ final class VirtHostsProvider
   }
 }
 
-String _$virtHostsHash() => r'de85bd282292f1a8e6e45780750b4d2b70e753bf';
+String _$virtHostsHash() => r'b0510fde851465760c88ef795579cb1b6d8c9b99';
 
 /// Which servers are virtualization hosts.
 ///
@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'dee24ea0b747838e7d6e341affe459020f7c9e73';
+String _$virtHostNotifierHash() => r'f5361bef36ca0229ad9c84120c2d6afc9efd5340';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).

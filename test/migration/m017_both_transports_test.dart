@@ -9,7 +9,7 @@ library;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/migrations/all.dart';
@@ -18,6 +18,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../helpers/server_ddl.dart';
 import '../helpers/test_db.dart';
 
 void main() {
@@ -33,6 +34,7 @@ void main() {
   Future<void> createV17Schema() async {
     final db = SqliteDb.instance;
     await createTables(db);
+    createServerCustomCmdTable();
     db.execute('PRAGMA foreign_keys = OFF;');
     db.execute('PRAGMA legacy_alter_table = ON;');
     db.execute('ALTER TABLE server RENAME TO server_new;');

@@ -1,0 +1,19 @@
+# Excalidraw (MIT), https://github.com/excalidraw/excalidraw/tree/b2b2815954f6561f0980bef8997750dabec16e87
+#
+# Upstream publishes its app as one image, tagged `latest` only: pinned by
+# digest here, the build of master's b2b2815 (2026-05-06). Written for
+# ServerBox Monitor (2026-10-18) from the README's `docker run`:
+# - no `name:` and no `container_name`: the agent names the project;
+# - nginx serves the built app; drawings stay in the browser.
+
+services:
+  excalidraw:
+    image: excalidraw/excalidraw:latest@${EXCALIDRAW_DIGEST}
+    ports:
+      - '${EXCALIDRAW_BIND}:${EXCALIDRAW_PORT}:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

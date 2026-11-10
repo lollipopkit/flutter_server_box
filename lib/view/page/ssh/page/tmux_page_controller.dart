@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_models.dart';
 
 /// Lifecycle phases for the tmux part of an SSH page.
 enum TmuxPageLifecyclePhase {
@@ -20,12 +20,9 @@ enum TmuxPageLifecyclePhase {
 /// and terminal rendering remain in the page.
 final class TmuxPageController {
   TmuxPageController({
-    required void Function(TmuxControlSnapshot snapshot) onSnapshot,
     required void Function(TmuxPageLifecyclePhase phase) onPhaseChanged,
-  }) : _onSnapshot = onSnapshot,
-       _onPhaseChanged = onPhaseChanged;
+  }) : _onPhaseChanged = onPhaseChanged;
 
-  final void Function(TmuxControlSnapshot snapshot) _onSnapshot;
   final void Function(TmuxPageLifecyclePhase phase) _onPhaseChanged;
 
   TmuxControlClient? _client;
@@ -107,7 +104,6 @@ final class TmuxPageController {
     _currentWindowIndex = snapshot.activeWindow?.index;
     _restorableSessionName = snapshot.session.name;
     _restorableWindowIndex = snapshot.activeWindow?.index;
-    _onSnapshot(snapshot);
   }
 
   void _notifyPhaseChanged() {

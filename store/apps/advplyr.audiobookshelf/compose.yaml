@@ -1,0 +1,57 @@
+# Audiobookshelf 2.37.1 (GPL-3.0), https://github.com/advplyr/audiobookshelf/tree/v2.37.1
+#
+# Adapted from the release's docker-compose.yml for ServerBox Monitor
+# (2026-10-17):
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image pinned (upstream: latest), run as the shared folder's owner
+#   (upstream's `user:` example), so it listens on 13378 (PORT) rather than 80;
+# - the folders, the published address and port come from the env file;
+# - seed-root is a one-shot job: while the server has no root user
+#   (GET /status, isInit), it makes one with the generated password
+#   (POST /init, server/Server.js), as the first visit's page would.
+
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:${AUDIOBOOKSHELF_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      PORT: '13378'
+    ports:
+      - '${AUDIOBOOKSHELF_BIND}:${AUDIOBOOKSHELF_PORT}:13378'
+    volumes:
+      - ${AUDIOBOOKSHELF_AUDIOBOOKS}:/audiobooks
+      - ${AUDIOBOOKSHELF_PODCASTS}:/podcasts
+      - ${AUDIOBOOKSHELF_METADATA}:/metadata
+      - ${AUDIOBOOKSHELF_CONFIG}:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:13378/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  seed-root:
+    image: ghcr.io/advplyr/audiobookshelf:${AUDIOBOOKSHELF_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      audiobookshelf:
+        condition: service_healthy
+    environment:
+      ROOT_PASSWORD: ${AUDIOBOOKSHELF_ROOT_PASSWORD}
+    entrypoint: ["node", "-e"]
+    command:
+      - |
+        const base = "http://audiobookshelf:13378";
+        (async () => {
+          const status = await (await fetch(base + "/status")).json();
+          if (status.isInit) return;
+          const res = await fetch(base + "/init", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ newRoot: { username: "root", password: process.env.ROOT_PASSWORD } }),
+          });
+          if (!res.ok) throw new Error("init: HTTP " + res.status);
+        })().catch((e) => { console.error(e.message); process.exit(1); });
+    restart: "no"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- `widget_bar` past the warning threshold. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="4dp" />
+            <solid android:color="@color/widgetTrack" />
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip android:clipOrientation="horizontal" android:gravity="start">
+            <shape>
+                <corners android:radius="4dp" />
+                <solid android:color="@color/widgetWarn" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

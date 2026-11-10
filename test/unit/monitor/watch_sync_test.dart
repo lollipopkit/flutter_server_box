@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 import '../../helpers/spi_fixture.dart';
@@ -30,17 +30,15 @@ void main() {
     required String id,
     required String name,
     String addr = addr,
-    String? user = 'admin',
     String? pwd = 'secret',
-    bool ignoreCert = false,
+    String? certSha256,
     bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
-        user: user,
         pwd: pwd,
-        ignoreCert: ignoreCert,
+        certSha256: certSha256,
         allowInsecure: allowInsecure,
       ),
     );
@@ -94,7 +92,7 @@ void main() {
     test('carries what it needs to reach the agent', () {
       final result = payload(
         selectedIds: ['a'],
-        servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
+        servers: [monitorSpi(id: 'a', name: 'Home', certSha256: 'abababababababababababababababababababababababababababababababab')],
         tokens: {'a': tok('watch-token')},
       );
 
@@ -106,7 +104,7 @@ void main() {
           'addr': addr,
           'token': 'watch-token',
           'expiresAt': inDays(90),
-          'ignoreCert': true,
+          'certSha256': 'abababababababababababababababababababababababababababababababab',
           'allowInsecure': false,
         },
       ]);
@@ -168,7 +166,7 @@ void main() {
     test('drops a server when no scoped token could be issued', () {
       final result = payload(
         selectedIds: ['a'],
-        servers: [monitorSpi(id: 'a', name: 'A', user: '', pwd: '')],
+        servers: [monitorSpi(id: 'a', name: 'A', pwd: '')],
       );
 
       expect(result['servers'], isEmpty);

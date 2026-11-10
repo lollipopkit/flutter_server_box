@@ -13,23 +13,36 @@
     <string name="widget_configure_server">Sunucu</string>
     <string name="widget_configure_metric">Ana ölçüm</string>
     <string name="widget_configure_save">Kaydet</string>
-    <string name="widget_configure_empty">Henüz monitor aracısı olan bir sunucu yok.\nServerBox\'ta bir tane ekleyip geri dönün.</string>
+    <string name="widget_configure_empty">Henüz ServerBox Monitor için yapılandırılmış bir sunucu yok.\nServerBox’a bir sunucu ekleyip buraya dönün.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Bellek</string>
     <string name="widget_metric_disk">Disk</string>
     <string name="widget_metric_network">Ağ</string>
     <string name="widget_err_not_configured">Sunucu seçmek için dokunun</string>
-    <string name="widget_err_no_token">Kimlik bilgisi yok — ServerBox\'ı açın</string>
+    <string name="widget_err_no_token">Erişim bilgileri eksik. ServerBox’ı açın</string>
     <string name="widget_err_insecure">HTTPS gerekli</string>
     <string name="widget_err_network">Ağ hatası</string>
     <string name="widget_err_timeout">Zaman aşımı</string>
-    <string name="widget_no_history">Geçmiş yok</string>
     <string name="widget_chart_desc">Durum grafikleri</string>
-    <string name="widget_cpu_desc">CPU kullanımı</string>
-    <string name="widget_mem_desc">Bellek kullanımı</string>
-    <string name="widget_disk_desc">Disk kullanımı</string>
-    <string name="widget_net_desc">Ağ kullanımı</string>
     <string name="widget_refresh_desc">Yenile</string>
     <string name="widget_small_label">Sunucu değerleri</string>
     <string name="widget_medium_label">Sunucu grafikleri</string>
+    <string name="widget_label">Sunucu durumu</string>
+    <string name="widget_description">CPU, bellek, disk ve ağ kullanımını hızlıca görüntüleyin. Daha fazlası için bileşeni büyütün.</string>
+
+    <string name="process_text_label">Kod parçacığı olarak kaydet</string>
+    <string name="tile_no_sessions">Çalışan oturum yok</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d oturum</item>
+    </plurals>
+    <string name="channel_transfers">Dosya aktarımları</string>
+    <string name="incoming_failed">Paylaşılan dosyalar alınamadı</string>
+    <string name="shortcut_server_gone">Sunucu kaldırıldı</string>
+    <string name="notification_disconnect_all">Tümünün bağlantısını kes</string>
+    <string name="session_connected">Bağlandı</string>
+    <string name="session_connecting">Bağlanıyor</string>
+    <string name="session_disconnected">Bağlantı kesildi</string>
+    <plurals name="notification_more">
+        <item quantity="other">…ve %d tane daha</item>
+    </plurals>
 </resources>

@@ -6,3 +6,10 @@
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2023 tech.lolli. All rights reserved.
+
+// Read by Info.plist's FLTEnableImpeller. On for every build; the Intel DMG turns
+// it off on the command line (scripts/release/release-macos-dmg.sh, macOS CI):
+// Impeller's MetalSDF renders glyphs and transitions as noise on an Intel/AMD
+// Mac, where Skia is clean (#1798).
+// TODO: remove with the overrides once Flutter fixes MetalSDF on Intel/AMD GPUs.
+FLT_ENABLE_IMPELLER = YES

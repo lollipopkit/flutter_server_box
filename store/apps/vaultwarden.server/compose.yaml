@@ -1,0 +1,30 @@
+# Vaultwarden 1.37.4 (AGPL-3.0), https://github.com/dani-garcia/vaultwarden/releases/tag/1.37.4
+#
+# Written for ServerBox Monitor's Passwords app from upstream's Docker setup
+# (the wiki, and docker/ in the 1.37.4 tree), not copied from a release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - the alpine image: upstream publishes it for the same release;
+# - `user:` as upstream's non-root guide describes, which needs a port of 1024
+#   or more: the container listens on 8080 (ROCKET_PORT), the port setting maps to it;
+# - DOMAIN, ADMIN_TOKEN and SIGNUPS_ALLOWED come from the env file the agent writes.
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:${VAULTWARDEN_IMAGE_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      ROCKET_PORT: 8080
+      TZ: ${SBM_TZ}
+    env_file:
+      - .env
+    volumes:
+      - ${VAULTWARDEN_DATA_LOCATION}:/data
+    ports:
+      - '${VAULTWARDEN_BIND}:${VAULTWARDEN_PORT}:8080'
+    restart: unless-stopped
+    # /alive is the route the image's own healthcheck uses; it also checks the database.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

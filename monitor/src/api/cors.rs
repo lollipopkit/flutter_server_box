@@ -10,8 +10,8 @@
 use std::rc::Rc;
 
 use ntex::http::{Method, header};
-use ntex::service::{Middleware, Service, ServiceCtx, cfg::SharedCfg};
-use ntex::web::{ErrorRenderer, HttpResponse, WebRequest, WebResponse};
+use ntex::service::{Ctx, Middleware, Service};
+use ntex::web::{HttpResponse, WebRequest, WebResponse};
 
 /// Methods advertised on preflight responses.
 ///
@@ -37,10 +37,10 @@ impl Cors {
     }
 }
 
-impl<S> Middleware<S, SharedCfg> for Cors {
+impl<S, St> Middleware<S, St> for Cors {
     type Service = CorsService<S>;
 
-    fn create(&self, service: S, _: SharedCfg) -> Self::Service {
+    fn create(&self, _: &St, service: S) -> Self::Service {
         CorsService { service, origins: self.origins.clone() }
     }
 }
@@ -50,22 +50,21 @@ pub struct CorsService<S> {
     origins: Rc<Vec<String>>,
 }
 
-impl<S, E> Service<WebRequest<E>> for CorsService<S>
+impl<S, St, In> Service<St, WebRequest<In>> for CorsService<S>
 where
-    S: Service<WebRequest<E>, Response = WebResponse>,
-    E: ErrorRenderer,
+    S: Service<St, WebRequest<In>, Res = WebResponse>,
 {
-    type Response = WebResponse;
+    type Res = WebResponse;
     type Error = S::Error;
 
-    ntex::forward_poll!(service);
-    ntex::forward_ready!(service);
-    ntex::forward_shutdown!(service);
+    ntex::forward_bind!(St, service);
+    ntex::forward_ready!(St, service);
+    ntex::forward_shutdown!(St, service);
 
     async fn call(
         &self,
-        req: WebRequest<E>,
-        ctx: ServiceCtx<'_, Self>,
+        req: WebRequest<In>,
+        ctx: Ctx<'_, Self, St>,
     ) -> Result<WebResponse, Self::Error> {
         let allowed = req
             .headers()
@@ -83,7 +82,7 @@ where
                 .header(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOW_HEADERS)
                 .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
                 .header(header::VARY, "Origin")
-                .finish();
+                .build();
             return Ok(req.into_response(res));
         }
 

@@ -7,10 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:xterm/core.dart';
@@ -62,7 +62,7 @@ void main() {
   });
 
   /// Everything the terminal was told to send upstream, which is where a
-  /// paste lands: `_onTerminalPaste` calls `Terminal.textInput`.
+  /// paste lands: `pasteClipboard` calls `Terminal.paste`.
   late List<String> typed;
 
   Future<TerminalSession> pump(WidgetTester tester) async {
@@ -201,6 +201,29 @@ void main() {
     // Proved by the second one pasting.
     await secondaryTap(tester);
     expect(typed.join(), contains('pasted from the clipboard'));
+  });
+
+  testWidgets('a refused copy is shown, and the selection stays', (
+    tester,
+  ) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            throw PlatformException(code: 'busy');
+          }
+          return null;
+        });
+    final session = await pump(tester);
+    session.terminal.write('the selected line\r\n');
+    await tester.pump(const Duration(milliseconds: 50));
+    selectAll(tester);
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await secondaryTap(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controllerOf(tester).selection, isNotNull);
+    expect(find.textContaining('busy'), findsOneWidget);
   });
 
   testWidgets('an empty clipboard types nothing', (tester) async {

@@ -1,0 +1,22 @@
+# draw.io 32.4.1 (Apache-2.0), https://github.com/jgraph/drawio/tree/v32.4.1
+# Image: jgraph/drawio, https://github.com/jgraph/docker-drawio
+#
+# Written for ServerBox Monitor (2026-10-18) from docker-drawio's README:
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; Tomcat's HTTP port alone (no self-signed
+#   HTTPS: the agent's proxy is the window's HTTPS);
+# - diagrams are saved where the person chooses (this device, or a file they
+#   open): the server keeps nothing.
+
+services:
+  drawio:
+    image: jgraph/drawio:${DRAWIO_VERSION}
+    ports:
+      - '${DRAWIO_BIND}:${DRAWIO_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

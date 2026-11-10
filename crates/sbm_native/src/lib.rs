@@ -33,6 +33,11 @@ mod sysinfo_backend;
 /// throughput, ...). Owned and passed by the caller (mirrors monitor's
 /// existing `prev_cpu: &mut Option<CpuCore>` pattern) rather than a hidden
 /// global — easier to test, no surprises from process-wide static state.
+///
+/// Keep it on one thread for its whole life: on Windows the sysinfo backend's
+/// components are WMI COM objects bound to the thread that created them, and
+/// refreshing them from another thread once that one has exited faults the
+/// process. The monitor gives it a thread of its own (`NativeSampler`).
 #[derive(Default)]
 pub struct NativeState {
     #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -41,6 +46,10 @@ pub struct NativeState {
     /// tree each sample's `df` is merged into.
     #[cfg(target_os = "linux")]
     block_devices: String,
+    /// The same output as a device tree, parsed once per refresh rather than
+    /// once per sample.
+    #[cfg(target_os = "linux")]
+    device_tree: Vec<sbm_parser::types::BlockDevice>,
 }
 
 impl NativeState {
@@ -56,14 +65,29 @@ impl NativeState {
 pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: SystemType) -> ServerStatus {
     match system {
         #[cfg(target_os = "linux")]
-        SystemType::Linux => linux::sample(&state.block_devices),
+        SystemType::Linux => linux::sample(&state.block_devices, &state.device_tree),
         #[cfg(any(target_os = "macos", target_os = "windows"))]
         SystemType::Bsd | SystemType::Windows => {
-            sysinfo_backend::sample(state.sysinfo.get_or_insert_with(Default::default))
+            match &mut state.sysinfo {
+                Some(s) => sysinfo_backend::sample(s),
+                slot => sysinfo_backend::State::new()
+                    .map(|s| sysinfo_backend::sample(slot.insert(s)))
+                    .unwrap_or_default(),
+            }
         }
         #[allow(unreachable_patterns)]
         _ => ServerStatus::default(),
     }
+}
+
+/// Processes using the GPU under WSL2 (`linux::dxg_processes`); none
+/// elsewhere, where the GPU's own tool lists them.
+pub fn wsl_gpu_processes() -> Vec<sbm_parser::types::GpuMemProcess> {
+    #[cfg(target_os = "linux")]
+    if linux::wsl() {
+        return linux::dxg_processes();
+    }
+    Vec::new()
 }
 
 /// Reads the block devices again: which there are, how they nest, their
@@ -80,6 +104,7 @@ pub fn refresh_block_devices(#[allow(unused_variables)] state: &mut NativeState)
     #[cfg(target_os = "linux")]
     {
         state.block_devices = linux::block_devices();
+        state.device_tree = sbm_parser::linux::parse_block_devices(&state.block_devices);
     }
 }
 

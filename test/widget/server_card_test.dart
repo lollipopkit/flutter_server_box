@@ -9,25 +9,26 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
@@ -117,11 +118,11 @@ void main() {
     ss.more[StatusCmdType.uptime] = uptime;
     final now = DateTime.now().millisecondsSinceEpoch;
     for (var i = 0; i < samples; i++) {
-      ss.history.add(
+      ss.history.add(StatusHistorySample(
         timeMs: now - lastAgo.inMilliseconds - (samples - 1 - i) * 3000,
         cpu: differenced && i == 0 ? null : 10.0 + i,
         mem: 50,
-      );
+      ));
     }
     return ss;
   }
@@ -749,8 +750,8 @@ void main() {
   ) async {
     final handle = tester.ensureSemantics();
     for (final (conn, name) in [
-      (ServerConn.finished, 'Disconnect'),
-      (ServerConn.disconnected, 'Connect'),
+      (ServerConn.finished, l10n.disconnect),
+      (ServerConn.disconnected, l10n.connect),
     ]) {
       await pump(tester, promoted: null, onPromote: (_) {}, conn: conn);
       final data = tester
@@ -889,6 +890,8 @@ void main() {
       of: find.byType(ServerCard),
       matching: find.byType(ClipRRect),
     );
+    final mem = shortMetricName(libL10n.memory);
+    final disk = shortMetricName(libL10n.disk);
 
     testWidgets('draws one bar, and names what it is made of', (tester) async {
       await pump(
@@ -908,19 +911,19 @@ void main() {
       Color? nameColor(String name) =>
           tester.widget<Text>(find.text(name)).style?.color;
       expect(nameColor('CPU'), ChartPalette.cpu);
-      expect(nameColor('MEM'), ChartPalette.mem);
-      expect(nameColor('DISK'), ChartPalette.diskRead);
+      expect(nameColor(mem), ChartPalette.mem);
+      expect(nameColor(disk), ChartPalette.diskRead);
       // In the bar's own order.
       expect(
         tester.getCenter(find.text('CPU')).dx,
-        lessThan(tester.getCenter(find.text('MEM')).dx),
+        lessThan(tester.getCenter(find.text(mem)).dx),
       );
       expect(
-        tester.getCenter(find.text('MEM')).dx,
-        lessThan(tester.getCenter(find.text('DISK')).dx),
+        tester.getCenter(find.text(mem)).dx,
+        lessThan(tester.getCenter(find.text(disk)).dx),
       );
       // A swap is not part of the bar, and nobody is watching it.
-      expect(find.text('SWAP'), findsNothing);
+      expect(find.text(shortMetricName('Swap')), findsNothing);
     });
 
     testWidgets('keeps the bar and the watched number when narrow', (
@@ -938,9 +941,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(bar, findsOneWidget);
       expect(tester.getSize(bar).width, greaterThanOrEqualTo(48));
-      expect(find.text('MEM'), findsOneWidget);
+      expect(find.text(mem), findsOneWidget);
       expect(find.text('CPU'), findsNothing);
-      expect(find.text('DISK'), findsNothing);
+      expect(find.text(disk), findsNothing);
     });
 
     testWidgets('a watched reading the bar does not hold comes first', (

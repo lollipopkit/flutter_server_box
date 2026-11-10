@@ -148,7 +148,6 @@ class FileBackendTraits {
     this.permissions = false,
     this.symlinks = false,
     this.sudoFallback = false,
-    this.readOnly = false,
   });
 
   /// Entries carry [FileEntry.mode], and it can be changed.
@@ -160,11 +159,6 @@ class FileBackendTraits {
   /// A refused operation can be retried through a shell with sudo. Only a
   /// backend that has a shell behind it can offer this; see `sftp_sudo.dart`.
   final bool sudoFallback;
-
-  /// Nothing can be changed here, only listed and read: a `monitor` agent
-  /// whose role grants `files` in read mode. The browser offers no write
-  /// rather than one the far side refuses.
-  final bool readOnly;
 }
 
 /// Somewhere files live.
@@ -243,17 +237,16 @@ abstract interface class FileBackend {
   /// somewhere this side cannot reach — the agent does its own — never calls
   /// it, and there is correspondingly nothing here to remove.
   ///
-  /// [replayData] is backend-specific. Local and SFTP writes make one attempt
-  /// and never consume it. The monitor backend uses it only after an HTTP 401
-  /// to authenticate and replay the body. In particular, SFTP must not retry a
-  /// timed-out rename: its outcome is unknown, so another write could replace
-  /// a destination that the first attempt already committed.
+  /// [open] gives the bytes, as a fresh stream each call. Most backends make
+  /// one attempt and call it once; the monitor backend calls it again only to
+  /// resend after an HTTP 401. SFTP must not retry a timed-out rename: its
+  /// outcome is unknown, so another write could replace a destination that
+  /// the first attempt already committed.
   Future<void> write(
     String path,
-    Stream<List<int>> data, {
+    Stream<List<int>> Function() open, {
     int? size,
     void Function(String staging)? onStaging,
-    Stream<List<int>> Function()? replayData,
   });
 
   /// Releases whatever this holds. A backend may be used again afterwards only

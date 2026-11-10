@@ -5,25 +5,11 @@ part 'custom.g.dart';
 
 /// Per-server extras.
 ///
-/// PVE's settings were here as `pveAddr`, `pveIgnoreCert` and `pvePwd`. They
-/// are `PveConfig` now, in a table of their own; a record from an older build
-/// still carries them, and `PveConfig.fromLegacyRecord` reads them out of the
-/// raw JSON — this class ignores keys it does not know. This build writes them
-/// into sync files, backups and shares as well, for those builds to read
-/// (`PveConfig.toLegacyCustom`).
+/// PVE's settings were here as `pveAddr`, `pveIgnoreCert` and `pvePwd`; they
+/// are `PveConfig` now, in a table of their own. A record from an older build
+/// may still carry them, and this class ignores keys it does not know.
 @JsonSerializable(includeIfNull: false)
 final class ServerCustom {
-  /// {"title": "cmd"}
-  ///
-  /// No longer where custom commands live: they are files in a directory on
-  /// the server, which is what the status script reads and what the editor
-  /// writes. This holds only what an older version of the app stored, until
-  /// the first connection moves it there.
-  // TODO(migration): delete this field, [withoutCmds], and
-  // `IndividualServerNotifier._migrateCustomCmds` once enough releases have
-  // passed for every install to have connected once.
-  final Map<String, String>? cmds;
-
   final String? preferTempDev;
 
   final bool tempIsCelsius;
@@ -54,7 +40,6 @@ final class ServerCustom {
   final bool diskCountsNetwork;
 
   const ServerCustom({
-    this.cmds,
     this.preferTempDev,
     this.tempIsCelsius = false,
     this.logoUrl,
@@ -64,19 +49,6 @@ final class ServerCustom {
     this.diskCountsNetwork = false,
   });
 
-  /// This, with [cmds] dropped — what the app records once those commands are
-  /// on the server, so it never sends them twice.
-  // TODO(migration): delete with [cmds].
-  ServerCustom withoutCmds() => ServerCustom(
-    preferTempDev: preferTempDev,
-    tempIsCelsius: tempIsCelsius,
-    logoUrl: logoUrl,
-    netDev: netDev,
-    scriptDir: scriptDir,
-    geo: geo,
-    diskCountsNetwork: diskCountsNetwork,
-  );
-
   factory ServerCustom.fromJson(Map<String, dynamic> json) =>
       _$ServerCustomFromJson(json);
 
@@ -85,7 +57,6 @@ final class ServerCustom {
   @override
   bool operator ==(Object other) {
     return other is ServerCustom &&
-        other.cmds == cmds &&
         other.preferTempDev == preferTempDev &&
         other.tempIsCelsius == tempIsCelsius &&
         other.logoUrl == logoUrl &&
@@ -96,13 +67,13 @@ final class ServerCustom {
   }
 
   @override
-  int get hashCode =>
-      cmds.hashCode ^
-      preferTempDev.hashCode ^
-      tempIsCelsius.hashCode ^
-      logoUrl.hashCode ^
-      netDev.hashCode ^
-      scriptDir.hashCode ^
-      geo.hashCode ^
-      diskCountsNetwork.hashCode;
+  int get hashCode => Object.hash(
+    preferTempDev,
+    tempIsCelsius,
+    logoUrl,
+    netDev,
+    scriptDir,
+    geo,
+    diskCountsNetwork,
+  );
 }

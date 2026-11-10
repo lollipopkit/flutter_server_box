@@ -8,55 +8,50 @@ import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/core/utils/monitor_exec.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/local/server.dart';
+import 'package:server_box/core/monitor/exec.dart';
+import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/client.dart';
+import 'package:server_box/core/ssh/decoder.dart';
+import 'package:server_box/core/ssh/exec.dart';
+import 'package:server_box/core/ssh/system_detector.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
-import 'package:server_box/data/helper/ssh_decoder.dart';
-import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/data/provider/server/monitor_http_source.dart';
 import 'package:server_box/data/provider/server/script_source.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/persistent_shell.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/persistent_shell.dart';
+import 'package:server_box/data/terminal/session_manager.dart';
 import 'package:server_box/src/rust/api/script.dart' as ffi;
 
 part 'single.g.dart';
 part 'single.freezed.dart';
+part 'single_history.dart';
+part 'single_local.dart';
+part 'single_monitor.dart';
+part 'single_script.dart';
+part 'single_ssh.dart';
 
-/// How often [ShellFunc.statusExt] runs, independent of the status poll.
-///
-/// It carries the commands kept out of the poll (`sbm_parser::commands::
-/// EXTENDED`), chiefly smartctl: reading SMART reaches the disk itself, so at
-/// the status interval a disk with spin-down configured would never stay spun
-/// down. The values it collects (SMART, AMD GPU) don't change meaningfully
-/// faster than this anyway.
-const _extendedStatusInterval = Duration(minutes: 5);
-
-// Individual server state, including connection and status information
 @freezed
 abstract class ServerState with _$ServerState {
   const factory ServerState({
@@ -97,7 +92,7 @@ abstract class ServerState with _$ServerState {
     /// asking them to assert something the server knows — and being wrong
     /// either way, since a "yes" the agent refuses is a row of dead buttons
     /// and a "no" it would have allowed hides features that are there.
-    MonitorRemoteAccess? remoteAccess,
+    MonitorAccess? agentAccess,
 
     /// The agent's version, as it reported it, or null for a server with no
     /// agent — and for an agent built before it said so.
@@ -123,7 +118,7 @@ abstract class ServerState with _$ServerState {
   /// hiding half of them behind a preference about *ordering* would take
   /// features away for no reason the user could see.
   ServerCapabilities get capabilities =>
-      ServerCapabilities.ofSpi(spi, granted: remoteAccess);
+      ServerCapabilities.ofSpi(spi, granted: agentAccess);
 
   /// Whether running a command would have to open a connection first, i.e.
   /// whether a caller is about to make the user wait.
@@ -137,36 +132,40 @@ abstract class ServerState with _$ServerState {
       capabilities.persistentSession && (client?.isClosed ?? true);
 }
 
-// Individual server state management
+/// What the status mixins (`single_*.dart`) take from [ServerNotifier]: the
+/// connection state and the generation every refresh checks against.
+mixin _ServerCore on _$ServerNotifier {
+  /// The status connection's entry in [TermSessionManager].
+  String get _statusSessionId => TermSessionManager.statusSessionId(state.spi.id);
+
+  int get _operationGeneration;
+  Duration get _timeout;
+  bool _isRefreshCurrent(int operation, Spi spi);
+  bool _beginRefresh(Spi spi);
+  void updateConnection(ServerConn conn);
+  void updateStatus(ServerStatus status, {int? latencyMs});
+  ServerStatus _copyStatus(
+    ServerStatus source, {
+    Err? err,
+    bool setErr = false,
+    SystemType? system,
+  });
+  void _setClient(SSHClient? client);
+  void _setFailedState(ServerStatus status, {bool closeClient = false});
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial});
+}
+
 @Riverpod(keepAlive: true)
-class ServerNotifier extends _$ServerNotifier {
-  PersistentShell? _persistentShell;
-  bool _usePersistentShellForStatus = true;
+class ServerNotifier extends _$ServerNotifier
+    with
+        _ServerCore,
+        _ScriptStatus,
+        _MonitorStatus,
+        _History,
+        _LocalStatus,
+        _SshStatus {
+  @override
   int _operationGeneration = 0;
-
-  /// The generation [seedHistory] last asked the source for, so each
-  /// connection asks once however many places want the trend. Cleared when
-  /// the asking fails, for the next poll to try again.
-  int? _seededOperation;
-
-  /// Last [ShellFunc.statusExt] output, appended to every status refresh's raw
-  /// output so its segments don't blank out on the polls in between — see
-  /// [_extendedStatusInterval]
-  String _extendedRaw = '';
-  DateTime? _extendedFetchedAt;
-
-  /// When [_extendedRaw] was last *replaced*, which is what its segments are
-  /// as old as.
-  ///
-  /// Not when it was last read: the same copy is merged into every poll for
-  /// the length of [_extendedStatusInterval], so stamping the parse would
-  /// report a reading taken minutes ago as current — and saying how old it is
-  /// is the whole reason the page carries it.
-  DateTime? _extendedAcceptedAt;
-
-  /// Reads status for whichever connection method this server uses. Rebuilt
-  /// when the SPI's connection config changes.
-  ServerDataSource? _source;
 
   /// The SSH client this notifier owns, kept beside [state].
   ///
@@ -187,7 +186,7 @@ class ServerNotifier extends _$ServerNotifier {
       // and reading `state` after disposal throws.
       _operationGeneration++;
       unawaited(_disposePersistentShell());
-      _source?.close();
+      _monitorSource?.close();
       try {
         _client?.close();
       } catch (_) {}
@@ -231,10 +230,11 @@ class ServerNotifier extends _$ServerNotifier {
     return ServerState(spi: spi, status: InitStatus.status);
   }
 
+  @override
   Duration get _timeout =>
       Duration(seconds: _cachedTimeout <= 0 ? 5 : _cachedTimeout);
 
-  // Update connection status
+  @override
   void updateConnection(ServerConn conn) {
     state = state.copyWith(conn: conn);
   }
@@ -252,6 +252,7 @@ class ServerNotifier extends _$ServerNotifier {
   /// the paths that clear the connection: a status read that timed out leaves
   /// the session up, so nothing else was going to, and the last good figure
   /// sat in the About card beside the error that replaced it.
+  @override
   void updateStatus(ServerStatus status, {int? latencyMs}) {
     state = state.copyWith(
       status: status,
@@ -282,6 +283,7 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
+  @override
   ServerStatus _copyStatus(
     ServerStatus source, {
     Err? err,
@@ -310,6 +312,7 @@ class ServerNotifier extends _$ServerNotifier {
     );
     status.amd = source.amd?.toList();
     status.diskUsage = source.diskUsage;
+    status.blockDevices = source.blockDevices;
     status.osId = source.osId;
     status.osIdLike = source.osIdLike;
     // Carried, for the reason the mappers do not clear it: it refreshes on the
@@ -326,25 +329,20 @@ class ServerNotifier extends _$ServerNotifier {
     return status;
   }
 
-  // Update SSH client
+  @override
   void _setClient(SSHClient? client) {
     if (!identical(state.client, client)) {
       unawaited(_disposePersistentShell());
       _usePersistentShellForStatus = true;
       // A different connection may be to a machine that has been rebooted
       // since, and a reboot takes `/tmp` — where the script lives — with it.
-      _scriptWritten = false;
-      // A new connection reinstalls the script, so drop the cache: the next
-      // refresh re-runs the extended function against the current script
-      _extendedRaw = '';
-      _extendedFetchedAt = null;
-      _extendedAcceptedAt = null;
+      // The next refresh re-runs the extended function against the new script.
+      _forgetInstalledScript(extended: true);
     }
     _client = client;
     state = state.copyWith(client: client);
   }
 
-  // Update SPI configuration
   /// The record behind this server was edited.
   ///
   /// Editing is one code path for every field a server has, and most of them
@@ -366,12 +364,7 @@ class ServerNotifier extends _$ServerNotifier {
         spi.customSystemType != old.customSystemType ||
         !listEquals(spi.disabledCmdTypes, old.disabledCmdTypes);
 
-    if (rewrite) {
-      _scriptWritten = false;
-      _extendedRaw = '';
-      _extendedFetchedAt = null;
-      _extendedAcceptedAt = null;
-    }
+    if (rewrite) _forgetInstalledScript(extended: true);
 
     if (!reconnect) {
       state = state.copyWith(spi: spi);
@@ -415,12 +408,13 @@ class ServerNotifier extends _$ServerNotifier {
     );
   }
 
+  @override
   void _setFailedState(ServerStatus status, {bool closeClient = false}) {
     final client = state.client;
     unawaited(_disposePersistentShell());
     // A server that went away may come back without what was on it: a reboot
     // clears `/tmp`, where the script lives by default.
-    _scriptWritten = false;
+    _forgetInstalledScript(extended: false);
     if (closeClient) {
       client?.close();
       _client = null;
@@ -433,13 +427,12 @@ class ServerNotifier extends _$ServerNotifier {
     );
   }
 
-  // Close connection
   void closeConnection() {
     _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
     _client = null;
-    _scriptWritten = false;
+    _forgetInstalledScript(extended: false);
     state = state.copyWith(
       client: null,
       conn: ServerConn.disconnected,
@@ -447,7 +440,6 @@ class ServerNotifier extends _$ServerNotifier {
     );
   }
 
-  // Refresh server status
   /// The generation of the refresh in flight, or null when there is none.
   ///
   /// Not a bare flag: editing a server bumps the generation, and the refresh
@@ -491,7 +483,7 @@ class ServerNotifier extends _$ServerNotifier {
         await SchedulerBinding.instance.endOfFrame;
         if (!_isRefreshCurrent(operation, spi)) return;
       }
-      await _getData(interactive: interactive, operation: operation);
+      await _refreshStatus(interactive: interactive, operation: operation);
     } finally {
       // Only if it is still ours: a newer refresh may have taken over while
       // this one was finding out it had been superseded.
@@ -509,13 +501,31 @@ class ServerNotifier extends _$ServerNotifier {
   /// server that no longer exists in that form. Every await in both paths
   /// re-checks this — including the ones a `catch` is reached from, which
   /// skip whatever check follows the await that threw.
+  @override
   bool _isRefreshCurrent(int operation, Spi spi) =>
       operation == _operationGeneration && state.spi == spi;
+
+  /// The start every transport's refresh shares: stop at the retry limit,
+  /// otherwise clear the previous error. False when the refresh stops here.
+  ///
+  /// The move to `connecting` stays with each transport, since SSH connects
+  /// inside that branch.
+  @override
+  bool _beginRefresh(Spi spi) {
+    if (!TryLimiter.canTry(spi.id)) {
+      if (state.conn != ServerConn.failed) {
+        updateConnection(ServerConn.failed);
+      }
+      return false;
+    }
+    updateStatus(_copyStatus(state.status, err: null, setErr: true));
+    return true;
+  }
 
   /// [interactive] only reaches the SSH path: it gates prompting the user for
   /// keyboard-interactive auth, which has no counterpart over monitor's HTTP
   /// API (credentials there are configured up front, never prompted for).
-  Future<void> _getData({
+  Future<void> _refreshStatus({
     required bool interactive,
     required int operation,
   }) async {
@@ -524,378 +534,13 @@ class ServerNotifier extends _$ServerNotifier {
         // Connecting is inseparable from fetching here (auth prompts, script
         // install, session bookkeeping), so the SSH path drives the state
         // machine itself and hands the reading half to ScriptDataSource
-        await _getDataSsh(interactive: interactive, operation: operation);
+        await _refreshStatusSsh(interactive: interactive, operation: operation);
       case ServerConnectCredentialMonitorHttp(:final monitor):
-        await _getDataMonitorHttp(monitor, operation);
+        await _refreshStatusMonitorHttp(monitor, operation);
       case ServerConnectCredentialLocal():
-        await _getDataLocal(interactive: interactive, operation: operation);
+        await _refreshStatusLocal(interactive: interactive, operation: operation);
     }
   }
-
-  /// The [ServerDataSource] for the current SPI.
-  ///
-  /// Only the monitor HTTP source is cached: it owns a `Dio` session and a
-  /// login token, so reusing it across refreshes avoids re-authenticating, and
-  /// it must be rebuilt when the connection config changes.
-  /// [ScriptDataSource] is stateless — what it reads through belongs to this
-  /// notifier — so the SSH and local paths construct one per refresh instead.
-  ServerDataSource _resolveSource(ServerConnectCredential credential) {
-    switch (credential) {
-      case ServerConnectCredentialSsh() || ServerConnectCredentialLocal():
-        return ScriptDataSource(
-          spi: state.spi,
-          runScript: () => throw StateError(
-            'Script output is supplied by _getDataSsh and _getDataLocal, '
-            'which run the script as part of their fetch flow',
-          ),
-        );
-      case ServerConnectCredentialMonitorHttp():
-        final existing = _source;
-        if (existing is MonitorHttpDataSource && existing.matches(credential)) {
-          return existing;
-        }
-        existing?.close();
-        return _source = MonitorHttpDataSource(credential);
-    }
-  }
-
-  /// Status polling via a `monitor` instance's HTTP API instead of SSH+shell
-  /// (see `Spi.monitorHttp`). Deliberately does NOT fall back to SSH on
-  /// failure — a misconfigured/unreachable monitor should surface as an
-  /// error, not silently switch data sources.
-  Future<void> _getDataMonitorHttp(
-    MonitorHttpCredential monitor,
-    int operation,
-  ) async {
-    final spi = state.spi;
-    final sid = spi.id;
-
-    if (!TryLimiter.canTry(sid)) {
-      if (state.conn != ServerConn.failed) {
-        updateConnection(ServerConn.failed);
-      }
-      return;
-    }
-
-    updateStatus(_copyStatus(state.status, err: null, setErr: true));
-    if (state.conn < ServerConn.connecting) {
-      updateConnection(ServerConn.connecting);
-    }
-    if (state.conn != ServerConn.finished) {
-      updateConnection(ServerConn.loading);
-    }
-
-    final source = _resolveSource(
-      ServerConnectCredentialMonitorHttp(spi: spi, monitor: monitor),
-    );
-
-    try {
-      final status = await source.fetchStatus(_copyStatus(state.status));
-      if (!_isRefreshCurrent(operation, spi)) return;
-      // Timed by the source, which is the only place that can tell the request
-      // apart from the mapping it does on the answer. Timed from here it would
-      // be the sum of the two, plus — had the stopwatch run past this line —
-      // a synchronous SQLite write and a full rebuild pass.
-      updateStatus(
-        status,
-        latencyMs: source is MonitorHttpDataSource ? source.lastRequestMs : null,
-      );
-      // Alongside the status rather than once at connect: what the agent
-      // allows is its own config, which can change under a running app, and
-      // this poll is already authenticated and periodic. A failure here is
-      // not a failure of the status — the app simply keeps the last answer,
-      // or offers nothing until there is one.
-      if (source is MonitorHttpDataSource) {
-        try {
-          final caps = await source.fetchCapabilities();
-          // The server may have been edited while this was in flight, in which
-          // case this answer describes the agent it used to point at — and the
-          // platform it reports decides which script gets installed.
-          if (!_isRefreshCurrent(operation, spi)) return;
-          state = state.copyWith(
-            remoteAccess: caps.remoteAccess,
-            agentVersion: caps.version,
-            agentCapabilities: caps,
-          );
-          // The agent knows what it is running on. Over SSH this takes a
-          // command and its output; here it arrives with the answer the app
-          // was already asking for, and it decides which script gets
-          // installed on the machine.
-          final platform = caps.platform;
-          if (platform != null && state.status.system != platform) {
-            // The script that was written is the other platform's, and the
-            // command about to run it is this platform's.
-            _scriptWritten = false;
-            updateStatus(_copyStatus(state.status, system: platform));
-          }
-        } catch (e, s) {
-          Loggers.app.warning('Ask ${spi.name} what it allows', e, s);
-        }
-      }
-      if (!_isRefreshCurrent(operation, spi)) return;
-      updateConnection(ServerConn.finished);
-      TryLimiter.reset(sid);
-    } catch (e, s) {
-      Loggers.app.warning(
-        'Get status via monitor for ${spi.name} failed',
-        e,
-        s,
-      );
-      // A failure belongs to the server it was fetched for. Edit a server's
-      // address and the poll still running against the old one eventually
-      // times out; without this it counted that timeout against the retry
-      // limiter and marked the server failed — overwriting the answer the
-      // corrected address had already produced, so a fixed server went back
-      // to looking broken a few seconds later.
-      if (!_isRefreshCurrent(operation, spi)) return;
-      TryLimiter.inc(sid);
-      final err = e is MonitorHttpErr
-          ? e
-          : MonitorHttpErr(
-              type: MonitorHttpErrType.unknown,
-              message: e.toString(),
-            );
-      _setFailedState(_copyStatus(state.status, err: err, setErr: true));
-    }
-  }
-
-  /// How long one command on this device may take before the poll gives up on
-  /// it. The bound the SSH path puts on its exec reads, for the same commands.
-  static const _localCmdTimeout = Duration(seconds: 30);
-
-  /// Status of this device (`Spi.local`): the same script the SSH path runs,
-  /// started as a process here.
-  ///
-  /// What the SSH flow does minus the connection. There is no handshake to
-  /// time or record, no session to register, and no `uname` round trip — the
-  /// platform is known. What stays is the script, installed on the first poll
-  /// and again after anything that clears [_scriptWritten], and the extended
-  /// commands on their own schedule.
-  Future<void> _getDataLocal({
-    required bool interactive,
-    required int operation,
-  }) async {
-    final spi = state.spi;
-    final sid = spi.id;
-
-    // Said on the card rather than attempted: a phone reading a server synced
-    // from a desktop would otherwise run the desktop's script on itself.
-    if (!LocalServer.isSupported) {
-      _failLocal(
-        LocalServerErrType.unsupported,
-        'Local server on ${Pfs.type.name}',
-        operation: operation,
-        countAttempt: false,
-      );
-      return;
-    }
-
-    if (!TryLimiter.canTry(sid)) {
-      if (state.conn != ServerConn.failed) {
-        updateConnection(ServerConn.failed);
-      }
-      return;
-    }
-
-    updateStatus(_copyStatus(state.status, err: null, setErr: true));
-    if (state.conn < ServerConn.connecting) {
-      updateConnection(ServerConn.connecting);
-    }
-
-    final system = spi.customSystemType ?? LocalServer.systemType;
-    if (state.status.system != system) {
-      // Whatever was installed was generated for the previous answer.
-      _scriptWritten = false;
-      updateStatus(_copyStatus(state.status, system: system));
-    }
-
-    final CommandExec exec;
-    try {
-      exec = await ensureScriptExec();
-    } catch (e) {
-      _failLocal(LocalServerErrType.writeScript, e, operation: operation);
-      return;
-    }
-    if (!_isRefreshCurrent(operation, spi)) return;
-    if (state.conn != ServerConn.finished) {
-      updateConnection(ServerConn.loading);
-    }
-
-    final String raw;
-    final int latencyMs;
-    try {
-      final elapsed = Stopwatch()..start();
-      raw = await _runLocal(
-        exec,
-        ShellFunc.status.exec(
-          spi.id,
-          systemType: system,
-          customDir: spi.custom?.scriptDir,
-        ),
-      );
-      latencyMs = elapsed.elapsedMilliseconds;
-      if (!_isRefreshCurrent(operation, spi)) return;
-      // The script is gone from under the app — the default directory is a
-      // temporary one, which the OS cleans on its own schedule. Reinstalled
-      // on the next poll.
-      if (!ffi.containsScriptSegment(raw: raw) &&
-          _hasEnabledStatusCommands(spi, system)) {
-        _scriptWritten = false;
-        throw raw.isEmpty
-            ? 'Empty response from this device'
-            : 'No status segments in response, raw:\n$raw';
-      }
-    } catch (e) {
-      _failLocal(LocalServerErrType.getStatus, e, operation: operation);
-      return;
-    }
-
-    try {
-      final extended = await _refreshExtendedRaw(
-        force: interactive,
-        operation: operation,
-        run: (cmd) => _runLocal(exec, cmd),
-      );
-      // Extended output first, for the reason the SSH path gives: built-in
-      // markers are trusted only before the first custom section.
-      final combined = extended.isEmpty ? raw : '$extended\n$raw';
-      final source = ScriptDataSource(
-        spi: spi,
-        runScript: () async => combined,
-      );
-      final status = await source.fetchStatus(_copyStatus(state.status));
-      status.diskSmartAt = _extendedAcceptedAt;
-      if (!_isRefreshCurrent(operation, spi)) return;
-      updateStatus(status, latencyMs: latencyMs);
-    } catch (e, s) {
-      Loggers.app.warning('Local status', e, s);
-      _failLocal(
-        LocalServerErrType.getStatus,
-        e,
-        operation: operation,
-        message: 'Parse failed: $e\n\n$raw',
-      );
-      return;
-    }
-
-    if (!_isRefreshCurrent(operation, spi)) return;
-    updateConnection(ServerConn.finished);
-    TryLimiter.reset(sid);
-  }
-
-  /// Runs [cmd] on this device and answers its stdout, stopping it after
-  /// [_localCmdTimeout].
-  ///
-  /// Stdout alone, as the SSH status read takes it: on Windows, PowerShell
-  /// writes progress records to stderr, and the parser reads one stream.
-  Future<String> _runLocal(CommandExec exec, String cmd) async {
-    final cancel = Completer<void>();
-    final timer = Timer(_localCmdTimeout, cancel.complete);
-    try {
-      final result = await exec.run(cmd, cancel: cancel.future);
-      if (cancel.isCompleted) {
-        throw TimeoutException('Local command', _localCmdTimeout);
-      }
-      return result.stdout;
-    } finally {
-      timer.cancel();
-    }
-  }
-
-  /// [_failSsh] for this device: the same bookkeeping minus the terminal
-  /// session, which a local server never registers.
-  void _failLocal(
-    LocalServerErrType type,
-    Object e, {
-    required int operation,
-    bool countAttempt = true,
-    String? message,
-  }) {
-    if (!_isRefreshCurrent(operation, state.spi)) return;
-    if (countAttempt) TryLimiter.inc(state.spi.id);
-    final err = LocalServerErr(
-      type: type,
-      // The inner error's own words when it has them — `ensureScriptExec`
-      // throws an [SSHErr] whatever carried the command.
-      message: message ?? (e is Err ? e.message : null) ?? e.toString(),
-    );
-    _setFailedState(_copyStatus(state.status, err: err, setErr: true));
-    Loggers.app.warning('Local ${state.spi.name}', err);
-  }
-
-  /// Prefills [ServerStatus.history] from whatever trend data the source
-  /// already holds, so a freshly opened detail page shows a trend instead of
-  /// building one up from scratch. A no-op for sources without
-  /// [ServerCapabilities.storedHistory]; what is older than the first live
-  /// sample goes before it — see [StatusHistory.seed]. Once per connection:
-  /// [refresh] asks with every poll, and the page again when it opens.
-  Future<void> seedHistory({int minutes = 60}) async {
-    final generation = _operationGeneration;
-    final spi = state.spi;
-    // Whichever transport *has* history, not whichever leads. On a server
-    // carrying both, SSH usually leads and has none — so asking only the
-    // leading one meant `capabilities.storedHistory` advertised a trend the
-    // page then never seeded, and the chart built up from empty exactly where
-    // an agent had months of it.
-    if (_seededOperation == generation) return;
-    final credential = _historyCredential(spi);
-    if (credential == null) return;
-    _seededOperation = generation;
-    try {
-      // Asking for exactly what the buffer holds. Any more is averaged down
-      // on the agent's side instead of being carried here and dropped by
-      // [StatusHistory.seed] as it walks past the capacity.
-      final samples = await _resolveSource(credential).fetchHistory(
-        minutes: minutes,
-        maxPoints: StatusHistory.capacity,
-      );
-      if (!_isRefreshCurrent(generation, spi)) return;
-      if (samples.isEmpty) return;
-      state.status.history.seed(samples);
-      // history is mutated in place, so hand out a fresh ServerStatus to make
-      // the watchers rebuild
-      updateStatus(_copyStatus(state.status));
-    } catch (e, s) {
-      if (!_isRefreshCurrent(generation, spi)) return;
-      _seededOperation = null;
-      Loggers.app.warning('Seed history for ${spi.name}', e, s);
-    }
-  }
-
-  /// The stored history of the last [minutes], as the source has it.
-  ///
-  /// Unlike [seedHistory] this leaves the rolling buffer alone: the page asks
-  /// for a window to draw and holds the answer itself, so a longer window on
-  /// screen never displaces what this app has watched happen. Empty when
-  /// nothing here stores history — an SSH-only server has only the buffer.
-  Future<List<StatusHistorySample>> fetchHistoryRange({
-    required int minutes,
-    int maxPoints = StatusHistory.capacity,
-    DateTime? from,
-    DateTime? to,
-  }) async {
-    final credential = _historyCredential(state.spi);
-    if (credential == null) return const [];
-    return _resolveSource(credential).fetchHistory(
-      minutes: minutes,
-      maxPoints: maxPoints,
-      from: from,
-      to: to,
-    );
-  }
-
-  /// The way in that keeps its own trend data, or null when neither does.
-  ServerConnectCredential? _historyCredential(Spi spi) {
-    final primary = ServerConnectCredential.fromSpi(spi);
-    if (ServerCapabilities.of(primary).storedHistory) return primary;
-    final fallback = ServerConnectCredential.fallbackOf(spi);
-    if (fallback != null && ServerCapabilities.of(fallback).storedHistory) {
-      return fallback;
-    }
-    return null;
-  }
-
-  String get _sshSessionId => 'ssh_${state.spi.id}';
 
   /// Retry-limiter key for connecting the shell, kept apart from the one the
   /// status poll uses.
@@ -972,17 +617,12 @@ class ServerNotifier extends _$ServerNotifier {
           sudoPassword: () => SudoPassword.known(state.spi.id),
         );
       case ServerConnectCredentialMonitorHttp():
-        final source = _resolveSource(credential);
-        if (source is! MonitorHttpDataSource) {
-          throw StateError(
-            'A monitor credential resolved to a ${source.runtimeType}',
-          );
-        }
+        final source = _monitorSourceFor(credential);
         // A GET the agent answers only to an authenticated caller, so it
         // covers both halves of "can this reach the machine": the agent is up,
         // and the login still works. Never the caller's command — that is what
         // must not be attempted twice.
-        if (probe) await source.fetchCapabilities();
+        if (probe) await source.capabilities();
         return source.exec;
       case ServerConnectCredentialLocal():
         if (!LocalServer.isSupported) {
@@ -998,10 +638,7 @@ class ServerNotifier extends _$ServerNotifier {
       return identical(state.client, exec.client) && !exec.client.isClosed;
     }
     if (exec is MonitorExec) {
-      final current = _source;
-      final currentExec = current is MonitorHttpDataSource
-          ? current.exec
-          : null;
+      final currentExec = _monitorSource?.exec;
       return currentExec is MonitorExec &&
           identical(currentExec.client, exec.client);
     }
@@ -1009,88 +646,6 @@ class ServerNotifier extends _$ServerNotifier {
     // server stopping being this device — which the check above already saw.
     if (exec is ProcessExec) return spi.local;
     return false;
-  }
-
-  /// Whether the generated script has been written to this server since the
-  /// last time it was reachable.
-  ///
-  /// Not persisted: the script carries the app's build number, and a relaunch
-  /// is exactly when it may need rewriting. Cleared whenever the server drops
-  /// out, which is what covers a machine that rebooted and took `/tmp` with
-  /// it — the script is gone and nothing else would notice, since a monitor
-  /// server's status never reads it.
-  bool _scriptWritten = false;
-
-  /// Moves custom commands the app still holds locally onto the server, once.
-  ///
-  /// The server's directory is where they live now; this only exists to empty
-  /// the old field, and does nothing for a server that has already been
-  /// connected to since. Whatever is already on the server wins on a name
-  /// collision, and the local extras are appended — nothing is dropped and the
-  /// result does not depend on which side ran first.
-  ///
-  /// The local copy is cleared only after the install succeeds, so a failure
-  /// here costs a retry rather than the commands. Failures are logged, not
-  /// raised: a server whose status works and whose commands did not migrate is
-  /// still a server worth showing.
-  // TODO(migration): delete with [ServerCustom.cmds].
-  Future<void> _migrateCustomCmds(
-    Spi spi,
-    SystemType system,
-    CommandExec exec,
-  ) async {
-    final local = spi.custom?.cmds;
-    if (local == null || local.isEmpty) return;
-
-    try {
-      final entry = ShellFuncManager.customCmdsEntry(system);
-      final listing = await exec.run(
-        ShellFuncManager.readCustomCmds(systemType: system),
-        entry: entry,
-      );
-      if (!listing.succeeded) {
-        throw 'read exited with ${listing.exitCode}: ${listing.combined}';
-      }
-      final onServer = ShellFuncManager.parseCustomCmds(listing.stdout);
-      final existing = onServer?.map((c) => c.name).toSet() ?? const <String>{};
-      final merged = [
-        ...?onServer,
-        for (final e in local.entries)
-          if (!existing.contains(e.key))
-            ffi.CustomCmd(name: e.key, cmd: e.value),
-      ];
-
-      // Reading the listing is an await, and an edit or a disconnect during it
-      // leaves `exec` pointing at the host this started on. The check below
-      // guards the database write; this one guards the write to the *server*,
-      // which is the one that cannot be taken back.
-      if (!isExecCurrent(exec, spi)) return;
-
-      final install = await exec.run(
-        ShellFuncManager.installCustomCmds(merged, systemType: system),
-        entry: entry,
-      );
-      if (!install.succeeded) {
-        throw 'install exited with ${install.exitCode}: ${install.combined}';
-      }
-
-      final custom = spi.custom;
-      if (custom == null) return;
-      // Don't overwrite newer edits that happened while we were reading/installing.
-      final current = ref.read(serversProvider).servers[spi.id];
-      if (current == null || current != spi) return;
-      await ref
-          .read(serversProvider.notifier)
-          .updateServer(
-            current,
-            current.copyWith(custom: custom.withoutCmds()),
-          );
-      Loggers.app.info(
-        'Migrated ${local.length} custom command(s) for ${spi.name}',
-      );
-    } catch (e, st) {
-      Loggers.app.warning('Custom commands for ${spi.name}', e, st);
-    }
   }
 
   /// A [CommandExec] with the generated script present on the server.
@@ -1106,23 +661,17 @@ class ServerNotifier extends _$ServerNotifier {
   /// tool both open one — and assuming otherwise runs a script that is not
   /// there.
   ///
-  /// Throws when the script cannot be written, since the alternative is a page
-  /// reporting an empty list on a server that has plenty of processes.
-  Future<CommandExec> ensureScriptExec() async {
-    final exec = await ensureExec();
+  /// Throws a [ScriptErr] when the script cannot be written, since the
+  /// alternative is a page reporting an empty list on a server that has plenty
+  /// of processes. [onSshDial] as for [ensureExec].
+  @override
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial}) async {
+    // Before the connect: a server edited or reconnected while it is pending
+    // must not have this one's script written for it.
     final gen = _operationGeneration;
     final origSpi = state.spi;
-    if (_scriptWritten) {
-      final spi = state.spi;
-      if (spi.custom?.cmds?.isNotEmpty == true &&
-          gen == _operationGeneration &&
-          origSpi == spi) {
-        try {
-          await _migrateCustomCmds(spi, state.status.system, exec);
-        } catch (_) {}
-      }
-      return exec;
-    }
+    final exec = await ensureExec(onSshDial: onSshDial);
+    if (_scriptWritten) return exec;
 
     final spi = state.spi;
     final system = state.status.system;
@@ -1150,19 +699,12 @@ class ServerNotifier extends _$ServerNotifier {
       if (spi.custom?.scriptDir == null) {
         ShellFuncManager.switchScriptDir(spi.id, systemType: system);
       }
-      // `SSHErrType.writeScript` names a transport this did not necessarily
-      // use, but it is the app's existing name for this failure and carries
-      // the advice that fits it.
-      throw SSHErr(
-        type: SSHErrType.writeScript,
+      throw ScriptErr(
+        type: ScriptErrType.writeScript,
         message: 'Write script to ${spi.name}: ${result.combined}',
       );
     }
-    // A monitor-only server reaches this path too, which is the point: what
-    // carries the commands is `CommandExec`, not SSH, so both kinds of server
-    // reach the same directory.
     if (gen == _operationGeneration && origSpi == state.spi) {
-      await _migrateCustomCmds(spi, system, exec);
       _scriptWritten = true;
     }
     return exec;
@@ -1250,640 +792,6 @@ class ServerNotifier extends _$ServerNotifier {
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
       rethrow;
     }
-  }
-
-  /// The failure ritual every SSH branch repeated: count the attempt against
-  /// the retry limiter, record the error on the status, drop to `failed`, and
-  /// mark the terminal session dead. Nine copies of it made the actual control
-  /// flow of `_getDataSsh` hard to see, and each copy was a chance to forget
-  /// one of the four steps.
-  ///
-  /// [countAttempt] is false for the one case that must not burn a retry:
-  /// a connection that only failed because keyboard-interactive auth needed a
-  /// prompt this non-interactive refresh could not show.
-  ///
-  /// [operation] is checked here rather than at each call site: a `catch` is
-  /// reached by throwing out of an `await`, so it skips whatever currency
-  /// check follows that await. Edit a server's address and the connection
-  /// still being attempted against the old one eventually fails; without this
-  /// it counted against the retry limiter and marked the server failed,
-  /// undoing the refresh the corrected address had already completed.
-  void _failSsh(
-    SSHErrType type,
-    Object e, {
-    required int operation,
-    bool closeClient = false,
-    bool countAttempt = true,
-    String? message,
-  }) {
-    if (!_isRefreshCurrent(operation, state.spi)) {
-      Loggers.app.info('SSH ${state.spi.name}: dropping a superseded failure');
-      return;
-    }
-    if (countAttempt) TryLimiter.inc(state.spi.id);
-    final err = SSHErr(type: type, message: message ?? e.toString());
-    _setFailedState(
-      _copyStatus(state.status, err: err, setErr: true),
-      closeClient: closeClient,
-    );
-    TermSessionManager.updateStatus(
-      _sshSessionId,
-      TermSessionStatus.disconnected,
-    );
-    Loggers.app.warning('SSH ${state.spi.name}', err);
-  }
-
-  /// Whether [client]'s server answers a keep-alive within the status timeout.
-  Future<bool> _answersPing(SSHClient client) async {
-    if (client.isClosed) return false;
-    try {
-      await client.ping().timeout(_timeout);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> _getDataSsh({
-    required bool interactive,
-    required int operation,
-  }) async {
-    final spi = state.spi;
-    final sid = spi.id;
-    var keyboardInteractiveRequested = false;
-
-    if (!TryLimiter.canTry(sid)) {
-      if (state.conn != ServerConn.failed) {
-        updateConnection(ServerConn.failed);
-      }
-      return;
-    }
-
-    final newStatus = _copyStatus(
-      state.status,
-      err: null,
-      setErr: true,
-    ); // Clear previous error
-    updateStatus(newStatus);
-
-    if (state.conn < ServerConn.connecting ||
-        (state.client?.isClosed ?? true)) {
-      updateConnection(ServerConn.connecting);
-
-      // Wake on LAN
-      final wol = spi.wolCfg;
-      if (wol != null) {
-        try {
-          await wol.wake();
-          if (!_isRefreshCurrent(operation, spi)) return;
-        } catch (e) {
-          Loggers.app.warning('Wake on lan failed', e);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-      }
-
-      // Two clocks on purpose. [time1] is when this happened and is stored as
-      // such; [elapsed] is how long it took. Reading the wall clock twice and
-      // subtracting gets the second answer wrong whenever the first one moves
-      // — an NTP step during a connect is not rare, since a reconnect is what
-      // a device does on waking, and it lands in `durationMs` as a negative.
-      final time1 = DateTime.now();
-      final elapsed = Stopwatch()..start();
-      try {
-        final client = await genClient(
-          spi,
-          timeout: _timeout,
-          onKeyboardInteractive: (server, request) {
-            keyboardInteractiveRequested = true;
-            if (!interactive) return null;
-            return KeyboardInteractiveAuth.handle(server, request);
-          },
-        );
-        await client.authenticated;
-        if (!_isRefreshCurrent(operation, spi)) {
-          client.close();
-          return;
-        }
-        _setClient(client);
-
-        final spentTime = elapsed.elapsedMilliseconds;
-        if (spi.resolvedJumpIds.isEmpty) {
-          Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
-        } else {
-          Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
-        }
-
-        try {
-          await Stores.connectionStats.recordConnection(
-            ConnectionStat(
-              serverId: spi.id,
-              serverName: spi.name,
-              timestamp: time1,
-              result: ConnectionResult.success,
-              durationMs: spentTime,
-            ),
-          );
-        } catch (e) {
-          Loggers.app.warning('Failed to record connection success', e);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-
-        final sessionId = 'ssh_${spi.id}';
-        TermSessionManager.add(
-          id: sessionId,
-          title: spi.name,
-          subtitle: spi.oldId,
-          startTimeMs: time1.millisecondsSinceEpoch,
-          disconnect: () =>
-              ref.read(serversProvider.notifier).closeOneServer(spi.id),
-          status: TermSessionStatus.connecting,
-          setAsActive: false,
-        );
-        TermSessionManager.setActive(sessionId, hasTerminal: false);
-      } catch (e) {
-        if (!_isRefreshCurrent(operation, spi)) return;
-        if (!keyboardInteractiveRequested || interactive) {
-          TryLimiter.inc(sid);
-        }
-
-        final durationMs = elapsed.elapsedMilliseconds;
-
-        ConnectionResult failureResult;
-        final errStr = e.toString().toLowerCase();
-        if (errStr.contains('timed out') || errStr.contains('timeout')) {
-          failureResult = ConnectionResult.timeout;
-        } else if (errStr.contains('auth') ||
-            errStr.contains('authentication') ||
-            errStr.contains('permission denied') ||
-            errStr.contains('access denied')) {
-          failureResult = ConnectionResult.authFailed;
-        } else if (errStr.contains('connection refused') ||
-            errStr.contains('no route to host') ||
-            errStr.contains('network') ||
-            errStr.contains('socket')) {
-          failureResult = ConnectionResult.networkError;
-        } else {
-          failureResult = ConnectionResult.unknownError;
-        }
-
-        try {
-          await Stores.connectionStats.recordConnection(
-            ConnectionStat(
-              serverId: spi.id,
-              serverName: spi.name,
-              timestamp: time1,
-              result: failureResult,
-              errorMessage: e.toString(),
-              durationMs: durationMs,
-            ),
-          );
-        } catch (recErr) {
-          Loggers.app.warning('Failed to record connection failure', recErr);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-
-        final SSHErrType errType;
-        if (keyboardInteractiveRequested && !interactive) {
-          errType = SSHErrType.interactiveAuth;
-        } else if (e is SSHAuthError) {
-          errType = SSHErrType.auth;
-        } else {
-          errType = SSHErrType.connect;
-        }
-        _setFailedState(
-          _copyStatus(
-            state.status,
-            err: SSHErr(type: errType, message: e.toString()),
-            setErr: true,
-          ),
-          closeClient: true,
-        );
-        // Removed, not just marked dead: there is no session to reconnect to
-        TermSessionManager.remove(_sshSessionId);
-        Loggers.app.warning('Connect to ${spi.name} failed', e);
-        return;
-      }
-
-      updateConnection(ServerConn.connected);
-
-      // Update SSH session status to connected
-      final sessionId = 'ssh_${spi.id}';
-      TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
-
-      try {
-        // Detect system type
-        final detectedSystemType = await SystemDetector.detect(
-          state.client!,
-          spi,
-        );
-        if (!_isRefreshCurrent(operation, spi)) return;
-        final newStatus = _copyStatus(state.status, system: detectedSystemType);
-        updateStatus(newStatus);
-
-        Loggers.app.info(
-          'Writing script for ${spi.name} (${detectedSystemType.name})',
-        );
-
-        final writeScriptResult = await state.client!.execSafe(
-          (session) async {
-            final scriptRaw = ShellFuncManager.installPayload(
-              ShellFuncManager.allScript(
-                systemType: detectedSystemType,
-                disabledCmdTypes: spi.disabledCmdTypes,
-              ),
-              systemType: detectedSystemType,
-            ).uint8List;
-            session.stdin.add(scriptRaw);
-            unawaited(session.stdin.close());
-          },
-          entry: ShellFuncManager.getInstallShellCmd(
-            spi.id,
-            systemType: detectedSystemType,
-            customDir: spi.custom?.scriptDir,
-          ),
-          systemType: detectedSystemType,
-          context: 'WriteScript<${spi.name}>',
-        );
-        if (!_isRefreshCurrent(operation, spi)) return;
-
-        if (writeScriptResult.stdout.isNotEmpty) {
-          Loggers.app.info(
-            'Script write stdout for ${spi.name}: ${writeScriptResult.stdout}',
-          );
-        }
-
-        // The commands themselves live in their own directory and are written
-        // separately: the script changes when the app does, they when the user
-        // does, and neither has to reinstall the other.
-        await _migrateCustomCmds(
-          spi,
-          detectedSystemType,
-          SshExec(state.client!),
-        );
-
-        if (writeScriptResult.stderr.isNotEmpty) {
-          Loggers.app.warning(
-            'Script write stderr for ${spi.name}: ${writeScriptResult.stderr}',
-          );
-        }
-
-        if (!writeScriptResult.succeeded) {
-          if (spi.custom?.scriptDir == null) {
-            ShellFuncManager.switchScriptDir(
-              spi.id,
-              systemType: detectedSystemType,
-            );
-          }
-          final output = writeScriptResult.stderr.isNotEmpty
-              ? writeScriptResult.stderr
-              : writeScriptResult.stdout;
-          throw 'Script installation exited with code '
-              '${writeScriptResult.exitCode}: $output';
-        } else {
-          Loggers.app.info('Script written successfully for ${spi.name}');
-          _scriptWritten = true;
-        }
-      } on SSHAuthAbortError catch (e) {
-        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
-        return;
-      } on SSHAuthFailError catch (e) {
-        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
-        return;
-      } catch (e) {
-        _failSsh(
-          SSHErrType.writeScript,
-          e,
-          operation: operation,
-          closeClient: true,
-        );
-        return;
-      }
-    }
-
-    if (state.conn == ServerConn.connecting) return;
-
-    // Keep finished status to prevent UI from refreshing to loading state
-    if (state.conn != ServerConn.finished) {
-      updateConnection(ServerConn.loading);
-    }
-
-    String? raw;
-    // The status command and nothing after it: the extended commands below
-    // take seconds by design and run once every few minutes, so including
-    // them would report one poll in five as an unreachable machine.
-    int? latencyMs;
-
-    try {
-      final statusCmd = ShellFunc.status.exec(
-        spi.id,
-        systemType: state.status.system,
-        customDir: spi.custom?.scriptDir,
-      );
-      final read = await _runStatusCommand(statusCmd);
-      raw = read.raw;
-      latencyMs = read.elapsedMs;
-      if (!_isRefreshCurrent(operation, spi)) return;
-
-      // Output carrying no segment marker parses into an empty status: the
-      // page keeps whatever its rolling state still holds (cpu, net speeds)
-      // and blanks the rest, with nothing saying why. It is what a host
-      // answers once the script is gone from under it — the default script
-      // directory is /tmp — so it is reported as a failure, which puts the
-      // connection back through the connect path and reinstalls the script.
-      //
-      // Was `raw.split(separator).isEmpty`, which `String.split` never
-      // returns: unparseable output reached the parser as if it were fine.
-      //
-      // Custom commands carry their own separator, and with every built-in
-      // command disabled they are the only output there is.
-      //
-      // Empty output is only a failure if the server was asked for anything.
-      // A host with every status command disabled legitimately returns nothing.
-      final hasSegment = ffi.containsScriptSegment(raw: raw);
-      if (!hasSegment && _hasEnabledStatusCommands(spi, state.status.system)) {
-        if (Stores.setting.keepStatusWhenErr.fetch()) {
-          // Keep previous server status when error occurs.
-          //
-          // The latency goes with it, deliberately: this setting asks for the
-          // last good reading to stay on screen, and the delay is part of that
-          // reading rather than a separate claim about right now.
-          if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
-            return;
-          }
-        }
-        _failSsh(
-          SSHErrType.segments,
-          '',
-          operation: operation,
-          message: raw.isEmpty
-              ? 'Empty response from server'
-              : 'No status segments in response, raw:\n$raw',
-        );
-        return;
-      }
-    } on TimeoutException catch (e, s) {
-      Loggers.app.warning('Get status from ${spi.name} timed out', e, s);
-      // Reached by throwing out of an await, so it skips the check that
-      // follows that await: a read that timed out against the address this
-      // server used to have must not stamp its error onto the one it has now.
-      if (!_isRefreshCurrent(operation, spi)) return;
-      // A slow command and a dead connection both end here, and only the
-      // second one is worth dropping. sshd answers a keep-alive itself, however
-      // busy the command is; no answer is a connection the network dropped —
-      // after a suspension, typically — which `ensureExec` and
-      // `ensureShellClient` would otherwise go on handing out.
-      final client = state.client;
-      if (client != null && !await _answersPing(client)) {
-        if (!_isRefreshCurrent(operation, spi)) return;
-        _failSsh(
-          SSHErrType.getStatus,
-          e,
-          operation: operation,
-          closeClient: true,
-          // The server did nothing wrong: the next refresh reconnects, and
-          // the limiter is for when that fails.
-          countAttempt: false,
-        );
-        return;
-      }
-      if (!_isRefreshCurrent(operation, spi)) return;
-      // Not _failSsh: a timed-out status read leaves the connection itself
-      // intact, so the session stays connected and the attempt isn't counted
-      updateStatus(
-        _copyStatus(
-          state.status,
-          err: SSHErr(type: SSHErrType.getStatus, message: e.toString()),
-          setErr: true,
-        ),
-      );
-      if (state.client != null && state.conn != ServerConn.finished) {
-        updateConnection(ServerConn.connected);
-      }
-      TermSessionManager.updateStatus(
-        _sshSessionId,
-        TermSessionStatus.connected,
-      );
-      return;
-    } catch (e) {
-      _failSsh(SSHErrType.getStatus, e, operation: operation);
-      return;
-    }
-
-    try {
-      // Segments the status function no longer carries, refreshed on their own
-      // schedule and concatenated here: the parser splits by separator, so one
-      // combined output parses exactly as the two runs would have
-      final client = state.client;
-      final extended = await _refreshExtendedRaw(
-        force: interactive,
-        operation: operation,
-        // Timing discarded: the extended commands take seconds by design, and
-        // what is wanted from them is their output.
-        run: client == null
-            ? null
-            : (cmd) async => (await _runStatusCommandWithExec(
-                client,
-                cmd,
-                isWindows: state.status.system == SystemType.windows,
-              )).raw,
-      );
-      // Built-in markers are trusted only before the first custom section;
-      // custom output may contain marker-looking text. Extended status has no
-      // custom commands, so put it first and leave custom output last.
-      final combined = extended.isEmpty ? raw : '$extended\n$raw';
-
-      // Use the same conversion contract as the monitor path: raw transport
-      // output becomes a ServerStatus plus one trend sample.
-      final source = ScriptDataSource(
-        spi: spi,
-        runScript: () async => combined,
-      );
-      final status = await source.fetchStatus(_copyStatus(state.status));
-      // Shell output carries no sampling instant, so the nearest thing is when
-      // the run that produced these segments came back.
-      status.diskSmartAt = _extendedAcceptedAt;
-      // The last two awaits are the longest in this method — the extended
-      // commands take seconds by design. A refresh that started before the
-      // server was edited arrives here holding the old host's status.
-      if (!_isRefreshCurrent(operation, spi)) return;
-      updateStatus(status, latencyMs: latencyMs);
-    } catch (e, trace) {
-      _failSsh(
-        SSHErrType.getStatus,
-        e,
-        operation: operation,
-        message: 'Parse failed: $e\n\n$raw',
-      );
-      Loggers.app.warning('Server status', e, trace);
-      return;
-    }
-
-    if (!_isRefreshCurrent(operation, spi)) return;
-    // A successful refresh leaves the connection ready for the next poll.
-    updateConnection(ServerConn.finished);
-    // Reset retries only after status preparation succeeds.
-    TryLimiter.reset(sid);
-  }
-
-  /// Runs [ShellFunc.statusExt] when [_extendedStatusInterval] has elapsed
-  /// (or [force], for a user-initiated refresh) and returns its output,
-  /// falling back to the last successful one.
-  ///
-  /// [run] executes one command and answers its stdout, or is null when
-  /// there is nothing to run it on. Over SSH it is deliberately the exec path
-  /// rather than the persistent shell: these commands can take seconds, and a
-  /// timeout there would drop the whole connection to exec for good (see
-  /// [_runStatusCommand]).
-  Future<String> _refreshExtendedRaw({
-    required bool force,
-    required int operation,
-    required Future<String> Function(String cmd)? run,
-  }) async {
-    final fetchedAt = _extendedFetchedAt;
-    final due =
-        force ||
-        fetchedAt == null ||
-        DateTime.now().difference(fetchedAt) >= _extendedStatusInterval;
-    if (!due || run == null) return _extendedRaw;
-
-    // Stamped before the run, so a remote that can't answer (an older script
-    // without the function, until the next connect reinstalls it) is retried
-    // on the extended schedule instead of on every poll
-    _extendedFetchedAt = DateTime.now();
-    final spi = state.spi;
-    try {
-      final cmd = ShellFunc.statusExt.exec(
-        spi.id,
-        systemType: state.status.system,
-        customDir: spi.custom?.scriptDir,
-      );
-      final raw = await run(cmd);
-      // The cache belongs to the notifier, not to this run: without the check
-      // a refresh against the address the server used to have would leave the
-      // old machine's SMART and GPU segments here, and the next poll of the
-      // *new* one would find them still within the interval and merge them
-      // into its status.
-      if (!_isRefreshCurrent(operation, spi)) return _extendedRaw;
-      if (ffi.containsStatusSegment(raw: raw)) {
-        _extendedRaw = raw;
-        _extendedAcceptedAt = DateTime.now();
-      }
-    } catch (e, s) {
-      Loggers.app.warning('Extended status for ${spi.name} failed', e, s);
-    }
-    return _extendedRaw;
-  }
-
-  /// The status command's output, and how long the command itself took.
-  ///
-  /// Timed here rather than around the call, because this is the only place
-  /// that knows which of the steps it takes is the request. The persistent
-  /// shell opens its session on the first `run` after every connect — a
-  /// channel open plus the remote shell's startup — and timed with the command
-  /// that made the first reading of every connection a multiple of the ones
-  /// after it, with nothing on screen explaining the drop.
-  ///
-  /// [elapsedMs] is null when there was nothing to time.
-  Future<({String raw, int? elapsedMs})> _runStatusCommand(
-    String statusCmd,
-  ) async {
-    final client = state.client;
-    final spi = state.spi;
-
-    if (client == null) {
-      Loggers.app.warning(
-        'Client for ${spi.name} is null, skipping status fetch',
-      );
-      return (raw: '', elapsedMs: null);
-    }
-
-    if (state.status.system == SystemType.windows) {
-      return _runStatusCommandWithExec(client, statusCmd, isWindows: true);
-    }
-
-    if (!_usePersistentShellForStatus) {
-      return _runStatusCommandWithExec(client, statusCmd);
-    }
-
-    try {
-      final shell = await _getPersistentShell();
-      await shell.ensureSession();
-      final elapsed = Stopwatch()..start();
-      final result = await shell.run(statusCmd, timeout: _timeout);
-      elapsed.stop();
-      return (raw: result.output, elapsedMs: elapsed.elapsedMilliseconds);
-    } on TimeoutException catch (e, s) {
-      _usePersistentShellForStatus = false;
-      await _disposePersistentShell();
-      Loggers.app.warning(
-        'Persistent shell status command timed out for ${spi.name}; fallback to exec for this connection',
-        e,
-        s,
-      );
-      return _runStatusCommandWithExec(client, statusCmd);
-    }
-  }
-
-  bool _hasEnabledStatusCommands(Spi spi, SystemType system) {
-    if (spi.custom?.cmds?.isNotEmpty == true) return true;
-    final disabled = spi.disabledCmdTypes?.toSet() ?? const <String>{};
-    final Iterable<ShellCmdType> commands = switch (system) {
-      SystemType.linux => StatusCmdType.values,
-      SystemType.bsd => BSDStatusCmdType.values,
-      SystemType.windows => WindowsStatusCmdType.values,
-    };
-    return commands.any((command) => !disabled.contains(command.displayName));
-  }
-
-  /// The whole call is timed, unlike the persistent shell's: `run` opens a
-  /// channel per command here, so that cost is part of every reading rather
-  /// than of the first one.
-  Future<({String raw, int? elapsedMs})> _runStatusCommandWithExec(
-    SSHClient client,
-    String statusCmd, {
-    bool isWindows = false,
-  }) async {
-    final spi = state.spi;
-    // Windows PowerShell serializes progress and information records (including
-    // Write-Host) as CLIXML on stderr when invoked with -EncodedCommand. Status
-    // parsing is a stdout protocol: merging stderr lets those records land in
-    // whichever SrvBoxSep section happened to be current when the SSH chunks
-    // arrived, so an <Objs> document could become the system name or an IP.
-    final elapsed = Stopwatch()..start();
-    final execResult = await client
-        .run(statusCmd, stderr: false)
-        .timeout(const Duration(seconds: 30));
-    elapsed.stop();
-    return (
-      raw: SSHDecoder.decode(
-        execResult,
-        isWindows: isWindows,
-        context: 'GetStatus<${spi.name}>',
-      ),
-      elapsedMs: elapsed.elapsedMilliseconds,
-    );
-  }
-
-  Future<PersistentShell> _getPersistentShell() async {
-    final client = state.client;
-    if (client == null) {
-      throw StateError('SSH client is not connected');
-    }
-
-    final shell = _persistentShell;
-    if (shell != null) {
-      return shell;
-    }
-
-    final newShell = PersistentShell(client);
-    _persistentShell = newShell;
-    return newShell;
-  }
-
-  Future<void> _disposePersistentShell() async {
-    final shell = _persistentShell;
-    _persistentShell = null;
-    await shell?.close();
   }
 }
 

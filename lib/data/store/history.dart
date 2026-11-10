@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/tab.dart';
 
@@ -54,60 +52,17 @@ class HistoryStore extends SqliteStore {
 
   static final instance = HistoryStore();
 
-  void renameSshServer(String oldId, String newId) {
-    final saved = sshTabs.fetch();
-    if (saved.isEmpty) return;
-    try {
-      final decoded = jsonDecode(saved);
-      if (decoded is! List) return;
-      var changed = false;
-      for (final entry in decoded.whereType<Map>()) {
-        for (final key in const ['sourceId', 'serverId']) {
-          if (entry[key] == oldId) {
-            entry[key] = newId;
-            changed = true;
-          }
-        }
-      }
-      if (changed) sshTabs.put(jsonEncode(decoded));
-    } catch (e, s) {
-      Loggers.app.warning('Failed to rewrite renamed SSH tab state', e, s);
-    }
-  }
-
   late final sftpGoPath = _ListHistory(store: this, name: 'sftpPath');
 
   late final sftpLastPath = _MapHistory(store: this, name: 'sftpLastPath');
 
-  /// The terminal tabs that were open, as JSON.
-  ///
-  /// Here rather than in `RestorationMixin`, which is what it used to use.
-  /// Flutter's restoration data is Android's saved instance state, and this app
-  /// never had any: measured on an API 36 emulator, the terminal tab's
-  /// `restoreState` ran with a **null bucket**, so nothing registered with it
-  /// was ever written. `MaterialApp.home` builds its route without a
-  /// restoration id, and a route without one hands no bucket to its subtree.
-  ///
-  /// A store also survives what saved instance state does not — the process
-  /// being killed in the background, and the task being swiped away — which is
-  /// exactly when someone wants their terminals back.
-  late final sshTabs = propertyDefault('sshTabs', '');
-
-  /// The workspace tab's workspaces, as JSON — see `Workspaces`. Here rather
-  /// than in a table for the reason the terminal tabs are: it is where this
-  /// device left off, not a record anybody edits, and it is read whole.
+  /// The workspace tab's workspaces, as JSON — see `Workspaces`. Not a table:
+  /// it is where this device left off, not a record anybody edits, and it is
+  /// read whole.
   late final workspaces = propertyDefault('workspaces', '');
 
   /// Which of [workspaces] was on screen.
   late final workspaceIndex = propertyDefault('workspaceIndex', 0);
-
-  /// The file tab's sessions, for the same reason and in the same shape.
-  ///
-  /// This page held them in a `RestorableString` until the measurement above
-  /// was applied to it too: it registered, it read back within a session, and
-  /// nothing survived a relaunch — so "reopens where it was left" was a
-  /// feature that had never once worked.
-  late final fileTabs = propertyDefault('fileTabs', '');
 
   /// Which bottom tab the app was last on, by [AppTab.name].
   ///

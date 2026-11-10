@@ -11,7 +11,6 @@ part of 'virt.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$VirtNode {
 
@@ -23,8 +22,6 @@ mixin _$VirtNode {
 @pragma('vm:prefer-inline')
 $VirtNodeCopyWith<VirtNode> get copyWith => _$VirtNodeCopyWithImpl<VirtNode>(this as VirtNode, _$identity);
 
-  /// Serializes this VirtNode to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -32,7 +29,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNode&&(identical(other.name, name) || other.name == name)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.maxCpu, maxCpu) || other.maxCpu == maxCpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.uptime, uptime) || other.uptime == uptime));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,name,online,cpu,maxCpu,memUsed,memTotal,uptime);
 
@@ -213,11 +210,11 @@ return $default(_that.name,_that.online,_that.cpu,_that.maxCpu,_that.memUsed,_th
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtNode implements VirtNode {
   const _VirtNode({required this.name, this.online = true, this.cpu, this.maxCpu, this.memUsed, this.memTotal, this.uptime});
-  factory _VirtNode.fromJson(Map<String, dynamic> json) => _$VirtNodeFromJson(json);
+  
 
 @override final  String name;
 @override@JsonKey() final  bool online;
@@ -234,17 +231,14 @@ class _VirtNode implements VirtNode {
 @pragma('vm:prefer-inline')
 _$VirtNodeCopyWith<_VirtNode> get copyWith => __$VirtNodeCopyWithImpl<_VirtNode>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtNodeToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNode&&(identical(other.name, name) || other.name == name)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.maxCpu, maxCpu) || other.maxCpu == maxCpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.uptime, uptime) || other.uptime == uptime));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,name,online,cpu,maxCpu,memUsed,memTotal,uptime);
 
@@ -294,7 +288,6 @@ as Duration?,
 
 }
 
-
 /// @nodoc
 mixin _$VirtHost {
 
@@ -307,8 +300,6 @@ mixin _$VirtHost {
 @pragma('vm:prefer-inline')
 $VirtHostCopyWith<VirtHost> get copyWith => _$VirtHostCopyWithImpl<VirtHost>(this as VirtHost, _$identity);
 
-  /// Serializes this VirtHost to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -316,7 +307,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHost&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.version, version) || other.version == version)&&(identical(other.hypervisor, hypervisor) || other.hypervisor == hypervisor)&&const DeepCollectionEquality().equals(other.nodes, nodes));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,serverId,kind,version,hypervisor,const DeepCollectionEquality().hash(nodes));
 
@@ -495,11 +486,11 @@ return $default(_that.serverId,_that.kind,_that.version,_that.hypervisor,_that.n
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtHost extends VirtHost {
   const _VirtHost({required this.serverId, required this.kind, this.version, this.hypervisor, final  List<VirtNode> nodes = const <VirtNode>[]}): _nodes = nodes,super._();
-  factory _VirtHost.fromJson(Map<String, dynamic> json) => _$VirtHostFromJson(json);
+  
 
 @override final  String serverId;
 @override final  VirtHostKind kind;
@@ -521,17 +512,14 @@ class _VirtHost extends VirtHost {
 @pragma('vm:prefer-inline')
 _$VirtHostCopyWith<_VirtHost> get copyWith => __$VirtHostCopyWithImpl<_VirtHost>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtHostToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHost&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.version, version) || other.version == version)&&(identical(other.hypervisor, hypervisor) || other.hypervisor == hypervisor)&&const DeepCollectionEquality().equals(other._nodes, _nodes));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,serverId,kind,version,hypervisor,const DeepCollectionEquality().hash(_nodes));
 
@@ -579,7 +567,6 @@ as List<VirtNode>,
 
 }
 
-
 /// @nodoc
 mixin _$VirtGuest {
 
@@ -602,8 +589,6 @@ mixin _$VirtGuest {
 @pragma('vm:prefer-inline')
 $VirtGuestCopyWith<VirtGuest> get copyWith => _$VirtGuestCopyWithImpl<VirtGuest>(this as VirtGuest, _$identity);
 
-  /// Serializes this VirtGuest to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -611,7 +596,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuest&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.state, state) || other.state == state)&&(identical(other.stateReason, stateReason) || other.stateReason == stateReason)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.node, node) || other.node == node)&&(identical(other.vcpu, vcpu) || other.vcpu == vcpu)&&(identical(other.memBytes, memBytes) || other.memBytes == memBytes)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.template, template) || other.template == template)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other.actions, actions));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,name,kind,state,stateReason,vmid,node,vcpu,memBytes,uptime,const DeepCollectionEquality().hash(tags),template,autostart,const DeepCollectionEquality().hash(actions));
 
@@ -799,11 +784,11 @@ return $default(_that.id,_that.name,_that.kind,_that.state,_that.stateReason,_th
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtGuest extends VirtGuest {
   const _VirtGuest({required this.id, required this.name, required this.kind, required this.state, this.stateReason, this.vmid, this.node, this.vcpu, this.memBytes, this.uptime, final  List<String> tags = const <String>[], this.template = false, this.autostart, final  Set<VirtPowerAction> actions = const <VirtPowerAction>{}}): _tags = tags,_actions = actions,super._();
-  factory _VirtGuest.fromJson(Map<String, dynamic> json) => _$VirtGuestFromJson(json);
+  
 
 /// Stable within the host: PVE `qemu/100`, libvirt the domain's UUID.
 @override final  String id;
@@ -851,17 +836,14 @@ class _VirtGuest extends VirtGuest {
 @pragma('vm:prefer-inline')
 _$VirtGuestCopyWith<_VirtGuest> get copyWith => __$VirtGuestCopyWithImpl<_VirtGuest>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtGuestToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuest&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.state, state) || other.state == state)&&(identical(other.stateReason, stateReason) || other.stateReason == stateReason)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.node, node) || other.node == node)&&(identical(other.vcpu, vcpu) || other.vcpu == vcpu)&&(identical(other.memBytes, memBytes) || other.memBytes == memBytes)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.template, template) || other.template == template)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other._actions, _actions));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,name,kind,state,stateReason,vmid,node,vcpu,memBytes,uptime,const DeepCollectionEquality().hash(_tags),template,autostart,const DeepCollectionEquality().hash(_actions));
 
@@ -918,7 +900,6 @@ as Set<VirtPowerAction>,
 
 }
 
-
 /// @nodoc
 mixin _$VirtStats {
 
@@ -930,8 +911,6 @@ mixin _$VirtStats {
 @pragma('vm:prefer-inline')
 $VirtStatsCopyWith<VirtStats> get copyWith => _$VirtStatsCopyWithImpl<VirtStats>(this as VirtStats, _$identity);
 
-  /// Serializes this VirtStats to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -939,7 +918,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtStats&&(identical(other.at, at) || other.at == at)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.diskUsed, diskUsed) || other.diskUsed == diskUsed)&&(identical(other.diskTotal, diskTotal) || other.diskTotal == diskTotal)&&(identical(other.diskRead, diskRead) || other.diskRead == diskRead)&&(identical(other.diskWrite, diskWrite) || other.diskWrite == diskWrite)&&(identical(other.netIn, netIn) || other.netIn == netIn)&&(identical(other.netOut, netOut) || other.netOut == netOut));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,at,cpu,memUsed,memTotal,diskUsed,diskTotal,diskRead,diskWrite,netIn,netOut);
 
@@ -1123,11 +1102,11 @@ return $default(_that.at,_that.cpu,_that.memUsed,_that.memTotal,_that.diskUsed,_
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtStats implements VirtStats {
   const _VirtStats({required this.at, this.cpu, this.memUsed, this.memTotal, this.diskUsed, this.diskTotal, this.diskRead, this.diskWrite, this.netIn, this.netOut});
-  factory _VirtStats.fromJson(Map<String, dynamic> json) => _$VirtStatsFromJson(json);
+  
 
 @override final  DateTime at;
 /// Percent of the guest's own vCPUs, 0..100.
@@ -1147,17 +1126,14 @@ class _VirtStats implements VirtStats {
 @pragma('vm:prefer-inline')
 _$VirtStatsCopyWith<_VirtStats> get copyWith => __$VirtStatsCopyWithImpl<_VirtStats>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtStatsToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtStats&&(identical(other.at, at) || other.at == at)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.diskUsed, diskUsed) || other.diskUsed == diskUsed)&&(identical(other.diskTotal, diskTotal) || other.diskTotal == diskTotal)&&(identical(other.diskRead, diskRead) || other.diskRead == diskRead)&&(identical(other.diskWrite, diskWrite) || other.diskWrite == diskWrite)&&(identical(other.netIn, netIn) || other.netIn == netIn)&&(identical(other.netOut, netOut) || other.netOut == netOut));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,at,cpu,memUsed,memTotal,diskUsed,diskTotal,diskRead,diskWrite,netIn,netOut);
 
@@ -1209,7 +1185,6 @@ as double?,
 
 
 }
-
 
 /// @nodoc
 mixin _$VirtCapabilities {
@@ -1287,8 +1262,6 @@ mixin _$VirtCapabilities {
 @pragma('vm:prefer-inline')
 $VirtCapabilitiesCopyWith<VirtCapabilities> get copyWith => _$VirtCapabilitiesCopyWithImpl<VirtCapabilities>(this as VirtCapabilities, _$identity);
 
-  /// Serializes this VirtCapabilities to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -1296,7 +1269,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.hardwareRevertPending, hardwareRevertPending) || other.hardwareRevertPending == hardwareRevertPending)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply)&&(identical(other.networkEditExisting, networkEditExisting) || other.networkEditExisting == networkEditExisting)&&(identical(other.networkRestart, networkRestart) || other.networkRestart == networkRestart));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,hardwareRevertPending,storageEdit,const DeepCollectionEquality().hash(poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(networkModes),networkStart,networkApply,networkEditExisting,networkRestart]);
 
@@ -1507,11 +1480,11 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtCapabilities implements VirtCapabilities {
   const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.snapshotExternal = false, this.snapshotSupported = false, this.storage = false, this.network = false, this.backup = false, this.clone = false, this.linkedClone = false, this.template = false, this.cloneTarget = false, this.backupJobs = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false, this.hardwareRevertPending = false, this.storageEdit = false, final  List<String> poolTypes = const <String>[], this.poolAutostart = false, this.poolDeleteStorage = false, this.volumeResize = false, this.volumeClone = false, this.upload = false, this.networkEdit = false, final  List<String> networkModes = const <String>[], this.networkStart = false, this.networkApply = false, this.networkEditExisting = false, this.networkRestart = false}): _poolTypes = poolTypes,_networkModes = networkModes;
-  factory _VirtCapabilities.fromJson(Map<String, dynamic> json) => _$VirtCapabilitiesFromJson(json);
+  
 
 @override@JsonKey() final  bool lxc;
 @override@JsonKey() final  bool pause;
@@ -1639,17 +1612,14 @@ class _VirtCapabilities implements VirtCapabilities {
 @pragma('vm:prefer-inline')
 _$VirtCapabilitiesCopyWith<_VirtCapabilities> get copyWith => __$VirtCapabilitiesCopyWithImpl<_VirtCapabilities>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtCapabilitiesToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.hardwareRevertPending, hardwareRevertPending) || other.hardwareRevertPending == hardwareRevertPending)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other._poolTypes, _poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other._networkModes, _networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply)&&(identical(other.networkEditExisting, networkEditExisting) || other.networkEditExisting == networkEditExisting)&&(identical(other.networkRestart, networkRestart) || other.networkRestart == networkRestart));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,hardwareRevertPending,storageEdit,const DeepCollectionEquality().hash(_poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(_networkModes),networkStart,networkApply,networkEditExisting,networkRestart]);
 

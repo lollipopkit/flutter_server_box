@@ -3,31 +3,31 @@ title: 程序状态
 description: 查看终端中的程序何时正在等待你、已完成或执行失败
 ---
 
-终端中运行的程序可以向 Server Box 报告自身状态：正在运行、等待你操作、已完成或执行失败。Server Box 会在终端名称旁显示状态；终端当前不可见时，也会发送通知。
+终端中运行的程序可以向 Server Box 主动上报当前状态：运行中、等待确认、已完成或执行失败。Server Box 会在终端标题旁实时展示状态指示，并在终端处于后台时发送系统通知。
 
-服务器无需安装额外软件。程序会将简短的 escape sequence 写入输出，Server Box 可像读取其他终端输出一样，通过 SSH、Monitor agent 终端或本机终端接收。
+服务器端无需安装任何附加组件。程序只需向标准输出写入简短的控制序列（escape sequence），Server Box 即可通过 SSH、Monitor 终端或本机终端自动解析。
 
-## Server Box 读取的内容
+## 支持的状态协议
 
-| Sequence | 发送方 | 表示的状态 |
+| 控制序列 | 常见发送方 | 上报状态 |
 |---|---|---|
-| OSC 7501 | 支持[程序状态协议](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)的程序 | `idle`、`working`（含进度）、`done`、`blocked`（等待批准、回答或登录）或 `error`，并附带标题和消息 |
-| OSC 9;4 | systemd、winget 和其他显示进度条的程序 | 进度、失败、暂停 |
-| OSC 133 | 集成了 shell integration 的 shell，例如 fish 4 | 命令已启动，或已结束并返回退出码 |
+| OSC 7501 | 支持[程序状态协议](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)的程序 | `idle`（空闲）、`working`（运行中，含进度）、`done`（已完成）、`blocked`（等待审批、输入或登录）或 `error`（失败），可附带标题与说明 |
+| OSC 9;4 | `systemd`、`winget` 及其他支持终端进度条的程序 | 进度百分比、失败、暂停 |
+| OSC 133 | 启用了 Shell 集成的 Shell（如 fish 4） | 命令开始执行、命令执行完毕及退出码 |
 
-## 显示位置
+## 状态展示位置
 
-- **终端名称前的状态点**：显示在终端标签页切换器、终端列表和侧边栏中。程序等待你操作时显示橙色，失败时显示红色，完成时显示绿色，运行时显示强调色（报告进度时显示为圆环）。程序仅处于空闲状态时不显示状态点。
-- **终端栏中的状态按钮**：列出所有报告，首先是终端自身 shell 的报告，其后是每个 tmux pane 的报告。已完成或失败的报告会保留，直到程序更新报告或你在此处清除报告。
-- **tmux**：窗口标记使用其 pane 中优先级最高的状态颜色；pane 菜单会显示各 pane 的报告。即使 pane 当前不在屏幕上，也会读取其报告。
-- **通知**：终端当前不可见时，例如显示其他标签页或 App 在后台运行，程序开始等待、完成或失败时会显示通知。运行时间达到 30 秒的命令结束时也会显示通知。点击通知可打开对应终端。可在 **设置 → SSH → 程序需要你时通知** 中关闭此功能。
-- Android 上的**持续通知**和 iOS 上的 **Live Activity** 会显示 session 中程序的状态（等待、已完成、失败或运行中），而不是地址。这两处无需解锁即可查看，因此只显示状态，不显示程序报告的标题或消息；上述通知开关关闭时不显示。
-- **Agent** 会结合屏幕内容读取这些报告，因此可以判断程序正在等待回答。
-- **Monitor agent 的 Web panel** 会在终端上方显示优先级最高的报告。
+- **终端名称前的状态圆点**：展示在终端标签切换器、终端列表及侧边栏中。等待操作时为橙色，执行失败时为红色，已完成时为绿色，运行中为主题强调色（含进度时显示为进度环）；空闲状态下不显示圆点。
+- **终端工具栏状态按钮**：汇总展示当前会话的所有状态报告，依次为外层 Shell 状态及各个 `tmux` 窗格（pane）的状态。已完成或失败的记录会一直保留，直到程序刷新状态或你手动清除。
+- **tmux 集成**：窗口标签采用其下属窗格中优先级最高的状态颜色，窗格菜单内可分别查看各窗格的状态详情。即便某个窗格当前未在屏幕显示，其上报的状态依然会被实时捕获。
+- **系统通知**：当终端不在当前前台（如已切换到其他标签页或应用退至后台）时，若程序进入等待操作、完成或失败状态，或是耗时超过 30 秒的命令执行结束，应用都会发送系统通知，点击通知即可直接跳转到对应终端。可在 **设置 → SSH → 程序需要操作时通知** 中关闭。
+- **Android 常驻通知与 iOS 实时活动（Live Activity）**：在锁屏或通知栏展示当前会话中程序的状态（等待操作、已完成、失败或运行中）。由于锁屏界面无需解锁即可查看，此处仅显示状态类别，不展示具体标题与消息正文；关闭上述通知开关后将不再显示。
+- **AI Agent**：Agent 会结合终端屏幕内容一并读取状态报告，从而准确判断程序是否正在等待交互输入。
+- **Monitor Web 面板**：在网页终端顶部展示当前优先级最高的状态报告。
 
-## 在自有脚本中报告状态
+## 在自定义脚本中上报状态
 
-报告格式为 `ESC ] 7501 ; key=value:key=value ESC \`，其中 `msg` 和 `title` 使用 base64 编码：
+状态序列格式为 `ESC ] 7501 ; key=value:key=value ESC \`，其中 `msg` 与 `title` 字段需使用 Base64 编码：
 
 ```sh
 status() {
@@ -39,12 +39,12 @@ status working 'Backing up /srv'
 status done 'Backup finished'
 ```
 
-`state=clear` 会移除报告。程序的 shell 显示下一个 prompt（启用了 shell integration 时）或 session 结束时，`working`、`blocked` 和 `idle` 报告会被移除；`done` 和 `error` 报告会保留。多个报告、同一程序的报告 `id` 等完整规则见[规范](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)。
+发送 `state=clear` 可清除当前状态。当启用了 Shell 集成并显示下一个命令提示符，或终端会话结束时，`working`、`blocked` 和 `idle` 状态会自动清除，`done` 与 `error` 状态则会保留。关于多任务并发上报及 `id` 标识的完整规范，请参阅[协议文档](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)。
 
-## tmux
+## tmux 透传说明
 
-Server Box 以 control mode 连接 tmux，tmux 会原样传递每个 pane 的输出，因此 tmux pane 中的报告无需额外设置。
+Server Box 客户端使用控制模式（control mode）连接 `tmux`，可直接获取每个窗格的原始输出，因此无需额外配置即可识别状态序列。
 
-Monitor agent 的 Web panel 会连接普通 tmux client。tmux 会丢弃它不识别的 sequence，因此只有启用 `allow-passthrough`（`set -g allow-passthrough on`），且程序为 tmux 封装报告（`ESC P tmux; …  ESC \`，并将其中每个 `ESC` 加倍）时，报告才会传到 panel。
+Monitor Web 面板则通过常规 `tmux` 客户端连接，由于 `tmux` 默认会过滤未知的控制序列，需在 `~/.tmux.conf` 中开启透传（`set -g allow-passthrough on`），并由脚本将控制序列按 `tmux` 透传格式封装（`ESC P tmux; … ESC \`，且内部每个 `ESC` 需双写转义），状态报告才能传递到网页面板。
 
-程序查询终端是否支持报告（`OSC 7501 ; ?`）时，通过 tmux 无法收到应答，因为 tmux 会先响应后续查询。程序仍可发送报告。
+此外，在 `tmux` 会话内查询终端是否支持状态协议（`OSC 7501 ; ?`）时无法收到应答，但直接发送状态序列不受影响。

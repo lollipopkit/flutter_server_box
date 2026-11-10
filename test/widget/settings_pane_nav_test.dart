@@ -10,13 +10,13 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
@@ -26,8 +26,10 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 import '../helpers/test_db.dart';
 
@@ -42,8 +44,9 @@ void _useWideView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app() => ProviderScope(
+Widget _app({GlobalKey<NavigatorState>? navigatorKey, bool pushed = false}) => ProviderScope(
   child: MaterialApp(
+    navigatorKey: navigatorKey,
     locale: const Locale('en'),
     localizationsDelegates: const [
       ...app_locale.appLocalizationsDelegates,
@@ -53,11 +56,32 @@ Widget _app() => ProviderScope(
       builder: (context) {
         app_locale.l10n = AppLocalizations.of(context)!;
         context.setLibL10n();
-        return const SettingsPage();
+        return pushed ? const Scaffold(body: Text('under')) : const SettingsPage();
       },
     ),
   ),
 );
+
+/// The settings pushed over a page, as the home pushes them where a tab is
+/// shown; [_left] once they are gone.
+Future<void> _pushSettings(WidgetTester tester, {bool rail = false}) async {
+  final nav = GlobalKey<NavigatorState>();
+  await tester.pumpWidget(_app(navigatorKey: nav, pushed: true));
+  unawaited(
+    nav.currentState!.push(
+      AppPageRoute<void>(builder: (_) => RailBeside(present: rail, child: const SettingsPage())),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 600));
+}
+
+Future<bool> _left(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  return find.byType(SettingsPage).evaluate().isEmpty;
+}
 
 /// One group as a route builds it, which is what a caller outside the settings
 /// tree gets.
@@ -88,6 +112,12 @@ NavigatorState _contentNav(WidgetTester tester) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // The search builds the rows, and one of them reads `Paths.doc`.
+  setUpAll(() {
+    Paths.doc = Directory.systemTemp.createTempSync('server-box-pane-').path;
+  });
+  tearDownAll(() => Directory(Paths.doc).deleteSync(recursive: true));
 
   setUp(() async {
     await openTestDb();
@@ -215,5 +245,152 @@ void main() {
       isNull,
       reason: 'the content navigator still has a page in it',
     );
+  });
+
+  testWidgets('a pushed page with unsaved edits is asked, and can refuse', (
+    tester,
+  ) async {
+    _useWideView(tester);
+    await tester.pumpWidget(_app());
+    await tester.pump(const Duration(milliseconds: 300));
+
+    var answer = false;
+    var asked = 0;
+    unawaited(
+      _contentNav(tester).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PopGuard(
+            enabled: true,
+            confirm: () async {
+              asked++;
+              return answer;
+            },
+            child: const Scaffold(body: Text('dirty editor')),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.text(libL10n.about).first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(asked, 1);
+    expect(find.text('dirty editor'), findsOneWidget);
+
+    // Platform back reaches the editor rather than skipping past it.
+    await tester.binding.handlePopRoute();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(asked, 2);
+    expect(find.text('dirty editor'), findsOneWidget);
+
+    answer = true;
+    await tester.tap(find.text(libL10n.about).first);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(asked, 3);
+    expect(find.text('dirty editor'), findsNothing);
+  });
+
+  group('pushed where a tab is shown', () {
+    for (final (name, width) in [('wide', 1400.0), ('narrow', 400.0)]) {
+      testWidgets('$name: back and its button put the settings away', (
+        tester,
+      ) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 900);
+        addTearDown(tester.view.reset);
+        final wide = width >= 1000;
+        await _pushSettings(tester, rail: wide);
+
+        await tester.binding.handlePopRoute();
+        expect(await _left(tester), isTrue);
+
+        // Wide, the home rail beside the settings is the way out.
+        await _pushSettings(tester, rail: wide);
+        if (!wide) {
+          await tester.tap(find.byType(BackButton).hitTestable().first);
+          expect(await _left(tester), isTrue);
+        } else {
+          expect(find.byType(BackButton), findsNothing);
+        }
+      });
+    }
+
+    testWidgets('narrow on iOS, a swipe from the left edge is followed, and puts the settings away', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 900);
+      addTearDown(tester.view.reset);
+      await _pushSettings(tester);
+
+      Future<void> swipe(int steps) async {
+        final g = await tester.startGesture(const Offset(4, 450));
+        for (var i = 0; i < steps; i++) {
+          await g.moveBy(const Offset(30, 0));
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        // Followed: the page under shows through.
+        expect(find.text('under'), findsOneWidget);
+        await g.up();
+      }
+
+      // Short of a third, slowly: back to the settings.
+      await swipe(3);
+      expect(await _left(tester), isFalse);
+
+      await swipe(10);
+      expect(await _left(tester), isTrue);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('wide with no rail, the header button leaves the settings with a page open in them', (tester) async {
+      _useWideView(tester);
+      await _pushSettings(tester);
+      unawaited(
+        _contentNav(tester).push(
+          MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('pushed editor'))),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await tester.tap(
+        find.descendant(of: find.byKey(settingsHeaderKey), matching: find.byType(BackButton)),
+      );
+      expect(await _left(tester), isTrue);
+    });
+
+    testWidgets('back leaves a pushed page and a search before the settings', (
+      tester,
+    ) async {
+      _useWideView(tester);
+      await _pushSettings(tester);
+
+      unawaited(
+        _contentNav(tester).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('pushed editor')),
+          ),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.binding.handlePopRoute();
+      expect(await _left(tester), isFalse);
+      expect(find.text('pushed editor'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'zzzz');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.binding.handlePopRoute();
+      expect(await _left(tester), isFalse);
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        isEmpty,
+      );
+
+      await tester.binding.handlePopRoute();
+      expect(await _left(tester), isTrue);
+    });
   });
 }

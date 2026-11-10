@@ -1,0 +1,64 @@
+# Jellyfin 12.2 (GPL-2.0-only), https://github.com/jellyfin/jellyfin/releases/tag/v12.2
+#
+# Written for ServerBox Monitor's Media app from upstream's container page
+# (jellyfin.org/docs/general/installation/container) and the Dockerfile of the
+# official image (jellyfin/jellyfin-packaging), not copied from a release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - `user:` is the uid:gid form upstream's docs show; the image runs as root
+#   by default. The config and cache folders are owned by that user;
+# - the transcoding backend is one service of hwaccel.yml, merged in by `extends`;
+# - the published address and ports, and the folders, come from the env file
+#   the agent writes.
+# - mcp: jaredtrent/jellyfin-mcp 2026.1015.1 (MIT), Agent mode's MCP server with
+#   the API key set in the app's settings; it asks for the token the agent holds
+#   (HTTP_TOKEN) itself, published on loopback alone. Until the key is set it
+#   waits instead of exiting, so the app is not reported down for it.
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
+    extends:
+      file: hwaccel.yml
+      service: ${TRANSCODE_BACKEND}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${JELLYFIN_CONFIG_LOCATION}:/config
+      - ${JELLYFIN_CACHE_LOCATION}:/cache
+      - ${JELLYFIN_MEDIA_LOCATION}:/media:ro
+      - ${JELLYFIN_MUSIC_LOCATION}:/music:ro
+    ports:
+      - '${JELLYFIN_BIND}:${JELLYFIN_PORT}:8096/tcp'
+      - '${JELLYFIN_BIND}:${JELLYFIN_DISCOVERY_PORT}:7359/udp'
+    restart: unless-stopped
+    # /health is the route the image's own HEALTHCHECK uses (HEALTHCHECK_URL).
+    healthcheck:
+      test: ["CMD", "curl", "--noproxy", "localhost", "-fsS", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 10s
+
+  mcp:
+    image: ghcr.io/jaredtrent/jellyfin-mcp:2026.1015.1@sha256:9b9c8ec91c5561d64176a88ce3933489c3903e669f4458e5f5cf3841fb822bb6
+    environment:
+      JELLYFIN_URL: http://jellyfin:8096
+      JELLYFIN_API_KEY: ${JELLYFIN_MCP_API_KEY:-}
+      HTTP_TOKEN: ${MCP_TOKEN}
+      TZ: ${SBM_TZ}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$${JELLYFIN_API_KEY}" ]; then
+          echo "Waiting for an API key in the app's settings."
+          while :; do sleep 3600; done
+        fi
+        exec /usr/local/bin/jellyfin-mcp --http --addr 0.0.0.0:8080
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    healthcheck:
+      disable: true
+    depends_on:
+      - jellyfin
+    restart: unless-stopped

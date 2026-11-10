@@ -68,12 +68,15 @@ void cardTests() {
 
     expect(find.text('sensor 5'), findsOneWidget);
     expect(find.text('sensor 6'), findsNothing);
-    expect(find.text('6 of 9 sensors'), findsOneWidget);
+    expect(
+      find.text(l10n.shownOfFmt(kReadoutCardRows, 9, 'sensors')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text(l10n.showAllFmt(9)));
     await tester.pumpAndSettle();
     expect(find.text('sensor 8'), findsOneWidget);
-    expect(find.text('9 sensors'), findsOneWidget);
+    expect(find.text(l10n.countOfFmt(9, 'sensors')), findsOneWidget);
 
     await tester.tap(find.text(libL10n.fold));
     await tester.pumpAndSettle();

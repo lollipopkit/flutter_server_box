@@ -11,7 +11,7 @@ description: 主题包格式、校验与发布
 
 主题包格式可参考
 [Aurora](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/examples/aurora/manifest.toml)。
-开发时可在桌面端选择 **Install theme → Folder**，导入主题源目录进行预览。应用会校验
+开发时可在桌面端选择 **安装主题 → 文件夹**，导入主题源目录进行预览。应用会校验
 并复制文件；修改后重新选择该目录即可重新加载。分发时，将目录内容打成 ZIP，确保
 `manifest.toml` 位于压缩包根目录，再将扩展名设为 `.fsbt`。
 
@@ -93,7 +93,7 @@ Light 和 Dark 均可选。
 旧的 AMOLED 设置迁移为 Dark + AMOLED，Auto AMOLED 迁移为 System + AMOLED；AMOLED
 不再是 ThemeMode 的选项。
 `format` 表示 ZIP 中 manifest 结构的版本。`schema` 表示该包支持的 theme UI schema
-版本范围，包含首尾。应用目前支持 schema **v1–v4**，并在 **Install theme** 的帮助文字
+版本范围，包含首尾。应用目前支持 schema **v1–v4**，并在 **安装主题** 的帮助文字
 中显示该范围。安装器要求包与应用支持的范围有交集；加载已安装主题时也会再次检查。
 `schema.min`
 和 `schema.max` 都是必填。
@@ -308,7 +308,8 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 ## Image key 与上限
 
 支持的 icon key 是 `tab.<tab>` 和 `tab.<tab>.selected`，其中 `<tab>` 取 `server`、
-`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。navigation key 有
+`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`、`workspace`、
+`monitor`。navigation key 有
 `nav.more`、`nav.settings`、`nav.tune`、`nav.privacy`、`nav.agent`、`nav.tabs`、
 `nav.server`、`nav.sort`、`nav.terminal`、`nav.folder`、`nav.cloud`、`nav.snippet`、
 `nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。Files 窗口还会绘制
@@ -399,7 +400,7 @@ max = 4
 具体主题或版本。第二层是 **repository**，即存放主题 TOML 文件的 git 仓库，每个主题
 对应一个文件。
 
-在 **Settings → Appearance → Theme store** 可打开主题商店页面。页面将 catalog 中的
+在 **设置 → 外观 → 主题商店** 可打开主题商店页面。页面将 catalog 中的
 主题与本机已安装的主题合并为一个列表，同一主题只显示一项。点按未安装的主题可安装并
 应用；点按已安装的主题可应用。每项右侧的按钮会根据状态提供安装或移除操作。移除当前
 主题后，应用会切回默认主题。

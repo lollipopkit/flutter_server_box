@@ -745,7 +745,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           Builder(
             key: ValueKey('netguest:$i'),
             builder: (context) {
-              final guest = virtGuestOf(host, u);
+              final guest = virtGuestOf(host.guests, u);
               final state = guest == null ? null : host.displayState(guest);
               final sub = [?u.device, ?u.ip, ?u.mac].join(' · ');
               return _box(
@@ -764,7 +764,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            virtGuestLabel(host, u),
+                            virtGuestLabel(host.guests, u),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: UIs.text13,

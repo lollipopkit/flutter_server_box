@@ -1,0 +1,75 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# changedetection.io: deployed with Docker Compose from compose.yaml beside
+# this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "dgtlmoon"
+name = "changedetection"
+project = "changedetection.io"
+developer = "dgtlmoon"
+version = "0.60.9"
+homepage = "https://changedetection.io"
+source = "https://github.com/dgtlmoon/changedetection.io/tree/0.60.9"
+glyph = "difference"
+tone = "teal"
+categories = ["tools", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "changedetection.io"
+
+[description]
+en = "Watch web pages for changes: prices, stock, release notes, any part of a page you pick. Each change is kept with a diff and can be sent as a notification."
+zh = "监视网页的变化：价格、库存、发布说明，或你选中的页面任意部分。每次变化都会保留差异对比，并可发送通知。"
+zh-TW = "監視網頁的變化：價格、庫存、發布說明，或你選取的頁面任意部分。每次變化都會保留差異比對，並可傳送通知。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/dgtlmoon/changedetection.io/blob/0.60.9/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+CHANGEDETECTION_VERSION = "0.60.9"
+
+[[secrets]]
+env = "CHANGEDETECTION_PASSWORD"
+length = 32
+
+[login]
+password = "CHANGEDETECTION_PASSWORD"
+note = { en = "Its page asks for the password only. The app sets it at every start, so it cannot be removed in Settings.", zh = "页面只要求输入密码。应用每次启动都会设置它，因此无法在 Settings 中移除。", zh-TW = "頁面只要求輸入密碼。應用每次啟動都會設定它，因此無法在 Settings 中移除。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "CHANGEDETECTION_DATA"
+default = "{stack}/datastore"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The watches, their history and snapshots.", zh = "监视项及其历史记录和快照。", zh-TW = "監視項目及其歷史紀錄和快照。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "CHANGEDETECTION_PORT"
+default = 5000
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { CHANGEDETECTION_BIND = "0.0.0.0" }
+off = { CHANGEDETECTION_BIND = "127.0.0.1" }

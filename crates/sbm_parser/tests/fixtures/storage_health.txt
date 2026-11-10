@@ -1,0 +1,334 @@
+### /dev/nvme0n1
+{
+  "smartctl": {
+    "version": [
+      7,
+      5
+    ],
+    "exit_status": 0
+  },
+  "device": {
+    "name": "/dev/nvme0n1",
+    "info_name": "/dev/nvme0n1",
+    "type": "nvme",
+    "protocol": "NVMe"
+  },
+  "model_name": "KIOXIA-EXCERIA SSD",
+  "smart_support": {
+    "available": true,
+    "enabled": true
+  },
+  "temperature": {
+    "op_limit_max": 72,
+    "critical_limit_max": 90,
+    "current": 58
+  },
+  "smart_status": {
+    "passed": true,
+    "nvme": {
+      "value": 0
+    }
+  },
+  "nvme_smart_health_information_log": {
+    "nsid": -1,
+    "critical_warning": 0,
+    "temperature": 58,
+    "available_spare": 100,
+    "available_spare_threshold": 5,
+    "percentage_used": 4,
+    "data_units_read": 39317033,
+    "data_units_written": 18654383,
+    "host_reads": 445775331,
+    "host_writes": 253300114,
+    "controller_busy_time": 915,
+    "power_cycles": 591,
+    "power_on_hours": 15511,
+    "unsafe_shutdowns": 327,
+    "media_errors": 0,
+    "num_err_log_entries": 1207,
+    "warning_temp_time": 2,
+    "critical_comp_time": 0
+  },
+  "power_on_time": {
+    "hours": 15511
+  },
+  "nvme_self_test_log": {
+    "nsid": -1,
+    "current_self_test_operation": {
+      "value": 1,
+      "string": "Short self-test in progress"
+    },
+    "current_self_test_completion_percent": 13
+  }
+}
+### /dev/nvme1n1
+{
+  "smartctl": {
+    "version": [
+      7,
+      5
+    ],
+    "exit_status": 0
+  },
+  "device": {
+    "name": "/dev/nvme0n1",
+    "info_name": "/dev/nvme0n1",
+    "type": "nvme",
+    "protocol": "NVMe"
+  },
+  "model_name": "KIOXIA-EXCERIA SSD",
+  "smart_support": {
+    "available": true,
+    "enabled": true
+  },
+  "temperature": {
+    "op_limit_max": 72,
+    "critical_limit_max": 90,
+    "current": 63
+  },
+  "smart_status": {
+    "passed": true,
+    "nvme": {
+      "value": 0
+    }
+  },
+  "nvme_smart_health_information_log": {
+    "nsid": -1,
+    "critical_warning": 0,
+    "temperature": 63,
+    "available_spare": 100,
+    "available_spare_threshold": 5,
+    "percentage_used": 4,
+    "data_units_read": 39317124,
+    "data_units_written": 18654400,
+    "host_reads": 445775999,
+    "host_writes": 253301147,
+    "controller_busy_time": 915,
+    "power_cycles": 591,
+    "power_on_hours": 15511,
+    "unsafe_shutdowns": 327,
+    "media_errors": 0,
+    "num_err_log_entries": 1207,
+    "warning_temp_time": 2,
+    "critical_comp_time": 0
+  },
+  "power_on_time": {
+    "hours": 15511
+  },
+  "nvme_self_test_log": {
+    "nsid": -1,
+    "current_self_test_operation": {
+      "value": 0,
+      "string": "No self-test in progress"
+    },
+    "table": [
+      {
+        "self_test_code": {
+          "value": 1,
+          "string": "Short"
+        },
+        "self_test_result": {
+          "value": 0,
+          "string": "Completed without error"
+        },
+        "power_on_hours": 15511
+      }
+    ]
+  }
+}
+### /dev/sda
+{
+  "smartctl": {
+    "version": [
+      7,
+      5
+    ],
+    "exit_status": 4
+  },
+  "device": {
+    "name": "/dev/sda",
+    "info_name": "/dev/sda",
+    "type": "scsi",
+    "protocol": "SCSI"
+  },
+  "model_name": "QEMU QEMU HARDDISK",
+  "smart_support": {
+    "available": false
+  },
+  "temperature": {
+    "current": 0,
+    "drive_trip": 0
+  }
+}
+### /dev/sdb
+{
+  "smartctl": {
+    "version": [
+      7,
+      4
+    ],
+    "exit_status": 64
+  },
+  "device": {
+    "name": "/dev/sdb",
+    "type": "sat",
+    "protocol": "ATA"
+  },
+  "model_name": "WDC WD40EFRX-68N32N0",
+  "smart_support": {
+    "available": true,
+    "enabled": true
+  },
+  "smart_status": {
+    "passed": true
+  },
+  "ata_smart_data": {
+    "self_test": {
+      "status": {
+        "value": 249,
+        "string": "in progress, 90% remaining",
+        "remaining_percent": 90
+      },
+      "polling_minutes": {
+        "short": 2,
+        "extended": 476
+      }
+    }
+  },
+  "ata_smart_attributes": {
+    "revision": 16,
+    "table": [
+      {
+        "id": 5,
+        "name": "Reallocated_Sector_Ct",
+        "value": 200,
+        "worst": 200,
+        "thresh": 140,
+        "raw": {
+          "value": 8,
+          "string": "8"
+        }
+      },
+      {
+        "id": 194,
+        "name": "Temperature_Celsius",
+        "value": 116,
+        "worst": 104,
+        "thresh": 0,
+        "raw": {
+          "value": 171798691875,
+          "string": "35 (Min/Max 20/40)"
+        }
+      },
+      {
+        "id": 197,
+        "name": "Current_Pending_Sector",
+        "value": 200,
+        "worst": 200,
+        "thresh": 0,
+        "raw": {
+          "value": 2,
+          "string": "2"
+        }
+      },
+      {
+        "id": 198,
+        "name": "Offline_Uncorrectable",
+        "value": 100,
+        "worst": 253,
+        "thresh": 0,
+        "raw": {
+          "value": 0,
+          "string": "0"
+        }
+      }
+    ]
+  },
+  "power_on_time": {
+    "hours": 31024
+  },
+  "ata_smart_self_test_log": {
+    "standard": {
+      "revision": 1,
+      "table": [
+        {
+          "type": {
+            "value": 2,
+            "string": "Extended offline"
+          },
+          "status": {
+            "value": 15,
+            "string": "Self-test routine in progress",
+            "remaining_percent": 90
+          },
+          "lifetime_hours": 31024
+        },
+        {
+          "type": {
+            "value": 2,
+            "string": "Extended offline"
+          },
+          "status": {
+            "value": 7,
+            "string": "Completed: read failure",
+            "remaining_percent": 60,
+            "passed": false
+          },
+          "lifetime_hours": 30980,
+          "lba": 123456
+        },
+        {
+          "type": {
+            "value": 1,
+            "string": "Short offline"
+          },
+          "status": {
+            "value": 0,
+            "string": "Completed without error",
+            "passed": true
+          },
+          "lifetime_hours": 30000
+        }
+      ],
+      "count": 3
+    }
+  }
+}
+### /dev/sdc
+{
+  "smartctl": {
+    "version": [
+      7,
+      4
+    ],
+    "exit_status": 2,
+    "messages": [
+      {
+        "string": "Device is in STANDBY mode, exit(2)",
+        "severity": "information"
+      }
+    ]
+  },
+  "device": {
+    "name": "/dev/sdc",
+    "type": "sat",
+    "protocol": "ATA"
+  }
+}
+### /dev/sdd
+{
+  "smartctl": {
+    "version": [
+      7,
+      4
+    ],
+    "exit_status": 2,
+    "messages": [
+      {
+        "string": "Smartctl open device: /dev/sdd failed: No such device",
+        "severity": "error"
+      }
+    ]
+  }
+}
+### /dev/sde

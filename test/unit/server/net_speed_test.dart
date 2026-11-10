@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
 
 NetSpeedPart _part(String dev, int inB, int outB, int time) =>
     NetSpeedPart(dev, BigInt.from(inB), BigInt.from(outB), time);

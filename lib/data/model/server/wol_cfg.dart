@@ -33,9 +33,10 @@ final class WakeOnLanCfg {
   }
 
   Future<void> wake() {
-    if (!validate().$2) {
-      throw Exception('Invalid WakeOnLanCfg');
-    }
+    final (err, valid) = validate();
+    // The editor validates before saving; a stored config that no longer
+    // passes says why, in the words the editor would have used.
+    if (!valid) throw FormatException('${err ?? 'Invalid Wake-on-LAN config'}');
 
     final ip_ = IPAddress(ip);
     final mac_ = MACAddress(mac);
@@ -48,4 +49,14 @@ final class WakeOnLanCfg {
       _$WakeOnLanCfgFromJson(json);
 
   Map<String, dynamic> toJson() => _$WakeOnLanCfgToJson(this);
+
+  @override
+  bool operator ==(Object other) =>
+      other is WakeOnLanCfg &&
+      other.mac == mac &&
+      other.ip == ip &&
+      other.pwd == pwd;
+
+  @override
+  int get hashCode => Object.hash(mac, ip, pwd);
 }

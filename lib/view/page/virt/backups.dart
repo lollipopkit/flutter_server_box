@@ -73,7 +73,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   /// The options a run now takes. The storage starts as the job's own (or
   /// the first that holds backups) and the rest as the design has them.
   String? _storage;
-  String _mode = 'snapshot';
+  VirtBackupMode _mode = VirtBackupMode.snapshot;
   String _compress = 'zstd';
   final _notes = TextEditingController();
   var _protect = false;
@@ -225,7 +225,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       j.schedule ?? '-',
       [
         ?j.storage,
-        ?j.mode,
+        ?j.mode?.name,
         if (!j.enabled) libL10n.disabled,
       ].join(' · '),
       marked: j.enabled,
@@ -239,7 +239,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       _field(
         Icons.compress,
         libL10n.mode,
-        [?j.mode, ?j.compress].join(' · '),
+        [?j.mode?.name, ?j.compress].join(' · '),
         indent: true,
       ),
       if (!j.takesOnly(_guest.vmid))
@@ -421,10 +421,10 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         _seg(
           Icons.restart_alt,
           libL10n.mode,
-          const ['snapshot', 'suspend', 'stop'],
-          _mode,
+          [for (final m in VirtBackupMode.values) m.name],
+          _mode.name,
           key: 'opt:mode',
-          onSelected: blocked ? null : (v) => setState(() => _mode = v),
+          onSelected: blocked ? null : (v) => setState(() => _mode = VirtBackupMode.values.byName(v)),
         ),
         _seg(
           Icons.compress,
@@ -452,7 +452,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           note: l10n.virtBackupProtectTip,
           onChanged: blocked ? null : (on) => setState(() => _protect = on),
         ),
-        if (_live && _mode != 'snapshot')
+        if (_live && _mode != VirtBackupMode.snapshot)
           _text(l10n.virtBackupModeStops),
         _actions([
           _Action(
@@ -736,7 +736,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       return;
     }
     await _run(
-      () => _notifier.editBackupJob(_removal(j), remove: true),
+      () => _notifier.deleteBackupJob(j),
       l10n.virtBackupJobDeleted,
     );
   }

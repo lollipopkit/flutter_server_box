@@ -6,7 +6,7 @@ import 'package:fl_tty/fl_tty.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/feature.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -181,7 +181,7 @@ Future<bool> _confirmBeta(BuildContext context) async {
                 value: noMore,
                 onChanged: (v) => setState(() => noMore = v ?? false),
               ),
-              Text(l10n.noPromptAgain),
+              Expanded(child: Text(l10n.noPromptAgain)),
             ],
           ),
         ),

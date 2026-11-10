@@ -1,0 +1,26 @@
+# Written for ServerBox Monitor: the gate in front of n8n's MCP server
+# (/mcp-server/http), which asks for the owner's MCP API key. It asks Agent
+# mode for MCP_TOKEN and passes requests on with the key seed-mcp made
+# (N8N_MCP_KEY, read at start): the agent never holds it. nginx's image fills
+# ${MCP_TOKEN} and ${N8N_MCP_KEY} in at start (envsubst over the variables it
+# is given; nginx's own `$…` stay).
+server {
+    listen 8080;
+
+    location = /mcp {
+        if ($http_authorization != "Bearer ${MCP_TOKEN}") {
+            return 401;
+        }
+        proxy_pass http://n8n:5678/mcp-server/http;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Authorization "Bearer ${N8N_MCP_KEY}";
+        # Streamable HTTP answers as an event stream: passed on as it comes.
+        proxy_buffering off;
+        proxy_read_timeout 1h;
+    }
+
+    location / {
+        return 404;
+    }
+}

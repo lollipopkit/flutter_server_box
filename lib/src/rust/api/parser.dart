@@ -6,30 +6,127 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `parse_system_or_err`, `parse_system`
+// These functions are ignored because they are not marked as `pub`: `whole`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`, `from`
 
-/// Parse all output of one collection round, returning `ServerStatus` JSON.
-/// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
-///
-/// Beside the status, `disk_used` and `disk_size` (KiB): the disk total, by
-/// `sbm_parser::types::disk_usage` — the one the monitor agent stores — with
-/// network filesystems in it only when `count_network`.
-/// Async: runs on the Rust thread pool without blocking the UI isolate
-Future<String> parseStatusJson({
-  required String system,
+/// Parses all output of one collection round; see `ParseOptions` for
+/// `temp_divisor`. Async: runs on the Rust
+/// thread pool without blocking the UI isolate.
+Future<StatusReport> parseStatus({
+  required SystemType system,
   required Map<String, String> raw,
   required double tempDivisor,
   required bool countNetwork,
-}) => RustLib.instance.api.crateApiParserParseStatusJson(
+}) => RustLib.instance.api.crateApiParserParseStatus(
   system: system,
   raw: raw,
   tempDivisor: tempDivisor,
   countNetwork: countNetwork,
 );
 
+/// The probe that tells a Unix server's system (`sbm_parser::system`).
+String systemProbeUname() =>
+    RustLib.instance.api.crateApiParserSystemProbeUname();
+
+/// The probe that tells Windows, run when `uname` said nothing it knows.
+String systemProbeVer() => RustLib.instance.api.crateApiParserSystemProbeVer();
+
+/// What `uname -a` said: Linux or a BSD; `None` when it says neither.
+SystemType? systemFromUname({required String output}) =>
+    RustLib.instance.api.crateApiParserSystemFromUname(output: output);
+
+/// Windows when `ver` answered as Windows does.
+SystemType? systemFromVer({required String output}) =>
+    RustLib.instance.api.crateApiParserSystemFromVer(output: output);
+
+/// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
+/// `None` when it cannot be read.
+BigInt? uptimeSeconds({required String formatted}) =>
+    RustLib.instance.api.crateApiParserUptimeSeconds(formatted: formatted);
+
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
-List<CommandSpec> commandSpecs({required String system}) =>
+List<CommandSpec> commandSpecs({required SystemType system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);
+
+class AmdSmiItem {
+  final String name;
+  final PlatformInt64? temp;
+  final String? power;
+  final GpuMem? memory;
+  final PlatformInt64? utilization;
+  final PlatformInt64? fanSpeed;
+  final PlatformInt64? clockSpeed;
+
+  const AmdSmiItem({
+    required this.name,
+    this.temp,
+    this.power,
+    this.memory,
+    this.utilization,
+    this.fanSpeed,
+    this.clockSpeed,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      temp.hashCode ^
+      power.hashCode ^
+      memory.hashCode ^
+      utilization.hashCode ^
+      fanSpeed.hashCode ^
+      clockSpeed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AmdSmiItem &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          temp == other.temp &&
+          power == other.power &&
+          memory == other.memory &&
+          utilization == other.utilization &&
+          fanSpeed == other.fanSpeed &&
+          clockSpeed == other.clockSpeed;
+}
+
+class Battery {
+  final PlatformInt64? percent;
+  final BatteryStatus status;
+  final String? name;
+  final PlatformInt64? cycle;
+  final String? tech;
+
+  const Battery({
+    this.percent,
+    required this.status,
+    this.name,
+    this.cycle,
+    this.tech,
+  });
+
+  @override
+  int get hashCode =>
+      percent.hashCode ^
+      status.hashCode ^
+      name.hashCode ^
+      cycle.hashCode ^
+      tech.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Battery &&
+          runtimeType == other.runtimeType &&
+          percent == other.percent &&
+          status == other.status &&
+          name == other.name &&
+          cycle == other.cycle &&
+          tech == other.tech;
+}
+
+enum BatteryStatus { charging, discharging, full, unknown }
 
 /// Collection command, single source of truth shared with the app's script generation
 class CommandSpec {
@@ -48,4 +145,719 @@ class CommandSpec {
           runtimeType == other.runtimeType &&
           key == other.key &&
           cmd == other.cmd;
+}
+
+class Conn {
+  final PlatformInt64 maxConn;
+  final PlatformInt64 fail;
+
+  const Conn({required this.maxConn, required this.fail});
+
+  @override
+  int get hashCode => maxConn.hashCode ^ fail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Conn &&
+          runtimeType == other.runtimeType &&
+          maxConn == other.maxConn &&
+          fail == other.fail;
+}
+
+class CpuCore {
+  final String id;
+  final BigInt user;
+  final BigInt sys;
+  final BigInt nice;
+  final BigInt idle;
+  final BigInt iowait;
+  final BigInt irq;
+  final BigInt softirq;
+
+  const CpuCore({
+    required this.id,
+    required this.user,
+    required this.sys,
+    required this.nice,
+    required this.idle,
+    required this.iowait,
+    required this.irq,
+    required this.softirq,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      user.hashCode ^
+      sys.hashCode ^
+      nice.hashCode ^
+      idle.hashCode ^
+      iowait.hashCode ^
+      irq.hashCode ^
+      softirq.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CpuCore &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          user == other.user &&
+          sys == other.sys &&
+          nice == other.nice &&
+          idle == other.idle &&
+          iowait == other.iowait &&
+          irq == other.irq &&
+          softirq == other.softirq;
+}
+
+class Disk {
+  final String path;
+  final String? fsType;
+  final String mount;
+  final int usedPercent;
+  final BigInt used;
+  final BigInt size;
+  final BigInt avail;
+  final String? name;
+  final String? kname;
+  final String? uuid;
+  final List<Disk> children;
+
+  const Disk({
+    required this.path,
+    this.fsType,
+    required this.mount,
+    required this.usedPercent,
+    required this.used,
+    required this.size,
+    required this.avail,
+    this.name,
+    this.kname,
+    this.uuid,
+    required this.children,
+  });
+
+  @override
+  int get hashCode =>
+      path.hashCode ^
+      fsType.hashCode ^
+      mount.hashCode ^
+      usedPercent.hashCode ^
+      used.hashCode ^
+      size.hashCode ^
+      avail.hashCode ^
+      name.hashCode ^
+      kname.hashCode ^
+      uuid.hashCode ^
+      children.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Disk &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          fsType == other.fsType &&
+          mount == other.mount &&
+          usedPercent == other.usedPercent &&
+          used == other.used &&
+          size == other.size &&
+          avail == other.avail &&
+          name == other.name &&
+          kname == other.kname &&
+          uuid == other.uuid &&
+          children == other.children;
+}
+
+class DiskIoPiece {
+  final String dev;
+  final PlatformInt64 sectorsRead;
+  final PlatformInt64 sectorsWrite;
+
+  const DiskIoPiece({
+    required this.dev,
+    required this.sectorsRead,
+    required this.sectorsWrite,
+  });
+
+  @override
+  int get hashCode =>
+      dev.hashCode ^ sectorsRead.hashCode ^ sectorsWrite.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DiskIoPiece &&
+          runtimeType == other.runtimeType &&
+          dev == other.dev &&
+          sectorsRead == other.sectorsRead &&
+          sectorsWrite == other.sectorsWrite;
+}
+
+class GpuItem {
+  final String id;
+  final String vendor;
+  final String name;
+  final double? utilization;
+  final PlatformInt64? temperature;
+  final String? power;
+  final GpuMem? memory;
+  final PlatformInt64? fanSpeed;
+  final PlatformInt64? clockSpeed;
+
+  const GpuItem({
+    required this.id,
+    required this.vendor,
+    required this.name,
+    this.utilization,
+    this.temperature,
+    this.power,
+    this.memory,
+    this.fanSpeed,
+    this.clockSpeed,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      vendor.hashCode ^
+      name.hashCode ^
+      utilization.hashCode ^
+      temperature.hashCode ^
+      power.hashCode ^
+      memory.hashCode ^
+      fanSpeed.hashCode ^
+      clockSpeed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GpuItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          vendor == other.vendor &&
+          name == other.name &&
+          utilization == other.utilization &&
+          temperature == other.temperature &&
+          power == other.power &&
+          memory == other.memory &&
+          fanSpeed == other.fanSpeed &&
+          clockSpeed == other.clockSpeed;
+}
+
+class GpuMem {
+  final PlatformInt64 total;
+  final PlatformInt64 used;
+  final String unit;
+  final List<GpuMemProcess> processes;
+
+  const GpuMem({
+    required this.total,
+    required this.used,
+    required this.unit,
+    required this.processes,
+  });
+
+  @override
+  int get hashCode =>
+      total.hashCode ^ used.hashCode ^ unit.hashCode ^ processes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GpuMem &&
+          runtimeType == other.runtimeType &&
+          total == other.total &&
+          used == other.used &&
+          unit == other.unit &&
+          processes == other.processes;
+}
+
+class GpuMemProcess {
+  final PlatformInt64 pid;
+  final String name;
+  final PlatformInt64 memory;
+
+  const GpuMemProcess({
+    required this.pid,
+    required this.name,
+    required this.memory,
+  });
+
+  @override
+  int get hashCode => pid.hashCode ^ name.hashCode ^ memory.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GpuMemProcess &&
+          runtimeType == other.runtimeType &&
+          pid == other.pid &&
+          name == other.name &&
+          memory == other.memory;
+}
+
+class Memory {
+  final BigInt total;
+  final BigInt free;
+  final BigInt avail;
+
+  const Memory({required this.total, required this.free, required this.avail});
+
+  @override
+  int get hashCode => total.hashCode ^ free.hashCode ^ avail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Memory &&
+          runtimeType == other.runtimeType &&
+          total == other.total &&
+          free == other.free &&
+          avail == other.avail;
+}
+
+class NetIface {
+  final String device;
+  final BigInt rxBytes;
+  final BigInt txBytes;
+
+  const NetIface({
+    required this.device,
+    required this.rxBytes,
+    required this.txBytes,
+  });
+
+  @override
+  int get hashCode => device.hashCode ^ rxBytes.hashCode ^ txBytes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NetIface &&
+          runtimeType == other.runtimeType &&
+          device == other.device &&
+          rxBytes == other.rxBytes &&
+          txBytes == other.txBytes;
+}
+
+class NvidiaSmiItem {
+  final String name;
+  final PlatformInt64? temp;
+  final String? power;
+  final GpuMem? memory;
+  final PlatformInt64? percent;
+  final PlatformInt64? fanSpeed;
+
+  const NvidiaSmiItem({
+    required this.name,
+    this.temp,
+    this.power,
+    this.memory,
+    this.percent,
+    this.fanSpeed,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      temp.hashCode ^
+      power.hashCode ^
+      memory.hashCode ^
+      percent.hashCode ^
+      fanSpeed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NvidiaSmiItem &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          temp == other.temp &&
+          power == other.power &&
+          memory == other.memory &&
+          percent == other.percent &&
+          fanSpeed == other.fanSpeed;
+}
+
+class SensorItem {
+  final String device;
+  final String adapter;
+  final List<(String, String)> details;
+
+  const SensorItem({
+    required this.device,
+    required this.adapter,
+    required this.details,
+  });
+
+  @override
+  int get hashCode => device.hashCode ^ adapter.hashCode ^ details.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SensorItem &&
+          runtimeType == other.runtimeType &&
+          device == other.device &&
+          adapter == other.adapter &&
+          details == other.details;
+}
+
+class SmartAttributeFlags {
+  final PlatformInt64? value;
+  final String? string;
+  final bool prefailure;
+  final bool updatedOnline;
+  final bool performance;
+  final bool errorRate;
+  final bool eventCount;
+  final bool autoKeep;
+
+  const SmartAttributeFlags({
+    this.value,
+    this.string,
+    required this.prefailure,
+    required this.updatedOnline,
+    required this.performance,
+    required this.errorRate,
+    required this.eventCount,
+    required this.autoKeep,
+  });
+
+  @override
+  int get hashCode =>
+      value.hashCode ^
+      string.hashCode ^
+      prefailure.hashCode ^
+      updatedOnline.hashCode ^
+      performance.hashCode ^
+      errorRate.hashCode ^
+      eventCount.hashCode ^
+      autoKeep.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmartAttributeFlags &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          string == other.string &&
+          prefailure == other.prefailure &&
+          updatedOnline == other.updatedOnline &&
+          performance == other.performance &&
+          errorRate == other.errorRate &&
+          eventCount == other.eventCount &&
+          autoKeep == other.autoKeep;
+}
+
+/// `sbm_parser::types::SmartAttribute`. `raw_value` is smartctl's raw value
+/// where it is a whole number, which is what every count is read from.
+class SmartReading {
+  final PlatformInt64? id;
+  final String name;
+  final PlatformInt64? value;
+  final PlatformInt64? worst;
+  final PlatformInt64? thresh;
+  final String? whenFailed;
+  final PlatformInt64? rawValue;
+  final String? rawString;
+  final SmartAttributeFlags flags;
+
+  const SmartReading({
+    this.id,
+    required this.name,
+    this.value,
+    this.worst,
+    this.thresh,
+    this.whenFailed,
+    this.rawValue,
+    this.rawString,
+    required this.flags,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      value.hashCode ^
+      worst.hashCode ^
+      thresh.hashCode ^
+      whenFailed.hashCode ^
+      rawValue.hashCode ^
+      rawString.hashCode ^
+      flags.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmartReading &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          value == other.value &&
+          worst == other.worst &&
+          thresh == other.thresh &&
+          whenFailed == other.whenFailed &&
+          rawValue == other.rawValue &&
+          rawString == other.rawString &&
+          flags == other.flags;
+}
+
+/// `sbm_parser::types::DiskSmart`, without smartctl's whole answer, which
+/// nothing here reads; its attributes in name order.
+class SmartReport {
+  final String device;
+  final bool? healthy;
+  final double? temperature;
+  final String? model;
+  final String? serial;
+  final PlatformInt64? powerOnHours;
+  final PlatformInt64? powerCycleCount;
+  final List<SmartReading> attributes;
+
+  const SmartReport({
+    required this.device,
+    this.healthy,
+    this.temperature,
+    this.model,
+    this.serial,
+    this.powerOnHours,
+    this.powerCycleCount,
+    required this.attributes,
+  });
+
+  @override
+  int get hashCode =>
+      device.hashCode ^
+      healthy.hashCode ^
+      temperature.hashCode ^
+      model.hashCode ^
+      serial.hashCode ^
+      powerOnHours.hashCode ^
+      powerCycleCount.hashCode ^
+      attributes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmartReport &&
+          runtimeType == other.runtimeType &&
+          device == other.device &&
+          healthy == other.healthy &&
+          temperature == other.temperature &&
+          model == other.model &&
+          serial == other.serial &&
+          powerOnHours == other.powerOnHours &&
+          powerCycleCount == other.powerCycleCount &&
+          attributes == other.attributes;
+}
+
+/// `sbm_parser::types::BlockDevice`.
+class StatusBlockDevice {
+  final String name;
+  final String path;
+  final String kind;
+  final String? model;
+  final BigInt size;
+  final String? tran;
+  final String? fsType;
+  final String? mount;
+  final bool inUse;
+  final List<StatusBlockDevice> children;
+
+  const StatusBlockDevice({
+    required this.name,
+    required this.path,
+    required this.kind,
+    this.model,
+    required this.size,
+    this.tran,
+    this.fsType,
+    this.mount,
+    required this.inUse,
+    required this.children,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      path.hashCode ^
+      kind.hashCode ^
+      model.hashCode ^
+      size.hashCode ^
+      tran.hashCode ^
+      fsType.hashCode ^
+      mount.hashCode ^
+      inUse.hashCode ^
+      children.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StatusBlockDevice &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          path == other.path &&
+          kind == other.kind &&
+          model == other.model &&
+          size == other.size &&
+          tran == other.tran &&
+          fsType == other.fsType &&
+          mount == other.mount &&
+          inUse == other.inUse &&
+          children == other.children;
+}
+
+/// One collection round, parsed. The readings are `sbm_parser`'s own,
+/// mirrored; what does not cross as it is — SMART, temperatures and the block
+/// device tree, whose model holds JSON values, ordered maps or a name another
+/// mirror has — is reported in a type of this layer, converted here.
+class StatusReport {
+  final List<CpuCore> cpu;
+
+  /// Each CPU model and how many cores carry it.
+  final List<(String, int)> cpuBrand;
+  final Memory? mem;
+  final Swap? swap;
+  final List<Disk> disks;
+
+  /// The disk total in KiB, by `sbm_parser::types::disk_usage` — the one the
+  /// monitor agent stores — with network filesystems only when asked for.
+  final BigInt diskUsed;
+  final BigInt diskSize;
+  final List<StatusBlockDevice> blockDevices;
+  final List<NetIface> net;
+
+  /// By name, in name order.
+  final List<(String, double)> temps;
+  final Conn? conn;
+  final String? uptime;
+  final String? sys;
+  final String? osId;
+  final List<String> osIdLike;
+  final String? host;
+  final List<String> ips;
+  final List<DiskIoPiece> diskio;
+  final List<Battery> batteries;
+  final List<SensorItem> sensors;
+  final List<NvidiaSmiItem> nvidia;
+  final List<AmdSmiItem> amd;
+  final List<GpuItem> gpus;
+  final List<SmartReport> diskSmart;
+
+  const StatusReport({
+    required this.cpu,
+    required this.cpuBrand,
+    this.mem,
+    this.swap,
+    required this.disks,
+    required this.diskUsed,
+    required this.diskSize,
+    required this.blockDevices,
+    required this.net,
+    required this.temps,
+    this.conn,
+    this.uptime,
+    this.sys,
+    this.osId,
+    required this.osIdLike,
+    this.host,
+    required this.ips,
+    required this.diskio,
+    required this.batteries,
+    required this.sensors,
+    required this.nvidia,
+    required this.amd,
+    required this.gpus,
+    required this.diskSmart,
+  });
+
+  @override
+  int get hashCode =>
+      cpu.hashCode ^
+      cpuBrand.hashCode ^
+      mem.hashCode ^
+      swap.hashCode ^
+      disks.hashCode ^
+      diskUsed.hashCode ^
+      diskSize.hashCode ^
+      blockDevices.hashCode ^
+      net.hashCode ^
+      temps.hashCode ^
+      conn.hashCode ^
+      uptime.hashCode ^
+      sys.hashCode ^
+      osId.hashCode ^
+      osIdLike.hashCode ^
+      host.hashCode ^
+      ips.hashCode ^
+      diskio.hashCode ^
+      batteries.hashCode ^
+      sensors.hashCode ^
+      nvidia.hashCode ^
+      amd.hashCode ^
+      gpus.hashCode ^
+      diskSmart.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StatusReport &&
+          runtimeType == other.runtimeType &&
+          cpu == other.cpu &&
+          cpuBrand == other.cpuBrand &&
+          mem == other.mem &&
+          swap == other.swap &&
+          disks == other.disks &&
+          diskUsed == other.diskUsed &&
+          diskSize == other.diskSize &&
+          blockDevices == other.blockDevices &&
+          net == other.net &&
+          temps == other.temps &&
+          conn == other.conn &&
+          uptime == other.uptime &&
+          sys == other.sys &&
+          osId == other.osId &&
+          osIdLike == other.osIdLike &&
+          host == other.host &&
+          ips == other.ips &&
+          diskio == other.diskio &&
+          batteries == other.batteries &&
+          sensors == other.sensors &&
+          nvidia == other.nvidia &&
+          amd == other.amd &&
+          gpus == other.gpus &&
+          diskSmart == other.diskSmart;
+}
+
+class Swap {
+  final BigInt total;
+  final BigInt free;
+  final BigInt cached;
+
+  const Swap({required this.total, required this.free, required this.cached});
+
+  @override
+  int get hashCode => total.hashCode ^ free.hashCode ^ cached.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Swap &&
+          runtimeType == other.runtimeType &&
+          total == other.total &&
+          free == other.free &&
+          cached == other.cached;
+}
+
+/// The platform a server runs (mirrors sbm_parser::SystemType).
+enum SystemType {
+  linux,
+
+  /// BSD family, including macOS
+  bsd,
+  windows,
 }

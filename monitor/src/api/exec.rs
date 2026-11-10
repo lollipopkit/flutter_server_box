@@ -12,22 +12,23 @@
 //! That is why `terminal.rs` refuses an `exec` frame, and why this is a
 //! separate door rather than a wider one.
 //!
-//! Gated on the caller's `shell` grant, the same one the terminal needs and
-//! for the same reason: anyone who can open a shell can run anything in it, so
+//! Gated on the transport rule, the same one the terminal is and for the
+//! same reason: anyone who can open a shell can run anything in it, so
 //! there is one decision here, not two.
 
+use crate::api::WebError;
+use crate::api::json::{ExecLimit, Json};
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
 
-use super::authz;
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::audit::{Action, Event, Kind, Outcome};
 
 /// The bounds on one command — how long it may run and how much of it is kept.
 ///
@@ -77,34 +78,14 @@ pub(crate) struct ExecResponse {
 
 pub async fn exec(
     req: HttpRequest,
-    body: web::types::Json<ExecRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
-    };
-
-    let remote_ip = peer_ip(&req);
-
-    // Re-checked here rather than trusted from the capabilities the client was
-    // told earlier: that answer is a UI hint, and the UI is not a boundary.
-    if let Err(why) = caller.check(
-        crate::core::permissions::Grant::Shell,
-        &app_state,
-        authz::is_secure(&req, &app_state),
-    ) {
-        Event::new(Kind::Exec, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
-            .remote_ip(remote_ip)
-            .detail(why.as_str())
-            .record(&app_state.db)
-            .await;
-        return Ok(HttpResponse::Forbidden().finish());
-    }
+    body: Json<ExecRequest, ExecLimit>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
+    let remote_ip = require!(super::machine::gate_as(Kind::Exec, &req, &app_state, "exec").await).remote_ip;
 
     let cmd = body.cmd.clone();
     if cmd.trim().is_empty() {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
 
     // Logged before it runs and by what it was asked to do, not by what it
@@ -130,7 +111,7 @@ pub async fn exec(
                 .detail(e.to_string())
                 .record(&app_state.db)
                 .await;
-            Ok(HttpResponse::InternalServerError().finish())
+            Ok(HttpResponse::InternalServerError().build())
         }
     }
 }

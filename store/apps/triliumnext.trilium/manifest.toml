@@ -1,0 +1,111 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Trilium Notes: deployed with Docker Compose from compose.yaml and
+# mcp-gate.conf.template beside this file, shown in a desk window through the
+# agent.
+
+schema = 1
+publisher = "triliumnext"
+name = "trilium"
+project = "Trilium Notes"
+developer = "TriliumNext"
+version = "0.106.0"
+homepage = "https://triliumnotes.org"
+source = "https://github.com/TriliumNext/Trilium/tree/v0.106.0"
+glyph = "note_stack"
+tone = "teal"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Trilium Notes"
+
+[description]
+en = "A personal knowledge base: notes in a tree as deep as you like, linked to each other, with rich text, code, canvases, mind maps and scripting. Agent mode can search, read and write the notes."
+zh = "个人知识库：笔记组成任意深度的树并互相链接，支持富文本、代码、画布、思维导图和脚本。Agent 模式可以搜索、阅读和编写笔记。"
+zh-TW = "個人知識庫：筆記組成任意深度的樹並互相連結，支援富文字、程式碼、畫布、心智圖和腳本。Agent 模式可以搜尋、閱讀和編寫筆記。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/TriliumNext/Trilium/blob/v0.106.0/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-mcp"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+TRILIUM_VERSION = "v0.106.0"
+
+[[secrets]]
+env = "TRILIUM_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
+[login]
+password = "TRILIUM_PASSWORD"
+note = { en = "Its page asks for the password only. Agent mode uses an ETAPI token made with it (Options → ETAPI); the MCP server can be turned off in Options → AI / LLM.", zh = "页面只要求输入密码。Agent 模式使用以此密码创建的 ETAPI 令牌（Options → ETAPI）；可在 Options → AI / LLM 中关闭 MCP 服务。", zh-TW = "頁面只要求輸入密碼。Agent 模式使用以此密碼建立的 ETAPI 權杖（Options → ETAPI）；可在 Options → AI / LLM 中關閉 MCP 服務。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "TRILIUM_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The notes' database, its backups and the configuration.", zh = "笔记数据库、备份和配置。", zh-TW = "筆記資料庫、備份和設定。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "TRILIUM_PORT"
+default = 8180
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the desktop and phone apps' sync and the web clipper. Off: only through the desk.", zh = "供桌面端和手机端同步以及网页剪藏使用。关闭时只能通过桌面访问。", zh-TW = "供桌面版和手機版同步以及網頁剪輯使用。關閉時只能透過桌面存取。" }
+on = { TRILIUM_BIND = "0.0.0.0" }
+off = { TRILIUM_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 8181
+label = { en = "MCP server port", zh = "MCP 服务端口", zh-TW = "MCP 服務連接埠" }
+help = { en = "Agent mode's connection to Trilium, on this machine only.", zh = "Agent 模式连接 Trilium 用，仅限本机。", zh-TW = "Agent 模式連線 Trilium 用，僅限本機。" }
+
+[[settings]]
+key = "mcp_token"
+type = "text"
+env = "TRILIUM_MCP_TOKEN"
+optional = true
+pattern = '[A-Za-z0-9_+/=-]{16,256}'
+label = { en = "ETAPI token for Agent mode", zh = "供 Agent 模式使用的 ETAPI 令牌", zh-TW = "供 Agent 模式使用的 ETAPI 權杖" }
+help = { en = "Optional: Agent mode is given a token when Trilium is set up. To use another, create one in Options → ETAPI and set it here.", zh = "可选：部署时会自动为 Agent 模式创建令牌。若要使用其他令牌，请在 Options → ETAPI 中创建并填在这里。", zh-TW = "選填：部署時會自動為 Agent 模式建立權杖。若要使用其他權杖，請在 Options → ETAPI 中建立並填在這裡。" }
+
+# Trilium's own MCP server, behind a gate that asks for MCP_TOKEN and holds
+# Trilium's ETAPI token.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "official"
+service = "mcp-gate"
+source = "https://github.com/TriliumNext/Trilium/blob/v0.106.0/apps/server/src/routes/mcp.ts"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

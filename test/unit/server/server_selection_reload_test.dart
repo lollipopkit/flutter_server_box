@@ -9,7 +9,7 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -108,9 +108,9 @@ void main() {
     await expectLater(
       notifier.updateServer(original, stale),
       throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
+        isA<ServerChangedConcurrently>().having(
+          (error) => error.toString(),
+          'toString',
           allOf(contains(libL10n.server), contains(libL10n.retry)),
         ),
       ),

@@ -9,7 +9,7 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/script_source.dart';
@@ -54,7 +54,7 @@ void main() {
       );
 
       final spi = Spi(name: 'me', id: id, local: true);
-      // What `_getDataLocal` sets before the first read: the parser takes the
+      // What `_refreshStatusLocal` sets before the first read: the parser takes the
       // platform from the status it is handed.
       final into = InitStatus.status..system = system;
       final status = await ScriptDataSource(

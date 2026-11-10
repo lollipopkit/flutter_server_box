@@ -307,6 +307,28 @@ pub fn parse_sessions(output: &str) -> TmuxSessionListing {
     listing
 }
 
+/// What [`list_sessions_command`] answered, exit code included: `None` when
+/// the listing failed. tmux exits 1 when no server is up (`no server running
+/// on <socket>`, or `error connecting to <socket> (<reason>)` for a stale
+/// socket; 1.x says `failed to connect to server: <reason>`), which is no
+/// sessions rather than a failure — but only when the reason says the socket
+/// is missing or refused. Any other reason (denied, a path too long, out of
+/// descriptors) is a server this listing could not reach.
+pub fn read_sessions(output: &str, exit_code: i32) -> Option<TmuxSessionListing> {
+    if exit_code == 0 {
+        return Some(parse_sessions(output));
+    }
+    let no_server = output.lines().map(str::trim).any(|line| {
+        line.starts_with("no server running on")
+            || ((line.starts_with("error connecting to") || line.starts_with("failed to connect to server"))
+                && NO_SERVER_REASONS.iter().any(|reason| line.contains(reason)))
+    });
+    (exit_code == 1 && no_server).then(TmuxSessionListing::default)
+}
+
+/// `strerror` for a socket that is not there and one nothing listens on.
+const NO_SERVER_REASONS: [&str; 2] = ["No such file or directory", "Connection refused"];
+
 fn parse_session(line: &str) -> Option<TmuxSession> {
     let fields = split_fields(line);
     if fields.len() < 4 {
@@ -573,6 +595,44 @@ mod tests {
         assert_eq!(json["created"], 1767225600);
         assert_eq!(json["last_attached"], 1767312000);
         assert_eq!(json["activity"], 1767398400);
+    }
+
+    #[test]
+    fn no_server_is_no_sessions() {
+        for output in [
+            "no server running on /tmp/tmux-1000/default",
+            "error connecting to /tmp/tmux-1000/default (No such file or directory)",
+            "error connecting to /tmp/tmux-1000/default (Connection refused)",
+            // tmux 1.x (CentOS 7's 1.8).
+            "failed to connect to server: No such file or directory",
+        ] {
+            assert_eq!(read_sessions(output, 1), Some(TmuxSessionListing::default()), "{output}");
+        }
+    }
+
+    #[test]
+    fn a_failed_listing_is_none() {
+        assert_eq!(read_sessions("bash: tmux: command not found", 127), None);
+        assert_eq!(read_sessions("unknown option -- F", 1), None);
+        assert_eq!(read_sessions("no server running on /tmp/tmux-1000/default", 2), None);
+        assert_eq!(
+            read_sessions("error connecting to /tmp/tmux-0/default (Permission denied)", 1),
+            None
+        );
+        assert_eq!(read_sessions("failed to connect to server: Permission denied", 1), None);
+        for reason in ["File name too long", "Too many open files", "Not a directory"] {
+            assert_eq!(
+                read_sessions(&format!("error connecting to /tmp/tmux-1000/default ({reason})"), 1),
+                None,
+                "{reason}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_successful_listing_is_parsed() {
+        let listing = read_sessions("$1\twork\t2\t0\n", 0).unwrap();
+        assert_eq!(listing.sessions[0].name, "work");
     }
 
     /// The times are epoch seconds, and a field that is not one is no time at

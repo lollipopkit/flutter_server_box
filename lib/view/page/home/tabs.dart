@@ -3,61 +3,70 @@ part of '../home.dart';
 /// Which tab is open: the pages the tabs are, moving between them, and
 /// where the app was left.
 extension _HomePageTabs on _HomePageState {
-  /// Every tab's page, kept alive behind the settings.
+  /// Every tab's page, kept alive under the settings: the first page of
+  /// [_HomePageSettings._buildArea]'s navigator, which lays out and ticks
+  /// only what is on screen.
   Widget _buildTabPages() {
-    // Kept mounted behind the settings rather than swapped out for them: a tab
-    // holds a terminal, a scroll position and a navigator of its own, and all
-    // three would end here. `Offstage` does not lay its child out, so nothing
-    // is resized to zero and back on the way through either.
-    return Offstage(
-      offstage: _tabsHidden,
-      child: TickerMode(
-        enabled: !_tabsHidden,
-        child: _crossed(
-          leaving: true,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _tabs.length,
-            physics: const NeverScrollableScrollPhysics(),
-            // Each tab keeps its own stack, so a page opened inside one — a
-            // server's details, its files — covers the tab and not the window.
-            // The bar or rail that got you here stays put, and coming back to a
-            // tab returns you to where you were in it.
-            //
-            // Only the tab on screen may hold focus. A hidden one kept in the
-            // scopes' history is otherwise where focus falls back to.
-            itemBuilder: (_, index) => ValueListenableBuilder(
-              key: ValueKey(_tabs[index]),
-              valueListenable: _selectIndex,
-              builder: (_, selected, child) =>
-                  ExcludeFocus(excluding: selected != index, child: child!),
-              child: NestedNavigator(
-                observers: [AgentScreen.tabObserver(_tabs[index])],
-                // The top inset lands on the tab's own content and not on the
-                // navigator around it, which is the whole point: a page pushed
-                // here is a sibling route, outside this `SafeArea`, so it reaches
-                // the top of the window and animates across the status bar.
-                // Wrapping the navigator instead would inset the pushed page too
-                // and put the seam back.
-                //
-                // Here rather than in each tab because a tab is not one shape:
-                // three of them put a `Scaffold` *inside* a pane splitter, so the
-                // splitter's own divider is above any app bar that could have
-                // spent the inset.
-                rootBuilder: (_) =>
-                    SafeArea(bottom: false, child: _tabs[index].page),
-              ),
-            ),
-            onPageChanged: (value) {
-              if (!_switchingPage) {
-                _selectIndex.value = value;
-                _rememberTab(value);
-              }
-              _syncFullscreenSystemUi();
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: _tabs.length,
+      physics: const NeverScrollableScrollPhysics(),
+      // Each tab keeps its own stack, so a page opened inside one — a
+      // server's details, its files — covers the tab and not the window.
+      // The bar or rail that got you here stays put, and coming back to a
+      // tab returns you to where you were in it.
+      //
+      // Only the tab on screen may hold focus. A hidden one kept in the
+      // scopes' history is otherwise where focus falls back to.
+      itemBuilder: (_, index) => ValueListenableBuilder(
+        key: ValueKey(_tabs[index]),
+        valueListenable: _selectIndex,
+        // Nor take a back: its page is current in its own navigator,
+        // and a back meant for the tab on screen popped it as well.
+        builder: (_, selected, child) => BackScope(
+          enabled: selected == index,
+          child: ExcludeFocus(excluding: selected != index, child: child!),
+        ),
+        child: NestedNavigator(
+          observers: [AgentScreen.tabObserver(_tabs[index])],
+          // The top inset lands on the tab's own content and not on the
+          // navigator around it, which is the whole point: a page pushed
+          // here is a sibling route, outside this `SafeArea`, so it reaches
+          // the top of the window and animates across the status bar.
+          // Wrapping the navigator instead would inset the pushed page too
+          // and put the seam back.
+          //
+          // Here rather than in each tab because a tab is not one shape:
+          // three of them put a `Scaffold` *inside* a pane splitter, so the
+          // splitter's own divider is above any app bar that could have
+          // spent the inset.
+          //
+          // Full screen takes the insets itself, so its black reaches
+          // the window's edges.
+          rootBuilder: (_) => Consumer(
+            child: _tabs[index].page,
+            builder: (_, ref, page) {
+              final whole =
+                  _tabs[index] == AppTab.server &&
+                  ref.watch(serverFullScreenProvider);
+              return SafeArea(
+                bottom: false,
+                top: !whole,
+                left: !whole,
+                right: !whole,
+                child: page!,
+              );
             },
           ),
         ),
       ),
+      onPageChanged: (value) {
+        if (!_switchingPage) {
+          _selectIndex.value = value;
+          _rememberTab(value);
+        }
+        _syncFullscreenSystemUi();
+      },
     );
   }
 
@@ -93,8 +102,15 @@ extension _HomePageTabs on _HomePageState {
     if (index < 0 || index >= _tabs.length) return;
     // A tab is a tab even when the settings are the thing on screen: picking
     // one has to put them away, which is the same move as picking the tab you
-    // were already on.
-    _closeSettings();
+    // were already on — once what they hold agreed to go.
+    if (_settingsOpen) {
+      unawaited(
+        _closeSettings().then((left) {
+          if (left && mounted) _onDestinationSelected(index);
+        }),
+      );
+      return;
+    }
     if (_selectIndex.value == index) return;
     _selectIndex.value = index;
     _rememberTab(index);

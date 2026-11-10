@@ -19,8 +19,9 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/src/rust/api/exec_session.dart' as es;
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/ssh_e2e.dart';
@@ -105,12 +106,14 @@ Future<void> main() async {
     return (result: result, took: watch.elapsed);
   }
 
+  // As the login shell reads it, whichever it is: fish takes `\\` in single
+  // quotes for one backslash, bash for two.
   test('runs as before through the login shell', () async {
-    final r = await SshExec(client).run(
-      "printf '%s|' \"a'b\" 'c\\\\d'; echo \$SHELL",
-      cancel: Completer<void>().future,
-    );
-    expect(r.stdout, startsWith("a'b|c\\d|"));
+    const command = "printf '%s|' \"a'b\" 'c\\\\d'; echo \$SHELL";
+    final plain = await execSshE2e(client, command, null);
+    final r = await SshExec(client).run(command, cancel: Completer<void>().future);
+    expect(r.stdout, plain.stdout);
+    expect(r.stdout, startsWith("a'b|c"));
     expect(r.stderr, isNot(contains('sbm-sid')));
   });
 
@@ -199,35 +202,35 @@ Future<void> main() async {
       final v = await session('');
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'n0t-this-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: '0dd0'),
         null,
       );
-      expect(r.stdout, isNot(contains(SshSessionId.owned)));
+      expect(r.stdout, isNot(contains(es.execSessionOwned())));
     });
 
     test('is taken for the session this run started', () async {
-      final v = await session('env ${SshSessionId.envName}=th1s-run ');
+      final v = await session('env ${es.execSessionEnvName()}=7e57 ');
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'th1s-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: '7e57'),
         null,
       );
-      expect(r.stdout, contains(SshSessionId.owned));
+      expect(r.stdout, contains(es.execSessionOwned()));
     });
 
     // Even one carrying the nonce: what runs as root is not the account's to
     // read.
     test('is not taken for a root session', () async {
       final v = await session(
-        "sudo -S -p '' env ${SshSessionId.envName}=r00t-run ",
+        "sudo -S -p '' env ${es.execSessionEnvName()}=b00b ",
         stdin: '$sudoPassword\n',
       );
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'r00t-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: 'b00b'),
         null,
       );
-      expect(r.stdout, isNot(contains(SshSessionId.owned)));
+      expect(r.stdout, isNot(contains(es.execSessionOwned())));
     }, skip: sudoPassword == null ? 'SBM_E2E_SSH_SUDO_PASSWORD not set' : null);
   });
 
@@ -239,7 +242,7 @@ Future<void> main() async {
         "sudo -S -p '' sleep $s",
         s,
         stdin: '$sudoPassword\n',
-        exec: SshExec(client, sudoPassword: () async => sudoPassword),
+        exec: SshExec(client, sudoPassword: () => sudoPassword),
       );
       expect(r.result.mayStillRun, isFalse);
       expect(await running(s), isFalse);

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import ModalHarness from './fixtures/ModalHarness.svelte'
+import DialogHarness from './fixtures/DialogHarness.svelte'
 import LineChart from '../components/LineChart.svelte'
 import { persistLocale } from '../i18n/init'
 
-describe('Modal', () => {
+describe('the desk Dialog', () => {
   it('focuses the dialog, keeps Tab inside and gives focus back on Escape', async () => {
     const onclose = vi.fn()
-    render(ModalHarness, { onclose })
+    render(DialogHarness, { onclose })
     const opener = screen.getByRole('button', { name: 'Open' })
     opener.focus()
     await fireEvent.click(opener)
@@ -16,17 +16,13 @@ describe('Modal', () => {
     const dialog = screen.getByRole('dialog', { name: 'Dialog' })
     const first = screen.getByLabelText('First')
     const inner = screen.getByRole('button', { name: 'Inner' })
-    const close = screen.getByRole('button', { name: 'Close' })
     // Not the first control: it may be an action that runs on Enter
     expect(dialog).toHaveFocus()
 
     await fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true })
     expect(inner).toHaveFocus()
     await fireEvent.keyDown(inner, { key: 'Tab' })
-    expect(close).toHaveFocus()
-    await fireEvent.keyDown(close, { key: 'Tab', shiftKey: true })
-    expect(inner).toHaveFocus()
-    first.focus()
+    expect(first).toHaveFocus()
 
     await fireEvent.keyDown(first, { key: 'Escape' })
     expect(onclose).toHaveBeenCalledOnce()
@@ -35,29 +31,26 @@ describe('Modal', () => {
   })
 
   it('focuses what the content marks with data-autofocus', async () => {
-    render(ModalHarness, { autofocusSecond: true })
+    render(DialogHarness, { autofocusSecond: true })
     await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
     expect(screen.getByLabelText('Second')).toHaveFocus()
   })
 
   it('still answers Escape and Tab once focus fell out of the dialog', async () => {
     const onclose = vi.fn()
-    render(ModalHarness, { onclose })
+    render(DialogHarness, { onclose })
     await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
-    // A focused button that became disabled leaves focus on the body
     ;(document.activeElement as HTMLElement).blur()
-    expect(document.body).toHaveFocus()
-
     await fireEvent.keyDown(document.body, { key: 'Tab' })
-    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
+    expect(screen.getByLabelText('First')).toHaveFocus()
 
     ;(document.activeElement as HTMLElement).blur()
     await fireEvent.keyDown(document.body, { key: 'Escape' })
     expect(onclose).toHaveBeenCalledOnce()
   })
 
-  it('pulls focus back from the page behind', async () => {
-    render(ModalHarness)
+  it('pulls focus back from what it covers', async () => {
+    render(DialogHarness)
     await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
     screen.getByRole('button', { name: 'Behind' }).focus()
     expect(screen.getByRole('dialog', { name: 'Dialog' })).toHaveFocus()
@@ -66,7 +59,7 @@ describe('Modal', () => {
   it('closes only the innermost dialog on Escape', async () => {
     const onclose = vi.fn()
     const oninnerclose = vi.fn()
-    render(ModalHarness, { onclose, oninnerclose })
+    render(DialogHarness, { onclose, oninnerclose })
     await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
     await fireEvent.click(screen.getByRole('button', { name: 'Inner' }))
     expect(screen.getByRole('dialog', { name: 'Inner dialog' })).toHaveFocus()
@@ -75,19 +68,6 @@ describe('Modal', () => {
     expect(oninnerclose).toHaveBeenCalledOnce()
     expect(onclose).not.toHaveBeenCalled()
     expect(screen.getByRole('dialog', { name: 'Dialog' })).toBeInTheDocument()
-  })
-
-  it('ignores Escape while closed', async () => {
-    const onclose = vi.fn()
-    render(ModalHarness, { onclose })
-    await fireEvent.keyDown(document, { key: 'Escape' })
-    expect(onclose).not.toHaveBeenCalled()
-  })
-
-  it('takes its close label from the app', async () => {
-    render(ModalHarness, { closeLabel: 'Schließen' })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
-    expect(screen.getByRole('button', { name: 'Schließen' })).toBeInTheDocument()
   })
 })
 
@@ -163,10 +143,10 @@ describe('LineChart', () => {
 })
 
 describe('html lang', () => {
-  it('follows the panel language', () => {
-    persistLocale('de')
+  it('follows the panel language', async () => {
+    await persistLocale('de')
     expect(document.documentElement.lang).toBe('de')
-    persistLocale('en')
+    await persistLocale('en')
     expect(document.documentElement.lang).toBe('en')
   })
 })

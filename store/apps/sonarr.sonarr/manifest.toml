@@ -1,0 +1,93 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Sonarr: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "sonarr"
+name = "sonarr"
+project = "Sonarr"
+developer = "Servarr"
+version = "4.0.20.3014"
+homepage = "https://sonarr.tv"
+source = "https://github.com/Sonarr/Sonarr/tree/v4.0.20.3014"
+glyph = "live_tv"
+tone = "sky"
+categories = ["media", "files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Sonarr"
+
+[description]
+en = "Follow TV series: new episodes are searched for through your indexers (Prowlarr), sent to a download client and filed into the TV library."
+zh = "追踪电视剧：通过索引器（Prowlarr）搜索新剧集，交给下载客户端下载，并整理进剧集库。"
+zh-TW = "追蹤電視劇：透過索引器（Prowlarr）搜尋新集數，交給下載用戶端下載，並整理進劇集庫。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/Sonarr/Sonarr/blob/v4.0.20.3014/LICENSE.md"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-login"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+SONARR_TAG = "4.0.20.3014-ls326"
+
+[[secrets]]
+env = "SONARR_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "SONARR_PASSWORD"
+note = { en = "Other apps reach Sonarr at host.docker.internal:<its port> once it is reachable from the network; its API key is in Settings → General.", zh = "开启“允许从网络访问”后，其他应用可通过 host.docker.internal:<端口> 连接 Sonarr；API 密钥在 Settings → General 中。", zh-TW = "開啟「允許從網路存取」後，其他應用可透過 host.docker.internal:<連接埠> 連線 Sonarr；API 金鑰在 Settings → General 中。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "SONARR_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration and database", zh = "配置和数据库", zh-TW = "設定和資料庫" }
+
+[[settings]]
+key = "tv"
+type = "path"
+env = "SONARR_LIBRARY"
+default = "{shared}/media/tv"
+label = { en = "TV library", zh = "剧集库", zh-TW = "劇集庫" }
+
+[[settings]]
+key = "downloads"
+type = "path"
+env = "DOWNLOADS_LOCATION"
+default = "{shared}/downloads"
+label = { en = "Downloads", zh = "下载", zh-TW = "下載" }
+help = { en = "Where the download clients put their files (qBittorrent's and Transmission's default), at /downloads.", zh = "下载客户端保存文件的位置（qBittorrent 和 Transmission 的默认位置），位于 /downloads。", zh-TW = "下載用戶端儲存檔案的位置（qBittorrent 和 Transmission 的預設位置），位於 /downloads。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "SONARR_PORT"
+default = 8989
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what the other apps need to reach it. Off: only through the desk.", zh = "其他应用连接它也需要开启。关闭时只能通过桌面访问。", zh-TW = "其他應用連線它也需要開啟。關閉時只能透過桌面存取。" }
+on = { SONARR_BIND = "0.0.0.0" }
+off = { SONARR_BIND = "127.0.0.1" }

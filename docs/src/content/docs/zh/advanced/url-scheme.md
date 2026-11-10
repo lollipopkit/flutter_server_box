@@ -1,11 +1,11 @@
 ---
-title: 链接(serverbox://)
-description: 通过链接打开服务器、功能、标签页或代码片段
+title: URL 链接（serverbox://）
+description: 通过自定义 URL 链接直接打开服务器、功能页、标签页或代码片段
 ---
 
-`serverbox://` 链接可在 iOS、macOS 和 Android 上打开 Server Box，也可用于快捷指令、启动器、笔记或网页。
+在 iOS、macOS 和 Android 上，你可以使用 `serverbox://` 链接直接调起 Server Box 并跳转到指定页面，方便配合系统快捷指令、启动器、笔记应用或内部网页使用。
 
-Windows 和 Linux 不支持这些链接。
+Windows 与 Linux 端暂不支持 `serverbox://` 链接。
 
 ## 获取链接
 
@@ -27,7 +27,7 @@ Windows 和 Linux 不支持这些链接。
 
 `<function>` 可选：`terminal`、`files`、`container`、`process`、`snippet`、`iperf`、`systemd`、`portForward`、`power`、`users`、`scheduledTasks`、`remoteDesktop`、`firewall`。
 
-`<tab>` 可选：`server`、`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。
+`<tab>` 可选：`server`、`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`、`workspace`、`monitor`。
 
 `add-server` 只有 `host` 是必填的。
 

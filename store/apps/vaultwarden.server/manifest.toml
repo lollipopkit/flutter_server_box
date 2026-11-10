@@ -1,0 +1,97 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Vaultwarden, as the Monitor's Passwords app: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "vaultwarden"
+name = "server"
+project = "Vaultwarden"
+developer = "Vaultwarden project"
+version = "1.37.4"
+homepage = "https://github.com/dani-garcia/vaultwarden"
+source = "https://github.com/dani-garcia/vaultwarden/tree/1.37.4"
+glyph = "lock"
+tone = "ink"
+recommended = true
+categories = ["security"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Vaultwarden"
+
+[description]
+en = "Your passwords and notes in the Bitwarden apps and browser extensions, on your own server. Vaultwarden is a community server compatible with Bitwarden clients, not Bitwarden's own."
+zh = "在自己的服务器上保存密码和笔记，供 Bitwarden 的 app 和浏览器扩展使用。Vaultwarden 是兼容 Bitwarden 客户端的社区服务器，不是 Bitwarden 官方服务器。"
+zh-TW = "在自己的伺服器上保存密碼和筆記，供 Bitwarden 的 app 和瀏覽器擴充功能使用。Vaultwarden 是相容 Bitwarden 用戶端的社群伺服器，不是 Bitwarden 官方伺服器。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/dani-garcia/vaultwarden/blob/1.37.4/LICENSE.txt"
+accept = true
+
+# The alpine tag is published for the same release (hub.docker.com/r/vaultwarden/server/tags).
+# Docker Hub lists amd64, arm64, arm/v6 and arm/v7 for it.
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+VAULTWARDEN_IMAGE_TAG = "1.37.4-alpine"
+
+[[secrets]]
+env = "ADMIN_TOKEN"
+length = 64
+
+[login]
+password = "ADMIN_TOKEN"
+note = { en = "No account is seeded. Create the first account in the web vault (Create account; sign-ups must be on). The admin page is at /admin, and takes the password above. The web vault needs HTTPS or localhost (a secure browser context): over plain HTTP its sign-in fails. Vaultwarden logs a notice that a plain ADMIN_TOKEN is less secure than an Argon2 hash; the agent cannot make one.", zh = "不会预设账号。请在网页版密码库中点击“创建账户”创建第一个账号（需开启注册）。管理页面在 /admin，使用上面的密码登录。网页版密码库需要 HTTPS 或 localhost（安全上下文），使用纯 HTTP 时无法登录。Vaultwarden 会记录一条提示：明文 ADMIN_TOKEN 不如 Argon2 哈希安全；本 app 无法生成哈希。", zh-TW = "不會預設帳號。請在網頁版密碼庫中點選「建立帳戶」建立第一個帳號（需開啟註冊）。管理頁面在 /admin，使用上面的密碼登入。網頁版密碼庫需要 HTTPS 或 localhost（安全上下文），使用純 HTTP 時無法登入。Vaultwarden 會記錄一則提示：明文 ADMIN_TOKEN 不如 Argon2 雜湊安全；本 app 無法產生雜湊。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "VAULTWARDEN_DATA_LOCATION"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, attachments, sends and the RSA key. Back this up.", zh = "数据库、附件、Send 和 RSA 密钥。请备份此目录。", zh-TW = "資料庫、附件、Send 和 RSA 金鑰。請備份此目錄。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "VAULTWARDEN_PORT"
+default = 8222
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For Bitwarden apps on other devices. Off: only through the desk.", zh = "供其他设备上的 Bitwarden app 连接。关闭时只能通过桌面访问。", zh-TW = "供其他裝置上的 Bitwarden app 連線。關閉時只能透過桌面存取。" }
+on = { VAULTWARDEN_BIND = "0.0.0.0" }
+off = { VAULTWARDEN_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "domain"
+type = "text"
+env = "DOMAIN"
+pattern = '^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~-]+)*/?$'
+optional = true
+label = { en = "Address (DOMAIN)", zh = "访问地址（DOMAIN）", zh-TW = "存取位址（DOMAIN）" }
+help = { en = "The address you open the web vault at, with the scheme, for example https://vault.example.com. Vaultwarden uses it for links and the web vault's API address. Empty: http://localhost, which only works in a browser on the same machine.", zh = "你打开网页版密码库所用的地址，包括协议，例如 https://vault.example.com。Vaultwarden 用它生成链接和网页版的 API 地址。留空时为 http://localhost，只在同一台机器的浏览器中有效。", zh-TW = "你開啟網頁版密碼庫所用的位址，包括協定，例如 https://vault.example.com。Vaultwarden 用它產生連結和網頁版的 API 位址。留空時為 http://localhost，只在同一台機器的瀏覽器中有效。" }
+
+[[settings]]
+key = "signups"
+type = "bool"
+default = true
+label = { en = "Allow new accounts", zh = "允许注册新账号", zh-TW = "允許註冊新帳號" }
+help = { en = "Vaultwarden's default is on: anyone who can reach it can create an account. Turn it off after creating your own account (invitations from the admin page still work).", zh = "Vaultwarden 默认开启：任何能访问它的人都可以创建账号。创建自己的账号后请关闭（管理页面发出的邀请仍然有效）。", zh-TW = "Vaultwarden 預設開啟：任何能存取它的人都可以建立帳號。建立自己的帳號後請關閉（管理頁面發出的邀請仍然有效）。" }
+on = { SIGNUPS_ALLOWED = "true" }
+off = { SIGNUPS_ALLOWED = "false" }

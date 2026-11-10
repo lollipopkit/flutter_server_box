@@ -108,8 +108,8 @@ describe('servers', () => {
       'servers.v1',
       JSON.stringify({
         list: [
-          { id: 'local', url: '', token: null, username: null },
-          { id: 'other', url: 'https://agent.example', token: null, username: null },
+          { id: 'local', url: '', token: null },
+          { id: 'other', url: 'https://agent.example', token: null },
         ],
         currentId: 'other',
       }),
@@ -206,14 +206,18 @@ describe('servers', () => {
 
   it('keeps bearer sessions out of localStorage', async () => {
     const servers = await freshStore()
-    servers.login('secret-token', 'admin')
+    servers.login('secret-token')
 
     const persisted = JSON.parse(window.localStorage.getItem('servers.v1')!)
     expect(persisted.list[0].token).toBeNull()
     expect(window.localStorage.getItem('token')).toBeNull()
 
-    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
-    expect(sessions.local).toEqual({ token: 'secret-token', username: 'admin' })
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v3')!)
+    expect(sessions).toEqual({ local: 'secret-token' })
+
+    servers.logout('local')
+    expect(servers.current?.token).toBeNull()
+    expect(JSON.parse(window.sessionStorage.getItem('servers.sessions.v3')!)).toEqual({})
   })
 
   it('migrates legacy localStorage credentials into the tab session', async () => {
@@ -225,7 +229,33 @@ describe('servers', () => {
     expect(servers.current?.token).toBe('legacy-token')
     expect(window.localStorage.getItem('token')).toBeNull()
     expect(window.localStorage.getItem('username')).toBeNull()
-    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
-    expect(sessions.local).toEqual({ token: 'legacy-token', username: 'legacy-user' })
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v3')!)
+    expect(sessions).toEqual({ local: 'legacy-token' })
+  })
+
+  it('reads the one session per server a tab held before several accounts', async () => {
+    window.localStorage.setItem('servers.v1', JSON.stringify({ list: [{ id: 'local', url: '' }], currentId: 'local' }))
+    window.sessionStorage.setItem('servers.sessions.v1', JSON.stringify({ local: { token: 't1', username: 'ops' } }))
+
+    const servers = await freshStore()
+
+    expect(servers.current?.token).toBe('t1')
+    expect(window.sessionStorage.getItem('servers.sessions.v1')).toBeNull()
+  })
+
+  it('keeps the account in use from the sessions of several accounts, and forgets the names', async () => {
+    window.localStorage.setItem('servers.v1', JSON.stringify({ list: [{ id: 'local', url: '' }], currentId: 'local' }))
+    window.sessionStorage.setItem(
+      'servers.sessions.v2',
+      JSON.stringify({ local: { active: 'deploy', tokens: { admin: 'ta', deploy: 'td' } } }),
+    )
+    window.localStorage.setItem('servers.accounts.v1', JSON.stringify({ local: [{ username: 'admin', lastLogin: 1 }] }))
+
+    const servers = await freshStore()
+
+    expect(servers.current?.token).toBe('td')
+    expect(window.sessionStorage.getItem('servers.sessions.v2')).toBeNull()
+    expect(window.localStorage.getItem('servers.accounts.v1')).toBeNull()
+    expect(JSON.parse(window.sessionStorage.getItem('servers.sessions.v3')!)).toEqual({ local: 'td' })
   })
 })

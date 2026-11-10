@@ -1,0 +1,46 @@
+# changedetection.io 0.60.9 (Apache-2.0), https://github.com/dgtlmoon/changedetection.io/tree/0.60.9
+#
+# Adapted from the release's docker-compose.yml for ServerBox Monitor
+# (2026-10-18):
+# - no `name:`, no `container_name` and no `hostname`: the agent names the
+#   project;
+# - image pinned to the release; a bind mount from the env file instead of
+#   the named volume; run as the shared folder's owner;
+# - USE_X_SETTINGS: its redirects follow the agent proxy's forwarded scheme
+#   and host;
+# - the password: changedetection.io takes it from SALTED_PASS (a salt and
+#   its PBKDF2 hash, flask_app.py), made from the generated password when the
+#   container starts, so the page asks for it from the first start on.
+
+services:
+  changedetection:
+    image: ghcr.io/dgtlmoon/changedetection.io:${CHANGEDETECTION_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      USE_X_SETTINGS: '1'
+      CHANGEDETECTION_PASSWORD: ${CHANGEDETECTION_PASSWORD}
+    volumes:
+      - ${CHANGEDETECTION_DATA}:/datastore
+    ports:
+      - '${CHANGEDETECTION_BIND}:${CHANGEDETECTION_PORT}:5000'
+    command:
+      - sh
+      - -c
+      - |
+        SALTED_PASS=$$(python -c '
+        import base64, hashlib, os
+        salt = os.urandom(32)
+        key = hashlib.pbkdf2_hmac("sha256", os.environ["CHANGEDETECTION_PASSWORD"].encode(), salt, 100000)
+        print(base64.b64encode(salt + key).decode())
+        ') || exit 1
+        export SALTED_PASS
+        unset CHANGEDETECTION_PASSWORD
+        exec python ./changedetection.py -d /datastore
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 5000), 3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

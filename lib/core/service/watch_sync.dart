@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/service/scoped_token.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/core/utils/coalesced.dart';
+import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 /// Keeps the watch app's server list in step with this app's.
@@ -59,8 +61,7 @@ final class WatchSync {
   StreamSubscription<Map<String, dynamic>>? _activationSub;
   StreamSubscription<dynamic>? _serverStoreSub;
   Timer? _pushDebouncer;
-  Future<void>? _pushing;
-  bool _pushDirty = false;
+  late final _pushes = Coalesced(_pushOnce);
 
   /// Completes once [_wc] is either connected or known to be unavailable, so
   /// callers racing app startup wait rather than silently doing nothing.
@@ -85,21 +86,9 @@ final class WatchSync {
   /// Rebuilds the payload and hands it to the watch.
   Future<void> push() {
     if (!isIOS) return Future.value();
-    _pushDirty = true;
-    return _pushing ??= _drainPush();
+    return _pushes();
   }
 
-  Future<void> _drainPush() async {
-    try {
-      while (_pushDirty) {
-        _pushDirty = false;
-        await _pushOnce();
-      }
-    } finally {
-      _pushing = null;
-      if (_pushDirty) _pushing = _drainPush();
-    }
-  }
 
   Future<void> _pushOnce() async {
     await _setupOnce();
@@ -357,9 +346,9 @@ final class WatchSync {
         ? monitor
         : MonitorHttpCredential(
             addr: revocationEndpoint,
-            user: monitor.user,
             pwd: monitor.pwd,
-            ignoreCert: monitor.ignoreCert,
+            legacyUser: monitor.legacyUser,
+            certSha256: monitor.certSha256,
             allowInsecure: monitor.allowInsecure,
           );
     final client = MonitorHttpClient(credential);
@@ -409,7 +398,9 @@ final class WatchSync {
         // ignores the key — it finds out a token has expired by being told
         // 401, which it cannot do anything about; renewing is this side's job.
         'expiresAt': token.expiresAt,
-        'ignoreCert': monitor.ignoreCert,
+        // The certificate this app accepted for a self-signed agent; the
+        // watch checks it where the system does not trust the certificate.
+        'certSha256': ?monitor.certSha256,
         // The watch refuses to send the token over plaintext without it, the
         // way this app and the home widget do. Not a storage decision made
         // here: the answer travels so the check can be made where the request
@@ -480,7 +471,7 @@ final class WatchSync {
   void dispose() {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
-    _pushDirty = false;
+    _pushes.cancelPending();
     unawaited(_activationSub?.cancel());
     _activationSub = null;
     unawaited(_serverStoreSub?.cancel());

@@ -56,7 +56,9 @@ object WidgetStore {
         val name: String,
         /** Base address of the agent, no trailing slash. */
         val addr: String,
-        val ignoreCert: Boolean,
+        /** The certificate accepted for this agent in the app, SHA-256 of its
+         *  DER form in lowercase hex (`MonitorHttpCredential.certSha256`). */
+        val certSha256: String?,
         /**
          * Whether this server was opted in to plaintext HTTP in the app.
          *
@@ -75,9 +77,10 @@ object WidgetStore {
             .put("id", id)
             .put("name", name)
             .put("addr", addr)
-            .put("ignoreCert", ignoreCert)
             .put("allowInsecure", allowInsecure)
             .put("tokenExpiresAt", tokenExpiresAt)
+            // Absent rather than `null`: `optString` reads a JSON null as "null".
+            .apply { certSha256?.let { put("certSha256", it) } }
 
         companion object {
             fun fromJson(o: JSONObject): WidgetServer? {
@@ -87,7 +90,9 @@ object WidgetStore {
                     id = id,
                     name = o.optString("name").takeIf { it.isNotEmpty() } ?: addr,
                     addr = addr,
-                    ignoreCert = o.optBoolean("ignoreCert", false),
+                    // An entry from before the pin carries `ignoreCert`, which
+                    // is not read: it accepted any certificate unseen.
+                    certSha256 = o.optString("certSha256").takeIf { it.isNotEmpty() },
                     allowInsecure = o.optBoolean("allowInsecure", false),
                     tokenExpiresAt = o.optLong("tokenExpiresAt", 0L),
                 )

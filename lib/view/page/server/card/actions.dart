@@ -1,19 +1,20 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/app/app_link.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/card.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/state_ui.dart';
+import 'package:server_box/view/page/server/widget/server_power.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:server_box/view/widget/app_link.dart';
-import 'package:server_box/view/widget/server_power.dart';
-import 'package:server_box/view/widget/server_share.dart';
 
 /// What can be done to one machine without leaving the list.
 ///
@@ -59,6 +60,20 @@ List<ContextMenuAction> serverActions(
       text: l10n.copyLink,
       onTap: () => AppLinkUi.copy(ServerLink(spi.id)),
     ),
+    if (isAndroid)
+      ContextMenuAction(
+        icon: Icons.add_to_home_screen,
+        text: l10n.addToHomeScreen,
+        onTap: () async {
+          final ok = await MethodChans.pinShortcut(
+            id: spi.id,
+            label: spi.name,
+            uri: ServerLink(spi.id).toString(),
+          );
+          // False is a launcher that cannot pin, or refused: say so.
+          if (!ok) Toast.error('${l10n.addToHomeScreen}: ${libL10n.fail}');
+        },
+      ),
     ContextMenuAction(
       icon: Icons.ios_share,
       text: libL10n.share,

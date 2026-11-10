@@ -1,12 +1,13 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/utils/jump_chain.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/jump_chain.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// One end of a transfer: somewhere files live, and a path in it.
 ///
@@ -132,7 +133,7 @@ final class MonitorFileRef extends FileRef {
   factory MonitorFileRef.forServer(Spi spi, String path) {
     final monitor = spi.monitor;
     if (monitor == null) {
-      throw StateError('${spi.name} has no monitor agent to browse');
+      throw StateError('${spi.name} has no Monitor to browse');
     }
     return MonitorFileRef(spi: spi, monitor: monitor, path: path);
   }

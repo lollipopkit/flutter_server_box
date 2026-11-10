@@ -314,8 +314,8 @@ as VirtGuestKind?,
 mixin _$VirtBackupJob {
 
  String get id;/// PVE's calendar event: `02:00`, `sat 03:00`, `daily`.
- String? get schedule; String? get storage;/// `snapshot`, `suspend` or `stop`.
- String? get mode;/// `zstd`, `lzo`, `gzip`, or none.
+ String? get schedule; String? get storage;/// Null when the job names none, or one this app does not know.
+ VirtBackupMode? get mode;/// `zstd`, `lzo`, `gzip`, or none.
  String? get compress;/// How many are kept, as PVE's retention says it: `keep-last=7`, ...
  String? get keep; bool get enabled;/// `all` (every guest on the job's node), the VMIDs it takes, or — with
 /// [pool] — the guests of that pool. PVE's `vmid` is a comma list or
@@ -360,7 +360,7 @@ abstract mixin class $VirtBackupJobCopyWith<$Res>  {
   factory $VirtBackupJobCopyWith(VirtBackupJob value, $Res Function(VirtBackupJob) _then) = _$VirtBackupJobCopyWithImpl;
 @useResult
 $Res call({
- String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
+ String id, String? schedule, String? storage, VirtBackupMode? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
 });
 
 
@@ -383,7 +383,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schedule: freezed == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
 as String?,storage: freezed == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
 as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
-as String?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
+as VirtBackupMode?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
 as String?,keep: freezed == keep ? _self.keep : keep // ignore: cast_nullable_to_non_nullable
 as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
 as bool,all: null == all ? _self.all : all // ignore: cast_nullable_to_non_nullable
@@ -480,7 +480,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  VirtBackupMode? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtBackupJob() when $default != null:
 return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
@@ -501,7 +501,7 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? schedule,  String? storage,  VirtBackupMode? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)  $default,) {final _that = this;
 switch (_that) {
 case _VirtBackupJob():
 return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
@@ -521,7 +521,7 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? schedule,  String? storage,  String? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? schedule,  String? storage,  VirtBackupMode? mode,  String? compress,  String? keep,  bool enabled,  bool all,  List<int> vmids,  List<int> exclude,  String? pool,  String? node,  String? comment,  String? notesTemplate,  String? mailNotification,  String? prune)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtBackupJob() when $default != null:
 return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,_that.keep,_that.enabled,_that.all,_that.vmids,_that.exclude,_that.pool,_that.node,_that.comment,_that.notesTemplate,_that.mailNotification,_that.prune);case _:
@@ -543,8 +543,8 @@ class _VirtBackupJob extends VirtBackupJob {
 /// PVE's calendar event: `02:00`, `sat 03:00`, `daily`.
 @override final  String? schedule;
 @override final  String? storage;
-/// `snapshot`, `suspend` or `stop`.
-@override final  String? mode;
+/// Null when the job names none, or one this app does not know.
+@override final  VirtBackupMode? mode;
 /// `zstd`, `lzo`, `gzip`, or none.
 @override final  String? compress;
 /// How many are kept, as PVE's retention says it: `keep-last=7`, ...
@@ -615,7 +615,7 @@ abstract mixin class _$VirtBackupJobCopyWith<$Res> implements $VirtBackupJobCopy
   factory _$VirtBackupJobCopyWith(_VirtBackupJob value, $Res Function(_VirtBackupJob) _then) = __$VirtBackupJobCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? schedule, String? storage, String? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
+ String id, String? schedule, String? storage, VirtBackupMode? mode, String? compress, String? keep, bool enabled, bool all, List<int> vmids, List<int> exclude, String? pool, String? node, String? comment, String? notesTemplate, String? mailNotification, String? prune
 });
 
 
@@ -638,7 +638,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schedule: freezed == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
 as String?,storage: freezed == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
 as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
-as String?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
+as VirtBackupMode?,compress: freezed == compress ? _self.compress : compress // ignore: cast_nullable_to_non_nullable
 as String?,keep: freezed == keep ? _self.keep : keep // ignore: cast_nullable_to_non_nullable
 as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
 as bool,all: null == all ? _self.all : all // ignore: cast_nullable_to_non_nullable

@@ -9,7 +9,7 @@ describe('protocol', () => {
   beforeEach(() => {
     for (const entry of [...servers.list]) servers.remove(entry.id)
     servers.add('https://agent.example')
-    servers.login('token', 'admin')
+    servers.login('token')
     sent = []
     vi.stubGlobal('fetch', vi.fn(async (_: string, init?: RequestInit) => {
       sent.push(new Headers(init?.headers))
@@ -23,7 +23,7 @@ describe('protocol', () => {
     await api.getSettings()
     await api.fsRead('/file')
     await getCapabilitiesFor(servers.current!)
-    await loginTo('https://agent.example', { username: 'admin', password: 'pw' })
+    await loginTo('https://agent.example', { password: 'pw' })
     expect(sent).toHaveLength(4)
     for (const headers of sent) expect(headers.get(PROTOCOL_HEADER)).toBe(String(PROTOCOL))
   })
@@ -34,6 +34,6 @@ describe('protocol', () => {
     await expect(api.getSettings()).rejects.toMatchObject(tooOld)
     await expect(getCapabilitiesFor(servers.current!)).rejects.toMatchObject(tooOld)
     await expect(getStatusFor(servers.current!)).rejects.toMatchObject(tooOld)
-    await expect(loginTo('https://agent.example', { username: 'admin', password: 'pw' })).rejects.toMatchObject(tooOld)
+    await expect(loginTo('https://agent.example', { password: 'pw' })).rejects.toMatchObject(tooOld)
   })
 })

@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
-import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
 /// One change to a host's storage or networks (the Storage and Network
 /// sections). Checked with [virtResourceIssue] before it is sent; made by
@@ -496,14 +493,13 @@ enum VirtResIssue {
   /// Not something this kind of host does.
   unsupported;
 
-  /// The issue `sbm_virt` names (`in_use`).
-  static VirtResIssue? ofRust(String? name) => switch (name) {
+  /// `ResourceIssue`, as the FFI returns it; one this build does not know is
+  /// [unsupported].
+  static VirtResIssue? of(vm.ResourceIssue? issue) => switch (issue) {
     null => null,
-    _ => values.firstWhere(
-      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
-      orElse: () => unsupported,
-    ),
+    final i => values.asNameMap()[i.name] ?? unsupported,
   };
+
 }
 
 /// What a [VirtResIssue] says, for a field's error line or a toast.
@@ -528,8 +524,6 @@ String? virtResIssueText(VirtResIssue? issue) => switch (issue) {
   VirtResIssue.notFound => l10n.virtResNotFound,
   VirtResIssue.unsupported => l10n.virtResUnsupported,
 };
-
-String _json(Object? value) => jsonEncode(value);
 
 /// Why [change] cannot be made on a host of [host]
 /// (`sbm_virt::resource::issue`); null when it can. [pools] and [networks]
@@ -571,19 +565,15 @@ VirtResIssue? virtResourceIssue(
     ...networks,
     if (network != null && !networks.any((n) => n.id == network.id)) network,
   ];
-  try {
-    return VirtResIssue.ofRust(
-      ffi.virtResourceIssue(
-        changeJson: _json(VirtRust.changeJson(change)),
-        pve: host == VirtHostKind.pve,
-        poolsJson: _json([for (final p in allPools) VirtRust.poolJson(p)]),
-        networksJson: _json([for (final n in allNetworks) VirtRust.networkJson(n)]),
-        volumesJson: _json([for (final v in allVolumes) VirtRust.volumeJson(v)]),
-      ),
-    );
-  } on PveError {
-    return VirtResIssue.unsupported;
-  }
+  return VirtResIssue.of(
+    ffi.virtResourceIssue(
+      change: change.ffi,
+      pve: host == VirtHostKind.pve,
+      pools: [for (final p in allPools) p.ffi],
+      networks: [for (final n in allNetworks) n.ffi],
+      volumes: [for (final v in allVolumes) v.ffi],
+    ),
+  );
 }
 
 /// Why an upload of [name] into [pool] cannot start; null when it can.
@@ -592,28 +582,28 @@ VirtResIssue? virtUploadIssue(
   String name,
   int size, {
   List<VirtVolume> volumes = const [],
-}) => VirtResIssue.ofRust(
+}) => VirtResIssue.of(
   ffi.virtUploadIssue(
-    poolJson: _json(VirtRust.poolJson(pool)),
+    pool: pool.ffi,
     name: name,
     size: BigInt.from(size < 0 ? 0 : size),
-    volumesJson: _json([for (final v in volumes) VirtRust.volumeJson(v)]),
+    volumes: [for (final v in volumes) v.ffi],
   ),
 );
 
 /// Whether [pool] takes uploads of install media.
 bool virtPoolTakesMedia(VirtStoragePool pool) =>
-    ffi.virtPoolTakesMedia(poolJson: _json(VirtRust.poolJson(pool)));
+    ffi.virtPoolTakesMedia(pool: pool.ffi);
 
 /// The formats a new volume in [pool] can have, the first the default.
 List<String> virtVolumeFormats(VirtStoragePool pool) =>
-    ffi.virtVolumeFormats(poolJson: _json(VirtRust.poolJson(pool)));
+    ffi.virtVolumeFormats(pool: pool.ffi);
 
 /// PVE: the name a new volume is given, with the format as its extension on
 /// a file-based storage.
 String virtVolumeFileName(VirtStoragePool pool, String name, String format) =>
     ffi.virtVolumeFileName(
-      poolJson: _json(VirtRust.poolJson(pool)),
+      pool: pool.ffi,
       name: name,
       format: format,
     );
@@ -655,4 +645,118 @@ final class VirtUploadProgress {
 
   @override
   int get hashCode => Object.hash(name, size, sent);
+}
+
+
+extension NetworkChangesVirt on List<vm.NetworkChanges> {
+  List<VirtNetworkChanges> get virt => [for (final c in this) VirtNetworkChanges(node: c.node, diff: c.diff)];
+}
+
+extension VirtResourceChangeFfi on VirtResourceChange {
+  /// As `sbm_virt::resource::Change`: what it is to, named by id, resolved
+  /// against what the host lists when it is made.
+  vm.ResourceChange get ffi => switch (this) {
+    VirtPoolCreate(
+      :final name,
+      :final type,
+      :final source,
+      :final target,
+      :final node,
+      :final content,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.poolCreate(
+        name: name,
+        poolType: type,
+        source: source,
+        target: target,
+        node: node,
+        content: content,
+        autostart: autostart,
+      ),
+    VirtPoolSetActive(:final pool, :final active) => vm.ResourceChange.poolSetActive(pool: pool.id, active: active),
+    VirtPoolSetAutostart(:final pool, :final on) => vm.ResourceChange.poolSetAutostart(pool: pool.id, on_: on),
+    VirtPoolRefresh(:final pool) => vm.ResourceChange.poolRefresh(pool: pool.id),
+    VirtPoolDelete(:final pool, :final deleteStorage) =>
+      vm.ResourceChange.poolDelete(pool: pool.id, deleteStorage: deleteStorage),
+    VirtVolumeCreate(:final pool, :final name, :final gib, :final format) =>
+      vm.ResourceChange.volumeCreate(pool: pool.id, name: name, gib: BigInt.from(gib), format: format),
+    VirtVolumeDelete(:final pool, :final volume) => vm.ResourceChange.volumeDelete(pool: pool.id, volume: volume.id),
+    VirtVolumeResize(:final pool, :final volume, :final bytes) =>
+      vm.ResourceChange.volumeResize(pool: pool.id, volume: volume.id, bytes: BigInt.from(bytes)),
+    VirtVolumeClone(:final pool, :final volume, :final name) =>
+      vm.ResourceChange.volumeClone(pool: pool.id, volume: volume.id, name: name),
+    VirtNetworkCreate(
+      :final name,
+      :final mode,
+      :final node,
+      :final bridge,
+      :final cidr,
+      :final dhcpStart,
+      :final dhcpEnd,
+      :final vlanAware,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.networkCreate(
+        name: name,
+        mode: mode,
+        node: node,
+        bridge: bridge,
+        cidr: cidr,
+        dhcpStart: dhcpStart,
+        dhcpEnd: dhcpEnd,
+        vlanAware: vlanAware,
+        autostart: autostart,
+      ),
+    VirtNetworkEdit(
+      :final network,
+      :final mode,
+      :final bridge,
+      :final address,
+      :final prefix,
+      :final dhcpStart,
+      :final dhcpEnd,
+      :final hosts,
+      :final restart,
+    ) =>
+      vm.ResourceChange.networkEdit(
+        network: network.id,
+        mode: mode,
+        bridge: bridge,
+        address: address,
+        prefix: prefix,
+        dhcpStart: dhcpStart,
+        dhcpEnd: dhcpEnd,
+        hosts: [for (final h in hosts) h.ffi],
+        restart: restart,
+        // The definition the edit was made from: one changed since is
+        // refused rather than overwritten.
+        baseXml: network.xml.isEmpty ? null : network.xml,
+      ),
+    VirtNetworkEditBridge(
+      :final network,
+      :final ports,
+      :final cidr,
+      :final gateway,
+      :final vlanAware,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.networkEditBridge(
+        network: network.id,
+        ports: ports,
+        cidr: cidr,
+        gateway: gateway,
+        vlanAware: vlanAware,
+        autostart: autostart,
+      ),
+    VirtNetworkRestart(:final network) =>
+      vm.ResourceChange.networkRestart(network: network.id, baseXml: network.xml.isEmpty ? null : network.xml),
+    VirtNetworkSetActive(:final network, :final active) =>
+      vm.ResourceChange.networkSetActive(network: network.id, active: active),
+    VirtNetworkSetAutostart(:final network, :final on) =>
+      vm.ResourceChange.networkSetAutostart(network: network.id, on_: on),
+    VirtNetworkDelete(:final network) => vm.ResourceChange.networkDelete(network: network.id),
+    VirtNetworkApply(:final node) => vm.ResourceChange.networkApply(node: node),
+    VirtNetworkRevert(:final node) => vm.ResourceChange.networkRevert(node: node),
+  };
 }

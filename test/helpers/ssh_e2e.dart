@@ -13,6 +13,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:dartssh2/dartssh2.dart';
 
 /// [key] from the environment, else from the workspace-root `.env`.
@@ -201,6 +202,32 @@ Future<bool> e2eReachable(
     return true;
   } catch (_) {
     return false;
+  }
+}
+
+/// The SHA-256 (lowercase hex) of the certificate the agent at [addr]
+/// presents, for `MonitorHttpCredential.certSha256`: what a user accepts on
+/// the first connection to an agent with its own self-signed certificate.
+/// Null for plain HTTP or an agent that cannot be reached.
+Future<String?> e2eAgentCertSha256(String addr) async {
+  final uri = Uri.tryParse(addr.trim());
+  if (uri == null || !uri.isScheme('https') || uri.host.isEmpty) return null;
+  try {
+    X509Certificate? seen;
+    final socket = await SecureSocket.connect(
+      uri.host,
+      uri.port,
+      timeout: const Duration(seconds: 5),
+      onBadCertificate: (cert) {
+        seen = cert;
+        return true;
+      },
+    );
+    final cert = seen ?? socket.peerCertificate;
+    socket.destroy();
+    return cert == null ? null : sha256.convert(cert.der).toString();
+  } catch (_) {
+    return null;
   }
 }
 

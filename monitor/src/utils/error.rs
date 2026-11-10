@@ -8,8 +8,11 @@ pub enum MonitorError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
     
+    /// Without its URL: a push URL can carry the credential (a Telegram bot
+    /// token, a Discord webhook, a Bark key in the path), and this message
+    /// reaches logs and the push test's answer. See the `From` below.
     #[error("HTTP error: {0}")]
-    Http(#[from] reqwest::Error),
+    Http(reqwest::Error),
     
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
@@ -39,6 +42,12 @@ pub enum MonitorError {
     Push(String),
 }
 
+impl From<reqwest::Error> for MonitorError {
+    fn from(error: reqwest::Error) -> Self {
+        Self::Http(error.without_url())
+    }
+}
+
 impl From<std::num::ParseFloatError> for MonitorError {
     fn from(err: std::num::ParseFloatError) -> Self {
         MonitorError::Parse(err.to_string())
@@ -51,8 +60,7 @@ impl From<std::num::ParseIntError> for MonitorError {
     }
 }
 
-// Web response error implementation for ntex
-impl ntex::web::WebResponseError for MonitorError {
+impl MonitorError {
     fn status_code(&self) -> ntex::http::StatusCode {
         match *self {
             MonitorError::Auth(_) => ntex::http::StatusCode::UNAUTHORIZED,
@@ -62,9 +70,12 @@ impl ntex::web::WebResponseError for MonitorError {
             _ => ntex::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
 
-    fn error_response(&self, _req: &ntex::web::HttpRequest) -> ntex::web::HttpResponse {
-        let mut response = ntex::web::HttpResponse::build(self.status_code());
+// Web response error implementation for ntex
+impl<St> ntex::web::WebResponseError<St, ntex::web::DefaultError> for MonitorError {
+    fn error_response(&self, _: &St) -> ntex::web::HttpResponse {
+        let mut response = ntex::web::HttpResponse::builder(self.status_code());
         if let MonitorError::Quota { retry_after_secs, .. } = self {
             response.header(
                 ntex::http::header::RETRY_AFTER,

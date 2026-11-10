@@ -3,16 +3,20 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_models.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/widget/tmux_window_bar.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
+import 'package:server_box/view/page/ssh/widget/tmux_window_bar.dart';
 
 void main() {
+  final en = AppLocalizationsEn();
+  final libEn = LibLocalizationsEn();
   testWidgets('renders native tmux windows and reports selection', (
     tester,
   ) async {
@@ -64,10 +68,10 @@ void main() {
     expect(selected?.id, TmuxWindowId('@1'));
     expect(newWindowTaps, 0);
 
-    await tester.tap(find.byTooltip('New window'));
+    await tester.tap(find.byTooltip(en.tmuxNewWindow));
     expect(newWindowTaps, 1);
 
-    await tester.tap(find.byTooltip('Delete'));
+    await tester.tap(find.byTooltip(libEn.delete));
     expect(closed?.id, TmuxWindowId('@0'));
 
     shell.splitPanes = true;

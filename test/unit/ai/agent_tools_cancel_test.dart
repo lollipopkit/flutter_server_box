@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/tools.dart';
+import 'package:server_box/view/agent/tools.dart';
 
 void main() {
   group('AgentTools.cancellable', () {

@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -111,6 +112,9 @@ class _BmcCredentialEditPageState extends ConsumerState<BmcCredentialEditPage> {
               label: libL10n.pwd,
               icon: Icons.password,
               obscureText: true,
+              onReveal: (cred?.pwd?.isNotEmpty ?? false)
+                  ? AppAuth.confirm
+                  : null,
               suggestion: false,
               onSubmitted: (_) => _onSave(),
             ),
@@ -149,9 +153,9 @@ extension on _BmcCredentialEditPageState {
 
     try {
       if (existing == null) {
-        await _notifier.add(saved);
+        _notifier.add(saved);
       } else {
-        await _notifier.update(existing, saved);
+        _notifier.update(existing, saved);
       }
     } on DuplicateNameException catch (e) {
       // The name is `UNIQUE` in the schema, so the collision is found here

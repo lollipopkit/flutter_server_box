@@ -9,6 +9,7 @@ import 'l10n_az.dart';
 import 'l10n_de.dart';
 import 'l10n_en.dart';
 import 'l10n_es.dart';
+import 'l10n_fa.dart';
 import 'l10n_fr.dart';
 import 'l10n_id.dart';
 import 'l10n_it.dart';
@@ -111,6 +112,7 @@ abstract class AppLocalizations {
     Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('fa'),
     Locale('fr'),
     Locale('id'),
     Locale('it'),
@@ -263,18 +265,6 @@ abstract class AppLocalizations {
   /// **'High risk'**
   String get askAiRiskDestructive;
 
-  /// User-facing label or message for ask AI auto run safe commands.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-run read-only commands'**
-  String get askAiAutoRunSafeCommands;
-
-  /// Help text for the ask AI auto run safe commands setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs only when both the model and the local check call it read-only'**
-  String get askAiAutoRunSafeCommandsTip;
-
   /// User-facing label or message for ask AI history.
   ///
   /// In en, this message translates to:
@@ -410,7 +400,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for agent monitor optional.
   ///
   /// In en, this message translates to:
-  /// **'Monitor agent (optional)'**
+  /// **'Monitor (optional)'**
   String get agentMonitorOptional;
 
   /// Help text for the auth fail setting or action.
@@ -418,12 +408,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Authentication failed. Check the details'**
   String get authFailTip;
-
-  /// User-facing label or message for auto backup conflict.
-  ///
-  /// In en, this message translates to:
-  /// **'Only one automatic backup can be turned on at the same time.'**
-  String get autoBackupConflict;
 
   /// User-facing label or message for auto connect.
   ///
@@ -455,17 +439,17 @@ abstract class AppLocalizations {
   /// **'Backup is encrypted'**
   String get backupEncrypted;
 
-  /// User-facing label or message for backup not encrypted.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup is not encrypted'**
-  String get backupNotEncrypted;
-
   /// User-facing label or message for backup password.
   ///
   /// In en, this message translates to:
   /// **'Backup password'**
   String get backupPassword;
+
+  /// Confirmation before removing the backup password on iOS or macOS, where it is in iCloud Keychain and so removed from the person's other Apple devices too.
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove the backup password from all devices using the same iCloud Keychain. Sync will pause on those devices until a new password is set.'**
+  String get backupPasswordRemoveSynced;
 
   /// User-facing label or message for backup password removed.
   ///
@@ -482,7 +466,7 @@ abstract class AppLocalizations {
   /// Help text for the backup password setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Set a password to encrypt backup files. Leave empty to disable encryption.'**
+  /// **'Used to encrypt backups and synced data. All synced devices must use the same password—if you change it on one device, enter the new password on the others.'**
   String get backupPasswordTip;
 
   /// User-facing label or message for backup password wrong.
@@ -590,7 +574,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor HTTPS required.
   ///
   /// In en, this message translates to:
-  /// **'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.'**
+  /// **'A remote Monitor needs HTTPS, unless HTTP is allowed for it.'**
   String get monitorHttpsRequired;
 
   /// User-facing label or message for monitor allow insecure HTTP.
@@ -602,7 +586,7 @@ abstract class AppLocalizations {
   /// Title shown for the plain HTTP dialog or section.
   ///
   /// In en, this message translates to:
-  /// **'This agent is served over plain HTTP'**
+  /// **'This Monitor is served over plain HTTP'**
   String get plainHttpTitle;
 
   /// Help text for the plain HTTP setting or action.
@@ -632,7 +616,7 @@ abstract class AppLocalizations {
   /// Help text for the monitor HTTP setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
+  /// **'Read this server\'s status from the **Monitor**\'s HTTP API instead of running commands over SSH.\n\nThe Monitor has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up the Monitor]({url})'**
   String monitorHttpTip(String url);
 
   /// Toast after a restore: the backup was restored, but the themes named below it could not be installed — not in the theme store or not carried by the backup (installed from a folder, or imported with an older version of the app).
@@ -641,65 +625,11 @@ abstract class AppLocalizations {
   /// **'Restored, except these themes. Install them again from the theme store or the file they came from.'**
   String get backupThemesNotRestored;
 
-  /// Help text for the backup setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
-  String get backupTip;
-
-  /// Title shown for the iCloud backup status dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup status'**
-  String get icloudBackupStatusTitle;
-
-  /// Status message shown while iCloud backup status loading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading iCloud backup status...'**
-  String get icloudBackupStatusLoading;
-
-  /// Error message shown when iCloud backup status error.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to read iCloud backup metadata'**
-  String get icloudBackupStatusError;
-
-  /// Empty-state message for iCloud backup status empty.
-  ///
-  /// In en, this message translates to:
-  /// **'No iCloud backup file found yet'**
-  String get icloudBackupStatusEmpty;
-
-  /// User-facing label or message for iCloud backup state uploading.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploading'**
-  String get icloudBackupStateUploading;
-
   /// User-facing label or message for iCloud backup state conflict.
   ///
   /// In en, this message translates to:
   /// **'Conflict detected'**
   String get icloudBackupStateConflict;
-
-  /// User-facing label or message for iCloud backup state uploaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Uploaded'**
-  String get icloudBackupStateUploaded;
-
-  /// User-facing label or message for iCloud backup state waiting.
-  ///
-  /// In en, this message translates to:
-  /// **'Waiting for iCloud'**
-  String get icloudBackupStateWaiting;
-
-  /// User-facing label or message for iCloud backup status summary.
-  ///
-  /// In en, this message translates to:
-  /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
-  String icloudBackupStatusSummary(String lastModified, String remoteState);
 
   /// User-facing label or message for bg run.
   ///
@@ -772,6 +702,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear All Statistics'**
   String get clearAllStatsTitle;
+
+  /// No description provided for @clearAllSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all settings'**
+  String get clearAllSettings;
 
   /// Action label for clear server stats content.
   ///
@@ -881,12 +817,6 @@ abstract class AppLocalizations {
   /// **'Discovery failed'**
   String get discoveryFailed;
 
-  /// User-facing label or message for discovery settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery Settings'**
-  String get discoverySettings;
-
   /// User-facing label or message for distro.
   ///
   /// In en, this message translates to:
@@ -923,12 +853,6 @@ abstract class AppLocalizations {
   /// **'Remove unused data to free up disk space'**
   String get dockerPruneTip;
 
-  /// User-facing label or message for docker statistics.
-  ///
-  /// In en, this message translates to:
-  /// **'Docker Statistics'**
-  String get dockerStatistics;
-
   /// Action label for edit virt keys.
   ///
   /// In en, this message translates to:
@@ -940,18 +864,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The current code highlighting performance is not ideal and can be optionally turned off to improve.'**
   String get editorHighlightTip;
-
-  /// Action label for enable mDNS.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable mDNS'**
-  String get enableMdns;
-
-  /// Description of the enable mDNS desc feature or option.
-  ///
-  /// In en, this message translates to:
-  /// **'Use mDNS/Bonjour to discover SSH services'**
-  String get enableMdnsDesc;
 
   /// User-facing label or message for env vars.
   ///
@@ -971,17 +883,17 @@ abstract class AppLocalizations {
   /// **'Fallback SSH destination'**
   String get fallbackSshDest;
 
-  /// Help text for the F-Droid release setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
-  String get fdroidReleaseTip;
-
   /// User-facing label or message for file too large.
   ///
   /// In en, this message translates to:
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
   String fileTooLarge(String file, String size, String sizeMax);
+
+  /// Asked when saving a file that changed on the server since it was opened.
+  ///
+  /// In en, this message translates to:
+  /// **'\'{file}\' changed on the server after it was opened. Overwrite it?'**
+  String fileChangedOverwrite(String file);
 
   /// User-facing label or message for file dir gone.
   ///
@@ -1001,59 +913,41 @@ abstract class AppLocalizations {
   /// **'Full screen'**
   String get fullScreen;
 
+  /// Full screen showing every server at once
+  ///
+  /// In en, this message translates to:
+  /// **'All servers'**
+  String get fullScreenAllServers;
+
+  /// Full screen showing one server at a time
+  ///
+  /// In en, this message translates to:
+  /// **'One server'**
+  String get fullScreenOneServer;
+
+  /// How many of the servers shown are connected
+  ///
+  /// In en, this message translates to:
+  /// **'{connected} / {total} connected'**
+  String fullScreenConnectedFmt(int connected, int total);
+
+  /// Leaves full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get fullScreenExit;
+
   /// User-facing label or message for full screen jitter.
   ///
   /// In en, this message translates to:
-  /// **'Full screen jitter'**
+  /// **'Burn-in protection'**
   String get fullScreenJitter;
-
-  /// User-facing label or message for full screen jitter help.
-  ///
-  /// In en, this message translates to:
-  /// **'To avoid screen burn-in'**
-  String get fullScreenJitterHelp;
 
   /// Help text for the full screen setting or action.
   ///
   /// In en, this message translates to:
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
-
-  /// User-facing label or message for github gist id optional.
-  ///
-  /// In en, this message translates to:
-  /// **'Gist ID (optional)'**
-  String get githubGistIdOptional;
-
-  /// User-facing label or message for github gist token.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub Gist token'**
-  String get githubGistToken;
-
-  /// Empty-state message for github gist token empty.
-  ///
-  /// In en, this message translates to:
-  /// **'Token is empty'**
-  String get githubGistTokenEmpty;
-
-  /// Error shown when the Gist ID field holds something that is neither an ID nor a gist URL.
-  ///
-  /// In en, this message translates to:
-  /// **'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.'**
-  String get githubGistIdInvalid;
-
-  /// Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.'**
-  String get githubGistNotFound;
-
-  /// Error shown when GitHub answers 401 or 403 for the token. Keep "gist" and "Gists" as GitHub names them.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).'**
-  String get githubGistTokenRejected;
 
   /// User-facing label or message for goto.
   ///
@@ -1072,12 +966,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Customize which tabs appear on the home page and their order'**
   String get homeTabsCustomizeDesc;
-
-  /// User-facing label or message for ignore cert.
-  ///
-  /// In en, this message translates to:
-  /// **'Ignore certificate'**
-  String get ignoreCert;
 
   /// A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is "Bild" and Japanese "画像".
   ///
@@ -1196,7 +1084,7 @@ abstract class AppLocalizations {
   /// Help text for the rememberKeyPassphrase setting.
   ///
   /// In en, this message translates to:
-  /// **'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.'**
+  /// **'Save passphrases for encrypted private keys so you don\'t need to re-enter them after restarting the app. Turning this off deletes saved passphrases from this device.'**
   String get rememberKeyPassphraseTip;
 
   /// Help text for the SSH key unlock setting or action.
@@ -1340,7 +1228,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for no connection method.
   ///
   /// In en, this message translates to:
-  /// **'Configure SSH, a monitor agent, or both'**
+  /// **'Configure SSH, the Monitor, or both'**
   String get noConnectionMethod;
 
   /// User-facing label or message for keep foreground.
@@ -1397,23 +1285,29 @@ abstract class AppLocalizations {
   /// **'Which shell a terminal starts. Empty restores /bin/sh.'**
   String get linuxShellTip;
 
-  /// Help text for the linux net setting or action.
+  /// Help text for the Linux DNS setting.
   ///
   /// In en, this message translates to:
-  /// **'DNS servers. Empty restores the defaults'**
-  String get linuxNetTip;
+  /// **'DNS servers. Empty restores the defaults.'**
+  String get linuxDnsTip;
+
+  /// Help text for the Linux package mirror setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Package mirror for the selected distribution. Empty restores the default.'**
+  String get linuxMirrorTip;
+
+  /// Name of one distribution's package mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'{distro} mirror'**
+  String linuxMirrorOf(String distro);
 
   /// User-facing label or message for made with love.
   ///
   /// In en, this message translates to:
   /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(String myGithub);
-
-  /// User-facing label or message for max concurrency.
-  ///
-  /// In en, this message translates to:
-  /// **'Max Concurrency'**
-  String get maxConcurrency;
 
   /// User-facing label or message for max retry count.
   ///
@@ -1619,29 +1513,11 @@ abstract class AppLocalizations {
   /// **'Not reviewed yet — tap to see the certificate'**
   String get bmcCertUnreviewed;
 
-  /// User-facing label or message for BMC cert review.
-  ///
-  /// In en, this message translates to:
-  /// **'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.'**
-  String get bmcCertReview;
-
-  /// User-facing label or message for BMC cert changed.
-  ///
-  /// In en, this message translates to:
-  /// **'The certificate does not match. Check it.'**
-  String get bmcCertChanged;
-
   /// User-facing label or message for BMC cert expired.
   ///
   /// In en, this message translates to:
   /// **'Expired.'**
   String get bmcCertExpired;
-
-  /// User-facing label or message for BMC cert was.
-  ///
-  /// In en, this message translates to:
-  /// **'Previously accepted: {fingerprint}'**
-  String bmcCertWas(String fingerprint);
 
   /// User-facing label or message for BMC addr invalid.
   ///
@@ -1702,12 +1578,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.'**
   String get proxyCommandMobileTip;
-
-  /// Help text for the pve ignore cert setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
-  String get pveIgnoreCertTip;
 
   /// User-facing label or message for pve password required.
   ///
@@ -1855,7 +1725,7 @@ abstract class AppLocalizations {
   /// Help text for the server files unavailable setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Needs SSH to this server, or server_box_monitor installed with its file API on.'**
+  /// **'Needs SSH to this server, or the Monitor installed with its file API on.'**
   String get serverFilesUnavailableTip;
 
   /// User-facing label or message for back.
@@ -2125,13 +1995,13 @@ abstract class AppLocalizations {
   /// No description provided for @diskCountsNetworkTip.
   ///
   /// In en, this message translates to:
-  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.'**
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the Monitor, the Monitor\'s own setting decides.'**
   String get diskCountsNetworkTip;
 
   /// No description provided for @diskCountsNetworkAgentTip.
   ///
   /// In en, this message translates to:
-  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.'**
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the Monitor stores in its history and checks disk alerts against.'**
   String get diskCountsNetworkAgentTip;
 
   /// User-facing label or message for spent time.
@@ -2140,29 +2010,11 @@ abstract class AppLocalizations {
   /// **'Spent time: {time}'**
   String spentTime(String time);
 
-  /// User-facing label or message for SSH config all exist.
-  ///
-  /// In en, this message translates to:
-  /// **'All servers already exist ({duplicateCount} duplicates found)'**
-  String sshConfigAllExist(int duplicateCount);
-
-  /// User-facing label or message for SSH config duplicates skipped.
-  ///
-  /// In en, this message translates to:
-  /// **'{duplicateCount} duplicates will be skipped'**
-  String sshConfigDuplicatesSkipped(int duplicateCount);
-
   /// User-facing label or message for SSH config found.
   ///
   /// In en, this message translates to:
   /// **'We found SSH configuration on your system.'**
   String get sshConfigFound;
-
-  /// User-facing label or message for SSH config found servers.
-  ///
-  /// In en, this message translates to:
-  /// **'Found {totalCount} servers'**
-  String sshConfigFoundServers(int totalCount);
 
   /// User-facing label or message for SSH config import.
   ///
@@ -2181,12 +2033,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prompt to read ~/.ssh/config on first server creation'**
   String get sshConfigImportTip;
-
-  /// User-facing label or message for SSH config imported.
-  ///
-  /// In en, this message translates to:
-  /// **'Imported {count} servers from SSH config'**
-  String sshConfigImported(int count);
 
   /// Description of the SSH host key changed desc feature or option.
   ///
@@ -2236,23 +2082,11 @@ abstract class AppLocalizations {
   /// **'Would you like to select the SSH config file manually?'**
   String get sshConfigManualSelect;
 
-  /// User-facing label or message for SSH config no servers.
-  ///
-  /// In en, this message translates to:
-  /// **'No servers found in SSH config'**
-  String get sshConfigNoServers;
-
   /// User-facing label or message for SSH config permission denied.
   ///
   /// In en, this message translates to:
   /// **'Cannot access SSH config file due to macOS permissions.'**
   String get sshConfigPermissionDenied;
-
-  /// User-facing label or message for SSH config servers to import.
-  ///
-  /// In en, this message translates to:
-  /// **'{importCount} servers will be imported'**
-  String sshConfigServersToImport(int importCount);
 
   /// User-facing label or message for SSH term help.
   ///
@@ -2284,17 +2118,47 @@ abstract class AppLocalizations {
   /// **'Switch to {val}'**
   String switchTo(String val);
 
-  /// User-facing label or message for sync app settings.
+  /// Title of the list of what sync carries.
   ///
   /// In en, this message translates to:
-  /// **'Sync app settings'**
-  String get syncAppSettings;
+  /// **'Synced data'**
+  String get syncedData;
 
-  /// Help text for the sync app settings setting or action.
+  /// Sync category label.
   ///
   /// In en, this message translates to:
-  /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
-  String get syncAppSettingsTip;
+  /// **'Sudo passwords and API keys'**
+  String get syncSecrets;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Key passphrases'**
+  String get keyPassphrases;
+
+  /// Sync category label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts, images and skills'**
+  String get syncFiles;
+
+  /// Shown on the backup page when this build stops syncing at data a newer build wrote.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced data was created by a newer version of ServerBox. Update the app to continue syncing.'**
+  String get syncRemoteTooNew;
+
+  /// A sync stopped: the remote backup opens with another backup password.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced data is encrypted with a different backup password. Enter the backup password used on your other devices.'**
+  String get syncPasswordMismatch;
+
+  /// A sync stopped: the destination could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the sync service. Check your network connection and try again.'**
+  String get syncUnreachable;
 
   /// Help text for the term font size setting or action.
   ///
@@ -2439,66 +2303,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The rest go on a page of their own, swiped sideways.'**
   String get virtKeyRowsTip;
-
-  /// Screen reader name of the down arrow virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Down arrow'**
-  String get keyArrowDown;
-
-  /// Screen reader name of the left arrow virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Left arrow'**
-  String get keyArrowLeft;
-
-  /// Screen reader name of the right arrow virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Right arrow'**
-  String get keyArrowRight;
-
-  /// Screen reader name of the up arrow virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Up arrow'**
-  String get keyArrowUp;
-
-  /// Screen reader name of the control virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Control'**
-  String get keyControl;
-
-  /// Screen reader name of the escape virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Escape'**
-  String get keyEscape;
-
-  /// Screen reader name of the page down virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Page down'**
-  String get keyPageDown;
-
-  /// Screen reader name of the page up virtual key.
-  ///
-  /// In en, this message translates to:
-  /// **'Page up'**
-  String get keyPageUp;
-
-  /// Opens the terminal output as selectable text, for screen readers.
-  ///
-  /// In en, this message translates to:
-  /// **'View as text'**
-  String get termTextView;
-
-  /// Shown at the top of the terminal text view once its oldest lines were dropped to bound memory.
-  ///
-  /// In en, this message translates to:
-  /// **'Earlier lines no longer kept: {count}'**
-  String termTextLetGo(int count);
 
   /// User-facing label or message for wait connection.
   ///
@@ -2791,13 +2595,13 @@ abstract class AppLocalizations {
   /// Help text for the watch servers setting or action.
   ///
   /// In en, this message translates to:
-  /// **'The watch fetches from the monitor on its own, so only servers with one can be picked.'**
+  /// **'The watch fetches from the Monitor on its own, so only servers with the Monitor can be picked.'**
   String get watchServersTip;
 
   /// User-facing label or message for watch no monitor server.
   ///
   /// In en, this message translates to:
-  /// **'No server has a monitor agent configured'**
+  /// **'No server has the Monitor configured'**
   String get watchNoMonitorServer;
 
   /// Title shown for the legacy status gone dialog or section.
@@ -2809,7 +2613,7 @@ abstract class AppLocalizations {
   /// Explanatory message shown in the legacy status gone dialog or notice.
   ///
   /// In en, this message translates to:
-  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
+  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the Monitor\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
   String get legacyStatusGoneBody;
 
   /// User-facing label or message for services.
@@ -3061,7 +2865,7 @@ abstract class AppLocalizations {
   /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
+  /// **'Allows the Agent to run commands on this device according to the permission mode'**
   String get agentLocalExecTip;
 
   /// Help text for the agent local exec rootfs setting or action.
@@ -3700,71 +3504,11 @@ abstract class AppLocalizations {
   /// **'Leave the password empty to keep the existing password.'**
   String get userPasswordEditTip;
 
-  /// Tab label for the machine's groups, next to Users.
-  ///
-  /// In en, this message translates to:
-  /// **'Groups'**
-  String get systemGroups;
-
-  /// Column header for a group's numeric id.
-  ///
-  /// In en, this message translates to:
-  /// **'GID'**
-  String get userGid;
-
-  /// Label for a group's supplementary members.
-  ///
-  /// In en, this message translates to:
-  /// **'Members'**
-  String get userGroupMembers;
-
-  /// Accounts whose primary group is this group.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary members'**
-  String get userPrimaryMembers;
-
-  /// Label for a group below the machine's GID_MIN.
-  ///
-  /// In en, this message translates to:
-  /// **'System group'**
-  String get userSystemGroup;
-
-  /// Hint for the group members field.
-  ///
-  /// In en, this message translates to:
-  /// **'alice,bob'**
-  String get userMembersHint;
-
-  /// Section and filter label for groups at or above the machine's GID_MIN.
-  ///
-  /// In en, this message translates to:
-  /// **'Regular'**
-  String get userRegularGroup;
-
   /// Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{func} is not available over this server\'s connection.'**
   String funcUnavailableFmt(String func);
-
-  /// No description provided for @funcNeedsAgentGrant.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} needs the Monitor agent\'s {setting} to be turned on.'**
-  String funcNeedsAgentGrant(String func, String setting);
-
-  /// No description provided for @funcNeedsAgentUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} needs a newer Monitor agent.'**
-  String funcNeedsAgentUpdate(String func);
-
-  /// No description provided for @portForwardRemoteNeedsAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote forwards through the Monitor agent need a newer agent: update it on the server.'**
-  String get portForwardRemoteNeedsAgent;
 
   /// User-facing label or message for range live.
   ///
@@ -3799,7 +3543,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for history no stored.
   ///
   /// In en, this message translates to:
-  /// **'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.'**
+  /// **'Only the Monitor stores history. This connection keeps what this app has seen since it connected.'**
   String get historyNoStored;
 
   /// User-facing label or message for no history yet.
@@ -3829,13 +3573,13 @@ abstract class AppLocalizations {
   /// User-facing label or message for beyond retention.
   ///
   /// In en, this message translates to:
-  /// **'beyond what this agent kept'**
+  /// **'beyond what this Monitor kept'**
   String get beyondRetention;
 
   /// Formatted user-facing message for agent retention; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
-  /// **'Agent keeps {kept}'**
+  /// **'Monitor keeps {kept}'**
   String agentRetentionFmt(String kept);
 
   /// Agent: agentServerTools.
@@ -4072,6 +3816,24 @@ abstract class AppLocalizations {
   /// **'{count} {what}'**
   String countOfFmt(int count, String what);
 
+  /// Section title for the mounted filesystems in the disk device list.
+  ///
+  /// In en, this message translates to:
+  /// **'Filesystems'**
+  String get filesystems;
+
+  /// Section title for every block device (disks, partitions) whether mounted or not.
+  ///
+  /// In en, this message translates to:
+  /// **'Block devices'**
+  String get blockDevices;
+
+  /// Shown for a block device or partition that nothing is mounted from.
+  ///
+  /// In en, this message translates to:
+  /// **'Not mounted'**
+  String get notMounted;
+
   /// User-facing label or message for unit devices.
   ///
   /// In en, this message translates to:
@@ -4255,13 +4017,13 @@ abstract class AppLocalizations {
   /// Help text for the connection setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Both can be on at once. The order is the order they are dialled.'**
+  /// **'Both can be enabled at once and are tried in the order shown.'**
   String get connectionTip;
 
   /// User-facing label or message for transport none on.
   ///
   /// In en, this message translates to:
-  /// **'Both are off — this server cannot be connected.'**
+  /// **'Enable at least one connection method.'**
   String get transportNoneOn;
 
   /// User-facing label or message for this device.
@@ -4273,7 +4035,7 @@ abstract class AppLocalizations {
   /// Help text for the local server setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.'**
+  /// **'Reads this device directly, by running the status script here. SSH and the Monitor are not used, and their settings are kept.'**
   String get localServerTip;
 
   /// User-facing label or message for local server unsupported.
@@ -4282,52 +4044,22 @@ abstract class AppLocalizations {
   /// **'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.'**
   String get localServerUnsupported;
 
-  /// Introductory text for the remote desktop screen or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.'**
-  String get remoteDesktopIntro;
-
-  /// User-facing label or message for remote desktop intro profiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.'**
-  String get remoteDesktopIntroProfiles;
-
-  /// Introductory text for the local server screen or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.'**
-  String get localServerIntro;
-
-  /// User-facing label or message for local server add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add this device'**
-  String get localServerAdd;
-
-  /// User-facing label or message for local server intro footer.
-  ///
-  /// In en, this message translates to:
-  /// **'It can also be turned on later, in a server\'s edit page under Connection.'**
-  String get localServerIntroFooter;
-
   /// User-facing label or message for transport section off.
   ///
   /// In en, this message translates to:
   /// **'Off. The fields below are kept for when you turn it back on.'**
   String get transportSectionOff;
 
-  /// User-facing label or message for monitor agent.
+  /// User-facing label or message for Monitor.
   ///
   /// In en, this message translates to:
-  /// **'Monitor agent'**
+  /// **'Monitor'**
   String get monitorAgent;
 
   /// Help text for the plain HTTP edit setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
+  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.'**
   String get plainHttpEditTip;
 
   /// User-facing label or message for behaviour.
@@ -4417,7 +4149,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for tag on this server.
   ///
   /// In en, this message translates to:
-  /// **'on this server'**
+  /// **'On this server'**
   String get tagOnThisServer;
 
   /// Formatted user-facing message for tag servers; runtime values are supplied by placeholders.
@@ -4678,16 +4410,16 @@ abstract class AppLocalizations {
   /// **'Monitor settings'**
   String get monitorSettings;
 
-  /// User-facing label or message for monitor agent default.
+  /// User-facing label or message for Monitor default.
   ///
   /// In en, this message translates to:
-  /// **'Agent default'**
+  /// **'Monitor default'**
   String get monitorAgentDefault;
 
   /// User-facing label or message for monitor needs restart.
   ///
   /// In en, this message translates to:
-  /// **'Takes effect after the agent restarts'**
+  /// **'Takes effect after the Monitor restarts'**
   String get monitorNeedsRestart;
 
   /// User-facing label or message for monitor collection.
@@ -4783,7 +4515,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for push secret set.
   ///
   /// In en, this message translates to:
-  /// **'Set on the agent, not shown'**
+  /// **'Set on the Monitor, not shown'**
   String get pushSecretSet;
 
   /// User-facing label or message for push secret keep.
@@ -4819,7 +4551,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for push unknown type.
   ///
   /// In en, this message translates to:
-  /// **'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.'**
+  /// **'This Monitor has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the Monitor\'s config.toml.'**
   String get pushUnknownType;
 
   /// User-facing label or message for push json invalid.
@@ -4837,7 +4569,7 @@ abstract class AppLocalizations {
   /// Help text for the data retention setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Off means the agent never deletes anything and its database grows without limit.'**
+  /// **'Off means the Monitor never deletes anything and its database grows without limit.'**
   String get dataRetentionTip;
 
   /// User-facing label or message for retention metrics.
@@ -4873,25 +4605,25 @@ abstract class AppLocalizations {
   /// Help text for the cors origins setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
+  /// **'Origins a browser panel may call this Monitor from. Empty means same-origin only.'**
   String get corsOriginsTip;
 
   /// User-facing label or message for monitor no remote access.
   ///
   /// In en, this message translates to:
-  /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
+  /// **'This Monitor refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the Monitor ([remote_access] allow_insecure) and this app.'**
   String get monitorNoRemoteAccess;
 
-  /// Shown when the Monitor agent speaks an older protocol than this app reads.
+  /// Shown when the Monitor speaks an older protocol than this app reads.
   ///
   /// In en, this message translates to:
-  /// **'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.'**
+  /// **'This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.'**
   String get monitorAgentTooOld;
 
-  /// Shown when the Monitor agent no longer answers this app's protocol (HTTP 426).
+  /// Shown when the Monitor no longer answers this app's protocol (HTTP 426).
   ///
   /// In en, this message translates to:
-  /// **'This Monitor agent no longer supports this version of ServerBox. Update the app.'**
+  /// **'This Monitor no longer supports this version of ServerBox. Update the app.'**
   String get monitorClientTooOld;
 
   /// User-facing label or message for alerts.
@@ -4939,7 +4671,7 @@ abstract class AppLocalizations {
   /// Help text for the search server setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Searches names and addresses — the two the editor asks for first.'**
+  /// **'Search by server name or address.'**
   String get searchServerTip;
 
   /// Help text for the add server setting or action.
@@ -4975,7 +4707,7 @@ abstract class AppLocalizations {
   /// Help text for the group by tag setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Tags are set in a server’s own editor.'**
+  /// **'Add and manage tags when editing a server.'**
   String get groupByTagTip;
 
   /// Action label for connecting.
@@ -5173,7 +4905,7 @@ abstract class AppLocalizations {
   /// No description provided for @remoteDesktopTargetTip.
   ///
   /// In en, this message translates to:
-  /// **'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.'**
+  /// **'The target is resolved from the SSH server or the Monitor. Localhost refers to that machine.'**
   String get remoteDesktopTargetTip;
 
   /// No description provided for @remoteDesktopDomain.
@@ -5254,6 +4986,12 @@ abstract class AppLocalizations {
   /// **'The target host cannot contain spaces or line breaks.'**
   String get remoteDesktopHostInvalid;
 
+  /// Remote desktop: the protocol is not one the app supports.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported protocol.'**
+  String get remoteDesktopProtocolInvalid;
+
   /// No description provided for @remoteDesktopCredentialInvalid.
   ///
   /// In en, this message translates to:
@@ -5283,6 +5021,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for desktop…'**
   String get remoteDesktopWaiting;
+
+  /// No description provided for @remoteDesktopFailStandardRdpSecurityOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.'**
+  String get remoteDesktopFailStandardRdpSecurityOnly;
+
+  /// No description provided for @remoteDesktopFailServerCertificateMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has no TLS certificate. Install one on the server; for xrdp, set certificate and key_file in xrdp.ini.'**
+  String get remoteDesktopFailServerCertificateMissing;
+
+  /// No description provided for @remoteDesktopFailClientCertificateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The server requires a client certificate (smart card logon), which is not supported.'**
+  String get remoteDesktopFailClientCertificateRequired;
+
+  /// No description provided for @remoteDesktopFailWrongCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong username or password.'**
+  String get remoteDesktopFailWrongCredentials;
+
+  /// No description provided for @remoteDesktopFailAccountLockedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is locked out. Try again later, or ask an administrator to unlock it.'**
+  String get remoteDesktopFailAccountLockedOut;
+
+  /// No description provided for @remoteDesktopFailAccountDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is disabled.'**
+  String get remoteDesktopFailAccountDisabled;
+
+  /// No description provided for @remoteDesktopFailAccountExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The account has expired.'**
+  String get remoteDesktopFailAccountExpired;
+
+  /// No description provided for @remoteDesktopFailPasswordExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The password has expired or must be changed. Change it on the server first.'**
+  String get remoteDesktopFailPasswordExpired;
+
+  /// No description provided for @remoteDesktopFailLogonRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'The account may not log on at this time or from this device, or its blank password is not allowed for remote logon.'**
+  String get remoteDesktopFailLogonRestricted;
+
+  /// No description provided for @remoteDesktopFailRemoteLogonDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is not allowed to log on through Remote Desktop. Add it to the Remote Desktop Users group on the server.'**
+  String get remoteDesktopFailRemoteLogonDenied;
+
+  /// No description provided for @remoteDesktopFailFreshCredentialsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not accept saved credentials. Enter the password again.'**
+  String get remoteDesktopFailFreshCredentialsRequired;
+
+  /// No description provided for @remoteDesktopFailIdleTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was disconnected after the server\'s idle time limit.'**
+  String get remoteDesktopFailIdleTimeout;
+
+  /// No description provided for @remoteDesktopFailSessionTimeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'The session reached the server\'s time limit.'**
+  String get remoteDesktopFailSessionTimeLimit;
+
+  /// No description provided for @remoteDesktopFailReplacedByOtherConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Another connection took over this session.'**
+  String get remoteDesktopFailReplacedByOtherConnection;
+
+  /// No description provided for @remoteDesktopFailDisconnectedOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was disconnected on the server.'**
+  String get remoteDesktopFailDisconnectedOnServer;
+
+  /// No description provided for @remoteDesktopFailLoggedOffByAdministrator.
+  ///
+  /// In en, this message translates to:
+  /// **'An administrator logged off the session.'**
+  String get remoteDesktopFailLoggedOffByAdministrator;
+
+  /// No description provided for @remoteDesktopFailLoggedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was logged off.'**
+  String get remoteDesktopFailLoggedOff;
+
+  /// No description provided for @remoteDesktopFailServerShutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is shutting down.'**
+  String get remoteDesktopFailServerShutdown;
+
+  /// No description provided for @remoteDesktopFailServerReboot.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is restarting.'**
+  String get remoteDesktopFailServerReboot;
+
+  /// No description provided for @remoteDesktopFailServerDeniedConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'The server denied the connection.'**
+  String get remoteDesktopFailServerDeniedConnection;
+
+  /// No description provided for @remoteDesktopFailLicensingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Desktop licensing failed on the server. Check its license server and Client Access Licenses.'**
+  String get remoteDesktopFailLicensingFailed;
+
+  /// No description provided for @remoteDesktopFailVncSecurityUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The VNC server offers no supported security type; only a VNC password or none is supported. For TigerVNC, set SecurityTypes=VncAuth.'**
+  String get remoteDesktopFailVncSecurityUnsupported;
+
+  /// No description provided for @remoteDesktopFailPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The VNC server requires a password.'**
+  String get remoteDesktopFailPasswordRequired;
+
+  /// No description provided for @tcpTargetUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not connect to this address. Check that the service is running and listening on that port.'**
+  String get tcpTargetUnreachable;
+
+  /// No description provided for @sshTcpForwardingProhibited.
+  ///
+  /// In en, this message translates to:
+  /// **'The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.'**
+  String get sshTcpForwardingProhibited;
+
+  /// No description provided for @monitorRelayForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor refused this connection: its password has changed, or it does not act over plain HTTP. Sign in again, or connect over HTTPS.'**
+  String get monitorRelayForbidden;
 
   /// No description provided for @remoteDesktopCertificateChanged.
   ///
@@ -5319,6 +5213,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trust and reconnect'**
   String get remoteDesktopTrustReconnect;
+
+  /// Accepts a certificate shown for review, where nothing reconnects at once (a form field is set).
+  ///
+  /// In en, this message translates to:
+  /// **'Trust'**
+  String get certTrust;
 
   /// No description provided for @remoteDesktopDeleteProfile.
   ///
@@ -5433,48 +5333,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Virtualization'**
   String get virtualization;
-
-  /// Intro page text describing the Virtualization tab.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.'**
-  String get virtIntro;
-
-  /// Intro page text telling Proxmox VE users where PVE moved.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.'**
-  String get virtIntroPveMoved;
-
-  /// Intro page text about libvirt/KVM hosts.
-  ///
-  /// In en, this message translates to:
-  /// **'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.'**
-  String get virtIntroLibvirt;
-
-  /// Intro page text about the transports the Virtualization tab works over.
-  ///
-  /// In en, this message translates to:
-  /// **'Both work over SSH, through a Monitor agent, or on this device.'**
-  String get virtIntroTransports;
-
-  /// Intro page text about Proxmox VE API token support.
-  ///
-  /// In en, this message translates to:
-  /// **'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.'**
-  String get virtIntroTokens;
-
-  /// Intro page text saying the Virtualization tab is in the tab bar.
-  ///
-  /// In en, this message translates to:
-  /// **'It has been added to the tab bar.'**
-  String get virtIntroInBar;
-
-  /// Intro page text saying the Virtualization tab is under More.
-  ///
-  /// In en, this message translates to:
-  /// **'It is under More. Home Tabs in Settings can move it to the tab bar.'**
-  String get virtIntroInMore;
 
   /// Section of the Virtualization tab listing virtual machines.
   ///
@@ -5722,16 +5580,16 @@ abstract class AppLocalizations {
   /// **'The host\'s certificate has changed'**
   String get virtErrCertChanged;
 
-  /// Error: the Monitor agent does not relay TCP connections to PVE.
+  /// Error: the Monitor does not relay TCP connections to PVE.
   ///
   /// In en, this message translates to:
-  /// **'The Monitor agent does not relay connections'**
+  /// **'The Monitor does not open TCP connections from the server over this link'**
   String get virtErrRelayNotGranted;
 
-  /// Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it.
+  /// Error: the Monitor does not run commands (its full access is off), so libvirt cannot be reached through it.
   ///
   /// In en, this message translates to:
-  /// **'The Monitor agent does not run commands'**
+  /// **'The Monitor does not run commands'**
   String get virtErrExecNotGranted;
 
   /// Error: virsh is not installed on the server.
@@ -8769,53 +8627,17 @@ abstract class AppLocalizations {
   /// **'Copy link'**
   String get copyLink;
 
-  /// No description provided for @funcNeedsAgentPermission.
-  ///
-  /// In en, this message translates to:
-  /// **'Your account on this Monitor agent has no permission for {func}. Ask the agent\'s admin.'**
-  String funcNeedsAgentPermission(String func);
-
   /// No description provided for @funcNeedsAgentHttps.
   ///
   /// In en, this message translates to:
-  /// **'{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.'**
+  /// **'{func} needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.'**
   String funcNeedsAgentHttps(String func);
-
-  /// No description provided for @funcNeedsAgentSetup.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} is not set up on this Monitor agent; its operator has to configure it.'**
-  String funcNeedsAgentSetup(String func);
-
-  /// No description provided for @monitorFilesReadOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Read-only: this account can browse files on the agent but not change them.'**
-  String get monitorFilesReadOnly;
 
   /// No description provided for @monitorAccess.
   ///
   /// In en, this message translates to:
   /// **'Access'**
   String get monitorAccess;
-
-  /// No description provided for @monitorAccounts.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get monitorAccounts;
-
-  /// No description provided for @monitorRoles.
-  ///
-  /// In en, this message translates to:
-  /// **'Roles'**
-  String get monitorRoles;
-
-  /// No description provided for @monitorRole.
-  ///
-  /// In en, this message translates to:
-  /// **'Role'**
-  String get monitorRole;
 
   /// No description provided for @monitorChangePassword.
   ///
@@ -8835,12 +8657,6 @@ abstract class AppLocalizations {
   /// **'Your current password'**
   String get monitorCurrentPassword;
 
-  /// No description provided for @monitorReauthTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Changing access needs your own password again.'**
-  String get monitorReauthTip;
-
   /// No description provided for @monitorPasswordTooShort.
   ///
   /// In en, this message translates to:
@@ -8859,142 +8675,10 @@ abstract class AppLocalizations {
   /// **'Your password was wrong.'**
   String get monitorErrReauth;
 
-  /// No description provided for @monitorErrLastAdmin.
+  /// Shown when the Monitor accepted a new password but the app failed to update the credential it stores for the server.
   ///
   /// In en, this message translates to:
-  /// **'The agent needs at least one admin account.'**
-  String get monitorErrLastAdmin;
-
-  /// No description provided for @monitorErrConflict.
-  ///
-  /// In en, this message translates to:
-  /// **'It already exists, or it is still in use.'**
-  String get monitorErrConflict;
-
-  /// No description provided for @monitorErrForbidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin can do this.'**
-  String get monitorErrForbidden;
-
-  /// No description provided for @monitorRoleNameRule.
-  ///
-  /// In en, this message translates to:
-  /// **'Lowercase letters, digits, - and _, up to 32 characters'**
-  String get monitorRoleNameRule;
-
-  /// No description provided for @monitorGrantShell.
-  ///
-  /// In en, this message translates to:
-  /// **'Shell and commands'**
-  String get monitorGrantShell;
-
-  /// No description provided for @monitorGrantShellTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal, processes, services, containers, snippets, power — as the agent\'s account'**
-  String get monitorGrantShellTip;
-
-  /// No description provided for @monitorGrantSshTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Panel terminal over SSH'**
-  String get monitorGrantSshTerminal;
-
-  /// No description provided for @monitorGrantVirt.
-  ///
-  /// In en, this message translates to:
-  /// **'Virtualization'**
-  String get monitorGrantVirt;
-
-  /// No description provided for @monitorGrantVirtTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel'**
-  String get monitorGrantVirtTip;
-
-  /// No description provided for @monitorGrantFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Files'**
-  String get monitorGrantFiles;
-
-  /// No description provided for @monitorGrantConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Outbound connections'**
-  String get monitorGrantConnect;
-
-  /// No description provided for @monitorGrantConnectTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Local and dynamic port forwards, remote desktop'**
-  String get monitorGrantConnectTip;
-
-  /// No description provided for @monitorGrantConnectAllow.
-  ///
-  /// In en, this message translates to:
-  /// **'Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)'**
-  String get monitorGrantConnectAllow;
-
-  /// No description provided for @monitorGrantListen.
-  ///
-  /// In en, this message translates to:
-  /// **'Listen on the server'**
-  String get monitorGrantListen;
-
-  /// No description provided for @monitorGrantListenTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote port forwards'**
-  String get monitorGrantListenTip;
-
-  /// No description provided for @monitorGrantListenPublic.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-loopback addresses'**
-  String get monitorGrantListenPublic;
-
-  /// No description provided for @monitorGrantPorts.
-  ///
-  /// In en, this message translates to:
-  /// **'Port range (empty is any)'**
-  String get monitorGrantPorts;
-
-  /// No description provided for @monitorGrantOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get monitorGrantOff;
-
-  /// No description provided for @monitorBuiltin.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in'**
-  String get monitorBuiltin;
-
-  /// No description provided for @monitorAdminRoleTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Manages accounts, roles and the agent\'s settings'**
-  String get monitorAdminRoleTip;
-
-  /// No description provided for @monitorYou.
-  ///
-  /// In en, this message translates to:
-  /// **'You'**
-  String get monitorYou;
-
-  /// No description provided for @monitorNoAccessToSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin can change this agent\'s settings.'**
-  String get monitorNoAccessToSettings;
-
-  /// Shown when the agent accepted a new password but the app failed to update the credential it stores for the server.
-  ///
-  /// In en, this message translates to:
-  /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
+  /// **'The password was changed on the Monitor, but the app could not save it. Update this server\'s Monitor password in its settings.'**
   String get monitorPasswordNotSaved;
 
   /// Server function that manages the server's firewall (ufw).
@@ -9386,36 +9070,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.'**
   String get firewallInvalidForwardPort;
-
-  /// Backup sync to a monitor agent: no server is chosen yet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick the server whose monitor agent stores the backup.'**
-  String get monitorSyncNeedsServer;
-
-  /// Backup sync to a monitor agent: the agent is too old to store backups.
-  ///
-  /// In en, this message translates to:
-  /// **'This monitor agent cannot store backups. Update the agent.'**
-  String get monitorBackupUnsupported;
-
-  /// Backup sync to a monitor agent: the account the app logs in with is not an admin.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin account of the monitor agent can store backups on it.'**
-  String get monitorBackupAdminOnly;
-
-  /// Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.
-  ///
-  /// In en, this message translates to:
-  /// **'The backup is larger than the monitor agent accepts ({max}).'**
-  String monitorBackupTooLarge(String max);
-
-  /// Backup sync to a monitor agent: the agent's blob count limit is reached.
-  ///
-  /// In en, this message translates to:
-  /// **'The monitor agent already holds as many backups as it allows. Delete one first.'**
-  String get monitorBackupTooMany;
 
   /// Create form: the VMID is outside the range PVE accepts.
   ///
@@ -10215,6 +9869,2058 @@ abstract class AppLocalizations {
   /// **'Servers: close details'**
   String get kbServerClose;
 
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageTitle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage management currently supports Linux servers.'**
+  String get storageLinuxOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks'**
+  String get storageDisks;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'RAID'**
+  String get storageRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS pools'**
+  String get storagePools;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No filesystem'**
+  String get storageNoFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total}'**
+  String storageUsage(Object total, Object used);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} free'**
+  String storageFree(Object size);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get storageBusyMounted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get storageBusySwap;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In an array'**
+  String get storageBusyRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In a pool'**
+  String get storageBusyPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Holds a volume'**
+  String get storageBusyVolume;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get storageBusyReadOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'System partition'**
+  String get storageBusySystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The system uses this mount; it stays mounted.'**
+  String get storageSystemMount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is mounted there any more.'**
+  String get storageNotMounted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount'**
+  String get storageMount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmount'**
+  String get storageUnmount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get storageFormat;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize'**
+  String get storageInitialize;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMART test'**
+  String get storageSmartTest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Filesystem'**
+  String get storageFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get storageLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get storageMountpoint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount again at every start (/etc/fstab)'**
+  String get storageMountPersist;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Let ServerBox write here (for backups)'**
+  String get storageMountOwn;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get storageName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get storageLevel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get storageLayout;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least {count} devices. What they hold is lost.'**
+  String storagePickDevices(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Create array'**
+  String get storageCreateRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds /dev/{name} (RAID {level}) from {devices}. Everything on them is lost.'**
+  String storageCreateRaidBody(Object devices, Object level, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Create pool'**
+  String get storageCreatePool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds pool {name} ({layout}) from {devices}. Everything on them is lost.'**
+  String storageCreatePoolBody(Object devices, Object layout, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Makes a new filesystem on {device}. Everything on it is lost.'**
+  String storageFormatBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipes {device} and gives it one partition for the whole disk. Everything on it is lost.'**
+  String storageInitializeBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mounts {device} at {mountpoint}.'**
+  String storageMountBody(Object device, Object mountpoint);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmounts {mountpoint} and stops mounting it at start.'**
+  String storageUnmountBody(Object mountpoint);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts a short self-test on {device}. It takes a few minutes; its progress and result show here.'**
+  String storageSmartTestBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disk'**
+  String get storageAddMember;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {device} to /dev/{array}: it replaces a failed member, or waits as a spare. What it holds is lost.'**
+  String storageAddMemberBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get storageRemoveMember;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Marks {device} failed and takes it out of /dev/{array}. The array runs on without it, degraded if it was a working member.'**
+  String storageRemoveMemberBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete array'**
+  String get storageDeleteRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops /dev/{array} and wipes its members\' RAID signatures. Its data is lost.'**
+  String storageDeleteRaidBody(Object array);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Destroy pool'**
+  String get storageDestroyPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Destroys pool {name} and everything in it.'**
+  String storageDestroyPoolBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub'**
+  String get storageScrub;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads all of pool {name} and repairs what it can. It runs in the background.'**
+  String storageScrubBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'State'**
+  String get storageState;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Healthy'**
+  String get storageHealthy;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Degraded'**
+  String get storageDegraded;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync ({action})'**
+  String storageSync(Object action);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get storageFaulty;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Spare'**
+  String get storageSpare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get storageActive;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan'**
+  String get storageScan;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} errors'**
+  String storageErrors(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No disks'**
+  String get storageNoDisks;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No arrays'**
+  String get storageNoArrays;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No pools'**
+  String get storageNoPools;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'mdadm is not installed: arrays cannot be built or changed here.'**
+  String get storageNoMdadm;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS is not installed (zfsutils).'**
+  String get storageNoZfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {word} to confirm'**
+  String storageTypeToConfirm(Object word);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The confirmation text did not match.'**
+  String get storageConfirmationMismatch;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} is in use.'**
+  String storageInUse(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Another change to the disks is running.'**
+  String get storageBusy;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read disk health'**
+  String get storageHealthRead;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Wearing'**
+  String get storageHealthWearing;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failing'**
+  String get storageHealthFailing;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Asleep'**
+  String get storageHealthAsleep;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No SMART'**
+  String get storageHealthUnsupported;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} °C'**
+  String storageTemperature(Object value);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h powered on'**
+  String storagePowerOn(Object hours);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bad sectors'**
+  String storageBadSectors(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-test: {percent}% left'**
+  String storageTesting(Object percent);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow partition'**
+  String get storageGrowPartition;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grows {device} into the free space after it. Expand its filesystem after.'**
+  String storageGrowPartitionBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt (LUKS)'**
+  String get storageEncrypt;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase'**
+  String get storagePassphrase;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The same again'**
+  String get storagePassphraseAgain;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. Without it the data cannot be read: keep it safe.'**
+  String get storagePassphraseHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The passphrase must be 8 to 512 characters, on one line.'**
+  String get storageInvalidPassphrase;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passphrases differ.'**
+  String get storagePassphrasesDiffer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted'**
+  String get storageEncrypted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get storageLocked;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get storageUnlock;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens {device} with its passphrase.'**
+  String storageUnlockBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get storageLock;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes {device}. Its filesystem must be unmounted.'**
+  String storageLockBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get storageReplace;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces {old} in pool {name} with {replacement}. The pool copies its data onto it; what {replacement} holds is lost.'**
+  String storageReplaceBody(Object name, Object old, Object replacement);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get storageAttach;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirrors {existing} onto {replacement}. What {replacement} holds is lost.'**
+  String storageAttachBody(Object existing, Object replacement);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add spare'**
+  String get storageAddSpare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {devices} to pool {name} as spares. What they hold is lost.'**
+  String storageAddSpareBody(Object devices, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get storageRemoveDevice;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes {device} out of pool {name}.'**
+  String storageRemoveDeviceBody(Object device, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring online'**
+  String get storageOnline;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Brings {device} back into pool {name}, grown into the whole disk.'**
+  String storageOnlineBody(Object device, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get storageDetails;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Attributes'**
+  String get storageAttributes;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get storageAttrValue;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Worst'**
+  String get storageAttrWorst;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get storageAttrThresh;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-tests'**
+  String get storageSelfTests;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Short'**
+  String get storageTestShort;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Long'**
+  String get storageTestLong;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get storageTestPassed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get storageTestFailed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get storageTestAborted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'at {hours} h'**
+  String storageAtHours(Object hours);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show'**
+  String get storageNothingToShow;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Long test'**
+  String get storageLongTest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts a long self-test on {device}. It reads the whole disk: hours on a large one.'**
+  String storageSmartLongTestBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmount its filesystem first.'**
+  String get storageMountedInside;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a spare or cache device can be taken out here.'**
+  String get storageNotRemovable;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'This device cannot be grown here.'**
+  String get storageNotGrowable;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose devices that do not overlap.'**
+  String get storageOverlapping;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The device is invalid or no longer available.'**
+  String get storageInvalidDevice;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The mount point is invalid.'**
+  String get storageInvalidMountpoint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The name is invalid.'**
+  String get storageInvalidName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The filesystem is not supported.'**
+  String get storageInvalidFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The label is invalid.'**
+  String get storageInvalidLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The RAID level or pool layout is invalid.'**
+  String get storageInvalidLevel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough valid devices were selected.'**
+  String get storageTooFewDevices;
+
+  /// Storage: an encrypted volume needs a passphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'A passphrase is required.'**
+  String get storageKeyRequired;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get storageExpand;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grows the filesystem on {device} to fill its device. It stays mounted.'**
+  String storageExpandBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow'**
+  String get storageGrowRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {device} to /dev/{array} as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What {device} holds is lost.'**
+  String storageGrowRaidBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disks'**
+  String get storageAddToPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {layout} of {devices} to pool {name} for more room. They cannot be taken out again, and what they hold is lost.'**
+  String storageAddToPoolBody(Object devices, Object layout, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get sharingTitle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMB'**
+  String get sharingSmb;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS'**
+  String get sharingNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get sharingService;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get sharingRunning;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get sharingStopped;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS server'**
+  String get sharingNfsServer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Samba is not installed. Windows, macOS and Linux open SMB shares.'**
+  String get sharingNoSamba;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The NFS server is not installed. Linux and macOS mount NFS exports.'**
+  String get sharingNoNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Samba'**
+  String get sharingInstallSamba;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Installs Samba with the machine\'s package manager.'**
+  String get sharingInstallSambaBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Install NFS server'**
+  String get sharingInstallNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Installs the NFS server with the machine\'s package manager.'**
+  String get sharingInstallNfsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add share'**
+  String get sharingAddShare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add export'**
+  String get sharingAddExport;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get sharingEdit;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get sharingRemove;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get sharingSave;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares {path} over SMB as {name}, then reloads Samba.'**
+  String sharingSaveSmbBody(Object name, Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Exports {path} over NFS, then reloads the exports.'**
+  String sharingSaveNfsBody(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops sharing {name}. The folder and its files stay.'**
+  String sharingRemoveSmbBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops exporting {path}. The folder and its files stay.'**
+  String sharingRemoveNfsBody(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up outside ServerBox'**
+  String get sharingElsewhere;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No SMB shares'**
+  String get sharingNoShares;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No NFS exports'**
+  String get sharingNoExports;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get sharingReadOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and write'**
+  String get sharingReadWrite;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get sharingGuest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Let anyone on the network in without an account'**
+  String get sharingGuestLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts allowed in (none ticked: every account with an SMB password):'**
+  String get sharingUsersHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get sharingFolder;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder on the server, e.g. a disk mounted in Storage.'**
+  String get sharingFolderHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get sharingComment;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMB passwords'**
+  String get sharingPasswords;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Samba keeps its own passwords: set one for each account that connects.'**
+  String get sharingPasswordsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Set password'**
+  String get sharingSetPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'New SMB password'**
+  String get sharingNewPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The same again'**
+  String get sharingNewPasswordAgain;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passwords differ.'**
+  String get sharingPasswordsDiffer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.'**
+  String get sharingClientsHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get sharingClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add client'**
+  String get sharingAddClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Root is nobody'**
+  String get sharingSquashRoot;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is nobody'**
+  String get sharingSquashAll;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Root stays root'**
+  String get sharingSquashNone;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is not a folder on the server.'**
+  String sharingNotAFolder(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The configuration was refused and the previous one is back: {detail}'**
+  String sharingRefused(Object detail);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Another share has this name or folder.'**
+  String get sharingDuplicate;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A name is letters, digits, _ . - (32 at most).'**
+  String get sharingInvalidName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The folder must be an absolute path without quotes, backslashes or ..'**
+  String get sharingInvalidPath;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A client is *, a host, an address or a network.'**
+  String get sharingInvalidClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'This password cannot be used.'**
+  String get sharingInvalidPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Machine backups (Mac)'**
+  String get sharingTimeMachineOption;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep deleted files in .recycle'**
+  String get sharingRecycleOption;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Machine'**
+  String get sharingTimeMachine;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle bin'**
+  String get sharingRecycle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected now'**
+  String get sharingConnectedNow;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody is connected'**
+  String get sharingNobodyConnected;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Show connections'**
+  String get sharingShowConnections;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads who is connected, as root.'**
+  String get sharingShowConnectionsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing management currently supports Linux servers.'**
+  String get sharingConnectionsLinuxOnly;
+
+  /// Source filter in the Agent history: the chats kept on this device, not the servers' tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get agentThisDevice;
+
+  /// Button in the Agent history that filters the list by where a chat or task lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get agentSource;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: confirmation that deleting removes it on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'The task is deleted on {server}.'**
+  String agentDeleteRemoteTip(String server);
+
+  /// Label of a monitor agent's plan step shown in a conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get agentPlan;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: it was deleted there.
+  ///
+  /// In en, this message translates to:
+  /// **'This task is no longer on the server.'**
+  String get agentRemoteGone;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: hint of the reply box.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to the task on {server}'**
+  String agentRemoteReplyHint(String server);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the server it runs on and its state.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} · {status, select, queued{Queued} running{Running} waiting{Waiting for you} done{Done} failed{Failed} cancelled{Stopped} other{}}'**
+  String agentRemoteStatus(String server, String status);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: button that adds a command rule to the server's allow list and runs the command.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow {rule}'**
+  String agentRemoteAlways(String rule);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the field where the machine's name is typed to confirm a destructive command.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {name} to run'**
+  String agentRemoteTypeToRun(String name);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: button that runs a destructive command once the machine's name is typed.
+  ///
+  /// In en, this message translates to:
+  /// **'Run anyway'**
+  String get agentRemoteRunAnyway;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the sudo password field.
+  ///
+  /// In en, this message translates to:
+  /// **'Password of {user}'**
+  String agentRemoteSudoFor(String user);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the sudo password was refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password'**
+  String get agentRemoteSudoWrong;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the server keeps the sudo password in memory for 15 minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember for 15 minutes'**
+  String get agentRemoteSudoRemember;
+
+  /// Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Label of the button that picks it; the place is 'This device' or a server's name.
+  ///
+  /// In en, this message translates to:
+  /// **'New in {place}'**
+  String agentNewOn(String place);
+
+  /// Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Hint of the empty page and the field when a server is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the agent on {server}, or give it a task.'**
+  String agentRemoteNewHint(String server);
+
+  /// Agent: warning shown while the allow-all mode is picked for a new task.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow all: deleting, restarting and config changes run directly, without asking.'**
+  String get agentModeBypassWarn;
+
+  /// Server page: card listing the web apps the Monitor deployed (Docker Compose services).
+  ///
+  /// In en, this message translates to:
+  /// **'Web apps'**
+  String get webApps;
+
+  /// Web app health: some of its services report unhealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Unhealthy'**
+  String get webAppUnhealthy;
+
+  /// Web app health: some of its services are not running.
+  ///
+  /// In en, this message translates to:
+  /// **'Down'**
+  String get webAppDown;
+
+  /// Web app state: being deployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing'**
+  String get webAppInstalling;
+
+  /// Web apps tab: no server has a deployed Monitor web app.
+  ///
+  /// In en, this message translates to:
+  /// **'No web apps yet. Deploy them from the App Store of the Monitor panel.'**
+  String get webAppsEmpty;
+
+  /// Web apps tab: subtitle of an app installed on the Monitor panel desk, which opens the panel in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens in the panel'**
+  String get deskAppOpensInPanel;
+
+  /// Web app details: the deployed version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get webAppVersion;
+
+  /// Web app details: the project's website.
+  ///
+  /// In en, this message translates to:
+  /// **'Homepage'**
+  String get webAppHomepage;
+
+  /// Web app details: the catalog has another version; updating is done in the Monitor web panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available. Update it in the Monitor panel.'**
+  String webAppUpdate(String version);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is down'**
+  String noticeStackDown(String app);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running: {services}.'**
+  String noticeStackDownBody(String services);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'None of its containers is running.'**
+  String get noticeStackDownBodyEmpty;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is unhealthy'**
+  String noticeStackUnhealthy(String app);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Failing its health check: {services}.'**
+  String noticeStackUnhealthyBody(String services);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is running again'**
+  String noticeStackBack(String app);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every container is up.'**
+  String get noticeStackBackBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app}: an update is available'**
+  String noticeStackUpdate(String app);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} {version} can be installed (now {current}).'**
+  String noticeStackUpdateBody(String project, String version, String current);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'/dev/{array} is degraded'**
+  String noticeStorageArrayDegraded(String array);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'A member failed or is missing; the array runs without its redundancy.'**
+  String get noticeStorageArrayDegradedBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'/dev/{array} is healthy again'**
+  String noticeStorageArrayBack(String array);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every member is working.'**
+  String get noticeStorageArrayBackBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Pool {pool} is {health}'**
+  String noticeStoragePoolUnhealthy(String pool, String health);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Storage to see which device.'**
+  String get noticeStoragePoolUnhealthyBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Pool {pool} is online again'**
+  String noticeStoragePoolBack(String pool);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every device is working.'**
+  String get noticeStoragePoolBackBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} is failing'**
+  String noticeStorageDiskFailing(String device);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Its SMART check or self-test failed: copy what it holds elsewhere and replace it.'**
+  String get noticeStorageDiskFailingBody;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} has {count} bad sectors'**
+  String noticeStorageDiskSectors(String device, int count);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'It had {was}. A disk losing sectors often fails soon.'**
+  String noticeStorageDiskSectorsBody(int was);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage maintenance did not run: {task}'**
+  String noticeStorageMaintenanceFailed(String task);
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub pools and check arrays'**
+  String get storageTaskScrub;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Short SMART test'**
+  String get storageTaskSmartShort;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Long SMART test'**
+  String get storageTaskSmartLong;
+
+  /// Monitor tab: a Monitor notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo asked for a password: run the Monitor as root, or allow these commands (above).'**
+  String get storageNeedsSudo;
+
+  /// Name of the Monitor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor'**
+  String get monitorTab;
+
+  /// Monitor tab section: each Monitor, its version and its firing alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get monitorOverview;
+
+  /// Monitor tab section: the Monitors' notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get monitorNotices;
+
+  /// Monitor tab section: a Monitor's audit log.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit log'**
+  String get monitorAudit;
+
+  /// Monitor tab section: what is signed in to a Monitor and open on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions & devices'**
+  String get monitorLive;
+
+  /// Monitor tab when no server is reached through a Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'No server is reached through a Monitor yet.'**
+  String get monitorNoAgents;
+
+  /// Monitor tab when the Monitor is too old for a section.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor version does not offer this. Update the Monitor.'**
+  String get monitorNotOffered;
+
+  /// Overview card: the Monitor is too old to report alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor version does not report alerts.'**
+  String get monitorAlertsNotOffered;
+
+  /// Overview card: no monitoring rule is firing.
+  ///
+  /// In en, this message translates to:
+  /// **'No rule is firing.'**
+  String get monitorAlertsNone;
+
+  /// An alert: how long its rule has been firing without a break.
+  ///
+  /// In en, this message translates to:
+  /// **'firing for {duration}'**
+  String monitorFiringFor(String duration);
+
+  /// Overview card: a newer Monitor release exists.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} available'**
+  String monitorAgentUpdate(String version);
+
+  /// Overview card: unread notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String monitorUnread(int count);
+
+  /// Overview card: deployed web apps that are down or unhealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps with problems: {count}'**
+  String monitorAppsUnwell(int count);
+
+  /// Overview card: deployed web apps the catalog has a newer version of.
+  ///
+  /// In en, this message translates to:
+  /// **'App updates: {count}'**
+  String monitorAppsUpdates(int count);
+
+  /// Web apps section: show only apps with an update.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates only'**
+  String get monitorUpdatesOnly;
+
+  /// Web apps section: no app has an update.
+  ///
+  /// In en, this message translates to:
+  /// **'No app has an update.'**
+  String get monitorNoUpdates;
+
+  /// Notifications section: none.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications.'**
+  String get monitorNoticesEmpty;
+
+  /// Notifications section: mark every notification read.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get monitorMarkAllRead;
+
+  /// Audit log kind: commands run through the Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Commands'**
+  String get monitorAuditExec;
+
+  /// Audit log kind: machine management (power, processes, services, …).
+  ///
+  /// In en, this message translates to:
+  /// **'Machine management'**
+  String get monitorAuditMachine;
+
+  /// Audit log kind and connection kind: ports the Monitor listened on.
+  ///
+  /// In en, this message translates to:
+  /// **'Listened ports'**
+  String get monitorAuditListen;
+
+  /// Audit log kind: single-use connection tickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection tickets'**
+  String get monitorAuditTicket;
+
+  /// Audit log kind: notification channels changed or tested.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification channels'**
+  String get monitorAuditPush;
+
+  /// Audit log kind: the account (password, sessions and devices ended).
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get monitorAuditAdmin;
+
+  /// Audit log result: refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get monitorAuditDenied;
+
+  /// Audit log: read the next page.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get monitorLoadMore;
+
+  /// Sessions section heading: terminal sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal sessions'**
+  String get monitorLiveSessions;
+
+  /// Sessions section heading: relayed connections, ports, consoles, remote desktops.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections'**
+  String get monitorLiveConnections;
+
+  /// Sessions section heading: read-only tokens of watches and widgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch and widget tokens'**
+  String get monitorLiveWatchTokens;
+
+  /// Sessions section heading: devices that signed in with the password.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed-in devices'**
+  String get monitorLiveDevices;
+
+  /// Sessions section: what forgetting a device does and does not do.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.'**
+  String get monitorLiveDevicesTip;
+
+  /// A terminal session a client is attached to now.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached'**
+  String get monitorLiveAttached;
+
+  /// A terminal session no client is attached to; it ends after the timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached'**
+  String get monitorLiveDetached;
+
+  /// Sessions section: end a session or connection.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get monitorLiveEnd;
+
+  /// Sessions section: revoke a watch or widget token.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get monitorLiveRevoke;
+
+  /// Sessions section: forget a signed-in device.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget'**
+  String get monitorLiveForget;
+
+  /// Confirm ending a terminal session.
+  ///
+  /// In en, this message translates to:
+  /// **'End the terminal session \"{name}\"? What runs in it stops.'**
+  String monitorLiveEndSessionConfirm(String name);
+
+  /// Confirm ending a connection.
+  ///
+  /// In en, this message translates to:
+  /// **'End the connection to {name}?'**
+  String monitorLiveEndConnectionConfirm(String name);
+
+  /// Confirm revoking a watch or widget token.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke the token of {name}? It stops updating until it is set up again.'**
+  String monitorLiveRevokeConfirm(String name);
+
+  /// Confirm forgetting a signed-in device.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget {name}?'**
+  String monitorLiveForgetConfirm(String name);
+
+  /// A watch or widget token: when it expires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {time}'**
+  String monitorLiveExpires(String time);
+
+  /// Connection kind: a TCP connection relayed by the Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Relayed connection'**
+  String get monitorLiveStream;
+
+  /// Connection kind: a connection a listened port took.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded connection'**
+  String get monitorLiveAccepted;
+
+  /// Connection kind: a virtual machine's console.
+  ///
+  /// In en, this message translates to:
+  /// **'Console'**
+  String get monitorLiveConsole;
+
+  /// Monitor tab header: how many Monitors a section covers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Monitors'**
+  String monitorAgentsCount(int count);
+
+  /// Overview count: Monitors answering.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get monitorStatOnline;
+
+  /// Overview count: alert rules firing now.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts firing'**
+  String get monitorStatFiring;
+
+  /// Overview count: unread notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get monitorStatUnread;
+
+  /// Overview count: web apps with an update.
+  ///
+  /// In en, this message translates to:
+  /// **'App updates'**
+  String get monitorStatUpdates;
+
+  /// Audit log: nothing matches.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing recorded matches.'**
+  String get monitorAuditEmpty;
+
+  /// Sessions: no terminal session is open.
+  ///
+  /// In en, this message translates to:
+  /// **'No terminal session is open.'**
+  String get monitorLiveNoSessions;
+
+  /// Sessions: nothing is relayed or listened on.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is forwarded or relayed.'**
+  String get monitorLiveNoConnections;
+
+  /// Sessions: no watch or widget has a token.
+  ///
+  /// In en, this message translates to:
+  /// **'No watch or widget is paired.'**
+  String get monitorLiveNoTokens;
+
+  /// Sessions: no device has signed in.
+  ///
+  /// In en, this message translates to:
+  /// **'No device has signed in.'**
+  String get monitorLiveNoDevices;
+
+  /// Title of the guide to updating a Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the Monitor'**
+  String get monitorUpdateAgent;
+
+  /// Solution shown with a sign-in a Monitor too old refused.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor tab has the steps to update it.'**
+  String get monitorAgentTooOldTip;
+
+  /// Update guide: why a Monitor from before one account must be updated.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.'**
+  String get monitorAgentTooOldBody;
+
+  /// Update guide: a Monitor behind the newest release.
+  ///
+  /// In en, this message translates to:
+  /// **'{latest} is out; this Monitor runs {running}.'**
+  String monitorAgentOutdatedBody(String latest, String running);
+
+  /// Update guide: where the command runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Run this on the server, as the account the Monitor was installed from:'**
+  String get monitorUpdateRunHint;
+
+  /// Update guide: what the terminal button does.
+  ///
+  /// In en, this message translates to:
+  /// **'The terminal runs it. If the Monitor was installed system-wide and the terminal goes over SSH, sudo asks for its password there.'**
+  String get monitorUpdateSshHint;
+
+  /// Update guide: the server has no SSH in the app.
+  ///
+  /// In en, this message translates to:
+  /// **'The app cannot open a terminal on this server: run it there yourself.'**
+  String get monitorUpdateNoSsh;
+
+  /// Update guide: a Monitor in Docker.
+  ///
+  /// In en, this message translates to:
+  /// **'In Docker? Pull the new image and recreate the container instead.'**
+  String get monitorUpdateDocker;
+
+  /// Update guide: what to do after.
+  ///
+  /// In en, this message translates to:
+  /// **'Once it has restarted, refresh the Monitor tab.'**
+  String get monitorUpdateAfter;
+
+  /// Update guide: run the command in a terminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in a terminal'**
+  String get monitorUpdateInTerminal;
+
+  /// Overview card: open the update guide.
+  ///
+  /// In en, this message translates to:
+  /// **'How to update'**
+  String get monitorHowToUpdate;
+
+  /// Update guide: a Monitor installed by the NixOS module.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed by the NixOS module: update it through your system configuration and rebuild.'**
+  String get monitorUpdateNix;
+
+  /// Notification: a newer Monitor is released.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor has an update'**
+  String get noticeAgentUpdate;
+
+  /// Update guide: the old Monitor account name to sign in with.
+  ///
+  /// In en, this message translates to:
+  /// **'Its account name'**
+  String get monitorUpdateLegacyUser;
+
+  /// Update guide: why an old Monitor needs its account name.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor still signs in with an account name and a password: the name this app used before (often admin) and the saved password.'**
+  String get monitorUpdateLegacyHint;
+
+  /// Update guide: start the update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get monitorUpdateNow;
+
+  /// Update progress: running.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get monitorUpdating;
+
+  /// Update progress: the Monitor does not answer while it restarts.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor is restarting; the connection is back in a few seconds…'**
+  String get monitorUpdateRestarting;
+
+  /// Update progress: done.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: the Monitor runs {version}.'**
+  String monitorUpdateDone(String version);
+
+  /// Update progress: failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update failed. Its output is above.'**
+  String get monitorUpdateFailed;
+
+  /// Update guide: the Monitor runs the update apart from itself.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.'**
+  String get monitorUpdateAgentHint;
+
+  /// Update guide: sudo password field.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo password'**
+  String get monitorUpdateSudoPassword;
+
+  /// Update guide: why sudo is needed.
+  ///
+  /// In en, this message translates to:
+  /// **'The installer needs root here (an OpenRC service). The password is used once and not saved.'**
+  String get monitorUpdateSudoHint;
+
+  /// Update guide: wrong sudo password.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo did not accept this password.'**
+  String get monitorUpdateSudoRefused;
+
+  /// Update progress: the Monitor never came back.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor has not come back. Check it on the server.'**
+  String get monitorUpdateNoAnswer;
+
+  /// Screen reader name of the down arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Down arrow'**
+  String get keyArrowDown;
+
+  /// Screen reader name of the left arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Left arrow'**
+  String get keyArrowLeft;
+
+  /// Screen reader name of the right arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Right arrow'**
+  String get keyArrowRight;
+
+  /// Screen reader name of the up arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Up arrow'**
+  String get keyArrowUp;
+
+  /// Screen reader name of the control virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Control'**
+  String get keyControl;
+
+  /// Screen reader name of the escape virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Escape'**
+  String get keyEscape;
+
+  /// Screen reader name of the page down virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page down'**
+  String get keyPageDown;
+
+  /// Screen reader name of the page up virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page up'**
+  String get keyPageUp;
+
+  /// Opens the terminal output as selectable text, for screen readers.
+  ///
+  /// In en, this message translates to:
+  /// **'View as text'**
+  String get termTextView;
+
+  /// Shown at the top of the terminal text view once its oldest lines were dropped to bound memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier lines no longer kept: {count}'**
+  String termTextLetGo(int count);
+
+  /// Tab label for the machine's groups, next to Users.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get systemGroups;
+
+  /// Column header for a group's numeric id.
+  ///
+  /// In en, this message translates to:
+  /// **'GID'**
+  String get userGid;
+
+  /// Label for a group's supplementary members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get userGroupMembers;
+
+  /// Accounts whose primary group is this group.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary members'**
+  String get userPrimaryMembers;
+
+  /// Label for a group below the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'System group'**
+  String get userSystemGroup;
+
+  /// Hint for the group members field.
+  ///
+  /// In en, this message translates to:
+  /// **'alice,bob'**
+  String get userMembersHint;
+
+  /// Section and filter label for groups at or above the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular'**
+  String get userRegularGroup;
+
   /// Setting: show a bar under the terminal with its server's CPU, memory, network and disk readings.
   ///
   /// In en, this message translates to:
@@ -10256,6 +11962,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.'**
   String get reconnectEndsShell;
+
+  /// No description provided for @handedness.
+  ///
+  /// In en, this message translates to:
+  /// **'Handedness'**
+  String get handedness;
+
+  /// No description provided for @handednessLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left hand'**
+  String get handednessLeft;
+
+  /// No description provided for @handednessRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right hand'**
+  String get handednessRight;
+
+  /// No description provided for @handednessTip.
+  ///
+  /// In en, this message translates to:
+  /// **'On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system\'s own bars do.'**
+  String get handednessTip;
 
   /// Title of the dialog shown after launch when the app's encrypted database could not be opened and the app started with no data.
   ///
@@ -10340,6 +12070,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already in the list'**
   String get hostCertAuthorityExists;
+
+  /// Server menu entry that pins a launcher shortcut to the server (Android).
+  ///
+  /// In en, this message translates to:
+  /// **'Add to home screen'**
+  String get addToHomeScreen;
+
+  /// Title of the transfer notification while several file transfers run.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer} other{{count} transfers}}'**
+  String transfersActive(int count);
+
+  /// No description provided for @syncKeyRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace sync key'**
+  String get syncKeyRotate;
+
+  /// Intro / server discovery: Find machines to add as servers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find machines to add as servers.'**
+  String get discoverIntro;
+
+  /// Intro / server discovery: LAN
+  ///
+  /// In en, this message translates to:
+  /// **'LAN'**
+  String get lan;
+
+  /// Intro / server discovery: Scan
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get discoveryScan;
+
+  /// Intro / server discovery: Scan again
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get discoveryScanAgain;
+
+  /// Intro / server discovery: Scanning…
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get discoveryScanning;
+
+  /// Intro / server discovery: Found {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count}'**
+  String discoveryFound(int count);
+
+  /// Intro / server discovery: {count} selected
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String discoverySelected(int count);
+
+  /// Intro / server discovery: Add {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count}'**
+  String discoveryAddN(int count);
+
+  /// Intro / server discovery: {count} added
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String discoveryAddedN(int count);
+
+  /// Intro / server discovery: Added
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get discoveryAdded;
+
+  /// Intro / server discovery: Exists
+  ///
+  /// In en, this message translates to:
+  /// **'Exists'**
+  String get discoveryExists;
+
+  /// Intro / server discovery: Runs without SSH
+  ///
+  /// In en, this message translates to:
+  /// **'Runs without SSH'**
+  String get localServerNoSsh;
+
+  /// Intro / server discovery: Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.'**
+  String get introWelcome;
+
+  /// Intro / server discovery: Security
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
+
+  /// Server discovery: SSH config
+  ///
+  /// In en, this message translates to:
+  /// **'SSH config'**
+  String get sshConfig;
+
+  /// Server discovery: Tailscale is not running
+  ///
+  /// In en, this message translates to:
+  /// **'Tailscale is not running'**
+  String get tailscaleStopped;
+
+  /// Server discovery: Installed on this device, but not connected to a tailnet.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed on this device, but not connected to a tailnet.'**
+  String get tailscaleStoppedTip;
+
+  /// Server discovery: API token
+  ///
+  /// In en, this message translates to:
+  /// **'API token'**
+  String get cloudflareApiToken;
+
+  /// Server discovery: the permission the Cloudflare API token needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs Account · Cloudflare Tunnel · Read.'**
+  String get cloudflareApiTokenTip;
+
+  /// Server discovery: Choose file
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get discoveryChooseFile;
+
+  /// Server discovery: Online
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get discoveryOnline;
+
+  /// Server discovery: Offline
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get discoveryOffline;
+
+  /// Server discovery: Select all
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get discoverySelectAll;
+
+  /// Server discovery: Filter by name or address
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by name or address'**
+  String get discoveryFilter;
+
+  /// Server discovery: Same machine, more than one address
+  ///
+  /// In en, this message translates to:
+  /// **'Same machine, more than one address'**
+  String get discoverySameMachine;
+
+  /// Server discovery: Primary address
+  ///
+  /// In en, this message translates to:
+  /// **'Primary address'**
+  String get discoveryPrimaryAddress;
+
+  /// Server discovery: Alternate address
+  ///
+  /// In en, this message translates to:
+  /// **'Alternate address'**
+  String get discoveryAlternateAddress;
+
+  /// Agent command permissions: Agent
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentPermsGroup;
+
+  /// Asked before leaving a page with unsaved edits
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get discardUnsaved;
+
+  /// No description provided for @syncAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync'**
+  String get syncAuto;
+
+  /// No description provided for @syncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get syncOff;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncDone;
+
+  /// No description provided for @syncLastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {time}'**
+  String syncLastAt(String time);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncSwitchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto sync with {name} will be turned off. Existing backups on {name} will not be deleted.'**
+  String syncSwitchBody(String name);
+
+  /// No description provided for @bakPwdSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get bakPwdSet;
+
+  /// No description provided for @bakPwdNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get bakPwdNotSet;
+
+  /// No description provided for @syncChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get syncChannel;
+
+  /// No description provided for @syncStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStateFailed;
+
+  /// No description provided for @syncStatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password mismatch'**
+  String get syncStatePassword;
+
+  /// No description provided for @syncStateUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get syncStateUpdate;
+
+  /// No description provided for @syncStateRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStateRunning;
 }
 
 class _AppLocalizationsDelegate
@@ -10357,6 +12357,7 @@ class _AppLocalizationsDelegate
     'de',
     'en',
     'es',
+    'fa',
     'fr',
     'id',
     'it',
@@ -10397,6 +12398,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'fa':
+      return AppLocalizationsFa();
     case 'fr':
       return AppLocalizationsFr();
     case 'id':

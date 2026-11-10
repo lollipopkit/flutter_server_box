@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/ssh/terminal_a11y.dart';
+import 'package:server_box/data/terminal/terminal_a11y.dart';
 import 'package:xterm/core.dart';
 
 /// A terminal's output as plain text: one line per row, selectable, and in

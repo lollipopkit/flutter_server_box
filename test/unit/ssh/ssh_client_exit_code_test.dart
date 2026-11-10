@@ -22,11 +22,10 @@ void main() {
   });
 
   test('execWithPwd waits for an exit status that follows the EOF', () async {
-    final (code, _) = await _Client(
-      _LateExitSession(3),
-    ).execWithPwd('script', id: 'id');
+    final result = await _Client(_LateExitSession(3)).execWithPwd('script');
 
-    expect(code, 3);
+    expect(result.exitCode, 3);
+    expect(result.rejected, isFalse);
   });
 }
 

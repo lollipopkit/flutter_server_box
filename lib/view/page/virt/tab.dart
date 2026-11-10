@@ -20,6 +20,7 @@ import 'package:server_box/view/page/virt/host_error.dart';
 import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
+import 'package:server_box/view/widget/swap_switcher.dart';
 
 part 'hosts.dart';
 part 'list.dart';
@@ -37,7 +38,7 @@ enum VirtSection { guests, storage, network, backup }
 /// narrow window — the host's guest list is what a single column is for, and
 /// the other hosts are behind the switcher at its head. The Storage and
 /// Network sections swap the list for the host's pools or networks, the same
-/// way. See docs/dev/virt.md, "UI".
+/// way.
 class VirtTabPage extends ConsumerStatefulWidget {
   const VirtTabPage({super.key});
 

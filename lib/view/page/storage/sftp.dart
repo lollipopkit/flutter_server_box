@@ -7,11 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/core/utils/local_files.dart';
-import 'package:server_box/core/utils/sftp_escalation.dart';
-import 'package:server_box/core/utils/sftp_sudo.dart';
-import 'package:server_box/core/utils/sftp_timeout.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/local/files.dart';
+import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
+import 'package:server_box/data/model/file/backend/sftp_sudo.dart';
+import 'package:server_box/data/model/file/backend/sftp_timeout.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -20,12 +20,12 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
+import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
@@ -285,10 +285,20 @@ extension _Open on _SftpPageState {
         .read(serverProvider(spi.id).notifier)
         .ensureShellClient();
     _client = client;
+    bool rememberPwd() => Stores.setting.rememberPwdInMem.fetch();
     _sudoHelper = SftpSudoHelper(
-      client: client,
       spi: spi,
-      contextProvider: () => mounted ? context : null,
+      exec: client.execWithPwd,
+      rememberPwd: rememberPwd,
+      askPassword: () async {
+        if (!mounted) return null;
+        return context.showPwdDialog(
+          title: l10n.trySudo,
+          label: spi.ssh?.user,
+          id: '${spi.id}_sftp_sudo',
+          remember: rememberPwd(),
+        );
+      },
     );
     _escalation = _SudoEscalation(
       helper: _sudoHelper,
@@ -306,11 +316,9 @@ extension _Open on _SftpPageState {
     return _SftpStart(
       backend: backend,
       home: home,
-      // Checked like the other three. The file tab restores a session by
-      // passing its saved directory as `initPath`, and one that has since been
+      // Checked like the other three: an `initPath` that has since been
       // deleted or become unreadable opened the browser straight onto a
-      // listing error with nothing to press — for as long as the tab was
-      // remembered, which is every launch.
+      // listing error with nothing to press.
       path:
           await _openable(backend, widget.args.initPath) ??
           await _lastPath(backend) ??
@@ -430,15 +438,6 @@ extension _Actions on _SftpPageState {
     String fullPath,
   ) => _edit(handle, entry, fullPath);
 
-  /// Local file dir + server id + remote path.
-  String _localPathFor(String remotePath) {
-    final parts = remotePath.split('/').where((part) => part.isNotEmpty);
-    return parts.fold(
-      Paths.file.joinPath(_spi.id),
-      (path, part) => path.joinPath(_safeLocalPathPart(part)),
-    );
-  }
-
   void _download(FileEntry entry, String fullPath) {
     context.showRoundDialog(
       title: libL10n.attention,
@@ -466,7 +465,7 @@ extension _Actions on _SftpPageState {
                 .add(
                   FileTransfer(
                     from: _refOf(fullPath),
-                    to: LocalFileRef(_localPathFor(fullPath)),
+                    to: LocalFileRef(serverLocalPath(_spi.id, fullPath)),
                   ),
                 );
           },
@@ -514,7 +513,7 @@ extension _Actions on _SftpPageState {
       // Asked before the transfer starts rather than after it fails: an upload
       // is a queued job, and a job that dies on the far side reports its
       // refusal in a list nobody is looking at.
-      if (await _canWrite(handle.path)) {
+      if (await _sudoHelper.canWrite(handle.path)) {
         ref
             .read(fileTransferProvider.notifier)
             .add(
@@ -530,15 +529,6 @@ extension _Actions on _SftpPageState {
 
     final ok = await _uploadViaSudo(local: local, remote: remote, name: name);
     if (ok) await handle.refresh();
-  }
-
-  Future<bool> _canWrite(String dir) async {
-    final (code, _) = await _client.execWithPwd(
-      files.filesWritableCommand(dir: dir),
-      context: context,
-      id: '${_spi.id}_sftp_write_probe',
-    );
-    return code == 0;
   }
 
   /// Uploads somewhere this user cannot write: to `/tmp` as themselves, then
@@ -569,37 +559,22 @@ extension _Actions on _SftpPageState {
       // No timeout: this waits for a transfer, whose length is the file's
       // business and not this dialog's.
       timeout: null,
-      fn: () async {
-        // The two checks answer different questions. A failed transfer leaves
-        // its error on the row; a cancelled one takes the row with it, and
-        // only the completer's own answer says so. Renaming after either would
-        // put a partial file — or nothing at all — over the destination as
-        // root.
-        final finished = await completer.future;
-        final status = ref.read(fileTransferProvider.notifier).get(reqId);
-        if (status?.error != null) throw status!.error!;
-        if (!finished) return false;
-        await _sudoHelper.rename(staging, remote, password: pwd);
-        return true;
-      },
-    );
-    if (moved == true && err == null) {
-      _sudoMode.value = true;
-      return true;
-    }
-
-    try {
-      await _sudoHelper.delete(
+      fn: () => _sudoHelper.finishUploadAsRoot(
         staging,
-        isDir: false,
-        recursive: false,
+        remote,
         password: pwd,
-      );
-    } catch (_) {
-      // Best effort: a leftover in `/tmp` is not worth a second error dialog
-      // over the one the user is already reading.
-    }
-    return false;
+        // A failed transfer leaves its error on the row; a cancelled one takes
+        // the row with it, and only the completer's own answer says so.
+        staged: completer.future.then((finished) {
+          final status = ref.read(fileTransferProvider.notifier).get(reqId);
+          if (status?.error != null) throw status!.error!;
+          return finished;
+        }),
+      ),
+    );
+    if (moved != true || err != null) return false;
+    _sudoMode.value = true;
+    return true;
   }
 
   Future<void> _decompress(
@@ -668,50 +643,46 @@ extension _Edit on _SftpPageState {
 
     final size = await _sizeFor(entry, remotePath, useSudo: useSudo);
     if (size == null || !mounted) return;
-    if (size > Miscs.editorMaxSize) {
-      Toast.show(
-        l10n.fileTooLarge(
-          entry.name,
-          size.bytes2Str,
-          Miscs.editorMaxSize.bytes2Str,
-        ),
-      );
-      return;
-    }
+    if (!fitsEditor(entry.name, size)) return;
 
-    final localPath = _localPathFor(remotePath);
+    final localPath = serverLocalPath(_spi.id, remotePath);
     if (!await _fetch(remotePath, localPath, useSudo: useSudo)) return;
     if (!mounted) return;
 
     await EditorPage.route.go(
       context,
-      args: EditorPageArgs(
+      args: fileEditorArgs(
         path: localPath,
         onSave: (_) => _saveBack(handle, localPath, remotePath, useSudo),
-        closeAfterSave: Stores.setting.closeAfterSave.fetch(),
-        softWrap: Stores.setting.editorSoftWrap.fetch(),
-        enableHighlight: Stores.setting.editorHighlight.fetch(),
-        lightTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorTheme.fetch(),
-        ),
-        darkTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorDarkTheme.fetch(),
-        ),
-        fontFamily: () {
-          final font = Stores.setting.editorFontFamily.fetch();
-          return font.isEmpty ? null : font;
-        }(),
       ),
     );
   }
 
-  /// The size, or null if the user gave up on the way to finding it out.
+  /// The size, or null if it could not be found out or the user gave up on
+  /// the way to finding it out.
   Future<int?> _sizeFor(
     FileEntry entry,
     String remotePath, {
     required bool useSudo,
   }) async {
-    if (!useSudo) return entry.size ?? 0;
+    if (!useSudo) {
+      // A link's listed size is the link's own, not its target's.
+      if (entry.size case final size? when entry.kind != FileKind.link) {
+        return size;
+      }
+      // A listing may leave the size out; never guess it is small enough.
+      final (size, err) = await context.showLoadingDialog(fn: () async {
+        final result = await _client.execWithPwd(
+          files.filesSizeCommand(path: remotePath),
+        );
+        if (result.exitCode != 0) return null;
+        return files.filesParseSize(output: result.stdout);
+      });
+      if (err == null && size == null) {
+        Toast.error('${libL10n.fail}: ${entry.name}');
+      }
+      return err == null ? size : null;
+    }
     final pwd = await _sudoHelper.ensurePassword();
     if (pwd == null || !mounted) return null;
     final (size, err) = await context.showLoadingDialog(

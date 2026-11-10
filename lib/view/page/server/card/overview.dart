@@ -4,12 +4,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// How long back the recent list looks.
 const _kRecentWindow = Duration(hours: 24);
@@ -161,7 +161,10 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
           _bars(totals, compact: compact)
         else
           Expanded(child: _pressure(totals, compact: compact)),
-        if (said != null) _divider(context),
+        // A hairline opens a section. With a bar each and no room for the
+        // words, the dot alone is not one: it sits at the end of the bars'
+        // section, or the line read as a third section with nothing in it.
+        if (said != null && (showLast || !separate)) _divider(context),
         if (showLast)
           Expanded(
             child: said == null
@@ -617,9 +620,7 @@ class _Totals {
     ])
       (
         kind: kind,
-        short: name.length <= 4
-            ? name.toUpperCase()
-            : name.substring(0, 3).toUpperCase(),
+        short: shortMetricName(name),
         pct: pct,
         over: (pct ?? 0) >= kServerAlertPercent,
       ),

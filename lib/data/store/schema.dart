@@ -39,6 +39,12 @@ abstract interface class SchemaMigration {
   Future<void> apply();
 }
 
+/// A step that rewrites only `setting` rows, synchronously, so a restore can
+/// run it inside its own transaction on the settings a file brought back.
+abstract interface class SettingsMigration implements SchemaMigration {
+  void applySync();
+}
+
 /// Version of the app's *local storage* layout.
 ///
 /// Distinct from `BuildData.build` (which gates one-off feature toggles via
@@ -73,7 +79,7 @@ abstract final class SchemaVersion {
   /// v10: the Agent shell's eight settings keys and the AI provider's six
   ///      folded into one object row each
   /// v11: `server_dist`, caching what each server was last seen running
-  /// v12: `horizonVirtKey`, a switch, becomes `virtKeyRows`, a count
+  /// v12: `horizonVirtKey`, a switch, becomes `virtualKeyRows`, a count
   /// v13: the trusted host keys v5 moved into `known_host` put back into the
   ///      setting the app actually reads
   /// v14: the virtual keys' order and hidden set by name rather than by index
@@ -98,7 +104,14 @@ abstract final class SchemaVersion {
   ///      certificate), and the Virtualization tab added for installs with PVE
   /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
   /// v33: `server.disk_counts_network`
-  static const current = 33;
+  /// v34: `sync_record`, each synced record's newest stamp (the op log)
+  /// v35: `server_identity_file`, a server's `IdentityFile` paths
+  /// v36: `server.monitor_cert_sha256` replaces `monitor_ignore_cert`
+  /// v37: `server_custom_cmd` dropped, custom commands living on the server
+  /// v38: the terminal and file tabs' saved sessions dropped
+  /// v39: what is synced by category (`sync_passed`), the secrets and the
+  /// Agent's stores synced, benchmarks a sync root
+  static const current = 39;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

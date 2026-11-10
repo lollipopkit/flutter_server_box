@@ -16,21 +16,23 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
+import '../helpers/l10n.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -373,18 +375,20 @@ void main() {
     // current — what a backgrounded app comes back to.
     final old = DateTime.now().subtract(const Duration(minutes: 9));
     for (var i = 0; i < 2; i++) {
-      status.history.add(
+      status.history.add(StatusHistorySample(
         timeMs: old.add(Duration(seconds: i)).millisecondsSinceEpoch,
         cpu: 2 + i.toDouble(),
         mem: 30 + i.toDouble(),
-      );
+      ));
     }
     notifier.updateStatus(status);
     await settle(tester);
 
     expect(tester.takeException(), isNull);
     // Said at the top of the page, once, with the way to ask again.
-    final said = find.textContaining(RegExp(r'Everything below is from'));
+    final said = find.textContaining(
+      startOf(app_locale.l10n.staleSinceFmt(l10nHole, l10nHole)),
+    );
     expect(said, findsOneWidget);
     expect(find.text(libL10n.refresh), findsOneWidget);
     // In a card about as tall as the way to ask again, which is the tallest
@@ -403,7 +407,8 @@ void main() {
     );
     // And in the rows, where the note is the timestamp rather than what the
     // figure is of.
-    expect(find.textContaining(RegExp(r'^at \d')), findsWidgets);
+    final at = startOf(app_locale.l10n.atTimeFmt(l10nHole)).pattern;
+    expect(find.textContaining(RegExp('$at\\d')), findsWidgets);
     // The chart stops where the samples do, and says so.
     final band = find.text(app_locale.l10n.noData);
     expect(band, findsOneWidget);

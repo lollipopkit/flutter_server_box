@@ -1,25 +1,21 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 
 /// A server that is this device: what it dials, and what it keeps.
 void main() {
   const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
   const ssh = SshCredential(ip: 'host', port: 22, user: 'root', pwd: 'p');
-  const full = MonitorRemoteAccess(
-    terminal: true,
-    fullAccess: true,
-    files: true,
-  );
+  const full = MonitorAccess.granted;
 
   Spi local({bool parked = false}) => Spi(
     name: 'me',

@@ -15,7 +15,7 @@ import Foundation
 
 /// `sbm_parser::protocol::PROTOCOL`, named in `X-SBM-Protocol`;
 /// `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal.
-private let sbmProtocol = "1"
+private let sbmProtocol = "2"
 
 enum WidgetError: LocalizedError {
     case notConfigured
@@ -200,17 +200,21 @@ extension WidgetMonitorClient: URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        // Only the certificate check, and only when this server was configured
-        // to skip it in the app — a self-signed agent is the common case, and
-        // the setting travels with the server rather than being global.
-        guard server.ignoreCert,
-              challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              let trust = challenge.protectionSpace.serverTrust
+        // Only the certificate check. What the system trusts is trusted; past
+        // that, only the certificate the user accepted for this agent in the
+        // app — a self-signed agent is the common case.
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let trust = challenge.protectionSpace.serverTrust,
+              !SecTrustEvaluateWithError(trust, nil)
         else {
             completionHandler(.performDefaultHandling, nil)
             return
         }
-        completionHandler(.useCredential, URLCredential(trust: trust))
+        if certPinAccepts(trust, pin: server.certSha256) {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
     }
 }
 

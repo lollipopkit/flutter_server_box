@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "2.0.3"
   archive:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: archive
       sha256: "0d58d1fa1fddf6588251ccf2819f3fb3b6d0452c1b2813ac7413a05592bfbefe"
@@ -217,13 +217,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
-  circle_chart:
-    dependency: "direct main"
-    description:
-      path: "packages/circle_chart"
-      relative: true
-    source: path
-    version: "1.1.0"
   cli_config:
     dependency: transitive
     description:
@@ -252,10 +245,10 @@ packages:
     dependency: transitive
     description:
       name: code_assets
-      sha256: bf394f466ba9205f1812a0433b392d6af280f155f56651eda7c18cc32ed493b8
+      sha256: "828110d598123b5ea96c00c9f3c72105bf79f8ee36c20a39b26209ade421ec57"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.1"
+    version: "2.1.0"
   code_builder:
     dependency: transitive
     description:
@@ -723,7 +716,7 @@ packages:
     source: hosted
     version: "1.0.5"
   flutter_math_fork:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: flutter_math_fork
       sha256: "6d5f2f1aa57ae539ffb0a04bb39d2da67af74601d685a161aff7ce5bda5fa407"
@@ -922,14 +915,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
-  hive_ce_generator:
-    dependency: "direct dev"
-    description:
-      name: hive_ce_generator
-      sha256: "69800cb5e9bde43d457d24d38c20f458cf95b122c25ba04cfe9519578f31548d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.11.2"
   hooks:
     dependency: transitive
     description:
@@ -1317,18 +1302,18 @@ packages:
     dependency: transitive
     description:
       name: native_toolchain_c
-      sha256: a1c26117c48cebe5677b0cf0e33a980a79a7c5577effc86f52e5a0d309cdcb60
+      sha256: "90eaad8059ebc2004a63810a4696ea9acdb02473e47ed3b6b3bafb100ac77e31"
       url: "https://pub.dev"
     source: hosted
-    version: "0.19.3"
+    version: "0.19.5"
   native_toolchain_rust:
     dependency: transitive
     description:
       name: native_toolchain_rust
-      sha256: "8469a0e32a47a5c84b7fd300de9fd0e8082aac76c37922986324f5082a58350d"
+      sha256: dc8e5f20c0cb7052372bc302f075607086d86354b37199e89ec9d3d35589e519
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.6"
+    version: "1.0.7"
   nested:
     dependency: transitive
     description:
@@ -1349,10 +1334,10 @@ packages:
     dependency: transitive
     description:
       name: objective_c
-      sha256: b7fb95a6d9a4f009edd63dc5ac69f07420b23a16161c6dd8660290b59c602e8e
+      sha256: "5c80c2ad6e2c0397de5db38c6d653e69616a3397e13aa7633bf39eb668f2041b"
       url: "https://pub.dev"
     source: hosted
-    version: "9.5.0"
+    version: "9.6.2"
   package_config:
     dependency: transitive
     description:
@@ -1584,15 +1569,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.2"
+  rage:
+    dependency: transitive
+    description:
+      name: rage
+      sha256: "4c3c1f584f1088638c4d0ddc2f576d524abf76fe21e22d6acca831e9dd986df5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   re_editor:
     dependency: transitive
     description:
       path: "."
       ref: main
-      resolved-ref: d5d70020da74082d182301a49e2bb87d30f0ab66
+      resolved-ref: ca4000440ed4e24765137ecf2b85bb4b0e2d2b0c
       url: "https://github.com/lollipopkit/re-editor"
     source: git
-    version: "0.8.0"
+    version: "0.10.0"
   re_highlight:
     dependency: transitive
     description:
@@ -1866,10 +1859,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: fa3fd961e83b2dca8890a7b1014ab1226831d2b5908067c0ab7f385ffb655caf
+      sha256: "5340531ad17f386ae444873f643f281060b6238cc702edeee6b1e90bc4c6874e"
       url: "https://pub.dev"
     source: hosted
-    version: "3.6.0"
+    version: "3.8.0"
   sqlparser:
     dependency: "direct dev"
     description:
@@ -2185,10 +2178,10 @@ packages:
     dependency: "direct main"
     description:
       name: webdav_client_plus
-      sha256: "1ac25cf8cc5810f77201e176fcdf53312386711be62eb6f49cf975490a172ced"
+      sha256: e72c60bdca6588214bda80c4f356aeabee507d8cc7c3a2712e5d3898ff1506a4
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "3.0.0"
   webdriver:
     dependency: transitive
     description:
@@ -2268,14 +2261,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
-  yaml_writer:
-    dependency: transitive
-    description:
-      name: yaml_writer
-      sha256: "69651cd7238411179ac32079937d4aa9a2970150d6b2ae2c6fe6de09402a5dc5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   zmodem:
     dependency: transitive
     description:

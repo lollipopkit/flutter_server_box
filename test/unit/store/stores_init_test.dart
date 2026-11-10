@@ -7,9 +7,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// `Stores.init` against a database that is not open yet.
@@ -31,7 +31,7 @@ void main() {
     // `HiveImport` runs inside `Stores.init` and opens boxes through
     // `HiveStore`; registering twice throws, so this is once per process too.
     Hive.init(tempDir.path);
-    Hive.registerAdapters();
+    registerHiveLegacyAdapters();
   });
 
   tearDownAll(() => tempDir.delete(recursive: true));
@@ -75,6 +75,23 @@ void main() {
     // The two table-backed stores answer only if their tables were created.
     expect(Stores.connectionStats.getAllServerStats(), isEmpty);
     expect(Stores.snippet.fetch(), isEmpty);
+  });
+
+  test('a newer build\'s database is refused before anything is written', () async {
+    await Stores.init();
+    Stores.setting.schemaVersion.put(SchemaVersion.current + 1);
+    Stores.setting.set('forceSinglePane', true);
+    await getIt.reset();
+    await SqliteDb.close();
+
+    await expectLater(Stores.init(), throwsA(isA<SchemaTooNewException>()));
+
+    // A retired key, which `removeRetiredKeys` would have dropped.
+    expect(Stores.setting.get<bool>('forceSinglePane'), isTrue);
+
+    // The file is shared with the tests after this one.
+    Stores.setting.schemaVersion.put(SchemaVersion.current);
+    Stores.setting.remove('forceSinglePane');
   });
 
   test('a second launch reopens the same file', () async {

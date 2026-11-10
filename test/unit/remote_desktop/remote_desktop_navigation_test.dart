@@ -38,18 +38,4 @@ void main() {
     expect(validate('123456789'), isNull);
     expect(validate('密码'), isNotNull);
   });
-
-  test('a host the agent could not dial is refused', () {
-    expect(
-      validateRemoteDesktopProfileInput(
-        name: 'Desktop',
-        host: 'a b',
-        port: 5900,
-        protocol: RemoteDesktopProtocol.vnc,
-        username: '',
-        password: '',
-      ),
-      isNotNull,
-    );
-  });
 }

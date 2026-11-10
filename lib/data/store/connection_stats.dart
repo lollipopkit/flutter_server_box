@@ -36,14 +36,14 @@ class ConnectionStatsStore {
   ///
   /// It *writes*, which is why `Stores.init` only calls it once the stored
   /// schema version says this build may.
-  Future<void> init() async => _expire();
+  void init() => _expire();
 
   /// Records one attempt, or does nothing if the server is gone.
   ///
   /// `server_id` is a foreign key now: a status refresh that lands after the
   /// user deleted the server has nothing to attach the record to, and the row
   /// would only ever have been orphaned statistics.
-  Future<void> recordConnection(ConnectionStat stat) async {
+  void recordConnection(ConnectionStat stat) {
     try {
       _insert(ShortId.generate(), stat);
     } on SqliteException catch (e) {
@@ -141,11 +141,11 @@ class ConnectionStatsStore {
   static DateTime? _timeOf(Object? millis) =>
       millis is int ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
 
-  Future<void> clearAll() async {
+  void clearAll() {
     _db.execute('DELETE FROM conn_stat;');
   }
 
-  Future<void> clearServerStats(String serverId) async {
+  void clearServerStats(String serverId) {
     _db.execute('DELETE FROM conn_stat WHERE server_id = ?;', [serverId]);
   }
 

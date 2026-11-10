@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,13 +9,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/workspace/tree.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/workspace/tab.dart';
 
@@ -101,6 +102,47 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
+
+  // The home's tabs are a `PageView`; a workspace first built while it slides
+  // past to another tab used to scroll it back to the workspace, through the
+  // strip revealing its selected tab with `Scrollable.ensureVisible`.
+  testWidgets('a workspace built in passing leaves the home pages alone', (
+    tester,
+  ) async {
+    save([_three()]);
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final pages = PageController();
+    addTearDown(pages.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: PageView(
+            controller: pages,
+            physics: const NeverScrollableScrollPhysics(),
+            children: const [
+              Text('before'),
+              Scaffold(body: WorkspaceTabPage()),
+              Text('after'),
+            ],
+          ),
+        ),
+      ),
+    );
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+    unawaited(
+      pages.animateToPage(2, duration: const Duration(milliseconds: 677), curve: Curves.fastLinearToSlowEaseIn),
+    );
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(pages.page, 2);
+    expect(find.text('after'), findsOneWidget);
+  });
 
   testWidgets('a fresh start is one empty workspace', (tester) async {
     await pump(tester, const Size(1200, 800));

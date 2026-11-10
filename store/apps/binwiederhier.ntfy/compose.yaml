@@ -1,0 +1,52 @@
+# ntfy 2.28.0 (Apache-2.0 / GPL-2.0), https://github.com/binwiederhier/ntfy/tree/v2.28.0
+#
+# Written for ServerBox Monitor (2026-10-17) from upstream's Docker
+# instructions (docs/install.md) and the server's flags (cmd/serve.go):
+# - no `name:` and no `container_name`: the agent names the project;
+# - run as the shared folder's owner, listening on 8080 inside;
+# - access is denied unless signed in: the administrator is provisioned on
+#   every start (auth-users, which takes only a bcrypt hash), the hash made
+#   from the generated password by `ntfy user hash` (it reads it twice from
+#   stdin);
+# - attachments only with a public address: ntfy refuses an attachment
+#   folder without base-url;
+# - behind-proxy: the visitor's address comes from X-Forwarded-For (the
+#   agent's proxy sets it), for rate limits.
+
+services:
+  ntfy:
+    image: binwiederhier/ntfy:${NTFY_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        hash=$$(printf '%s\n%s\n' "$$NTFY_ADMIN_PASSWORD" "$$NTFY_ADMIN_PASSWORD" | ntfy user hash 2>/dev/null)
+        unset NTFY_ADMIN_PASSWORD
+        export NTFY_AUTH_USERS="$$NTFY_ADMIN_USER:$$hash:admin"
+        if [ -n "$$NTFY_BASE_URL" ]; then export NTFY_ATTACHMENT_CACHE_DIR=/var/lib/ntfy/attachments; fi
+        exec ntfy serve
+    environment:
+      TZ: ${SBM_TZ}
+      NTFY_ADMIN_USER: ${NTFY_ADMIN_USER}
+      NTFY_ADMIN_PASSWORD: ${NTFY_ADMIN_PASSWORD}
+      NTFY_BASE_URL: ${NTFY_BASE_URL:-}
+      NTFY_LISTEN_HTTP: ':8080'
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_ENABLE_LOGIN: 'true'
+      NTFY_REQUIRE_LOGIN: 'true'
+      NTFY_BEHIND_PROXY: 'true'
+    volumes:
+      - ${NTFY_DATA}:/var/lib/ntfy
+    ports:
+      - '${NTFY_BIND}:${NTFY_PORT}:8080'
+    restart: unless-stopped
+    # Upstream's healthcheck (docs/install.md), on the port inside.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://127.0.0.1:8080/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

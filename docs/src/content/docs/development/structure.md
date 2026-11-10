@@ -4,7 +4,7 @@ description: Understand the Server Box codebase
 ---
 
 The repository is a monorepo. The Flutter App is at the root, alongside the
-Rust workspace, Monitor agent, documentation site, and project website.
+Rust workspace, Monitor, documentation site, and project website.
 
 ## Monorepo layout
 
@@ -14,8 +14,8 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Shared status parser for App and Monitor
 │   ├── sbm_ffi/       # flutter_rust_bridge binding crate
-│   └── sbm_native/    # Native sampler used by Monitor
-├── monitor/           # Monitor agent (Rust service + Svelte panel)
+│   └── sbm_native/    # Native sampler used by the Monitor
+├── monitor/           # Monitor (Rust service + Svelte panel)
 ├── packages/          # Path-dependent Dart forks and shared webui package
 ├── docs/              # Astro Starlight documentation site
 ├── website/           # Project website
@@ -38,7 +38,7 @@ lib/
 ├── view/              # Pages and reusable Widgets
 ├── generated/         # Generated localization code
 ├── l10n/              # Localization source ARB files
-├── hive/              # TODO: remove after the Hive migration window
+├── hive/              # Legacy Hive migration readers
 └── src/rust/          # Generated flutter_rust_bridge bindings
 ```
 
@@ -94,7 +94,7 @@ dependencies:
 - `fl_build/`: Cross-platform build tool
 - Other platform plugins and component packages
 
-`packages/webui/` is shared by the Monitor panel and project website. This
+`packages/webui/` is used by the project website. This
 Svelte package provides UI primitives and design tokens.
 
 ## Rust workspace
@@ -102,7 +102,7 @@ Svelte package provides UI primitives and design tokens.
 - `crates/sbm_parser/` parses command output into structured server status. The App calls it through FFI; Monitor uses it in its script collection path.
 - `crates/sbm_native/` samples metrics on the host running Monitor, using syscalls, procfs, or sysfs. The App collects remote data over SSH and does not call this crate on a remote host.
 - `crates/sbm_ffi/` exposes Rust APIs to Flutter, including the parser and native SSH cryptography. Generated Dart bindings are in `lib/src/rust/`.
-- `monitor/` contains the standalone Monitor agent. See `monitor/README.md` for its documentation.
+- `monitor/` contains the standalone Monitor. See `monitor/README.md` for its documentation.
 
 The App collects metrics from remote servers over SSH. Monitor collects them
 from the host where it runs. The projects share selected models and parser

@@ -25,6 +25,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
+import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -53,6 +54,7 @@ Future<void> _createV30() async {
   final db = SqliteDb.instance;
   db.execute('PRAGMA foreign_keys = ON;');
   await createTables(db);
+  createServerCustomCmdTable();
   replaceServerTable(serverDdlBeforePveTable(freshServerDdl()));
   db.execute('DROP TABLE server_pve;');
 }
@@ -131,8 +133,9 @@ void main() {
 
     await _createV30();
     await const PveVirtMigration().apply();
-    // The step since that touches `server`.
+    // The steps since that touch `server`.
     await const DiskCountsNetworkMigration().apply();
+    await const MonitorCertSha256Migration().apply();
 
     expect(_xinfo('server'), freshServer);
     expect(_xinfo('server_pve'), freshPve);

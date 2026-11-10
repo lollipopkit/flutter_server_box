@@ -4,17 +4,21 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/theme.dart' show ThemeBackup, ThemeRestoreReport;
+import 'package:fl_lib/theme.dart'
+    show ThemeBackup, ThemeBlobStore, ThemeRestoreReport;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/core/utils/local_file_backend.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/sync/category.dart';
+import 'package:server_box/core/sync/log.dart' show SyncSeal;
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
@@ -22,26 +26,37 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/provider/bmc_credential.dart';
-import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/data/provider/private_key.dart';
-import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
-import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
-import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
-import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/store_reload.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
+part 'backup_restore.dart';
 
 final _loggerV2 = Logger('BackupV2');
+
+/// Where a restore fetches the theme packages a backup keeps apart, from the
+/// sync that keeps them, which installs [source] at start
+/// (`installThemeBlobs`).
+abstract final class BackupThemeBlobs {
+  static ThemeBlobStore? Function()? source;
+
+  /// None while signed out of where they are kept.
+  static ThemeBlobStore? get available {
+    final source = BackupThemeBlobs.source;
+    if (source == null) {
+      Loggers.app.warning('Themes restored before installThemeBlobs');
+      return null;
+    }
+    return source();
+  }
+}
 
 @freezed
 abstract class BackupV2 with _$BackupV2 implements Mergeable {
@@ -83,10 +98,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
     ///
-    /// Absent from files written before PVE had a table of its own. Those
-    /// carry it inside the server record's `custom` instead — and so does
-    /// every file this build writes, for those builds to read. What [merge]
-    /// makes of either is `_pveToRestore`'s rule.
+    /// The only place a file carries PVE. One written before PVE had a table
+    /// of its own has no such section and restores without PVE; see
+    /// `_pveToRestore`.
     @Default(<String, Object?>{}) Map<String, Object?> pve,
 
     /// The installed theme packages, by installation id — see
@@ -94,6 +108,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// settings point at. Absent from files written before themes were
     /// carried (#1637), whose theme settings restore onto the default.
     @Default(<String, Object?>{}) Map<String, Object?> themes,
+
+    /// The synced kv stores beside [settings], by name
+    /// (`SyncRecorder.syncedStores`): the Agent's. Absent from files written
+    /// before they synced.
+    @Default(<String, Object?>{}) Map<String, Object?> stores,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -108,197 +127,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
-    await mergeReporting(force: force);
-  }
-
-  /// [merge], answering what became of [themes]: which came back, and which
-  /// could not — for a restore the user started to say so.
-  Future<ThemeRestoreReport?> mergeReporting({bool force = false}) async {
-    _validateRestorableTypedStores();
-    _loggerV2.info('Merging...');
-
-    // Before the settings that select one: the network is not something to
-    // hold the transaction open for, and a selection is only restored onto a
-    // theme that is there.
-    final themeReport = themes.isEmpty ? null : await ThemeBackup.restore(themes);
-    if (themeReport != null && themeReport.failed.isNotEmpty) {
-      _loggerV2.warning('Themes not restored: ${themeReport.failed}');
-    }
-
-    late bool keysChanged;
-    late bool credsChanged;
-    late bool serversChanged;
-    late bool snippetsChanged;
-    late bool forwardsChanged;
-    late bool remoteDesktopsChanged;
-    late bool containerChanged;
-    late Set<String> historyNotifications;
-    late Set<String> settingNotifications;
-
-    // Every store shares this SQLite connection. Keep the reference order, but
-    // commit the whole restore as one unit so a later failure cannot leave the
-    // earlier stores visible without it.
-    final restored = _restoredServerGraph();
-    final keysBefore = [for (final k in Stores.key.fetch()) k.key];
-    SqliteStore.transact(() {
-      keysChanged = Stores.key.merge(keys, force: force, notify: false);
-      credsChanged = Stores.bmcCredential.merge(
-        bmcCredentials,
-        force: force,
-        notify: false,
-      );
-      final appliedServerIds = <String>{};
-      serversChanged = Stores.server.merge(
-        restored.servers,
-        force: force,
-        notify: false,
-        appliedIds: appliedServerIds,
-      );
-      snippetsChanged = Stores.snippet.merge(
-        _snippetsWithRestoredServerIds(restored.serverIds),
-        force: force,
-        notify: false,
-      );
-      forwardsChanged = Stores.portForward.merge(
-        _portForwardsWithRestoredServerIds(restored.serverIds),
-        force: force,
-        notify: false,
-      );
-      remoteDesktopsChanged = Stores.remoteDesktop.merge(
-        _remoteDesktopsWithRestoredServerIds(restored.serverIds),
-        force: force,
-        notify: false,
-      );
-
-      final restoredContainer = _containerWithRestoredServerIds(
-        restored.serverIds,
-      );
-      containerChanged = false;
-      final containerIds = <String>{
-        for (final key in restored.servers.keys)
-          if (!_isInternalStoreKey(key)) key,
-        for (final key in restoredContainer.keys)
-          if (!_isInternalStoreKey(key)) key,
-      };
-      for (final serverId in containerIds) {
-        // A container host is a child of its server and carries no timestamp
-        // of its own — editing one stamps the parent. So the backup speaks for
-        // it exactly where it spoke for the parent. Applied to every server
-        // instead, this deleted a host configured here after the backup was
-        // taken, on a server `merge` had just correctly decided to keep.
-        if (!appliedServerIds.contains(serverId)) continue;
-        if (Stores.container.restoreOne(
-          serverId,
-          restoredContainer[serverId] ?? const <String, Object?>{},
-          notify: false,
-        )) {
-          containerChanged = true;
-          serversChanged = true;
-        }
-      }
-
-      // Same rule as the container host just above: a child of its server,
-      // restored exactly where the server was — and only as far as the file
-      // can speak for it, see [_pveToRestore].
-      final restoredPve = _pveWithRestoredServerIds(restored.serverIds);
-      for (final serverId in containerIds.union(restoredPve.keys.toSet())) {
-        if (!appliedServerIds.contains(serverId)) continue;
-        final value = _pveToRestore(
-          serverId,
-          restoredPve,
-          restored.servers[serverId],
-          force: force,
-        );
-        if (value == null) continue;
-        if (Stores.pve.restoreOne(serverId, value, notify: false)) {
-          serversChanged = true;
-        }
-      }
-
-      historyNotifications = _mergeSqliteStore(
-        Stores.history,
-        _mergeDataForStore(
-          Stores.history,
-          _historyWithRestoredServerIds(restored.serverIds),
-        ),
-        force: force,
-      );
-      settingNotifications = settings.isEmpty
-          ? const <String>{}
-          : _mergeSqliteStore(
-              Stores.setting,
-              _mergeDataForStore(
-                Stores.setting,
-                settings,
-                deviceLocal: SettingStore.deviceLocalKeys,
-              ),
-              force: force,
-            );
-      // Restoring does not run the schema migrator. Convert legacy setting
-      // shapes in version order before this transaction can commit, so a
-      // failed conversion rolls the entire restore back with it.
-      if (settings.isNotEmpty) {
-        const SettingsFixupsMigration().applySync();
-        const GroupedSettingsMigration().applySync();
-        const VirtKeyRowsMigration().applySync();
-        const VirtKeyNamesMigration().applySync();
-        const HomeTabsBarMigration().applySync();
-      }
-    });
-
-    // Notifications and provider reloads happen only after the outer
-    // transaction commits. A failed restore therefore has no observable half.
-    if (keysChanged) {
-      Stores.key.invalidate();
-      PrivateKeyUnlock.forgetAll();
-      forgetParsedIdentities();
-      unawaited(
-        KeyPassphrases.forgetGone(
-          keysBefore,
-          Stores.key.fetch().map((e) => e.key),
-        ),
-      );
-    }
-    if (credsChanged) Stores.bmcCredential.invalidate();
-    if (serversChanged) {
-      Stores.server.invalidate();
-      // A server tombstone cascades these rows even when their own merge pass
-      // has no later write to announce.
-      Stores.portForward.invalidate();
-      Stores.remoteDesktop.invalidate();
-      Stores.snippet.invalidate();
-      // A PVE write sets [serversChanged]; a deleted server's row cascades
-      // without one, since `restoreOne` answers false for a server not here.
-      Stores.pve.invalidate();
-    }
-    if (snippetsChanged && !serversChanged) Stores.snippet.invalidate();
-    if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
-    if (remoteDesktopsChanged && !serversChanged) {
-      Stores.remoteDesktop.invalidate();
-    }
-    _notifySqliteStore(Stores.history, historyNotifications);
-    _notifySqliteStore(Stores.setting, settingNotifications);
-
-    // Not awaited: the reload reconnects every server, which a merge has no
-    // reason to wait for.
-    if (serversChanged) {
-      unawaited(GlobalRef.gRef?.read(serversProvider.notifier).reload());
-    }
-    if (snippetsChanged) {
-      GlobalRef.gRef?.read(snippetProvider.notifier).reload();
-    }
-    if (keysChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
-    if (credsChanged) {
-      GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
-    }
-    if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
-
-    // After the settings: it points what they restored at this device's
-    // installations, and falls back where a theme did not come back.
-    if (themeReport != null) ThemeBackup.reselect(themeReport);
-
-    _loggerV2.info('Merge completed');
-    return themeReport;
+    await restoreStores(force: force);
   }
 
   /// Envelope version. Bumped to 3 with the nested `Spi.ssh` layout, so a
@@ -309,11 +138,19 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// would drift.
   static const formatVer = SchemaVersion.current;
 
-  static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
+  /// [only]: the categories carried beside the records every backup holds;
+  /// all when null. [blobs]: where theme packages are kept apart, when the
+  /// backup goes where they can be (LK Cloud).
+  static Future<BackupV2> loadFromStore({
+    Set<SyncCategory>? only,
+    ThemeBlobStore? blobs,
+  }) async {
+    final categories = only ?? SyncCategory.values.toSet();
+    final includeSettings = categories.contains(SyncCategory.settings);
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: _withLegacyPve(Stores.server.getAllMap(), Stores.pve.fetchAll()),
+      spis: Stores.server.getAllMap(),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
@@ -323,17 +160,108 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       pve: Stores.pve.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
-          ? _backupStore(
-              Stores.setting,
-              deviceLocal: SettingStore.deviceLocalKeys,
-            )
+          ? _backupStore(Stores.setting)
           : const {},
-      themes: includeSettings ? await _themes() : const {},
+      themes: includeSettings ? await _themes(blobs) : const {},
+      stores: {
+        for (final MapEntry(key: name, value: store) in _syncedStores.entries)
+          if (_covers(categories, name)) name: _backupStore(store),
+      },
     );
   }
 
-  static Future<Map<String, Object?>> _themes() async {
-    final export = await ThemeBackup.export();
+  /// [SyncRecorder.syncedStores] but the settings, which have their own
+  /// section.
+  static Map<String, SqliteStore> get _syncedStores => {
+    for (final MapEntry(:key, :value) in SyncRecorder.syncedStores.entries)
+      if (key != Stores.setting.name) key: value,
+  };
+
+  /// Whether [categories] cover the store [name]: one of no category is in
+  /// every backup.
+  static bool _covers(Set<SyncCategory> categories, String name) =>
+      switch (SyncCategory.of('kv:$name')) {
+        null => true,
+        final c => categories.contains(c),
+      };
+
+  /// This backup holding only what [categories] cover beside the records
+  /// every backup holds: what a device that leaves the rest out takes.
+  BackupV2 only(Set<SyncCategory> categories) => _mix(categories, null);
+
+  /// This backup with what [categories] leave out taken from [from] as it
+  /// is: a device that leaves something out carries the others' on.
+  BackupV2 carrying(BackupV2 from, Set<SyncCategory> categories) =>
+      _mix(categories, from);
+
+  BackupV2 _mix(Set<SyncCategory> categories, BackupV2? from) {
+    final withSettings = categories.contains(SyncCategory.settings);
+    return copyWith(
+      settings: withSettings ? settings : from?.settings ?? const {},
+      themes: withSettings ? themes : from?.themes ?? const {},
+      stores: {
+        for (final e in stores.entries)
+          if (_covers(categories, e.key)) e.key: e.value,
+        if (from != null)
+          for (final e in from.stores.entries)
+            if (!_covers(categories, e.key)) e.key: e.value,
+      },
+    );
+  }
+
+  /// This backup without the stores of [SyncCategory.secrets] and
+  /// [SyncCategory.passphrases]: what a file without a password holds.
+  BackupV2 withoutSecrets() => copyWith(
+    stores: {
+      for (final e in stores.entries)
+        if (!const {SyncCategory.secrets, SyncCategory.passphrases}.contains(SyncCategory.of('kv:${e.key}')))
+          e.key: e.value,
+    },
+  );
+
+  /// Whether this file lacks a record this device holds, or holds one older
+  /// than this device's, a delete included — see `SyncIface.lacks`. Records
+  /// and their stamps only: those converge. The themes do not (they are what
+  /// each device could install), so they are left out.
+  bool lacksLocal({required Set<SyncCategory> categories}) => [
+    (Stores.server.getAllMap(), spis),
+    (Stores.snippet.getAllMap(), snippets),
+    (Stores.key.getAllMap(), keys),
+    (Stores.bmcCredential.getAllMap(), bmcCredentials),
+    (Stores.portForward.getAllMap(), portForwards),
+    (Stores.remoteDesktop.getAllMap(), remoteDesktopProfiles),
+    (_backupStore(Stores.history), history),
+    if (categories.contains(SyncCategory.settings))
+      (_backupStore(Stores.setting), settings),
+    for (final MapEntry(key: name, value: store) in _syncedStores.entries)
+      if (_covers(categories, name))
+        (_backupStore(store), _storeRows(name)),
+  ].any((pair) => _lacks(pair.$1, pair.$2));
+
+  /// The rows of the store [name] this file holds.
+  Map<String, Object?> _storeRows(String name) => switch (stores[name]) {
+    final Map<String, Object?> rows => rows,
+    final Map rows => rows.cast<String, Object?>(),
+    _ => const {},
+  };
+
+  static bool _lacks(Map<String, Object?> local, Map<String, Object?> remote) {
+    const tsKey = StoreDefaults.defaultLastUpdateTsKey;
+    Map<String, int> stamps(Map<String, Object?> rows) => _kvTimestamps(
+      rows[tsKey],
+      rows.keys.where((key) => key != tsKey),
+    );
+    final remoteStamps = stamps(remote);
+    for (final MapEntry(:key, value: at) in stamps(local).entries) {
+      if (at > (remoteStamps[key] ?? 0)) return true;
+    }
+    return local.keys.any(
+      (key) => !_isInternalStoreKey(key) && !remote.containsKey(key),
+    );
+  }
+
+  static Future<Map<String, Object?>> _themes(ThemeBlobStore? blobs) async {
+    final export = await ThemeBackup.export(blobs: blobs);
     if (export.skipped.isNotEmpty) {
       // Listed with nothing to install them from; the restore names them.
       _loggerV2.warning('Themes without a package to carry: ${export.skipped}');
@@ -341,34 +269,56 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return export.entries;
   }
 
-  static Future<String> backup([
+  /// [only] and [blobs] as [loadFromStore]; what [only] leaves out is
+  /// taken from [carry] when given ([carrying]). Sealed to [key] (the sync's,
+  /// `Miscs.bakFileName`), else with [password] (an export `age -d` opens,
+  /// `Miscs.exportBakFileName`); with neither, the secrets are left out: the
+  /// file is readable by whoever holds it.
+  static Future<String> backup(
     String? name,
-    String? password,
-    bool includeSettings = true,
-  ]) async {
-    final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
-    var result = bak.toJsonString();
-
-    if (password != null && password.isNotEmpty) {
-      // Compressed *inside* the envelope, so what goes over the wire is
-      // roughly an eighth of what it was: this JSON is one shape repeated a
-      // few hundred times, and every key name is spelled out in every record.
-      // Base64 then expands it once, rather than once per layer — which is
-      // why this goes through `encryptBytes` instead of encoding to text
-      // first.
-      result = Cryptor.encryptBytes(
-        compressBackups
-            ? gzip.encode(utf8.encode(result))
-            : utf8.encode(result),
-        password,
-      );
+    String? password, {
+    SyncSeal? key,
+    Set<SyncCategory>? only,
+    ThemeBlobStore? blobs,
+    BackupV2? carry,
+  }) async {
+    final encrypted = key != null || (password != null && password.isNotEmpty);
+    if (!encrypted) {
+      only = {...only ?? SyncCategory.values}
+        ..remove(SyncCategory.secrets)
+        ..remove(SyncCategory.passphrases);
+    }
+    var bak = await BackupV2.loadFromStore(only: only, blobs: blobs);
+    if (carry != null && only != null) bak = bak.carrying(carry, only);
+    // What was carried too: another device's secrets are no more this
+    // file's to hold in the clear than this one's.
+    if (!encrypted) bak = bak.withoutSecrets();
+    final json = utf8.encode(bak.toJsonString());
+    // Compressed *inside* the envelope, so what goes over the wire is
+    // roughly an eighth of what it was: this JSON is one shape repeated a few
+    // hundred times, and every key name is spelled out in every record. The
+    // armor then expands it once, rather than once per layer.
+    List<int> compressed() => compressBackups ? gzip.encode(json) : json;
+    final Uint8List bytes;
+    if (key != null) {
+      bytes = await key.seal(Uint8List.fromList(compressed()));
+    } else if (encrypted) {
+      bytes = utf8.encode(await AgeCryptor.encrypt(compressed(), password!));
+    } else {
+      bytes = json;
     }
 
-    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
-    final bytes = utf8.encode(result);
+    final path = Paths.doc.joinPath(
+      name ??
+          (key != null
+              ? Miscs.bakFileName
+              : encrypted
+              ? Miscs.exportBakFileName
+              : Miscs.plainBakFileName),
+    );
     await const LocalFileBackend().write(
       path,
-      Stream.value(bytes),
+      () => Stream.value(bytes),
       size: bytes.length,
     );
     return path;
@@ -376,20 +326,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   /// Whether a new backup is compressed before it is encrypted.
   ///
-  /// **Turning this on is a one-way format change for the sync file.** The
-  /// envelope is unchanged — the default cost still writes V01, so an older
-  /// build recognises the file and decrypts it correctly. What it then has is
-  /// gzip, and its `Cryptor.decrypt` ends in `utf8.decode`, so it throws (as
-  /// "invalid Base64 format", which is the wrong message and the reason to
-  /// expect this in a bug report). `SyncIface._sync` catches that and returns
-  /// **before** it uploads. So such a device stops syncing until it is
-  /// updated; it does not overwrite anything, which is why this is a release
-  /// note rather than a migration.
-  ///
-  /// Deliberately not a filename bump, which is how v2 -> v3 was handled. A
-  /// second name would let an old build keep writing the old one, and the two
-  /// histories would diverge silently in both directions. Stopping is the
-  /// recoverable failure; diverging is not.
+  /// It was a one-way format change for the v3 sync file: an older build
+  /// decrypted the envelope, found gzip where it expected text, and stopped
+  /// syncing before it uploaded. The age envelope goes further, under the v4
+  /// name: a build before it never sees the file.
   ///
   /// TODO: remove this constant once no supported build predates it, and
   /// compress unconditionally.
@@ -409,17 +349,32 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// unbounded allocation, and refusing is cheaper than finding out.
   static const _maxPlainBytes = 256 * 1024 * 1024;
 
-  factory BackupV2.fromJsonString(String jsonString, [String? password]) {
-    if (Cryptor.isEncrypted(jsonString)) {
-      if (password == null || password.isEmpty) {
-        throw Exception('Backup is encrypted but no password provided');
-      }
-      final bytes = Cryptor.decryptBytes(jsonString, password);
-      jsonString = _looksGzipped(bytes)
-          ? utf8.decode(gunzipCapped(bytes))
-          : utf8.decode(bytes);
-    }
+  /// [data] as [backup] wrote it: an encrypted backup opened with [password]
+  /// (`AgeCryptor`: age, or the `LKFL_ENC` envelope of every build before),
+  /// or a plain export. Decrypts in rage's isolate and parses in the
+  /// caller's; the app's readers split the two ([unlock], then
+  /// [BackupV2.fromPlainBytes] in a worker).
+  static Future<BackupV2> open(List<int> data, [String? password]) async =>
+      BackupV2.fromPlainBytes(await unlock(data, password));
 
+  /// [data] decrypted when it is encrypted ([password] required then), and
+  /// as it is otherwise: gzip or JSON, what [BackupV2.fromPlainBytes] reads.
+  static Future<Uint8List> unlock(List<int> data, String? password) async {
+    if (!AgeCryptor.isEncrypted(data)) {
+      return data is Uint8List ? data : Uint8List.fromList(data);
+    }
+    if (password == null || password.isEmpty) {
+      throw const RemoteBackupPasswordMissing();
+    }
+    return AgeCryptor.decrypt(data, password);
+  }
+
+  /// What the envelope holds, or a plain export: gzip, or the JSON itself.
+  factory BackupV2.fromPlainBytes(List<int> bytes) => BackupV2.fromJsonString(
+    utf8.decode(_looksGzipped(bytes) ? gunzipCapped(bytes) : bytes),
+  );
+
+  factory BackupV2.fromJsonString(String jsonString) {
     final map = json.decode(jsonString) as Map<String, dynamic>;
 
     // Checked before decoding. `version` was written from the beginning but
@@ -481,509 +436,29 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('bmcCredentials', bmcCredentials);
   }
 
-  /// A pre-table backup identifies a private key by its name. When that name
-  /// already exists locally, [PrivateKeyStore.reconcile] correctly keeps the
-  /// local generated id; the server's old reference must follow it before the
-  /// foreign key can accept the server row.
-  ///
-  /// [BmcCredentialStore.reconcile] does the same thing for the same reason,
-  /// so `bmc.credId` needs the same treatment — restoring one backup twice
-  /// would otherwise leave every server pointing at an account id that the
-  /// second restore did not create.
-  ({Map<String, Object?> servers, Map<String, String> serverIds})
-  _restoredServerGraph() {
-    final keyIds = _restoredIds(
-      keys,
-      PrivateKeyInfo.fromJson,
-      (key) => key.id,
-      (key) => Stores.key.fetchByName(key.name)?.id,
-    );
-    final credIds = _restoredIds(
-      bmcCredentials,
-      BmcCredential.fromJson,
-      (cred) => cred.id,
-      (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
-    );
-    // Every local id per name, not one: a server's name is not unique, and a
-    // map keyed by it answers with whichever record happened to be last.
-    final localByName = <String, List<String>>{};
-    for (final server in Stores.server.fetch()) {
-      (localByName[server.name] ??= <String>[]).add(server.id);
-    }
-    final serverIds = <String, String>{};
-    final decoded = <String, Map<String, Object?>>{};
-    final sourceOwners = <String, String>{};
-    final destinationOwners = <String, String>{};
-
-    void claimSourceId(String id, String sourceKey) {
-      final owner = sourceOwners[id];
-      if (owner != null && owner != sourceKey) {
-        throw FormatException(
-          'Backup server id $id is shared by $owner and $sourceKey',
-        );
-      }
-      sourceOwners[id] = sourceKey;
-    }
-
-    for (final entry in spis.entries) {
-      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
-      final server = Map<String, Object?>.from(entry.value as Map);
-      final embedded = server['id'];
-      final backupId = embedded is String && embedded.isNotEmpty
-          ? embedded
-          : entry.key;
-      final name = server['name'];
-      // An id this device already holds is the identity; a name only stands in
-      // for a record that carries none. A name is ambiguous when more than one
-      // local server has it, and resolves to nothing then — the same rule
-      // `ServerStore.reconcile` applies, and it has to be the same one, since
-      // the id decided here is what reconcile is later handed. Resolving it to
-      // one of them instead overwrote whichever the lookup answered with.
-      final namedLocally = name is String ? localByName[name] : null;
-      final restoredId = Stores.server.fetchOneRaw(backupId) != null
-          ? backupId
-          : (namedLocally != null && namedLocally.length == 1
-                ? namedLocally.single
-                : backupId);
-      claimSourceId(entry.key, entry.key);
-      claimSourceId(backupId, entry.key);
-      final destinationOwner = destinationOwners[restoredId];
-      if (destinationOwner != null && destinationOwner != entry.key) {
-        throw FormatException(
-          'Backup servers $destinationOwner and ${entry.key} restore to the same id $restoredId',
-        );
-      }
-      destinationOwners[restoredId] = entry.key;
-      serverIds[entry.key] = restoredId;
-      serverIds[backupId] = restoredId;
-      server['id'] = restoredId;
-      decoded[restoredId] = server;
-    }
-
-    final servers = <String, Object?>{
-      for (final entry in spis.entries)
-        if (_isInternalStoreKey(entry.key)) entry.key: entry.value,
-      for (final entry in decoded.entries)
-        entry.key: _serverWithRestoredIds(
-          entry.value,
-          keyIds,
-          credIds,
-          serverIds,
-        ),
-    };
-    final timestamps = spis[StoreDefaults.defaultLastUpdateTsKey];
-    if (timestamps is Map) {
-      servers[StoreDefaults.defaultLastUpdateTsKey] = {
-        for (final entry in timestamps.entries)
-          serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
-      };
-    }
-    return (servers: servers, serverIds: serverIds);
-  }
-
-  /// Backup id -> local id, for the records of [store] whose name already
-  /// exists here.
-  ///
-  /// A record that will not decode is skipped rather than failing the restore:
-  /// `merge` skips it too, so leaving its server reference untouched is what
-  /// makes the foreign key reject exactly the matching malformed record.
-  /// [decode] runs once per record; [idOf] and [localIdOf] are handed the
-  /// result. Passing them the raw map instead made each of them decode it
-  /// again, which is two decodes per record for one lookup.
-  Map<String, String> _restoredIds<T>(
-    Map<String, Object?> store,
-    T Function(Map<String, dynamic>) decode,
-    String Function(T) idOf,
-    String? Function(T) localIdOf,
-  ) {
-    final out = <String, String>{};
-    for (final entry in store.entries) {
-      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
-      try {
-        final json = Map<String, dynamic>.from(entry.value as Map);
-        json['id'] ??= entry.key;
-        final record = decode(json);
-        final restored = localIdOf(record);
-        if (restored != null) {
-          out[entry.key] = restored;
-          out[idOf(record)] = restored;
-        }
-      } catch (_) {
-        continue;
-      }
-    }
-    return out;
-  }
-
-  Map<String, Object?> _snippetsWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) => {
-    for (final entry in snippets.entries)
-      entry.key: _snippetWithRestoredServerIds(entry.value, serverIds),
-  };
-
-  Map<String, Object?> _portForwardsWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) => {
-    for (final entry in portForwards.entries)
-      entry.key: _recordWithRestoredServerId(entry.value, serverIds),
-  };
-
-  Map<String, Object?> _remoteDesktopsWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) => {
-    for (final entry in remoteDesktopProfiles.entries)
-      entry.key: _recordWithRestoredServerId(entry.value, serverIds),
-  };
-
-  Map<String, Object?> _containerWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) => {
-    for (final entry in container.entries)
-      serverIds[entry.key] ?? entry.key: entry.value,
-  };
-
-  Map<String, Object?> _pveWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) => {
-    for (final entry in pve.entries)
-      if (!_isInternalStoreKey(entry.key))
-        serverIds[entry.key] ?? entry.key: entry.value,
-  };
-
   /// Whether this file was written by a build with `server_pve`, and so has
   /// a [pve] section that is the complete state: every server with PVE has an
   /// entry, and one without an entry has none.
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
-
-  /// What restoring [serverId]'s PVE configuration writes: an entry for
-  /// `PveStore.restoreOne` (empty removes the row, unreadable is skipped
-  /// there), or null to leave the row as it is.
-  ///
-  /// **A file with a [pve] section** ([carriesPveSection]) is the whole
-  /// truth: its entry, or none, which removes the row. That is how removing
-  /// PVE on one device reaches the others.
-  ///
-  /// **A file from an older build** has no section; its server records carry
-  /// the legacy `custom.pveAddr`/`pvePwd` instead, which express an address
-  /// and a password and nothing else.
-  /// - Present: applied onto the row here with `PveConfig.mergeLegacy`, so
-  ///   an older device handing back a record it got from this build leaves
-  ///   the token and the pinned certificate alone.
-  /// - Absent: in a sync, the row is left alone. An older build writes no
-  ///   PVE fields for a server whose record it has not seen with them, and
-  ///   cannot say "removed" in any other way than it says "never had", so
-  ///   reading absence as removal lets one old device delete what a new one
-  ///   configured. The cost is that removing PVE *on an older build* does not
-  ///   reach newer ones. [force] (restoring a backup) is the exception: the
-  ///   user asked for the file's state, and at the time it was written the
-  ///   server had no PVE.
-  // TODO(migration): after 5 releases every file has the section; reduce this
-  // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
-  Object? _pveToRestore(
-    String serverId,
-    Map<String, Object?> restoredPve,
-    Object? server, {
-    required bool force,
-  }) {
-    if (carriesPveSection) {
-      // A malformed entry is passed on for `PveStore.restoreOne` to skip:
-      // read as "none", it would delete the credentials here.
-      return restoredPve[serverId] ?? const <String, Object?>{};
-    }
-    final legacy = PveConfig.fromLegacyRecord(server);
-    if (legacy != null) {
-      return PveConfig.mergeLegacy(Stores.pve.fetch(serverId), legacy).toJson();
-    }
-    return force ? const <String, Object?>{} : null;
-  }
-
-  /// [spis] with each server's PVE configuration also written into its
-  /// record's `custom`, where a build from before `server_pve` reads it —
-  /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section
-  /// and writes back only what it read.
-  // TODO(migration): remove after 5 releases.
-  static Map<String, Object?> _withLegacyPve(
-    Map<String, Object?> spis,
-    Map<String, PveConfig> pve,
-  ) => {
-    for (final MapEntry(:key, :value) in spis.entries)
-      key: switch ((value, pve[key])) {
-        (final Map record, final PveConfig cfg) =>
-          PveConfig.withLegacyCustom(record, cfg),
-        _ => value,
-      },
-  };
-
-  Map<String, Object?> _historyWithRestoredServerIds(
-    Map<String, String> serverIds,
-  ) {
-    final restored = Map<String, Object?>.from(history);
-    // This key belonged to the retired recent-server dialog. Older backups
-    // may still contain it, but restoring one must not put unused history back
-    // into the database after the local migration removed it.
-    // TODO: Remove once supported backups can no longer contain this key.
-    restored.remove('sshServerHistory');
-    final lastPaths = restored['sftpLastPath'];
-    if (lastPaths is Map) {
-      restored['sftpLastPath'] = {
-        for (final entry in lastPaths.entries)
-          serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
-      };
-    }
-    for (final key in const ['sshTabs', 'fileTabs']) {
-      final value = restored[key];
-      if (value is! String || value.isEmpty) continue;
-      try {
-        restored[key] = json.encode(
-          _jsonWithRestoredServerIds(json.decode(value), serverIds),
-        );
-      } catch (_) {}
-    }
-    return restored;
-  }
-}
-
-Object? _serverWithRestoredIds(
-  Object? value,
-  Map<String, String> keyIds,
-  Map<String, String> credIds,
-  Map<String, String> serverIds,
-) {
-  if (value is! Map) return value;
-  final server = Map<String, Object?>.from(value);
-  final ssh = server['ssh'];
-  if (ssh is Map) {
-    server['ssh'] = _sshWithRestoredIds(ssh, keyIds, serverIds);
-  } else {
-    for (final key in const ['pubKeyId', 'keyId']) {
-      final id = server[key];
-      if (id is String && keyIds.containsKey(id)) server[key] = keyIds[id];
-    }
-  }
-  final bmc = server['bmc'];
-  if (bmc is Map) {
-    final restored = Map<String, Object?>.from(bmc);
-    final id = restored['credId'];
-    if (id is String && credIds.containsKey(id)) {
-      restored['credId'] = credIds[id];
-    }
-    server['bmc'] = restored;
-  }
-  return server;
-}
-
-Map<String, Object?> _sshWithRestoredKeyId(
-  Map value,
-  Map<String, String> keyIds,
-) {
-  final ssh = Map<String, Object?>.from(value);
-  for (final key in const ['pubKeyId', 'keyId']) {
-    final id = ssh[key];
-    if (id is String && keyIds.containsKey(id)) ssh[key] = keyIds[id];
-  }
-  return ssh;
-}
-
-Map<String, Object?> _sshWithRestoredIds(
-  Map value,
-  Map<String, String> keyIds,
-  Map<String, String> serverIds,
-) {
-  final ssh = _sshWithRestoredKeyId(value, keyIds);
-  final jumpId = ssh['jumpId'];
-  if (jumpId is String) ssh['jumpId'] = serverIds[jumpId] ?? jumpId;
-  final jumpIds = ssh['jumpIds'];
-  if (jumpIds is List) {
-    ssh['jumpIds'] = [
-      for (final id in jumpIds) id is String ? serverIds[id] ?? id : id,
-    ];
-  }
-  return ssh;
-}
-
-Object? _snippetWithRestoredServerIds(
-  Object? value,
-  Map<String, String> serverIds,
-) {
-  if (value is! Map) return value;
-  final snippet = Map<String, Object?>.from(value);
-  final targets = snippet['autoRunOn'];
-  if (targets is List) {
-    snippet['autoRunOn'] = [
-      for (final id in targets) id is String ? serverIds[id] ?? id : id,
-    ];
-  }
-  return snippet;
-}
-
-Object? _recordWithRestoredServerId(
-  Object? value,
-  Map<String, String> serverIds,
-) {
-  if (value is! Map) return value;
-  final record = Map<String, Object?>.from(value);
-  final id = record['serverId'];
-  if (id is String) record['serverId'] = serverIds[id] ?? id;
-  return record;
-}
-
-Object? _jsonWithRestoredServerIds(
-  Object? value,
-  Map<String, String> serverIds,
-) {
-  if (value is List) {
-    return [
-      for (final item in value) _jsonWithRestoredServerIds(item, serverIds),
-    ];
-  }
-  if (value is! Map) return value;
-  return {
-    for (final entry in value.entries)
-      '${entry.key}': switch ('${entry.key}') {
-        'sourceId' || 'serverId' when entry.value is String =>
-          serverIds[entry.value] ?? entry.value,
-        _ => _jsonWithRestoredServerIds(entry.value, serverIds),
-      },
-  };
 }
 
 /// Keeps the per-record modification map needed by sync, but not device-local
 /// layout and migration markers. Restoring those markers from another device
 /// can make this device skip a migration or claim a schema it does not have.
 ///
-/// [deviceLocal] is the same idea for keys with ordinary names — see
-/// [SettingStore.deviceLocalKeys], where a permission granted on one machine
-/// must not be granted on another by restoring a file.
-Map<String, Object?> _backupStore(
-  SqliteStore store, {
-  Set<String> deviceLocal = const {},
-}) {
+/// Device-local keys ([SqliteStore.isDeviceLocalKey]) are the same idea for
+/// keys with ordinary names — see [SettingStore.deviceLocalKeys], where a
+/// permission granted on one machine must not be granted on another by
+/// restoring a file.
+Map<String, Object?> _backupStore(SqliteStore store) {
   final rows = store.getAllMap(includeInternalKeys: true);
-  rows.removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
+  rows.removeWhere((key, _) => _isLocalOnly(store, key));
+  // The stamps as read, without device-local ones (a build that does not
+  // hold a key device-local reads one with no row as deleted there, and
+  // deletes its own), and as the map: a string holding it made two devices'
+  // backups differ in shape.
+  if (store.lastUpdateTs case final stamps?) rows[store.lastUpdateTsKey] = stamps;
   return rows;
-}
-
-Map<String, Object?> _mergeDataForStore(
-  SqliteStore store,
-  Map<String, Object?> rows, {
-  Set<String> deviceLocal = const {},
-}) {
-  final result = Map<String, Object?>.from(rows)
-    ..removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
-
-  // Mergeable treats an absent key as a deletion. Keep local-only state in
-  // the input until fl_lib can expose an internal-key exclusion policy.
-  for (final entry
-      in store
-          .getAllMap(includeInternalKeys: true)
-          .entries
-          .where((entry) => _isLocalOnly(store, entry.key, deviceLocal))) {
-    result[entry.key] = entry.value;
-  }
-  return result;
-}
-
-/// Synchronous equivalent of `Mergeable.mergeStore` for the shared SQLite
-/// database. The caller owns the outer transaction and delivers [Set] as
-/// notifications only after commit.
-Set<String> _mergeSqliteStore(
-  SqliteStore store,
-  Map<String, Object?> backupData, {
-  required bool force,
-}) {
-  final incomingTimestamps = _kvTimestamps(
-    backupData[store.lastUpdateTsKey],
-    backupData.keys.where((key) => key != store.lastUpdateTsKey),
-  );
-  final timestamps = Map<String, int>.from(store.lastUpdateTs ?? const {});
-  final current = store.getAllMap(includeInternalKeys: true);
-  final currentKeys = current.keys
-      .where((key) => key != store.lastUpdateTsKey)
-      .toSet();
-  final backupKeys = backupData.keys
-      .where((key) => key != store.lastUpdateTsKey)
-      .toSet();
-  final notifications = <String>{};
-  var timestampDirty = false;
-
-  for (final key in {...backupKeys, ...currentKeys}) {
-    final backupTimestamp = incomingTimestamps[key] ?? 0;
-    final currentTimestamp = timestamps[key] ?? 0;
-    final backupHasKey = backupKeys.contains(key);
-    final currentHasKey = currentKeys.contains(key);
-
-    if (backupHasKey && !currentHasKey) {
-      // Nothing here to protect. A key this device does not hold and has no
-      // timestamp for was never written and never deleted, so the backup's
-      // copy is the only copy — `0 <= 0` used to drop it, which is every entry
-      // of every envelope that carries no timestamps.
-      if (!force &&
-          currentTimestamp > 0 &&
-          backupTimestamp <= currentTimestamp) {
-        continue;
-      }
-      final value = backupData[key];
-      if (value == null) continue;
-      _writeKv(store, key, value);
-      notifications.add(key);
-      if (!store.isInternalKey(key)) {
-        timestamps[key] = backupTimestamp;
-        timestampDirty = true;
-      }
-      continue;
-    }
-
-    if (!backupHasKey && currentHasKey) {
-      if (!force && backupTimestamp <= currentTimestamp) continue;
-      _deleteKv(store, key);
-      notifications.add(key);
-      if (!store.isInternalKey(key)) {
-        // Preserve the existing merge contract: a deletion keeps the local
-        // timestamp entry unless the backup supplied a newer tombstone.
-        timestamps[key] = backupTimestamp > currentTimestamp
-            ? backupTimestamp
-            : currentTimestamp;
-        timestampDirty = true;
-      }
-      continue;
-    }
-
-    if (!backupHasKey || !currentHasKey) continue;
-    if (!force && backupTimestamp <= currentTimestamp) continue;
-    final value = backupData[key];
-    if (value == current[key]) continue;
-    if (value == null) {
-      _deleteKv(store, key);
-    } else {
-      _writeKv(store, key, value);
-    }
-    notifications.add(key);
-    if (!store.isInternalKey(key)) {
-      timestamps[key] = backupTimestamp;
-      timestampDirty = true;
-    }
-  }
-
-  if (force && incomingTimestamps.isNotEmpty) {
-    final maxTimestamp = incomingTimestamps.values.reduce(
-      (left, right) => left > right ? left : right,
-    );
-    if (maxTimestamp > 0) {
-      for (final key in timestamps.keys) {
-        timestamps[key] = maxTimestamp;
-      }
-      timestampDirty = true;
-    }
-  }
-
-  if (timestampDirty) {
-    // KvStore persists the timestamp map as a JSON string inside the JSON
-    // value column; retain that wire shape for existing readers.
-    _writeKv(store, store.lastUpdateTsKey, json.encode(timestamps));
-    notifications.add(store.lastUpdateTsKey);
-  }
-  return notifications;
 }
 
 Map<String, int> _kvTimestamps(Object? raw, Iterable<String> recordKeys) {
@@ -1007,41 +482,12 @@ Map<String, int> _kvTimestamps(Object? raw, Iterable<String> recordKeys) {
   };
 }
 
-void _writeKv(SqliteStore store, String key, Object value) {
-  final encoded = json.encode(_toJsonValue(value));
-  SqliteDb.instance.execute(
-    'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, ?) '
-    'ON CONFLICT (store, key) DO UPDATE SET '
-    'value = excluded.value, updated_at = excluded.updated_at;',
-    [store.name, key, encoded, DateTimeX.timestamp],
-  );
-}
-
-void _deleteKv(SqliteStore store, String key) {
-  SqliteDb.instance.execute('DELETE FROM kv WHERE store = ? AND key = ?;', [
-    store.name,
-    key,
-  ]);
-}
-
-void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {
-  for (final key in keys) {
-    final value = store.get<Object>(key);
-    final notified = value == null
-        ? store.remove(key, updateLastUpdateTsOnRemove: false)
-        : store.set(key, value, updateLastUpdateTsOnSet: false);
-    if (!notified) {
-      _loggerV2.warning('Failed to notify ${store.name}/$key after restore');
-    }
-  }
-}
-
 /// Whether [key] belongs to this device rather than to the backup.
 ///
 /// `lastUpdateTs` is internal and still travels: it is what sync compares.
-bool _isLocalOnly(SqliteStore store, String key, Set<String> deviceLocal) =>
+bool _isLocalOnly(SqliteStore store, String key) =>
     (store.isInternalKey(key) && key != store.lastUpdateTsKey) ||
-    deviceLocal.contains(key);
+    store.isDeviceLocalKey(key);
 
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;

@@ -16,16 +16,16 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/provider/virt/text_consoles.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/server/chart.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
@@ -546,7 +546,7 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
   /// The name, which of the host's guests it is when that is worth saying,
   /// and what can be done to it.
   PreferredSizeWidget _bar(VirtHostState st, VirtGuest? guest) {
-    final guests = st.data?.guests ?? const <VirtGuest>[];
+    final guests = st.guests;
     final at = guest == null ? -1 : guests.indexOf(guest);
     final actions = guest == null
         ? const <VirtPowerAction>{}
@@ -744,7 +744,7 @@ extension _GuestActions on _VirtGuestViewState {
 
   /// The host's other guests, for the layout with no list beside this.
   Future<void> _showGuests(VirtHostState st) async {
-    final guests = st.data?.guests ?? const <VirtGuest>[];
+    final guests = st.guests;
     final picked = await showRowsSheet<String>(
       context,
       rows: (ctx) => [

@@ -2,7 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/core/utils/app_auth.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// A row the settings page draws, described without naming its own row type.
 ///
@@ -61,10 +62,9 @@ abstract final class PlatformPublicSettings {
       title: Text(libL10n.bioAuth),
       trailing: StoreSwitch(
         prop: Stores.setting.useBioAuth,
-        validator: (val) async {
-          if (val) return true;
-          return await LocalAuth.goWithResult() == AuthResult.success;
-        },
+        // Both ways: turning it on proves this device can open the lock it
+        // is about to be held behind.
+        validator: (_) async => AppAuth.passed(await LocalAuth.goWithResult()),
       ),
     );
   }

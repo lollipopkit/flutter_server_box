@@ -235,7 +235,7 @@ void main() {
     expect(
       () => data.gunzipCapped(bomb, 640, 'ip4_city_v1.bin.gz'),
       throwsA(
-        isA<StateError>().having(
+        isA<GeoDownloadFailure>().having(
           (e) => e.message,
           'message',
           contains('past the 640 bytes it declares'),
@@ -255,7 +255,7 @@ void main() {
     final short = Uint8List.fromList(gzip.encode(Uint8List(320)));
     expect(
       () => data.gunzipCapped(short, 640, 'x'),
-      throwsA(isA<StateError>()),
+      throwsA(isA<GeoDownloadFailure>()),
     );
   });
 

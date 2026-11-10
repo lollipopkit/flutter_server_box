@@ -18,32 +18,46 @@ ads, advertising identifiers, or cross-app tracking.
 | Data | Storage and behavior |
 |---|---|
 | Server names, addresses, ports, usernames and settings | Encrypted SQLite database |
-| SSH passwords, private keys, Monitor and BMC credentials | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
-| AI provider API keys | Platform keychain, one entry per provider |
-| Backup password, WebDAV password and GitHub token | Platform secure storage |
+| SSH passwords, private keys, Monitor and BMC credentials, saved sudo passwords, key passphrases, AI provider API keys, MCP headers, and the WebDAV settings with their password | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
+| Backup password and sync key | Platform secure storage |
 | App logs | Local log files only; the current and previous run are retained for troubleshooting |
 | Agent conversations, memory notes, AI providers and tool settings | Local encrypted database; conversations may contain prompts, model responses, command output, terminal text, file content and fetched pages |
 | Active terminal output | Kept in the active session; the terminal does not retain it after the session ends |
 | Downloaded city-level location data | Unencrypted files in the app's data directory, created only after you confirm the download; see [Globe and location data](#globe-and-location-data) |
 | Public-interface-address results reported by servers, including an explicit no-address result | Encrypted app database, one entry per server. Once seven days old, a record can be refreshed by a later status poll. Coordinates are not stored; each one is derived again from the downloaded data whenever needed |
 
-Agent conversations, memory notes, AI providers and tool settings are excluded
-from backups and device sync. Conversations remain on this device until you
-delete them from the conversation history. An Agent
+Agent conversations are excluded from backups and device sync. They remain on
+this device until you delete them from the conversation history.
+**Backup → Synced data** chooses what else sync carries, one switch per kind:
+settings, AI (providers, tool settings, permissions and memory notes),
+sudo passwords and API keys (with MCP headers and the WebDAV settings), key passphrases (only on a device that remembers them),
+fonts, images and skills, and benchmarks. An Agent
 conversation can still be sent to the AI provider you configured; see
 [AI requests](#ai-requests).
 
 Backups are created only when you request one. Depending on the options and the
-backup format, a backup can contain server settings and credentials, private
-keys, snippets, port forwards, container settings, connection history and app
-settings. AI provider settings and API keys, Agent conversations and
-device-local state are not included.
+backup format, a backup can contain server settings with their SSH passwords,
+private keys, snippets, port forwards, remote desktop profiles with their saved
+passwords, container settings, connection history, app settings and AI
+settings, encrypted or not. Only an encrypted backup also holds saved sudo
+passwords, API keys, MCP headers, the WebDAV settings, and key
+passphrases. Agent conversations, sign-ins to AI providers and MCP
+servers, and device-local state are not included. Fonts, images, skills and
+benchmarks are synced through iCloud, WebDAV and LK Cloud, not in a backup
+file.
 
 A local backup may be unencrypted when no backup password is set. When you set a
-backup password, the backup is encrypted before it is written or uploaded.
-Automatic remote backup requires a non-empty backup password. After a backup is
-sent to iCloud, WebDAV, GitHub Gist or one of your monitor agents, that provider's storage, access and
-retention rules also apply.
+backup password, an exported backup is encrypted before it is written or
+uploaded, as an [age](https://age-encryption.org) file in passphrase mode:
+`age -d` and the backup password open it without ServerBox.
+Automatic sync requires a non-empty backup password. Synced data is encrypted
+with a sync key, while the sync key itself is stored alongside it as
+`identity.age` and is the only file encrypted directly with the backup password
+(`age -d` with the backup password decrypts the key, and `age -d -i` with the
+key decrypts the remaining files). If a device's backup password cannot unlock
+that key, sync pauses on that device until you enter the password used by your
+other devices. After data is uploaded to iCloud, WebDAV or LK Cloud, that
+provider's storage, access and retention policies also apply.
 
 ## Automatic diagnostic data
 
@@ -64,10 +78,9 @@ automatic upload.
 Changing the level to **Nothing** stops automatic delivery immediately; it does
 not wait for the next launch.
 
-TODO: Remove this upgrade note when supported installations no longer retain
-the old diagnostic level. Earlier versions also offered **Full information**,
-which added performance traces and feature-use analytics. It has been removed. An install
-that had chosen it is moved to **Basic information** when it updates, and the
+Earlier versions also offered **Full information**, which added performance
+traces and feature-use analytics. It has been removed. An install that had
+chosen it is moved to **Basic information** when it updates, and the
 per-install analytics identifier that level stored on the device is deleted.
 No performance traces or feature-use events are sent at any level.
 
@@ -147,18 +160,19 @@ in a later request so the model can continue. Command output and file content ma
 contain passwords, tokens or other secrets even when Server Box did not add them
 itself; check what you submit and review the provider's privacy policy.
 
-A provider's API key is stored in the platform keychain and sent only to that
-provider. A custom provider at a plain `http://` address on another machine is
+A provider's API key is stored in the App's encrypted database and sent only
+to that provider. A custom provider at a plain `http://` address on another machine is
 refused unless you allow it for that provider, since the key would travel
 unencrypted. The **Web fetch** tool requests a page from this device when the
 Agent uses it, and MCP servers you add receive the calls made to their tools.
 Installing or updating a skill from a remote source downloads it from the
 source you enter (GitHub, GitLab or the site), over `https`; one from a folder
 or a `.zip` on this device is read locally, with no request. Skills are kept
-as files on this device and are not backed up.
+as files on this device and synced with the fonts and images.
 An MCP server's headers and sign-in tokens are kept in the App's encrypted
-database on this device, never in a backup, and sent only to that server, and
-only over `https` unless the server is on this device.
+database and sent only to that server, and only over `https` unless the server
+is on this device. The headers are synced with the sudo passwords and API keys; a
+sign-in stays on this device.
 Server Box does not proxy AI requests through a developer service.
 
 ## Globe and location data
@@ -223,7 +237,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your monitor agent | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
+| Backup or sync | iCloud or your WebDAV server | When you upload, download or sync a backup; an uploaded backup file, which may be encrypted. Sync sends the backup and each device's changes, encrypted to a sync key, and that key, encrypted with the backup password |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |
@@ -232,7 +246,7 @@ automatic diagnostic payload described above.
 | Sponsor link | `cdn.lollipopkit.com` | When you open the sponsor link |
 | Documentation and issue links | `serverbox.lollipopkit.com` or `github.com` | When you open one of those links |
 
-Connections to your own servers, to a BMC you configured and to a Monitor agent
+Connections to your own servers, to a BMC you configured and to a Monitor
 you deployed go directly to those endpoints. They are not routed through the
 developer's infrastructure.
 
@@ -256,7 +270,7 @@ Do not include passwords, keys or other sensitive content in a public issue.
 ## Watch app and home-screen widgets
 
 The watch app, its complication, and the iOS and Android home-screen widgets
-read a Monitor agent you deployed directly. They use a read-only credential that
+read a Monitor you deployed directly. They use a read-only credential that
 Server Box mints for each surface. The credential can reach only the Monitor
 metrics endpoints (`/api/v1/status`, `/api/v1/metrics` and
 `/api/v1/metrics/history`); it cannot open a shell, execute commands or browse
@@ -270,7 +284,7 @@ Servers are included automatically when they have a Monitor configuration. On
 the watch, you can exclude individual servers in **Settings**; widgets publish
 the Monitor-configured servers without a separate exclusion list. Excluding or
 deleting a server revokes the watch or widget credential as soon as the app can
-contact the Monitor agent.
+contact the Monitor.
 
 ## Platform stores
 

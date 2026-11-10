@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 
 void main() {
   group('needsInsecureOptIn', () {
@@ -34,18 +34,16 @@ void main() {
     test('allowingInsecure changes that and nothing else', () {
       const before = MonitorHttpCredential(
         addr: 'http://10.0.0.1:3770',
-        user: 'admin',
         pwd: 'secret',
-        ignoreCert: true,
+        certSha256: 'abababababababababababababababababababababababababababababababab',
       );
       final after = before.allowingInsecure();
 
       expect(after.allowInsecure, isTrue);
       expect(after.needsInsecureOptIn, isFalse);
       expect(after.addr, before.addr);
-      expect(after.user, before.user);
       expect(after.pwd, before.pwd);
-      expect(after.ignoreCert, before.ignoreCert);
+      expect(after.certSha256, before.certSha256);
       // A changed credential is what makes `Spi.shouldReconnect` fire, which
       // is what reconnects after the one-tap fix.
       expect(after, isNot(before));

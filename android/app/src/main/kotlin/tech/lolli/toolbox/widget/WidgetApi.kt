@@ -10,11 +10,15 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
+import java.security.KeyStore
+import java.security.MessageDigest
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
 /**
@@ -56,7 +60,6 @@ object WidgetApi {
         val disk: Double?,
         val memText: String,
         val diskText: String,
-        val netText: String,
     )
 
     /** One bucket of the agent's stored history, oldest first. */
@@ -71,7 +74,7 @@ object WidgetApi {
     private const val TIMEOUT_MS = 8_000
 
     /** `sbm_parser::protocol::PROTOCOL`; `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal. */
-    private const val SBM_PROTOCOL = "1"
+    private const val SBM_PROTOCOL = "2"
 
     /**
      * How many history points to ask the agent for.
@@ -145,16 +148,15 @@ object WidgetApi {
         var connection: HttpURLConnection? = null
         try {
             connection = (url.openConnection() as HttpURLConnection).apply {
-                // Only the certificate check, only when this server was
-                // configured to skip it in the app, and only on *this*
-                // connection — a self-signed agent is the common case, and the
-                // setting travels with the server rather than being global.
-                // Installing it through `HttpsURLConnection.setDefault*` would
-                // silently disarm certificate checking for every other request
-                // the process makes.
-                if (this is HttpsURLConnection && server.ignoreCert) {
-                    sslSocketFactory = permissiveSslContext().socketFactory
-                    hostnameVerifier = HostnameVerifier { _, _ -> true }
+                // What the system trusts is trusted; past that, only the
+                // certificate the user accepted for this agent in the app, and
+                // only on *this* connection. Installing it through
+                // `HttpsURLConnection.setDefault*` would widen what every other
+                // request the process makes accepts.
+                val pin = server.certSha256
+                if (this is HttpsURLConnection && !pin.isNullOrEmpty()) {
+                    sslSocketFactory = pinnedSslContext(pin).socketFactory
+                    hostnameVerifier = pinnedHostnameVerifier(pin)
                 }
                 requestMethod = "GET"
                 connectTimeout = TIMEOUT_MS
@@ -177,7 +179,6 @@ object WidgetApi {
         val o = JSONObject(body)
         val mem = o.optJSONObject("memory") ?: JSONObject()
         val disk = o.optJSONObject("disk") ?: JSONObject()
-        val net = o.optJSONObject("network") ?: JSONObject()
         return Reading(
             name = o.optString("server_name").ifEmpty { server.name },
             cpu = o.optDoubleOrNull("cpu_usage"),
@@ -185,7 +186,6 @@ object WidgetApi {
             disk = disk.optDoubleOrNull("usage_percent"),
             memText = "${formatBytes(mem.optDouble("used", 0.0))} / ${formatBytes(mem.optDouble("total", 0.0))}",
             diskText = "${formatBytes(disk.optDouble("used", 0.0))} / ${formatBytes(disk.optDouble("total", 0.0))}",
-            netText = "${formatBytes(net.optDouble("rx_bytes", 0.0))} / ${formatBytes(net.optDouble("tx_bytes", 0.0))}",
         )
     }
 
@@ -212,21 +212,63 @@ object WidgetApi {
     private fun JSONObject.optDoubleOrNull(key: String): Double? =
         if (has(key) && !isNull(key)) optDouble(key).takeIf { !it.isNaN() } else null
 
+    /** SHA-256 of [der], lowercase hex: the form a pin is kept in. */
+    internal fun sha256Hex(der: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(der).joinToString("") { "%02x".format(it) }
+
     /**
-     * A TLS context that accepts any certificate.
-     *
-     * Built fresh per request rather than cached, so there is no object that
-     * outlives the one connection it was made for and could be reached by
-     * anything else.
+     * [pin] as `sbm_redfish`'s `normalize_fingerprint` reads it — `:`, spaces
+     * and `-` dropped, lowercased — since the app accepts one typed or imported
+     * in the colon form `openssl` prints.
      */
-    private fun permissiveSslContext(): SSLContext {
-        val trustEverything = object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<X509Certificate>?, authType: String?) = Unit
-            override fun checkServerTrusted(chain: Array<X509Certificate>?, authType: String?) = Unit
-            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+    internal fun normalizePin(pin: String): String =
+        pin.filterNot { it == ':' || it == ' ' || it == '-' }.lowercase(Locale.ROOT)
+
+    /**
+     * A TLS context that trusts what the platform trusts, and otherwise only a
+     * leaf certificate [pin] names — the app's `badCertificateCallback`.
+     *
+     * Built per request rather than cached, so nothing outlives the one
+     * connection it was made for.
+     */
+    private fun pinnedSslContext(raw: String): SSLContext {
+        val pin = normalizePin(raw)
+        val system = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            .apply { init(null as KeyStore?) }
+            .trustManagers.filterIsInstance<X509TrustManager>().first()
+        val pinned = object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>?, authType: String?) =
+                system.checkClientTrusted(chain, authType)
+
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+                try {
+                    system.checkServerTrusted(chain, authType)
+                } catch (e: CertificateException) {
+                    val leaf = chain.firstOrNull() ?: throw e
+                    if (sha256Hex(leaf.encoded) != pin) throw e
+                }
+            }
+
+            override fun getAcceptedIssuers(): Array<X509Certificate> = system.acceptedIssuers
         }
         return SSLContext.getInstance("TLS").apply {
-            init(null, arrayOf<TrustManager>(trustEverything), java.security.SecureRandom())
+            init(null, arrayOf<TrustManager>(pinned), java.security.SecureRandom())
+        }
+    }
+
+    /**
+     * The platform's host name check, and past it the pinned leaf alone: the
+     * app's callback covers a name mismatch the same way, since an agent's own
+     * certificate seldom names the address it is reached at.
+     */
+    private fun pinnedHostnameVerifier(raw: String): HostnameVerifier {
+        val pin = normalizePin(raw)
+        val system = HttpsURLConnection.getDefaultHostnameVerifier()
+        return HostnameVerifier { host, session ->
+            system.verify(host, session) ||
+                session.peerCertificates.firstOrNull()?.let {
+                    sha256Hex(it.encoded) == pin
+                } == true
         }
     }
 

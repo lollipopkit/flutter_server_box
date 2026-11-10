@@ -4,6 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `wrap_for_default_shell`
@@ -12,7 +13,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 /// Build the full script for a system ("linux" | "bsd" | "windows").
 /// `disabled` uses the app's stored displayName format ("Linux.net", ...).
 String buildScript({
-  required String system,
+  required SystemType system,
   required List<String> disabled,
   required String buildNumber,
 }) => RustLib.instance.api.crateApiScriptBuildScript(
@@ -27,7 +28,7 @@ String buildScript({
 /// the commands travel encoded — see `install_custom_cmds_script`. The
 /// directory is fixed under the user's home, so there is no path to pass.
 String installCustomCmdsCommand({
-  required String system,
+  required SystemType system,
   required List<CustomCmd> cmds,
 }) => RustLib.instance.api.crateApiScriptInstallCustomCmdsCommand(
   system: system,
@@ -36,21 +37,20 @@ String installCustomCmdsCommand({
 
 /// Script that prints the custom-command directory back, for the editor to
 /// load. Output goes to `parse_custom_cmds_listing`.
-String readCustomCmdsCommand({required String system}) =>
+String readCustomCmdsCommand({required SystemType system}) =>
     RustLib.instance.api.crateApiScriptReadCustomCmdsCommand(system: system);
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
+/// Empty when the directory does not exist; `None` when the output is not a
+/// listing, which the caller reports rather than reading as no commands.
 List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
     RustLib.instance.api.crateApiScriptParseCustomCmdsListing(raw: raw);
 
 /// Command that installs the script on the target (content piped via stdin,
 /// as produced by [`install_payload`] — not the bare script)
 String installCommand({
-  required String system,
+  required SystemType system,
   required String scriptDir,
   required String scriptPath,
 }) => RustLib.instance.api.crateApiScriptInstallCommand(
@@ -65,7 +65,7 @@ String installCommand({
 /// because Windows OpenSSH does not reliably deliver EOF to the child and
 /// waiting for one hangs the install indefinitely. This adds that line, so no
 /// caller has to know it exists; on Unix it returns `content` unchanged.
-String installPayload({required String system, required String content}) =>
+String installPayload({required SystemType system, required String content}) =>
     RustLib.instance.api.crateApiScriptInstallPayload(
       system: system,
       content: content,
@@ -73,7 +73,7 @@ String installPayload({required String system, required String content}) =>
 
 /// Command that runs one shell function of an installed script
 String execCommand({
-  required String system,
+  required SystemType system,
   required String scriptPath,
   required ShellFuncKind func,
 }) => RustLib.instance.api.crateApiScriptExecCommand(
@@ -123,6 +123,43 @@ String? customResultName({required String key}) =>
 bool sudoPasswordRejected({required String stderr}) =>
     RustLib.instance.api.crateApiScriptSudoPasswordRejected(stderr: stderr);
 
+/// Command that upgrades the monitor agent `install.sh` installed on the
+/// server, in whichever form it is there — see
+/// `sbm_parser::monitor_agent::upgrade_command`.
+String monitorUpgradeCommand() =>
+    RustLib.instance.api.crateApiScriptMonitorUpgradeCommand();
+
+/// Page `page` (from 1) of this repository's releases, where the agent's
+/// newest is looked for — see `sbm_parser::monitor_agent::release_page`.
+String monitorReleasesUrl({required int page}) =>
+    RustLib.instance.api.crateApiScriptMonitorReleasesUrl(page: page);
+
+/// How many pages of releases are read at most.
+int monitorReleaseMaxPages() =>
+    RustLib.instance.api.crateApiScriptMonitorReleaseMaxPages();
+
+MonitorReleasePage monitorReleasePage({required String listing}) =>
+    RustLib.instance.api.crateApiScriptMonitorReleasePage(listing: listing);
+
+/// Whether an agent reporting `running` is older than `latest`; false when
+/// either does not read as a version.
+bool monitorOutdated({required String running, required String latest}) =>
+    RustLib.instance.api.crateApiScriptMonitorOutdated(
+      running: running,
+      latest: latest,
+    );
+
+/// What starts the agent's update outside it, so that it outlives the
+/// restart: for an agent too old to start one itself (`POST /update/run`),
+/// sent through its `/exec` — see
+/// `sbm_parser::monitor_agent::start_update_script`.
+String monitorStartUpdateScript() =>
+    RustLib.instance.api.crateApiScriptMonitorStartUpdateScript();
+
+/// [monitor_start_update_script]'s exit status when sudo refused the password.
+int monitorUpdateSudoRefusedExit() =>
+    RustLib.instance.api.crateApiScriptMonitorUpdateSudoRefusedExit();
+
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
 class CustomCmd {
@@ -141,6 +178,28 @@ class CustomCmd {
           runtimeType == other.runtimeType &&
           name == other.name &&
           cmd == other.cmd;
+}
+
+/// What one page of releases says about the agent's.
+class MonitorReleasePage {
+  /// The highest `monitor-v*` version on it, drafts and prereleases left out.
+  final String? newest;
+
+  /// Whether the next page may hold one.
+  final bool readOn;
+
+  const MonitorReleasePage({this.newest, required this.readOn});
+
+  @override
+  int get hashCode => newest.hashCode ^ readOn.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MonitorReleasePage &&
+          runtimeType == other.runtimeType &&
+          newest == other.newest &&
+          readOn == other.readOn;
 }
 
 /// One section of the script's output.

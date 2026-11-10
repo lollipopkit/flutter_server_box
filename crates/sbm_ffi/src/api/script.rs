@@ -4,7 +4,7 @@
 //! script content, install/exec command strings, and output segment splitting
 //! all come from here so app and monitor share one implementation.
 
-use super::parser::parse_system_or_err;
+use super::parser::SystemType;
 
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
@@ -41,13 +41,12 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
 /// `disabled` uses the app's stored displayName format ("Linux.net", ...).
 #[flutter_rust_bridge::frb(sync)]
 pub fn build_script(
-    system: String,
+    system: SystemType,
     disabled: Vec<String>,
     build_number: String,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
+) -> String {
     let opts = sbm_parser::script::ScriptOptions { disabled, build_number };
-    Ok(sbm_parser::script::build_script(system, &opts))
+    sbm_parser::script::build_script(system, &opts)
 }
 
 /// Script that replaces the custom-command directory.
@@ -57,10 +56,9 @@ pub fn build_script(
 /// directory is fixed under the user's home, so there is no path to pass.
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_custom_cmds_command(
-    system: String,
+    system: SystemType,
     cmds: Vec<CustomCmd>,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
+) -> String {
     let cmds: Vec<(u32, String, String)> = cmds
         .into_iter()
         .enumerate()
@@ -75,15 +73,14 @@ pub fn install_custom_cmds_command(
         })
         .collect();
     let script = sbm_parser::script::install_custom_cmds_script(system, &cmds);
-    Ok(wrap_for_default_shell(system, script))
+    wrap_for_default_shell(system, script)
 }
 
 /// Script that prints the custom-command directory back, for the editor to
 /// load. Output goes to `parse_custom_cmds_listing`.
 #[flutter_rust_bridge::frb(sync)]
-pub fn read_custom_cmds_command(system: String) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(wrap_for_default_shell(system, sbm_parser::script::read_custom_cmds_script(system)))
+pub fn read_custom_cmds_command(system: SystemType) -> String {
+    wrap_for_default_shell(system, sbm_parser::script::read_custom_cmds_script(system))
 }
 
 /// Windows gets a complete command line, base64-wrapped, for the same reason
@@ -101,9 +98,8 @@ fn wrap_for_default_shell(system: sbm_parser::SystemType, script: String) -> Str
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
+/// Empty when the directory does not exist; `None` when the output is not a
+/// listing, which the caller reports rather than reading as no commands.
 #[flutter_rust_bridge::frb(sync)]
 pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
     sbm_parser::script::parse_custom_cmds_listing(&raw).map(|cmds| {
@@ -118,12 +114,11 @@ pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
 /// as produced by [`install_payload`] — not the bare script)
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_command(
-    system: String,
+    system: SystemType,
     script_dir: String,
     script_path: String,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::install_command(system, &script_dir, &script_path))
+) -> String {
+    sbm_parser::script::install_command(system, &script_dir, &script_path)
 }
 
 /// What to write to [`install_command`]'s stdin for `content`.
@@ -133,20 +128,18 @@ pub fn install_command(
 /// waiting for one hangs the install indefinitely. This adds that line, so no
 /// caller has to know it exists; on Unix it returns `content` unchanged.
 #[flutter_rust_bridge::frb(sync)]
-pub fn install_payload(system: String, content: String) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::install_payload(system, &content))
+pub fn install_payload(system: SystemType, content: String) -> String {
+    sbm_parser::script::install_payload(system, &content)
 }
 
 /// Command that runs one shell function of an installed script
 #[flutter_rust_bridge::frb(sync)]
 pub fn exec_command(
-    system: String,
+    system: SystemType,
     script_path: String,
     func: ShellFuncKind,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::exec_command(system, &script_path, func.into()))
+) -> String {
+    sbm_parser::script::exec_command(system, &script_path, func.into())
 }
 
 /// Command-line flag of a shell function ("s", "e", "p", "sd", "r", "sp");
@@ -213,4 +206,61 @@ pub fn custom_result_name(key: String) -> Option<String> {
 #[flutter_rust_bridge::frb(sync)]
 pub fn sudo_password_rejected(stderr: String) -> bool {
     sbm_parser::script::sudo_password_rejected(&stderr)
+}
+
+/// Command that upgrades the monitor agent `install.sh` installed on the
+/// server, in whichever form it is there — see
+/// `sbm_parser::monitor_agent::upgrade_command`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_upgrade_command() -> String {
+    sbm_parser::monitor_agent::upgrade_command()
+}
+
+/// Page `page` (from 1) of this repository's releases, where the agent's
+/// newest is looked for — see `sbm_parser::monitor_agent::release_page`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_releases_url(page: u32) -> String {
+    sbm_parser::monitor_agent::releases_url(page)
+}
+
+/// How many pages of releases are read at most.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_release_max_pages() -> u32 {
+    sbm_parser::monitor_agent::MAX_PAGES
+}
+
+/// What one page of releases says about the agent's.
+pub struct MonitorReleasePage {
+    /// The highest `monitor-v*` version on it, drafts and prereleases left out.
+    pub newest: Option<String>,
+    /// Whether the next page may hold one.
+    pub read_on: bool,
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_release_page(listing: String) -> MonitorReleasePage {
+    let page = sbm_parser::monitor_agent::release_page(&listing);
+    MonitorReleasePage { newest: page.newest, read_on: page.read_on }
+}
+
+/// Whether an agent reporting `running` is older than `latest`; false when
+/// either does not read as a version.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_outdated(running: String, latest: String) -> bool {
+    sbm_parser::monitor_agent::outdated(&running, &latest)
+}
+
+/// What starts the agent's update outside it, so that it outlives the
+/// restart: for an agent too old to start one itself (`POST /update/run`),
+/// sent through its `/exec` — see
+/// `sbm_parser::monitor_agent::start_update_script`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_start_update_script() -> String {
+    sbm_parser::monitor_agent::start_update_script()
+}
+
+/// [monitor_start_update_script]'s exit status when sudo refused the password.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_update_sudo_refused_exit() -> i32 {
+    sbm_parser::monitor_agent::SUDO_REFUSED_EXIT
 }

@@ -10,9 +10,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/screen.dart';
-import 'package:server_box/core/service/tray.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -21,21 +19,25 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/floating_panels.dart';
+import 'package:server_box/view/page/home/android_system.dart';
+import 'package:server_box/view/page/home/app_link.dart';
+import 'package:server_box/view/page/home/incoming.dart';
 import 'package:server_box/view/page/home_tab.dart';
+import 'package:server_box/view/page/home_tab_page.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
+import 'package:server_box/view/page/notice/dmg_notice.dart';
+import 'package:server_box/view/page/notice/store_unreadable_notice.dart';
+import 'package:server_box/view/page/server/widget/legacy_status_notice.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
-import 'package:server_box/view/widget/app_link.dart';
-import 'package:server_box/view/widget/dmg_notice.dart';
-import 'package:server_box/view/widget/legacy_status_notice.dart';
+import 'package:server_box/view/tray.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
-import 'package:server_box/view/widget/server_share.dart';
-import 'package:server_box/view/widget/store_unreadable_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'home/lifecycle.dart';
@@ -48,17 +50,13 @@ class HomePage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
-
-  static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
 class _HomePageState extends ConsumerState<HomePage>
     with
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
-        WidgetsBindingObserver,
-        SingleTickerProviderStateMixin,
-        GlobalRef {
+        WidgetsBindingObserver {
   /// Which tab to come back to, by [AppTab.name] — see
   /// [_HomePageTabs._rememberTab].
   ///
@@ -90,10 +88,15 @@ class _HomePageState extends ConsumerState<HomePage>
   /// platforms where opening a file also resumes the app.
   var _consumingPending = false;
 
+  /// Something was handed over while [_consumingPending] held the guard — an
+  /// incoming share finishes copying whenever it does — so take it after.
+  var _consumeAgain = false;
+
   /// The lock screen currently up, if any. See where it is assigned.
   Future<void>? _authed;
 
   late final _notifier = ref.read(serversProvider.notifier);
+  late final _androidSystem = AndroidSystemSync(ref);
 
   /// What the user arranged: the bar, and the rail.
   late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
@@ -108,48 +111,23 @@ class _HomePageState extends ConsumerState<HomePage>
   /// both, and it is null exactly when there is no strip to point at.
   final _navKey = GlobalKey();
 
-  /// Whether the window is too narrow for a rail, read from the last build.
-  ///
-  /// A field because the callbacks that need it — see
-  /// [_HomePageSettings._openSettings] — run outside the `LayoutBuilder` that
-  /// works it out.
-  bool _narrow = false;
+  /// Where a tab is shown: the tabs, and the settings pushed over them.
+  final _areaNavKey = GlobalKey<NavigatorState>();
+
+  /// The settings' route while it is in [_areaNavKey]'s navigator.
+  Route<dynamic>? _settingsRoute;
 
   /// Whether the settings are what the content area is showing.
   ///
   /// Not an `AppTab`: it is never arranged, never stored and never one of the
   /// pages [_selectIndex] addresses. But it *is* shown where a tab is shown,
-  /// over the same rail — it used to be pushed over the whole window, which
-  /// took away the only navigation on screen to get back out with.
-  bool _settingsOpen = false;
+  /// over the same rail — pushed over the whole window it took away the only
+  /// navigation on screen to get back out with.
+  bool get _settingsOpen => _settingsRoute != null;
 
-  /// The settings' own stack, so that back can be asked whether it has
-  /// somewhere to go before it is taken to mean "put the settings away".
-  final _settingsNavKey = GlobalKey<NavigatorState>();
-
-  /// The settings arriving and leaving.
-  ///
-  /// A tab is swapped for a tab by the `PageView` sliding, which is a move
-  /// between siblings. This is not one — it is a different kind of place, so
-  /// it crosses rather than slides: each side fades, and each is displaced by
-  /// a fraction of the pane in the direction it is going.
-  late final _settingsCtrl = AnimationController(
-    vsync: this,
-    duration: Durations.medium2,
-  );
-  late final _settingsAnim = CurvedAnimation(
-    parent: _settingsCtrl,
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInCubic,
-  );
-
-  /// Whether they have been opened at all since launch.
-  ///
-  /// They keep their place once they have been — which section, what was
-  /// typed in the search, where the page was scrolled to — the way a tab
-  /// keeps its own. Built for the first time only when asked for, because
-  /// most launches never go near them.
-  bool _settingsSeen = false;
+  late final _areaRoutes = _AreaRoutes((route) {
+    if (mounted && route == _settingsRoute) _onSettingsRoute(null);
+  });
 
   /// Whether the guide over that strip has been dealt with this launch.
   ///
@@ -161,6 +139,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// because the strips are built inside `ListenableBuilder`s on
   /// [_selectIndex], which is not a build this state's `ref` may watch from.
   AppTab? _immersiveTab;
+
+  /// Whether the server tab is in full screen by its button — see
+  /// [_isServerFullscreenMode].
+  bool _serverFullScreen = false;
 
   /// Whether the tab on screen is the one asking for the window.
   ///
@@ -180,6 +162,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    _androidSystem.dispose();
     _stopServerRefreshCycle();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
@@ -200,8 +183,6 @@ class _HomePageState extends ConsumerState<HomePage>
     _selectIndex.removeListener(_publishCurrentTab);
     _selectIndex.removeListener(_dropFocus);
     _selectIndex.dispose();
-    _settingsAnim.dispose();
-    _settingsCtrl.dispose();
     super.dispose();
   }
 
@@ -213,6 +194,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // The one way in the lifecycle cannot report: a file or link opened into
     // an app that never left the foreground. See [MethodChans.onOpened].
     MethodChans.onOpened(() => unawaited(_consumePending()));
+    _androidSystem.attach();
     // avoid index out of range
     if (_selectIndex.value >= _tabs.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -233,18 +215,6 @@ class _HomePageState extends ConsumerState<HomePage>
     // and one of those would eventually be forgotten.
     _selectIndex.addListener(_publishCurrentTab);
     _selectIndex.addListener(_dropFocus);
-
-    // Only at the ends. What moves in between is drawn by `FadeTransition`
-    // and `SlideTransition`, which listen for themselves; what a rebuild is
-    // for is [_tabsHidden] and [_settingsShowing], and both only change there.
-    _settingsCtrl.addStatusListener((status) {
-      switch (status) {
-        case AnimationStatus.completed || AnimationStatus.dismissed:
-          if (mounted) setState(() {});
-        case _:
-          break;
-      }
-    });
   }
 
   /// Re-announces the tab after a hot reload.
@@ -380,6 +350,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // decided in [_wantsWindow], which also has to know *which* tab is on
     // screen.
     _immersiveTab = ref.watch(immersiveTabProvider);
+    _serverFullScreen = ref.watch(serverFullScreenProvider);
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of
@@ -400,9 +371,12 @@ class _HomePageState extends ConsumerState<HomePage>
     // the bottom inset off the body whenever the slot is filled, on the
     // grounds that the bar will spend it. An empty one spends nothing, and the
     // globe ran under the home indicator.
-    Widget mainContent(bool narrow) => ListenableBuilder(
+    Widget mainContent(bool narrow, Rect? column, Size area) => ListenableBuilder(
       listenable: _selectIndex,
       builder: (_, _) => Scaffold(
+        // The keyboard is the tabs' Scaffold's and each page's to make room
+        // for: shrunk here, the bar inside the tabs' page sat on top of it.
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Row(
@@ -414,7 +388,9 @@ class _HomePageState extends ConsumerState<HomePage>
                 // Its own `SafeArea` rather than none, because the rail has
                 // one too — on a landscape phone wide enough for a rail, the
                 // left inset is width neither of them may spend.
-                if (_hasRail(narrow))
+                // None for a rail in the system's column: it stands in the
+                // side inset, which the tabs already leave.
+                if (_hasRail(narrow, column) && column == null)
                   const SafeArea(
                     top: false,
                     bottom: false,
@@ -422,11 +398,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     child: SizedBox(width: _kRailWidth),
                   ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      _buildTabPages(),
-                      if (_settingsSeen) _buildSettingsPane(),
-                    ],
+                  child: RailBeside(
+                    present: _hasRail(narrow, column),
+                    child: _buildArea(
+                      bar: narrow && !_wantsWindow && column == null ? _buildBottomBar() : null,
+                    ),
                   ),
                 ),
               ],
@@ -435,16 +411,31 @@ class _HomePageState extends ConsumerState<HomePage>
             // tab rather than the tab drawing over it: in a `Row` the rail is
             // the first child and so the first painted, and what it overflows
             // into is painted after.
-            if (_hasRail(narrow))
-              PositionedDirectional(
-                top: 0,
-                bottom: 0,
-                start: 0,
-                child: _buildRailBar(),
-              ),
+            if (_hasRail(narrow, column))
+              if (column == null)
+                PositionedDirectional(
+                  top: 0,
+                  bottom: 0,
+                  start: 0,
+                  child: _buildRailBar(),
+                )
+              else
+                // Centred on the system's bar line, and held by its outer
+                // side so that opening it grows it over the tab rather than
+                // off the window.
+                Positioned(
+                  top: column.top,
+                  bottom: area.height - column.bottom,
+                  left: column.left < area.width / 2
+                      ? column.left - _kRailWidth / 2
+                      : null,
+                  right: column.left < area.width / 2
+                      ? null
+                      : area.width - column.left - _kRailWidth / 2,
+                  child: _buildColumnRail(column),
+                ),
           ],
         ),
-        bottomNavigationBar: narrow && !_wantsWindow ? _buildBottomBar() : null,
       ),
     );
 
@@ -457,61 +448,54 @@ class _HomePageState extends ConsumerState<HomePage>
     // the window and here, the responsive builder included, is free to hand
     // down less than it got — and keeping a panel inside the window is not the
     // same as keeping it inside the area it is painted in.
-    final withShell = LayoutBuilder(
-      builder: (_, constraints) {
-        // The same width the pages inside decide by, so the rail appears
-        // exactly when a tab can start using the room it costs — see
-        // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
-        // which this used to ask, ends at 600.
-        //
-        // Measured against what a tab would be left with, not against the
-        // window: the rail is taken off the top before any page sees the
-        // width, so between 800 and 880 a rail appeared beside pages that were
-        // still too narrow to split — the extra column bought nothing but its
-        // own presence.
-        //
-        // And measured from this box for the same reason the panels above are:
-        // everything between the window and here is free to hand down less
-        // than it got, so `MediaQuery.sizeOf` is a different number and it is
-        // not the one a tab is laid out in.
-        final narrow =
-            constraints.maxWidth - _kRailWidth < AdaptivePanes.kSplitWidth;
-        _narrow = narrow;
-        return Stack(
-          children: [
-            mainContent(narrow),
-            FloatingPanels(area: constraints.biggest),
-          ],
-        );
-      },
-    );
-
-    // Back, while the settings are shown in place of a tab, puts them away.
-    //
-    // On a phone they are a page and back pops it. Here they are not a route
-    // at all, so back went to the only route there is — this one — and on a
-    // wide Android window that is the app closing from inside its settings.
-    //
-    // What the settings have pushed goes first: their navigator asks for the
-    // gesture itself while it has somewhere to go, and every scope on a route
-    // is told of a back that was refused, so without asking it this would put
-    // the settings away from under the page that was being left.
-    final withBack = PopScope(
-      canPop: !_settingsOpen,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_settingsNavKey.currentState?.canPop() ?? false) return;
-        _closeSettings();
-      },
-      child: withShell,
+    // Rebuilt as iPhone Duo's bar column comes and goes (fold, rotation, a
+    // split) and as the hand it is for changes — see [_railColumn].
+    final withShell = ListenableBuilder(
+      listenable: Listenable.merge([
+        WindowControls.verticalBar,
+        Stores.setting.rightHanded.listenable(),
+      ]),
+      builder: (_, _) => LayoutBuilder(
+        builder: (_, constraints) {
+          // The same width the pages inside decide by, so the rail appears
+          // exactly when a tab can start using the room it costs — see
+          // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
+          // which this used to ask, ends at 600.
+          //
+          // Measured against what a tab would be left with, not against the
+          // window: the rail is taken off the top before any page sees the
+          // width, so between 800 and 880 a rail appeared beside pages that were
+          // still too narrow to split — the extra column bought nothing but its
+          // own presence.
+          //
+          // And measured from this box for the same reason the panels above are:
+          // everything between the window and here is free to hand down less
+          // than it got, so `MediaQuery.sizeOf` is a different number and it is
+          // not the one a tab is laid out in.
+          //
+          // A rail in the system's column costs the tabs nothing: the column is
+          // the side inset they already leave.
+          final column = _railColumn(constraints.biggest);
+          final narrow =
+              constraints.maxWidth - (column == null ? _kRailWidth : 0) <
+              AdaptivePanes.kSplitWidth;
+          return Stack(
+            children: [
+              mainContent(narrow, column, constraints.biggest),
+              FloatingPanels(area: constraints.biggest),
+            ],
+          );
+        },
+      ),
     );
 
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
     // which is where a shortcut is *discovered* — but the menu bar is a macOS
     // API, and until now it was also the only thing that bound the keys, so
     // Linux and Windows had no way to switch tabs from the keyboard at all.
-    final withKeys = !isDesktop
-        ? withBack
+    // And on Android, for a hardware keyboard and the desktop mode.
+    final withKeys = !isDesktop && !isAndroid
+        ? withShell
         : CallbackShortcuts(
             bindings: desktopShortcuts(
               tabCount: _tabs.length,
@@ -525,7 +509,7 @@ class _HomePageState extends ConsumerState<HomePage>
             // Focused so the bindings are reachable without clicking
             // something first, and skipping traversal so Tab still walks the
             // actual controls.
-            child: Focus(autofocus: true, skipTraversal: true, child: withBack),
+            child: Focus(autofocus: true, skipTraversal: true, child: withShell),
           );
     // The same chords as asked for by a terminal, which takes every key it
     // is given and hands the app's on as intents rather than letting them

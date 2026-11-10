@@ -16,7 +16,7 @@ void main() {
       File('crates/sbm_parser/tests/fixtures/process/$name').readAsStringSync();
 
   test('a reading, its columns, orders and signals', () async {
-    final r = await PsResult.parse(fixture('linux_procps.txt'), SystemType.linux, sampledAtMillis: 1000);
+    final r = await ProcTable.parse(fixture('linux_procps.txt'), SystemType.linux, sampledAtMillis: 1000);
     expect(r.issue, isNull);
     expect(r.procs, isNotEmpty);
     expect(r.columns.cpu, isTrue);
@@ -27,13 +27,13 @@ void main() {
     expect(r.signals, [ProcSignal.term, ProcSignal.kill]);
     final p = r.procs.first;
     expect(p.name, isNotEmpty);
-    expect(p.killable, p.startId != null);
+    expect(p.killable, p.proc.startId != null);
   });
 
   test('ordered again, and an order the table cannot answer falls back', () async {
-    final r = await PsResult.parse(fixture('linux_procps.txt'), SystemType.linux, sampledAtMillis: 1000);
+    final r = await ProcTable.parse(fixture('linux_procps.txt'), SystemType.linux, sampledAtMillis: 1000);
     final byPid = await r.sortedBy(SystemType.linux, ProcSortMode.pid);
-    final pids = byPid.procs.map((p) => p.pid).toList();
+    final pids = byPid.procs.map((p) => p.proc.pid).toList();
     expect(pids, [...pids]..sort());
     expect((byPid.sort, byPid.ascending), (ProcSortMode.pid, true));
     final read = await r.sortedBy(SystemType.linux, ProcSortMode.read, ascending: true);
@@ -42,19 +42,19 @@ void main() {
 
   test('the next reading has speeds against the previous one', () async {
     final raw = fixture('linux_procps.txt');
-    final first = await PsResult.parse(raw, SystemType.linux, sampledAtMillis: 1000);
-    final second = await PsResult.parse(raw, SystemType.linux, previous: first, sampledAtMillis: 3000);
-    expect(second.procs.where((p) => p.readSpeed != null), isNotEmpty);
+    final first = await ProcTable.parse(raw, SystemType.linux, sampledAtMillis: 1000);
+    final second = await ProcTable.parse(raw, SystemType.linux, previous: first, sampledAtMillis: 3000);
+    expect(second.procs.where((p) => p.proc.readSpeed != null), isNotEmpty);
   });
 
   test('macOS has no stop the app can check', () async {
-    final r = await PsResult.parse(fixture('macos.txt'), SystemType.bsd, sampledAtMillis: 1000);
+    final r = await ProcTable.parse(fixture('macos.txt'), SystemType.bsd, sampledAtMillis: 1000);
     expect(r.signals, isEmpty);
     expect(r.procs.every((p) => !p.killable), isTrue);
   });
 
   test('a table it cannot read says why', () async {
-    final r = await PsResult.parse('hello\nworld\n', SystemType.linux, sampledAtMillis: 1000);
+    final r = await ProcTable.parse('hello\nworld\n', SystemType.linux, sampledAtMillis: 1000);
     expect(r.issue?.failure, PsParseFailure.unsupportedOutput);
   });
 }

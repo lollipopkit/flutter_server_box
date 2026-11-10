@@ -74,15 +74,23 @@ extension _SettingsLayout on _SettingsPageState {
     // and a row of tabs starting above the menu points at nothing there.
     final level = _levelFor(nodes, selected.id);
     final actions = _buildActions();
+    // While searching it names the results it is over, as the narrow bar does,
+    // and keeps the way out.
     final header = _SettingsContentHeader(
-      title: _branchOf(nodes, selected.id)?.title ?? selected.title,
-      nodes: level,
+      title: _searching
+          ? libL10n.search
+          : _branchOf(nodes, selected.id)?.title ?? selected.title,
+      nodes: _searching ? const [] : level,
       selectedId: selected.id,
       onTap: _onSelect,
       actions: actions,
+      // Pushed, and with no rail beside them to leave by.
+      leading: (ModalRoute.canPopOf(context) ?? false) && !RailBeside.of(context)
+          ? BackButton(onPressed: () => unawaited(_leave()))
+          : null,
     );
 
-    final scaffold = Scaffold(
+    final page = Scaffold(
       // None on a wide window. The menu says which subject, the header over
       // the content says which page and carries the two buttons that act on
       // the settings as a whole, and the settings are shown beside the rail
@@ -112,7 +120,7 @@ extension _SettingsLayout on _SettingsPageState {
                   ? BackButton(
                       onPressed: _searching ? _clearSearch : _onTabBack,
                     )
-                  : null,
+                  : BackButton(onPressed: () => unawaited(_leave())),
               actions: actions,
             ),
       // The same column every other list-beside-content page has, rather than
@@ -147,12 +155,10 @@ extension _SettingsLayout on _SettingsPageState {
             surfaceBuilder: (ctx, split) => split
                 ? Column(
                     children: [
-                      // Hidden rather than taken out of the tree: `Offstage`
-                      // in a column takes no height, and a `Column` whose
-                      // children come and go rebuilds what is under them —
-                      // which here is the navigator, and rebuilding that is
-                      // losing every page in it.
-                      Offstage(offstage: _searching, child: header),
+                      // Always here, never `if`: a child of this `Column`
+                      // coming and going rebuilds the navigator under it,
+                      // and every page in it with it.
+                      header,
                       Expanded(
                         child: Stack(
                           children: [
@@ -205,6 +211,18 @@ extension _SettingsLayout on _SettingsPageState {
       ),
     );
 
+    // Back leaves the settings, a route like any other, once there is nothing
+    // in them to go back from first: the search, then a level or a page
+    // pushed in the content. While there is, the route refuses the pop and
+    // its swipe, and the level's own route takes the swipe.
+    final scaffold = PopScope(
+      canPop: !_searching && !_contentCanPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: page,
+    );
+
     // The chord the field advertises, actually bound. `Focus` so the binding
     // has somewhere on this page to be reached from — `CallbackShortcuts`
     // reads the focus chain, and a page nobody has clicked in yet has nothing
@@ -220,7 +238,8 @@ extension _SettingsLayout on _SettingsPageState {
     );
   }
 
-  /// What acts on the settings as a whole: the log, and clearing everything.
+  /// The log, which belongs to no one page. Nothing destructive goes here:
+  /// the bar stays over every page (#1819).
   List<Widget> _buildActions() {
     return [
       Btn.text(
@@ -239,27 +258,6 @@ extension _SettingsLayout on _SettingsPageState {
         // and `CrashDebugMenu` — with everything it reaches — is tree shaken
         // out rather than shipped behind a gesture nobody is told about.
         onLongTap: kDebugMode ? () => CrashDebugMenu.show(context) : null,
-      ),
-      Btn.icon(
-        text: libL10n.delete,
-        icon: const Icon(Icons.delete),
-        onTap: () => context.showRoundDialog(
-          title: libL10n.attention,
-          child: SimpleMarkdown(
-            data: libL10n.askContinue(
-              '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-            ),
-          ),
-          actions: [
-            CountDownBtn(
-              onTap: () {
-                context.popDialog();
-                _clearAllSettings();
-              },
-              afterColor: Colors.red,
-            ),
-          ],
-        ),
       ),
     ];
   }
@@ -295,6 +293,38 @@ extension _SettingsLayout on _SettingsPageState {
     ),
   );
 
+  /// Out of the settings, rather than out of the level on screen: what the
+  /// content holds is asked first, then the settings' route goes whatever
+  /// level is open.
+  Future<void> _leave() async {
+    final content = _contentNav.currentState;
+    if (content != null && !await PopGuard.confirmLeave(content)) return;
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  /// What [_contentNav] said it can go back from, kept for the `PopScope`.
+  /// Told after a frame's build, never during one (`Navigator` defers it).
+  void _followContentPop(bool canPop) {
+    if (canPop != _contentCanPop) setState(() => _contentCanPop = canPop);
+  }
+
+  /// Back, in the order it means here: the search over everything, then what
+  /// the content can go back from. Leaving the settings is the route's pop.
+  void _onBack() {
+    final content = _contentNav.currentState;
+    if (_searching) {
+      _clearSearch();
+    } else if (content != null) {
+      // Also a page there refusing its own pop, which asks. Nothing there to
+      // go back from after all, and back is the settings'.
+      unawaited(
+        content.maybePop().then((handled) {
+          if (!handled && mounted) Navigator.of(context).pop();
+        }),
+      );
+    }
+  }
+
   Widget _buildSearchField() => _SettingsSearchField(
     controller: _searchCtrl,
     focusNode: _searchFocus,
@@ -306,7 +336,7 @@ extension _SettingsLayout on _SettingsPageState {
   ///
   /// Declarative rather than pushed by hand: [_path] already says which levels
   /// are open, and letting the navigator read it means the two cannot disagree.
-  /// A level arriving or leaving the list is a `MaterialPage` doing so, which is
+  /// A level arriving or leaving the list is an `AppPage` doing so, which is
   /// where the transition comes from.
   Widget _buildContent({
     required bool wide,
@@ -339,13 +369,13 @@ extension _SettingsLayout on _SettingsPageState {
         if (wide)
           // Never keyed by the search: the results are drawn over this
           // navigator, not as a page of it — see where they are laid out.
-          MaterialPage<void>(
+          AppPage<void>(
             key: ValueKey(level.firstOrNull?.id ?? 'root'),
             child: _opaque(pagesOf(level)),
           )
         else ...[
           // What settings there are, which is where a narrow window starts.
-          MaterialPage<void>(
+          AppPage<void>(
             key: const ValueKey('root'),
             child: _opaque(
               _SettingsList(
@@ -357,7 +387,7 @@ extension _SettingsLayout on _SettingsPageState {
             ),
           ),
           for (final entered in _path)
-            MaterialPage<void>(
+            AppPage<void>(
               key: ValueKey(entered.id),
               child: _opaque(pagesOf(_levelOf(entered))),
             ),
@@ -376,9 +406,20 @@ extension _SettingsLayout on _SettingsPageState {
     // Platform back belongs to this stack while it has somewhere to go. Without
     // a pop handler the enclosing navigator removes the whole settings route,
     // skipping whichever level or manually pushed page is currently on top.
-    return NavigatorPopHandler(
-      onPopWithResult: (_) => _contentNav.currentState?.pop(),
-      child: navigator,
+    return NotificationListener<NavigationNotification>(
+      // Answered for the whole page by the `PopScope` around it.
+      onNotification: (n) {
+        _followContentPop(n.canHandlePop);
+        return true;
+      },
+      // One column keeps the settings' bar over this navigator, so a page with
+      // a bar of its own pushed here showed two, and the settings' actions sat
+      // over the page's own (#1819). It goes over the whole window instead.
+      // Beside the menu there is no settings bar, and the page takes the
+      // content column.
+      child: wide
+          ? navigator
+          : NavTargetScope(target: NavTarget.root, child: navigator),
     );
   }
 
@@ -406,11 +447,9 @@ extension _SettingsLayout on _SettingsPageState {
     final reduceMotion = context.reduceMotion;
 
     return Stack(
-      // Nothing here should reach past the floor of this box — the page is
-      // pushed into the home tab's navigator, and the `Scaffold` paints its
-      // bottom bar after the body, so anything that does is covered rather than
-      // shown. `none` only keeps the clip from being what cuts it: the bar
-      // carries its own margin, so it stops short of the floor on its own.
+      // Nothing here should reach past the floor of this box. `none` only keeps
+      // the clip from being what cuts it: the bar carries its own margin, so it
+      // stops short of the floor on its own.
       clipBehavior: Clip.none,
       children: [
         MediaQuery(
@@ -464,27 +503,4 @@ extension _SettingsLayout on _SettingsPageState {
       ],
     );
   }
-}
-
-/// Whether the settings are in two columns, for a row that opens a page of its
-/// own.
-///
-/// One column keeps the settings' bar over the navigator the rows are in, so
-/// a page with a bar of its own pushed there showed two. It goes over the
-/// whole window instead. Beside the menu there is no settings bar, and the
-/// page takes the content column.
-final class _SettingsWidth extends InheritedWidget {
-  const _SettingsWidth({required this.wide, required super.child});
-
-  final bool wide;
-
-  /// Where a page opened from a row belongs. Outside the settings page — a
-  /// section pushed on its own, with its own bar — the nearest navigator.
-  static NavTarget pageTarget(BuildContext context) =>
-      context.getInheritedWidgetOfExactType<_SettingsWidth>()?.wide == false
-      ? NavTarget.root
-      : NavTarget.nearest;
-
-  @override
-  bool updateShouldNotify(_SettingsWidth oldWidget) => wide != oldWidget.wide;
 }

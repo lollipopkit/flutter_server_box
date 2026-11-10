@@ -1,7 +1,7 @@
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/server_status_update_req.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/server_status_update_req.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 

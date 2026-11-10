@@ -13,23 +13,36 @@
     <string name="widget_configure_server">伺服器</string>
     <string name="widget_configure_metric">主要指標</string>
     <string name="widget_configure_save">儲存</string>
-    <string name="widget_configure_empty">尚未設定任何有 Monitor 的伺服器。\n請先在 ServerBox 中新增，然後返回。</string>
+    <string name="widget_configure_empty">尚未設定啟用 Monitor 的伺服器。\n請先在 ServerBox 中新增伺服器，再返回此處。</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">記憶體</string>
     <string name="widget_metric_disk">磁碟</string>
     <string name="widget_metric_network">網路</string>
     <string name="widget_err_not_configured">點按選擇伺服器</string>
-    <string name="widget_err_no_token">無憑證 —— 請開啟 ServerBox</string>
+    <string name="widget_err_no_token">缺少存取憑證，請開啟 ServerBox</string>
     <string name="widget_err_insecure">需要 HTTPS</string>
     <string name="widget_err_network">網路錯誤</string>
     <string name="widget_err_timeout">要求逾時</string>
-    <string name="widget_no_history">尚無歷史</string>
     <string name="widget_chart_desc">狀態曲線</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">記憶體使用率</string>
-    <string name="widget_disk_desc">磁碟使用率</string>
-    <string name="widget_net_desc">網路使用量</string>
     <string name="widget_refresh_desc">重新整理</string>
     <string name="widget_small_label">伺服器數值</string>
     <string name="widget_medium_label">伺服器曲線</string>
+    <string name="widget_label">伺服器狀態</string>
+    <string name="widget_description">快速查看 CPU、記憶體、磁碟和網路狀態。放大後可查看更多資訊。</string>
+
+    <string name="process_text_label">儲存為程式碼片段</string>
+    <string name="tile_no_sessions">沒有正在執行的工作階段</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 個工作階段</item>
+    </plurals>
+    <string name="channel_transfers">檔案傳輸</string>
+    <string name="incoming_failed">無法接收分享的檔案</string>
+    <string name="shortcut_server_gone">伺服器已刪除</string>
+    <string name="notification_disconnect_all">全部斷開</string>
+    <string name="session_connected">已連線</string>
+    <string name="session_connecting">正在連線</string>
+    <string name="session_disconnected">已中斷連線</string>
+    <plurals name="notification_more">
+        <item quantity="other">…還有 %d 個</item>
+    </plurals>
 </resources>

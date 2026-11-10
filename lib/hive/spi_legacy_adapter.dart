@@ -1,8 +1,8 @@
 import 'package:hive_ce/hive.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/hive/frozen_adapters.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 
 /// typeId 13, as written before plaintext HTTP could be explicitly allowed.
@@ -75,7 +75,7 @@ class LegacySpiV2 {
   final List<String>? tags;
   final bool autoConnect;
   final LegacyServerCustomV1? custom;
-  final WakeOnLanCfg? wolCfg;
+  final LegacyWakeOnLanCfgV1? wolCfg;
   final Map<String, String>? envs;
   final String id;
   final SystemType? customSystemType;
@@ -102,7 +102,7 @@ class LegacySpiV2 {
     tags: tags,
     autoConnect: autoConnect,
     custom: custom?.toCustom(),
-    wolCfg: wolCfg,
+    wolCfg: wolCfg?.toCfg(),
     envs: envs,
     id: id,
     customSystemType: customSystemType,
@@ -158,7 +158,7 @@ class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,
       custom: fields[10] as LegacyServerCustomV1?,
-      wolCfg: fields[11] as WakeOnLanCfg?,
+      wolCfg: fields[11] as LegacyWakeOnLanCfgV1?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
       customSystemType: fields[14] as SystemType?,
@@ -198,7 +198,7 @@ class LegacySpiV3 {
   final List<String>? tags;
   final bool autoConnect;
   final LegacyServerCustomV1? custom;
-  final WakeOnLanCfg? wolCfg;
+  final LegacyWakeOnLanCfgV1? wolCfg;
   final Map<String, String>? envs;
   final String id;
   final SystemType? customSystemType;
@@ -211,7 +211,7 @@ class LegacySpiV3 {
     tags: tags,
     autoConnect: autoConnect,
     custom: custom?.toCustom(),
-    wolCfg: wolCfg,
+    wolCfg: wolCfg?.toCfg(),
     envs: envs,
     id: id,
     customSystemType: customSystemType,
@@ -243,7 +243,7 @@ class SpiNestedLegacyAdapter extends TypeAdapter<LegacySpiV3> {
       tags: (fields[6] as List?)?.cast<String>(),
       autoConnect: fields[8] == null ? true : fields[8] as bool,
       custom: fields[10] as LegacyServerCustomV1?,
-      wolCfg: fields[11] as WakeOnLanCfg?,
+      wolCfg: fields[11] as LegacyWakeOnLanCfgV1?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
       customSystemType: fields[14] as SystemType?,
@@ -262,8 +262,8 @@ MonitorHttpCredential? _monitorCredential(
   if (value == null) return null;
   return MonitorHttpCredential(
     addr: value.addr,
-    user: value.user,
+    legacyUser: value.user,
     pwd: value.pwd,
-    ignoreCert: value.ignoreCert,
+    // `ignoreCert` accepted any certificate unseen, so it pins none.
   );
 }

@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+# sbOS's boot step (/usr/share/server-box-monitor/sbm-setup): the agent
+# installed when missing, its address on the console.
+#
+# Not ordered before the agent's service: install.sh starts that itself, and
+# it exists only once installed. sbm-install (setup-disk, through lbu) carries
+# this script but not the agent's service: /etc/init.d is not kept unless
+# named, see /etc/apk/protected_paths.d/server-box-monitor.list (its entries
+# are prefixes, hence this service's name).
+
+description="sbOS: installs ServerBox Monitor from the image"
+
+depend() {
+	need net
+	after docker
+}
+
+start() {
+	ebegin "Setting up ServerBox Monitor"
+	/usr/share/server-box-monitor/sbm-setup
+	eend $?
+}

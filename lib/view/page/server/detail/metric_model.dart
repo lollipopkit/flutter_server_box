@@ -4,13 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/chart.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// How far back the chart looks.
 ///
@@ -291,12 +291,12 @@ const kHistoryRangePoints = 300;
 /// [deviceSeries] is the line per device the page draws for a metric, and
 /// null where the totals are what there is — see `_deviceSeries`.
 List<DetailMetric> serverDetailMetrics(
-  ServerState si,
+  ServerState srv,
   MetricWindow w, {
   required List<HistorySeries>? Function(ServerMetricKind kind) deviceSeries,
 }) {
-  final ss = si.status;
-  if (serverNeverSampled(si)) return _blankMetrics();
+  final ss = srv.status;
+  if (serverNeverSampled(srv)) return _blankMetrics();
   final views = <DetailMetric>[];
 
   // Always a row, even before the first sample: every machine has a CPU, so

@@ -10,8 +10,8 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 
@@ -205,7 +205,7 @@ void main() {
       // the save must have gone straight through
       expect(find.byKey(const ValueKey('open-server-editor')), findsOneWidget);
       expect(persisted, isNotNull);
-      expect(persisted!.ssh?.keyPath, '~/.ssh/id_ed25519');
+      expect(persisted!.ssh?.resolvedIdentityFiles.firstOrNull, '~/.ssh/id_ed25519');
       expect(persisted!.ssh?.keyId, isNull);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -276,7 +276,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       final keyAuth = find.descendant(
-        of: find.widgetWithText(ListTile, 'Key Auth'),
+        of: find.widgetWithText(ListTile, app_locale.l10n.keyAuth),
         matching: find.byType(Switch),
       );
       expect(keyAuth, findsOneWidget);

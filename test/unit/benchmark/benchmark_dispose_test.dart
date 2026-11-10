@@ -20,11 +20,11 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
@@ -48,6 +48,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<BenchmarkStore>(BenchmarkStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.server.put(spi);
   });
@@ -66,7 +67,7 @@ void main() {
       options: const YabsOptions(),
       runDir: '/tmp/x/.server_box_bench',
     );
-    BenchmarkStore.instance.put(run);
+    Stores.benchmark.put(run);
     return run;
   }
 
@@ -101,12 +102,12 @@ void main() {
     gate.complete();
     await pumpEventQueue();
 
-    final stored = BenchmarkStore.instance.forServer(sid).single;
+    final stored = Stores.benchmark.forServer(sid).single;
     expect(stored.status, BenchmarkStatus.completed);
     expect(stored.exitCode, 0);
     expect(stored.resultJson, contains('"version"'));
     expect(
-      BenchmarkStore.instance.activeFor(sid),
+      Stores.benchmark.activeFor(sid),
       isNull,
       reason: 'a row left `running` is polled forever by every later open',
     );
@@ -145,7 +146,7 @@ void main() {
     gate.complete();
     await pumpEventQueue();
 
-    final stored = BenchmarkStore.instance.forServer(sid).single;
+    final stored = Stores.benchmark.forServer(sid).single;
     expect(stored.status, BenchmarkStatus.running);
     expect(stored.log, contains('fio Disk Speed Tests'));
   });

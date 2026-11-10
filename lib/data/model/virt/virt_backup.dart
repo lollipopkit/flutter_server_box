@@ -1,14 +1,27 @@
-import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/virt/ffi_num.dart';
 import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/backup.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
 part 'virt_backup.freezed.dart';
 
 /// One backup of a guest (PVE `vzdump`), as a backup storage lists it.
+/// How vzdump stops a guest to copy it, as PVE names the option.
+enum VirtBackupMode {
+  snapshot,
+  suspend,
+  stop;
+
+  static VirtBackupMode? fromName(Object? name) =>
+      values.firstWhereOrNull((m) => m.name == name);
+}
+
 @freezed
 abstract class VirtBackup with _$VirtBackup {
   const VirtBackup._();
@@ -59,8 +72,8 @@ abstract class VirtBackupJob with _$VirtBackupJob {
     String? schedule,
     String? storage,
 
-    /// `snapshot`, `suspend` or `stop`.
-    String? mode,
+    /// Null when the job names none, or one this app does not know.
+    VirtBackupMode? mode,
 
     /// `zstd`, `lzo`, `gzip`, or none.
     String? compress,
@@ -113,7 +126,7 @@ abstract class VirtBackupJob with _$VirtBackupJob {
   /// that VMID, not `all`, not a pool. Such a job is the guest's own plan,
   /// which its Plan group edits; any other job is the datacenter's.
   bool takesOnly(int? vmid) => ffi.virtBackupJobTakesOnly(
-    jobJson: jsonEncode(VirtRust.backupJobJson(this)),
+    job: this.ffi,
     vmid: vmid,
   );
 }
@@ -132,7 +145,7 @@ final class VirtBackupJobEdit {
     required this.node,
     required this.storage,
     required this.schedule,
-    this.mode = 'snapshot',
+    this.mode = VirtBackupMode.snapshot,
     this.compress = 'zstd',
     this.enabled = true,
     this.all = false,
@@ -156,7 +169,7 @@ final class VirtBackupJobEdit {
 
   /// systemd calendar format, as PVE's own `pve-calendar-event` takes it.
   final String schedule;
-  final String mode;
+  final VirtBackupMode mode;
   final String compress;
   final bool enabled;
 
@@ -175,7 +188,7 @@ final class VirtBackupJobEdit {
 final class VirtBackupRequest {
   const VirtBackupRequest({
     required this.storage,
-    this.mode = 'snapshot',
+    this.mode = VirtBackupMode.snapshot,
     this.compress = 'zstd',
     this.notes,
     this.protected = false,
@@ -186,7 +199,7 @@ final class VirtBackupRequest {
   final String storage;
 
   /// `snapshot` (a running guest keeps running), `suspend` or `stop`.
-  final String mode;
+  final VirtBackupMode mode;
 
   /// `zstd`, `lzo`, `gzip` or `0` for none.
   final String compress;
@@ -207,15 +220,132 @@ final class VirtBackupEdit {
   final bool protected;
 }
 
-/// What a refused backup request says (`sbm_virt::backup::Issue`, by name).
-String? virtBackupIssueText(String? issue) => switch (issue) {
+/// What a refused backup request says (`sbm_virt::backup::Issue`).
+String? virtBackupIssueText(BackupIssue? issue) => switch (issue) {
   null => null,
-  'schedule_empty' || 'schedule_invalid' => l10n.virtBackupScheduleInvalid,
-  'storage' => l10n.virtBackupIssueStorage,
-  'mode' || 'compress' => l10n.virtBackupIssueOption,
-  'guests' => l10n.virtBackupSelectionNone,
-  'node_offline' => l10n.virtBackupIssueNodeOffline,
-  'not_stopped' => l10n.virtBackupStopFirst,
-  'not_found' => l10n.virtResNotFound,
-  _ => l10n.virtResUnsupported,
+  BackupIssue.scheduleEmpty || BackupIssue.scheduleInvalid => l10n.virtBackupScheduleInvalid,
+  BackupIssue.storage => l10n.virtBackupIssueStorage,
+  BackupIssue.mode || BackupIssue.compress => l10n.virtBackupIssueOption,
+  BackupIssue.guests => l10n.virtBackupSelectionNone,
+  BackupIssue.nodeOffline => l10n.virtBackupIssueNodeOffline,
+  BackupIssue.notStopped => l10n.virtBackupStopFirst,
+  BackupIssue.notFound => l10n.virtResNotFound,
+  BackupIssue.unsupported => l10n.virtResUnsupported,
 };
+
+// --- FFI: `sbm_virt::backup` ---
+
+extension BackupsVirt on List<vm.Backup> {
+  List<VirtBackup> get virt => [
+    for (final b in this)
+      VirtBackup(
+        id: b.id,
+        storage: b.storage,
+        node: b.node,
+        vmid: b.vmid,
+        createdAt: b.createdAt?.unixTime,
+        size: b.size?.toInt(),
+        format: b.format,
+        notes: b.notes,
+        protected: b.protected,
+        verification: b.verification,
+        kind: b.kind?.virt,
+      ),
+  ];
+}
+
+extension VirtBackupFfi on VirtBackup {
+  vm.Backup get ffi => vm.Backup(
+    id: id,
+    storage: storage,
+    node: node,
+    vmid: vmid,
+    createdAt: createdAt?.unixSeconds,
+    size: size?.big,
+    format: format,
+    notes: notes,
+    protected: this.protected,
+    verification: verification,
+    kind: kind?.ffi,
+  );
+}
+
+extension BackupJobsVirt on List<vm.BackupJob> {
+  List<VirtBackupJob> get virt => [
+    for (final j in this)
+      VirtBackupJob(
+        id: j.id,
+        schedule: j.schedule,
+        storage: j.storage,
+        mode: VirtBackupMode.fromName(j.mode),
+        compress: j.compress,
+        keep: j.prune,
+        enabled: j.enabled,
+        all: j.all,
+        vmids: j.vmids,
+        exclude: j.exclude,
+        pool: j.pool,
+        node: j.node,
+        comment: j.comment,
+        notesTemplate: j.notesTemplate,
+        mailNotification: j.mailNotification,
+        prune: j.prune,
+      ),
+  ];
+}
+
+extension VirtBackupJobFfi on VirtBackupJob {
+  vm.BackupJob get ffi => vm.BackupJob(
+    id: id,
+    schedule: schedule,
+    storage: storage,
+    mode: mode?.name,
+    compress: compress,
+    enabled: enabled,
+    all: all,
+    vmids: Uint32List.fromList(vmids),
+    exclude: Uint32List.fromList(exclude),
+    pool: pool,
+    node: node,
+    comment: comment,
+    notesTemplate: notesTemplate,
+    mailNotification: mailNotification,
+    prune: prune ?? keep,
+  );
+}
+
+extension VirtBackupJobEditFfi on VirtBackupJobEdit {
+  vm.BackupJobEdit get ffi => vm.BackupJobEdit(
+    id: id,
+    isNew: isNew,
+    node: node,
+    storage: storage,
+    schedule: schedule,
+    mode: mode.name,
+    compress: compress,
+    enabled: enabled,
+    all: all,
+    vmids: Uint32List.fromList(vmids),
+    exclude: Uint32List.fromList(exclude),
+    pool: pool,
+    comment: comment,
+    notesTemplate: notesTemplate,
+    mailNotification: mailNotification,
+    prune: prune,
+  );
+}
+
+extension VirtBackupRequestFfi on VirtBackupRequest {
+  vm.BackupRequest get ffi => vm.BackupRequest(
+    storage: storage,
+    mode: mode.name,
+    compress: compress,
+    notes: notes,
+    protected: this.protected,
+    prune: prune,
+  );
+}
+
+extension VirtBackupEditFfi on VirtBackupEdit {
+  vm.BackupEdit get ffi => vm.BackupEdit(notes: notes, protected: this.protected);
+}

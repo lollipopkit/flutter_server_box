@@ -3,26 +3,30 @@ import type { Translation } from '../i18n-types.js'
 const fr: Translation = {
   meta: {
     lang: 'fr',
-    title: 'ServerBox — État des serveurs, SSH et opérations dans une app Flutter',
+    title: 'ServerBox — Supervision serveur, SSH et administration en une seule app',
     description:
-      'ServerBox surveille les serveurs Linux, Unix et Windows avec graphiques, terminal SSH, SFTP, Docker, processus, systemd, S.M.A.R.T, notifications, widgets et watchOS.',
+      'Pilotez vos serveurs Linux, Unix et Windows avec graphiques en direct, terminal SSH tactile, SFTP, Docker, systemd, S.M.A.R.T., widgets et agent IA.',
   },
   nav: {
-    features: 'Fonctions',
+    features: 'Fonctionnalités',
     capabilities: 'Capacités',
     download: 'Télécharger',
-    docs: 'Documentation',
+    docs: 'Docs',
     themes: 'Thèmes',
+    os: 'ServerBox OS',
+    beta: 'Bêta',
     plugins: 'Plugins',
+    otherApps: 'Plus',
+    signIn: 'Connexion',
     languageLabel: 'Langue',
   },
   hero: {
-    titlePrefix: 'État des serveurs,',
+    titlePrefix: 'Tous vos serveurs,',
     titleSuffix: 'dans votre poche.',
     subtitle:
-      'ServerBox réunit graphiques, terminal SSH, SFTP, Docker, contrôle des processus, systemd, S.M.A.R.T, alertes, widgets et watchOS dans une seule app Flutter.',
-    primaryAction: 'Télécharger ServerBox',
-    secondaryAction: 'Voir les fonctions',
+      'Télémétrie en direct, terminal SSH pensé pour le tactile, SFTP, conteneurs et opérations assistées par IA — réunis dans un espace natif rapide sur mobile et ordinateur.',
+    primaryAction: 'Télécharger',
+    secondaryAction: 'Explorer',
   },
   screenshots: {
     label: 'Captures interactives de ServerBox',
@@ -32,149 +36,272 @@ const fr: Translation = {
     four: 'Capture du navigateur de fichiers ServerBox',
   },
   features: {
-    title: 'Un espace compact pour la maintenance quotidienne.',
+    title: 'Taillé pour l’administration réelle.',
     subtitle:
-      'Une surface opérationnelle dense et directe, où chaque bloc correspond à un vrai flux de maintenance.',
+      'Gérez les contrôles quotidiens et les urgences sans ouvrir votre ordinateur portable.',
     list: {
-      title: 'Liste des serveurs',
+      title: 'Vue d’ensemble',
       description:
-        "Consultez d'un coup d'œil l'état de connexion et l'utilisation du CPU, de la mémoire, du disque et du réseau de chaque serveur. Filtrez par étiquette ou repérez-les sur le globe.",
+        'Visualisez d’un coup d’œil l’état, le CPU, la mémoire, le disque et le réseau de chaque nœud. Filtrez par tag ou localisez vos machines sur le globe 3D.',
     },
     charts: {
-      title: "Graphiques d'état",
+      title: 'Télémétrie en direct',
       description:
-        "Graphiques en temps réel du CPU, de la mémoire, du swap, des disques, des E/S disque et du réseau, ainsi que des capteurs, GPU et batteries. Consultez l'historique ou ouvrez une mesure pour en voir les détails.",
+        'Graphiques temps réel et historiques pour CPU, mémoire, swap, E/S disque, réseau, GPU, capteurs et santé S.M.A.R.T.',
     },
     terminal: {
-      title: 'Terminal SSH',
+      title: 'Terminal SSH tactile',
       description:
-        'Un terminal complet avec touches virtuelles sur mobile, prêt pour htop, vim et bien plus. Connectez-vous directement, via un hôte bastion ou avec un ProxyCommand.',
+        'Touches virtuelles dédiées pour maîtriser vim, tmux et htop sur mobile. Prise en charge native des bastions (jump hosts) et de ProxyCommand.',
     },
     files: {
-      title: 'Fichiers via SFTP',
+      title: 'Gestionnaire SFTP',
       description:
-        "Parcourez, envoyez, téléchargez et modifiez les fichiers sur place. Les fichiers Markdown s'ouvrent dans un aperçu mis en forme.",
+        'Parcourez, transférez et éditez vos fichiers distants sur place avec aperçu Markdown mis en forme.',
     },
     containers: {
-      title: 'Docker et Podman',
+      title: 'Docker & Podman',
       description:
-        'Consultez les conteneurs regroupés par projet Compose et leur utilisation du CPU, de la mémoire et du réseau. Démarrez-les, arrêtez-les, redémarrez-les ou supprimez-les ; consultez leurs logs ou ouvrez-y un shell. Les images et les réglages ont leurs propres onglets.',
+        'Conteneurs groupés par projet Compose avec suivi des ressources, redémarrage en un geste, lecture des logs et shell intégré.',
     },
     processes: {
-      title: 'Processus',
+      title: 'Inspecteur de processus',
       description:
-        'Tous les processus avec leur CPU et leur mémoire, triés à votre guise et recherchables par nom, utilisateur ou PID. Arrêtez-en un depuis la liste.',
+        'Triez par CPU ou mémoire, filtrez par nom, utilisateur ou PID et arrêtez immédiatement les processus en fuite.',
     },
     services: {
       title: 'Services systemd',
       description:
-        "Les unités en échec d'abord, puis le reste. Redémarrez une unité ou lisez ses logs d'un geste.",
+        'Les unités en échec sont automatiquement épinglées en tête de liste pour consulter les logs et relancer le service en un geste.',
     },
     users: {
-      title: 'Utilisateurs et groupes',
+      title: 'Utilisateurs & groupes',
       description:
-        'Consultez les comptes système avec le shell de connexion et l’accès à sudo mis en évidence. Créez ou supprimez des utilisateurs, et créez, modifiez ou supprimez des groupes.',
+        'Vérifiez les comptes système, shells de connexion et droits sudo. Créez ou modifiez utilisateurs et groupes sans mémoriser les options CLI.',
     },
     agent: {
-      title: 'Agent IA',
+      title: 'Agent IA intégré',
       description:
-        "Un assistant dans l'app qui connaît vos serveurs, avec les fournisseurs de modèles, serveurs MCP et skills de votre choix.",
+        'Connectez vos fournisseurs LLM, serveurs MCP et skills pour diagnostiquer les pannes et automatiser la maintenance.',
     },
     bench: {
-      title: 'Benchmark',
+      title: 'Benchmark en un clic',
       description:
-        'Lancez Yet Another Bench Script pour tester le disque, le réseau et le CPU d’un serveur, puis conserver les résultats. Le menu Plus permet aussi d’ouvrir les snippets, le bureau à distance et la virtualisation.',
+        'Exécutez YABS pour mesurer disque, réseau et CPU, archivez les scores et accédez aux snippets et au bureau à distance.',
     },
     virt: {
       title: 'Virtualisation',
       description:
-        'Machines virtuelles et conteneurs sur libvirt et Proxmox VE : démarrez-les, arrêtez-les, modifiez vCPU, mémoire et disques, ouvrez leurs consoles.',
+        'Pilotez vos VM et conteneurs sur Proxmox VE et libvirt : alimentation, vCPU, mémoire, disques et console directe.',
     },
     themes: {
       title: 'Boutique de thèmes',
       description:
-        "Des thèmes officiels avec leurs couleurs, fonds et écrans de démarrage, installés depuis l'app. Vous pouvez aussi créer le vôtre.",
+        'Appliquez des thèmes officiels (couleurs, icônes, fond et écran d’accueil) depuis l’app ou créez les vôtres.',
     },
   },
   capabilities: {
-    title: 'Tous les outils. Une seule app.',
+    title: 'Un seul flux de travail natif.',
     subtitle:
-      'ServerBox garde terminal, transfert de fichiers, services, santé matérielle et alertes dans le même flux.',
+      'Fini le jonglage entre clients SSH, outils SFTP et tableaux de bord de monitoring.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux et Windows',
+  },
+  os: {
+    metaTitle: 'ServerBox OS (ancien ServerBox Monitor) — Le compagnon serveur de ServerBox',
+    metaDescription:
+      'ServerBox OS (ancien ServerBox Monitor) apporte un bureau web, plus de 40 apps Docker en un clic, la gestion ZFS/RAID, un mode Agent IA, des alertes et des sauvegardes chiffrées.',
+    heroTitle: 'ServerBox OS',
+    formerlyMonitor: 'Ancien ServerBox Monitor',
+    navPreview: 'Démo',
+    navInstall: 'Installer',
+    navApp: 'App ServerBox',
+    tagline: 'Votre serveur, dans le navigateur comme dans l’app.',
+    subtitle:
+      'Un démon léger qui dote n’importe quel serveur Linux d’un bureau complet dans le navigateur, de 40+ apps auto-hébergées et d’une synchronisation HTTPS instantanée avec ServerBox — ou démarre comme OS dédié.',
+    monitorNote:
+      'ServerBox OS est la nouvelle génération de ServerBox Monitor (server_box_monitor). Les installations Monitor existantes se mettent à jour sur place avec la même commande et continuent d’alimenter les alertes push, widgets, watchOS et graphiques historiques de l’app.',
+    exploreAction: 'Découvrir ServerBox OS',
+    installAction: 'Installer sur Linux',
+    images: 'Télécharger les images',
+    previewAction: 'Voir la démo',
+    previewTitle: 'En fonctionnement',
+    previewSubtitle:
+      'Aperçu en conditions réelles : bureau multifenêtre dans le navigateur, catalogue d’apps et mode Agent IA.',
+    previewPlay: 'Lire la démo de ServerBox OS',
+    previewYoutube: 'Voir sur YouTube',
+    featuresTitle: 'Tout côté serveur',
+    featuresSubtitle: 'Un seul binaire sur la machine, accessible depuis un navigateur ou l’app mobile.',
+    desk: {
+      title: 'Bureau dans le navigateur',
+      description:
+        'Ouvrez l’adresse du serveur pour retrouver métriques, fichiers, terminal, conteneurs, processus et services dans des fenêtres dédiées.',
+    },
+    apps: {
+      title: 'Boutique d’apps en un clic',
+      description:
+        'Déployez plus de 40 services via Docker Compose (Immich, Jellyfin, Gitea, Home Assistant) ainsi que Tailscale, des reverse proxies et des LLM locaux.',
+    },
+    storage: {
+      title: 'Stockage & partage NAS',
+      description:
+        'Partitionnez et montez vos disques, créez des grappes RAID et pools ZFS, suivez le S.M.A.R.T. et partagez en SMB et NFS.',
+    },
+    agent: {
+      title: 'Mode Agent autonome',
+      description:
+        'Confiez une mission à l’IA : elle planifie, demande confirmation avant toute commande sensible, encadre sudo et dialogue via MCP.',
+    },
+    alerts: {
+      title: 'Alertes multicanales',
+      description:
+        'Règles sur CPU, mémoire, disques et services notifiées vers l’app, Telegram, Discord, ntfy, Bark, ServerChan, e-mail ou webhook.',
+    },
+    backups: {
+      title: 'Sauvegardes chiffrées',
+      description:
+        'Configuration sauvegardée sur WebDAV avec chiffrement age ; volumes de conteneurs sauvegardés automatiquement sur le disque choisi.',
+    },
+    security: {
+      title: 'Chiffré & audité',
+      description:
+        'Compte unique, HTTPS obligatoire pour toute modification, identifiants chiffrés au repos et journal d’audit complet.',
+    },
+    app: {
+      title: 'Synchronisation native',
+      description:
+        'Ajoutez le serveur en HTTPS dans ServerBox en complément ou à la place de SSH : historique, alertes push, widgets et tâches Agent.',
+    },
+    installTitle: 'Deux modes de déploiement',
+    installSubtitle: 'En service sur une distribution Linux existante, ou comme système complet sur machine dédiée.',
+    linuxTitle: 'Sur un serveur Linux existant',
+    promptUser: '# systemd : service utilisateur sous votre propre compte',
+    promptOpenrc: '# OpenRC (Alpine) : enregistré par root, exécuté sous votre compte',
+    promptRoot: '# systemd ou OpenRC : service système global en root',
+    linuxNote:
+      'Les droits correspondent au compte d’exécution. Remplacez install par upgrade ou uninstall à tout moment.',
+    copy: 'Copier la commande',
+    imageTitle: 'En système d’exploitation complet',
+    stepWrite: 'Flashez une image sur clé USB (dd, Etcher, Ventoy) ou montez-la dans une VM.',
+    stepBoot:
+      'Démarrez : la console affiche l’URL web, l’empreinte TLS et l’emplacement du mot de passe initial.',
+    stepInstall: 'Exécutez sbm-install <disque> pour installer définitivement le système.',
+    liveNote:
+      'Avant l’installation sur disque, sbOS tourne en mémoire vive (mode Live) et se réinitialise au redémarrage.',
+    note: 'ServerBox OS est libre et open source sous licence AGPLv3.',
+    docs: 'Docs Monitor',
+    appAction: 'Obtenir l’app',
   },
   themes: {
     title: 'À votre image.',
     subtitle:
-      'Les thèmes officiels de ServerBox, les mêmes que ceux de la boutique de thèmes de l’app. Installez-les depuis Réglages → Apparence → Boutique de thèmes, ou téléchargez un paquet et choisissez Installer un thème → Fichier.',
+      'Prévisualisez les thèmes officiels en direct. Installez-les depuis Réglages → Apparence → Boutique de thèmes ou importez un fichier .fsbt.',
     empty:
-      'Pas encore de thème officiel. Un thème est un dossier avec un manifest.toml : couleurs claires et sombres, styles des composants, icônes, arrière-plan et écran de démarrage. Le guide explique comment en créer un et le publier dans la boutique.',
+      'Aucun thème officiel pour le moment. Consultez le guide pour créer et proposer le vôtre.',
     note:
-      'L’app vérifie le SHA-256 de chaque paquet de la boutique avant de l’installer.',
-    authoring: 'Créer un thème',
-    download: 'Télécharger le .fsbt',
+      'Chaque paquet est vérifié par somme SHA-256 avant son installation.',
+    authoring: 'Guide de création',
+    download: 'Télécharger .fsbt',
     source: 'Source',
     light: 'Clair',
     dark: 'Sombre',
-    search: 'Rechercher un thème',
+    search: 'Rechercher un thème ou pack',
     modeLabel: 'Mode',
     all: 'Tous',
     sortLabel: 'Trier',
     sortName: 'Nom',
-    sortUpdated: 'Mis à jour récemment',
-    noMatch: 'Aucun thème ne correspond. Essayez un autre nom ou un autre mode.',
+    sortUpdated: 'Récents',
+    noMatch: 'Aucun thème trouvé. Essayez un autre terme ou mode.',
     storeTitle: 'Boutique de thèmes',
     storeSubtitle:
-      'Tous les thèmes officiels de ServerBox, dessinés comme l’app les dessine : couleurs, composants, icônes et écran de démarrage. Installez-les depuis la boutique de l’app ou téléchargez le paquet.',
-    browse: 'Ouvrir la boutique de thèmes',
+      'Explorez tous les thèmes et packs d’icônes officiels rendus en direct avec leurs vraies couleurs et composants.',
+    browse: 'Parcourir la boutique',
     back: 'Tous les thèmes',
     details: 'Détails',
     icons: 'Icônes',
-    tabIcons: 'Onglets, et sélectionnés',
-    navIcons: 'Symboles',
-    palette: 'Palette',
+    tabIcons: 'Onglets & état actif',
+    navIcons: 'Symboles de navigation',
+    palette: 'Palette de couleurs',
     components: 'Composants',
     splash: 'Écran de démarrage',
-    install: 'Installer',
+    install: 'Installation',
     installSteps:
-      'Dans l’app, ouvrez Réglages → Apparence → Boutique de thèmes et choisissez {name}. Ou téléchargez le paquet et choisissez Installer un thème → Fichier.',
+      'Dans l’app, ouvrez « Réglages → Apparence → Boutique de thèmes » et choisissez {name}, ou importez le fichier .fsbt.',
     base: 'Normal',
     hovered: 'Survolé',
     pressed: 'Pressé',
     disabled: 'Désactivé',
-    loadFailed: 'Impossible de charger l’aperçu de ce thème.',
+    loadFailed: 'Impossible de charger l’aperçu du thème.',
     retry: 'Réessayer',
-    previewNote:
-      'Les aperçus montrent les icônes et les couleurs du thème ; le reste de l’interface est indicatif.',
     iconPacks: 'Packs d’icônes',
     iconPacksSubtitle:
-      'Des icônes choisies indépendamment du thème et dessinées par-dessus celui utilisé. Installez-les dans l’app depuis Réglages → Apparence → Boutique de thèmes → Packs d’icônes.',
+      'Combinez librement les packs d’icônes avec n’importe quel thème depuis « Réglages → Apparence → Boutique de thèmes → Packs d’icônes ».',
   },
   plugins: {
-    title: 'Plugins.',
+    title: 'Étendez ServerBox',
     subtitle:
-      'Les plugins officiels de ServerBox, installés depuis la boutique de plugins de l’app.',
-    empty: 'Pas encore de plugin officiel.',
+      'Ajoutez de nouvelles capacités avec les plugins officiels.',
+    empty: 'Aucun plugin officiel pour le moment.',
     download: 'Télécharger',
   },
   download: {
-    title: 'Toutes les plateformes, toutes les sources.',
+    title: 'Natif sur chaque plateforme.',
     subtitle:
-      'Choisissez une source fiable pour votre appareil. iOS est sur l’App Store, ou en .ipa non signé sur GitHub Releases, à signer vous-même. Les versions macOS pour puce Apple et Intel sont sur GitHub Releases et Homebrew. Android, Linux et Windows ont des téléchargements directs.',
+      'Choisissez votre système et votre canal de distribution ci-dessous.',
     copied: 'Commande copiée',
     copyPrompt: 'Copiez cette commande :',
     note:
-      'Téléchargez uniquement depuis une source de confiance. Pour les notifications serveur, widgets et surveillance compagnon, installez ServerBoxMonitor sur vos serveurs.',
+      'Astuce : associez ServerBox OS côté serveur pour activer les notifications push, les widgets et l’historique hors connexion SSH.',
   },
   cta: {
-    title: 'ServerBox est libre et open source sous AGPLv3.',
+    title: 'Libre et open source sous AGPLv3.',
     subtitle:
-      'Installez depuis l’App Store, GitHub Releases, F-Droid ou OpenAPK.',
-    appStoreAction: 'Ouvrir l’App Store',
-    githubAction: 'Télécharger depuis GitHub Releases',
+      'Explorez le code sur GitHub ou téléchargez la dernière version pour votre appareil.',
+    appStoreAction: 'App Store',
+    githubAction: 'GitHub Releases',
+  },
+  pride: {
+    badge: 'LGBTQ+ Friendly',
+    title: 'Conçu avec Fierté.',
+    description:
+      'ServerBox soutient fièrement la communauté LGBTQ+. Le thème officiel Pride de la boutique inclut les variantes Rainbow, Trans et Nonbinary.',
+    rainbow: 'Rainbow',
+    trans: 'Trans',
+    nonbinary: 'Nonbinary',
+  },
+  otherApps: {
+    title: 'Plus de services et d’apps.',
+    subtitle:
+      'Services cloud et applications natives conçus avec la même exigence de rapidité et de sobriété.',
+    servicesHeading: 'Services',
+    appsHeading: 'Apps',
+    llmapi: {
+      title: 'LLM API',
+      description:
+        'Passerelle API unifiée pour les principaux LLM, prête pour l’agent IA de ServerBox, LLMBox ou vos propres outils.',
+    },
+    uptimer: {
+      title: 'Uptimer',
+      description:
+        'Supervision légère de disponibilité et pages de statut pour vos sites, API et serveurs avec alertes instantanées.',
+    },
+    llmbox: {
+      title: 'LLMBox',
+      tag: 'iOS · Android · macOS · Linux · Windows',
+      description:
+        'Client natif rapide pour l’API OpenAI et les modèles compatibles, avec historique local, appels d’outils et points de terminaison personnalisés.',
+      action: 'GitHub',
+    },
+    mfuse: {
+      title: 'MFuse',
+      tag: 'macOS · File Provider',
+      description:
+        'Montez SFTP, S3, WebDAV et vos stockages distants directement dans le Finder macOS via File Provider natif, sans extension noyau.',
+      action: 'mfuse.lollipopkit.com',
+    },
   },
   footer: {
-    features: 'Fonctions',
+    features: 'Fonctionnalités',
     capabilities: 'Capacités',
     releases: 'Versions',
   },

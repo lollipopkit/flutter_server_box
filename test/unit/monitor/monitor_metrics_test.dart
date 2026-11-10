@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
-import 'package:server_box/data/model/server/monitor_metrics.dart';
-import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics_mapper.dart';
 import 'package:server_box/data/res/status.dart';
 
 void main() {
@@ -40,6 +40,72 @@ void main() {
 
     expect(metrics.serverName, 'test-server');
     expect(metrics.diskio.single.dev, 'sda');
+  });
+
+  group('the block devices (#1829)', () {
+    Map<String, Object?> body(Map<String, Object?> extra) => {
+      'timestamp': '2026-08-22T00:00:00Z',
+      'server_name': 'test-server',
+      'cpu_usage': 0.0,
+      'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+      'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+      ...extra,
+    };
+
+    test('arrive as the agent serialises them, unmounted included', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          body({
+            'block_devices': const [
+              {
+                'name': 'sda',
+                'path': '/dev/sda',
+                'kind': 'disk',
+                'model': 'WDC WD40EFRX',
+                'size': 4000787030016,
+                'tran': 'sata',
+                'fs_type': null,
+                'mount': null,
+                'in_use': true,
+                'children': [
+                  {
+                    'name': 'sda1',
+                    'path': '/dev/sda1',
+                    'kind': 'part',
+                    'model': null,
+                    'size': 4000785104896,
+                    'tran': null,
+                    'fs_type': 'ext4',
+                    'mount': null,
+                    'in_use': false,
+                    'children': [],
+                  },
+                ],
+              },
+            ],
+          }),
+        ),
+      );
+
+      final sda = status.blockDevices.single;
+      expect(sda.model, 'WDC WD40EFRX');
+      expect(sda.size, 4000787030016);
+      expect(sda.children.single.fsType, 'ext4');
+      expect(sda.inUse, isTrue);
+      expect(sda.children.single.mount, isNull);
+      expect(sda.children.single.inUse, isFalse);
+    });
+
+    test('and an agent predating them sends none', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(body(const {})),
+      );
+      expect(status.blockDevices, isEmpty);
+    });
   });
 
   group('the os-release identifiers', () {
@@ -365,6 +431,52 @@ void main() {
     expect(status.gpus.single.id, '0000:04:00.0');
     expect(status.gpus.single.vendor, 'amd');
     expect(status.gpus.single.name, 'Instinct MI300X');
+  });
+
+  test("a GPU's processes reach the card, and an agent without them parses", () {
+    Map<String, dynamic> body(Map<String, dynamic> gpu) => {
+      'timestamp': '2026-10-10T00:00:00Z',
+      'server_name': 'test-server',
+      'cpu_usage': 0.0,
+      'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+      'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+      'gpus': [gpu],
+    };
+    const gpu = {
+      'id': 'nvidia:0',
+      'vendor': 'nvidia',
+      'name': 'Tesla T10',
+      'usage_percent': 91.0,
+      'temperature': 86,
+      'power': null,
+      'memory_used': 9493,
+      'memory_total': 16384,
+      'memory_unit': 'MiB',
+    };
+
+    final status = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson(
+        body({
+          ...gpu,
+          'processes': [
+            {'pid': 854129, 'name': '/python3.12', 'memory': 0},
+          ],
+        }),
+      ),
+    );
+    final process = status.gpus.single.memory!.processes.single;
+    expect(process.pid, 854129);
+    expect(process.name, '/python3.12');
+    expect(process.memory, 0);
+
+    final older = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson(body(gpu)),
+    );
+    expect(older.gpus.single.memory!.processes, isEmpty);
   });
 
   test('an Intel GPU keeps unavailable metrics null', () {

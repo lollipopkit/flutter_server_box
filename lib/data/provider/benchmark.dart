@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bench.dart' as ffi;
 
 part 'benchmark.freezed.dart';
@@ -47,7 +48,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   late final String _serverId;
   Timer? _timer;
 
-  BenchmarkStore get _store => BenchmarkStore.instance;
+  BenchmarkStore get _store => Stores.benchmark;
 
   /// Keyed by the server's id, not by the whole [Spi].
   ///
@@ -133,12 +134,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
         startedAt: DateTime.now(),
         status: BenchmarkStatus.running,
         options: options,
-        runDir: ffi.benchRunDir(optionsJson: options.rustJson),
+        runDir: ffi.benchRunDir(options: options.rust),
       );
 
       final res = await exec.run(
-        ffi.benchLauncher(optionsJson: options.rustJson),
-        entry: ffi.benchStartEntry(optionsJson: options.rustJson, runId: run.id),
+        ffi.benchLauncher(options: options.rust),
+        entry: ffi.benchStartEntry(options: options.rust, runId: run.id),
       );
       if (!ffi.benchStarted(output: res.combined)) {
         throw StateError(

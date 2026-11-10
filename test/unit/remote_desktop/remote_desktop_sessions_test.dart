@@ -65,4 +65,48 @@ void main() {
     expect(cleared.useDefault, isTrue);
     expect(cleared.rgba, isNull);
   });
+
+  // #1835: a failure the server named is the same on every attempt, and a
+  // session taken over by another connection would take it back.
+  test('a named failure is not retried, an unnamed disconnect is', () {
+    const retries = RemoteDesktopSessions.retriesAfter;
+    expect(
+      retries(
+        ffi.RemoteDesktopEndReason.serverDisconnected,
+        null,
+        lastErrorRetryable: false,
+      ),
+      isTrue,
+    );
+    expect(
+      retries(
+        ffi.RemoteDesktopEndReason.serverDisconnected,
+        ffi.RemoteDesktopFailure.replacedByOtherConnection,
+        lastErrorRetryable: false,
+      ),
+      isFalse,
+    );
+    expect(
+      retries(
+        ffi.RemoteDesktopEndReason.configurationError,
+        ffi.RemoteDesktopFailure.standardRdpSecurityOnly,
+        lastErrorRetryable: true,
+      ),
+      isFalse,
+    );
+  });
+
+  test('a failure is set and cleared with the end reason', () {
+    final ended = RemoteDesktopSessionView(profile: profile('one')).copyWith(
+      endReason: ffi.RemoteDesktopEndReason.serverDisconnected,
+      failure: ffi.RemoteDesktopFailure.idleTimeout,
+    );
+    expect(ended.failure, ffi.RemoteDesktopFailure.idleTimeout);
+    expect(ended.copyWith(viewOnly: true).failure, ended.failure);
+    final unnamed = ended.copyWith(
+      endReason: ffi.RemoteDesktopEndReason.transportError,
+    );
+    expect(unnamed.failure, isNull);
+    expect(ended.copyWith(clearEndReason: true).failure, isNull);
+  });
 }
