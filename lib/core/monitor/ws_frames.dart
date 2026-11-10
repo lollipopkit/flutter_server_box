@@ -2,13 +2,9 @@ import 'dart:io';
 import 'dart:math';
 
 /// The largest Binary frame sent to a monitor agent's WebSocket endpoints
-/// (`/terminal/ws`, `/stream/ws`). An agent before its own upgrade
-/// (`monitor/src/api/ws/upgrade.rs`) takes ntex's default codec, which
-/// refuses a frame over 64 KiB by dropping the connection; one since takes
-/// 4 MiB.
-///
-/// TODO: remove the split once agents before the 4 MiB limit are gone.
-const monitorWsMaxFrameBytes = 64 * 1024;
+/// (`/terminal/ws`, `/stream/ws`): the agent's `ws::upgrade::MAX_FRAME`. It
+/// drops the connection on a larger one.
+const monitorWsMaxFrameBytes = 4 << 20;
 
 /// Sends [data] to [socket] as Binary frames of at most
 /// [monitorWsMaxFrameBytes]: a write is whatever the other end wrote at once

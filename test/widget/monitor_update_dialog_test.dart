@@ -28,6 +28,7 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/monitor/update_agent.dart';
 
+import '../helpers/fake_agent_health.dart';
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';
 
@@ -71,6 +72,7 @@ void main() {
     asked = [];
     agent = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     agent.listen((req) async {
+      if (await answerAgentHealth(req)) return;
       final raw = await utf8.decoder.bind(req).join();
       final body = raw.isEmpty ? null : jsonDecode(raw);
       seen.add((req.method, req.uri.path, body));

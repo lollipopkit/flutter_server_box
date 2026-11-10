@@ -13,7 +13,7 @@ App 和 Monitor 使用同一个协议版本号（`sbm_parser::protocol`）。只
 - `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 Monitor 视为协议 1。
 - 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，Monitor 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
 - App 登录前先读取 `/health`。Monitor 的协议版本过旧时，App 会提示更新 Monitor；如果 Monitor 要求更高版本的协议，则会提示更新 App。
-- 双方都至少支持上一个协议版本：Monitor 按旧版客户端的格式回应它，App 仍能读取旧版 Monitor。
+- Monitor 按旧一个协议版本的客户端的格式回应它。App 不读取协议 2 以下的 Monitor，会提示更新 Monitor。
 
 ## Capability discovery
 

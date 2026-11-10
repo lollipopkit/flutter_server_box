@@ -16,6 +16,7 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/monitor_settings/view.dart';
 
+import '../helpers/fake_agent_health.dart';
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';
 
@@ -33,6 +34,7 @@ void main() {
     asked = [];
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     server.listen((req) async {
+      if (await answerAgentHealth(req)) return;
       await req.drain<void>();
       final path = req.uri.path;
       asked.add('${req.method} $path');

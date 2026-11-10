@@ -303,9 +303,9 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
       _error = null;
     });
     _client?.dispose();
-    final client = _client = MonitorHttpClient(
-      _way == _Way.legacy && user.isNotEmpty ? monitor.withLegacyUser(user) : monitor,
-    );
+    final client = _client = _way == _Way.legacy
+        ? MonitorHttpClient.toUpdate(user.isNotEmpty ? monitor.withLegacyUser(user) : monitor)
+        : MonitorHttpClient(monitor);
     try {
       if (_way == _Way.legacy) {
         final out = await client.exec(rust.monitorStartUpdateScript(), stdin: password == null ? null : '$password\n');

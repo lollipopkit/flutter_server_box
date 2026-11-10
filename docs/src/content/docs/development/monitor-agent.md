@@ -25,9 +25,8 @@ New features do not change the protocol version; they are listed in `features`.
 - Before signing in, the App reads `/health`. It prompts you to update the
   Monitor when its protocol is too old, or to update the App when the Monitor
   requires a newer protocol.
-- Each side supports the previous protocol at least: the Monitor answers an
-  older client in that client's format, and the App still reads an older
-  Monitor.
+- The Monitor answers a client one protocol older in that client's format.
+  The App reads no Monitor below protocol 2, and prompts you to update it.
 
 ## Capability discovery
 

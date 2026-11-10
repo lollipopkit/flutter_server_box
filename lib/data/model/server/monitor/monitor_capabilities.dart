@@ -54,7 +54,7 @@ class MonitorCapabilities {
 
   factory MonitorCapabilities.fromJson(Map<String, dynamic> json) {
     return MonitorCapabilities(
-      access: MonitorAccess.fromCapabilities(json),
+      access: MonitorAccess.fromJson(json['access']),
       features: switch (json['features']) {
         final List<dynamic> list => list.whereType<String>().toSet(),
         _ => const {},
