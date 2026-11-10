@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 /// The WebDAV the backup syncs to, kept in `Stores.syncRemote` and synced

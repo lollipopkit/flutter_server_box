@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -34,7 +33,8 @@ void main() {
   });
 
   tearDown(() async {
-    SyncKey.resetForTest();
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
     await getIt.reset();
     await SqliteDb.close();
   });
@@ -43,19 +43,19 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
-    final key = await SyncKey.of(MemoryKeyFile());
+    final key = await keyOf(MemoryKeyFile());
 
     final synced = await File(await BackupV2.backup(null, null, key: key)).readAsBytes();
-    expect(SyncKey.sealedToKey(synced), isTrue);
+    expect(SyncKeyring.sealedToKey(synced), isTrue);
     await expectLater(BackupV2.unlock(synced, 'remote-password'), throwsA(isA<Object>()));
-    expect(BackupV2.fromPlainBytes(await key.open(synced)).version, BackupV2.formatVer);
+    expect(BackupV2.fromPlainBytes(await key.open(sealed: synced)).version, BackupV2.formatVer);
 
     final export = await BackupV2.backup(null, 'remote-password');
     expect(export, endsWith(Miscs.exportBakFileName));
     final content = await File(export).readAsString();
     // Armored age, as `age -p -a` writes it.
     expect(content, startsWith(AgeCryptor.armorHeader));
-    expect(SyncKey.sealedToKey(utf8.encode(content)), isFalse);
+    expect(SyncKeyring.sealedToKey(utf8.encode(content)), isFalse);
     expect(
       (await BackupV2.open(utf8.encode(content), 'remote-password')).version,
       BackupV2.formatVer,

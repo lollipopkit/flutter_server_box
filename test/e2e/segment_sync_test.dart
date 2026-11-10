@@ -54,9 +54,9 @@ void main() {
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
-    SyncRecorder.install();
+    SyncedStores.install();
     SyncRemotes.setWebdav(url: url, user: user ?? '', pwd: pwd ?? '');
-    FileLogSync.reset();
+    fileLog.reset();
     return SyncRecorder.deviceHexOf(SyncRecorder.device);
   }
 
@@ -94,7 +94,7 @@ void main() {
     final a = await becomeDevice();
     Stores.snippet.put(snippet);
     Stores.setting.timeout.put(17);
-    await FileLogSync.sync();
+    await fileLog.sync();
     final written = await listed();
     expect(written, containsAll(['identity.age', 'seg-$a-1.age']));
     if (out != null) {
@@ -104,16 +104,16 @@ void main() {
     }
 
     final b = await becomeDevice();
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(Stores.snippet.fetchOneRaw(snippet.id)?.script, 'uptime');
     expect(Stores.setting.timeout.fetch(), 17);
 
     Stores.setting.timeout.put(30);
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(await listed(), contains('seg-$b-2.age'), reason: "the second of B's: its first sent what it joined with");
 
     await becomeDevice();
-    await FileLogSync.sync();
+    await fileLog.sync();
     expect(Stores.setting.timeout.fetch(), 30);
     expect(Stores.snippet.fetchOneRaw(snippet.id)?.script, 'uptime');
   });

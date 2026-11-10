@@ -1,7 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Skills;
-import 'package:server_box/data/store/sync_recorder.dart';
-import 'package:server_box/data/store/sync_records.dart';
 
 /// The Agent's skills, synced as records of their own (`skill`, by
 /// directory): files and all, so one installed from a folder or a file

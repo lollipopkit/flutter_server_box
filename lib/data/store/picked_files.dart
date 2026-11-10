@@ -6,8 +6,6 @@ import 'package:fl_lib/theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
-import 'package:server_box/data/store/sync_records.dart';
 
 /// A file the person picked, and the setting that points at it.
 final class _Role {

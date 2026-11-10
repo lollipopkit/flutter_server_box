@@ -29,7 +29,7 @@ void main() {
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
-    SyncRecorder.install();
+    SyncedStores.install();
   });
 
   tearDown(() async {

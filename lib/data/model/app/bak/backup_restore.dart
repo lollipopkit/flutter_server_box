@@ -684,7 +684,7 @@ void _deleteKv(SqliteStore store, String key, {int? at}) {
 }
 
 void _recordKv(SqliteStore store, String key, int? at) {
-  if (!SyncRecorder.syncedStores.containsKey(store.name)) return;
+  if (!SyncedStores.byName.containsKey(store.name)) return;
   if (store.isInternalKey(key) || store.isDeviceLocalKey(key)) return;
   SyncRecorder.record('kv:${store.name}', key, at: at);
 }

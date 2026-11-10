@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart'
     show ThemeBackup, ThemeBlobStore, ThemeHost, ThemeIconPacks, ThemePackages;
 import 'package:flutter/foundation.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 
 /// Installed theme packages and icon packs as sync records (#1842):
 /// `theme/<installation id>`, the op holding what [ThemeBackup] describes an

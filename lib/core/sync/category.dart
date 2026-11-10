@@ -57,6 +57,19 @@ enum SyncCategory {
   /// for one every sync carries.
   static SyncCategory? of(String c) => _byCollection[c];
 
+  /// The categories as fl_lib's [SyncGroups], which the engines ask. Before
+  /// any sync runs.
+  static void define() => SyncGroups.define([
+    for (final cat in values)
+      SyncGroup(
+        name: cat.name,
+        pref: cat.pref,
+        collections: {for (final MapEntry(:key, :value) in _byCollection.entries) if (value == cat) key},
+        also: [if (cat == passphrases) Stores.setting.rememberKeyPassphrase.listenable()],
+        extra: cat == passphrases ? () => Stores.setting.rememberKeyPassphrase.fetch() : null,
+      ),
+  ]);
+
   static final _byCollection = <String, SyncCategory>{
     'kv:${Stores.setting.name}': settings,
     SyncThemes.c: settings,

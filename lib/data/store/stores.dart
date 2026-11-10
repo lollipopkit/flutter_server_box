@@ -168,7 +168,7 @@ abstract final class Stores {
       // The Agent's: its chats, providers, tool switches and memory. Not in
       // `_kvStores`: a conversation is a record of what was said, not an
       // edit, and stays on this device; the rest syncs as
-      // `SyncRecorder.syncedStores` says.
+      // `SyncedStores.byName` says.
       ...LlmStores.all.map((store) => store.init()),
       // The secrets, a sync category of their own.
       LlmStores.mcpSecret.init(),
@@ -202,7 +202,7 @@ abstract final class Stores {
 
   static int get lastModTime {
     var lastModTime = 0;
-    for (final store in {..._kvStores, ...SyncRecorder.syncedStores.values}) {
+    for (final store in {..._kvStores, ...SyncedStores.byName.values}) {
       final last = store.lastUpdateTs;
       if (last == null) continue;
       for (final ts in last.values) {

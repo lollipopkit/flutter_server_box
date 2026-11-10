@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Raised when a write would collide with a `UNIQUE` column.

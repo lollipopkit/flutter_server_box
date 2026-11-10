@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/src/rust/api/digest.dart';
 
 /// Passphrases of encrypted private keys, kept in [Stores.keyPassphrase]

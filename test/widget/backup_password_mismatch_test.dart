@@ -6,7 +6,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
@@ -30,7 +29,8 @@ void main() {
   });
 
   tearDown(() async {
-    SyncKey.resetForTest();
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
     await getIt.reset();
     await SqliteDb.close();
   });
@@ -67,11 +67,11 @@ void main() {
     // Said where the sync's status is: with a destination on.
     await PrefProps.webdavSync.set(true);
     addTearDown(() => PrefProps.webdavSync.set(false));
-    SyncKey.passwordMismatch.value = {'webdav:x'};
+    SyncKeyring.passwordMismatch.value = {'webdav:x'};
     await tester.pump();
     expect(said, findsOneWidget);
 
-    SyncKey.release('webdav:x');
+    SyncKeyring.release('webdav:x');
     await tester.pump();
     expect(said, findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());

@@ -10,7 +10,7 @@ abstract final class Miscs {
   static const pkgName = 'tech.lolli.toolbox';
 
   /// Name of the synced backup, local and remote: sealed to the remote's
-  /// sync key (`SyncKey`), which the backup password opens.
+  /// sync key (`SyncKeyring`), which the backup password opens.
   ///
   /// Carries the format version so that a build which predates it never sees
   /// a file it would misread — see the note at `Paths.init` in `main.dart`.

@@ -8,9 +8,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart' show ThemePackages;
 import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmApi, LlmCustomProvider;
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores, Skills;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_host.dart';
-import 'package:server_box/core/sync/log.dart';
+import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
@@ -25,12 +26,14 @@ import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
 import 'package:server_box/data/store/sync_skills.dart';
 import 'package:server_box/data/store/sync_themes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/fsbt.dart';
 import '../../helpers/spi_fixture.dart';
+import '../../helpers/sync_key.dart';
 
 /// LK Cloud's log, in memory: batches numbered as appended, once per key.
-final class _Log implements SyncLogTransport {
+final class _Log implements SyncLogStore {
   final batches = <(int, Uint8List)>[];
   final keys = <String, int>{};
   ({int seq, Uint8List body})? snap;
@@ -59,7 +62,7 @@ final class _Log implements SyncLogTransport {
   int _take(String key, Uint8List body) => keys[key] ??= (batches..add((batches.length + 1, body))).length;
 
   @override
-  Future<SyncLogPage> read(int after, String? log) async {
+  Future<SyncLogPage> readLog(int after, String? log) async {
     if (after < floor) return const SyncLogPage.compacted(log: 'L1');
     final rest = batches.where((b) => b.$1 > after).toList();
     return SyncLogPage(log: batches.isEmpty ? null : 'L1', batches: rest.take(2).toList(), more: rest.length > 2);
@@ -78,68 +81,56 @@ final class _Log implements SyncLogTransport {
 
   final blobStore = <String, ({Uint8List body, DateTime at})>{};
 
+  /// As LK Cloud's: one there is the one named.
   @override
-  Future<void> putBlob(String name, Uint8List body) async => blobStore.putIfAbsent(name, () => (body: body, at: DateTime.now()));
+  Future<void> write(String name, Uint8List body) async {
+    blobStore.putIfAbsent(name, () => (body: body, at: DateTime.now()));
+  }
 
   @override
-  Future<Uint8List?> getBlob(String name) async => blobStore[name]?.body;
+  Future<Uint8List?> read(String name) async => blobStore[name]?.body;
 
   @override
-  Future<List<({String name, DateTime? at})>> blobs(String prefix) async => [
+  Future<List<({String name, DateTime? at})>> list(String prefix) async => [
     for (final MapEntry(:key, :value) in blobStore.entries)
       if (key.startsWith(prefix)) (name: key, at: value.at),
   ];
 
   @override
-  Future<void> deleteBlob(String name) async => blobStore.remove(name);
-}
-
-/// No encryption: what is under test is what goes into it.
-final class _Clear implements SyncSeal {
-  @override
-  Future<Uint8List> open(Uint8List sealed) async => sealed;
-  @override
-  Future<Uint8List> seal(Uint8List plain) async => plain;
-
-  @override
-  String nameOf(List<int> data) => syncBlobName(secret: 'test', data: data);
-
-  @override
-  Future<bool> refresh() async => false;
-}
-
-/// A key per device, and the account's keys as `identity.age` holds them.
-final class _Keyed implements SyncSeal {
-  _Keyed(this.remote) : held = [...remote];
-
-  final List<String> remote;
-  List<String> held;
-
-  @override
-  Future<Uint8List> seal(Uint8List plain) async => Uint8List.fromList([...utf8.encode('${held.first}|'), ...plain]);
-
-  @override
-  Future<Uint8List> open(Uint8List sealed) async {
-    final bar = sealed.indexOf(124);
-    if (!held.contains(utf8.decode(sealed.sublist(0, bar)))) throw const FormatException('not ours');
-    return Uint8List.sublistView(sealed, bar + 1);
-  }
-
-  @override
-  String nameOf(List<int> data) => syncBlobName(secret: held.first, data: data);
-
-  @override
-  Future<bool> refresh() async {
-    if (remote.every(held.contains)) return false;
-    held = {...remote, ...held}.toList();
-    return true;
-  }
-
-  Future<void> rotate(String next) async {
-    remote.insert(0, next);
-    held = [...remote];
+  Future<void> delete(String name) async {
+    blobStore.remove(name);
   }
 }
+
+/// A record larger than this goes as a blob (`fl_sync_engine`).
+const _inlineMax = 64 << 10;
+
+/// The account's key file, and the key this device holds of it.
+final _keyFile = MemoryKeyFile();
+late SyncKeyHandle _key;
+
+/// This device's keychain: [kept], the keys it holds (none: a device that
+/// has only the password), and the backup password.
+Future<void> _keychain([String? kept]) async {
+  FlutterSecureStorage.setMockInitialValues({
+    SecureStoreProps.bakPwd.key: 'pw',
+    'syncIdentity.${_keyFile.id}': ?kept,
+  });
+  SecureProp.resetRateLimits();
+  SyncKeyring.resetForTest();
+  SyncKeyring.init(label: 'ServerBox sync key');
+  _key = await SyncKeyring.ofFiles(_keyFile);
+}
+
+/// The keys this device holds, the newest first.
+Future<String?> _held() => const FlutterSecureStorage().read(key: 'syncIdentity.${_keyFile.id}');
+
+/// [sealed], a batch or snapshot, as the JSON it holds.
+Future<Map<String, dynamic>> _plain(Uint8List sealed) async =>
+    jsonDecode(utf8.decode(gzip.decode(await _key.open(sealed: sealed)))) as Map<String, dynamic>;
+
+/// [json] as a batch sealed to the account's key.
+Uint8List _batch(Object json) => _key.seal(plain: Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode(json)))));
 
 Future<void> _device() async {
   KvStore.onEdit = null;
@@ -151,14 +142,51 @@ Future<void> _device() async {
   SqliteDb.openInMemory();
   await Stores.init();
   SyncRecorder.resetForTest();
-  SyncRecorder.install();
+  SyncedStores.install();
+  ServerSyncRecords.install();
+  SyncCategory.define();
 }
 
-LogSync _sync(_Log log, {bool settings = true}) =>
-    LogSync(log, _Clear(), carries: (c) => settings || (c != 'kv:setting' && c != 'theme'));
+/// A device's sync on [log], carrying the settings or not.
+final class _Sync {
+  _Sync(_Log log, {this.settings = true}) : _engine = SyncLogEngine.onDart(key: _key, host: SyncHost(log: log).call);
+
+  final SyncLogEngine _engine;
+  final bool settings;
+
+  Future<T> _carrying<T>(Future<T> Function() run) async {
+    final was = SyncCategory.settings.pref.get();
+    await SyncCategory.settings.pref.set(settings);
+    try {
+      return await syncCall(run);
+    } finally {
+      await SyncCategory.settings.pref.set(was);
+    }
+  }
+
+  Future<void> sync() => _carrying(_engine.run);
+
+  Future<void> pull() => _carrying(_engine.pull);
+
+  /// Replaces the account's key, then writes a snapshot under the new one.
+  Future<void> rotate() => _carrying(() => _engine.rotate(key: _key));
+
+  Future<bool> behind(int seq) => _engine.behind(seq: seq);
+
+  bool get tooNew => _engine.tooNew();
+
+  Future<void> reset() => syncCall(_engine.reset);
+}
+
+_Sync _sync(_Log log, {bool settings = true}) => _Sync(log, settings: settings);
 
 void main() {
   setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
+    // The mock keeps one map whatever the store's options: one store here.
+    SecureProp.legacyApart = false;
+    await _keychain();
     final dir = await Directory.systemTemp.createTemp('sbm-log-sync-');
     Paths.doc = dir.path;
     Paths.img = dir.path.joinPath('img');
@@ -196,7 +224,7 @@ void main() {
     await _sync(log).sync();
     expect(Stores.snippet.fetchOneRaw(snippet.id), isNull);
     expect(Stores.setting.timeout.fetch(), 30);
-    expect(SyncRecords.read('snippet', snippet.id), isNull);
+    expect(EntityRecords.read('snippet', snippet.id), isNull);
   });
 
   test('an older op does not overwrite a newer edit here', () async {
@@ -250,7 +278,7 @@ void main() {
 
     Stores.snippet.put(snippet);
     log.failNext = true;
-    await expectLater(sync.sync(), throwsA(isA<SocketException>()));
+    await expectLater(sync.sync(), throwsA(isA<SyncError>()));
     expect(log.batches, hasLength(before + 1));
     await sync.sync();
     expect(log.batches, hasLength(before + 1), reason: 'the same key is taken once, and nothing sent twice');
@@ -304,14 +332,14 @@ void main() {
     ));
     final run = Stores.benchmark.read('early')!;
     final h = SyncRecorder.stampsOf([(BenchmarkStore.c, 'early')])[(BenchmarkStore.c, 'early')]!;
-    final server = await SyncRecords.read(Stores.server.table, spi.id);
+    final server = EntityRecords.read(Stores.server.table, spi.id);
     final serverH = SyncRecorder.stampsOf([(Stores.server.table, spi.id)])[(Stores.server.table, spi.id)]!;
 
     // Another device, reading the run before its server.
     await _device();
-    await SyncAnnounce.write([(c: BenchmarkStore.c, id: 'early', h: h, d: run)]);
+    await SyncRecords.apply([(c: BenchmarkStore.c, id: 'early', h: h, d: run)]);
     expect(Stores.benchmark.get('early'), isNull);
-    await SyncAnnounce.write([(c: Stores.server.table, id: spi.id, h: serverH, d: server)]);
+    await SyncRecords.apply([(c: Stores.server.table, id: spi.id, h: serverH, d: server)]);
     await _sync(log).sync();
     expect(Stores.benchmark.get('early')?.resultJson, '{}');
     expect(SqliteDb.instance.select('SELECT k FROM sync_state WHERE k LIKE ?;', ['retry:%']), isEmpty);
@@ -337,21 +365,23 @@ void main() {
     final log = _Log()..batches.add((1, Uint8List.fromList([1, 2, 3])));
     await _device();
     Stores.snippet.put(snippet);
-    await _sync(log).sync();
-    expect(LogSync.behind(1), isFalse);
+    var sync = _sync(log);
+    await sync.sync();
+    expect(await sync.behind(1), isFalse);
     expect(log.batches.length, greaterThan(1));
-    expect(LogSync.tooNew.value, isFalse);
+    expect(sync.tooNew, isFalse);
 
     final sent = log.batches.length;
-    log.batches.add((sent + 1, Uint8List.fromList(gzip.encode('{"v":99,"ops":[]}'.codeUnits))));
+    log.batches.add((sent + 1, _batch({'v': 99, 'ops': []})));
     Stores.setting.timeout.put(9);
-    await expectLater(_sync(log).sync(), throwsA(isA<SyncLogTooNew>()));
+    sync = _sync(log);
+    await expectLater(sync.sync(), throwsA(isA<SyncLogTooNew>()));
     expect(log.batches.length, sent + 2, reason: 'the edit is sent all the same');
-    expect(LogSync.behind(sent + 1), isTrue);
-    expect(LogSync.tooNew.value, isTrue, reason: 'shown on the backup page');
+    expect(await sync.behind(sent + 1), isTrue);
+    expect(sync.tooNew, isTrue, reason: 'shown on the backup page');
 
-    LogSync.forget();
-    expect(LogSync.tooNew.value, isFalse);
+    await sync.reset();
+    expect(sync.tooNew, isFalse);
   });
 
   test('a full log is compacted, then the batch sent', () async {
@@ -391,7 +421,7 @@ void main() {
     final sync = _sync(log);
     Stores.snippet.put(snippet);
     await sync.sync();
-    expect(LogSync.behind(log.batches.length), isFalse);
+    expect(await sync.behind(log.batches.length), isFalse);
   });
 
   test('two records named alike: the later keeps the name, the other is suffixed alike everywhere', () async {
@@ -418,7 +448,7 @@ void main() {
     final log = _Log();
     log.blobStore['op-stale.age'] = (body: Uint8List(1), at: DateTime.now().subtract(const Duration(days: 3)));
     await _device();
-    final big = 'x' * (SyncEngine.inlineMax + 1);
+    final big = 'x' * (_inlineMax + 1);
     Stores.setting.set('bigNote', big);
     await _sync(log).sync();
     expect(log.blobStore.keys.where((k) => k != 'op-stale.age'), hasLength(1));
@@ -435,32 +465,32 @@ void main() {
     expect(log.blobStore, hasLength(1), reason: 'the one the snapshot names stays');
   });
 
-  test('a replaced key: devices that held the old one take the new, and one that joins reads all', () async {
+  test('a replaced key: a device that held the old one takes the new, and one that joins reads all', () async {
     final log = _Log();
-    final account = ['k1'];
     await _device();
-    final a = _Keyed(account);
     Stores.snippet.put(snippet);
-    await LogSync(log, a).sync();
+    final sync = _sync(log);
+    await sync.sync();
 
-    // Another device, behind, holding k1 only.
-    final behind = _Keyed(account);
-
-    final sync = LogSync(log, a);
-    await sync.rotate(() => a.rotate('k2'));
+    // Another device, behind, holding the old key only.
+    final old = await _held();
+    await sync.rotate();
     expect(log.snap, isNotNull);
+    expect(await _held(), isNot(old));
     Stores.setting.timeout.put(21);
     await sync.sync();
 
     await _device();
-    await LogSync(log, behind).sync();
-    expect(behind.held.first, 'k2');
+    await _keychain(old);
+    await _sync(log).sync();
+    expect((await _held())!.split('\n').first, isNot(old));
     expect(Stores.setting.timeout.fetch(), 21);
     expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
 
     // A device that joins after has both keys from the account's file.
     await _device();
-    await LogSync(log, _Keyed(account)).sync();
+    await _keychain();
+    await _sync(log).sync();
     expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
     expect(Stores.setting.timeout.fetch(), 21);
   });
@@ -473,7 +503,7 @@ void main() {
     // Settings off here: taken as they came, not applied, and still in the
     // snapshot it writes (here as it replaces the key).
     await _device();
-    await _sync(log, settings: false).rotate(() async {});
+    await _sync(log, settings: false).rotate();
     expect(Stores.setting.timeout.fetch(), isNot(17));
     // The batches the snapshot covers are gone: a device joining now reads
     // the snapshot alone, and has the setting.
@@ -485,24 +515,24 @@ void main() {
 
   test('a large record carried on is sealed again under a key replaced here', () async {
     final log = _Log();
-    final account = ['k1'];
-    final big = 'x' * (SyncEngine.inlineMax + 1);
+    final big = 'x' * (_inlineMax + 1);
     await _device();
     Stores.setting.set('bigNote', big);
-    await LogSync(log, _Keyed(account)).sync();
+    await _sync(log).sync();
 
     // Settings off here: kept as they came, and in the snapshot the
     // replaced key writes.
     await _device();
-    final b = _Keyed(account);
-    await LogSync(log, b, carries: (c) => c != 'kv:setting' && c != 'theme').rotate(() => b.rotate('k2'));
+    await _sync(log, settings: false).rotate();
     final passed = SqliteDb.instance.select('SELECT d FROM sync_passed;').single['d'] as String;
     expect(passed, isNot(contains(r'$blob')));
 
     // A device holding the new key alone reads it from the snapshot.
+    final newest = (await _held())!.split('\n').first;
     log.floor = log.snap!.seq;
     await _device();
-    await LogSync(log, _Keyed(['k2'])).sync();
+    await _keychain(newest);
+    await _sync(log).sync();
     expect(Stores.setting.get<String>('bigNote'), big);
   });
 
@@ -547,7 +577,7 @@ void main() {
     await _sync(log).sync();
     final removals = [
       for (final (_, body) in log.batches)
-        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+        for (final op in (await _plain(body))['ops'] as List)
           if (op['c'] == SyncSkills.c && op['d'] == null) op,
     ];
     expect(removals, isEmpty);
@@ -574,12 +604,12 @@ void main() {
     // An edit of it where it is `aaaaaaaa1` lands on `bbbbbbbb2` here.
     final edit = _Log()..batches.addAll(log.batches);
     final h = syncTick(device: BigInt.from(99), last: '', nowMs: BigInt.from(SyncClock.now() + 1000));
-    edit.batches.add((edit.batches.length + 1, Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode({
+    edit.batches.add((edit.batches.length + 1, _batch({
       'v': 1,
       'ops': [
         {'c': 'snippet', 'id': 'aaaaaaaa1', 'h': h, 'd': {'id': 'aaaaaaaa1', 'name': 'deploy', 'script': 'make release'}},
       ],
-    }))))));
+    })));
     await _sync(edit).pull();
     expect(Stores.snippet.fetch().map((e) => (e.id, e.script)), [('bbbbbbbb2', 'make release')]);
 
@@ -592,7 +622,7 @@ void main() {
   test("a snapshot names the batch's blob for the same op, so the sweep keeps it", () async {
     final log = _Log();
     await _device();
-    Stores.setting.set('bigNote', 'y' * (SyncEngine.inlineMax + 1));
+    Stores.setting.set('bigNote', 'y' * (_inlineMax + 1));
     await _sync(log).sync();
     final named = log.blobStore.keys.single;
     log.blobStore[named] = (body: log.blobStore[named]!.body, at: DateTime.now().subtract(const Duration(days: 3)));
@@ -760,22 +790,18 @@ void main() {
 
     await _device();
     Stores.setting.serverStatusUpdateInterval.put(11);
-    var settings = true;
-    final sync = LogSync(
-      log,
-      _Clear(),
-      carries: (c) => settings || c != 'kv:setting',
-      write: (won) async {
-        // Switched off while this run reads.
-        settings = false;
-        await SyncAnnounce.write(won);
-      },
-    );
-    await sync.sync();
+    final announce = SyncRecords.announce;
+    addTearDown(() => SyncRecords.announce = announce);
+    SyncRecords.announce = (won, written) async {
+      // Switched off while this run reads.
+      await SyncCategory.settings.pref.set(false);
+      await announce?.call(won, written);
+    };
+    await _sync(log).sync();
 
     final sent = [
       for (final (_, body) in log.batches)
-        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List) '${op['c']}/${op['id']}',
+        for (final op in (await _plain(body))['ops'] as List) '${op['c']}/${op['id']}',
     ];
     expect(sent, contains('kv:setting/${Stores.setting.serverStatusUpdateInterval.key}'));
   });
@@ -817,7 +843,7 @@ void main() {
 
     final sent = [
       for (final (_, body) in log.batches)
-        for (final op in (jsonDecode(utf8.decode(gzip.decode(body))) as Map)['ops'] as List)
+        for (final op in (await _plain(body))['ops'] as List)
           if (op['c'] == PickedFiles.c) op,
     ];
     expect(sent, isEmpty);

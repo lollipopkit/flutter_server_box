@@ -29,19 +29,6 @@ class RemoteBackupPasswordMissing implements Exception {
   String toString() => l10n.remoteBackupPasswordRequired;
 }
 
-/// The backup password here does not open the sync key of [id]'s remote
-/// (`SyncKey`), and nothing changed here explains it: another device sealed
-/// it with another password. Nothing syncs there until the one here is it.
-class SyncPasswordMismatch implements Exception {
-  const SyncPasswordMismatch(this.id);
-
-  /// The key file's (`SyncKeyFile.id`).
-  final String id;
-
-  @override
-  String toString() => l10n.syncPasswordMismatch;
-}
-
 enum SSHErrType {
   unknown,
   connect,

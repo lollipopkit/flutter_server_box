@@ -6,7 +6,6 @@ import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m033_sync_record.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 
 List<Map<String, Object?>> _table() => [
   for (final row in SqliteDb.instance.select('PRAGMA table_info(sync_record);'))

@@ -13,17 +13,14 @@ import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/sync/category.dart';
 import 'package:server_box/core/sync/failure.dart';
 import 'package:server_box/core/sync/file_log.dart';
-import 'package:server_box/core/sync/key.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
-import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
-import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -251,13 +248,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (previous != pwd) {
       // First: the remotes' keys are still sealed with it, and a restart
       // before they are sealed again must still open them.
-      await SyncKey.passwordChanged(previous);
+      await SyncKeyring.passwordChanged(previous);
       await SecureStoreProps.bakPwd.write(pwd);
       // Sealed again now; the syncs then go on with it.
       unawaited(
-        SyncKey.recheck().whenComplete(() {
-          unawaited(LkcLogSync.sync());
-          unawaited(FileLogSync.sync());
+        SyncKeyring.recheck().whenComplete(() {
+          unawaited(lkcLog.sync());
+          unawaited(fileLog.sync());
           // Not to upload (the backup is sealed to the key): to clear what the
           // last one said of the password.
           if (_hasEnabledRemoteSync) bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
@@ -279,7 +276,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (ok != true || !context.mounted) return;
     // Only with the account's key open here: a new one is put beside it.
     try {
-      await LkcLogSync.key();
+      await lkcLog.key();
     } on SyncPasswordMismatch catch (e) {
       return Toast.show(e.toString());
     } catch (e, s) {
@@ -289,7 +286,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (!context.mounted || !await _onTapSetBakPwd(context)) return;
     lkcLoading.value = true;
     try {
-      await LkcLogSync.rotateKey();
+      await lkcLog.rotateKey();
       Toast.show(libL10n.success);
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
@@ -513,9 +510,9 @@ extension on _BackupPageState {
     try {
       // First: nothing of the account is listed while the password here does
       // not open its key.
-      final SyncKey key;
+      final SyncKeyHandle key;
       try {
-        key = await LkcLogSync.key(create: false);
+        key = await lkcLog.key(create: false);
       } on SyncKeyNotHere {
         return Toast.show(l10n.dirEmpty);
       }
@@ -545,7 +542,7 @@ extension on _BackupPageState {
           ? await sync.download(name: name, to: path)
           : await sync.downloadVersion(name: name, etag: picked.$1, to: path);
       if (fetched.missing) return Toast.show(l10n.dirEmpty);
-      final bytes = await key.openFresh(await File(path).readAsBytes());
+      final bytes = await key.open(sealed: await File(path).readAsBytes());
       if (context.mounted) await BackupService.restoreData(context, bytes);
     } on SyncPasswordMismatch catch (e) {
       // Said as the card above says it: no error to report.

@@ -9,7 +9,7 @@ import 'package:server_box/data/store/sync_recorder.dart';
 /// - `sync_passed`: what a category turned off here takes from the others,
 ///   kept for the snapshots this device writes.
 /// - The Agent's stores and the finished benchmarks sync: records now
-///   (`SyncRecorder.seed`, `seedRecords`).
+///   (`SyncedStores.seed`, `SyncRecorder.seedRecords`).
 /// - The logs are joined again: what was left out of them (the settings,
 ///   until now off unless turned on) goes out from every device.
 class SyncAllMigration implements SchemaMigration {
@@ -26,7 +26,7 @@ class SyncAllMigration implements SchemaMigration {
       'e TEXT NOT NULL, c TEXT NOT NULL, id TEXT NOT NULL, h TEXT NOT NULL, d TEXT NOT NULL, '
       'PRIMARY KEY (e, c, id)) WITHOUT ROWID;',
     );
-    SyncRecorder.seed();
+    SyncedStores.seed();
     SyncRecorder.seedRecords(BenchmarkStore.c, BenchmarkStore.finished());
     // As `LogSync.forget` and `SegmentSync.forget`: read again, everything
     // sent. The account and the store they are bound to stay.

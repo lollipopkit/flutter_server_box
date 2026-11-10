@@ -23,7 +23,7 @@ void main() {
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
-    SyncRecorder.install();
+    SyncedStores.install();
   });
 
   tearDown(() async {
@@ -102,7 +102,7 @@ void main() {
   });
 
   test('seeds from every sync root', () {
-    expect(SyncRecorder.roots.toSet(), Stores.syncedTables.toSet());
+    expect(SyncedStores.roots.toSet(), Stores.syncedTables.toSet());
   });
 
   test('the device id is made once and kept', () {
