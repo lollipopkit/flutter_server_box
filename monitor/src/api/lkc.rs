@@ -18,6 +18,17 @@ use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::lkc::{self, SignInView};
 
+/// None of it while LK Cloud is off (`Config::lkc`): as if it were not
+/// there.
+// TODO: rm with `Config::lkc`.
+macro_rules! require_on {
+    ($state:expr) => {
+        if !$state.config.lkc {
+            return Ok(HttpResponse::NotFound().build());
+        }
+    };
+}
+
 #[derive(Serialize)]
 struct Answer {
     /// `fl_lkc::User` (`LkcUser`); never a token.
@@ -27,11 +38,13 @@ struct Answer {
 
 /// Over a link that may act only: the answer names a person.
 pub async fn get(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
+    require_on!(state);
     require!(authz::acting_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&Answer { user: lkc::current(&state).await, sign_in: state.lkc.sign_in() }))
 }
 
 pub async fn start(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
+    require_on!(state);
     require!(authz::acting_caller(&req, &state).await);
     match lkc::start(&state).await {
         Ok(sign_in) => {
@@ -54,6 +67,7 @@ pub async fn start(req: HttpRequest, state: Arc<AppState>) -> Result<HttpRespons
 }
 
 pub async fn cancel(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
+    require_on!(state);
     require!(authz::acting_caller(&req, &state).await);
     if state.lkc.cancel() {
         Event::new(Kind::Admin, Action::Write, Outcome::Ok)
@@ -66,6 +80,7 @@ pub async fn cancel(req: HttpRequest, state: Arc<AppState>) -> Result<HttpRespon
 }
 
 pub async fn sign_out(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
+    require_on!(state);
     require!(authz::acting_caller(&req, &state).await);
     match lkc::sign_out(&state).await {
         Ok(signed_out) => {

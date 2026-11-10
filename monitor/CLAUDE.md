@@ -71,6 +71,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 - `.env` (DB URL, JWT secret, host/port, TLS) and `config.toml`. Sections are grouped by what they act on; the flat pre-Aug-2026 layout is not read (deliberate).
 - Capacities derive from physical memory unless set. `core/config_file.rs` writes atomically with backups; callers hold `AppState.config_write` across read-modify-write. API reads go to the file on disk, not `AppState.config`.
 - Env: `SBM_HOST`, `SBM_PORT`, `SBM_TLS_CERT`, `SBM_TLS_KEY`, `SBM_CORS_ORIGINS`, `DATABASE_URL`, `JWT_SECRET`, `RUST_LOG`.
+- LK Cloud (`lkc`) is off until it ships in ServerBox, as the app's `Lkc.enabled`: only `SBM_LKC=1` turns it on, at start, never through `config.toml` (TODO: remove `Config::lkc` then).
 
 ## Release
 

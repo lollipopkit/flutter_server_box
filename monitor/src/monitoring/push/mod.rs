@@ -319,7 +319,8 @@ pub async fn push_all(state: &AppState, alert: Alert<'_>) {
     // the operator named `lkc` does not share its budget.
     static LKC: OnceLock<PushRateLimiter> = OnceLock::new();
     let lkc = LKC.get_or_init(PushRateLimiter::new);
-    if lkc.check("lkc", rate_times, rate_window) && crate::lkc::push(state, alert).await {
+    // TODO: `state.config.lkc` goes once LK Cloud ships.
+    if state.config.lkc && lkc.check("lkc", rate_times, rate_window) && crate::lkc::push(state, alert).await {
         lkc.acquire("lkc");
     }
 }

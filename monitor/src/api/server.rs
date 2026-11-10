@@ -631,7 +631,7 @@ async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<
             .unwrap_or_default()
             .metrics_days,
         oldest_sample,
-        features: crate::api::machine::features(),
+        features: crate::api::machine::features(app_state.config.lkc),
         stacks: match caller {
             Some(_) => crate::stacks::store::all(&app_state.db)
                 .await
