@@ -53,11 +53,12 @@ account.
 ### Android
 
 ```bash
-dart run fl_build -p android
+make build-android
 ```
 
-Requires the Android SDK, a JDK, and a keystore for release signing. Release
-builds must use the keystore configured in `key.properties`. For local
+Requires the Android SDK, a JDK, and the 1Password CLI: release builds are
+signed with the key that `scripts/release/android-signing.sh` reads from
+1Password. For local
 verification only, pass `-PallowDebugReleaseSigning=true` explicitly to use
 debug signing. Reproducible and F-Droid builds use
 `-PallowUnsignedRelease=true`, which omits signing configuration;

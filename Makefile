@@ -136,10 +136,10 @@ build:
 		echo 'PLATFORM is required. Example: make build PLATFORM=android'; \
 		exit 1; \
 	fi
-	$(DART) run fl_build -p $(PLATFORM)
+	$(if $(findstring android,$(PLATFORM)),scripts/release/android-signing.sh) $(DART) run fl_build -p $(PLATFORM)
 
 build-android:
-	$(DART) run fl_build -p android
+	scripts/release/android-signing.sh $(DART) run fl_build -p android
 
 build-ios:
 	$(DART) run fl_build -p ios

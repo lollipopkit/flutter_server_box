@@ -50,10 +50,10 @@ dart run fl_build -p ios
 ### Android
 
 ```bash
-dart run fl_build -p android
+make build-android
 ```
 
-需要 Android SDK、JDK 和用于 release signing 的 keystore。Release build 必须使用 `key.properties` 中配置的 keystore。仅本地验证时，才显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。可重现构建和 F-Droid 构建使用 `-PallowUnsignedRelease=true`，不配置任何签名；`scripts/release/android-build-env.sh` 会导出此选项。
+需要 Android SDK、JDK 和 1Password CLI：release build 使用 `scripts/release/android-signing.sh` 从 1Password 读取的签名 key。仅本地验证时，才显式传入 `-PallowDebugReleaseSigning=true` 使用 debug signing。可重现构建和 F-Droid 构建使用 `-PallowUnsignedRelease=true`，不配置任何签名；`scripts/release/android-build-env.sh` 会导出此选项。
 
 ### macOS
 

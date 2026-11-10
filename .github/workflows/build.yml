@@ -518,6 +518,10 @@ jobs:
       github.ref_type == 'tag'
       || contains(needs.reproducibilityCheck.outputs.selected, ',android,')
     needs: reproducibilityCheck
+    # The release key's 1Password token is a secret of environment `release`,
+    # which only `v*` tags (created by admins alone, a ruleset) may use: a
+    # workflow pushed to a branch cannot read it.
+    environment: ${{ github.ref_type == 'tag' && 'release' || '' }}
     # From pubspec.yaml's `fl_build:`, by way of the job above — see its
     # `appName`
     # output. Job level rather than workflow level because that is the
@@ -570,19 +574,11 @@ jobs:
       - name: Build
         shell: bash
         run: scripts/release/build-fdroid.sh ${{ matrix.abi }}
-      # After the build, not before: with `key.properties` present Gradle signs
-      # the release itself, and the unsigned APK above is never produced.
-      - name: Fetch secrets
-        # Through the environment, and quoted. Expanded into the script the way
-        # they were, a space or a shell metacharacter in either value is parsed
-        # as script rather than as part of the value.
-        env:
-          BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
-          URL_PREFIX: ${{ secrets.URL_PREFIX }}
-        run: |
-          set -euo pipefail
-          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
-          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
+      - name: Install 1Password CLI
+        if: github.ref_type == 'tag'
+        uses: 1password/install-cli-action@1a3160d5e9de1ae0803eaa08a88746f5ae3daa50 # v4.1.0
+        with:
+          version: 2.42.0
       # Signing adds a signing block and touches no entry, which is what lets
       # F-Droid copy the signature onto its own build to compare the two.
       # `--alignment-preserved` keeps the entries where Gradle put them; the
@@ -593,6 +589,7 @@ jobs:
         shell: bash
         env:
           ABI: ${{ matrix.abi }}
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           set -euo pipefail
           case "$ABI" in
@@ -604,33 +601,33 @@ jobs:
           unsigned="build/app/outputs/apk/release/$unsigned"
           out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
 
-          prop() {
-            sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
-              tail -n 1 | tr -d '\r'
-          }
-          store_file="$(prop storeFile)"
-          key_alias="$(prop keyAlias)"
-          KS_PASS="$(prop storePassword)"
-          KEY_PASS="$(prop keyPassword)"
-          echo "::add-mask::$KS_PASS"
-          echo "::add-mask::$KEY_PASS"
-          export KS_PASS KEY_PASS
-          # Relative to the app module, as Gradle's `file()` resolved it.
-          [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
-
           mkdir -p "$(dirname "$out")"
-          "$APKSIGNER" sign \
-            --ks "$store_file" \
-            --ks-key-alias "$key_alias" \
-            --ks-pass env:KS_PASS \
-            --key-pass env:KEY_PASS \
+          sign='"$APKSIGNER" sign \
+            --ks "$SBX_KEYSTORE" \
+            --ks-key-alias "$SBX_KEY_ALIAS" \
+            --ks-pass env:SBX_KEYSTORE_PASSWORD \
+            --key-pass env:SBX_KEY_PASSWORD \
             --alignment-preserved \
             --v1-signing-enabled false \
             --v2-signing-enabled true \
             --v3-signing-enabled false \
             --v4-signing-enabled false \
-            --out "$out" \
-            "$unsigned"
+            --out "$1" \
+            "$2"'
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            # `op run` masks the passwords in anything printed.
+            scripts/release/android-signing.sh sh -c "$sign" sh "$out" "$unsigned"
+          else
+            # Off a tag the release key is out of reach: a key made for this
+            # run, so the APK still installs for a test.
+            export SBX_KEYSTORE="$RUNNER_TEMP/throwaway.p12" SBX_KEY_ALIAS=throwaway
+            export SBX_KEYSTORE_PASSWORD=throwaway SBX_KEY_PASSWORD=throwaway
+            keytool -genkeypair -keystore "$SBX_KEYSTORE" -storetype PKCS12 \
+              -storepass:env SBX_KEYSTORE_PASSWORD -keypass:env SBX_KEY_PASSWORD \
+              -alias "$SBX_KEY_ALIAS" -keyalg EC -groupname secp384r1 \
+              -dname CN=throwaway -validity 1 >/dev/null
+            sh -c "$sign" sh "$out" "$unsigned"
+          fi
           "$APKSIGNER" verify "$out"
 
           entries() {
