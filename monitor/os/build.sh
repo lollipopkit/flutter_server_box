@@ -82,6 +82,9 @@ fi
 cp "$repo/monitor/install.sh" "$pkg/install.sh"
 
 mkdir -p "$OUT"
+# Absolute: `docker run -v` takes a relative source for a volume name, and the
+# image would go there instead.
+OUT="$(cd "$OUT" && pwd)"
 owner="$(id -u):$(id -g)"
 if [ "$FLAVOR" = musl ]; then
 	name="sbOS_musl_$ARCH"
