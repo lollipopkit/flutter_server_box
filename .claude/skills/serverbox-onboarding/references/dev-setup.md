@@ -146,7 +146,8 @@ cd monitor/frontend && npm run dev
 make build PLATFORM=<android|ios|macos|linux|windows>   # dart run fl_build -p ...
 ```
 
-- **Android release builds use the real keystore from `key.properties`.** The
+- **Android release builds take the key from 1Password** through
+  `scripts/release/android-signing.sh` (`make build-android`). The
   debug-signing fallback exists for local verification and has to be asked for
   explicitly with `-PallowDebugReleaseSigning=true`. Never use it for a release
   artifact.

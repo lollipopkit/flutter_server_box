@@ -52,6 +52,7 @@ app.*.map.json
 /android/app/release
 
 /android/app/fjy.androidstudio.key
+# TODO: remove with the old plaintext signing files.
 /android/app/app.key
 /release
 test.dart

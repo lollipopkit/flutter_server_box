@@ -12,18 +12,15 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-} else {
-    System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
+// The release key, from 1Password: `scripts/release/android-signing.sh`.
+def releaseStoreFilePath = System.getenv('SBX_KEYSTORE')?.trim()
+def releaseStorePassword = System.getenv('SBX_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('SBX_KEY_ALIAS')?.trim()
+def releaseKeyPassword = System.getenv('SBX_KEY_PASSWORD')
+// TODO: remove once no checkout keeps the old plaintext key.properties.
+if (rootProject.file('key.properties').exists()) {
+    System.err.println(' [!] android/key.properties is no longer read; the key is in 1Password. Delete it.')
 }
-
-def releaseStoreFilePath = keystoreProperties['storeFile']?.toString()?.trim()
-def releaseStorePassword = keystoreProperties['storePassword']?.toString()?.trim()
-def releaseKeyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
-def releaseKeyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
 
 def hasReleaseSigning =
     releaseStoreFilePath &&
@@ -68,7 +65,7 @@ if (requiresReleaseSigning && !hasReleaseSigning) {
         System.err.printf(" [!] Release signing is intentionally disabled for a reproducible/F-Droid build. \n")
     } else {
         throw new GradleException(
-            'Release signing is not configured. Add key.properties with a valid storeFile, ' +
+            'Release signing is not configured. Build through scripts/release/android-signing.sh, ' +
             'build with -PallowDebugReleaseSigning=true for local verification, ' +
             'or set -PallowUnsignedRelease=true for a reproducible/F-Droid build.'
         )
