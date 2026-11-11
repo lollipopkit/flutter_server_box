@@ -636,7 +636,7 @@ extension on _SharesPageState {
   Future<void> _setPassword(String user) async {
     final password = TextEditingController();
     final repeated = TextEditingController();
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.sharingSetPassword,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -685,7 +685,7 @@ extension on _SharesPageState {
     var timeMachine = original?.timeMachine ?? false;
     var recycle = original?.recycle ?? false;
     final users = [...?original?.users];
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: original == null ? l10n.sharingAddShare : l10n.sharingEdit,
       child: StatefulBuilder(
         builder: (context, setDialogState) => SizedBox(
@@ -798,7 +798,7 @@ extension on _SharesPageState {
       ])
         _NfsClientDraft(client),
     ];
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: original == null ? l10n.sharingAddExport : l10n.sharingEdit,
       child: StatefulBuilder(
         builder: (context, setDialogState) => SizedBox(
@@ -893,7 +893,7 @@ extension on _SharesPageState {
   ];
 
   Future<bool> _confirm(String title, String body) async =>
-      await context.showRoundDialog<bool>(
+      await context.showSheet<bool>(
         title: libL10n.attention,
         child: Text(body),
         actions: Btnx.cancelRedOk,

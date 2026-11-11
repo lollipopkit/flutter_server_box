@@ -472,7 +472,7 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
         (s) => s.data?.capabilities.hardwareRevertPending ?? false,
       ),
     );
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: revertPending
           ? l10n.virtHwRevertPendingTitle
           : l10n.virtHwRevertAll,
@@ -726,7 +726,7 @@ extension _GuestActions on _VirtGuestViewState {
   /// Asks, then acts. The action that loses the guest's unsaved state is
   /// asked in red.
   Future<void> _onPower(VirtGuest guest, VirtPowerAction action) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('${action.label} ${guest.name}')),
       actions: action.destructive ? Btnx.cancelRedOk : Btnx.cancelOk,

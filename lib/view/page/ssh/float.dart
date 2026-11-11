@@ -118,7 +118,7 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
                 onSecondaryTapUp: (_, _) => unawaited(_clipboardAction()),
                 onCopied: _onCopied,
                 onCopyFailed: (e, s) =>
-                    context.showErrDialog(e, s, libL10n.copy),
+                    context.showErrSheet(e, s, libL10n.copy),
                 onSelectAll: () =>
                     _termKey.currentState?.renderTerminal.selectAll(),
                 autofocus: false,

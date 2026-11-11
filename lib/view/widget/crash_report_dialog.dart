@@ -24,21 +24,21 @@ abstract final class CrashReportDialog {
   /// False only when the user dropped it, which is what the caller needs to
   /// know: the row that opened this stops existing at that point.
   static Future<bool> show(BuildContext context, String report) async {
-    final action = await context.showRoundDialog<_ReportAction>(
+    final action = await context.showSheet<_ReportAction>(
       title: l10n.crashReportTitle,
       child: _ReportBody(report: report),
       actionsBuilder: (ctx) => [
         Btn.text(
           text: libL10n.delete,
-          onTap: () => ctx.popDialog(_ReportAction.drop),
+          onTap: () => ctx.popSheet(_ReportAction.drop),
         ),
         Btn.text(
           text: libL10n.copy,
-          onTap: () => ctx.popDialog(_ReportAction.copy),
+          onTap: () => ctx.popSheet(_ReportAction.copy),
         ),
         Btn.text(
           text: l10n.crashReportSubmit,
-          onTap: () => ctx.popDialog(_ReportAction.submit),
+          onTap: () => ctx.popSheet(_ReportAction.submit),
         ),
       ],
     );

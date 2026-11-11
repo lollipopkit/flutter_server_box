@@ -18,7 +18,7 @@ Future<({String current, String next})?> askMonitorPasswordChange(
   final current = TextEditingController();
   final first = TextEditingController();
   final second = TextEditingController();
-  final ok = await context.showRoundDialog<bool>(
+  final ok = await context.showSheet<bool>(
     title: l10n.monitorChangePassword,
     child: DisposeWith(
       notifiers: [current, first, second],
@@ -47,7 +47,7 @@ Future<({String current, String next})?> askMonitorPasswordChange(
             icon: Icons.password,
             obscureText: true,
             suggestion: false,
-            onSubmitted: (_) => context.popDialog(true),
+            onSubmitted: (_) => context.popSheet(true),
           ),
         ],
       ),

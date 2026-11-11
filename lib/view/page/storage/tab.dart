@@ -365,7 +365,7 @@ extension _Sessions on _FileTabPageState {
     final tab = _sessions.tabs.elementAtOrNull(index - 1);
     if (tab == null) return;
 
-    final confirm = await context.showRoundDialog<bool>(
+    final confirm = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text('${libL10n.close} ${tab.name} ?'),
       actions: Btnx.okReds,

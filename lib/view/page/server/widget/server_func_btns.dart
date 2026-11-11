@@ -482,7 +482,7 @@ void runServerFunc(
           Toast.show(libL10n.empty);
           return;
         }
-        final snippets = await context.showPickWithTagDialog<Snippet>(
+        final snippets = await context.showPickWithTagSheet<Snippet>(
           title: libL10n.snippet,
           tags: snippetState.tags.vn,
           itemsBuilder: (e) {
@@ -677,14 +677,14 @@ Future<void> confirmAndRunSnippet(
     Toast.error(e.message);
     return;
   }
-  final sure = await context.showRoundDialog<bool>(
+  final sure = await context.showSheet<bool>(
     title: libL10n.attention,
     child: SingleChildScrollView(
       child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
     ),
     actions: [
       CountDownBtn(
-        onTap: () => context.popDialog(true),
+        onTap: () => context.popSheet(true),
         text: libL10n.run,
         afterColor: Colors.red,
       ),

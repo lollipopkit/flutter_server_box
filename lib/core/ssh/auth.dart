@@ -57,7 +57,7 @@ abstract final class KeyboardInteractiveAuth {
 
     _activeRequest = queued;
     try {
-      final pendingResponses = await _showDialog(
+      final pendingResponses = await _showSheet(
         queued.spi,
         queued.request,
         preferredContext: queued.preferredContext,
@@ -194,7 +194,7 @@ abstract final class KeyboardInteractiveAuth {
     ).toLowerCase().replaceAll(RegExp(r'[\s:：]+'), ' ').trim();
   }
 
-  static Future<List<String>?> _showDialog(
+  static Future<List<String>?> _showSheet(
     Spi spi,
     SSHUserInfoRequest request, {
     BuildContext? preferredContext,
@@ -215,10 +215,10 @@ abstract final class KeyboardInteractiveAuth {
     final instruction = _sanitize(request.instruction);
     final title = requestName.isNotEmpty ? requestName : libL10n.authRequired;
 
-    return await context.showRoundDialog<List<String>>(
+    return await context.showSheet<List<String>>(
       title: title,
       titleMaxLines: 2,
-      barrierDismiss: false,
+      dismissible: false,
       childBuilder: (dialogContext) {
         onDismissReady(() {
           if (!dialogContext.mounted) return;

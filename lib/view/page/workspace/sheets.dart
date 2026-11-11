@@ -102,22 +102,24 @@ extension _Sheets on _WorkspaceTabState {
     final ws = _state.all.elementAtOrNull(index);
     if (ws == null) return;
     final ctrl = TextEditingController(text: ws.name);
-    final name = await context.showRoundDialog<String>(
+    final name = await context.showSheet<String>(
       title: libL10n.rename,
-      child: Input(
-        controller: ctrl,
-        autoFocus: true,
-        onSubmitted: (v) => context.popDialog(v.trim()),
+      child: DisposeWith(
+        notifiers: [ctrl],
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          onSubmitted: (v) => context.popSheet(v.trim()),
+        ),
       ),
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () => context.popDialog(ctrl.text.trim()),
+          onPressed: () => context.popSheet(ctrl.text.trim()),
           child: Text(libL10n.ok),
         ),
       ],
     );
-    ctrl.dispose();
     if (name != null && name.isNotEmpty) _ws.rename(index, name);
   }
 

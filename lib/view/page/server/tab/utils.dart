@@ -79,7 +79,6 @@ extension _Actions on _ServerPageState {
         srv,
         // Anchor the menu to the pressed row when possible.
         at: at ?? (sheet ? null : contextMenuAnchorBelow(ctx)),
-        sheet: sheet,
         // Said inside the menu only where the menu is not beside the thing it
         // is about: a sheet is at the bottom of the window, and a 44pt tile
         // has no room for identifying information beyond the name. A card or

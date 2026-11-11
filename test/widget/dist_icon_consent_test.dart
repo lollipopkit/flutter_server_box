@@ -50,11 +50,13 @@ void main() {
   testWidgets('the README is what goes up', (tester) async {
     await tester.pumpWidget(_app((_) {}));
     await tester.tap(find.text('ask'));
+    // A route's first frame is the start of its slide in.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // The asset load is a future; give it a frame to land.
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(PromptSheet), findsOneWidget);
     // Lines only the README has, so a fallback to the short notice fails here.
     expect(find.textContaining('CC BY-SA'), findsWidgets);
     expect(find.textContaining('nominative use'), findsWidgets);
@@ -68,6 +70,8 @@ void main() {
     bool? answer;
     await tester.pumpWidget(_app((v) => answer = v));
     await tester.tap(find.text('ask'));
+    // A route's first frame is the start of its slide in.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     final ok = find.byType(TextButton).last;
@@ -75,7 +79,7 @@ void main() {
     await tester.tap(ok);
     await tester.pump(const Duration(milliseconds: 300));
     expect(answer, isNull, reason: 'a tap during the pause answers nothing');
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(PromptSheet), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     expect(tester.widget<TextButton>(find.byType(TextButton).last).onPressed,
@@ -86,13 +90,15 @@ void main() {
     bool? answer;
     await tester.pumpWidget(_app((v) => answer = v));
     await tester.tap(find.text('ask'));
+    // A route's first frame is the start of its slide in.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(seconds: 3));
     await tester.tap(find.byType(TextButton).last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(PromptSheet), findsNothing);
     expect(answer, isTrue);
   });
 
@@ -102,12 +108,14 @@ void main() {
     bool? answer;
     await tester.pumpWidget(_app((v) => answer = v));
     await tester.tap(find.text('ask'));
+    // A route's first frame is the start of its slide in.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text(libL10n.cancel));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(PromptSheet), findsNothing);
     expect(answer, isFalse);
   });
 
@@ -117,12 +125,14 @@ void main() {
     bool? answer;
     await tester.pumpWidget(_app((v) => answer = v));
     await tester.tap(find.text('ask'));
+    // A route's first frame is the start of its slide in.
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tapAt(const Offset(10, 10));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(PromptSheet), findsNothing);
     expect(answer, isFalse);
   });
 }

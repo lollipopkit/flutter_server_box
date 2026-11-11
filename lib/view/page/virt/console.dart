@@ -550,7 +550,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
   /// this connection only, kept nowhere.
   Future<void> _askVncPassword() async {
     final ctrl = TextEditingController();
-    final password = await context.showRoundDialog<String>(
+    final password = await context.showSheet<String>(
       title: 'VNC ${libL10n.pwd}',
       childBuilder: (dialogContext) => DisposeWith(
         notifiers: [ctrl],
@@ -560,14 +560,14 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
           obscureText: true,
           autoFocus: true,
           suggestion: false,
-          onSubmitted: (value) => dialogContext.popDialog(value),
+          onSubmitted: (value) => dialogContext.popSheet(value),
         ),
       ),
       actionsBuilder: (dialogContext) => [
         Btn.cancel(),
         Btn.text(
           text: l10n.connect,
-          onTap: () => dialogContext.popDialog(ctrl.text),
+          onTap: () => dialogContext.popSheet(ctrl.text),
         ),
       ],
     );

@@ -175,7 +175,7 @@ Future<_Place?> _pickPlace(BuildContext context, WidgetRef ref) async {
       if (state.servers[id] case final spi? when canTransferTo(ref, spi)) spi,
   ];
 
-  return context.showRoundDialog<_Place>(
+  return context.showSheet<_Place>(
     title: libL10n.select,
     child: SingleChildScrollView(
       child: Column(
@@ -184,13 +184,13 @@ Future<_Place?> _pickPlace(BuildContext context, WidgetRef ref) async {
           Btn.tile(
             icon: const Icon(Icons.smartphone),
             text: libL10n.device,
-            onTap: () => context.popDialog(const _Device()),
+            onTap: () => context.popSheet(const _Device()),
           ),
           for (final spi in servers)
             Btn.tile(
               icon: const Icon(Icons.dns),
               text: spi.name,
-              onTap: () => context.popDialog(_Server(spi)),
+              onTap: () => context.popSheet(_Server(spi)),
             ),
         ],
       ),

@@ -382,7 +382,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final alwaysRecursive = Stores.setting.sftpRmrDir.fetch();
     var recursive = alwaysRecursive;
     final hasDir = entries.any((e) => e.isDir);
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (_, setState) => Column(
@@ -465,7 +465,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // shape underneath the answer.
     final alwaysRecursive = Stores.setting.sftpRmrDir.fetch();
     var recursive = alwaysRecursive;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (_, setState) => Column(
@@ -803,7 +803,7 @@ enum _SortBy {
 ///
 /// The controller has to outlive the `await` that opened the dialog. Created
 /// beside it and disposed in a `finally`, it was torn out from under a field
-/// that is still mounted: `showRoundDialog` returns when the route is popped,
+/// that is still mounted: `showSheet` returns when the route is popped,
 /// not when it has finished going away, and `autoFocus` leaves an implicit
 /// animation running in the decoration for another 167ms. Rebuilding that
 /// against a disposed controller is "Tried to build dirty widget in the wrong
@@ -833,7 +833,7 @@ class _NameFieldState extends State<_NameField> {
 
   /// Answers with the trimmed name, from the field's own context — the dialog
   /// is on the root navigator, and this is inside it.
-  void _submit() => context.popDialog(_controller.text.trim());
+  void _submit() => context.popSheet(_controller.text.trim());
 
   @override
   Widget build(BuildContext context) {

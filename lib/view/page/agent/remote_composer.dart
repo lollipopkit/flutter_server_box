@@ -131,7 +131,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
       final saved = await client.saveAgentPermissions(view.permissions.copyWith(defaultMode: mode));
       RemoteAgentTasks.setDefaultMode(serverId, saved.permissions.mode);
     } catch (e) {
-      if (mounted) context.showErrDialog(e);
+      if (mounted) context.showErrSheet(e);
     } finally {
       if (mounted) setState(() => _savingMode = false);
     }
@@ -141,7 +141,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
     final choices = _choices;
     if (choices == null || choices.models.isEmpty) return;
     final current = _effectiveModel;
-    final picked = await context.showRoundDialog<MonitorAgentModel>(
+    final picked = await context.showSheet<MonitorAgentModel>(
       title: llmL10n.model,
       childBuilder: (dialogContext) => SizedBox(
         width: 360,

@@ -165,7 +165,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // In iCloud Keychain: gone from every device.
     if (await SecureStoreProps.bakPwd.inSyncedStore()) {
       if (!mounted) return;
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: libL10n.delete,
         child: Text(l10n.backupPasswordRemoveSynced),
         actions: Btnx.cancelRedOk,
@@ -185,7 +185,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     final e = bakSync.lastFailure.value;
     if (e == null) return true;
     if (mounted) {
-      context.showRoundDialog(
+      context.showSheet(
         title: libL10n.fail,
         child: Text(syncFailureText(e) ?? '$e'),
         actions: Btnx.oks,
@@ -202,7 +202,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     final currentPwd = await SecureStoreProps.bakPwd.read();
     final controller = TextEditingController(text: currentPwd ?? '');
     final node = FocusNode();
-    final result = await context.showRoundDialog<bool>(
+    final result = await context.showSheet<bool>(
       title: l10n.backupPassword,
       // Both disposed by the tree. The focus node has the same problem the
       // controller does — the field holds it while the route animates out —
@@ -220,7 +220,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               controller: controller,
               node: node,
               obscureText: true,
-              onSubmitted: (_) => context.popDialog(true),
+              onSubmitted: (_) => context.popSheet(true),
             ),
           ],
         ),
@@ -229,7 +229,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         if (currentPwd?.isNotEmpty ?? false)
           TextButton(
             onPressed: () {
-              context.popDialog();
+              context.popSheet();
               unawaited(_onTapDeleteBakPwd());
             },
             child: Text(libL10n.delete, style: const TextStyle(color: Colors.red)),
@@ -269,7 +269,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   /// A new key and a new backup password together: a device that still knows
   /// the password reads the new key from LK Cloud.
   Future<void> _onTapRotateSyncKey(BuildContext context) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.syncKeyRotate,
       actions: Btnx.cancelRedOk,
     );
@@ -297,7 +297,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   void _showLkcErr(Object e, StackTrace s, String operation) {
     final err = e is LkcSyncError ? e.exception : e;
-    context.showErrDialog(
+    context.showErrSheet(
       err is LkcException ? err.text(libL10n) : err,
       s,
       operation,
@@ -352,7 +352,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       leading: const Icon(MingCute.code_line),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        final data = await context.showImportDialog(
+        final data = await context.showImportSheet(
           title: libL10n.snippet,
           modelDef: Snippet.example.toJson(),
         );
@@ -361,12 +361,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         try {
           str = utf8.decode(data);
         } on FormatException catch (e, s) {
-          context.showErrDialog(e, s, libL10n.error);
+          context.showErrSheet(e, s, libL10n.error);
           return;
         }
         final text = str.trim();
         if (!await _routeImport(context, text)) return;
-        final (list, _) = await context.showLoadingDialog(
+        final (list, _) = await context.showLoadingSheet(
           fn: () => compute((s) => json.decode(s) as List, text),
         );
         if (list == null || list.isEmpty || !context.mounted) return;
@@ -385,7 +385,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         if (errs.isNotEmpty) {
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.error,
             child: SingleChildScrollView(child: Text(errs.join('\n'))),
           );
@@ -395,7 +395,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         // The dialog answers; the page acts on the answer, and closes
         // itself. Doing both from the button meant two pops in a row from a
         // callback that can see two navigators.
-        final confirmed = await context.showRoundDialog<bool>(
+        final confirmed = await context.showSheet<bool>(
           title: libL10n.attention,
           child: SingleChildScrollView(
             child: Text(
@@ -438,14 +438,14 @@ extension on _BackupPageState {
       await BackupService.restoreFromText(context, text);
       return false;
     }
-    final (isBackup, err) = await context.showLoadingDialog(
+    final (isBackup, err) = await context.showLoadingSheet(
       fn: () => compute(BackupReader.isBackup, text),
     );
     // A context that has been deactivated cannot open the dialog every caller
-    // leads with, and `showLoadingDialog` closes the one it was reading behind
+    // leads with, and `showLoadingSheet` closes the one it was reading behind
     // on its own, so this is reachable.
     if (!context.mounted) return false;
-    // Reported by `showLoadingDialog` in a dialog of its own already; throwing
+    // Reported by `showLoadingSheet` in a dialog of its own already; throwing
     // it raised a second one for the same failure.
     if (err != null) return false;
     if (isBackup != true) return true;
@@ -466,7 +466,7 @@ extension on _BackupPageState {
       final files = await SyncRemotes.webdav.list();
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
-      final fileName = await context.showPickSingleDialog(
+      final fileName = await context.showPickSingleSheet(
         title: libL10n.restore,
         items: files,
       );
@@ -477,7 +477,7 @@ extension on _BackupPageState {
       if (!context.mounted) return;
       await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.restore);
+      context.showErrSheet(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
       if (mounted) remoteLoading.value = false;
@@ -495,7 +495,7 @@ extension on _BackupPageState {
       await SyncRemotes.webdav.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.upload);
+      context.showErrSheet(e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
       if (mounted) remoteLoading.value = false;
@@ -530,7 +530,7 @@ extension on _BackupPageState {
 
       String when(String at) =>
           DateTime.tryParse(at)?.toLocal().ymdhms() ?? at;
-      final picked = await context.showPickSingleDialog(
+      final picked = await context.showPickSingleSheet(
         title: libL10n.restore,
         items: items,
         display: (e) => e.$3 ? '${when(e.$2)} ✓' : when(e.$2),
@@ -562,7 +562,7 @@ extension on _BackupPageState {
     final pwd = TextEditingController(text: SyncRemotes.webdavPwd);
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
-    final result = await context.showRoundDialog<bool>(
+    final result = await context.showSheet<bool>(
       title: 'WebDAV',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -586,7 +586,7 @@ extension on _BackupPageState {
             controller: pwd,
             node: nodePwd,
             suggestion: false,
-            onSubmitted: (_) => context.popDialog(true),
+            onSubmitted: (_) => context.popSheet(true),
           ),
         ],
       ),
@@ -609,7 +609,7 @@ extension on _BackupPageState {
         // The server it names is shown.
         _webdavEdited.value++;
       } catch (e, s) {
-        context.showErrDialog(e, s, 'Webdav');
+        context.showErrSheet(e, s, 'Webdav');
       }
     }
     url.dispose();
@@ -620,7 +620,7 @@ extension on _BackupPageState {
   }
 
   void _onBulkImportServers(BuildContext context) async {
-    final data = await context.showImportDialog(
+    final data = await context.showImportSheet(
       title: libL10n.server,
       // `pve` beside the server's own fields: it is a table of its own, not
       // part of `Spi`, and this is the one place the import shape is shown.
@@ -631,14 +631,14 @@ extension on _BackupPageState {
     try {
       text = utf8.decode(data);
     } on FormatException catch (e, s) {
-      context.showErrDialog(e, s, libL10n.error);
+      context.showErrSheet(e, s, libL10n.error);
       return;
     }
 
     try {
       text = text.trim();
       if (!await _routeImport(context, text)) return;
-      final (spis, err) = await context.showLoadingDialog(
+      final (spis, err) = await context.showLoadingSheet(
         fn: () => compute((String val) {
           final list = json.decode(val) as List;
           return [
@@ -648,13 +648,13 @@ extension on _BackupPageState {
         }, text),
       );
       if (err != null || spis == null) return;
-      final sure = await context.showRoundDialog<bool>(
+      final sure = await context.showSheet<bool>(
         title: libL10n.import,
         child: Text(libL10n.askContinue('${spis.length} ${libL10n.server}')),
         actions: Btnx.oks,
       );
       if (sure == true) {
-        final (suc, err) = await context.showLoadingDialog(
+        final (suc, err) = await context.showLoadingSheet(
           fn: () async {
             final usedIds = <String>{};
             for (final (:spi, :pve) in spis) {
@@ -677,7 +677,7 @@ extension on _BackupPageState {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
-      if (context.mounted) context.showErrDialog(e, s, libL10n.import);
+      if (context.mounted) context.showErrSheet(e, s, libL10n.import);
       Loggers.app.warning('Import servers failed', e, s);
     }
   }
@@ -688,16 +688,16 @@ extension on _BackupPageState {
 
     // Remote backups contain credentials and private keys, so encryption is
     // mandatory rather than an optional warning.
-    final result = await context.showRoundDialog<bool>(
+    final result = await context.showSheet<bool>(
       title: l10n.backupPassword,
       child: Text(l10n.remoteBackupPasswordRequired, style: UIs.textGrey),
       actions: [
         TextButton(
-          onPressed: () => context.popDialog(false),
+          onPressed: () => context.popSheet(false),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popSheet(true),
           child: Text(libL10n.setting),
         ),
       ],

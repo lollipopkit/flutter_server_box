@@ -481,7 +481,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
   }
 
   Future<void> _run(VirtBackupJob job) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.virtBackupJobRunAsk),
       actions: Btnx.cancelOk,

@@ -43,7 +43,7 @@ Future<TerminalSession?> showSnippetRun(
   // — see [DisposeWith].
   final running = ValueNotifier(true);
 
-  final carryOn = await context.showRoundDialog<bool>(
+  final carryOn = await context.showSheet<bool>(
     title: snippet.name,
     contentPadding: const EdgeInsets.fromLTRB(11, 11, 11, 0),
     child: DisposeWith(
@@ -61,12 +61,12 @@ Future<TerminalSession?> showSnippetRun(
         listenable: running,
         builder: () => TextButton(
           onPressed: running.value
-              ? () => context.popDialog(true)
+              ? () => context.popSheet(true)
               : null,
           child: Text(l10n.continueInTerminal),
         ),
       ),
-      Btn.ok(onTap: () => context.popDialog(false)),
+      Btn.ok(onTap: () => context.popSheet(false)),
     ],
   );
 

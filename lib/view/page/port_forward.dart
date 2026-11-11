@@ -40,7 +40,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
     if (!Feature.portForward.beta) return;
     if (Stores.setting.portForwardBetaWarned.fetch()) return;
     var noMore = false;
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.attention,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -175,15 +175,15 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 
   void _onAdd() {
-    _showConfigDialog(null);
+    _showConfigSheet(null);
   }
 
   void _onEdit(PortForwardConfig config) {
-    _showConfigDialog(config);
+    _showConfigSheet(config);
   }
 
   void _onDelete(PortForwardConfig config) async {
-    final sure = await context.showRoundDialog<bool>(
+    final sure = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(context.l10n.portForward_deleteConfirmFmt(config.name)),
       actions: Btnx.cancelOk,
@@ -193,10 +193,11 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
     }
   }
 
-  void _showConfigDialog(PortForwardConfig? existing) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _PortForwardConfigDialog(
+  void _showConfigSheet(PortForwardConfig? existing) {
+    showResizableSheet<void>(
+      context,
+      restLimit: PromptSheet.restLimit,
+      builder: (ctx) => _PortForwardConfigSheet(
         existing: existing,
         serverId: widget.args.spi.id,
         kinds: portForwardKinds(ref.read(serverProvider(widget.args.spi.id))),
@@ -225,7 +226,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 }
 
-class _PortForwardConfigDialog extends StatefulWidget {
+class _PortForwardConfigSheet extends StatefulWidget {
   final PortForwardConfig? existing;
   final String serverId;
 
@@ -237,7 +238,7 @@ class _PortForwardConfigDialog extends StatefulWidget {
   final String? listenUnavailable;
   final Future<void> Function(PortForwardConfig config) onSave;
 
-  const _PortForwardConfigDialog({
+  const _PortForwardConfigSheet({
     required this.existing,
     required this.serverId,
     required this.kinds,
@@ -246,11 +247,11 @@ class _PortForwardConfigDialog extends StatefulWidget {
   });
 
   @override
-  State<_PortForwardConfigDialog> createState() =>
-      _PortForwardConfigDialogState();
+  State<_PortForwardConfigSheet> createState() =>
+      _PortForwardConfigSheetState();
 }
 
-class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
+class _PortForwardConfigSheetState extends State<_PortForwardConfigSheet> {
   late final TextEditingController nameController;
   late final TextEditingController localHostController;
   late final TextEditingController localPortController;
@@ -290,9 +291,13 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return PromptSheet(
       title: Text(widget.existing == null ? libL10n.add : libL10n.edit),
-      content: SingleChildScrollView(
+      actions: [
+        Btn.cancel(),
+        Btn.ok(onTap: _onSave),
+      ],
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -348,10 +353,6 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
           ],
         ),
       ),
-      actions: [
-        Btn.cancel(),
-        Btn.ok(onTap: _onSave),
-      ],
     );
   }
 

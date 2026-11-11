@@ -47,7 +47,7 @@ class BackupService {
         data: {'to': kind},
       );
       if (context.mounted) {
-        context.showErrDialog(e, s, libL10n.backup);
+        context.showErrSheet(e, s, libL10n.backup);
       }
     }
   }
@@ -79,7 +79,7 @@ class BackupService {
   static Future<void> restoreData(BuildContext context, List<int> data) async {
     // A synced backup, sealed to a sync key this device keeps.
     if (SyncKeyring.sealedToKey(Uint8List.fromList(data))) {
-      final (plain, err) = await context.showLoadingDialog(
+      final (plain, err) = await context.showLoadingSheet(
         fn: () => SyncKeyring.openKept(Uint8List.fromList(data)),
       );
       if (plain == null || err != null || !context.mounted) return;
@@ -117,7 +117,7 @@ class BackupService {
     List<int> data,
     String? password,
   ) async {
-    final (opened, err) = await context.showLoadingDialog(
+    final (opened, err) = await context.showLoadingSheet(
       // A slow device takes its time over the key derivation.
       timeout: null,
       fn: () async {
@@ -133,7 +133,7 @@ class BackupService {
     final backup = opened.backup;
     if (!context.mounted) return _Opened.failed;
     if (backup == null) {
-      context.showErrDialog('${libL10n.empty}: ${libL10n.backup}', null, libL10n.restore);
+      context.showErrSheet('${libL10n.empty}: ${libL10n.backup}', null, libL10n.restore);
       return _Opened.failed;
     }
     await _confirmAndRestore(context, backup);
@@ -142,15 +142,15 @@ class BackupService {
 
   /// Asks whether to try another password after a wrong one.
   static Future<bool> _askRetry(BuildContext context) async {
-    final retry = await context.showRoundDialog<bool>(
+    final retry = await context.showSheet<bool>(
       title: l10n.backupPasswordWrong,
       actions: [
         TextButton(
-          onPressed: () => context.popDialog(false),
+          onPressed: () => context.popSheet(false),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popSheet(true),
           child: Text(libL10n.retry),
         ),
       ],
@@ -164,7 +164,7 @@ class BackupService {
     (Mergeable, String) backup,
   ) async {
     if (!context.mounted) return;
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.restore,
       child: Text(
         libL10n.askContinue(
@@ -204,7 +204,7 @@ class BackupService {
               }
             } catch (e, s) {
               close();
-              if (context.mounted) context.showErrDialog(e, s, libL10n.restore);
+              if (context.mounted) context.showErrSheet(e, s, libL10n.restore);
             }
           },
         ),
@@ -229,7 +229,7 @@ class BackupService {
     String? hint,
   }) async {
     final controller = TextEditingController(text: initial ?? '');
-    final result = await context.showRoundDialog<String>(
+    final result = await context.showSheet<String>(
       title: title ?? libL10n.pwd,
       // Disposed by the tree: this future completes on the pop, and the
       // field is still there while the route animates out.
@@ -244,7 +244,7 @@ class BackupService {
               label: l10n.backupPassword,
               controller: controller,
               obscureText: true,
-              onSubmitted: (_) => context.popDialog(controller.text),
+              onSubmitted: (_) => context.popSheet(controller.text),
             ),
           ],
         ),
@@ -252,7 +252,7 @@ class BackupService {
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () => context.popDialog(controller.text),
+          onPressed: () => context.popSheet(controller.text),
           child: Text(libL10n.ok),
         ),
       ],

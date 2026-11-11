@@ -371,7 +371,7 @@ extension _HomePageNav on _HomePageState {
   /// back where it was. A terminal that was closed takes its scrollback with
   /// it, and whatever was still running in it.
   Future<void> _confirmCloseAllTerminals() async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue(

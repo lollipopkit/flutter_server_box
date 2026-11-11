@@ -2,7 +2,7 @@ part of '../entry.dart';
 
 extension _Editor on _AppSettingsPageState {
   Future<void> _pickEditorTheme(SqliteProp<String> property) async {
-    final selected = await context.showPickSingleDialog(
+    final selected = await context.showPickSingleSheet(
       title: libL10n.theme,
       items: themeMap.keys.toList(),
       display: (p0) => p0,
@@ -149,10 +149,10 @@ extension _Editor on _AppSettingsPageState {
   void _showFontSizeDialog(SqliteProp<double> property) {
     final ctrl = TextEditingController(text: property.fetch().toString());
     void onSave() {
-      context.popDialog();
+      context.popSheet();
       final fontSize = double.tryParse(ctrl.text);
       if (fontSize == null) {
-        context.showRoundDialog(
+        context.showSheet(
           title: libL10n.fail,
           child: Text('${libL10n.invalid}: ${ctrl.text}'),
         );
@@ -161,7 +161,7 @@ extension _Editor on _AppSettingsPageState {
       property.set(fontSize);
     }
 
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.fontSize,
       child: Input(
         controller: ctrl,

@@ -214,7 +214,7 @@ extension on _CustomCmdsPageState {
   }
 
   Future<void> _onDelete(int idx) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(libL10n.cmd, _cmds![idx].name)),
       actions: Btnx.cancelRedOk,
@@ -231,7 +231,7 @@ extension on _CustomCmdsPageState {
   /// The dialog's own buttons close the dialog; this is the caller, and it is
   /// on the page, so it is the one that may pop the page.
   Future<void> _confirmDiscard() async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.goBackQ),
       actions: Btnx.cancelRedOk,
@@ -256,7 +256,7 @@ extension on _CustomCmdsPageState {
     while (true) {
       final nameCtrl = TextEditingController(text: nameText);
       final cmdCtrl = TextEditingController(text: cmdText);
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: initial == null ? libL10n.add : libL10n.edit,
         child: DisposeWith(
           notifiers: [nameCtrl, cmdCtrl],

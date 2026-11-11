@@ -47,7 +47,11 @@ void main() {
       for (var i = 0; i < 5; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      if (until == null ? round >= 3 : until.evaluate().isNotEmpty) return;
+      if (until == null ? round >= 3 : until.evaluate().isNotEmpty) {
+        // Found while it may still be sliding in: past its transition.
+        await tester.pump(const Duration(milliseconds: 300));
+        return;
+      }
     }
   }
 

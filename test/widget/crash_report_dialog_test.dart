@@ -8,7 +8,7 @@ import 'package:server_box/view/widget/crash_report_dialog.dart';
 /// The report is reached from a settings page now rather than from a toast, and
 /// that move is what these are about.
 ///
-/// `showRoundDialog` puts the dialog on the **root** navigator while the page
+/// `showSheet` puts the dialog on the **root** navigator while the page
 /// that opened it is on another, so a button that pops the wrong one closes the
 /// page, leaves the dialog on screen and never completes the future the caller
 /// is waiting on — which here decides whether the row that opened it stays.

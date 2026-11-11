@@ -463,7 +463,7 @@ final anySelected = find.textContaining(
     });
 
     testWidgets('the name dialog survives being answered', (tester) async {
-      // The crash this covers was on the way *out*: `showRoundDialog` returns
+      // The crash this covers was on the way *out*: `showSheet` returns
       // when the route is popped, not when it has finished going away, so a
       // controller disposed right after the `await` was pulled out from under
       // a field still animating its decoration — "Tried to build dirty widget
@@ -797,7 +797,7 @@ final anySelected = find.textContaining(
       tester,
     ) async {
       // The way out is the barrier: `Btnx.okReds` is one button, so there is
-      // no Cancel to press, and `showRoundDialog` is barrier-dismissible by
+      // no Cancel to press, and `showSheet` is barrier-dismissible by
       // default. A dismissed dialog answers null, which is not `true`.
       final backend = threeFiles();
 

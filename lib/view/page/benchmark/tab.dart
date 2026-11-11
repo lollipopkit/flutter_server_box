@@ -400,12 +400,12 @@ extension _Actions on _BenchmarkTabPageState {
     }
     // The sheet goes first, or the result is pushed underneath it: the sheet
     // was raised on the root navigator and this pushes on the tab's.
-    if (inSheet) context.popDialog();
+    if (inSheet) context.popSheet();
     BenchmarkResultPage.route.go(context, run);
   }
 
   Future<void> _onDelete(BenchmarkRun run) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.benchmarkDeleteConfirm),
       actions: Btnx.cancelRedOk,

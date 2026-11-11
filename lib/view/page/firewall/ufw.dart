@@ -490,7 +490,7 @@ extension on _UfwViewState {
         suggestion: false,
       );
 
-      final submitted = await context.showRoundDialog<bool>(
+      final submitted = await context.showSheet<bool>(
         title: l10n.firewallAddRule,
         child: DisposeWith(
           notifiers: [

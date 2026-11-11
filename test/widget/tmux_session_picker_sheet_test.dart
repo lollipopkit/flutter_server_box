@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart' show PromptSheet;
 import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -81,7 +82,7 @@ void main() {
     await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(PromptSheet), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), ' work ');
     await tester.pump();
@@ -110,9 +111,9 @@ void main() {
     await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    // The dialog is above the sheet on the root navigator; the sheet goes
-    // first, as when the page under it is torn down.
-    final sheet = ModalRoute.of(tester.element(find.byType(BottomSheet)))!;
+    // The name's sheet is above the picker on the root navigator; the picker
+    // goes first, as when the page under it is torn down.
+    final sheet = ModalRoute.of(tester.element(find.byType(BottomSheet).first))!;
     Navigator.of(context).removeRoute(sheet);
     await tester.pump();
     expect(await future, isNull);
@@ -121,7 +122,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.takeException(), isNull);
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(PromptSheet), findsNothing);
   });
 
   testWidgets('prefills a non-conflicting session name', (tester) async {

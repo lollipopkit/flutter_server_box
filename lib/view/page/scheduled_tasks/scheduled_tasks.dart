@@ -890,7 +890,7 @@ extension on _ScheduledTasksPageState {
   Future<void> _deleteTask(CronJob task) async {
     final catalog = _catalog;
     if (catalog == null) return;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.delFmt(
@@ -934,7 +934,7 @@ extension on _ScheduledTasksPageState {
   Future<void> _showRaw(CronCatalog catalog) async {
     final raw = catalog.document.render();
     final scheme = Theme.of(context).colorScheme;
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.scheduledTaskRaw,
       child: SizedBox(
         // The dialog is as wide as it is allowed to be, which on a phone is

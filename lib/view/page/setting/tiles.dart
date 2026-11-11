@@ -25,7 +25,7 @@ final class LocaleTile extends StatelessWidget {
       leading: const Icon(IonIcons.language),
       title: Text(label),
       onTap: () async {
-        final selected = await context.showPickSingleDialog(
+        final selected = await context.showPickSingleSheet(
           title: label,
           items: AppLocalizations.supportedLocales,
           display: (p0) => p0.nativeName,
@@ -98,7 +98,7 @@ final class UpdateIntervalTile extends StatelessWidget {
       leading: const Icon(Icons.timer_outlined),
       title: Text(label),
       onTap: () async {
-        final val = await context.showPickSingleDialog(
+        final val = await context.showPickSingleSheet(
           title: label,
           items: [0, for (var i = 2; i <= 10; i++) i],
           initial: prop.fetch(),
@@ -133,7 +133,7 @@ final class MotionPrefTile extends StatelessWidget {
       leading: const Icon(Icons.animation),
       title: Text(label),
       onTap: () async {
-        final selected = await context.showPickSingleDialog(
+        final selected = await context.showPickSingleSheet(
           title: label,
           items: MotionPref.values,
           display: _name,

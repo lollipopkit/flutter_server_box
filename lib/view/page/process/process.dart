@@ -298,7 +298,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
         BarAction(
           icon: Icons.error_outline,
           label: _parseFailureMessage(parseIssue.failure),
-          onTap: () => context.showRoundDialog(
+          onTap: () => context.showSheet(
             title: libL10n.error,
             child: Text(_parseFailureMessage(parseIssue.failure)),
             actions: [
@@ -1089,7 +1089,7 @@ extension _ProcessPageActions on _ProcessPageState {
     ProcSignal signal,
   ) async {
     final action = _signalLabel(signal, system, withName: true);
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('$action ${row.name} (${row.proc.pid})')),
       actions: Btnx.cancelRedOk,
@@ -1106,7 +1106,7 @@ extension _ProcessPageActions on _ProcessPageState {
     // command instead, which has to run as the command.
     final entry = system == SystemType.windows ? null : 'sh';
 
-    var (outcome, _) = await context.showLoadingDialog(
+    var (outcome, _) = await context.showLoadingSheet(
       fn: () => _runKill((exec) => exec.run(command, entry: entry)),
     );
     if (!mounted || outcome == null) return;
@@ -1139,7 +1139,7 @@ extension _ProcessPageActions on _ProcessPageState {
       context,
       spi.id,
       label: spi.ssh?.user,
-      attempt: (password) async => (await context.showLoadingDialog(
+      attempt: (password) async => (await context.showLoadingSheet(
         fn: () => _runExec(
           (exec) => PrivilegedExec.run(
             exec,

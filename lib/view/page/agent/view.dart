@@ -97,7 +97,7 @@ class _AdHocSessionsButton extends ConsumerWidget {
 
 /// The connections the Agent opened on its own, each with a way to close it.
 void _showAdHocSessions(BuildContext context) {
-  context.showRoundDialog(
+  context.showSheet(
     title: context.l10n.agentAdHocSessions,
     child: Consumer(
       builder: (context, ref, _) {

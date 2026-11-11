@@ -692,20 +692,20 @@ abstract final class ServiceUi {
     try {
       command = await notifier.commandFor(unit, action);
     } catch (e, s) {
-      if (context.mounted) context.showErrDialog(e, s, libL10n.fail);
+      if (context.mounted) context.showErrSheet(e, s, libL10n.fail);
       return;
     }
     if (command == null || !context.mounted) return;
 
     if (action.destructive) {
-      final sure = await context.showRoundDialog<bool>(
+      final sure = await context.showSheet<bool>(
         title: libL10n.attention,
         child: SimpleMarkdown(data: '```shell\n$command\n```'),
         actions: [
           Btn.cancel(),
           CountDownBtn(
             seconds: 3,
-            onTap: () => context.popDialog(true),
+            onTap: () => context.popSheet(true),
             text: libL10n.ok,
             afterColor: Colors.red,
           ),
@@ -721,7 +721,7 @@ abstract final class ServiceUi {
       context,
       spi.id,
       label: spi.ssh?.user,
-      attempt: (password) async => (await context.showLoadingDialog(
+      attempt: (password) async => (await context.showLoadingSheet(
         fn: () => notifier.runAction(unit, action, password: password),
         timeout: timeout,
       )).$1,

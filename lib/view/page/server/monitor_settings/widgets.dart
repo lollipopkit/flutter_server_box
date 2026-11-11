@@ -84,7 +84,7 @@ abstract final class MonitorUi {
   /// Whether unsaved edits may be dropped, asked before a page with them is
   /// left.
   static Future<bool> confirmDiscard(BuildContext context) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.discardUnsaved),
       actions: Btnx.cancelRedOk,

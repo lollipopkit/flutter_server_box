@@ -195,7 +195,7 @@ class _GeoDataTileState extends State<_GeoDataTile> {
   }
 
   Future<void> _remove() async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.geoData,
       child: Text(libL10n.askContinue(libL10n.delete)),
       actions: Btnx.cancelRedOk,
@@ -205,7 +205,7 @@ class _GeoDataTileState extends State<_GeoDataTile> {
     Diag.crumb(SbDiag.globe, removed ? 'data removed' : 'data remove failed');
     await _refresh();
     if (!removed && mounted) {
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.fail,
         child: Text(l10n.geoDataRemoveFailed),
         actions: Btnx.oks,

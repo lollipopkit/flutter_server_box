@@ -147,7 +147,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
     final controller = TextEditingController(text: title)
       ..selection = TextSelection(baseOffset: 0, extentOffset: title.length);
     // Disposed with the field, not when the dialog answers. See [DisposeWith].
-    final next = await context.showRoundDialog<String>(
+    final next = await context.showSheet<String>(
       title: context.l10n.askAiRenameConversation,
       childBuilder: (dialogContext) => DisposeWith(
         notifiers: [controller],
@@ -170,7 +170,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
   }
 
   Future<void> _delete(ChatMeta chat) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: context.l10n.askAiDeleteConversationTitle,
       child: Text(context.l10n.askAiDeleteConversationTip),
       actionsBuilder: (dialogContext) => [
@@ -187,7 +187,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
   }
 
   Future<void> _deleteRemote(RemoteTaskRef ref, String title, String server) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: context.l10n.askAiDeleteConversationTitle,
       child: Text(context.l10n.agentDeleteRemoteTip(server)),
       actionsBuilder: (dialogContext) => [
@@ -230,7 +230,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
   }
 
   Future<void> _clear() async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: context.l10n.agentClearHistoryTitle,
       child: Text(context.l10n.agentClearHistoryTip),
       actionsBuilder: (dialogContext) => [

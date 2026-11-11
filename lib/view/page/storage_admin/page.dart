@@ -844,7 +844,7 @@ extension on _StoragePageState {
   ) async {
     final controller = TextEditingController();
     try {
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: title,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -882,7 +882,7 @@ extension on _StoragePageState {
       TextEditingController(),
       TextEditingController(),
     ];
-    final form = await context.showRoundDialog<bool>(
+    final form = await context.showSheet<bool>(
       title: l10n.storageFormat,
       child: StatefulBuilder(
         builder: (context, setDialogState) => Column(
@@ -951,7 +951,7 @@ extension on _StoragePageState {
     );
     var persist = true;
     var own = true;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.storageMount,
       child: StatefulBuilder(
         builder: (context, setDialogState) => Column(
@@ -986,7 +986,7 @@ extension on _StoragePageState {
 
   Future<void> _unlock(BlockDevice device) async {
     final controller = TextEditingController();
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.storageUnlock,
       child: Input(
         controller: controller,
@@ -1045,7 +1045,7 @@ extension on _StoragePageState {
         choices.firstWhereOrNull((choice) => choice.value == value)?.minimum ?? 1;
     var layout = raid ? '1' : 'mirror';
     final selected = <String>{};
-    final result = await context.showRoundDialog<bool>(
+    final result = await context.showSheet<bool>(
       title: raid ? l10n.storageCreateRaid : l10n.storageCreatePool,
       child: StatefulBuilder(
         builder: (context, setDialogState) => SizedBox(
@@ -1112,7 +1112,7 @@ extension on _StoragePageState {
     final free = _view == null ? <BlockDevice>[] : _free(_view!);
     if (free.isEmpty) return null;
     var path = free.first.path;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: title,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1199,7 +1199,7 @@ extension on _StoragePageState {
   }
 
   Future<void> _showHealth(DiskHealth health) async {
-    await context.showRoundDialog<void>(
+    await context.showSheet<void>(
       title: l10n.storageDetails,
       child: SizedBox(
         width: 620,
@@ -1228,7 +1228,7 @@ extension on _StoragePageState {
         Btn.text(
           text: l10n.storageLongTest,
           onTap: () {
-            context.popDialog();
+            context.popSheet();
             unawaited(_runAction(
               StorageAction.smartTest(device: health.device, long: true),
               l10n.storageLongTest,
@@ -1236,7 +1236,7 @@ extension on _StoragePageState {
             ));
           },
         ),
-        Btn.text(text: libL10n.ok, onTap: context.popDialog),
+        Btn.text(text: libL10n.ok, onTap: context.popSheet),
       ],
     );
   }

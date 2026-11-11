@@ -140,7 +140,7 @@ extension on _ServerDetailPageState {
     // whoever is on it. The dialog names the ResetType actually chosen, not the
     // intent, because they differ — a "restart" is ForceRestart on hardware
     // that has no graceful one, and that is worth seeing before agreeing.
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: _bmcIntentText(intent),
       child: Text(l10n.bmcPowerConfirm(srv.spi.name, request.resetType)),
       actions: Btnx.cancelRedOk,

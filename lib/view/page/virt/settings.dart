@@ -298,7 +298,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   }
 
   Future<void> _onTemplate(VirtHardware hw) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Column(
         mainAxisSize: MainAxisSize.min,

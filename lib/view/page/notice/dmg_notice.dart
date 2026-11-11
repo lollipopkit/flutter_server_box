@@ -36,14 +36,14 @@ abstract final class DmgNotice {
   /// The whole of it. Reachable from the settings page for good, so the one
   /// line above never has to carry the explanation itself.
   static Future<void> show(BuildContext context) {
-    return context.showRoundDialog(
+    return context.showSheet(
       title: l10n.macDmgTitle,
       child: SingleChildScrollView(child: SimpleMarkdown(data: l10n.macDmgBody)),
       actions: [
         Btn.text(
           text: libL10n.download,
           onTap: () {
-            context.popDialog();
+            context.popSheet();
             // Whatever the update check resolved for this machine, which on
             // macOS is the DMG for this architecture; the releases page when
             // no check has run yet.
@@ -138,7 +138,7 @@ abstract final class SandboxImportNotice {
     if (!result.needsExplaining) return;
 
     final denied = result == SandboxImportResult.denied;
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.macDmgTitle,
       child: Text(denied ? l10n.macDmgImportDenied : l10n.macDmgImportFailed),
       actions: [
@@ -146,7 +146,7 @@ abstract final class SandboxImportNotice {
           Btn.text(
             text: libL10n.setting,
             onTap: () {
-              context.popDialog();
+              context.popSheet();
               // Full Disk Access. macOS decides whether one app may read
               // another's container, and only the user can change that answer.
               'x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles'
@@ -157,7 +157,7 @@ abstract final class SandboxImportNotice {
           Btn.text(
             text: libL10n.restore,
             onTap: () {
-              context.popDialog();
+              context.popSheet();
               BackupPage.route.go(context);
             },
           ),

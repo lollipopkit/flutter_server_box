@@ -183,6 +183,7 @@ void main() {
     }
 
     await tester.tap(find.text('open'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     // OpenRC without root: sudo's password, asked for up front.
     expect(find.text(l10n.monitorUpdateSudoPassword), findsOneWidget);

@@ -640,7 +640,7 @@ extension on _FirewalldViewState {
     ];
     final ctrl = TextEditingController();
     var query = '';
-    return context.showRoundDialog<String>(
+    return context.showSheet<String>(
       title: l10n.firewallServices,
       child: DisposeWith(
         notifiers: [ctrl],
@@ -676,7 +676,7 @@ extension on _FirewalldViewState {
                           subtitle: ports.isEmpty
                               ? null
                               : Text(ports, style: monoStyle),
-                          onTap: () => context.popDialog(name),
+                          onTap: () => context.popSheet(name),
                         );
                       },
                     ),

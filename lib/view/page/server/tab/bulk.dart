@@ -52,13 +52,13 @@ extension _Bulk on _ServerPageState {
   /// Adds rather than replaces: a tag is one of the things a server is, and a
   /// bulk edit that cleared the others would be a way to lose them quietly.
   Future<void> _bulkTag() async {
-    final tag = await context.showRoundDialog<String>(
+    final tag = await context.showSheet<String>(
       title: libL10n.tag,
       child: Input(
         autoFocus: true,
         type: TextInputType.text,
         hint: libL10n.tag,
-        onSubmitted: (value) => context.popDialog(value.trim()),
+        onSubmitted: (value) => context.popSheet(value.trim()),
       ),
       actions: Btn.cancel().toList,
     );
@@ -73,7 +73,7 @@ extension _Bulk on _ServerPageState {
       try {
         await notifier.updateServer(spi, spi.copyWith(tags: tags));
       } catch (e, st) {
-        if (mounted) context.showErrDialog(e, st);
+        if (mounted) context.showErrSheet(e, st);
         return;
       }
     }
@@ -130,7 +130,7 @@ extension _Bulk on _ServerPageState {
   /// The one that cannot be undone, so it says how many.
   Future<void> _bulkDelete() async {
     final count = _selected.length;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue('${libL10n.delete} ${libL10n.server}($count)'),
@@ -144,7 +144,7 @@ extension _Bulk on _ServerPageState {
       try {
         await notifier.delServer(id);
       } catch (e, st) {
-        if (mounted) context.showErrDialog(e, st);
+        if (mounted) context.showErrSheet(e, st);
         return;
       }
     }

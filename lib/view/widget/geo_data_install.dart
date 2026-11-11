@@ -68,7 +68,7 @@ abstract final class GeoDataInstall {
 
     final installed = GeoData.shared.installed();
     if (installed != null && installed.generated == manifest.generated) {
-      await context.showRoundDialog(
+      await context.showSheet(
         title: l10n.geoData,
         child: Text(l10n.geoDataCurrent(manifest.generated)),
         actions: Btnx.oks,
@@ -102,12 +102,14 @@ abstract final class GeoDataInstall {
     final progress = ValueNotifier((0, manifest.downloadBytes));
     // Not awaited here: this dialog is closed from below rather than by a
     // button, so waiting on it would wait for the thing this has to close.
-    final closed = context.showRoundDialog(
+    VoidCallback? close;
+    final closed = context.showSheet(
+      onShown: (c) => close = c,
       title: l10n.geoData,
       child: _Progress(progress: progress),
       // No actions. Cancelling mid-download would leave a directory half
       // written, which `install` only cleans up on a failure it saw.
-      barrierDismiss: false,
+      dismissible: false,
     );
     try {
       return await GeoData.shared.install(
@@ -115,7 +117,9 @@ abstract final class GeoDataInstall {
         onProgress: (got, total) => progress.value = (got, total),
       );
     } finally {
-      if (context.mounted) context.popDialog();
+      // Its own handle: the page may be gone, and something raised over it
+      // meanwhile is not what ends here.
+      close?.call();
       // **After the route has gone, not after `pop` was called.** A dialog's
       // future completes when its route is removed, and the exit transition
       // runs first — so disposing here left the outgoing `_Progress` listening
@@ -144,7 +148,7 @@ abstract final class GeoDataInstall {
     BuildContext context,
     GeoManifest manifest,
   ) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.geoData,
       child: SingleChildScrollView(
         child: SimpleMarkdown(
@@ -159,13 +163,13 @@ abstract final class GeoDataInstall {
       ),
       actions: [
         Btn.cancel(),
-        CountDownBtn(text: libL10n.ok, onTap: () => context.popDialog(true)),
+        CountDownBtn(text: libL10n.ok, onTap: () => context.popSheet(true)),
       ],
     );
     return ok == true;
   }
 
-  static Future<void> _fail(BuildContext context) => context.showRoundDialog(
+  static Future<void> _fail(BuildContext context) => context.showSheet(
     title: libL10n.fail,
     child: Text(l10n.geoDataUnreachable),
     actions: Btnx.oks,

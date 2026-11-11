@@ -870,7 +870,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   /// change written without a restart waits for. Asked first, with the
   /// guests on it named: they lose their link meanwhile.
   Future<void> _restart(VirtNetwork net) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.virtNetRestart,
       child: Text(
         net.users.isEmpty
@@ -886,7 +886,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   /// Stopping one with guests on it cuts them off: asked first.
   Future<void> _setActive(VirtNetwork net, bool active) async {
     if (!active && net.users.isNotEmpty) {
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: libL10n.attention,
         child: Text(l10n.virtNetStopAsk(net.name, net.users.length)),
         actions: Btnx.cancelRedOk,
@@ -897,7 +897,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   }
 
   Future<void> _delete(VirtNetwork net, VirtCapabilities caps) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         caps.networkApply
@@ -1069,7 +1069,7 @@ class VirtNetworkPendingCard extends ConsumerWidget {
   }
 
   static Future<void> _showDiff(BuildContext context, VirtNetworkChanges c) =>
-      context.showRoundDialog<void>(
+      context.showSheet<void>(
         title: l10n.virtNetPendingTitle(c.node),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -1086,7 +1086,7 @@ class VirtNetworkPendingCard extends ConsumerWidget {
     WidgetRef ref,
     VirtNetworkChanges c,
   ) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.virtNetApply,
       child: Text(l10n.virtNetApplyAsk(c.node)),
       actions: Btnx.cancelRedOk,
@@ -1100,7 +1100,7 @@ class VirtNetworkPendingCard extends ConsumerWidget {
     WidgetRef ref,
     VirtNetworkChanges c,
   ) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.virtHwRevert,
       child: Text(l10n.virtNetRevertAsk(c.node)),
       actions: Btnx.cancelRedOk,

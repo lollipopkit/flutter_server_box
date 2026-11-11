@@ -22,7 +22,7 @@ abstract final class StoreUnreadableNotice {
       StoreUnreadableReason.vaultFailed => l10n.storeUnreadableVaultFailed,
     };
     // Kept on a barrier tap or back: only a button says it was read.
-    final read = await context.showRoundDialog<bool>(
+    final read = await context.showSheet<bool>(
       title: l10n.storeUnreadableTitle,
       child: SingleChildScrollView(
         child: Column(
@@ -42,7 +42,7 @@ abstract final class StoreUnreadableNotice {
         Btn.text(
           text: libL10n.restore,
           onTap: () {
-            context.popDialog(true);
+            context.popSheet(true);
             BackupPage.route.go(context);
           },
         ),

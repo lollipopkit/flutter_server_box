@@ -112,7 +112,7 @@ class _DesktopSettingsPageState extends ConsumerState<DesktopSettingsPage> {
 
   Future<void> _pickReadings() async {
     final picked = {..._setting.trayMetrics.fetch()};
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.trayReadings,
       child: StatefulBuilder(
         builder: (_, setState) => Column(
@@ -170,7 +170,7 @@ class _DesktopSettingsPageState extends ConsumerState<DesktopSettingsPage> {
       for (final m in TrayMetric.values)
         if (m.chartable) m.name,
     ];
-    final picked = await context.showRoundDialog<String>(
+    final picked = await context.showSheet<String>(
       title: l10n.trayChart,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -184,7 +184,7 @@ class _DesktopSettingsPageState extends ConsumerState<DesktopSettingsPage> {
               trailing: (current?.name ?? '') == (name ?? '')
                   ? const Icon(Icons.check, size: 18)
                   : null,
-              onTap: () => context.popDialog(name ?? ''),
+              onTap: () => context.popSheet(name ?? ''),
             ),
         ],
       ),

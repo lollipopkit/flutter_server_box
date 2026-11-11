@@ -37,7 +37,7 @@ abstract final class ServerShareUi {
     if (probe.carriesSecret && !await AppAuth.confirm()) return;
     if (!context.mounted) return;
 
-    final carrier = await context.showRoundDialog<ShareCarrier>(
+    final carrier = await context.showSheet<ShareCarrier>(
       title: l10n.shareVia,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -58,13 +58,13 @@ abstract final class ServerShareUi {
             title: const Text('QR'),
             subtitle: fits ? null : Text(l10n.shareTooBigForQr),
             enabled: fits,
-            onTap: () => context.popDialog(ShareCarrier.qr),
+            onTap: () => context.popSheet(ShareCarrier.qr),
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.file_present),
             title: Text(libL10n.file),
-            onTap: () => context.popDialog(ShareCarrier.file),
+            onTap: () => context.popSheet(ShareCarrier.file),
           ),
         ],
       ),
@@ -84,50 +84,53 @@ abstract final class ServerShareUi {
     final code = ServerShareCodec.generateCode();
     final share = ServerShare.of(spi, ttl: ShareCarrier.qr.ttl);
 
-    final (text, err) = await context.showLoadingDialog(
+    final (text, err) = await context.showLoadingSheet(
       fn: () => ServerShareCodec.encodeAsync(share, code, ShareCarrier.qr),
     );
     if (text == null || err != null || !context.mounted) return;
 
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.share,
-      child: ConstrainedBox(
-        // Without a cap the hint's intrinsic width sets the dialog's, and the
-        // QR fills whatever it is given — on a desktop window that is a code
-        // the height of the screen. A max, so a narrow phone still gets less.
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              QrView(
-                data: text,
-                tip: spi.name,
-                tip2: '${libL10n.server} ~ ServerBox',
-                // The other device is in the room and reads this off a
-                // screen, so nothing is going to scuff the symbol. What
-                // decides whether it can be read is how many camera pixels
-                // land on a module, and L is two versions fewer than M.
-                errorCorrectLevel: QrErrorCorrectLevel.L,
-              ),
-              UIs.height13,
-              Text(l10n.shareCodeTitle, style: UIs.text13Grey),
-              SelectableText(
-                // Spaced, because this is read out loud and `114447` is not.
-                code.split('').join(' '),
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2,
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          // Without a cap the hint's intrinsic width sets the dialog's, and the
+          // QR fills whatever it is given — on a desktop window that is a code
+          // the height of the screen. A max, so a narrow phone still gets less.
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QrView(
+                  data: text,
+                  tip: spi.name,
+                  tip2: '${libL10n.server} ~ ServerBox',
+                  // The other device is in the room and reads this off a
+                  // screen, so nothing is going to scuff the symbol. What
+                  // decides whether it can be read is how many camera pixels
+                  // land on a module, and L is two versions fewer than M.
+                  errorCorrectLevel: QrErrorCorrectLevel.L,
                 ),
-              ),
-              UIs.height13,
-              Text(l10n.shareCodeHint, style: UIs.text13Grey),
-              Text(
-                l10n.shareQrTip(ShareCarrier.qr.ttl!.inMinutes),
-                style: UIs.text13Grey,
-              ),
-            ],
+                UIs.height13,
+                Text(l10n.shareCodeTitle, style: UIs.text13Grey),
+                SelectableText(
+                  // Spaced, because this is read out loud and `114447` is not.
+                  code.split('').join(' '),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                  ),
+                ),
+                UIs.height13,
+                Text(l10n.shareCodeHint, style: UIs.text13Grey),
+                Text(
+                  l10n.shareQrTip(ShareCarrier.qr.ttl!.inMinutes),
+                  style: UIs.text13Grey,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -140,7 +143,7 @@ abstract final class ServerShareUi {
     if (pwd == null || !context.mounted) return;
 
     final share = ServerShare.of(spi);
-    final (text, err) = await context.showLoadingDialog(
+    final (text, err) = await context.showLoadingSheet(
       fn: () => ServerShareCodec.encodeAsync(share, pwd, ShareCarrier.file),
     );
     if (text == null || err != null) return;
@@ -156,7 +159,7 @@ abstract final class ServerShareUi {
       await file.writeAsString(text);
       await Pfs.sharePaths(paths: [file.path], title: spi.name);
     } catch (e, s) {
-      if (context.mounted) context.showErrDialog(e, s, libL10n.share);
+      if (context.mounted) context.showErrSheet(e, s, libL10n.share);
       Loggers.app.warning('Share server as file', e, s);
     } finally {
       // On mobile the sheet is done with the file by the time `sharePaths`
@@ -234,8 +237,8 @@ abstract final class ServerShareUi {
       if (password == null || !context.mounted) return;
     }
 
-    // Caught inside `fn` rather than let out. `showLoadingDialog` answers a
-    // throw by popping its spinner and raising `showErrDialog` itself, so an
+    // Caught inside `fn` rather than let out. `showLoadingSheet` answers a
+    // throw by popping its spinner and raising `showErrSheet` itself, so an
     // exception that escapes is reported twice — the raw object first, then
     // the sentence [_errorText] wrote for it. A mistyped digit showed
     // `Exception: Failed to decrypt: incorrect password or corrupted data`
@@ -243,7 +246,7 @@ abstract final class ServerShareUi {
     // with `ServerShareExpiredException`. Anything still escaping is the
     // dialog's own timeout, which has no better message than the raw one.
     Object? decodeErr;
-    final (share, _) = await context.showLoadingDialog<ServerShare?>(
+    final (share, _) = await context.showLoadingSheet<ServerShare?>(
       fn: () async {
         try {
           return await ServerShareCodec.decodeAsync(text, password: password);
@@ -261,7 +264,7 @@ abstract final class ServerShareUi {
     }
 
     final existing = ServerShareInstaller.findExisting(share.spi);
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: l10n.shareImportTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -293,7 +296,7 @@ abstract final class ServerShareUi {
       ref.read(privateKeyProvider.notifier).reload();
       Toast.success('${libL10n.success}: ${result.spi.name}');
     } catch (e, s) {
-      if (context.mounted) context.showErrDialog(e, s, libL10n.import);
+      if (context.mounted) context.showErrSheet(e, s, libL10n.import);
       Loggers.app.warning('Install shared server', e, s);
     }
   }
@@ -316,7 +319,7 @@ abstract final class ServerShareUi {
   }) async {
     final controller = TextEditingController();
     final node = FocusNode();
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: digitsOnly ? l10n.shareCodePrompt : libL10n.pwd,
       // Disposed by the tree: the field holds both while the route animates
       // out, and doing it on every return path means remembering both twice.
@@ -341,7 +344,7 @@ abstract final class ServerShareUi {
               // read out loud, and "4/6" is how the person typing knows they
               // missed one.
               maxLength: digitsOnly ? ServerShareCodec.codeDigits : null,
-              onSubmitted: (_) => context.popDialog(true),
+              onSubmitted: (_) => context.popSheet(true),
             ),
           ],
         ),

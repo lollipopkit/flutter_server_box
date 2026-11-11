@@ -336,7 +336,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
       Toast.show(l10n.remoteDesktopUniqueName);
       return;
     } catch (error, stackTrace) {
-      if (mounted) context.showErrDialog(error, stackTrace);
+      if (mounted) context.showErrSheet(error, stackTrace);
       return;
     }
     if (!mounted) return;
@@ -344,7 +344,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
   }
 
   Future<void> _delete(RemoteDesktopProfile profile) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.remoteDesktopDeleteProfile(profile.name)),
       actions: Btnx.cancelOk,
@@ -491,7 +491,7 @@ Future<String?> _askPassword(
   RemoteDesktopProfile profile,
 ) {
   final controller = TextEditingController();
-  return context.showRoundDialog<String>(
+  return context.showSheet<String>(
     title: '${profile.protocol.name.toUpperCase()} ${libL10n.pwd}',
     childBuilder: (dialogContext) => DisposeWith(
       notifiers: [controller],
@@ -544,7 +544,7 @@ void _answerPassword(
     Toast.show(l10n.remoteDesktopVncPasswordAscii);
     return;
   }
-  dialogContext.popDialog(password);
+  dialogContext.popSheet(password);
 }
 
 String? _emptyToNull(String value) {

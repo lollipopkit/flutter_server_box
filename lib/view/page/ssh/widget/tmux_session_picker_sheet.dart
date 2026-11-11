@@ -199,7 +199,7 @@ final class _TmuxNewSessionRow extends StatelessWidget {
       return trimmed.isNotEmpty && !existingNames.contains(trimmed);
     }
 
-    final result = await sheetContext.showRoundDialog<String>(
+    final result = await sheetContext.showSheet<String>(
       title: sheetContext.l10n.tmuxNewSession,
       childBuilder: (dialogContext) => DisposeWith(
         notifiers: [controller, name],

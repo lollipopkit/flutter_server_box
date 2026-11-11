@@ -70,10 +70,10 @@ extension _VirtualKey on SSHPageState {
     final help = item.help;
     if (help == null) return;
     HapticFeedback.selectionClick();
-    context.showRoundDialog(
+    context.showSheet(
       title: item.text,
       child: Text(help),
-      actions: [Btn.ok(onTap: context.popDialog)],
+      actions: [Btn.ok(onTap: context.popSheet)],
     );
   }
 

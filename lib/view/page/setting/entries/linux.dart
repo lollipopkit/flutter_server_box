@@ -195,7 +195,7 @@ extension _Linux on _AppSettingsPageState {
     // `withTextFieldController` returns before the dialog is answered.
     final ctrl = TextEditingController(text: profile.label);
     try {
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: libL10n.rename,
         child: Input(
           controller: ctrl,
@@ -203,7 +203,7 @@ extension _Linux on _AppSettingsPageState {
           label: libL10n.name,
           icon: Icons.label_outline,
           suggestion: false,
-          onSubmitted: (_) => context.popDialog(true),
+          onSubmitted: (_) => context.popSheet(true),
         ),
         actions: Btnx.cancelOk,
       );
@@ -268,7 +268,7 @@ extension _Linux on _AppSettingsPageState {
       // The buttons answer. `Btnx.cancelOk` pops a value of its own, so an
       // `onTap` that also popped would have to know which navigator the dialog
       // is on — the trap this project keeps walking into.
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: libL10n.name,
         child: Input(
           controller: ctrl,
@@ -276,7 +276,7 @@ extension _Linux on _AppSettingsPageState {
           label: libL10n.name,
           icon: Icons.label_outline,
           suggestion: false,
-          onSubmitted: (_) => context.popDialog(true),
+          onSubmitted: (_) => context.popSheet(true),
         ),
         actions: Btnx.cancelOk,
       );
@@ -284,7 +284,7 @@ extension _Linux on _AppSettingsPageState {
       final typed = ctrl.text.trim();
       return typed.isEmpty ? suggestion : typed;
     } finally {
-      // Not disposed here. `showRoundDialog` completes when the route is
+      // Not disposed here. `showSheet` completes when the route is
       // popped, and the field is still mounted and animating for a beat after
       // that — disposing now leaves a live `TextField` holding a dead
       // controller, which the framework reports as "tried to build dirty
@@ -323,7 +323,7 @@ extension _Linux on _AppSettingsPageState {
     final distros = LinuxDistros.installable;
     final distro = distros.length == 1
         ? distros.single
-        : await context.showRoundDialog<LinuxDistro>(
+        : await context.showSheet<LinuxDistro>(
             title: l10n.distro,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -344,7 +344,7 @@ extension _Linux on _AppSettingsPageState {
                     trailing: it.releases.length == 1
                         ? null
                         : const Icon(Icons.keyboard_arrow_right),
-                    onTap: () => context.popDialog(it),
+                    onTap: () => context.popSheet(it),
                   ),
               ],
             ),
@@ -357,7 +357,7 @@ extension _Linux on _AppSettingsPageState {
       return (distro: distro, release: distro.preferred);
     }
 
-    final release = await context.showRoundDialog<RootfsRelease>(
+    final release = await context.showSheet<RootfsRelease>(
       title: distro.label,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -379,7 +379,7 @@ extension _Linux on _AppSettingsPageState {
                 '${release.source.sizeMb} MB',
                 style: UIs.text13Grey,
               ),
-              onTap: () => context.popDialog(release),
+              onTap: () => context.popSheet(release),
             ),
         ],
       ),
@@ -496,12 +496,12 @@ extension _Linux on _AppSettingsPageState {
 
       Future<void> save() async {
         final typed = ctrl.text.trim();
-        context.popDialog();
+        context.popSheet();
         // Empty is how the default is asked for, here as in the rows below.
         final chosen = typed.isEmpty ? FlTty.defaultShell : typed;
         if (!isShellPathValid(chosen) || !await shellExistsIn(root, chosen)) {
           if (!mounted) return;
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.fail,
             child: Text('${libL10n.invalid}: $chosen'),
           );
@@ -513,7 +513,7 @@ extension _Linux on _AppSettingsPageState {
         Toast.success(libL10n.success);
       }
 
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.terminal,
         child: Input(
           controller: ctrl,
@@ -571,7 +571,7 @@ extension _Linux on _AppSettingsPageState {
   /// The dialog both network settings use, and the write both of them need.
   ///
   /// Pops before it validates, so that the failure dialog is not pushed under
-  /// the one being closed — `showRoundDialog` puts both on the root navigator.
+  /// the one being closed — `showSheet` puts both on the root navigator.
   void _showLinuxNetDialog({
     required String title,
     required String initial,
@@ -585,9 +585,9 @@ extension _Linux on _AppSettingsPageState {
 
       Future<void> save() async {
         final value = ctrl.text.trim();
-        context.popDialog();
+        context.popSheet();
         if (!validate(value)) {
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.fail,
             child: Text('${libL10n.invalid}: $value'),
           );
@@ -607,7 +607,7 @@ extension _Linux on _AppSettingsPageState {
         } catch (e, s) {
           Loggers.app.warning('Failed to apply the Linux net settings', e, s);
           if (!context.mounted) return;
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.fail,
             child: Text('$e'),
           );
@@ -616,7 +616,7 @@ extension _Linux on _AppSettingsPageState {
         Toast.success(libL10n.success);
       }
 
-      await context.showRoundDialog(
+      await context.showSheet(
         title: title,
         child: Input(
           controller: ctrl,

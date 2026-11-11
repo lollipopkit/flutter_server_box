@@ -2,9 +2,9 @@ import 'dart:async';
 
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
@@ -115,13 +115,8 @@ void main() {
       'On screen: Server tab, the page "/firewall" of server "web" (server_id: s1).',
     );
 
-    // A dialog is over the page, not in place of it.
-    unawaited(
-      showDialog<void>(
-        context: tab.currentContext!,
-        builder: (_) => const Text('dialog'),
-      ),
-    );
+    // A sheet is over the page, not in place of it.
+    unawaited(tab.currentContext!.showSheet<void>(child: const Text('sheet')));
     await settle();
     expect(at(), contains('"/firewall"'));
     root.currentState!.pop();

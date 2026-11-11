@@ -104,6 +104,9 @@ void main() {
     );
     await tester.pump();
     Navigator.of(ctx, rootNavigator: true).pop();
+    // The answer comes once the sheet's exit has run, which only a pump does.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(await result, isNull);
     expect(tried, [null]);
     expect(SudoPassword.typed('s'), isNull);

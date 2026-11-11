@@ -99,7 +99,7 @@ class _TransferListViewState extends ConsumerState<TransferListView> {
         status: status,
         subtitle: libL10n.error,
         trailing: IconButton(tooltip: libL10n.error, 
-          onPressed: () => context.showRoundDialog(
+          onPressed: () => context.showSheet(
             title: libL10n.error,
             child: Text(err.toString()),
           ),
@@ -216,7 +216,7 @@ class _TransferListViewState extends ConsumerState<TransferListView> {
 
   Widget _buildDelete(FileTransferStatus status) {
     return IconButton(tooltip: libL10n.delete, 
-      onPressed: () => context.showRoundDialog(
+      onPressed: () => context.showSheet(
         title: libL10n.attention,
         child: Text(
           libL10n.askContinue(
@@ -226,8 +226,9 @@ class _TransferListViewState extends ConsumerState<TransferListView> {
         actions: Btn.ok(
           onTap: () {
             ref.read(fileTransferProvider.notifier).cancel(status.id);
-            context.popDialog();
+            context.popSheet();
           },
+          red: true,
         ).toList,
       ),
       icon: const Icon(Icons.delete),

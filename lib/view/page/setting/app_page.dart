@@ -389,10 +389,10 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
         void save() {
           onSave(ctrl.text.trim());
-          context.popDialog();
+          context.popSheet();
         }
 
-        await context.showRoundDialog<bool>(
+        await context.showSheet<bool>(
           title: title,
           child: Input(
             controller: ctrl,

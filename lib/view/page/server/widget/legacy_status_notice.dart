@@ -21,7 +21,7 @@ abstract final class LegacyStatusNotice {
     if (!pending.fetch()) return;
     if (!context.mounted) return;
 
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.legacyStatusGoneTitle,
       child: SingleChildScrollView(
         child: SimpleMarkdown(data: l10n.legacyStatusGoneBody),

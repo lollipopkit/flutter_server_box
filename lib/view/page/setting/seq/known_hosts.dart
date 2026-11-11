@@ -78,7 +78,7 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
         : '${_label(key.serverId)} · '
               '${key.keyType.isEmpty ? libL10n.unknown : key.keyType}\n'
               '${key.fingerprint}';
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('${libL10n.delete} $what')),
       actions: Btnx.cancelRedOk,

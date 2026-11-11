@@ -459,7 +459,7 @@ extension _Sessions on _SSHTabPageState {
     final tab = _sessions.tabs.elementAtOrNull(index - 1);
     if (tab == null) return;
 
-    final confirm = await contextSafe?.showRoundDialog(
+    final confirm = await contextSafe?.showSheet(
       title: libL10n.attention,
       // Not "SSH": this strip also carries a shell on this device and one
       // inside the Linux userland, neither of which is a connection to

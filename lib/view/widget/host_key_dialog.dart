@@ -27,9 +27,9 @@ Future<bool> _showHostKeyDialog(
       ? l10n.sshHostKeyChangedDesc(info.spi.name)
       : l10n.sshHostKeyNewDesc(info.spi.name);
 
-  final result = await ctx.showRoundDialog<bool>(
+  final result = await ctx.showSheet<bool>(
     title: libL10n.attention,
-    barrierDismiss: false,
+    dismissible: false,
     child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,8 +54,8 @@ Future<bool> _showHostKeyDialog(
       ],
     ),
     actions: [
-      TextButton(onPressed: () => ctx.popDialog(false), child: Text(libL10n.cancel)),
-      TextButton(onPressed: () => ctx.popDialog(true), child: Text(libL10n.ok)),
+      TextButton(onPressed: () => ctx.popSheet(false), child: Text(libL10n.cancel)),
+      TextButton(onPressed: () => ctx.popSheet(true), child: Text(libL10n.ok)),
     ],
   );
 

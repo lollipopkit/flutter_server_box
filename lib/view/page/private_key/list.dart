@@ -90,7 +90,7 @@ extension on _PrivateKeyListState {
   /// button that pushed the page from inside the dialog would be reaching for
   /// the root navigator the dialog is on, not the one holding this page.
   Future<void> _onTapAdd() async {
-    final generate = await context.showRoundDialog<bool>(
+    final generate = await context.showSheet<bool>(
       title: libL10n.add,
       childBuilder: (dialogContext) => Column(
         mainAxisSize: MainAxisSize.min,
@@ -98,12 +98,12 @@ extension on _PrivateKeyListState {
           ListTile(
             leading: const Icon(Icons.vpn_key),
             title: Text(l10n.sshKeyGenerate),
-            onTap: () => dialogContext.popDialog(true),
+            onTap: () => dialogContext.popSheet(true),
           ),
           ListTile(
             leading: const Icon(Icons.file_open),
             title: Text(libL10n.import),
-            onTap: () => dialogContext.popDialog(false),
+            onTap: () => dialogContext.popSheet(false),
           ),
         ],
       ),
@@ -130,12 +130,12 @@ extension on _PrivateKeyListState {
         key: await idRsaFile.readAsString(),
       );
       if (!mounted) return;
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(
           onTap: () {
-            context.popDialog();
+            context.popSheet();
             PrivateKeyEditPage.route.go(
               context,
               args: PrivateKeyEditPageArgs(pki: sysPk),

@@ -180,7 +180,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     ];
     final rescue = plan.keepOpen.isEmpty ? null : plan.keepOpen;
     var keep = plan.keepOpenDefault;
-    final sure = await context.showRoundDialog<bool>(
+    final sure = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (context, setDialogState) => SingleChildScrollView(
@@ -235,14 +235,14 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         Btn.cancel(),
         if (plan.countdown)
           CountDownBtn(
-            onTap: () => context.popDialog(true),
+            onTap: () => context.popSheet(true),
             text: libL10n.ok,
             afterColor: Colors.red,
           )
         else if (plan.destructive)
           Btnx.okRed
         else
-          Btn.ok(onTap: () => context.popDialog(true)),
+          Btn.ok(onTap: () => context.popSheet(true)),
       ],
     );
     if (sure != true || !mounted) return null;
@@ -446,7 +446,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     String initial = '',
   }) async {
     final ctrl = TextEditingController(text: initial);
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: title,
       child: DisposeWith(
         notifiers: [ctrl],
@@ -457,7 +457,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
           icon: icon,
           autoFocus: true,
           suggestion: false,
-          onSubmitted: (_) => context.popDialog(true),
+          onSubmitted: (_) => context.popSheet(true),
         ),
       ),
       actions: Btnx.cancelOk,

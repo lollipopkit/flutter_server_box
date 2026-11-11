@@ -193,7 +193,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
               onPressed: () async {
                 // The dialog answers; the page acts on the answer. See the
                 // snippet editor for why not from inside the button.
-                final confirmed = await context.showRoundDialog<bool>(
+                final confirmed = await context.showSheet<bool>(
                   title: libL10n.attention,
                   child: Text(
                     libL10n.askContinue(
@@ -240,7 +240,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       return;
     }
     if (!mounted) return;
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.sshKeyPublicKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -262,7 +262,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           },
           child: Text(libL10n.copy),
         ),
-        TextButton(onPressed: context.popDialog, child: Text(libL10n.ok)),
+        TextButton(onPressed: context.popSheet, child: Text(libL10n.ok)),
       ],
     );
   }

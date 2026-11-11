@@ -170,7 +170,7 @@ class _MonitorLiveViewState extends ConsumerState<MonitorLiveView> {
   }
 
   Future<void> _act(String confirm, Future<void> Function() run) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(confirm),
       actions: Btnx.cancelRedOk,

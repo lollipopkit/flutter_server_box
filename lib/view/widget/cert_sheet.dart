@@ -14,7 +14,7 @@ import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
 /// [source] the `host:port` it was read from, where the user typed that.
 /// [reconnects] says whether accepting connects again at once, which the
 /// button says. The dialog only answers; the caller pins the certificate.
-Future<bool> showCertTrustDialog(
+Future<bool> showCertTrustSheet(
   BuildContext context, {
   required CertInfo cert,
   String? previous,
@@ -23,9 +23,9 @@ Future<bool> showCertTrustDialog(
 }) async {
   final changed = previous != null && previous.isNotEmpty;
   final fmt = DateFormat.yMMMd(l10n.localeName);
-  final accepted = await context.showRoundDialog<bool>(
+  final accepted = await context.showSheet<bool>(
     title: changed ? l10n.virtErrCertChanged : l10n.remoteDesktopTrustCertificate,
-    barrierDismiss: false,
+    dismissible: false,
     child: SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +75,7 @@ Future<bool> showCertTrustDialog(
             ? l10n.remoteDesktopTrustReconnect
             : l10n.certTrust,
         textStyle: changed ? UIs.textRed : null,
-        onTap: () => context.popDialog(true),
+        onTap: () => context.popSheet(true),
       ),
     ],
   );

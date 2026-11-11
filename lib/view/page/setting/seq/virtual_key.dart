@@ -117,7 +117,7 @@ class _SSHVirtualKeySettingPageState extends State<SSHVirtualKeySettingPage> {
   Future<void> _pickVirtKeyRows(int rows, int current) async {
     // 0 is "all of them", and so is the row count itself — offering both would
     // be two entries doing one thing.
-    final picked = await context.showPickSingleDialog<int>(
+    final picked = await context.showPickSingleSheet<int>(
       title: l10n.virtKeyRows,
       items: [0, for (var i = 1; i < rows; i++) i],
       // The effective value, so the dialog opens on the entry the row above

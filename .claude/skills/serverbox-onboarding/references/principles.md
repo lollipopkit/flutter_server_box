@@ -106,12 +106,12 @@ Riverpod with code generation for providers, freezed for immutable models,
 GetIt for service location. `docs/src/content/docs/development/state.md` is how
 to declare a provider and release it.
 
-The trap that has produced the most bugs: **`showRoundDialog` puts the dialog on
-the root navigator**, while a page's `context` finds the navigator holding the
+The trap that has produced the most bugs: **`showSheet` puts the sheet on the
+root navigator**, while a page's `context` finds the navigator holding the
 page — and inside a pane or a tab those differ. A `context.pop()` reached from a
-dialog button closes the *page* and leaves the dialog on screen, and the awaited
-future never completes. Close a dialog with `context.popDialog()`, or better,
-let it answer: `await context.showRoundDialog<bool>(...)` with `Btnx.cancelOk`.
+sheet's button closes the *page* and leaves the sheet on screen, and the awaited
+future never completes. Close a sheet with `context.popSheet()`, or better,
+let it answer: `await context.showSheet<bool>(...)` with `Btnx.cancelOk`.
 Passing an `onTap` to `Btn.ok` is what breaks it, because that replaces the
 button's own correct navigator resolution.
 

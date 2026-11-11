@@ -382,15 +382,13 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   /// The navigator holding the reconnecting dialog, while it is on screen.
   ///
-  /// The navigator rather than a bool, because this page's own context is not
-  /// enough to close that dialog: it lives on the *root* navigator and so
-  /// outlives the page, and `contextSafe` is null the moment the page is gone.
-  /// A `NavigatorState` captured while showing it still answers.
+  /// What closes the reconnecting sheet, and only it: the sheet's own handle,
+  /// because this page's context is not enough — the sheet outlives the page
+  /// — and a pop takes whatever is on top, a sheet raised over it included.
   ///
   /// Nulled by whoever closes it — the cancel button, the reconnect finishing,
-  /// or [dispose] — so the other two do nothing. A second pop on a dialog that
-  /// is already gone takes the route under it instead, which here is the app.
-  NavigatorState? _reconnectDialogNav;
+  /// or [dispose] — so the other two do nothing.
+  VoidCallback? _closeReconnecting;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
 
@@ -904,7 +902,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           },
           toolbarBuilder: _buildTerminalToolbar,
           onCopied: _onTerminalCopied,
-          onCopyFailed: (e, s) => context.showErrDialog(e, s, libL10n.copy),
+          onCopyFailed: (e, s) => context.showErrSheet(e, s, libL10n.copy),
           onSelectAll: _onTerminalSelectAll,
         ),
       ),
@@ -1110,7 +1108,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       // without a word whenever there was no server, so the snippet key did
       // nothing at all on a shell on this device.
       final tags = ref.read(snippetProvider.select((p) => p.tags));
-      final picked = await context.showPickWithTagDialog<Snippet>(
+      final picked = await context.showPickWithTagSheet<Snippet>(
         title: libL10n.snippet,
         tags: tags.vn,
         itemsBuilder: (tag) {
@@ -1126,7 +1124,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         await selected.runInTerm(_terminal, spi);
       } catch (e, s) {
         if (!mounted) return;
-        context.showErrDialog(e, s, '${libL10n.snippet}: ${selected.name}');
+        context.showErrSheet(e, s, '${libL10n.snippet}: ${selected.name}');
         return;
       }
       if (!mounted) return;

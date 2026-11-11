@@ -663,6 +663,8 @@ void main() {
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    // The answer comes once the sheet is gone; the list redraws after it.
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     expect(find.byType(BenchmarkHistoryTile), findsNothing);
