@@ -164,24 +164,22 @@ class BackupService {
     (Mergeable, String) backup,
   ) async {
     if (!context.mounted) return;
+    // Its own handle: the page may be gone when the restore ends, and only
+    // this is to close — not what was raised over it meanwhile, nor the sheet
+    // it may be a page of.
+    VoidCallback? close;
     await context.showSheet(
       title: libL10n.restore,
+      onShown: (c) => close = c,
       child: Text(
         libL10n.askContinue(
           '${libL10n.restore} ${libL10n.backup}(${backup.$2})',
         ),
       ),
-      actionsBuilder: (dialogCtx) => [
+      actions: [
         Btn.cancel(),
         Btn.ok(
           onTap: () async {
-            // Taken before the restore: the page may be gone when it ends,
-            // and only this dialog is to close, whatever is above it then.
-            final nav = Navigator.of(dialogCtx);
-            final route = ModalRoute.of(dialogCtx);
-            void close() {
-              if (route != null && route.isActive) nav.removeRoute(route);
-            }
             try {
               final mergeable = backup.$1;
               ThemeRestoreReport? themes;
@@ -190,7 +188,7 @@ class BackupService {
               } else {
                 await mergeable.merge(force: true);
               }
-              close();
+              close?.call();
               // Said once the restore is done, not as a failure of it: the
               // rest of the backup is in place, and these can be installed
               // again by hand.
@@ -203,7 +201,7 @@ class BackupService {
                 );
               }
             } catch (e, s) {
-              close();
+              close?.call();
               if (context.mounted) context.showErrSheet(e, s, libL10n.restore);
             }
           },

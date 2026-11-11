@@ -219,22 +219,18 @@ abstract final class KeyboardInteractiveAuth {
       title: title,
       titleMaxLines: 2,
       dismissible: false,
-      childBuilder: (dialogContext) {
-        onDismissReady(() {
-          if (!dialogContext.mounted) return;
-          final route = ModalRoute.of(dialogContext);
-          if (route?.isCurrent == true) Navigator.of(dialogContext).pop();
-        });
-        return _KeyboardInteractiveFields(
-          key: fieldsKey,
-          spi: spi,
-          instruction: instruction,
-          prompts: request.prompts,
-          onSubmit: () => Navigator.of(
-            dialogContext,
-          ).pop(fieldsKey.currentState?.responses),
-        );
-      },
+      // Its own handle: a prompt raised over this one shares its route, and a
+      // pop would take that one and leave this up.
+      onShown: onDismissReady,
+      childBuilder: (dialogContext) => _KeyboardInteractiveFields(
+        key: fieldsKey,
+        spi: spi,
+        instruction: instruction,
+        prompts: request.prompts,
+        onSubmit: () => Navigator.of(
+          dialogContext,
+        ).pop(fieldsKey.currentState?.responses),
+      ),
       actionsBuilder: (dialogContext) => [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(),
