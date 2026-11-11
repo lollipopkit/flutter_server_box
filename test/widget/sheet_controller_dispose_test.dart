@@ -64,6 +64,10 @@ void main() {
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 16));
       expect(tester.takeException(), isNull, reason: 'frame $i');
+      // Not answered while any of it is still on the screen.
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        expect(answer, isNull, reason: 'frame $i');
+      }
     }
     expect(find.byType(TextField), findsNothing);
     expect(answer, 'https://x');
