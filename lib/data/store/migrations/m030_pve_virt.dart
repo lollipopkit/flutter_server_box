@@ -189,9 +189,7 @@ CREATE TABLE IF NOT EXISTS server_pve (
         db.execute('ALTER TABLE server_m030 RENAME TO server;');
         // `DROP TABLE` took the indexes with it, and Drift creates them only
         // on `onCreate`. See `m017` for why the whole list.
-        for (final statement in AppDb.indexStatements) {
-          db.execute(statement);
-        }
+        AppDb.restoreIndexes();
         db.execute('COMMIT;');
       } catch (_) {
         db.execute('ROLLBACK;');

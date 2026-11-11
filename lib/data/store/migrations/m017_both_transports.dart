@@ -133,9 +133,7 @@ class BothTransportsMigration implements SchemaMigration {
         // The whole list, not the two that name `server`: every statement is
         // `IF NOT EXISTS`, and a migration naming what it knows about is a
         // list that goes stale the next time someone adds one.
-        for (final statement in AppDb.indexStatements) {
-          db.execute(statement);
-        }
+        AppDb.restoreIndexes();
         db.execute('COMMIT;');
       } catch (_) {
         db.execute('ROLLBACK;');
