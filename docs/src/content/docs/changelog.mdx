@@ -3,6 +3,147 @@ title: Changelog
 description: What changed in each released version
 ---
 
+## v1.0.1925 — 2026-11-11
+
+### Before you upgrade
+
+- **Usage analytics are removed**, along with the Full diagnostics level.
+  Installations set to Full now use Basic, which uploads only errors and
+  crashes.
+- **Monitor v0.4.0 uses a single account and signs in with a password only.**
+  Signing in grants the permissions of the system account Monitor runs as;
+  roles, per-feature permissions, file roots and read-only mode are removed. On
+  upgrade, the oldest admin account is kept and other accounts' tasks, memory
+  and desk data move to it. ServerBox no longer asks for a username, and offers
+  to update Monitors older than v0.4.0 before signing in.
+- **Self-signed Monitor certificates are trusted once by fingerprint.** The
+  "ignore certificate" toggle is replaced by SHA-256 fingerprint pinning: the
+  first connection prompts you to trust the certificate from the server card or
+  detail page, and prompts again only if the certificate changes.
+- **Sync uses a new incremental format.** iCloud and WebDAV now sync individual
+  changes instead of full backups, encrypted with a sync key protected by your
+  backup password. GitHub Gist and Monitor's hosted backup store are removed as
+  sync destinations. All devices sharing a destination must use the same backup
+  password and upgrade to this version; older versions cannot read changes
+  written by newer ones.
+- **The Monitor panel's terminal no longer connects over SSH.** It opens a local
+  shell directly under the system account Monitor runs as.
+- New Monitor panel features, the Monitor tab's management views, and the new
+  notification channels require **Monitor v0.4.0**.
+
+### Added
+
+- **Storage and sharing** in the app and the Monitor panel: manage disks,
+  partitions, RAID arrays, ZFS pools, LUKS encryption and SMART health, plus
+  SMB shares (with Time Machine and recycle bin options) and NFS exports.
+- **Monitor panel redesigned as a desktop:** every feature opens in its own
+  window, with a menu bar, dock, Spotlight search, notification center, tabs and
+  split panes in Terminal and Files, and customizable wallpapers and themes.
+- **Expanded server tools in the Monitor panel:** processes, services, scheduled
+  tasks, containers (images, logs, container shell, and scheduled volume and
+  folder backups), system users and groups, snippets, firewall, benchmark, tmux,
+  iperf, file editor, remote desktop (VNC and RDP), virtualization and BMC
+  (Redfish).
+- **App Store for self-hosted web apps:** deploy and update over 40 Docker
+  Compose services from the Monitor panel (including Immich, Jellyfin,
+  Nextcloud, Vaultwarden, Home Assistant, Gitea, Open WebUI, Grafana and n8n),
+  or load custom catalogs and local Compose apps, with port checks, health
+  alerts, a shared media folder and built-in reverse proxy access.
+- **Desk apps (`.fsba`) in the Monitor panel:** install sandboxed third-party
+  panel apps with approved permissions, alongside signed official packages for
+  **Local inference** (Ollama, llama.cpp, vLLM, SGLang and MLX matched to the
+  machine's GPU), **AI agents** (Codex, Claude Code, pi, opencode, Hermes and
+  OpenClaw), **Reverse proxy and WAF** (nginx, Caddy, Traefik, and ModSecurity
+  with OWASP CRS), **Tailscale**, **Kernels**, **Ubuntu Pro** and **Cleanup**.
+- **Agent mode on Monitor, integrated with the app:** run AI tasks on Linux,
+  macOS and Windows servers with per-task model, thinking level and permission
+  mode, execution plans, command risk checks, sudo prompts, attachments, memory,
+  MCP servers (with OAuth and deployed apps' MCP servers) and skills. Tasks can
+  also be started, followed live and answered from the app's Agent tab.
+- **Agent command permissions:** choose Manual, Auto or Allow all mode and
+  configure allow, ask or deny command rules for both the on-device Agent and
+  Monitor's Agent mode.
+- **Monitor tab, one-click updates and settings backup:** view all connected
+  Monitors at a glance—version status and one-click updates, active alert rules,
+  deployed web apps (with available updates listed first) opened through
+  Monitor's proxy, notifications, per-server audit logs, and signed-in sessions
+  and trusted devices that can be revoked. Each server page also lists its own
+  web apps, and Monitor can back up its settings to WebDAV as `age`-encrypted
+  archives.
+- **ServerBox OS (`sbOS`) bootable images:** live and disk-installable images
+  based on Alpine Linux (`musl`) and Debian 13 (`GNU`) for `x64` (BIOS and UEFI)
+  and `arm64` (UEFI), with Monitor and Docker preconfigured.
+- **Server discovery:** find SSH servers on the local network, in SSH config
+  files, on Tailscale and through Cloudflare Tunnel, and add them along with
+  their jump servers. First-run setup is redesigned around it.
+- **Selective sync and full user-data coverage:** toggle sync separately for
+  settings, AI preferences, credentials, key passphrases, files and benchmarks;
+  fonts, images, skills, theme packages and icon packs now sync as well. The
+  redesigned sync page shows each destination's live status.
+- **Trusted sign-in devices on Monitor:** devices that have signed in before
+  receive a device token, so failed sign-in attempts from other sources do not
+  lock them out.
+- **New notification channels:** SMTP email, Telegram, Discord and ntfy, plus
+  `${ENV}` variable references for push credentials in `config.toml`. Bark adds
+  subtitle, Markdown, critical alert volume, badge, image, copy, archive options
+  and AES-CBC encrypted push.
+- **GPU process list** for servers connected through Monitor.
+- **iOS:** device files and installed Linux environments appear in the Files
+  app, and Paste from the system menu uses bracketed paste in the terminal.
+- **Windows installer (`.exe`):** per-user installer that requires no
+  administrator rights and bundles the Visual C++ runtime, alongside WinGet
+  support. The portable `.zip` archive remains available.
+- **tmux:** zoom and unzoom panes, keeping zoom active when switching panes.
+- **Redesigned full-screen server view** across all platforms, showing a single
+  server or all servers with burn-in protection.
+
+### Changed
+
+- Exported backups now use the `age` format and can be decrypted with `age -d`
+  using your backup password; older backups still restore. On Monitor, stored
+  credentials and Agent mode chats are now encrypted at rest.
+- Terminal and file tabs are no longer reopened automatically after closing the
+  app.
+- Improved mouse wheel and trackpad scrolling in the terminal, with whole-line
+  wheel steps, smooth trackpad scrolling in full-screen programs and a single
+  scrollbar.
+- Notification channel editors now show every option a channel type supports,
+  including unset fields.
+- Percentage chart axes no longer extend past 100%.
+- Completed and polished translations across all supported languages in the app,
+  Monitor panel and documentation.
+
+### Fixed
+
+- macOS: fixed garbled text on Intel Macs (#1798) by switching the Intel DMG
+  build to the Skia renderer.
+- Database: fixed a migration failure when opening databases from older releases
+  (prior to schema v31), and added retries for transient I/O errors when opening
+  the database on Windows.
+- tmux: fixed pane and window target resolution, cross-window switching, clean
+  detaching, live screen tracking on pane switches, and output replay after
+  reconnecting.
+- Terminal: typing quickly no longer duplicates characters; opening a session
+  from the picker switches to its tab; replacing the background image takes
+  effect immediately; and the Files button resolves the shell's working
+  directory without typing commands into the shell.
+- Editor: copying a large selection while an input method is active no longer
+  drops lines.
+- Settings and navigation: pages with unsaved edits ask before closing, and Back
+  navigation returns to the visible page across tabs, workspace panes and wide
+  windows.
+- Dialog buttons remain responsive after the window is resized or the screen
+  rotates.
+- Mobile: fixed Paste in text fields and the terminal on iOS, merged foreground
+  session notifications, and fixed keyboard bounce when switching views.
+- Remote desktop now shows a clear explanation when a server supports only
+  Standard RDP Security.
+- Monitor: Linux builds start on CPUs without AVX; NVIDIA GPU processes are
+  listed again when the driver does not report per-process memory (Windows and
+  WSL); notification channel errors no longer expose request URLs that could
+  contain tokens; and newly installed Monitors no longer send alerts to blank
+  placeholder channels.
+
 ## v1.0.1856 — 2026-11-01
 
 ### Added
@@ -37,67 +178,6 @@ description: What changed in each released version
 - Monitor agent v0.3.0 on Windows no longer crashes about 20 seconds after
   starting as a service or over SSH. Timed-out commands now end with all their
   child processes.
-
-## Unreleased
-
-### Before you upgrade
-
-- **Usage analytics are removed**, along with the Full diagnostics level. An
-  install set to Full now uses Basic, which uploads only errors and crashes.
-- **The Monitor agent has one account, signed in with its password alone.** It
-  may do what the system account the agent runs as may do: roles, per-feature
-  permissions, file roots and read-only mode are removed. On upgrade the oldest
-  admin is kept and the other accounts' tasks, memory and desk data move to it.
-  This app no longer asks for a user name, and signs in to older agents only
-  after they are updated.
-- **The web panel's terminal no longer logs in over SSH.** It opens a shell as
-  the account the Monitor agent runs under.
-- Most features below that run in the web panel, and the new notification
-  channels, require the next Monitor agent release.
-
-### Added
-
-- **Storage and sharing** in the app and the web panel: disks, partitions,
-  RAID, ZFS pools, LUKS and SMART health; SMB shares (Time Machine, recycle
-  bin) and NFS exports.
-- **Web panel as a desktop:** every feature is an app in its own window, with a
-  menubar, dock, Spotlight search, notification centre, tabs and split panes in
-  Terminal and Files, and per-account wallpapers and themes.
-- **More pages in the web panel:** processes, services, scheduled tasks,
-  containers (images, logs, shell inside a container), system users, snippets,
-  firewall, benchmark, tmux, iperf, file editor, remote desktop (VNC, RDP),
-  virtualization, BMC (Redfish) and backups.
-- **Agent mode in the web panel:** an AI agent runs tasks on the server, with
-  per-task permission modes, command risk checks, plans, sudo prompts,
-  attachments and memory. Windows is supported.
-- **Third-party apps for the web panel:** an admin can install `.fsba`
-  packages, which run sandboxed with the permissions they were approved for.
-- **Monitor tab:** the Monitor agents at a glance: each one's version against
-  the newest release and the alert rules firing now; the web apps they deployed
-  (an update first), opened in the browser through the agent's proxy; their
-  notifications; and per server the audit log and the sessions and devices
-  signed in, which can be ended or forgotten. A server's page lists its own web
-  apps.
-- **A device that signed in before is not locked out** by failed sign-ins from
-  elsewhere: the Monitor agent recognises it by a token it handed out.
-- **New notification channels:** SMTP email, Telegram, Discord and ntfy. Bark
-  gains subtitle, Markdown, critical alert volume, badge, image, copy, archive
-  options and encrypted push (AES-CBC).
-- **GPU processes for servers connected through the Monitor agent**, readable
-  by every account.
-
-### Changed
-
-- Notification channel editors show every setting a channel type supports,
-  including ones not set yet.
-- Percentage charts no longer extend their axis past 100%.
-
-### Fixed
-
-- NVIDIA GPU processes are listed again when the driver does not report their
-  memory (Windows and WSL).
-- Error messages from notification channels no longer include the request URL,
-  which could contain a token.
 
 ## v1.0.1844 — 2026-10-30
 
