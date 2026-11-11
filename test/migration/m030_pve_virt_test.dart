@@ -416,4 +416,23 @@ void main() {
     expect(SchemaVersion.stored, SchemaVersion.current);
     expect(_pveRow('pve')?['addr'], 'https://h:8006');
   });
+
+  test('the chain goes through it before `sync_record` is there', () async {
+    // What every database a release wrote at v21 or v23 is: `sync_record` is
+    // m033's, and this step puts the indexes back after its rebuild.
+    await _createV30();
+    SqliteDb.instance.execute('DROP TABLE sync_record;');
+    _seedServer('pve', pveAddr: 'https://h:8006');
+    setting.schemaVersion.put(30);
+
+    await SchemaVersion.migrate(kSchemaMigrations);
+
+    expect(SchemaVersion.stored, SchemaVersion.current);
+    expect(
+      SqliteDb.instance.select(
+        "SELECT name FROM sqlite_master WHERE type = 'index' AND name IN ('idx_sync_record_hlc', 'idx_server_key');",
+      ),
+      hasLength(2),
+    );
+  });
 }

@@ -198,8 +198,10 @@ void main() {
     await settle(tester);
 
     expect(tester.takeException(), isNull);
-    expect(find.text(libL10n.empty), findsOneWidget);
-    expect(find.text(libL10n.retry), findsOneWidget);
+    // Nothing was tried, so it offers to connect rather than to try again.
+    expect(find.text(app_locale.l10n.workspaceAsleep), findsOneWidget);
+    expect(find.text(app_locale.l10n.connect), findsOneWidget);
+    expect(find.text(libL10n.retry), findsNothing);
     // The entries stay where they are, all of them unusable: what cannot be
     // done through a connection that is not there is all of it.
     final bar = tester.widget<ServerFuncBtns>(find.byType(ServerFuncBtns));

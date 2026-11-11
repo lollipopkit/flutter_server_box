@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:fl_lib/fl_lib.dart' show SqliteDb;
 
 part 'db.g.dart';
 
@@ -799,42 +800,60 @@ class AppDb extends _$AppDb {
 
   /// Indexes the read patterns need, which the table definitions do not carry.
   ///
-  /// Public because a migration that *rebuilds* a table has to put them back:
-  /// `DROP TABLE` takes its indexes with it, and Drift only runs this list on
-  /// `onCreate`, which an upgrading install never reaches. Every statement is
-  /// `IF NOT EXISTS`, so re-running the whole list is the safe way to do that
-  /// — safer than a migration naming the two it knows about, which is a list
-  /// that goes stale the next time someone adds an index to `server`.
-  static const indexStatements = [
-    'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);',
+  /// A migration that *rebuilds* a table has to put them back, through
+  /// [restoreIndexes]: `DROP TABLE` takes its indexes with it, and Drift only
+  /// runs this list on `onCreate`, which an upgrading install never reaches.
+  /// Every statement is `IF NOT EXISTS`, so re-running the list is the safe
+  /// way to do that — safer than a migration naming the two it knows about,
+  /// which is a list that goes stale the next time someone adds an index to
+  /// `server`.
+  static const _indexes = <({String table, String sql})>[
+    (table: 'server', sql: 'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);'),
     // Same read as `ssh_key_id`: "how many servers use this account", asked
     // once per row of the account list and on every rebuild of the server
     // editor. It also serves the ON DELETE SET NULL, which without it scans
     // `server` once per deleted account.
-    'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);',
-    'CREATE INDEX IF NOT EXISTS idx_server_tag_tag ON server_tag(tag);',
-    'CREATE INDEX IF NOT EXISTS idx_server_jump_target ON server_jump(jump_id);',
-    'CREATE INDEX IF NOT EXISTS idx_snippet_tag_tag ON snippet_tag(tag);',
-    'CREATE INDEX IF NOT EXISTS idx_snippet_auto_run_server '
-        'ON snippet_auto_run_on(server_id);',
-    'CREATE INDEX IF NOT EXISTS idx_port_forward_server '
-        'ON port_forward(server_id);',
-    'CREATE INDEX IF NOT EXISTS idx_remote_desktop_profile_server '
-        'ON remote_desktop_profile(server_id);',
+    (table: 'server', sql: 'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);'),
+    (table: 'server_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_server_tag_tag ON server_tag(tag);'),
+    (table: 'server_jump', sql: 'CREATE INDEX IF NOT EXISTS idx_server_jump_target ON server_jump(jump_id);'),
+    (table: 'snippet_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_snippet_tag_tag ON snippet_tag(tag);'),
+    (table: 'snippet_auto_run_on', sql: 'CREATE INDEX IF NOT EXISTS idx_snippet_auto_run_server '
+        'ON snippet_auto_run_on(server_id);'),
+    (table: 'port_forward', sql: 'CREATE INDEX IF NOT EXISTS idx_port_forward_server '
+        'ON port_forward(server_id);'),
+    (table: 'remote_desktop_profile', sql: 'CREATE INDEX IF NOT EXISTS idx_remote_desktop_profile_server '
+        'ON remote_desktop_profile(server_id);'),
     // Every read is "this server, newest first"; the per-server cap is the
     // same order with a LIMIT.
-    'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '
-        'ON conn_stat(server_id, timestamp DESC);',
+    (table: 'conn_stat', sql: 'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '
+        'ON conn_stat(server_id, timestamp DESC);'),
     // The age sweep asks about `timestamp` alone, which the index above
     // cannot serve — its leading column is `server_id`.
-    'CREATE INDEX IF NOT EXISTS idx_conn_stat_ts ON conn_stat(timestamp);',
+    (table: 'conn_stat', sql: 'CREATE INDEX IF NOT EXISTS idx_conn_stat_ts ON conn_stat(timestamp);'),
     // The history list is per server, newest first, and that is the only way
     // this table is ever read.
-    'CREATE INDEX IF NOT EXISTS idx_benchmark_run_server_started '
-        'ON benchmark_run(server_id, started_at DESC);',
-    'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
-        'ON tombstone(deleted_at);',
+    (table: 'benchmark_run', sql: 'CREATE INDEX IF NOT EXISTS idx_benchmark_run_server_started '
+        'ON benchmark_run(server_id, started_at DESC);'),
+    (table: 'tombstone', sql: 'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
+        'ON tombstone(deleted_at);'),
     // What is still to send: this device's stamps after the last one sent.
-    'CREATE INDEX IF NOT EXISTS idx_sync_record_hlc ON sync_record(hlc);',
+    (table: 'sync_record', sql: 'CREATE INDEX IF NOT EXISTS idx_sync_record_hlc ON sync_record(hlc);'),
   ];
+
+  static final indexStatements = [for (final index in _indexes) index.sql];
+
+  /// [indexStatements] for the tables there are: what a migration that rebuilt
+  /// a table runs. A table a later step makes brings its own index, and naming
+  /// it before then is `no such table` — m030 with `sync_record`, which m033
+  /// makes, stopped every database older than v31 from opening.
+  static void restoreIndexes() {
+    final db = SqliteDb.instance;
+    final tables = {
+      for (final row in db.select("SELECT name FROM sqlite_master WHERE type = 'table';"))
+        row['name'] as String,
+    };
+    for (final index in _indexes) {
+      if (tables.contains(index.table)) db.execute(index.sql);
+    }
+  }
 }

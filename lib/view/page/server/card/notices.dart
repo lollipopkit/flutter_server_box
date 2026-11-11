@@ -2,8 +2,10 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -39,6 +41,9 @@ enum ServerNoticeKind {
 
   /// Nothing yet, and something on its way.
   connecting,
+
+  /// Not asked: a machine that does not connect by itself, or was let go of.
+  disconnected,
 
   /// It answered, with nothing.
   empty,
@@ -126,6 +131,15 @@ class ServerNotice {
         kind: ServerNoticeKind.connecting,
         glyph: Icons.hourglass_empty,
         title: l10n.waitConnection,
+      );
+    }
+    // Nothing was tried, so there is nothing to try again: the page offers
+    // to connect, as the card does.
+    if (srv.conn == ServerConn.disconnected) {
+      return ServerNotice(
+        kind: ServerNoticeKind.disconnected,
+        glyph: MingCute.link_3_line,
+        title: l10n.workspaceAsleep,
       );
     }
     return ServerNotice(
