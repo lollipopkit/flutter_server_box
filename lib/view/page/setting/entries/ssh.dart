@@ -3,7 +3,7 @@ part of '../entry.dart';
 extension _SSH on _AppSettingsPageState {
   void _refreshApp({bool closeDialog = false}) {
     if (closeDialog && mounted) {
-      context.popDialog();
+      context.popSheet();
     }
     RNodes.app.notify();
   }
@@ -110,7 +110,7 @@ extension _SSH on _AppSettingsPageState {
           },
         ),
         onTap: () {
-          context.showRoundDialog(
+          context.showSheet(
             title: label,
             actions: [
               TextButton(
@@ -163,7 +163,7 @@ extension _SSH on _AppSettingsPageState {
         await part.rename(fontPath);
       } catch (e, s) {
         if (await part.exists()) await part.delete();
-        if (mounted) context.showErrDialog(e, s, libL10n.font);
+        if (mounted) context.showErrSheet(e, s, libL10n.font);
         return;
       }
       if (_setting.fontPath.fetch() != fontPath) await _clearCachedFont();
@@ -205,7 +205,7 @@ extension _SSH on _AppSettingsPageState {
       _setting.termLineHeight.put(
         val.clamp(TerminalLook.minLineHeight, TerminalLook.maxLineHeight),
       );
-      context.popDialog();
+      context.popSheet();
     }
 
     return SettingsRow(
@@ -219,7 +219,7 @@ extension _SSH on _AppSettingsPageState {
         ),
         onTap: () {
           ctrl.text = _setting.termLineHeight.fetch().toString();
-          context.showRoundDialog(
+          context.showSheet(
             title: label,
             child: Input(
               controller: ctrl,
@@ -288,7 +288,7 @@ extension _SSH on _AppSettingsPageState {
           builder: (val) => Text(index2Str(val), style: UIs.text15),
         ),
         onTap: () async {
-          final selected = await context.showPickSingleDialog(
+          final selected = await context.showPickSingleSheet(
             title: libL10n.theme,
             items: List.generate(3, (index) => index),
             display: (p0) => index2Str(p0),
@@ -386,7 +386,7 @@ extension _SSH on _AppSettingsPageState {
           return Text(name ?? libL10n.empty, style: UIs.text15);
         }),
         onTap: () {
-          context.showRoundDialog(
+          context.showSheet(
             title: label,
             actions: [
               TextButton(
@@ -418,7 +418,7 @@ extension _SSH on _AppSettingsPageState {
         return;
       }
       _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
-      context.popDialog();
+      context.popSheet();
     }
 
     return SettingsRow(
@@ -430,7 +430,7 @@ extension _SSH on _AppSettingsPageState {
           listenable: _setting.sshBgOpacity.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        onTap: () => context.showRoundDialog(
+        onTap: () => context.showSheet(
           title: libL10n.opacity,
           child: Input(
             controller: _sshOpacityCtrl,
@@ -459,7 +459,7 @@ extension _SSH on _AppSettingsPageState {
       const maxBlur = 50.0;
       final clampedVal = val.clamp(minRadius, maxBlur);
       _setting.sshBlurRadius.put(clampedVal);
-      context.popDialog();
+      context.popSheet();
     }
 
     return SettingsRow(
@@ -471,7 +471,7 @@ extension _SSH on _AppSettingsPageState {
           listenable: _setting.sshBlurRadius.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        onTap: () => context.showRoundDialog(
+        onTap: () => context.showSheet(
           title: libL10n.blurRadius,
           child: Input(
             controller: _sshBlurCtrl,
@@ -555,12 +555,12 @@ extension _SSH on _AppSettingsPageState {
       ctrl.text = current;
       void onSave() {
         _setting.tmuxSessionName.put(ctrl.text.trim());
-        // `popDialog`: `context` here is the settings page's, and the dialog
+        // `popSheet`: `context` here is the settings page's, and the dialog
         // is on the root navigator.
-        context.popDialog();
+        context.popSheet();
       }
 
-      await context.showRoundDialog<bool>(
+      await context.showSheet<bool>(
         title: l10n.tmuxSessionName,
         child: Input(
           controller: ctrl,
@@ -592,7 +592,7 @@ extension _SSH on _AppSettingsPageState {
 
   Future<void> _showHostCertAuthorities() async {
     final prop = _setting.sshHostCertAuthorities;
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.hostCertAuthorities,
       child: SizedBox(
         width: 480,
@@ -632,7 +632,7 @@ extension _SSH on _AppSettingsPageState {
   /// Asked first, as forgetting a host key is: every host it vouches for
   /// goes back to the first-use prompt.
   Future<void> _removeHostCertAuthority(int index, HostCertAuthority ca) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue('${libL10n.delete} ${_hostCertAuthorityLabel(ca)}'),
@@ -679,10 +679,10 @@ extension _SSH on _AppSettingsPageState {
           });
           if (keyError != null || hostsError != null) return;
           prop.put([...list, ca]);
-          context.popDialog();
+          context.popSheet();
         }
 
-        await context.showRoundDialog(
+        await context.showSheet(
           title: libL10n.add,
           child: StatefulBuilder(
             builder: (context, setState) {

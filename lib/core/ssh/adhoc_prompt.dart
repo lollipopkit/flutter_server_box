@@ -53,9 +53,9 @@ Future<AdHocSshCredential?> promptAdHocSshCredential({
   String? keyId;
 
   // Disposed with the field, not when the dialog answers. See [DisposeWith].
-  return await ctx.showRoundDialog<AdHocSshCredential>(
+  return await ctx.showSheet<AdHocSshCredential>(
     title: ctx.l10n.agentSshConnectTitle,
-    barrierDismiss: false,
+    dismissible: false,
     child: DisposeWith(
       notifiers: [controller],
       child: StatefulBuilder(
@@ -157,9 +157,9 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
     return value.isEmpty ? null : value;
   }
 
-  return await ctx.showRoundDialog<AdHocServerSaveResult>(
+  return await ctx.showSheet<AdHocServerSaveResult>(
     title: ctx.l10n.agentSaveServerTitle,
-    barrierDismiss: false,
+    dismissible: false,
     // All three disposed by the tree rather than after the `await`. The
     // name field is autofocused, which is the case that reliably still
     // has an animation running when the route is popped.

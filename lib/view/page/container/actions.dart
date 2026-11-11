@@ -19,11 +19,11 @@ extension on _ContainerPageState {
   Future<void> _execContainerAction(
     Future<ContainerErr?> Function() action,
   ) async {
-    final (result, err) = await context.showLoadingDialog(fn: action);
+    final (result, err) = await context.showLoadingSheet(fn: action);
     if (!mounted) return;
     if (err != null || result != null) {
       final e = result?.message ?? err?.toString();
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.error,
         child: Text(_errorMessage(e)),
       );
@@ -36,40 +36,43 @@ extension on _ContainerPageState {
     final imageCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
-    await context.showRoundDialog(
+    await context.showSheet(
       title: l10n.newContainer,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            autoFocus: true,
-            type: TextInputType.text,
-            label: l10n.image,
-            hint: 'xxx:1.1',
-            controller: imageCtrl,
-            suggestion: false,
-          ),
-          Input(
-            type: TextInputType.text,
-            controller: nameCtrl,
-            label: libL10n.name,
-            hint: 'xxx',
-            suggestion: false,
-          ),
-          Input(
-            type: TextInputType.text,
-            controller: argsCtrl,
-            label: l10n.extraArgs,
-            hint: '-p 2222:22 -v ~/.xxx/:/xxx',
-            suggestion: false,
-          ),
-        ],
+      child: DisposeWith(
+        notifiers: [imageCtrl, nameCtrl, argsCtrl],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              autoFocus: true,
+              type: TextInputType.text,
+              label: l10n.image,
+              hint: 'xxx:1.1',
+              controller: imageCtrl,
+              suggestion: false,
+            ),
+            Input(
+              type: TextInputType.text,
+              controller: nameCtrl,
+              label: libL10n.name,
+              hint: 'xxx',
+              suggestion: false,
+            ),
+            Input(
+              type: TextInputType.text,
+              controller: argsCtrl,
+              label: l10n.extraArgs,
+              hint: '-p 2222:22 -v ~/.xxx/:/xxx',
+              suggestion: false,
+            ),
+          ],
+        ),
       ),
       actions: Btn.ok(
         onTap: () async {
           try {
             final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
-            context.popDialog();
+            context.popSheet();
             await _showAddCmdPreview(
               _containerNotifier.runCommand(
                 image: imageCtrl.text.trim(),
@@ -83,9 +86,6 @@ extension on _ContainerPageState {
         },
       ).toList,
     );
-    imageCtrl.dispose();
-    nameCtrl.dispose();
-    argsCtrl.dispose();
   }
 
   Future<void> _showPruneDialog({
@@ -93,7 +93,7 @@ extension on _ContainerPageState {
     String? message,
     required Future<ContainerErr?> Function() onConfirm,
   }) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: title,
       child: Text(message ?? libL10n.askContinue('${libL10n.prune} $title')),
       actions: Btnx.cancelRedOk,
@@ -109,7 +109,7 @@ extension on _ContainerPageState {
         ? null
         : countUnusedTaggedImages(images, containerImages);
     var allUnused = false;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: l10n.pruneImages,
       child: StatefulBuilder(
         builder: (_, setState) {
@@ -139,7 +139,7 @@ extension on _ContainerPageState {
   Future<void> _showSystemPruneDialog() async {
     var allUnusedImages = false;
     var includeVolumes = false;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: l10n.pruneUnusedData,
       child: StatefulBuilder(
         builder: (_, setState) {
@@ -172,14 +172,14 @@ extension on _ContainerPageState {
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.preview,
       child: Text(cmd),
       actions: [
-        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.popSheet(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.popDialog();
+            context.popSheet();
             await _execContainerAction(() => _containerNotifier.run(cmd));
           },
           child: Text(libL10n.run),
@@ -196,7 +196,7 @@ extension on _ContainerPageState {
         : 'DOCKER_HOST';
     final ctrl = TextEditingController(text: host);
     // Disposed with the field, not when the dialog answers. See [DisposeWith].
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.edit,
       child: DisposeWith(
         notifiers: [ctrl],
@@ -215,7 +215,7 @@ extension on _ContainerPageState {
   }
 
   void _onSaveContainerHost(String val) {
-    context.popDialog();
+    context.popSheet();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
     unawaited(_refreshContainerTab(_lastResourceTab));
@@ -233,14 +233,14 @@ extension on _ContainerPageState {
       Toast.show(libL10n.empty);
       return;
     }
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue('${libL10n.delete} Image($id)'),
       ),
       actions: Btn.ok(
         onTap: () async {
-          context.popDialog();
+          context.popSheet();
           final result = await _containerNotifier.removeImage(id);
           if (result != null) {
             if (mounted) Toast.error(_errorMessage(result.message));
@@ -261,14 +261,14 @@ extension on _ContainerPageState {
           return;
         }
         final imageRef = '${e.repository.trim()}:${tag.trim()}';
-        context.showRoundDialog(
+        context.showSheet(
           title: libL10n.attention,
           child: Text(
             libL10n.askContinue('${l10n.pull} ${l10n.image}($imageRef)'),
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.popDialog();
+              context.popSheet();
               await _execContainerAction(
                 () => _containerNotifier.pullImage(imageRef),
               );
@@ -291,7 +291,7 @@ extension on _ContainerPageState {
     switch (item) {
       case ContainerMenu.rm:
         var force = false;
-        await context.showRoundDialog(
+        await context.showSheet(
           title: libL10n.attention,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -320,11 +320,12 @@ extension on _ContainerPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.popDialog();
+              context.popSheet();
               await _execContainerAction(
                 () => _containerNotifier.delete(id, force),
               );
             },
+            red: true,
           ).toList,
         );
         break;
@@ -398,7 +399,7 @@ extension on _ContainerPageState {
     };
     if (action == null) return;
     if (showLoading) {
-      await context.showLoadingDialog(fn: action);
+      await context.showLoadingSheet(fn: action);
     } else {
       await action();
     }

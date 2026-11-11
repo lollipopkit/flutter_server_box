@@ -607,14 +607,14 @@ final class _Progress extends StatelessWidget {
 
 /// Asks for one discovered host, in a dialog. Null when dismissed.
 Future<DiscoveredSshHost?> pickDiscoveredHost(BuildContext context) {
-  return context.showRoundDialog<DiscoveredSshHost>(
+  return context.showSheet<DiscoveredSshHost>(
     title: l10n.discoverSshServers,
     child: SizedBox(
       width: 400,
       height: 380,
       child: Builder(
         builder: (ctx) =>
-            SshDiscoveryView.pick(onPick: (h) => ctx.popDialog(h)),
+            SshDiscoveryView.pick(onPick: (h) => ctx.popSheet(h)),
       ),
     ),
     actions: [Btn.cancel()],

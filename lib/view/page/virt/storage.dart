@@ -746,7 +746,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 
   Future<void> _deleteVolume(VirtStoragePool pool, VirtVolume v) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.virtVolDeleteAsk(v.name, pool.name)),
       actions: Btnx.cancelRedOk,
@@ -826,7 +826,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 
   Future<void> _stop(VirtStoragePool pool) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -857,7 +857,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     // `pool-delete` removes an empty directory and nothing else.
     final canDeleteStorage =
         caps.poolDeleteStorage && vols.isEmpty && pool.type != 'logical';
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (context, setDialog) => Column(
@@ -918,29 +918,32 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     final ctrl = TextEditingController(
       text: base.replaceAll(RegExp(r'[^A-Za-z0-9._+-]'), '-').replaceFirst(RegExp(r'^[.+-]+'), ''),
     );
-    final name = await context.showRoundDialog<String>(
+    final name = await context.showSheet<String>(
       title: l10n.virtUploadTo(pool.name),
       child: StatefulBuilder(
         builder: (context, setDialog) {
           final issue = virtResIssueText(
             virtUploadIssue(pool, ctrl.text.trim(), size, volumes: vols),
           );
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Input(
-                key: const ValueKey('pool:upload:name'),
-                controller: ctrl,
-                label: libL10n.name,
-                icon: Icons.label_outline,
-                noWrap: true,
-                suggestion: false,
-                errorText: issue,
-                onChanged: (_) => setDialog(() {}),
-              ),
-              Text('${size.bytes2Str} · $base', style: UIs.text12Grey),
-            ],
+          return DisposeWith(
+            notifiers: [ctrl],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Input(
+                  key: const ValueKey('pool:upload:name'),
+                  controller: ctrl,
+                  label: libL10n.name,
+                  icon: Icons.label_outline,
+                  noWrap: true,
+                  suggestion: false,
+                  errorText: issue,
+                  onChanged: (_) => setDialog(() {}),
+                ),
+                Text('${size.bytes2Str} · $base', style: UIs.text12Grey),
+              ],
+            ),
           );
         },
       ),
@@ -951,12 +954,11 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           onTap: () {
             final n = ctrl.text.trim();
             if (virtUploadIssue(pool, n, size, volumes: vols) != null) return;
-            context.popDialog(n);
+            context.popSheet(n);
           },
         ),
       ],
     );
-    ctrl.dispose();
     if (name == null || !mounted) return;
     final lower = name.toLowerCase();
     final template = RegExp(r'\.tar\.(gz|xz|zst)$').hasMatch(lower);

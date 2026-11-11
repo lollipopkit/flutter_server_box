@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/view/widget/cert_dialog.dart';
+import 'package:server_box/view/widget/cert_sheet.dart';
 
 /// Shows the certificate the agent presented and pins it if the user accepts.
 ///
@@ -20,7 +20,7 @@ Future<void> trustMonitorCert(
   final monitor = srv.spi.monitorHttp;
   final cert = err.cert;
   if (monitor == null || cert == null) return;
-  final accepted = await showCertTrustDialog(
+  final accepted = await showCertTrustSheet(
     context,
     cert: cert,
     previous: err.previousFingerprint,
@@ -31,6 +31,6 @@ Future<void> trustMonitorCert(
         .read(serversProvider.notifier)
         .updateServer(srv.spi, srv.spi.copyWith(monitorHttp: monitor.withCertSha256(cert.fingerprint)));
   } catch (e, s) {
-    if (context.mounted) context.showErrDialog(e, s);
+    if (context.mounted) context.showErrSheet(e, s);
   }
 }

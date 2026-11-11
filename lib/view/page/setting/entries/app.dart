@@ -2,7 +2,7 @@ part of '../entry.dart';
 
 extension _App on _AppSettingsPageState {
   void _showInvalidDialog() {
-    context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
+    context.showSheet(title: libL10n.fail, child: Text(libL10n.invalid));
   }
 
   List<SettingsGroup> _buildApp() {
@@ -150,7 +150,7 @@ extension _App on _AppSettingsPageState {
           leading: const Icon(Icons.replay),
           title: Text(label),
           onTap: () async {
-            final selected = await context.showPickSingleDialog(
+            final selected = await context.showPickSingleSheet(
               title: label,
               items: List.generate(10, (index) => index),
               display: (p0) => '$p0 ${l10n.times}',
@@ -344,7 +344,7 @@ extension _App on _AppSettingsPageState {
   }
 
   void _askClearSettings() {
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.attention,
       child: SimpleMarkdown(
         data: libL10n.askContinue(
@@ -354,7 +354,7 @@ extension _App on _AppSettingsPageState {
       actions: [
         CountDownBtn(
           onTap: () {
-            context.popDialog();
+            context.popSheet();
             _clearSettings();
           },
           afterColor: Colors.red,
@@ -404,7 +404,7 @@ extension _App on _AppSettingsPageState {
       final backupPwd = await SecureStoreProps.bakPwd.read();
       if (backupPwd?.isNotEmpty == true) return backupPwd;
       final controller = TextEditingController();
-      final result = await context.showRoundDialog<String>(
+      final result = await context.showSheet<String>(
         title: libL10n.pwd,
         child: DisposeWith(
           notifiers: [controller],
@@ -412,16 +412,16 @@ extension _App on _AppSettingsPageState {
             controller: controller,
             label: libL10n.pwd,
             obscureText: true,
-            onSubmitted: (_) => context.popDialog(controller.text.trim()),
+            onSubmitted: (_) => context.popSheet(controller.text.trim()),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => context.popDialog(null),
+            onPressed: () => context.popSheet(null),
             child: Text(libL10n.cancel),
           ),
           TextButton(
-            onPressed: () => context.popDialog(controller.text.trim()),
+            onPressed: () => context.popSheet(controller.text.trim()),
             child: Text(libL10n.ok),
           ),
         ],
@@ -452,7 +452,7 @@ extension _App on _AppSettingsPageState {
         } on WrongPasswordException catch (e, stack) {
           Loggers.app.warning('Decrypt raw settings failed', e, stack);
           if (!mounted) return;
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.fail,
             child: Text(l10n.backupPasswordWrong),
           );
@@ -460,7 +460,7 @@ extension _App on _AppSettingsPageState {
         } catch (e, stack) {
           Loggers.app.warning('Decrypt raw settings failed', e, stack);
           if (!mounted) return;
-          await context.showRoundDialog(
+          await context.showSheet(
             title: libL10n.fail,
             child: Text('${libL10n.error}:\n$e'),
           );
@@ -535,7 +535,7 @@ extension _App on _AppSettingsPageState {
           });
         }
       } catch (e, trace) {
-        context.showRoundDialog(
+        context.showSheet(
           title: libL10n.error,
           child: Text('${libL10n.save}:\n$e'),
         );

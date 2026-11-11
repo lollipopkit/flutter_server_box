@@ -80,7 +80,7 @@ abstract final class AppLinkRouter {
       Toast.show(libL10n.empty);
       return Future.value();
     }
-    return context.showPickSingleDialog<Spi>(
+    return context.showPickSingleSheet<Spi>(
       title: libL10n.server,
       items: spis,
       display: (spi) => spi.name,

@@ -113,7 +113,7 @@ class ServerDetailReadingFailed extends StatelessWidget {
             icon: const Icon(Icons.bug_report_outlined, size: 17),
             text: l10n.viewError,
             mainAxisSize: MainAxisSize.min,
-            onTap: () => context.showRoundDialog(
+            onTap: () => context.showSheet(
               title: label,
               child: SingleChildScrollView(
                 child: SelectableText(error.trim(), style: mono),
@@ -128,7 +128,7 @@ class ServerDetailReadingFailed extends StatelessWidget {
                   child: Text(libL10n.copy),
                 ),
                 TextButton(
-                  onPressed: () => ctx.popDialog(),
+                  onPressed: () => ctx.popSheet(),
                   child: Text(libL10n.close),
                 ),
               ],

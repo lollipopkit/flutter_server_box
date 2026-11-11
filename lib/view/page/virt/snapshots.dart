@@ -688,7 +688,7 @@ extension _SnapshotActions on _VirtSnapshotsViewState {
         .then<Object>((d) => d)
         .catchError((Object e) => e);
     if (!mounted) return;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (context, setDialog) => SingleChildScrollView(
@@ -748,7 +748,7 @@ extension _SnapshotActions on _VirtSnapshotsViewState {
   }
 
   Future<void> _delete(VirtGuestSnapshot snap) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('${libL10n.delete} ${snap.name}')),
       actions: Btnx.cancelRedOk,

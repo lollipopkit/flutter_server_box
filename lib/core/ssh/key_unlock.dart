@@ -91,7 +91,7 @@ abstract final class PrivateKeyUnlock {
       pem,
       cacheKey: cacheKey,
       keyName: keyName,
-      prompt: prompt ?? _showDialog,
+      prompt: prompt ?? _showSheet,
     );
     _inFlight[cacheKey] = attempt;
     try {
@@ -217,7 +217,7 @@ abstract final class PrivateKeyUnlock {
     throw _locked(keyName);
   }
 
-  static Future<String?> _showDialog({
+  static Future<String?> _showSheet({
     required String keyName,
     required bool retry,
   }) async {
@@ -226,7 +226,7 @@ abstract final class PrivateKeyUnlock {
 
     final controller = TextEditingController();
     // Disposed with the field, not when the dialog answers. See [DisposeWith].
-    return await context.showRoundDialog<String>(
+    return await context.showSheet<String>(
       title: libL10n.authRequired,
       childBuilder: (dialogContext) => DisposeWith(
         notifiers: [controller],

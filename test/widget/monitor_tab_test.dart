@@ -282,12 +282,14 @@ void main() {
     expect(_calls, ['enter a/jellyfin.jellyfin']);
 
     await tester.tap(find.byTooltip(app_locale.l10n.monitorUpdatesOnly));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Immich'), findsNothing);
     expect(find.text('Jellyfin'), findsOneWidget);
 
     // Not behind the proxy: its page instead, saying why.
     await tester.tap(find.byTooltip(app_locale.l10n.monitorUpdatesOnly));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Busy'));
     await tester.pump();
@@ -337,6 +339,7 @@ void main() {
     expect(find.textContaining('uptime'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ChoiceChip, libL10n.login));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(_calls.last, 'audit a login');
     expect(find.textContaining('uptime'), findsNothing);
@@ -355,15 +358,19 @@ void main() {
     expect(find.text(app_locale.l10n.monitorLiveDevicesTip), findsOneWidget);
 
     await tester.tap(find.byTooltip(app_locale.l10n.monitorLiveEnd));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(app_locale.l10n.monitorLiveEndSessionConfirm('tmux main')), findsOneWidget);
     await tester.tap(find.text(libL10n.ok));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(_calls, ['end session s1']);
 
     await tester.tap(find.byTooltip(app_locale.l10n.monitorLiveForget));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text(libL10n.cancel));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(_calls, ['end session s1']);
   });
@@ -391,6 +398,7 @@ void main() {
     // The tip points at this tab: not repeated on it.
     expect(find.textContaining(app_locale.l10n.monitorAgentTooOldTip), findsNothing);
     await tester.tap(find.text(app_locale.l10n.monitorHowToUpdate));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text(app_locale.l10n.monitorAgentTooOldBody), findsOneWidget);
     // No SSH to it: the agent starts the update itself, signed in to with the
@@ -401,9 +409,11 @@ void main() {
     expect(find.text(app_locale.l10n.monitorUpdateNow), findsOneWidget);
     expect(find.text(app_locale.l10n.monitorUpdateInTerminal), findsNothing);
     await tester.tap(find.text(libL10n.close));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.text(app_locale.l10n.monitorAgentUpdate('0.3.0')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text(app_locale.l10n.monitorAgentOutdatedBody('0.3.0', '0.2.0')), findsOneWidget);
     // Too old to start it, and no SSH: the command, to run there.
@@ -433,14 +443,17 @@ void main() {
 
     // Newer than this app's read (0.3.0): the agent's answer wins.
     await tester.tap(find.text(app_locale.l10n.monitorAgentUpdate('0.5.0')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text(app_locale.l10n.monitorUpdateDocker), findsOneWidget);
     expect(find.text(rust.monitorUpgradeCommand()), findsNothing);
     expect(find.text(app_locale.l10n.monitorUpdateNow), findsNothing);
     await tester.tap(find.text(libL10n.close));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.text(app_locale.l10n.monitorAgentUpdate('0.4.0')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     // Installed by the script and signed in: the agent runs it.
     expect(find.text(app_locale.l10n.monitorUpdateAgentHint), findsOneWidget);
@@ -463,6 +476,7 @@ void main() {
     expect(find.descendant(of: find.byType(SideBarTile), matching: find.text('4')), findsOneWidget);
 
     await tester.tap(find.widgetWithText(SideBarTile, 'box-b'));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.widgetWithText(SideBarTile, MonitorSection.audit.label));
     await tester.pump();

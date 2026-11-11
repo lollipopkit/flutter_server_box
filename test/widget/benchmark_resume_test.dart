@@ -449,6 +449,8 @@ void main() {
     await tester.tap(find.text('db').last);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    // The picker answers once it is off the screen; the page follows after.
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     // The same single column, now that machine's — not another copy of the run
@@ -497,6 +499,8 @@ void main() {
     await tester.tap(find.text('db').last);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    // The picker answers once it is off the screen; the page follows after.
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     final page = tester.widget<BenchmarkRunPage>(find.byType(BenchmarkRunPage));
@@ -663,6 +667,8 @@ void main() {
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    // The answer comes once the sheet is gone; the list redraws after it.
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     expect(find.byType(BenchmarkHistoryTile), findsNothing);

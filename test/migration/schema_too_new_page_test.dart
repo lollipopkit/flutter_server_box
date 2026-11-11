@@ -111,7 +111,8 @@ void main() {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 50)),
       );
-      await tester.pump();
+      // With time: a sheet answers once its exit has run.
+      await tester.pump(const Duration(milliseconds: 50));
     }
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -339,6 +340,8 @@ void main() {
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+    // The answer comes once the sheet is gone; the page redraws after it.
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     // The controls are gone: there is nothing left to export.
@@ -369,6 +372,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
+    // Past the sheet's exit, which is when it answers.
+    await tester.pump(const Duration(milliseconds: 400));
     await settle(tester);
 
     expect(find.text(libL10n.backup), findsNothing);

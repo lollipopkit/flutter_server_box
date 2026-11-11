@@ -502,7 +502,7 @@ extension _Actions on _VirtTabPageState {
     if (spi == null) return false;
     final line = ref.read(virtHostsProvider).probes[serverId]?.pve;
     final version = RegExp(r'pve-manager/([^/\s]+)').firstMatch(line ?? '');
-    final go = await context.showRoundDialog<bool>(
+    final go = await context.showSheet<bool>(
       title: 'Proxmox VE',
       child: Text(
         l10n.virtPveSetupTip(
@@ -511,7 +511,7 @@ extension _Actions on _VirtTabPageState {
       ),
       actions: [
         Btn.cancel(),
-        Btn.text(text: libL10n.setting, onTap: () => context.popDialog(true)),
+        Btn.text(text: libL10n.setting, onTap: () => context.popSheet(true)),
       ],
     );
     if (go != true || !mounted) return false;

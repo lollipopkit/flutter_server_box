@@ -199,14 +199,14 @@ extension _Actions on _IosSettingsPageState {
     }
 
     final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
-    final picked = await context.showPickDialog<Spi>(
+    final picked = await context.showPickSheet<Spi>(
       title: l10n.watchServers,
       items: servers,
       display: (e) => e.name,
       initial: servers.where((e) => !excluded.contains(e.id)).toList(),
       actions: [
         TextButton(
-          onPressed: () => context.showRoundDialog(
+          onPressed: () => context.showSheet(
             title: l10n.watchServers,
             child: Text(l10n.watchServersTip),
           ),

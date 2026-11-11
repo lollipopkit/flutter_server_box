@@ -615,7 +615,7 @@ extension on _MonitorSettingsViewState {
     } else {
       // Named one by one: a failure in one half says nothing about the other,
       // which may well have been written.
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.error,
         child: Text(failures.join('\n\n')),
         actions: Btnx.oks,

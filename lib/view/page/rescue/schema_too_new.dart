@@ -175,14 +175,14 @@ extension _Actions on _SchemaTooNewPageState {
   }
 
   Future<void> _onExportEncrypted() async {
-    final pwd = await context.showPwdDialog(title: libL10n.pwd);
+    final pwd = await context.showPwdSheet(title: libL10n.pwd);
     if (pwd == null || pwd.isEmpty) return;
     await _export(password: pwd, suffix: '');
   }
 
   Future<void> _onExportPlain() async {
     final l10n = context.l10n;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.schemaTooNewPlainWarn),
       actions: Btnx.cancelRedOk,
@@ -263,7 +263,7 @@ extension _Actions on _SchemaTooNewPageState {
 
     if (!mounted) return;
     if (error != null) {
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.fail,
         child: Text('$error'),
         actions: Btnx.oks,
@@ -272,7 +272,7 @@ extension _Actions on _SchemaTooNewPageState {
       // Nothing else on this screen changes once the copy has landed, and there
       // is no toast host in this app to say so. The path is the answer to
       // "where did it go".
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.success,
         child: SelectableText(savedTo),
         actions: Btnx.oks,
@@ -361,7 +361,7 @@ extension _Actions on _SchemaTooNewPageState {
 
   Future<void> _onWipe() async {
     final l10n = context.l10n;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.schemaTooNewWipeConfirm),
       actions: Btnx.cancelRedOk,
@@ -383,7 +383,7 @@ extension _Actions on _SchemaTooNewPageState {
     } catch (e, s) {
       Loggers.app.warning('Rescue wipe failed', e, s);
       if (mounted) {
-        await context.showRoundDialog(
+        await context.showSheet(
           title: libL10n.fail,
           child: Text('$e'),
         );

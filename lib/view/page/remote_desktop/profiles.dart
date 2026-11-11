@@ -268,7 +268,7 @@ extension _Actions on _RemoteDesktopProfilesPageState {
   }
 
   Future<void> _delete(RemoteDesktopProfile profile) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.remoteDesktopDeleteProfile(profile.name)),
       actions: Btnx.cancelOk,

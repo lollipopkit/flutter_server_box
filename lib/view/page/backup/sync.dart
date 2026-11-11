@@ -420,7 +420,7 @@ extension _SyncActions on _BackupPageState {
     final from = _SyncDest.current;
     if (to == from) return;
     if (from != _SyncDest.off && to != _SyncDest.off) {
-      final ok = await context.showRoundDialog<bool>(
+      final ok = await context.showSheet<bool>(
         title: l10n.switchTo(to.name),
         child: Text(l10n.syncSwitchBody(from.name)),
         actions: Btnx.cancelOk,
@@ -535,7 +535,7 @@ extension _SyncActions on _BackupPageState {
       final bytes = await File(path).readAsBytes();
       if (mounted) await BackupService.restoreData(context, bytes);
     } catch (e, s) {
-      if (mounted) context.showErrDialog(e, s, libL10n.restore);
+      if (mounted) context.showErrSheet(e, s, libL10n.restore);
       Loggers.app.warning('Restore iCloud backup failed', e, s);
     } finally {
       await dir?.delete(recursive: true);

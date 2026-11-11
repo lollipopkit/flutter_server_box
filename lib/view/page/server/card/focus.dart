@@ -518,7 +518,6 @@ class ServerCardSwitch extends StatelessWidget {
       ],
       title: title,
       at: at,
-      sheet: at == null,
     );
   }
 }

@@ -24,7 +24,7 @@ extension _RemoteDesktop on _AppSettingsPageState {
         title: TipText(label, l10n.remoteSessionIdleTimeoutTip),
         onTap: () async {
           final current = prop.fetch();
-          final val = await context.showPickSingleDialog(
+          final val = await context.showPickSingleSheet(
             title: label,
             // A value set some other way — a restored backup — is offered
             // beside the usual ones rather than shown as none of them.

@@ -82,7 +82,7 @@ void main() {
   tearDown(closeTestDb);
 
   /// A page that hands [text] to the importer, on its own navigator — which is
-  /// what every real caller is, and what makes the dialogs' `popDialog` reach
+  /// what every real caller is, and what makes the dialogs' `popSheet` reach
   /// the root navigator rather than this page.
   Future<void> open(WidgetTester tester, String text) async {
     await tester.pumpWidget(
@@ -104,11 +104,15 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    // Past the sheet's slide in.
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   /// Runs the pending isolate work and lets the tree catch up.
   Future<void> settle(WidgetTester tester) async {
+    // A sheet answers once it is off the screen: its exit first.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(seconds: 2));
     });

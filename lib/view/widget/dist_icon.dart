@@ -254,7 +254,7 @@ String distLegalPlain(AppLocalizations l10n) => l10n.distIconIntroLegal;
 /// under the thumb is one that gets dismissed without a glance.
 Future<bool> confirmDistIconTerms(BuildContext context) async {
   final l10n = context.l10n;
-  final agreed = await context.showRoundDialog<bool>(
+  final agreed = await context.showSheet<bool>(
     title: l10n.distIcon,
     childBuilder: (ctx) => ConstrainedBox(
       // Half the window, so the dialog never grows past what it can scroll
@@ -306,7 +306,7 @@ class _DistTerms extends StatelessWidget {
 /// An OK button that cannot be pressed for [_kReadPause], counting down.
 ///
 /// Its own widget so the timer lives with the thing it disables, and so the
-/// dialog around it stays a plain `showRoundDialog` call.
+/// dialog around it stays a plain `showSheet` call.
 class _DelayedOk extends StatefulWidget {
   const _DelayedOk();
 

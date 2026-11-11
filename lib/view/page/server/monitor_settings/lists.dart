@@ -148,7 +148,7 @@ final class _MonitorRulesPageState extends State<MonitorRulesPage> {
     final matcher = TextEditingController(text: rule?.matcher ?? 'cpu');
     var type = rule?.monitorType ?? _kRuleTypes.first;
 
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.monitoringRules,
       child: SingleChildScrollView(
         child: StatefulBuilder(
@@ -323,7 +323,7 @@ final class _MonitorPushListPageState extends State<MonitorPushListPage> {
   Future<void> _removePush(int idx) async {
     final entry = _pushes[idx];
     final name = entry.name.isEmpty ? libL10n.empty : entry.name;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue('${libL10n.delete} ${l10n.pushChannels}($name)'),
@@ -422,20 +422,22 @@ final class _MonitorCorsPageState extends State<MonitorCorsPage> {
 
   Future<void> _addOrigin() async {
     final ctrl = TextEditingController();
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.corsOrigins,
-      child: Input(
-        controller: ctrl,
-        label: 'URL',
-        hint: 'https://panel.example.com',
-        icon: MingCute.web_line,
-        type: TextInputType.url,
-        suggestion: false,
+      child: DisposeWith(
+        notifiers: [ctrl],
+        child: Input(
+          controller: ctrl,
+          label: 'URL',
+          hint: 'https://panel.example.com',
+          icon: MingCute.web_line,
+          type: TextInputType.url,
+          suggestion: false,
+        ),
       ),
       actions: Btnx.cancelOk,
     );
     final origin = ctrl.text.trim();
-    ctrl.dispose();
     if (ok != true || origin.isEmpty || !mounted) return;
     if (_origins.contains(origin)) return;
     _edited(() => _origins.add(origin));

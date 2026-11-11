@@ -117,7 +117,7 @@ class _KeybindingsPageState extends ConsumerState<KeybindingsPage> {
   Future<void> _resetAll() async {
     final kb = ref.read(keybindingsProvider);
     if (kb.overrides.isEmpty) return;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.kbResetAllAsk),
       actions: Btnx.cancelRedOk,
@@ -132,7 +132,7 @@ class _KeybindingsPageState extends ConsumerState<KeybindingsPage> {
       Toast.show(l10n.kbFixedHint);
       return;
     }
-    await context.showRoundDialog<void>(
+    await context.showSheet<void>(
       title: c.title,
       child: _Recorder(command: c),
     );
@@ -306,7 +306,7 @@ class _RecorderState extends ConsumerState<_Recorder> {
     // Bare Escape and Enter are this dialog's own: a chord of either alone
     // would be one nobody could set.
     if (plain && e.logicalKey == LogicalKeyboardKey.escape) {
-      context.popDialog();
+      context.popSheet();
       return KeyEventResult.handled;
     }
     if (plain && e.logicalKey == LogicalKeyboardKey.enter) {
@@ -322,7 +322,7 @@ class _RecorderState extends ConsumerState<_Recorder> {
     final chord = _chord;
     if (chord == null) return;
     ref.read(keybindingsProvider.notifier).bind(widget.command, chord);
-    context.popDialog();
+    context.popSheet();
     Toast.show(
       l10n.kbChanged(
         widget.command.title,
@@ -429,14 +429,14 @@ class _RecorderState extends ConsumerState<_Recorder> {
                   ref
                       .read(keybindingsProvider.notifier)
                       .unbind(widget.command);
-                  context.popDialog();
+                  context.popSheet();
                 },
                 style: TextButton.styleFrom(foregroundColor: scheme.error),
                 child: Text(l10n.kbRemove),
               ),
               const Spacer(),
               TextButton(
-                onPressed: context.popDialog,
+                onPressed: context.popSheet,
                 child: Text(libL10n.cancel),
               ),
               TextButton(

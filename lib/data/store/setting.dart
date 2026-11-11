@@ -642,7 +642,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   late final serverOverview = propertyDefault('serverOverview', true);
 
   /// Remerber pwd in memory
-  /// Used for [DialogX.showPwdDialog]
+  /// Used for [SheetX.showPwdSheet]
   late final rememberPwdInMem = propertyDefault('rememberPwdInMem', true);
 
   /// SSH Term Theme

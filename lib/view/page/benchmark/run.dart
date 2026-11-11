@@ -125,7 +125,7 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
   }
 
   Future<void> _onCancel() async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.benchmarkCancelConfirm),
       actions: Btnx.cancelRedOk,

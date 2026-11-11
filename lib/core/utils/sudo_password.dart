@@ -46,7 +46,7 @@ abstract final class SudoPassword {
     String? label,
   }) async {
     if (!context.mounted) return null;
-    final pwd = await context.showPwdDialog(
+    final pwd = await context.showPwdSheet(
       title: libL10n.sudoPassword,
       label: label,
       // Not fl_lib's own memory, which only fills the field in: this one

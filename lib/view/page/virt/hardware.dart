@@ -1849,7 +1849,7 @@ extension _Actions on _VirtHardwareViewState {
   }
 
   Future<void> _pickCpuType(VirtHardware hw) async {
-    final picked = await context.showRoundDialog<String>(
+    final picked = await context.showSheet<String>(
       title: l10n.virtHwModel,
       child: SizedBox(
         width: 400,
@@ -1862,7 +1862,7 @@ extension _Actions on _VirtHardwareViewState {
                 dense: true,
                 title: Text(t, style: UIs.text13),
                 selected: t == hw.cpu.type,
-                onTap: () => context.popDialog(t),
+                onTap: () => context.popSheet(t),
               ),
           ],
         ),
@@ -1884,7 +1884,7 @@ extension _Actions on _VirtHardwareViewState {
   Future<void> _removeDisk(VirtHardware hw, VirtHwDisk d) async {
     final cdrom = d.kind == VirtHwDiskKind.cdrom;
     var delete = false;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (context, setDialog) => Column(
@@ -1963,7 +1963,7 @@ extension _Actions on _VirtHardwareViewState {
   }
 
   Future<void> _removeDevice(VirtHardware hw, VirtHwDevice d) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         l10n.virtHwRemoveNicAsk(
@@ -1987,7 +1987,7 @@ extension _Actions on _VirtHardwareViewState {
       return '${_pve ? 'bc:24:11' : '52:54:00'}:${b()}:${b()}:${b()}';
     }
 
-    final mac = await context.showRoundDialog<String>(
+    final mac = await context.showSheet<String>(
       title: l10n.virtHwMac,
       child: DisposeWith(
         notifiers: [ctrl],
@@ -2022,7 +2022,7 @@ extension _Actions on _VirtHardwareViewState {
         Btn.cancel(),
         Btn.text(
           text: libL10n.save,
-          onTap: () => context.popDialog(ctrl.text.trim()),
+          onTap: () => context.popSheet(ctrl.text.trim()),
         ),
       ],
     );
@@ -2045,7 +2045,7 @@ extension _Actions on _VirtHardwareViewState {
     required bool secureBoot,
   }) async {
     final name = uefi ? (secureBoot ? 'UEFI · Secure Boot' : 'UEFI') : 'BIOS';
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.virtHwFirmwareWarnTitle,
       child: Text(
         '${l10n.virtHwSwitchFirmwareAsk(widget.guest.name, name)}\n\n'
@@ -2060,7 +2060,7 @@ extension _Actions on _VirtHardwareViewState {
       await _loadDiskPools();
       if (!mounted) return;
       final pools = _addPools ?? const [];
-      final picked = await context.showPickSingleDialog<VirtStoragePool>(
+      final picked = await context.showPickSingleSheet<VirtStoragePool>(
         title: l10n.virtHwEfiStorage,
         items: pools,
         display: (p) => '${p.name} · ${p.type}',
@@ -2075,7 +2075,7 @@ extension _Actions on _VirtHardwareViewState {
   }
 
   Future<void> _removeNic(VirtHardware hw, VirtHwNic n, String name) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.virtHwRemoveNicAsk(name, widget.guest.name)),
       actions: Btnx.cancelRedOk,

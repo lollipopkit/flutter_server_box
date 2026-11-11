@@ -9,7 +9,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/virt/common.dart';
-import 'package:server_box/view/widget/cert_dialog.dart';
+import 'package:server_box/view/widget/cert_sheet.dart';
 
 /// A host's failure where its guests would be, with the one action that
 /// answers it.
@@ -108,7 +108,7 @@ Future<void> virtPromptTfa(
   VirtErr err,
 ) async {
   final ctrl = TextEditingController();
-  final ok = await context.showRoundDialog<bool>(
+  final ok = await context.showSheet<bool>(
     title: l10n.pveOtpTitle,
     // Disposed by the tree, since `autoFocus` is the case that breaks when
     // the controller goes before the field does.
@@ -128,9 +128,9 @@ Future<void> virtPromptTfa(
             type: TextInputType.number,
             suggestion: false,
             autoFocus: true,
-            // `popDialog`: the dialog is on the root navigator and this
+            // `popSheet`: the dialog is on the root navigator and this
             // context is the tab's — see the dialog rules in CLAUDE.md.
-            onSubmitted: (_) => context.popDialog(true),
+            onSubmitted: (_) => context.popSheet(true),
           ),
         ],
       ),
@@ -145,7 +145,7 @@ Future<void> virtPromptTfa(
   }
   // A wrong code comes back as the host's new state, which the card beside
   // this already shows; the loading dialog's own report is enough on top.
-  await context.showLoadingDialog(fn: () => notifier.submitTfa(code));
+  await context.showLoadingSheet(fn: () => notifier.submitTfa(code));
 }
 
 /// Shows the certificate PVE presented and pins it if the user accepts.
@@ -158,13 +158,13 @@ Future<void> virtConfirmCert(
 ) async {
   final cert = err.cert;
   if (cert == null) return;
-  final accepted = await showCertTrustDialog(
+  final accepted = await showCertTrustSheet(
     context,
     cert: cert,
     previous: err.type == VirtErrType.certChanged ? err.previousFingerprint : null,
   );
   if (!accepted || !context.mounted) return;
-  await context.showLoadingDialog(
+  await context.showLoadingSheet(
     fn: () => notifier.confirmCert(cert.fingerprint),
   );
 }
@@ -175,7 +175,7 @@ Future<void> virtAskSudo(
   BuildContext context,
   VirtHostNotifier notifier,
 ) async {
-  final pwd = await context.showPwdDialog(
+  final pwd = await context.showPwdSheet(
     title: libL10n.sudoPassword,
     remember: false,
   );

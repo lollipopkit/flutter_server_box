@@ -182,7 +182,7 @@ ${err.message ?? 'null'}
           .read(serversProvider.notifier)
           .updateServer(srv.spi, srv.spi.copyWith(monitorHttp: monitor.allowingInsecure()));
     } catch (e, s) {
-      if (mounted) context.showErrDialog(e, s);
+      if (mounted) context.showErrSheet(e, s);
     }
   }
 
@@ -254,14 +254,14 @@ ${err.message ?? 'null'}
   /// the empty page, so the same one-tap answer has to be offered in both.
   void _showErrDetail(ServerState srv, Err err) {
     final md = _errMarkdown(err);
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
         if (srv.certRefusal case final certErr?)
           TextButton(
             onPressed: () {
-              context.popDialog();
+              context.popSheet();
               trustMonitorCert(context, ref, srv, certErr);
             },
             child: Text(l10n.remoteDesktopTrustCertificate),
@@ -272,13 +272,13 @@ ${err.message ?? 'null'}
             // `onPressed` replaces the navigator the button would have
             // resolved on its own — see the dialog rules in CLAUDE.md.
             onPressed: () {
-              context.popDialog();
+              context.popSheet();
               _allowInsecure(srv);
             },
             child: Text(l10n.monitorAllowInsecureHttp),
           ),
         TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
-        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
+        TextButton(onPressed: () => context.popSheet(), child: Text(libL10n.close)),
       ],
     );
   }

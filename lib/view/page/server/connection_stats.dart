@@ -272,7 +272,7 @@ extension _Actions on _ConnectionStatsPageState {
   }
 
   void _showServerDetailsDialog(ServerConnectionStats stats) {
-    context.showRoundDialog(
+    context.showSheet(
       title: '${stats.serverName} - ${l10n.connectionDetails}',
       child: SizedBox(
         width: double.maxFinite,
@@ -317,10 +317,10 @@ extension _Actions on _ConnectionStatsPageState {
         ),
       ),
       actions: [
-        TextButton(onPressed: context.popDialog, child: Text(libL10n.close)),
+        TextButton(onPressed: context.popSheet, child: Text(libL10n.close)),
         TextButton(
           onPressed: () {
-            context.popDialog();
+            context.popSheet();
             _showClearServerStatsDialog(stats);
           },
           child: Text(
@@ -353,22 +353,22 @@ extension _Actions on _ConnectionStatsPageState {
     required String content,
     required VoidCallback onConfirm,
   }) {
-    context.showRoundDialog(
+    context.showSheet(
       title: title,
       child: Text(content),
       actions: [
-        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popSheet, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
             try {
               onConfirm();
               await _loadStats();
               if (mounted) {
-                context.popDialog();
+                context.popSheet();
               }
             } catch (e, s) {
               if (!mounted) return;
-              context.showErrDialog(e, s);
+              context.showErrSheet(e, s);
             }
           },
           text: libL10n.ok,

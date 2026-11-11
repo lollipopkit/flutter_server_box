@@ -50,7 +50,7 @@ final class MonitorOutdated extends MonitorUpdateReason {
 /// the command runs in a terminal, which the restart leaves alone. A
 /// container or a NixOS module is updated its own way, said instead.
 Future<void> showMonitorUpdate(BuildContext context, Spi spi, MonitorUpdateReason reason, {MonitorAccess? access}) {
-  return context.showRoundDialog<void>(
+  return context.showSheet<void>(
     title: '${l10n.monitorUpdateAgent} · ${spi.name}',
     child: _UpdateDialog(spi: spi, reason: reason, access: access),
   );
@@ -174,7 +174,7 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
             spacing: 7,
             children: [
               TextButton(onPressed: () => doc.launchUrl(), child: Text(libL10n.doc)),
-              TextButton(onPressed: context.popDialog, child: Text(libL10n.close)),
+              TextButton(onPressed: context.popSheet, child: Text(libL10n.close)),
               ?_buildAction(),
             ],
           ),
@@ -286,7 +286,7 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
         label: Text(l10n.monitorUpdateInTerminal),
         onPressed: () {
           final page = context;
-          context.popDialog();
+          context.popSheet();
           SSHPage.route.go(page, SshPageArgs(source: ServerSource(widget.spi), initCmd: command));
         },
       ),

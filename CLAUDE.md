@@ -76,7 +76,7 @@ A server is reached over SSH, the Monitor (HTTP), both, or is this device (`Spi.
 - Names come in through `use`, never as long paths inline: `use crate::api::json::{Json, Max};` then `Json<T, Max<N>>`, not `crate::api::json::Json<T, crate::api::json::Max<N>>`.
 - Git LFS holds images, fonts, `.fsbt` and PDFs under `monitor/`, `docs/`, `website/`, `store/` only: F-Droid clones without LFS, so nothing the app's build or `fastlane/` reads goes there (`.gitattributes`). `scripts/check-lfs.sh` fails a build that finds a pointer.
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.
-- GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.
+- GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showSheet`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.
 - **In `lib/`, a page is `AppRoute.go`, `AppPageRoute` or `AppPage` (fl_lib), never a bare `MaterialPageRoute` / `MaterialPage`**: a predictive back (Android, and the iOS/macOS edge swipe) pops every route current in its own navigator, and only these leave it to the page on screen. Navigators side by side or kept alive while hidden (tabs, workspace panes) sit under a `BackScope(enabled:)` saying which one back is for.
 - **A pushed page keeps a way back at every width.** A page that draws no bar in some layout decides by the route it is on (`ModalRoute.canPopOf`), never by the width: the window changes after the push (rotation, Stage Manager). `test/widget/pushed_page_way_back_test.dart` pushes every route that takes no arguments narrow, wide and widened; a new one is listed there. A `route` nothing pushes is not declared.
 
@@ -94,10 +94,13 @@ A server is reached over SSH, the Monitor (HTTP), both, or is this device (`Spi.
 - `detailId` is null at the root; give `leading` where the back button has nowhere to go; no `ref.watch`/`ref.listen` in `detailBuilder`; the subject is a widget, not a route.
 - `AppTab` is positional; index 7 stays in `_retiredIndices`.
 
-### Dialogs
+### Sheets
 
-- `showRoundDialog` uses the root navigator: close a dialog with `context.popDialog()` or a returning `Btn.ok`/`Btnx.cancelOk`, never `context.pop()`.
-- **Trap: `Btn.ok(onTap: f)`** and `Input.onSubmitted` in a dialog — `f` must pop. Greps: `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib`, `rg -n 'Btnx?\.\w+\(onTap:' lib`.
+- **No dialogs** (`showDialog`, `AlertDialog`): a question is a bottom sheet. fl_lib's `context.showSheet` (title / child / actions), `showInputSheet`, `showPwdSheet`, `showPickSheet` / `showPickSingleSheet`, `showErrSheet`, `showLoadingSheet`; a body of its own (its own surface and grip too) is `showResizableSheet`, which a `showSheet` raised from inside joins as a page.
+- `showSheet` uses the root navigator: close a sheet with `context.popSheet()` (from a page gone since too: it closes `SheetX.topSheet`) or a returning `Btn.ok`/`Btnx.cancelOk`, never `context.pop()`. `dismissible: false` holds against the barrier and a drag.
+- **A sheet raised while one is in front is its next page** (`SheetStack`, one route): `popSheet`, `context.pop`, a raw `Navigator.pop`, back and the barrier pop the top page; the grip's drag down closes every page when none holds. `dismissible: false` is per page. An answer comes once the sheet (or page) is gone, so a test pumps past the exit before awaiting it. What closes itself (a progress) closes by its own handle (`showSheet(onShown:)`, which takes that page only), never by `popSheet`. `showResizableSheet` / `showRowsSheet` always open a sheet of their own; every kind answers once gone, with taps under it held until then.
+- A sheet is as wide as the window up to 640 and as tall as its content up to 90% of what the keyboard leaves (`PromptSheet.restLimit`): a taller body scrolls itself.
+- **Trap: `Btn.ok(onTap: f)`** and `Input.onSubmitted` in a sheet — `f` must pop. Greps: `rg -U 'showSheet[\s\S]*?context\.pop\(' lib`, `rg -n 'Btnx?\.\w+\(onTap:' lib`.
 - **Trap: a page embedding `SSHPage`** inherits `PopScope(canPop: false)`; a plain `BackButton()` types Esc. Use `onPressed: () => context.pop()`.
 
 ## Feature notes

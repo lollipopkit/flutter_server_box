@@ -132,7 +132,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
           // button meant two pops in a row from a callback that can see two
           // navigators, and getting their order or their target wrong is
           // silent.
-          final confirmed = await context.showRoundDialog<bool>(
+          final confirmed = await context.showSheet<bool>(
             title: libL10n.attention,
             child: Text(
               libL10n.askContinue(
@@ -221,7 +221,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
       return;
     }
 
-    final chosen = await context.showPickSingleDialog<Spi>(
+    final chosen = await context.showPickSingleSheet<Spi>(
       title: libL10n.server,
       items: spis,
       display: (spi) => spi.name,
@@ -312,7 +312,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                     (e) => ref.read(serversProvider).serverOrder.contains(e),
                   )
                   .toList();
-              final serverIds = await context.showPickDialog(
+              final serverIds = await context.showPickSheet(
                 title: l10n.autoRun,
                 items: ref.read(serversProvider).serverOrder,
                 display: (e) => ref.read(serversProvider).servers[e]?.name ?? e,

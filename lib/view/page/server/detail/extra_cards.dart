@@ -93,11 +93,11 @@ extension on _ServerDetailPageState {
     required String title,
     required Widget child,
   }) {
-    context.showRoundDialog(
+    context.showSheet(
       title: title,
       child: child,
       actions: [
-        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
+        TextButton(onPressed: () => context.popSheet(), child: Text(libL10n.close)),
       ],
     );
   }
@@ -533,7 +533,7 @@ extension on _ServerDetailPageState {
   }
 
   void _onTapSensorItem(SensorItem srv) {
-    context.showRoundDialog(
+    context.showSheet(
       title: srv.device,
       child: SingleChildScrollView(
         child: SimpleMarkdown(

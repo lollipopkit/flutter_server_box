@@ -16,7 +16,7 @@ import 'package:server_box/core/service/crash_report.dart';
 /// dialog's claim about that is honest.
 abstract final class CrashDebugMenu {
   static Future<void> show(BuildContext context) async {
-    final action = await context.showRoundDialog<_Action>(
+    final action = await context.showSheet<_Action>(
       title: 'Crash diagnostics (debug)',
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -26,7 +26,7 @@ abstract final class CrashDebugMenu {
             ListTile(
               dense: true,
               title: Text(action.label),
-              onTap: () => context.popDialog(action),
+              onTap: () => context.popSheet(action),
             ),
         ],
       ),
@@ -52,7 +52,7 @@ abstract final class CrashDebugMenu {
         // one to read: it says what would actually be published.
         final report = await CrashReport.build();
         if (!context.mounted) return;
-        await context.showRoundDialog(
+        await context.showSheet(
           title: 'Report preview',
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 400),
@@ -66,7 +66,7 @@ abstract final class CrashDebugMenu {
           actions: [
             Btn.text(text: libL10n.copy, onTap: () {
               Pfs.copy(report);
-              context.popDialog();
+              context.popSheet();
             }),
             Btn.ok(),
           ],

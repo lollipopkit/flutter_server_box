@@ -1106,7 +1106,7 @@ extension on _UsersPageState {
 
   Future<bool> _deleteUser(SystemUser user) async {
     var removeHome = false;
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
         builder: (context, setDialogState) => Column(
@@ -1160,7 +1160,7 @@ extension on _UsersPageState {
   }
 
   Future<bool> _deleteGroup(SystemGroup group) async {
-    final confirmed = await context.showRoundDialog<bool>(
+    final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),
       actions: Btnx.cancelRedOk,
@@ -1240,7 +1240,7 @@ extension on _UsersPageState {
       final primaryGroupCtrl = TextEditingController(text: primaryGroup);
       final groupsCtrl = TextEditingController(text: groupsText);
       final passwordCtrl = TextEditingController(text: password);
-      final submitted = await context.showRoundDialog<bool>(
+      final submitted = await context.showSheet<bool>(
         title: user == null ? libL10n.add : libL10n.edit,
         child: DisposeWith(
           notifiers: [
@@ -1402,7 +1402,7 @@ extension on _UsersPageState {
     while (mounted) {
       final nameCtrl = TextEditingController(text: name);
       final membersCtrl = TextEditingController(text: membersText);
-      final submitted = await context.showRoundDialog<bool>(
+      final submitted = await context.showSheet<bool>(
         title: group == null ? libL10n.add : libL10n.edit,
         child: DisposeWith(
           notifiers: [nameCtrl, membersCtrl],

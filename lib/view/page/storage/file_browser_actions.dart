@@ -21,7 +21,7 @@ extension _Actions on _FileBrowserPageState {
     final original = entry.mode ?? 0;
     final perm = UnixPerm.fromValue(original);
     var next = perm;
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       child: UnixPermEditor(perm: perm, onChanged: (value) => next = value),
       actions: Btnx.okReds,
     );
@@ -66,7 +66,7 @@ extension _Actions on _FileBrowserPageState {
     required IconData icon,
     String? initial,
   }) async {
-    final name = await context.showRoundDialog<String>(
+    final name = await context.showSheet<String>(
       title: title,
       child: _NameField(icon: icon, initial: initial),
     );
@@ -110,7 +110,7 @@ extension _Actions on _FileBrowserPageState {
   /// Descriptions because the same menu is drawn two ways — a centred dialog
   /// for a finger, a popup at the pointer for a mouse — and because closing
   /// the menu becomes the menu's job. Every one of these used to begin with a
-  /// `popDialog` the author had to remember.
+  /// `popSheet` the author had to remember.
   List<ContextMenuAction> _entryActions(FileEntry entry, String full) => [
     ContextMenuAction(
       icon: Icons.checklist,
@@ -176,10 +176,10 @@ extension _Actions on _FileBrowserPageState {
   }
 
   Future<void> _pick(FileEntry entry) async {
-    final picked = await context.showRoundDialog<bool>(
+    final picked = await context.showSheet<bool>(
       title: libL10n.file,
       child: Text(entry.name),
-      actions: Btn.ok(onTap: () => context.popDialog(true)).toList,
+      actions: Btn.ok(onTap: () => context.popSheet(true)).toList,
     );
     if (picked != true || !mounted) return;
     context.pop(_fullPath(entry));

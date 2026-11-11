@@ -171,7 +171,7 @@ extension on _BmcCredentialEditPageState {
   }
 
   Future<void> _onDelete(BmcCredential existing, int shared) async {
-    final sure = await context.showRoundDialog<bool>(
+    final sure = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         shared > 0

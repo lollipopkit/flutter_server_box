@@ -115,7 +115,7 @@ Future<void> _confirmDelete(
   WidgetRef ref,
   Spi spi,
 ) async {
-  final confirmed = await context.showRoundDialog<bool>(
+  final confirmed = await context.showSheet<bool>(
     title: libL10n.attention,
     child: Text(
       libL10n.askContinue('${libL10n.delete} ${libL10n.server}(${spi.name})'),
@@ -126,7 +126,7 @@ Future<void> _confirmDelete(
   try {
     await ref.read(serversProvider.notifier).delServer(spi.id);
   } catch (e, s) {
-    if (context.mounted) context.showErrDialog(e, s);
+    if (context.mounted) context.showErrSheet(e, s);
   }
 }
 
@@ -181,8 +181,8 @@ Widget serverMenuHead(ServerState srv) {
 /// by its colour — see [ServerCard.highlighted] — which is what makes the
 /// menu's own position readable as "this one".
 ///
-/// [sheet] is the one window with nowhere to hang it: a single column under a
-/// finger. [header] names the machine inside the menu — see [serverMenuHead].
+/// Without [at] it is a sheet. [header] names the machine inside the menu —
+/// see [serverMenuHead].
 ///
 /// How each of those is drawn is [showContextMenu]'s, not this file's: the
 /// sheet and the popup are one menu in two places, and a set of rows written
@@ -192,7 +192,6 @@ Future<void> showServerActions(
   WidgetRef ref,
   ServerState srv, {
   Offset? at,
-  bool sheet = false,
   Widget? header,
   VoidCallback? onSelect,
 }) {
@@ -202,6 +201,5 @@ Future<void> showServerActions(
     title: srv.spi.name,
     header: header,
     at: at,
-    sheet: sheet,
   );
 }

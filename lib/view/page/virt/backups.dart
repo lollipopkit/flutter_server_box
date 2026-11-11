@@ -679,7 +679,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   /// Runs the scheduled [job] now, as PVE's own "Run now" does: the job's
   /// fields, without its schedule.
   Future<void> _runNow(VirtBackupJob job) async {
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(l10n.virtBackupJobRunAsk),
       actions: Btnx.cancelOk,

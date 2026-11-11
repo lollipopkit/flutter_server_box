@@ -46,7 +46,7 @@ abstract final class ServerPower {
     WidgetRef ref,
     Spi spi,
   ) async {
-    final func = await context.showPickSingleDialog<ShellFunc>(
+    final func = await context.showPickSingleSheet<ShellFunc>(
       title: l10n.power,
       items: funcs,
       display: label,
@@ -65,7 +65,7 @@ abstract final class ServerPower {
     // Said once, and before the confirmation rather than after it: it is a
     // reason someone might answer no.
     if (func == ShellFunc.suspend && Stores.setting.showSuspendTip.fetch()) {
-      await context.showRoundDialog(
+      await context.showSheet(
         title: libL10n.attention,
         child: Text(l10n.suspendTip),
       );
@@ -73,7 +73,7 @@ abstract final class ServerPower {
       if (!context.mounted) return;
     }
 
-    final sure = await context.showRoundDialog<bool>(
+    final sure = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(
         libL10n.askContinue('${label(func)} ${libL10n.server}(${spi.name})'),
@@ -130,7 +130,7 @@ abstract final class ServerPower {
 
   static Future<String?> _askPassword(BuildContext context, Spi spi) async {
     final remember = Stores.setting.rememberPwdInMem.fetch();
-    final pwd = await context.showPwdDialog(
+    final pwd = await context.showPwdSheet(
       title: libL10n.pwd,
       label: spi.ssh?.user,
       // Its own key rather than the SSH one: sudo's password and the account's

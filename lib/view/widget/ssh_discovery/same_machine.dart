@@ -29,19 +29,17 @@ final class _SameMachineDialog extends StatelessWidget {
           alternate: m.hosts.length > 1 ? 1 : null,
         )),
     ];
-    try {
-      final ok = await context.showRoundDialog<bool>(
-        title: l10n.discoverySameMachine,
+    final ok = await context.showSheet<bool>(
+      title: l10n.discoverySameMachine,
+      // The choices outlive the answer by the sheet's exit: see [DisposeWith].
+      child: DisposeWith(
+        notifiers: choices,
         child: _SameMachineDialog(machines, choices),
-        actions: Btnx.cancelOk,
-      );
-      if (ok != true) return null;
-      return [for (final c in choices) c.value];
-    } finally {
-      for (final c in choices) {
-        c.dispose();
-      }
-    }
+      ),
+      actions: Btnx.cancelOk,
+    );
+    if (ok != true) return null;
+    return [for (final c in choices) c.value];
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart' show PromptSheet;
 import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -60,6 +61,8 @@ void main() {
 
     await tester.tap(find.text('build'));
     await tester.pump();
+    // Answered once the sheet is off the screen.
+    await tester.pump(const Duration(milliseconds: 400));
     final result = await future;
     expect(result, isA<TmuxPickExisting>());
     final existing = result as TmuxPickExisting;
@@ -81,20 +84,24 @@ void main() {
     await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(PromptSheet), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), ' work ');
     await tester.pump();
     await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    // The name was a page of the picker; the picker then answers once it is
+    // off the screen.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     final result = await future;
     expect(result, isA<TmuxPickNew>());
     expect((result as TmuxPickNew).sessionName, 'work');
   });
 
-  testWidgets('a name confirmed after the sheet is gone is dropped', (
+  testWidgets('the name goes with the sheet it was asked over', (
     tester,
   ) async {
     await tester.pumpWidget(const _PickerHost());
@@ -110,18 +117,15 @@ void main() {
     await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    // The dialog is above the sheet on the root navigator; the sheet goes
-    // first, as when the page under it is torn down.
-    final sheet = ModalRoute.of(tester.element(find.byType(BottomSheet)))!;
+    // The name is a page of the picker's sheet; the sheet goes, as when the
+    // page under it is torn down, and takes the name with it.
+    final sheet = ModalRoute.of(tester.element(find.byType(PromptSheet)))!;
     Navigator.of(context).removeRoute(sheet);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(await future, isNull);
-
-    await tester.tap(find.text(libEn.ok));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
     expect(tester.takeException(), isNull);
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(PromptSheet), findsNothing);
   });
 
   testWidgets('prefills a non-conflicting session name', (tester) async {
@@ -159,6 +163,10 @@ void main() {
     await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    // The name was a page of the picker; the picker then answers once it is
+    // off the screen.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     final result = await future;
     expect(result, isA<TmuxPickNew>());
@@ -194,6 +202,10 @@ void main() {
     await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    // The name was a page of the picker; the picker then answers once it is
+    // off the screen.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     final result = await future;
     expect(result, isA<TmuxPickNew>());
@@ -214,6 +226,8 @@ void main() {
 
     await tester.tap(find.text(en.tmuxSkip));
     await tester.pump();
+    // Answered once the sheet is off the screen.
+    await tester.pump(const Duration(milliseconds: 400));
     expect(await future, isA<TmuxPickSkip>());
   });
 
@@ -232,6 +246,8 @@ void main() {
     expect(find.text(en.disconnect), findsOneWidget);
     await tester.tap(find.text(en.disconnect));
     await tester.pump();
+    // Answered once the sheet is off the screen.
+    await tester.pump(const Duration(milliseconds: 400));
     expect(await future, isA<TmuxPickDetach>());
   });
 }

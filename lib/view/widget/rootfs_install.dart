@@ -66,7 +66,7 @@ Future<bool> installRootfs(
   final distro = target.distro;
   final chosen = target.release;
 
-  final confirm = await context.showRoundDialog<bool>(
+  final confirm = await context.showSheet<bool>(
     title: into == null ? libL10n.install : libL10n.update,
     child: Text(
       into == null
@@ -95,9 +95,12 @@ Future<bool> installRootfs(
 
   // Not awaited: this dialog has no answer to give. It is closed below, when
   // the work it is describing ends — which is the only thing that should close
-  // it, so there is no barrier dismiss either.
+  // it, so there is no barrier dismiss either. By its own handle: what is
+  // raised over it meanwhile is not what ends here, and the page may be gone.
+  VoidCallback? close;
   unawaited(
-    context.showRoundDialog(
+    context.showSheet(
+      onShown: (c) => close = c,
       title: libL10n.download,
       // Disposed with the dialog, which is still animating out when the work
       // below returns. See [DisposeWith].
@@ -120,7 +123,7 @@ Future<bool> installRootfs(
           ),
         ),
       ),
-      barrierDismiss: false,
+      dismissible: false,
       actions: [
         Btn.text(
           text: libL10n.cancel,
@@ -142,12 +145,12 @@ Future<bool> installRootfs(
       onProgress: (value) => progress.value = value,
       cancel: cancel,
     );
-    if (context.mounted) context.popDialog();
+    close?.call();
     return true;
   } catch (e, s) {
+    close?.call();
     if (!context.mounted) return false;
-    context.popDialog();
-    if (!cancelled) context.showErrDialog(e, s);
+    if (!cancelled) context.showErrSheet(e, s);
     return false;
   }
 }
@@ -167,7 +170,7 @@ Future<bool> _confirmBeta(BuildContext context) async {
   if (!Feature.linux.beta) return true;
   if (Stores.setting.linuxBetaWarned.fetch()) return true;
   var noMore = false;
-  final ok = await context.showRoundDialog<bool>(
+  final ok = await context.showSheet<bool>(
     title: libL10n.attention,
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -209,7 +212,7 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
   // the engine cannot unmount a `/dev/pts` a session still holds — so this
   // turns an error after the fact into something to do first.
   if (Rootfs.openSessions(target) > 0) {
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.attention,
       child: Text(context.l10n.linuxSystemInUse(target.label)),
       actions: [Btnx.okRed],
@@ -217,7 +220,7 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
     return false;
   }
 
-  final confirm = await context.showRoundDialog<bool>(
+  final confirm = await context.showSheet<bool>(
     title: libL10n.attention,
     child: Text(libL10n.askContinue('${libL10n.delete} ${target.label}')),
     actions: Btnx.cancelRedOk,
@@ -235,15 +238,17 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
   //
   // No answer to give and nothing to cancel: stopping halfway is what leaves
   // a tree with its `/dev` half unmounted, so there is no barrier dismiss
-  // either. Closed below, whatever happened.
+  // either. Closed below, whatever happened, by its own handle.
+  VoidCallback? close;
   unawaited(
-    context.showRoundDialog(
+    context.showSheet(
+      onShown: (c) => close = c,
       title: libL10n.delete,
       child: const SizedBox(
         height: 48,
         child: Center(child: CircularProgressIndicator()),
       ),
-      barrierDismiss: false,
+      dismissible: false,
       actions: const [],
     ),
   );
@@ -254,12 +259,10 @@ Future<bool> removeRootfs(BuildContext context, {LinuxProfile? profile}) async {
     // Refused rather than half-done: the tree is still there, and so is
     // whatever was using it. Deleting it anyway is what froze the app.
     Loggers.app.warning('Remove ${target.id}', e, s);
-    if (context.mounted) {
-      context.popDialog();
-      Toast.error('${libL10n.fail}: $e');
-    }
+    close?.call();
+    if (context.mounted) Toast.error('${libL10n.fail}: $e');
     return false;
   }
-  if (context.mounted) context.popDialog();
+  close?.call();
   return true;
 }

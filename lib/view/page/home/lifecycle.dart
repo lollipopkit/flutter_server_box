@@ -156,7 +156,7 @@ extension _HomePageLifecycle on _HomePageState {
 
   /// Completes once the lock screen, if there is one, has been dismissed.
   ///
-  /// Awaited by the launch notices. `showRoundDialog` puts a dialog on the
+  /// Awaited by the launch notices. `showSheet` puts a dialog on the
   /// *root* navigator, which is the one holding the lock page, so anything
   /// raised while it is up draws over it — and the crash report renders the
   /// previous run's log, which is precisely what a lock screen exists to keep

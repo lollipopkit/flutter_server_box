@@ -40,7 +40,7 @@ import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
-import 'package:server_box/view/widget/cert_dialog.dart';
+import 'package:server_box/view/widget/cert_sheet.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 

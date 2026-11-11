@@ -302,7 +302,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     String path,
   ) async {
     final localPath = serverLocalPath(_spi.id, path);
-    final (opened, err) = await context.showLoadingDialog(
+    final (opened, err) = await context.showLoadingSheet(
       // A download, which takes as long as the link makes it.
       timeout: null,
       fn: () async {
@@ -360,7 +360,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     if (!mounted) return null;
     // A failure is the loading dialog's to show.
     Future<_SaveResult> write(String? expected) async {
-      final (saved, err) = await context.showLoadingDialog(
+      final (saved, err) = await context.showLoadingSheet(
         fn: () async {
           final bytes = await File(localPath).readAsBytes();
           try {
@@ -380,7 +380,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     var result = await write(version);
     if (result.modified) {
       if (!mounted) return null;
-      final overwrite = await context.showRoundDialog<bool>(
+      final overwrite = await context.showSheet<bool>(
         title: libL10n.attention,
         child: Text(l10n.fileChangedOverwrite(name)),
         actions: Btnx.cancelRedOk,

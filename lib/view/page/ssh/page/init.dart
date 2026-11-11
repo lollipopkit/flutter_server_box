@@ -347,14 +347,14 @@ extension _Init on SSHPageState {
       return;
     }
 
-    return await context.showRoundDialog(
+    return await context.showSheet(
       title: libL10n.doc,
       child: Text(l10n.sshTermHelp),
       actions: [
         TextButton(
           onPressed: () {
             Stores.setting.sshTermHelpShown.put(true);
-            context.popDialog();
+            context.popSheet();
           },
           child: Text(l10n.noPromptAgain),
         ),
@@ -526,7 +526,7 @@ extension _Init on SSHPageState {
       await snippet.runInTerm(_terminal, spi, alive: current);
     } catch (e, s) {
       if (!mounted) return;
-      context.showErrDialog(e, s, '${libL10n.snippet}: ${snippet.name}');
+      context.showErrSheet(e, s, '${libL10n.snippet}: ${snippet.name}');
     }
   }
 
@@ -688,7 +688,7 @@ extension _Init on SSHPageState {
     final backend = _backend;
     final tmux = _tmuxCurrentSession;
     if (tmux == null || tmux.isEmpty) {
-      final confirmed = await context.showRoundDialog<bool>(
+      final confirmed = await context.showSheet<bool>(
         title: l10n.reconnect,
         child: Text(l10n.reconnectEndsShell),
         actions: Btnx.cancelOk,
@@ -774,10 +774,9 @@ extension _Init on SSHPageState {
 
   /// Cancellable progress dialog shown while reconnecting.
   void _showReconnectingDialog() {
-    // Captured now, while there is certainly a context to ask — see the field.
-    _reconnectDialogNav = Navigator.of(context, rootNavigator: true);
     unawaited(
-      context.showRoundDialog(
+      context.showSheet(
+        onShown: (close) => _closeReconnecting = close,
         child: Row(
           children: [
             const SizedBox(
@@ -800,7 +799,7 @@ extension _Init on SSHPageState {
             ),
           ],
         ),
-        barrierDismiss: false,
+        dismissible: false,
       ),
     );
   }
@@ -818,30 +817,28 @@ extension _Init on SSHPageState {
   /// unmounting this page — popping a route from there is a `markNeedsBuild`
   /// during build. Nothing follows it, so nothing can be popped by mistake.
   void _dismissReconnectingDialog({bool deferred = false}) {
-    final nav = _reconnectDialogNav;
-    if (nav == null) return;
-    _reconnectDialogNav = null;
+    final close = _closeReconnecting;
+    if (close == null) return;
+    _closeReconnecting = null;
     if (!deferred) {
-      if (nav.mounted) nav.pop();
+      close();
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (nav.mounted) nav.pop();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => close());
   }
 
   Future<void> _showDisconnectDialog() async {
-    final shouldLeave = await context.showRoundDialog<bool>(
+    final shouldLeave = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text('${libL10n.disconnected}\n${libL10n.goBackQ}'),
-      barrierDismiss: false,
+      dismissible: false,
       actions: [
         TextButton(
-          onPressed: () => context.popDialog(false),
+          onPressed: () => context.popSheet(false),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popSheet(true),
           child: Text(libL10n.ok),
         ),
       ],

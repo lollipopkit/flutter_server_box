@@ -474,7 +474,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       return;
     }
     final replacing = certificate.replacesExisting;
-    final accepted = await context.showRoundDialog<bool>(
+    final accepted = await context.showSheet<bool>(
       title: replacing
           ? l10n.remoteDesktopCertificateChanged
           : l10n.remoteDesktopTrustCertificate,
@@ -513,7 +513,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () => context.popDialog(true),
+          onPressed: () => context.popSheet(true),
           child: Text(
             replacing
                 ? l10n.remoteDesktopReplaceTrust

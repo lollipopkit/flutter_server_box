@@ -2,7 +2,7 @@ part of '../entry.dart';
 
 extension _Server on _AppSettingsPageState {
   void _showInvalidUrlDialog() {
-    context.showRoundDialog(
+    context.showSheet(
       title: libL10n.fail,
       child: Text(libL10n.invalidUrl),
       actions: Btnx.oks,
@@ -72,7 +72,7 @@ extension _Server on _AppSettingsPageState {
     final names = Map.fromEntries(
       keys.map((e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e)),
     );
-    final deleteKeys = await context.showPickDialog<String>(
+    final deleteKeys = await context.showPickSheet<String>(
       clearable: true,
       items: keys.toList(),
       display: (p0) => names[p0] ?? p0,
@@ -80,7 +80,7 @@ extension _Server on _AppSettingsPageState {
     if (deleteKeys == null || deleteKeys.isEmpty) return;
 
     final md = deleteKeys.map((e) => '- ${names[e] ?? e}').join('\n');
-    final sure = await context.showRoundDialog(
+    final sure = await context.showSheet(
       title: libL10n.attention,
       child: SimpleMarkdown(data: md),
       actions: Btnx.cancelRedOk,
@@ -105,7 +105,7 @@ extension _Server on _AppSettingsPageState {
           listenable: _setting.textFactor.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        onTap: () => context.showRoundDialog(
+        onTap: () => context.showSheet(
           title: label,
           child: Input(
             autoFocus: true,
@@ -131,7 +131,7 @@ extension _Server on _AppSettingsPageState {
     }
     _setting.textFactor.put(val);
     RNodes.app.notify();
-    context.popDialog();
+    context.popSheet();
   }
 
   SettingsRow _buildServerOverview() {
@@ -215,7 +215,7 @@ extension _Server on _AppSettingsPageState {
       // skips both the validation and the terms.
       if (url.isEmpty) {
         _setting.serverMarkUrl.put('');
-        context.popDialog();
+        context.popSheet();
         return;
       }
       if (!isFetchableLogoUrl(url)) {
@@ -223,7 +223,7 @@ extension _Server on _AppSettingsPageState {
         return;
       }
       _setting.serverMarkUrl.put(url);
-      context.popDialog();
+      context.popSheet();
     }
 
     return SettingsRow(
@@ -243,7 +243,7 @@ extension _Server on _AppSettingsPageState {
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () {
           _serverMarkCtrl.text = _setting.serverMarkUrl.fetch();
-          context.showRoundDialog(
+          context.showSheet(
             title: label,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -329,7 +329,7 @@ extension _Server on _AppSettingsPageState {
       // and shows as [libL10n.empty], which left no way back to it.
       if (raw.trim().isEmpty) {
         _setting.serverLogoUrl.put('');
-        context.popDialog();
+        context.popSheet();
         return;
       }
       // A GitHub page URL is rewritten to the one that serves the file. It is
@@ -341,7 +341,7 @@ extension _Server on _AppSettingsPageState {
         return;
       }
       _setting.serverLogoUrl.put(url);
-      context.popDialog();
+      context.popSheet();
     }
 
     return SettingsRow(
@@ -361,7 +361,7 @@ extension _Server on _AppSettingsPageState {
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () {
           _serverLogoCtrl.text = _setting.serverLogoUrl.fetch();
-          context.showRoundDialog(
+          context.showSheet(
             title: label,
             child: Column(
               mainAxisSize: MainAxisSize.min,

@@ -128,7 +128,7 @@ extension _Discovery on _ServerEditPageState {
           if (hop.id != found.server.id) await notifier.addServer(hop);
         }
       } catch (e, s) {
-        if (mounted) context.showErrDialog(e, s);
+        if (mounted) context.showErrSheet(e, s);
         return;
       }
       _jumpServers.value = [
@@ -192,12 +192,12 @@ extension _Actions on _ServerEditPageState {
   Future<void> _onTapBmcAccount() async {
     final creds = ref.read(bmcCredentialProvider).creds;
     final current = _bmcCredId.value;
-    // `showPickDialog` rather than `showPickSingleDialog`, which answers null
+    // `showPickSheet` rather than `showPickSingleSheet`, which answers null
     // for a dialog that was dismissed *and* for one whose selection was
     // cleared. Those have to be told apart here, or dismissing would silently
     // unset the account. This one answers null only for a dismissal, and an
     // empty list for a clear.
-    final picked = await context.showPickDialog<String>(
+    final picked = await context.showPickSheet<String>(
       title: l10n.bmcAccount,
       items: [...creds.map((e) => e.id), _kNewBmcCred],
       display: (id) {
@@ -279,7 +279,7 @@ extension _Actions on _ServerEditPageState {
     }
     if (!mounted) return null;
 
-    final accepted = await showCertTrustDialog(
+    final accepted = await showCertTrustSheet(
       context,
       cert: info,
       previous: pinned != info.fingerprint ? pinned : null,
@@ -382,7 +382,7 @@ extension _Actions on _ServerEditPageState {
   Future<void> _onTapForgetPveCert() async {
     // The dialog answers; this page clears the field it holds — see the
     // dialog rules in CLAUDE.md.
-    final ok = await context.showRoundDialog<bool>(
+    final ok = await context.showSheet<bool>(
       title: l10n.pveCertForget,
       child: Text(l10n.pveCertForgetTip),
       actions: Btnx.cancelRedOk,
@@ -400,7 +400,7 @@ extension _Actions on _ServerEditPageState {
 
     // Disposed by the tree, not after this `await`: the dialog's future
     // completes on the pop, while the field is still mounted and animating.
-    await context.showRoundDialog(
+    await context.showSheet(
       title: libL10n.sudoPwdTitle(libL10n.pwd),
       child: DisposeWith(
         notifiers: [controller],
@@ -421,11 +421,11 @@ extension _Actions on _ServerEditPageState {
             onPressed: () async {
               await _setPendingSudoPassword(null);
               if (!mounted) return;
-              context.popDialog();
+              context.popSheet();
             },
             child: Text(libL10n.clear),
           ),
-        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popSheet, child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async => await _saveSudoPassword(controller.text),
           child: Text(libL10n.save),
@@ -441,11 +441,11 @@ extension _Actions on _ServerEditPageState {
     }
     await _setPendingSudoPassword(value);
     if (!mounted) return;
-    // `popDialog`, not `pop`. This runs from the dialog's Save button but
-    // `context` is the *page's*, and `showRoundDialog` puts the dialog on the
+    // `popSheet`, not `pop`. This runs from the dialog's Save button but
+    // `context` is the *page's*, and `showSheet` puts the dialog on the
     // root navigator — so in a pane those are two navigators and `pop` closed
     // the edit page while leaving the dialog on screen.
-    context.popDialog();
+    context.popSheet();
   }
 
   Future<bool> _persistPendingSudoPassword() async {
@@ -624,7 +624,7 @@ extension _Actions on _ServerEditPageState {
       // on every save would be asking about something that is not true.
       final hasKey = selectedKey != null || _keyPath.value != null;
       if (!hasKey && _passwordController.text.isEmpty) {
-        final ok = await context.showRoundDialog<bool>(
+        final ok = await context.showSheet<bool>(
           title: libL10n.attention,
           child: Text(libL10n.askContinue(l10n.useNoPwd)),
           actions: Btnx.cancelRedOk,
@@ -843,7 +843,7 @@ extension _Actions on _ServerEditPageState {
       if (mounted) Toast.error(l10n.nameAlreadyExistsFmt(e.name));
       return false;
     } catch (e, s) {
-      if (mounted) context.showErrDialog(e, s);
+      if (mounted) context.showErrSheet(e, s);
       return false;
     }
     return true;
@@ -929,7 +929,7 @@ extension _Utils on _ServerEditPageState {
     }
     if (!mounted) return;
 
-    final shouldImport = await context.showRoundDialog<bool>(
+    final shouldImport = await context.showSheet<bool>(
       title: l10n.sshConfigImport,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -951,7 +951,7 @@ extension _Utils on _ServerEditPageState {
   }
 
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
-    return context.showRoundDialog(
+    return context.showSheet(
       title: '${libL10n.disabled} ${libL10n.cmd}',
       child: SizedBox(
         width: 270,
