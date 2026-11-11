@@ -51,6 +51,19 @@ extension ServerStateUi on ServerState {
     return error is SSHErr && error.type == SSHErrType.interactiveAuth;
   }
 
+  /// The agent's certificate refusal this server failed on, when it did.
+  ///
+  /// A question to answer, as [needsInteractiveAuth] is: the same attempt
+  /// again is refused the same way until the certificate is reviewed.
+  MonitorHttpErr? get certRefusal => switch (status.err) {
+    final MonitorHttpErr e
+        when e.cert != null &&
+            (e.type == MonitorHttpErrType.certUnconfirmed ||
+                e.type == MonitorHttpErrType.certChanged) =>
+      e,
+    _ => null,
+  };
+
   /// The one line a list of servers carries beside a name.
   ///
   /// Temperature and uptime, and nothing else. The latency belongs to the

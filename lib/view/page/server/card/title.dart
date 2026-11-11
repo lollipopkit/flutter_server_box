@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -8,11 +10,13 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/state_ui.dart';
+import 'package:server_box/view/page/server/trust_cert.dart';
 import 'package:server_box/view/widget/built_from.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
@@ -161,6 +165,13 @@ class ServerCardConnAction extends ConsumerWidget {
         const SizedBox.square(dimension: 19, child: SizedLoading(19, padding: 2)),
         null,
         null,
+      ),
+      // A certificate to review is answered here, where the card is: asking
+      // again is refused the same way.
+      ServerConn.failed when srv.certRefusal != null => (
+        const Icon(Icons.verified_user_outlined, size: 19, color: StatePalette.warn),
+        () => unawaited(trustMonitorCert(context, ref, srv, srv.certRefusal!)),
+        l10n.bmcCert,
       ),
       ServerConn.failed => (
         Icon(
