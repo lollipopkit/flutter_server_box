@@ -1235,6 +1235,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get usePodmanByDefault => 'Usa Podman per impostazione predefinita';
 
   @override
+  String get priority => 'Priorità';
+
+  @override
   String get used => 'Usato';
 
   @override

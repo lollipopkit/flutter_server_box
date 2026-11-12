@@ -32,6 +32,7 @@ const zh_CN = {
 	gpu: 'GPU',
 	back: '返回',
 	swap: '交换分区',
+	swapPriority: '优先级 {priority}',
 	disks: '磁盘',
 	blockDevices: '块设备',
 	notMounted: '未挂载',

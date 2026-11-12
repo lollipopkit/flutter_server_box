@@ -157,6 +157,7 @@ void _applySwap(ServerStatus ss, MonitorMetrics m) {
     free: _toKib(m.swap.total - m.swap.used),
     cached: 0,
   );
+  ss.swapAreas = m.swapAreas;
 }
 
 /// The per-mount list where the agent sends one, and the aggregate otherwise.

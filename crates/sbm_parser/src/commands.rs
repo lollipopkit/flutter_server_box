@@ -113,7 +113,8 @@ pub const LINUX: &[CommandSpec] = &[
         // `-T` at all.
         cmd: r#"lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,TYPE,MODEL,SIZE,TRAN 2>/dev/null; echo __SBM_DF__; d=$(df -kT 2>/dev/null); case "$d" in *Type*) printf '%s\n' "$d" ;; *) df -k ;; esac"#,
     },
-    CommandSpec { key: MEM, cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'" },
+    // `/proc/swaps` after the totals: each swap area on its own (#1829).
+    CommandSpec { key: MEM, cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'; echo __SBM_SWAPS__; cat /proc/swaps 2>/dev/null" },
     // Quiet on purpose, unlike most of this table. The status function no
     // longer discards stderr — a command that could not run says so in its own
     // segment, and the page prints that where the reading would be (see

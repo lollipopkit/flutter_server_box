@@ -27,11 +27,11 @@
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
 use crate::api::bmc::*;
 use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -5763,6 +5763,12 @@ let _: bool = Support.pci;
 let _: u64 = Swap.free;
 let _: u64 = Swap.cached;
  } 
+{ let SwapArea = None::<crate::api::parser::SwapArea>.unwrap(); let _: String = SwapArea.path;
+let _: String = SwapArea.kind;
+let _: u64 = SwapArea.size;
+let _: u64 = SwapArea.used;
+let _: i32 = SwapArea.priority;
+ } 
 { let SystemGroup = None::<crate::api::users::SystemGroup>.unwrap(); let _: String = SystemGroup.name;
 let _: u32 = SystemGroup.gid;
 let _: Vec<String> = SystemGroup.members;
@@ -8537,6 +8543,14 @@ return crate::api::virt_model::Limits{host_cpus: var_hostCpus, host_memory_bytes
         return ans_;}
                 }
                 
+                impl SseDecode for Vec<crate::api::parser::SwapArea> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::parser::SwapArea>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
                 impl SseDecode for Vec<crate::api::users::SystemGroup> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
@@ -10759,6 +10773,7 @@ return crate::api::parser::StatusBlockDevice{name: var_name, path: var_path, kin
 let mut var_cpuBrand = <Vec<(String,u32,)>>::sse_decode(deserializer);
 let mut var_mem = <Option<crate::api::parser::Memory>>::sse_decode(deserializer);
 let mut var_swap = <Option<crate::api::parser::Swap>>::sse_decode(deserializer);
+let mut var_swapAreas = <Vec<crate::api::parser::SwapArea>>::sse_decode(deserializer);
 let mut var_disks = <Vec<crate::api::parser::Disk>>::sse_decode(deserializer);
 let mut var_diskUsed = <u64>::sse_decode(deserializer);
 let mut var_diskSize = <u64>::sse_decode(deserializer);
@@ -10779,7 +10794,7 @@ let mut var_nvidia = <Vec<crate::api::parser::NvidiaSmiItem>>::sse_decode(deseri
 let mut var_amd = <Vec<crate::api::parser::AmdSmiItem>>::sse_decode(deserializer);
 let mut var_gpus = <Vec<crate::api::parser::GpuItem>>::sse_decode(deserializer);
 let mut var_diskSmart = <Vec<crate::api::parser::SmartReport>>::sse_decode(deserializer);
-return crate::api::parser::StatusReport{cpu: var_cpu, cpu_brand: var_cpuBrand, mem: var_mem, swap: var_swap, disks: var_disks, disk_used: var_diskUsed, disk_size: var_diskSize, block_devices: var_blockDevices, net: var_net, temps: var_temps, conn: var_conn, uptime: var_uptime, sys: var_sys, os_id: var_osId, os_id_like: var_osIdLike, host: var_host, ips: var_ips, diskio: var_diskio, batteries: var_batteries, sensors: var_sensors, nvidia: var_nvidia, amd: var_amd, gpus: var_gpus, disk_smart: var_diskSmart};}
+return crate::api::parser::StatusReport{cpu: var_cpu, cpu_brand: var_cpuBrand, mem: var_mem, swap: var_swap, swap_areas: var_swapAreas, disks: var_disks, disk_used: var_diskUsed, disk_size: var_diskSize, block_devices: var_blockDevices, net: var_net, temps: var_temps, conn: var_conn, uptime: var_uptime, sys: var_sys, os_id: var_osId, os_id_like: var_osIdLike, host: var_host, ips: var_ips, diskio: var_diskio, batteries: var_batteries, sensors: var_sensors, nvidia: var_nvidia, amd: var_amd, gpus: var_gpus, disk_smart: var_diskSmart};}
                 }
                 
                 impl SseDecode for crate::api::snippet::Step {
@@ -10942,6 +10957,16 @@ return crate::api::virt_model::Support{buses: var_buses, caches: var_caches, nic
 let mut var_free = <u64>::sse_decode(deserializer);
 let mut var_cached = <u64>::sse_decode(deserializer);
 return crate::api::parser::Swap{total: var_total, free: var_free, cached: var_cached};}
+                }
+                
+                impl SseDecode for crate::api::parser::SwapArea {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_path = <String>::sse_decode(deserializer);
+let mut var_kind = <String>::sse_decode(deserializer);
+let mut var_size = <u64>::sse_decode(deserializer);
+let mut var_used = <u64>::sse_decode(deserializer);
+let mut var_priority = <i32>::sse_decode(deserializer);
+return crate::api::parser::SwapArea{path: var_path, kind: var_kind, size: var_size, used: var_used, priority: var_priority};}
                 }
                 
                 impl SseDecode for crate::api::users::SystemGroup {
@@ -16794,6 +16819,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::parser::StatusBlockDevice> fo
 self.cpu_brand.into_into_dart().into_dart(),
 self.mem.into_into_dart().into_dart(),
 self.swap.into_into_dart().into_dart(),
+self.swap_areas.into_into_dart().into_dart(),
 self.disks.into_into_dart().into_dart(),
 self.disk_used.into_into_dart().into_dart(),
 self.disk_size.into_into_dart().into_dart(),
@@ -17030,6 +17056,24 @@ self.0.cached.into_into_dart().into_dart()
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::parser::Swap> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::parser::Swap>> for crate::api::parser::Swap {
             fn into_into_dart(self) -> FrbWrapper<crate::api::parser::Swap> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::parser::SwapArea> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.0.path.into_into_dart().into_dart(),
+self.0.kind.into_into_dart().into_dart(),
+self.0.size.into_into_dart().into_dart(),
+self.0.used.into_into_dart().into_dart(),
+self.0.priority.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::parser::SwapArea> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::parser::SwapArea>> for crate::api::parser::SwapArea {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::parser::SwapArea> {
                 self.into()
             }
         }
@@ -20734,6 +20778,12 @@ crate::api::virt_model::HwIssue::Unsupported => { 20 }
         for item in self { <crate::api::snippet::Step>::sse_encode(item, serializer); }}
                 }
                 
+                impl SseEncode for Vec<crate::api::parser::SwapArea> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::parser::SwapArea>::sse_encode(item, serializer); }}
+                }
+                
                 impl SseEncode for Vec<crate::api::users::SystemGroup> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
@@ -22662,6 +22712,7 @@ crate::api::virt::SnapshotNameIssue::Taken => { 2 }
 <Vec<(String,u32,)>>::sse_encode(self.cpu_brand, serializer);
 <Option<crate::api::parser::Memory>>::sse_encode(self.mem, serializer);
 <Option<crate::api::parser::Swap>>::sse_encode(self.swap, serializer);
+<Vec<crate::api::parser::SwapArea>>::sse_encode(self.swap_areas, serializer);
 <Vec<crate::api::parser::Disk>>::sse_encode(self.disks, serializer);
 <u64>::sse_encode(self.disk_used, serializer);
 <u64>::sse_encode(self.disk_size, serializer);
@@ -22833,6 +22884,15 @@ crate::api::exec_session::SudoEntry::SudoPassword => { 2 }
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<u64>::sse_encode(self.total, serializer);
 <u64>::sse_encode(self.free, serializer);
 <u64>::sse_encode(self.cached, serializer);}
+                }
+                
+                impl SseEncode for crate::api::parser::SwapArea {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.path, serializer);
+<String>::sse_encode(self.kind, serializer);
+<u64>::sse_encode(self.size, serializer);
+<u64>::sse_encode(self.used, serializer);
+<i32>::sse_encode(self.priority, serializer);}
                 }
                 
                 impl SseEncode for crate::api::users::SystemGroup {
@@ -23865,11 +23925,11 @@ crate::api::virt_libvirt::VirtResourceOp::NetDelete{name} => { <i32>::sse_encode
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
 use crate::api::bmc::*;
 use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -24000,11 +24060,11 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
 use crate::api::bmc::*;
 use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

@@ -45,6 +45,10 @@ pub struct SystemMetrics {
     pub cpu_cores: Vec<CpuCoreTime>,
     pub memory: MemoryMetrics,
     pub swap: SwapMetrics,
+    /// Each swap area `swap` adds up (Linux `/proc/swaps`, #1829). Sizes in
+    /// bytes.
+    #[serde(default)]
+    pub swap_areas: Vec<sbm_parser::types::SwapArea>,
     pub disk: DiskMetrics,
     pub network: NetworkMetrics,
     /// The single reading the home-page card shows: a CPU sensor when one is

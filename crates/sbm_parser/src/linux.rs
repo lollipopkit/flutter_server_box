@@ -47,8 +47,66 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     cores
 }
 
+/// What [commands::MEM] prints between `/proc/meminfo` and `/proc/swaps`.
+pub const MEM_SWAPS_MARKER: &str = "__SBM_SWAPS__";
+
+/// The `/proc/meminfo` part of [commands::MEM]'s output.
+fn meminfo(raw: &str) -> &str {
+    raw.split_once(MEM_SWAPS_MARKER).map_or(raw, |(meminfo, _)| meminfo)
+}
+
+/// The `/proc/swaps` part of [commands::MEM]'s output: one row per active
+/// swap area, KiB converted to bytes. Empty for output from before the
+/// marker, and where no swap is on.
+pub fn parse_swap_areas(raw: &str) -> Vec<SwapArea> {
+    raw.split_once(MEM_SWAPS_MARKER).map_or_else(Vec::new, |(_, swaps)| parse_proc_swaps(swaps))
+}
+
+/// `/proc/swaps` itself.
+pub fn parse_proc_swaps(swaps: &str) -> Vec<SwapArea> {
+    swaps
+        .lines()
+        .filter_map(|line| {
+            let mut fields = line.split_whitespace();
+            let path = fields.next()?;
+            let kind = fields.next()?;
+            let size: u64 = fields.next()?.parse().ok()?;
+            let used: u64 = fields.next()?.parse().ok()?;
+            let priority = fields.next()?.parse().ok()?;
+            Some(SwapArea {
+                path: unescape_octal(path),
+                kind: kind.to_string(),
+                size: size * 1024,
+                used: used * 1024,
+                priority,
+            })
+        })
+        .collect()
+}
+
+/// A path as the kernel prints it in `/proc` tables, with space, tab, newline
+/// and backslash written as `\ooo`.
+fn unescape_octal(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'\\'
+            && let Some(code) = s.get(i + 1..i + 4).and_then(|o| u8::from_str_radix(o, 8).ok())
+        {
+            out.push(code);
+            i += 4;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
 /// /proc/meminfo (Dart `Memory.parse`), in KiB
 pub fn parse_mem(raw: &str) -> Option<Memory> {
+    let raw = meminfo(raw);
     let get = |key: &str| meminfo_value(raw, key);
     let total = get("MemTotal:")?;
     Some(Memory {
@@ -60,6 +118,7 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
 
 /// Swap lines of /proc/meminfo (Dart `Swap.parse`), in KiB
 pub fn parse_swap(raw: &str) -> Option<Swap> {
+    let raw = meminfo(raw);
     Some(Swap {
         total: meminfo_value(raw, "SwapTotal:")?,
         free: meminfo_value(raw, "SwapFree:").unwrap_or(0),

@@ -1227,6 +1227,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get usePodmanByDefault => 'Використовувати Podman за замовчуванням';
 
   @override
+  String get priority => 'Пріоритет';
+
+  @override
   String get used => 'Використано';
 
   @override

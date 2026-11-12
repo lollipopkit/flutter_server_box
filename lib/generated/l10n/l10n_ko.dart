@@ -1165,6 +1165,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get usePodmanByDefault => '기본적으로 Podman 사용';
 
   @override
+  String get priority => '우선순위';
+
+  @override
   String get used => '사용됨';
 
   @override

@@ -105,6 +105,35 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
 
+    test('linux reads each swap area after the totals (#1829)', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: InitStatus.status,
+          parsedOutput: {
+            StatusCmdType.mem.name: '''
+MemTotal:        8040600 kB
+MemFree:         1000000 kB
+MemAvailable:    4000000 kB
+SwapCached:         1024 kB
+SwapTotal:       6291452 kB
+SwapFree:        5242876 kB
+__SBM_SWAPS__
+Filename				Type		Size		Used		Priority
+/dev/zram0                              partition	4194300		1048576		100
+/swapfile                               file		2097152		0		-2
+''',
+          },
+        ),
+      );
+
+      expect(result.swap.total, 6291452);
+      expect(result.mem.total, 8040600);
+      expect(result.swapAreas.map((a) => a.path), ['/dev/zram0', '/swapfile']);
+      expect(result.swapAreas.first.used, 1048576 * 1024);
+      expect(result.swapAreas.last.priority, -2);
+    });
+
     test('linux lsblk lists a disk nothing is mounted from (#1829)', () async {
       final result = await getStatus(
         ServerStatusUpdateReq(

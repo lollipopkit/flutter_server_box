@@ -312,6 +312,7 @@
   "updateServerStatusInterval": "서버 상태 업데이트 간격",
   "useNoPwd": "비밀번호 사용 안 함",
   "usePodmanByDefault": "기본적으로 Podman 사용",
+  "priority": "우선순위",
   "used": "사용됨",
   "viewDetails": "상세 보기",
   "virtKeyHelpIME": "키보드 켜기/끄기",

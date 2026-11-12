@@ -1547,6 +1547,10 @@
   "@usePodmanByDefault": {
     "description": "User-facing label or message for use podman by default."
   },
+  "priority": "Priority",
+  "@priority": {
+    "description": "The order the kernel uses swap areas in: higher first."
+  },
   "used": "Used",
   "@used": {
     "description": "User-facing label or message for used."

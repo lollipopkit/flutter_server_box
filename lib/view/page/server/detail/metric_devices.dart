@@ -143,9 +143,34 @@ class MetricDevices {
             return v == null ? '--' : ReadingFmt.temp(v);
           },
         );
+      case ServerMetricKind.swap:
+        // By priority, the order the kernel fills them in: fixed, so an area
+        // keeps its place and colour as the usage moves.
+        final areas = [...ss.swapAreas]..sort((a, b) => b.priority.compareTo(a.priority));
+        if (areas.length < 2) return null;
+        final total = libL10n.total;
+        final byPath = {for (final a in areas) a.path: a};
+        return MetricDevices(
+          // The total first and drawn by default: it is what the row reads.
+          names: [total, ...byPath.keys],
+          byDevice: {total: h.swap, ...h.swapsByDevice},
+          defaults: [total],
+          subtitle: (d) {
+            final a = byPath[d];
+            if (a == null) {
+              return '${ReadingFmt.pct(ss.swap.usedPercent * 100)} · '
+                  '${ReadingFmt.size(ss.swap.total * 1024.0)}';
+            }
+            return '${ReadingFmt.pct(switch (a.usedPercent) {
+              final p? => p * 100,
+              null => null,
+            })} · '
+                '${ReadingFmt.size(a.used.toDouble())} / ${ReadingFmt.size(a.size.toDouble())} · '
+                '${l10n.priority} ${a.priority}';
+          },
+        );
       case ServerMetricKind.cpu:
       case ServerMetricKind.mem:
-      case ServerMetricKind.swap:
       case ServerMetricKind.disk:
       case ServerMetricKind.gpu:
       case ServerMetricKind.battery:

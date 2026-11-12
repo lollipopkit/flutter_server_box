@@ -722,6 +722,7 @@ class StatusReport {
   final List<(String, int)> cpuBrand;
   final Memory? mem;
   final Swap? swap;
+  final List<SwapArea> swapAreas;
   final List<Disk> disks;
 
   /// The disk total in KiB, by `sbm_parser::types::disk_usage` — the one the
@@ -753,6 +754,7 @@ class StatusReport {
     required this.cpuBrand,
     this.mem,
     this.swap,
+    required this.swapAreas,
     required this.disks,
     required this.diskUsed,
     required this.diskSize,
@@ -781,6 +783,7 @@ class StatusReport {
       cpuBrand.hashCode ^
       mem.hashCode ^
       swap.hashCode ^
+      swapAreas.hashCode ^
       disks.hashCode ^
       diskUsed.hashCode ^
       diskSize.hashCode ^
@@ -811,6 +814,7 @@ class StatusReport {
           cpuBrand == other.cpuBrand &&
           mem == other.mem &&
           swap == other.swap &&
+          swapAreas == other.swapAreas &&
           disks == other.disks &&
           diskUsed == other.diskUsed &&
           diskSize == other.diskSize &&
@@ -851,6 +855,41 @@ class Swap {
           total == other.total &&
           free == other.free &&
           cached == other.cached;
+}
+
+class SwapArea {
+  final String path;
+  final String kind;
+  final BigInt size;
+  final BigInt used;
+  final int priority;
+
+  const SwapArea({
+    required this.path,
+    required this.kind,
+    required this.size,
+    required this.used,
+    required this.priority,
+  });
+
+  @override
+  int get hashCode =>
+      path.hashCode ^
+      kind.hashCode ^
+      size.hashCode ^
+      used.hashCode ^
+      priority.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SwapArea &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          kind == other.kind &&
+          size == other.size &&
+          used == other.used &&
+          priority == other.priority;
 }
 
 /// The platform a server runs (mirrors sbm_parser::SystemType).

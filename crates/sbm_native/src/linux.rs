@@ -396,6 +396,7 @@ pub fn sample(block_devices: &str, device_tree: &[BlockDevice]) -> ServerStatus 
         cpu_brand: linux::parse_cpu_brand(&read("/proc/cpuinfo")),
         mem: linux::parse_mem(&mem_raw),
         swap: linux::parse_swap(&mem_raw),
+        swap_areas: linux::parse_proc_swaps(&read("/proc/swaps")),
         disks,
         block_devices: device_tree.to_vec(),
         net: linux::parse_net(&read("/proc/net/dev")),

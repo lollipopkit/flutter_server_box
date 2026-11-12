@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/block_device.dart';
+import 'package:server_box/data/model/server/status/swap_area.dart';
 
 part 'monitor_metrics.g.dart';
 
@@ -32,6 +33,9 @@ class MonitorMetrics {
   final List<MonitorCpuCoreTime> cpuCores;
   final MonitorMemoryMetrics memory;
   final MonitorSwapMetrics swap;
+
+  /// Empty on agents predating the field, and on Bsd/Windows agents.
+  final List<SwapArea> swapAreas;
   final MonitorDiskMetrics disk;
   final MonitorNetworkMetrics network;
   final double? temperature;
@@ -84,6 +88,7 @@ class MonitorMetrics {
     this.cpuCores = const [],
     required this.memory,
     required this.swap,
+    this.swapAreas = const [],
     required this.disk,
     required this.network,
     this.temperature,

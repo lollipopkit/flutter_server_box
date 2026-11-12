@@ -32,6 +32,7 @@ const it = {
 	gpu: 'GPU',
 	back: 'Indietro',
 	swap: 'Memoria di scambio',
+	swapPriority: 'Priorità {priority}',
 	disks: 'Dischi',
 	blockDevices: 'Dispositivi a blocchi',
 	notMounted: 'Non montato',

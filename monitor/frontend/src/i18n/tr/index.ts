@@ -32,6 +32,7 @@ const tr = {
 	gpu: 'GPU',
 	back: 'Geri',
 	swap: 'Takas',
+	swapPriority: 'Öncelik {priority}',
 	disks: 'Diskler',
 	blockDevices: 'Blok aygıtları',
 	notMounted: 'Bağlı değil',

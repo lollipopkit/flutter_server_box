@@ -32,6 +32,7 @@ const ko = {
 	gpu: 'GPU',
 	back: '뒤로',
 	swap: '스왑',
+	swapPriority: '우선순위 {priority}',
 	disks: '디스크',
 	blockDevices: '블록 장치',
 	notMounted: '마운트되지 않음',

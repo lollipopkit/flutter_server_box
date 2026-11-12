@@ -292,6 +292,13 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     assert!(!status.cpu.is_empty(), "cpu cores parsed");
     assert!(!status.disks.is_empty(), "disks parsed");
     assert!(status.uptime.is_some(), "uptime parsed");
+    // Each swap area, adding up to meminfo's total (#1829).
+    if let (SystemType::Linux, Some(swap)) = (system, status.swap)
+        && swap.total > 0
+    {
+        let size: u64 = status.swap_areas.iter().map(|a| a.size).sum();
+        assert_eq!(size, swap.total * 1024, "swap areas add up to SwapTotal");
+    }
 
     // Remote clock sanity via the time segment (unix epoch, ±5 min tolerance)
     let remote_epoch: i64 = segments["time"]

@@ -157,6 +157,7 @@ pub(super) fn adapt_status(
         cpu_cores,
         memory,
         swap,
+        swap_areas: status.swap_areas,
         disk,
         network,
         temperature,

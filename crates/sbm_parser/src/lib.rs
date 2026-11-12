@@ -77,6 +77,9 @@ pub struct ServerStatus {
     pub cpu_brand: Vec<(String, u32)>,
     pub mem: Option<Memory>,
     pub swap: Option<Swap>,
+    /// Each swap area [`swap`](ServerStatus::swap) adds up (Linux
+    /// `/proc/swaps`). Sizes in bytes.
+    pub swap_areas: Vec<SwapArea>,
     pub disks: Vec<Disk>,
     /// Every block device, mounted or not (Linux `lsblk`). Sizes in bytes,
     /// unlike [`disks`](ServerStatus::disks).
@@ -186,6 +189,7 @@ pub fn parse_status_opts(
             status.cpu_brand = linux::parse_cpu_brand(get(commands::CPU_BRAND));
             status.mem = linux::parse_mem(get(commands::MEM));
             status.swap = linux::parse_swap(get(commands::MEM));
+            status.swap_areas = linux::parse_swap_areas(get(commands::MEM));
             status.disks = linux::parse_disk(get(commands::DISK));
             status.block_devices = linux::parse_block_devices(get(commands::DISK));
             status.net = linux::parse_net(get(commands::NET));

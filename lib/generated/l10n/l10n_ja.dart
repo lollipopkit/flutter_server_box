@@ -1162,6 +1162,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get usePodmanByDefault => 'デフォルトでPodmanを使用';
 
   @override
+  String get priority => '優先度';
+
+  @override
   String get used => '使用済み';
 
   @override

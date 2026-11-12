@@ -11,6 +11,8 @@ export interface SystemMetrics {
   cpu_cores?: { used: number; total: number; usage_percent: number | null }[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
+  // Each area `swap` adds up (Linux). Absent on older agents.
+  swap_areas?: SwapArea[];
   disk: DiskMetrics;
   network: NetworkMetrics;
   temperature?: number;
@@ -351,6 +353,15 @@ export interface SwapMetrics {
   total: number;
   used: number;
   usage_percent: number;
+}
+
+// `sbm_parser::types::SwapArea`. Sizes in bytes.
+export interface SwapArea {
+  path: string;
+  kind: string;
+  size: number;
+  used: number;
+  priority: number;
 }
 
 export interface DiskMetrics {

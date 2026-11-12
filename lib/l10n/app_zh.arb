@@ -337,6 +337,7 @@
   "updateServerStatusInterval": "服务器状态刷新间隔",
   "useNoPwd": "不使用密码",
   "usePodmanByDefault": "默认使用 Podman",
+  "priority": "优先级",
   "used": "已用",
   "viewDetails": "查看详情",
   "virtKeyHelpIME": "打开/关闭键盘",

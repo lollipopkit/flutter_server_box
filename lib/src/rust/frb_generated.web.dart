@@ -1266,6 +1266,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Step> dco_decode_list_step(dynamic raw);
 
   @protected
+  List<SwapArea> dco_decode_list_swap_area(dynamic raw);
+
+  @protected
   List<SystemGroup> dco_decode_list_system_group(dynamic raw);
 
   @protected
@@ -1943,6 +1946,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Swap dco_decode_swap(dynamic raw);
+
+  @protected
+  SwapArea dco_decode_swap_area(dynamic raw);
 
   @protected
   SystemGroup dco_decode_system_group(dynamic raw);
@@ -3607,6 +3613,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Step> sse_decode_list_step(SseDeserializer deserializer);
 
   @protected
+  List<SwapArea> sse_decode_list_swap_area(SseDeserializer deserializer);
+
+  @protected
   List<SystemGroup> sse_decode_list_system_group(SseDeserializer deserializer);
 
   @protected
@@ -4416,6 +4425,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Swap sse_decode_swap(SseDeserializer deserializer);
+
+  @protected
+  SwapArea sse_decode_swap_area(SseDeserializer deserializer);
 
   @protected
   SystemGroup sse_decode_system_group(SseDeserializer deserializer);
@@ -6453,6 +6465,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_step(List<Step> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_swap_area(List<SwapArea> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_system_group(
     List<SystemGroup> self,
     SseSerializer serializer,
@@ -7489,6 +7504,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_swap(Swap self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_swap_area(SwapArea self, SseSerializer serializer);
 
   @protected
   void sse_encode_system_group(SystemGroup self, SseSerializer serializer);

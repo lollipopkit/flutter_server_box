@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/status/memory.dart';
 import 'package:server_box/data/model/server/status/net_speed.dart';
 import 'package:server_box/data/model/server/status/nvdia.dart';
 import 'package:server_box/data/model/server/status/sensors.dart';
+import 'package:server_box/data/model/server/status/swap_area.dart';
 import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
@@ -325,6 +326,10 @@ void _applyMemory(ServerStatus ss, ffi.StatusReport status) {
 }
 
 void _applySwap(ServerStatus ss, ffi.StatusReport status) {
+  ss.swapAreas = [
+    for (final a in status.swapAreas)
+      SwapArea(path: a.path, kind: a.kind, size: a.size.toInt(), used: a.used.toInt(), priority: a.priority),
+  ];
   final swap = status.swap;
   if (swap == null) return;
   ss.swap = Swap(total: swap.total.toInt(), free: swap.free.toInt(), cached: swap.cached.toInt());

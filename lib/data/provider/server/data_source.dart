@@ -81,6 +81,10 @@ extension ServerStatusHistoryX on ServerStatus {
       ),
       temp: temps.first,
       temps: {for (final d in temps.devices) d: ?temps.get(d)},
+      swaps: {
+        for (final a in swapAreas)
+          if (a.usedPercent case final p?) a.path: p * 100,
+      },
       diskReads: {
         for (final d in diskIO.devices) d: ?diskIO.speedBytes(d).$1,
       },
