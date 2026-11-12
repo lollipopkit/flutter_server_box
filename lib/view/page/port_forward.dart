@@ -196,7 +196,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   void _showConfigSheet(PortForwardConfig? existing) {
     showResizableSheet<void>(
       context,
-      restLimit: PromptSheet.restLimit,
+      restLimit: SheetScaffold.restLimit,
       builder: (ctx) => _PortForwardConfigSheet(
         existing: existing,
         serverId: widget.args.spi.id,
@@ -291,7 +291,7 @@ class _PortForwardConfigSheetState extends State<_PortForwardConfigSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return PromptSheet(
+    return SheetScaffold(
       title: Text(widget.existing == null ? libL10n.add : libL10n.edit),
       actions: [
         Btn.cancel(),

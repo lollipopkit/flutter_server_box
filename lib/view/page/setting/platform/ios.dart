@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 class IosSettingsPage extends StatefulWidget {
   /// Whether it is being shown inside the settings pane rather than pushed.
@@ -188,8 +189,9 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 extension _Actions on _IosSettingsPageState {
   /// Servers the watch can actually load: it talks to a monitor agent over
   /// HTTP and has no SSH client of its own.
-  List<Spi> get _monitorServers =>
-      Stores.server.fetch().where((e) => e.monitor != null).toList();
+  static bool _watchable(Spi spi) => spi.monitor != null;
+
+  List<Spi> get _monitorServers => Stores.server.fetch().where(_watchable).toList();
 
   void _onTapWatchApp() async {
     final servers = _monitorServers;
@@ -199,11 +201,14 @@ extension _Actions on _IosSettingsPageState {
     }
 
     final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
-    final picked = await context.showPickSheet<Spi>(
+    final picked = await pickServers(
+      context,
       title: l10n.watchServers,
-      items: servers,
-      display: (e) => e.name,
-      initial: servers.where((e) => !excluded.contains(e.id)).toList(),
+      where: (_, spi) => _watchable(spi),
+      initial: [
+        for (final e in servers)
+          if (!excluded.contains(e.id)) e.id,
+      ],
       actions: [
         TextButton(
           onPressed: () => context.showSheet(

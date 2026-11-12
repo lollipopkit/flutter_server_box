@@ -68,18 +68,14 @@ extension _Server on _AppSettingsPageState {
   }
 
   Future<void> _onTapDeleteServers() async {
-    final keys = Stores.server.keys();
-    final names = Map.fromEntries(
-      keys.map((e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e)),
-    );
-    final deleteKeys = await context.showPickSheet<String>(
+    final picked = await pickServers(
+      context,
+      title: l10n.deleteServers,
       clearable: true,
-      items: keys.toList(),
-      display: (p0) => names[p0] ?? p0,
     );
-    if (deleteKeys == null || deleteKeys.isEmpty) return;
+    if (picked == null || picked.isEmpty || !mounted) return;
 
-    final md = deleteKeys.map((e) => '- ${names[e] ?? e}').join('\n');
+    final md = picked.map((e) => '- ${e.name}').join('\n');
     final sure = await context.showSheet(
       title: libL10n.attention,
       child: SimpleMarkdown(data: md),
@@ -88,8 +84,8 @@ extension _Server on _AppSettingsPageState {
 
     if (sure != true) return;
     final notifier = ref.read(serversProvider.notifier);
-    for (final key in deleteKeys) {
-      await notifier.delServer(key);
+    for (final spi in picked) {
+      await notifier.delServer(spi.id);
     }
     Toast.success(libL10n.success);
   }

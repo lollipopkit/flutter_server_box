@@ -56,7 +56,7 @@ void main() {
     // The asset load is a future; give it a frame to land.
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(PromptSheet), findsOneWidget);
+    expect(find.byType(SheetScaffold), findsOneWidget);
     // Lines only the README has, so a fallback to the short notice fails here.
     expect(find.textContaining('CC BY-SA'), findsWidgets);
     expect(find.textContaining('nominative use'), findsWidgets);
@@ -79,7 +79,7 @@ void main() {
     await tester.tap(ok);
     await tester.pump(const Duration(milliseconds: 300));
     expect(answer, isNull, reason: 'a tap during the pause answers nothing');
-    expect(find.byType(PromptSheet), findsOneWidget);
+    expect(find.byType(SheetScaffold), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     expect(tester.widget<TextButton>(find.byType(TextButton).last).onPressed,
@@ -98,7 +98,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
     expect(answer, isTrue);
   });
 
@@ -115,7 +115,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
     expect(answer, isFalse);
   });
 
@@ -132,7 +132,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
     expect(answer, isFalse);
   });
 }

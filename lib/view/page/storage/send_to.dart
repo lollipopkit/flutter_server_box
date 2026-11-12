@@ -7,12 +7,12 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
-import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 /// Ask where [source] should go, and queue the transfer.
 ///
@@ -49,7 +49,7 @@ Future<_Destination?> _askDestination(
   bool reuse = false,
 }) async {
   if (reuse && _last != null) return _last;
-  final place = await _pickPlace(context, ref);
+  final place = await _pickPlace(context);
   if (place == null || !context.mounted) return null;
   final dir = await _pickDir(context, place);
   if (dir == null || !context.mounted) return null;
@@ -168,34 +168,24 @@ final class _Server extends _Place {
 ///
 /// A picker rather than the file tab's own list, because this is a question
 /// about one file and answering it should not disturb what is open.
-Future<_Place?> _pickPlace(BuildContext context, WidgetRef ref) async {
-  final state = ref.read(serversProvider);
-  final servers = [
-    for (final id in state.serverOrder)
-      if (state.servers[id] case final spi? when canTransferTo(ref, spi)) spi,
-  ];
-
-  return context.showSheet<_Place>(
+Future<_Place?> _pickPlace(BuildContext context) async {
+  final pick = await pickServerOr<_Place>(
+    context,
     title: libL10n.select,
-    child: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Btn.tile(
-            icon: const Icon(Icons.smartphone),
-            text: libL10n.device,
-            onTap: () => context.popSheet(const _Device()),
-          ),
-          for (final spi in servers)
-            Btn.tile(
-              icon: const Icon(Icons.dns),
-              text: spi.name,
-              onTap: () => context.popSheet(_Server(spi)),
-            ),
-        ],
+    where: canTransferTo,
+    extras: [
+      ServerPickerExtra(
+        icon: Icons.smartphone,
+        title: libL10n.device,
+        value: const _Device(),
       ),
-    ),
+    ],
   );
+  return switch (pick) {
+    null => null,
+    PickedServer(:final spi) => _Server(spi),
+    PickedExtra(:final value) => value,
+  };
 }
 
 /// Which directory there, in that place's own browser.

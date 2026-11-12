@@ -259,11 +259,11 @@ void main() {
     await tester.longPress(find.text('web').first);
     await tester.pumpAndSettle();
 
-    expect(find.byType(RowsSheet), findsOneWidget);
+    expect(find.byType(SheetScaffold), findsOneWidget);
     // The same row widget the popup draws, not a `ListTile` that happens to
     // list the same things.
     expect(
-      find.descendant(of: find.byType(RowsSheet), matching: menuEntries()),
+      find.descendant(of: find.byType(SheetScaffold), matching: menuEntries()),
       findsWidgets,
     );
     expect(find.text('u@h:22'), findsOneWidget);

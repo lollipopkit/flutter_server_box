@@ -1,4 +1,4 @@
-import 'package:fl_lib/fl_lib.dart' show PromptSheet;
+import 'package:fl_lib/fl_lib.dart' show SheetScaffold;
 import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -84,7 +84,7 @@ void main() {
     await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(PromptSheet), findsOneWidget);
+    expect(find.byType(SheetScaffold), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), ' work ');
     await tester.pump();
@@ -119,13 +119,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     // The name is a page of the picker's sheet; the sheet goes, as when the
     // page under it is torn down, and takes the name with it.
-    final sheet = ModalRoute.of(tester.element(find.byType(PromptSheet)))!;
+    final sheet = ModalRoute.of(tester.element(find.byType(SheetScaffold)))!;
     Navigator.of(context).removeRoute(sheet);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(await future, isNull);
     expect(tester.takeException(), isNull);
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
   });
 
   testWidgets('prefills a non-conflicting session name', (tester) async {

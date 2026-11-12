@@ -462,6 +462,35 @@ void main() {
     expect(find.text(app_locale.l10n.monitorUpdateDocker), findsNothing);
   });
 
+  testWidgets('one column picks a server, or all of them, in the shared picker', (tester) async {
+    Stores.server.put(_agent('a', 'box-a'));
+    Stores.server.put(_agent('b', 'box-b'));
+    Stores.server.put(spiFixture(id: 'x', name: 'ssh-only', ip: '10.0.0.9'));
+    await pump(tester);
+    expect(find.text('box-a'), findsOneWidget);
+
+    Future<void> pick(String title) async {
+      await tester.tap(find.descendant(of: find.byType(SwitcherBar), matching: find.byIcon(Icons.dns_outlined)));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      // Only the agents, with the search the picker brings.
+      expect(find.text('ssh-only'), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
+      await tester.tap(find.text(title).last);
+      // The sheet slides away, then answers, then the section crosses over.
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+    }
+
+    await pick('box-b');
+    expect(find.text('box-a'), findsNothing);
+    expect(find.text('box-b'), findsWidgets);
+
+    await pick(libL10n.all);
+    expect(find.text('box-a'), findsOneWidget);
+  });
+
   testWidgets('a wide window has the sections and servers in a rail, with counts', (tester) async {
     Stores.server.put(_agent('a', 'box-a'));
     Stores.server.put(_agent('b', 'box-b'));

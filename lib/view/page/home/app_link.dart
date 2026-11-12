@@ -9,7 +9,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/widget/server_func_btns.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 /// Acts on a `serverbox://` link.
 ///
@@ -74,17 +74,10 @@ abstract final class AppLinkRouter {
   }
 
   static Future<Spi?> _pickServer(BuildContext context, WidgetRef ref) {
-    final servers = ref.read(serversProvider);
-    final spis = [for (final id in servers.serverOrder) ?servers.servers[id]];
-    if (spis.isEmpty) {
+    if (ref.read(serversProvider).servers.isEmpty) {
       Toast.show(libL10n.empty);
       return Future.value();
     }
-    return context.showPickSingleSheet<Spi>(
-      title: libL10n.server,
-      items: spis,
-      display: (spi) => spi.name,
-      avatar: (spi) => distIcon(spi.id, size: 17),
-    );
+    return pickServer(context, title: libL10n.server);
   }
 }
