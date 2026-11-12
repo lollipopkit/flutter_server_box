@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "{workspace} 레이아웃",
   "workspaceTemplateSaved": "템플릿 “{name}” 저장됨",
   "workspaceTemplatesHead": "레이아웃 템플릿 · 포커스된 패널의 서버로 새 작업 공간 만들기",
-  "workspaceMoveTo": "연결을 유지한 채 작업 공간으로 이동",
+  "workspaceMoveTo": "작업 공간으로 이동",
   "workspaceMoved": "터미널 {server}을(를) “{workspace}”(으)로 이동했습니다. 연결은 유지됩니다",
   "workspaceNew": "새 작업 공간",
   "workspaceIntoFocused": "포커스된 패널로",

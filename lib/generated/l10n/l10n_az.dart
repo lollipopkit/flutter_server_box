@@ -5591,7 +5591,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Düzülüş şablonları · fokuslu panelin serverində yeni iş sahəsi';
 
   @override
-  String get workspaceMoveTo => 'Bağlantını saxlayaraq iş sahəsinə köçür';
+  String get workspaceMoveTo => 'İş sahəsinə köçür';
 
   @override
   String workspaceMoved(String server, String workspace) {

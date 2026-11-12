@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Макет {workspace}",
   "workspaceTemplateSaved": "Шаблон «{name}» сохранён",
   "workspaceTemplatesHead": "Шаблоны макета · новое рабочее пространство на сервере активной панели",
-  "workspaceMoveTo": "Переместить в рабочее пространство, не разрывая соединение",
+  "workspaceMoveTo": "Переместить в рабочее пространство",
   "workspaceMoved": "Терминал {server} перемещён в «{workspace}», соединение сохранено",
   "workspaceNew": "Новое рабочее пространство",
   "workspaceIntoFocused": "В активную панель",

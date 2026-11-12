@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Tata letak {workspace}",
   "workspaceTemplateSaved": "Templat “{name}” disimpan",
   "workspaceTemplatesHead": "Templat tata letak · ruang kerja baru di server panel yang difokuskan",
-  "workspaceMoveTo": "Pindahkan ke ruang kerja, tetap terhubung",
+  "workspaceMoveTo": "Pindahkan ke ruang kerja",
   "workspaceMoved": "Terminal {server} dipindahkan ke “{workspace}”, tetap terhubung",
   "workspaceNew": "Ruang kerja baru",
   "workspaceIntoFocused": "Ke panel yang difokuskan",

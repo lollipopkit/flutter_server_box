@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "{workspace} düzeni",
   "workspaceTemplateSaved": "“{name}” şablonu kaydedildi",
   "workspaceTemplatesHead": "Düzen şablonları · odaklı bölmenin sunucusunda yeni çalışma alanı",
-  "workspaceMoveTo": "Bağlantıyı koruyarak çalışma alanına taşı",
+  "workspaceMoveTo": "Çalışma alanına taşı",
   "workspaceMoved": "{server} terminali “{workspace}” alanına taşındı, hâlâ bağlı",
   "workspaceNew": "Yeni çalışma alanı",
   "workspaceIntoFocused": "Odaklı bölmeye",

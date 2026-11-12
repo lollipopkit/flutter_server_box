@@ -5343,7 +5343,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workspaceTemplatesHead => '레이아웃 템플릿 · 포커스된 패널의 서버로 새 작업 공간 만들기';
 
   @override
-  String get workspaceMoveTo => '연결을 유지한 채 작업 공간으로 이동';
+  String get workspaceMoveTo => '작업 공간으로 이동';
 
   @override
   String workspaceMoved(String server, String workspace) {

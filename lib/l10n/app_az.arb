@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "{workspace} düzülüşü",
   "workspaceTemplateSaved": "“{name}” şablonu saxlanıldı",
   "workspaceTemplatesHead": "Düzülüş şablonları · fokuslu panelin serverində yeni iş sahəsi",
-  "workspaceMoveTo": "Bağlantını saxlayaraq iş sahəsinə köçür",
+  "workspaceMoveTo": "İş sahəsinə köçür",
   "workspaceMoved": "{server} terminalı “{workspace}” sahəsinə köçürüldü, hələ də qoşuludur",
   "workspaceNew": "Yeni iş sahəsi",
   "workspaceIntoFocused": "Fokuslu panelə",

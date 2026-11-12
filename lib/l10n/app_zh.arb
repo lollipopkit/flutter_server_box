@@ -1572,7 +1572,7 @@
   "workspaceTemplateOf": "{workspace} 的布局",
   "workspaceTemplateSaved": "已保存模板「{name}」",
   "workspaceTemplatesHead": "布局模板 · 按当前区块的服务器新建工作区",
-  "workspaceMoveTo": "移到工作区，连接保持",
+  "workspaceMoveTo": "移到工作区",
   "workspaceMoved": "终端 {server} 已移到「{workspace}」，连接保持",
   "workspaceNew": "新工作区",
   "workspaceIntoFocused": "放入焦点区块",

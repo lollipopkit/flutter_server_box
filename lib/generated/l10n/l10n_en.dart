@@ -5600,7 +5600,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Layout templates · new workspace on the focused pane\'s server';
 
   @override
-  String get workspaceMoveTo => 'Move to workspace, staying connected';
+  String get workspaceMoveTo => 'Move to workspace';
 
   @override
   String workspaceMoved(String server, String workspace) {

@@ -665,14 +665,8 @@ extension _Actions on _SSHTabPageState {
     // The id of the workspace, `''` for a new one, null for no answer.
     final target = await showRowsSheet<String>(
       context,
+      title: l10n.workspaceMoveTo,
       rows: (ctx) => [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(17, 9, 17, 3),
-          child: SizedBox(
-            width: double.infinity,
-            child: Text(l10n.workspaceMoveTo, style: UIs.text12Grey),
-          ),
-        ),
         for (final ws in workspaces)
           SheetChoiceTile(
             icon: Icons.space_dashboard_outlined,

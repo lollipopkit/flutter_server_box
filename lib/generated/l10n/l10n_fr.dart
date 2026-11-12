@@ -5688,8 +5688,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Modèles de disposition · nouvel espace de travail sur le serveur du volet actif';
 
   @override
-  String get workspaceMoveTo =>
-      'Déplacer vers un espace de travail, sans déconnexion';
+  String get workspaceMoveTo => 'Déplacer vers un espace de travail';
 
   @override
   String workspaceMoved(String server, String workspace) {

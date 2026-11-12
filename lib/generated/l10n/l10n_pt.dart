@@ -5649,8 +5649,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Modelos de layout · novo espaço de trabalho no servidor do painel em foco';
 
   @override
-  String get workspaceMoveTo =>
-      'Mover para espaço de trabalho, mantendo a conexão';
+  String get workspaceMoveTo => 'Mover para espaço de trabalho';
 
   @override
   String workspaceMoved(String server, String workspace) {

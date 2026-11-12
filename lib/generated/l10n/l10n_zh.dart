@@ -5244,7 +5244,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceTemplatesHead => '布局模板 · 按当前区块的服务器新建工作区';
 
   @override
-  String get workspaceMoveTo => '移到工作区，连接保持';
+  String get workspaceMoveTo => '移到工作区';
 
   @override
   String workspaceMoved(String server, String workspace) {
@@ -12093,7 +12093,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get workspaceTemplatesHead => '版面配置範本 · 依目前區塊的伺服器新增工作區';
 
   @override
-  String get workspaceMoveTo => '移到工作區，連線保持';
+  String get workspaceMoveTo => '移到工作區';
 
   @override
   String workspaceMoved(String server, String workspace) {

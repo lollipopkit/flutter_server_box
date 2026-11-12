@@ -5678,7 +5678,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Plantillas de diseño · nuevo espacio de trabajo en el servidor del panel enfocado';
 
   @override
-  String get workspaceMoveTo => 'Mover a un espacio de trabajo sin desconectar';
+  String get workspaceMoveTo => 'Mover a un espacio de trabajo';
 
   @override
   String workspaceMoved(String server, String workspace) {

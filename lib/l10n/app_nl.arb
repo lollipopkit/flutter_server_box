@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Indeling van {workspace}",
   "workspaceTemplateSaved": "Sjabloon “{name}” opgeslagen",
   "workspaceTemplatesHead": "Indelingssjablonen · nieuwe werkruimte op de server van het actieve paneel",
-  "workspaceMoveTo": "Naar werkruimte verplaatsen, verbinding blijft",
+  "workspaceMoveTo": "Naar werkruimte verplaatsen",
   "workspaceMoved": "Terminal {server} verplaatst naar “{workspace}”, nog steeds verbonden",
   "workspaceNew": "Nieuwe werkruimte",
   "workspaceIntoFocused": "In het actieve paneel",

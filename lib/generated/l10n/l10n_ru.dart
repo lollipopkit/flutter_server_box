@@ -5634,8 +5634,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Шаблоны макета · новое рабочее пространство на сервере активной панели';
 
   @override
-  String get workspaceMoveTo =>
-      'Переместить в рабочее пространство, не разрывая соединение';
+  String get workspaceMoveTo => 'Переместить в рабочее пространство';
 
   @override
   String workspaceMoved(String server, String workspace) {

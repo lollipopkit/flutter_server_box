@@ -9572,7 +9572,7 @@ abstract class AppLocalizations {
   /// Heading: move a terminal into a workspace.
   ///
   /// In en, this message translates to:
-  /// **'Move to workspace, staying connected'**
+  /// **'Move to workspace'**
   String get workspaceMoveTo;
 
   /// Toast.

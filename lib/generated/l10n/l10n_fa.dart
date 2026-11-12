@@ -5642,7 +5642,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'الگوهای طرح‌بندی · فضای کاری جدید روی سرور قاب فوکوس‌شده';
 
   @override
-  String get workspaceMoveTo => 'انتقال به فضای کاری، بدون قطع اتصال';
+  String get workspaceMoveTo => 'انتقال به فضای کاری';
 
   @override
   String workspaceMoved(String server, String workspace) {

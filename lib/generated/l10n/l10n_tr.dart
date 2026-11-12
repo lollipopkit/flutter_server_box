@@ -5582,7 +5582,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Düzen şablonları · odaklı bölmenin sunucusunda yeni çalışma alanı';
 
   @override
-  String get workspaceMoveTo => 'Bağlantıyı koruyarak çalışma alanına taşı';
+  String get workspaceMoveTo => 'Çalışma alanına taşı';
 
   @override
   String workspaceMoved(String server, String workspace) {

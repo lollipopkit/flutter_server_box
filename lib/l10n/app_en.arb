@@ -7276,7 +7276,7 @@
   "@workspaceTemplatesHead": {
     "description": "Heading of the template list."
   },
-  "workspaceMoveTo": "Move to workspace, staying connected",
+  "workspaceMoveTo": "Move to workspace",
   "@workspaceMoveTo": {
     "description": "Heading: move a terminal into a workspace."
   },

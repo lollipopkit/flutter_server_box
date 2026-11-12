@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Disposition de {workspace}",
   "workspaceTemplateSaved": "Modèle « {name} » enregistré",
   "workspaceTemplatesHead": "Modèles de disposition · nouvel espace de travail sur le serveur du volet actif",
-  "workspaceMoveTo": "Déplacer vers un espace de travail, sans déconnexion",
+  "workspaceMoveTo": "Déplacer vers un espace de travail",
   "workspaceMoved": "Terminal {server} déplacé vers « {workspace} », toujours connecté",
   "workspaceNew": "Nouvel espace de travail",
   "workspaceIntoFocused": "Dans le volet actif",

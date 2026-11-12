@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Layout de {workspace}",
   "workspaceTemplateSaved": "Modelo “{name}” salvo",
   "workspaceTemplatesHead": "Modelos de layout · novo espaço de trabalho no servidor do painel em foco",
-  "workspaceMoveTo": "Mover para espaço de trabalho, mantendo a conexão",
+  "workspaceMoveTo": "Mover para espaço de trabalho",
   "workspaceMoved": "Terminal {server} movido para “{workspace}”, ainda conectado",
   "workspaceNew": "Novo espaço de trabalho",
   "workspaceIntoFocused": "No painel em foco",

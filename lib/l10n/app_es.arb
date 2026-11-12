@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Diseño de {workspace}",
   "workspaceTemplateSaved": "Plantilla “{name}” guardada",
   "workspaceTemplatesHead": "Plantillas de diseño · nuevo espacio de trabajo en el servidor del panel enfocado",
-  "workspaceMoveTo": "Mover a un espacio de trabajo sin desconectar",
+  "workspaceMoveTo": "Mover a un espacio de trabajo",
   "workspaceMoved": "Terminal {server} movido a “{workspace}”, sigue conectado",
   "workspaceNew": "Nuevo espacio de trabajo",
   "workspaceIntoFocused": "Al panel enfocado",
