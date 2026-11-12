@@ -97,7 +97,12 @@ extension _HomePageStrip on _HomePageState {
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
-        final shown = _barTabs;
+        // As many as the width holds: a bar arranged on a tablet's rail, and
+        // synced, is more than a phone has room for.
+        final media = MediaQuery.of(context);
+        final shown = _barTabs
+            .take(NavBarMetrics.capacity(media.size.width - media.padding.horizontal))
+            .toList();
         final overflow = _tabs.length - shown.length;
         return AppNavBar(
           key: _navKey,
