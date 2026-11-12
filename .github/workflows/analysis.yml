@@ -387,8 +387,8 @@ jobs:
             packages/fl_lib/assets/themes/*/manifest.toml \
             store/themes/*/manifest.toml
 
-  # The manifests `publishWinget` in build.yml submits on a release, rendered
-  # with placeholder values.
+  # The manifests submitted by hand after a release
+  # (scripts/release/winget.sh), rendered with placeholder values.
   winget:
     name: winget manifests
     needs: changes
