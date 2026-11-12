@@ -544,6 +544,23 @@ impeller_for() {
   esac
 }
 
+# The "Set FLTEnableImpeller" build phase writes FLT_ENABLE_IMPELLER into the
+# built Info.plist as a boolean.
+verify_app_renderer() {
+  local plist="$1/Contents/Info.plist"
+  local expected got
+  case "$2" in
+    YES) expected=true ;;
+    NO) expected=false ;;
+  esac
+  got="$(plutil -extract FLTEnableImpeller raw -expect bool "$plist")"
+  if [[ "$got" != "$expected" ]]; then
+    echo "FLTEnableImpeller is '$got' in $plist, expected $expected" >&2
+    exit 1
+  fi
+  echo "$plist: FLTEnableImpeller $got"
+}
+
 built_dmgs=()
 last_app_path=''
 
@@ -621,6 +638,7 @@ for arch in $RELEASE_ARCHS; do
   fi
 
   verify_app_arch "$app_path" "$arch"
+  verify_app_renderer "$app_path" "$(impeller_for "$arch")"
   codesign --verify --deep --strict --verbose=2 "$app_path"
   warn_pre_notary_spctl_rejection "$app_path"
 

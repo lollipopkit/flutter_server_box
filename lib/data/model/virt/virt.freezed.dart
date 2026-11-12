@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt.dart';
@@ -9,6 +9,7 @@ part of 'virt.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -26,16 +27,21 @@ $VirtNodeCopyWith<VirtNode> get copyWith => _$VirtNodeCopyWithImpl<VirtNode>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNode&&(identical(other.name, name) || other.name == name)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.maxCpu, maxCpu) || other.maxCpu == maxCpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.uptime, uptime) || other.uptime == uptime));
+  final _this = this as VirtNode;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNode&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.online, _this.online) || other.online == _this.online)&&(identical(other.cpu, _this.cpu) || other.cpu == _this.cpu)&&(identical(other.maxCpu, _this.maxCpu) || other.maxCpu == _this.maxCpu)&&(identical(other.memUsed, _this.memUsed) || other.memUsed == _this.memUsed)&&(identical(other.memTotal, _this.memTotal) || other.memTotal == _this.memTotal)&&(identical(other.uptime, _this.uptime) || other.uptime == _this.uptime));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,online,cpu,maxCpu,memUsed,memTotal,uptime);
+int get hashCode {
+  final _this = this as VirtNode;
+  return Object.hash(runtimeType,_this.name,_this.online,_this.cpu,_this.maxCpu,_this.memUsed,_this.memTotal,_this.uptime);
+}
 
 @override
 String toString() {
-  return 'VirtNode(name: $name, online: $online, cpu: $cpu, maxCpu: $maxCpu, memUsed: $memUsed, memTotal: $memTotal, uptime: $uptime)';
+  final _this = this as VirtNode;
+  return 'VirtNode(name: ${_this.name}, online: ${_this.online}, cpu: ${_this.cpu}, maxCpu: ${_this.maxCpu}, memUsed: ${_this.memUsed}, memTotal: ${_this.memTotal}, uptime: ${_this.uptime})';
 }
 
 
@@ -64,7 +70,7 @@ class _$VirtNodeCopyWithImpl<$Res>
 /// Create a copy of VirtNode
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? online = null,Object? cpu = freezed,Object? maxCpu = freezed,Object? memUsed = freezed,Object? memTotal = freezed,Object? uptime = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtNode(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,online: null == online ? _self.online : online // ignore: cast_nullable_to_non_nullable
 as bool,cpu: freezed == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
@@ -235,16 +241,18 @@ _$VirtNodeCopyWith<_VirtNode> get copyWith => __$VirtNodeCopyWithImpl<_VirtNode>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNode&&(identical(other.name, name) || other.name == name)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.maxCpu, maxCpu) || other.maxCpu == maxCpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.uptime, uptime) || other.uptime == uptime));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNode&&(identical(other.name, name) || other.name == name)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.maxCpu, maxCpu) || other.maxCpu == maxCpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.uptime, uptime) || other.uptime == uptime));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,online,cpu,maxCpu,memUsed,memTotal,uptime);
+int get hashCode {
+    return Object.hash(runtimeType,name,online,cpu,maxCpu,memUsed,memTotal,uptime);
+}
 
 @override
 String toString() {
-  return 'VirtNode(name: $name, online: $online, cpu: $cpu, maxCpu: $maxCpu, memUsed: $memUsed, memTotal: $memTotal, uptime: $uptime)';
+    return 'VirtNode(name: $name, online: $online, cpu: $cpu, maxCpu: $maxCpu, memUsed: $memUsed, memTotal: $memTotal, uptime: $uptime)';
 }
 
 
@@ -304,16 +312,21 @@ $VirtHostCopyWith<VirtHost> get copyWith => _$VirtHostCopyWithImpl<VirtHost>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHost&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.version, version) || other.version == version)&&(identical(other.hypervisor, hypervisor) || other.hypervisor == hypervisor)&&const DeepCollectionEquality().equals(other.nodes, nodes));
+  final _this = this as VirtHost;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHost&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.hypervisor, _this.hypervisor) || other.hypervisor == _this.hypervisor)&&const DeepCollectionEquality().equals(other.nodes, _this.nodes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,version,hypervisor,const DeepCollectionEquality().hash(nodes));
+int get hashCode {
+  final _this = this as VirtHost;
+  return Object.hash(runtimeType,_this.serverId,_this.kind,_this.version,_this.hypervisor,const DeepCollectionEquality().hash(_this.nodes));
+}
 
 @override
 String toString() {
-  return 'VirtHost(serverId: $serverId, kind: $kind, version: $version, hypervisor: $hypervisor, nodes: $nodes)';
+  final _this = this as VirtHost;
+  return 'VirtHost(serverId: ${_this.serverId}, kind: ${_this.kind}, version: ${_this.version}, hypervisor: ${_this.hypervisor}, nodes: ${_this.nodes})';
 }
 
 
@@ -342,7 +355,7 @@ class _$VirtHostCopyWithImpl<$Res>
 /// Create a copy of VirtHost
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = null,Object? version = freezed,Object? hypervisor = freezed,Object? nodes = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtHost(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as VirtHostKind,version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
@@ -489,7 +502,7 @@ return $default(_that.serverId,_that.kind,_that.version,_that.hypervisor,_that.n
 
 
 class _VirtHost extends VirtHost {
-  const _VirtHost({required this.serverId, required this.kind, this.version, this.hypervisor, final  List<VirtNode> nodes = const <VirtNode>[]}): _nodes = nodes,super._();
+  const _VirtHost({required this.serverId, required this.kind, this.version, this.hypervisor,  List<VirtNode> nodes = const <VirtNode>[]}): _nodes = nodes,super._();
   
 
 @override final  String serverId;
@@ -516,16 +529,18 @@ _$VirtHostCopyWith<_VirtHost> get copyWith => __$VirtHostCopyWithImpl<_VirtHost>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHost&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.version, version) || other.version == version)&&(identical(other.hypervisor, hypervisor) || other.hypervisor == hypervisor)&&const DeepCollectionEquality().equals(other._nodes, _nodes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHost&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.version, version) || other.version == version)&&(identical(other.hypervisor, hypervisor) || other.hypervisor == hypervisor)&&const DeepCollectionEquality().equals(other.nodes, _nodes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,version,hypervisor,const DeepCollectionEquality().hash(_nodes));
+int get hashCode {
+    return Object.hash(runtimeType,serverId,kind,version,hypervisor,const DeepCollectionEquality().hash(_nodes));
+}
 
 @override
 String toString() {
-  return 'VirtHost(serverId: $serverId, kind: $kind, version: $version, hypervisor: $hypervisor, nodes: $nodes)';
+    return 'VirtHost(serverId: $serverId, kind: $kind, version: $version, hypervisor: $hypervisor, nodes: $nodes)';
 }
 
 
@@ -593,16 +608,21 @@ $VirtGuestCopyWith<VirtGuest> get copyWith => _$VirtGuestCopyWithImpl<VirtGuest>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuest&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.state, state) || other.state == state)&&(identical(other.stateReason, stateReason) || other.stateReason == stateReason)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.node, node) || other.node == node)&&(identical(other.vcpu, vcpu) || other.vcpu == vcpu)&&(identical(other.memBytes, memBytes) || other.memBytes == memBytes)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.template, template) || other.template == template)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other.actions, actions));
+  final _this = this as VirtGuest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuest&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.state, _this.state) || other.state == _this.state)&&(identical(other.stateReason, _this.stateReason) || other.stateReason == _this.stateReason)&&(identical(other.vmid, _this.vmid) || other.vmid == _this.vmid)&&(identical(other.node, _this.node) || other.node == _this.node)&&(identical(other.vcpu, _this.vcpu) || other.vcpu == _this.vcpu)&&(identical(other.memBytes, _this.memBytes) || other.memBytes == _this.memBytes)&&(identical(other.uptime, _this.uptime) || other.uptime == _this.uptime)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.template, _this.template) || other.template == _this.template)&&(identical(other.autostart, _this.autostart) || other.autostart == _this.autostart)&&const DeepCollectionEquality().equals(other.actions, _this.actions));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,kind,state,stateReason,vmid,node,vcpu,memBytes,uptime,const DeepCollectionEquality().hash(tags),template,autostart,const DeepCollectionEquality().hash(actions));
+int get hashCode {
+  final _this = this as VirtGuest;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.kind,_this.state,_this.stateReason,_this.vmid,_this.node,_this.vcpu,_this.memBytes,_this.uptime,const DeepCollectionEquality().hash(_this.tags),_this.template,_this.autostart,const DeepCollectionEquality().hash(_this.actions));
+}
 
 @override
 String toString() {
-  return 'VirtGuest(id: $id, name: $name, kind: $kind, state: $state, stateReason: $stateReason, vmid: $vmid, node: $node, vcpu: $vcpu, memBytes: $memBytes, uptime: $uptime, tags: $tags, template: $template, autostart: $autostart, actions: $actions)';
+  final _this = this as VirtGuest;
+  return 'VirtGuest(id: ${_this.id}, name: ${_this.name}, kind: ${_this.kind}, state: ${_this.state}, stateReason: ${_this.stateReason}, vmid: ${_this.vmid}, node: ${_this.node}, vcpu: ${_this.vcpu}, memBytes: ${_this.memBytes}, uptime: ${_this.uptime}, tags: ${_this.tags}, template: ${_this.template}, autostart: ${_this.autostart}, actions: ${_this.actions})';
 }
 
 
@@ -631,7 +651,7 @@ class _$VirtGuestCopyWithImpl<$Res>
 /// Create a copy of VirtGuest
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? kind = null,Object? state = null,Object? stateReason = freezed,Object? vmid = freezed,Object? node = freezed,Object? vcpu = freezed,Object? memBytes = freezed,Object? uptime = freezed,Object? tags = null,Object? template = null,Object? autostart = freezed,Object? actions = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtGuest(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
@@ -787,7 +807,7 @@ return $default(_that.id,_that.name,_that.kind,_that.state,_that.stateReason,_th
 
 
 class _VirtGuest extends VirtGuest {
-  const _VirtGuest({required this.id, required this.name, required this.kind, required this.state, this.stateReason, this.vmid, this.node, this.vcpu, this.memBytes, this.uptime, final  List<String> tags = const <String>[], this.template = false, this.autostart, final  Set<VirtPowerAction> actions = const <VirtPowerAction>{}}): _tags = tags,_actions = actions,super._();
+  const _VirtGuest({required this.id, required this.name, required this.kind, required this.state, this.stateReason, this.vmid, this.node, this.vcpu, this.memBytes, this.uptime,  List<String> tags = const <String>[], this.template = false, this.autostart,  Set<VirtPowerAction> actions = const <VirtPowerAction>{}}): _tags = tags,_actions = actions,super._();
   
 
 /// Stable within the host: PVE `qemu/100`, libvirt the domain's UUID.
@@ -840,16 +860,18 @@ _$VirtGuestCopyWith<_VirtGuest> get copyWith => __$VirtGuestCopyWithImpl<_VirtGu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuest&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.state, state) || other.state == state)&&(identical(other.stateReason, stateReason) || other.stateReason == stateReason)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.node, node) || other.node == node)&&(identical(other.vcpu, vcpu) || other.vcpu == vcpu)&&(identical(other.memBytes, memBytes) || other.memBytes == memBytes)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.template, template) || other.template == template)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other._actions, _actions));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuest&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.state, state) || other.state == state)&&(identical(other.stateReason, stateReason) || other.stateReason == stateReason)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.node, node) || other.node == node)&&(identical(other.vcpu, vcpu) || other.vcpu == vcpu)&&(identical(other.memBytes, memBytes) || other.memBytes == memBytes)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.template, template) || other.template == template)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&const DeepCollectionEquality().equals(other.actions, _actions));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,kind,state,stateReason,vmid,node,vcpu,memBytes,uptime,const DeepCollectionEquality().hash(_tags),template,autostart,const DeepCollectionEquality().hash(_actions));
+int get hashCode {
+    return Object.hash(runtimeType,id,name,kind,state,stateReason,vmid,node,vcpu,memBytes,uptime,const DeepCollectionEquality().hash(_tags),template,autostart,const DeepCollectionEquality().hash(_actions));
+}
 
 @override
 String toString() {
-  return 'VirtGuest(id: $id, name: $name, kind: $kind, state: $state, stateReason: $stateReason, vmid: $vmid, node: $node, vcpu: $vcpu, memBytes: $memBytes, uptime: $uptime, tags: $tags, template: $template, autostart: $autostart, actions: $actions)';
+    return 'VirtGuest(id: $id, name: $name, kind: $kind, state: $state, stateReason: $stateReason, vmid: $vmid, node: $node, vcpu: $vcpu, memBytes: $memBytes, uptime: $uptime, tags: $tags, template: $template, autostart: $autostart, actions: $actions)';
 }
 
 
@@ -915,16 +937,21 @@ $VirtStatsCopyWith<VirtStats> get copyWith => _$VirtStatsCopyWithImpl<VirtStats>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtStats&&(identical(other.at, at) || other.at == at)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.diskUsed, diskUsed) || other.diskUsed == diskUsed)&&(identical(other.diskTotal, diskTotal) || other.diskTotal == diskTotal)&&(identical(other.diskRead, diskRead) || other.diskRead == diskRead)&&(identical(other.diskWrite, diskWrite) || other.diskWrite == diskWrite)&&(identical(other.netIn, netIn) || other.netIn == netIn)&&(identical(other.netOut, netOut) || other.netOut == netOut));
+  final _this = this as VirtStats;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtStats&&(identical(other.at, _this.at) || other.at == _this.at)&&(identical(other.cpu, _this.cpu) || other.cpu == _this.cpu)&&(identical(other.memUsed, _this.memUsed) || other.memUsed == _this.memUsed)&&(identical(other.memTotal, _this.memTotal) || other.memTotal == _this.memTotal)&&(identical(other.diskUsed, _this.diskUsed) || other.diskUsed == _this.diskUsed)&&(identical(other.diskTotal, _this.diskTotal) || other.diskTotal == _this.diskTotal)&&(identical(other.diskRead, _this.diskRead) || other.diskRead == _this.diskRead)&&(identical(other.diskWrite, _this.diskWrite) || other.diskWrite == _this.diskWrite)&&(identical(other.netIn, _this.netIn) || other.netIn == _this.netIn)&&(identical(other.netOut, _this.netOut) || other.netOut == _this.netOut));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,at,cpu,memUsed,memTotal,diskUsed,diskTotal,diskRead,diskWrite,netIn,netOut);
+int get hashCode {
+  final _this = this as VirtStats;
+  return Object.hash(runtimeType,_this.at,_this.cpu,_this.memUsed,_this.memTotal,_this.diskUsed,_this.diskTotal,_this.diskRead,_this.diskWrite,_this.netIn,_this.netOut);
+}
 
 @override
 String toString() {
-  return 'VirtStats(at: $at, cpu: $cpu, memUsed: $memUsed, memTotal: $memTotal, diskUsed: $diskUsed, diskTotal: $diskTotal, diskRead: $diskRead, diskWrite: $diskWrite, netIn: $netIn, netOut: $netOut)';
+  final _this = this as VirtStats;
+  return 'VirtStats(at: ${_this.at}, cpu: ${_this.cpu}, memUsed: ${_this.memUsed}, memTotal: ${_this.memTotal}, diskUsed: ${_this.diskUsed}, diskTotal: ${_this.diskTotal}, diskRead: ${_this.diskRead}, diskWrite: ${_this.diskWrite}, netIn: ${_this.netIn}, netOut: ${_this.netOut})';
 }
 
 
@@ -953,7 +980,7 @@ class _$VirtStatsCopyWithImpl<$Res>
 /// Create a copy of VirtStats
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? at = null,Object? cpu = freezed,Object? memUsed = freezed,Object? memTotal = freezed,Object? diskUsed = freezed,Object? diskTotal = freezed,Object? diskRead = freezed,Object? diskWrite = freezed,Object? netIn = freezed,Object? netOut = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtStats(
 at: null == at ? _self.at : at // ignore: cast_nullable_to_non_nullable
 as DateTime,cpu: freezed == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
 as double?,memUsed: freezed == memUsed ? _self.memUsed : memUsed // ignore: cast_nullable_to_non_nullable
@@ -1130,16 +1157,18 @@ _$VirtStatsCopyWith<_VirtStats> get copyWith => __$VirtStatsCopyWithImpl<_VirtSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtStats&&(identical(other.at, at) || other.at == at)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.diskUsed, diskUsed) || other.diskUsed == diskUsed)&&(identical(other.diskTotal, diskTotal) || other.diskTotal == diskTotal)&&(identical(other.diskRead, diskRead) || other.diskRead == diskRead)&&(identical(other.diskWrite, diskWrite) || other.diskWrite == diskWrite)&&(identical(other.netIn, netIn) || other.netIn == netIn)&&(identical(other.netOut, netOut) || other.netOut == netOut));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtStats&&(identical(other.at, at) || other.at == at)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memUsed, memUsed) || other.memUsed == memUsed)&&(identical(other.memTotal, memTotal) || other.memTotal == memTotal)&&(identical(other.diskUsed, diskUsed) || other.diskUsed == diskUsed)&&(identical(other.diskTotal, diskTotal) || other.diskTotal == diskTotal)&&(identical(other.diskRead, diskRead) || other.diskRead == diskRead)&&(identical(other.diskWrite, diskWrite) || other.diskWrite == diskWrite)&&(identical(other.netIn, netIn) || other.netIn == netIn)&&(identical(other.netOut, netOut) || other.netOut == netOut));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,at,cpu,memUsed,memTotal,diskUsed,diskTotal,diskRead,diskWrite,netIn,netOut);
+int get hashCode {
+    return Object.hash(runtimeType,at,cpu,memUsed,memTotal,diskUsed,diskTotal,diskRead,diskWrite,netIn,netOut);
+}
 
 @override
 String toString() {
-  return 'VirtStats(at: $at, cpu: $cpu, memUsed: $memUsed, memTotal: $memTotal, diskUsed: $diskUsed, diskTotal: $diskTotal, diskRead: $diskRead, diskWrite: $diskWrite, netIn: $netIn, netOut: $netOut)';
+    return 'VirtStats(at: $at, cpu: $cpu, memUsed: $memUsed, memTotal: $memTotal, diskUsed: $diskUsed, diskTotal: $diskTotal, diskRead: $diskRead, diskWrite: $diskWrite, netIn: $netIn, netOut: $netOut)';
 }
 
 
@@ -1266,16 +1295,21 @@ $VirtCapabilitiesCopyWith<VirtCapabilities> get copyWith => _$VirtCapabilitiesCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.hardwareRevertPending, hardwareRevertPending) || other.hardwareRevertPending == hardwareRevertPending)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply)&&(identical(other.networkEditExisting, networkEditExisting) || other.networkEditExisting == networkEditExisting)&&(identical(other.networkRestart, networkRestart) || other.networkRestart == networkRestart));
+  final _this = this as VirtCapabilities;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, _this.lxc) || other.lxc == _this.lxc)&&(identical(other.pause, _this.pause) || other.pause == _this.pause)&&(identical(other.snapshots, _this.snapshots) || other.snapshots == _this.snapshots)&&(identical(other.snapshotMemoryRequired, _this.snapshotMemoryRequired) || other.snapshotMemoryRequired == _this.snapshotMemoryRequired)&&(identical(other.snapshotExternal, _this.snapshotExternal) || other.snapshotExternal == _this.snapshotExternal)&&(identical(other.snapshotSupported, _this.snapshotSupported) || other.snapshotSupported == _this.snapshotSupported)&&(identical(other.storage, _this.storage) || other.storage == _this.storage)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.backup, _this.backup) || other.backup == _this.backup)&&(identical(other.clone, _this.clone) || other.clone == _this.clone)&&(identical(other.linkedClone, _this.linkedClone) || other.linkedClone == _this.linkedClone)&&(identical(other.template, _this.template) || other.template == _this.template)&&(identical(other.cloneTarget, _this.cloneTarget) || other.cloneTarget == _this.cloneTarget)&&(identical(other.backupJobs, _this.backupJobs) || other.backupJobs == _this.backupJobs)&&(identical(other.cluster, _this.cluster) || other.cluster == _this.cluster)&&(identical(other.serialConsole, _this.serialConsole) || other.serialConsole == _this.serialConsole)&&(identical(other.vncConsole, _this.vncConsole) || other.vncConsole == _this.vncConsole)&&(identical(other.termConsole, _this.termConsole) || other.termConsole == _this.termConsole)&&(identical(other.storedHistory, _this.storedHistory) || other.storedHistory == _this.storedHistory)&&(identical(other.create, _this.create) || other.create == _this.create)&&(identical(other.deleteKeepsDisks, _this.deleteKeepsDisks) || other.deleteKeepsDisks == _this.deleteKeepsDisks)&&(identical(other.hardware, _this.hardware) || other.hardware == _this.hardware)&&(identical(other.hardwareRevert, _this.hardwareRevert) || other.hardwareRevert == _this.hardwareRevert)&&(identical(other.hardwareRevertPending, _this.hardwareRevertPending) || other.hardwareRevertPending == _this.hardwareRevertPending)&&(identical(other.storageEdit, _this.storageEdit) || other.storageEdit == _this.storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, _this.poolTypes)&&(identical(other.poolAutostart, _this.poolAutostart) || other.poolAutostart == _this.poolAutostart)&&(identical(other.poolDeleteStorage, _this.poolDeleteStorage) || other.poolDeleteStorage == _this.poolDeleteStorage)&&(identical(other.volumeResize, _this.volumeResize) || other.volumeResize == _this.volumeResize)&&(identical(other.volumeClone, _this.volumeClone) || other.volumeClone == _this.volumeClone)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.networkEdit, _this.networkEdit) || other.networkEdit == _this.networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, _this.networkModes)&&(identical(other.networkStart, _this.networkStart) || other.networkStart == _this.networkStart)&&(identical(other.networkApply, _this.networkApply) || other.networkApply == _this.networkApply)&&(identical(other.networkEditExisting, _this.networkEditExisting) || other.networkEditExisting == _this.networkEditExisting)&&(identical(other.networkRestart, _this.networkRestart) || other.networkRestart == _this.networkRestart));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,hardwareRevertPending,storageEdit,const DeepCollectionEquality().hash(poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(networkModes),networkStart,networkApply,networkEditExisting,networkRestart]);
+int get hashCode {
+  final _this = this as VirtCapabilities;
+  return Object.hashAll([runtimeType,_this.lxc,_this.pause,_this.snapshots,_this.snapshotMemoryRequired,_this.snapshotExternal,_this.snapshotSupported,_this.storage,_this.network,_this.backup,_this.clone,_this.linkedClone,_this.template,_this.cloneTarget,_this.backupJobs,_this.cluster,_this.serialConsole,_this.vncConsole,_this.termConsole,_this.storedHistory,_this.create,_this.deleteKeepsDisks,_this.hardware,_this.hardwareRevert,_this.hardwareRevertPending,_this.storageEdit,const DeepCollectionEquality().hash(_this.poolTypes),_this.poolAutostart,_this.poolDeleteStorage,_this.volumeResize,_this.volumeClone,_this.upload,_this.networkEdit,const DeepCollectionEquality().hash(_this.networkModes),_this.networkStart,_this.networkApply,_this.networkEditExisting,_this.networkRestart]);
+}
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, snapshotExternal: $snapshotExternal, snapshotSupported: $snapshotSupported, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, template: $template, cloneTarget: $cloneTarget, backupJobs: $backupJobs, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, hardwareRevertPending: $hardwareRevertPending, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply, networkEditExisting: $networkEditExisting, networkRestart: $networkRestart)';
+  final _this = this as VirtCapabilities;
+  return 'VirtCapabilities(lxc: ${_this.lxc}, pause: ${_this.pause}, snapshots: ${_this.snapshots}, snapshotMemoryRequired: ${_this.snapshotMemoryRequired}, snapshotExternal: ${_this.snapshotExternal}, snapshotSupported: ${_this.snapshotSupported}, storage: ${_this.storage}, network: ${_this.network}, backup: ${_this.backup}, clone: ${_this.clone}, linkedClone: ${_this.linkedClone}, template: ${_this.template}, cloneTarget: ${_this.cloneTarget}, backupJobs: ${_this.backupJobs}, cluster: ${_this.cluster}, serialConsole: ${_this.serialConsole}, vncConsole: ${_this.vncConsole}, termConsole: ${_this.termConsole}, storedHistory: ${_this.storedHistory}, create: ${_this.create}, deleteKeepsDisks: ${_this.deleteKeepsDisks}, hardware: ${_this.hardware}, hardwareRevert: ${_this.hardwareRevert}, hardwareRevertPending: ${_this.hardwareRevertPending}, storageEdit: ${_this.storageEdit}, poolTypes: ${_this.poolTypes}, poolAutostart: ${_this.poolAutostart}, poolDeleteStorage: ${_this.poolDeleteStorage}, volumeResize: ${_this.volumeResize}, volumeClone: ${_this.volumeClone}, upload: ${_this.upload}, networkEdit: ${_this.networkEdit}, networkModes: ${_this.networkModes}, networkStart: ${_this.networkStart}, networkApply: ${_this.networkApply}, networkEditExisting: ${_this.networkEditExisting}, networkRestart: ${_this.networkRestart})';
 }
 
 
@@ -1304,7 +1338,7 @@ class _$VirtCapabilitiesCopyWithImpl<$Res>
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? snapshotExternal = null,Object? snapshotSupported = null,Object? storage = null,Object? network = null,Object? backup = null,Object? clone = null,Object? linkedClone = null,Object? template = null,Object? cloneTarget = null,Object? backupJobs = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,Object? hardwareRevertPending = null,Object? storageEdit = null,Object? poolTypes = null,Object? poolAutostart = null,Object? poolDeleteStorage = null,Object? volumeResize = null,Object? volumeClone = null,Object? upload = null,Object? networkEdit = null,Object? networkModes = null,Object? networkStart = null,Object? networkApply = null,Object? networkEditExisting = null,Object? networkRestart = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtCapabilities(
 lxc: null == lxc ? _self.lxc : lxc // ignore: cast_nullable_to_non_nullable
 as bool,pause: null == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
 as bool,snapshots: null == snapshots ? _self.snapshots : snapshots // ignore: cast_nullable_to_non_nullable
@@ -1483,7 +1517,7 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 
 
 class _VirtCapabilities implements VirtCapabilities {
-  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.snapshotExternal = false, this.snapshotSupported = false, this.storage = false, this.network = false, this.backup = false, this.clone = false, this.linkedClone = false, this.template = false, this.cloneTarget = false, this.backupJobs = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false, this.hardwareRevertPending = false, this.storageEdit = false, final  List<String> poolTypes = const <String>[], this.poolAutostart = false, this.poolDeleteStorage = false, this.volumeResize = false, this.volumeClone = false, this.upload = false, this.networkEdit = false, final  List<String> networkModes = const <String>[], this.networkStart = false, this.networkApply = false, this.networkEditExisting = false, this.networkRestart = false}): _poolTypes = poolTypes,_networkModes = networkModes;
+  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.snapshotExternal = false, this.snapshotSupported = false, this.storage = false, this.network = false, this.backup = false, this.clone = false, this.linkedClone = false, this.template = false, this.cloneTarget = false, this.backupJobs = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false, this.hardwareRevertPending = false, this.storageEdit = false,  List<String> poolTypes = const <String>[], this.poolAutostart = false, this.poolDeleteStorage = false, this.volumeResize = false, this.volumeClone = false, this.upload = false, this.networkEdit = false,  List<String> networkModes = const <String>[], this.networkStart = false, this.networkApply = false, this.networkEditExisting = false, this.networkRestart = false}): _poolTypes = poolTypes,_networkModes = networkModes;
   
 
 @override@JsonKey() final  bool lxc;
@@ -1616,16 +1650,18 @@ _$VirtCapabilitiesCopyWith<_VirtCapabilities> get copyWith => __$VirtCapabilitie
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.hardwareRevertPending, hardwareRevertPending) || other.hardwareRevertPending == hardwareRevertPending)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other._poolTypes, _poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other._networkModes, _networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply)&&(identical(other.networkEditExisting, networkEditExisting) || other.networkEditExisting == networkEditExisting)&&(identical(other.networkRestart, networkRestart) || other.networkRestart == networkRestart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.snapshotExternal, snapshotExternal) || other.snapshotExternal == snapshotExternal)&&(identical(other.snapshotSupported, snapshotSupported) || other.snapshotSupported == snapshotSupported)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.clone, clone) || other.clone == clone)&&(identical(other.linkedClone, linkedClone) || other.linkedClone == linkedClone)&&(identical(other.template, template) || other.template == template)&&(identical(other.cloneTarget, cloneTarget) || other.cloneTarget == cloneTarget)&&(identical(other.backupJobs, backupJobs) || other.backupJobs == backupJobs)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert)&&(identical(other.hardwareRevertPending, hardwareRevertPending) || other.hardwareRevertPending == hardwareRevertPending)&&(identical(other.storageEdit, storageEdit) || other.storageEdit == storageEdit)&&const DeepCollectionEquality().equals(other.poolTypes, _poolTypes)&&(identical(other.poolAutostart, poolAutostart) || other.poolAutostart == poolAutostart)&&(identical(other.poolDeleteStorage, poolDeleteStorage) || other.poolDeleteStorage == poolDeleteStorage)&&(identical(other.volumeResize, volumeResize) || other.volumeResize == volumeResize)&&(identical(other.volumeClone, volumeClone) || other.volumeClone == volumeClone)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.networkEdit, networkEdit) || other.networkEdit == networkEdit)&&const DeepCollectionEquality().equals(other.networkModes, _networkModes)&&(identical(other.networkStart, networkStart) || other.networkStart == networkStart)&&(identical(other.networkApply, networkApply) || other.networkApply == networkApply)&&(identical(other.networkEditExisting, networkEditExisting) || other.networkEditExisting == networkEditExisting)&&(identical(other.networkRestart, networkRestart) || other.networkRestart == networkRestart));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,hardwareRevertPending,storageEdit,const DeepCollectionEquality().hash(_poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(_networkModes),networkStart,networkApply,networkEditExisting,networkRestart]);
+int get hashCode {
+    return Object.hashAll([runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,snapshotExternal,snapshotSupported,storage,network,backup,clone,linkedClone,template,cloneTarget,backupJobs,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert,hardwareRevertPending,storageEdit,const DeepCollectionEquality().hash(_poolTypes),poolAutostart,poolDeleteStorage,volumeResize,volumeClone,upload,networkEdit,const DeepCollectionEquality().hash(_networkModes),networkStart,networkApply,networkEditExisting,networkRestart]);
+}
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, snapshotExternal: $snapshotExternal, snapshotSupported: $snapshotSupported, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, template: $template, cloneTarget: $cloneTarget, backupJobs: $backupJobs, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, hardwareRevertPending: $hardwareRevertPending, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply, networkEditExisting: $networkEditExisting, networkRestart: $networkRestart)';
+    return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, snapshotExternal: $snapshotExternal, snapshotSupported: $snapshotSupported, storage: $storage, network: $network, backup: $backup, clone: $clone, linkedClone: $linkedClone, template: $template, cloneTarget: $cloneTarget, backupJobs: $backupJobs, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert, hardwareRevertPending: $hardwareRevertPending, storageEdit: $storageEdit, poolTypes: $poolTypes, poolAutostart: $poolAutostart, poolDeleteStorage: $poolDeleteStorage, volumeResize: $volumeResize, volumeClone: $volumeClone, upload: $upload, networkEdit: $networkEdit, networkModes: $networkModes, networkStart: $networkStart, networkApply: $networkApply, networkEditExisting: $networkEditExisting, networkRestart: $networkRestart)';
 }
 
 
@@ -1714,16 +1750,21 @@ $VirtSnapshotCopyWith<VirtSnapshot> get copyWith => _$VirtSnapshotCopyWithImpl<V
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapshot&&(identical(other.host, host) || other.host == host)&&const DeepCollectionEquality().equals(other.guests, guests)&&const DeepCollectionEquality().equals(other.stats, stats)&&(identical(other.capabilities, capabilities) || other.capabilities == capabilities));
+  final _this = this as VirtSnapshot;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtSnapshot&&(identical(other.host, _this.host) || other.host == _this.host)&&const DeepCollectionEquality().equals(other.guests, _this.guests)&&const DeepCollectionEquality().equals(other.stats, _this.stats)&&(identical(other.capabilities, _this.capabilities) || other.capabilities == _this.capabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,host,const DeepCollectionEquality().hash(guests),const DeepCollectionEquality().hash(stats),capabilities);
+int get hashCode {
+  final _this = this as VirtSnapshot;
+  return Object.hash(runtimeType,_this.host,const DeepCollectionEquality().hash(_this.guests),const DeepCollectionEquality().hash(_this.stats),_this.capabilities);
+}
 
 @override
 String toString() {
-  return 'VirtSnapshot(host: $host, guests: $guests, stats: $stats, capabilities: $capabilities)';
+  final _this = this as VirtSnapshot;
+  return 'VirtSnapshot(host: ${_this.host}, guests: ${_this.guests}, stats: ${_this.stats}, capabilities: ${_this.capabilities})';
 }
 
 
@@ -1752,7 +1793,7 @@ class _$VirtSnapshotCopyWithImpl<$Res>
 /// Create a copy of VirtSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? host = null,Object? guests = null,Object? stats = null,Object? capabilities = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtSnapshot(
 host: null == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
 as VirtHost,guests: null == guests ? _self.guests : guests // ignore: cast_nullable_to_non_nullable
 as List<VirtGuest>,stats: null == stats ? _self.stats : stats // ignore: cast_nullable_to_non_nullable
@@ -1916,7 +1957,7 @@ return $default(_that.host,_that.guests,_that.stats,_that.capabilities);case _:
 
 
 class _VirtSnapshot implements VirtSnapshot {
-  const _VirtSnapshot({required this.host, required final  List<VirtGuest> guests, final  Map<String, VirtStats> stats = const <String, VirtStats>{}, required this.capabilities}): _guests = guests,_stats = stats;
+  const _VirtSnapshot({required this.host, required  List<VirtGuest> guests,  Map<String, VirtStats> stats = const <String, VirtStats>{}, required this.capabilities}): _guests = guests,_stats = stats;
   
 
 @override final  VirtHost host;
@@ -1948,16 +1989,18 @@ _$VirtSnapshotCopyWith<_VirtSnapshot> get copyWith => __$VirtSnapshotCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapshot&&(identical(other.host, host) || other.host == host)&&const DeepCollectionEquality().equals(other._guests, _guests)&&const DeepCollectionEquality().equals(other._stats, _stats)&&(identical(other.capabilities, capabilities) || other.capabilities == capabilities));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtSnapshot&&(identical(other.host, host) || other.host == host)&&const DeepCollectionEquality().equals(other.guests, _guests)&&const DeepCollectionEquality().equals(other.stats, _stats)&&(identical(other.capabilities, capabilities) || other.capabilities == capabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,host,const DeepCollectionEquality().hash(_guests),const DeepCollectionEquality().hash(_stats),capabilities);
+int get hashCode {
+    return Object.hash(runtimeType,host,const DeepCollectionEquality().hash(_guests),const DeepCollectionEquality().hash(_stats),capabilities);
+}
 
 @override
 String toString() {
-  return 'VirtSnapshot(host: $host, guests: $guests, stats: $stats, capabilities: $capabilities)';
+    return 'VirtSnapshot(host: $host, guests: $guests, stats: $stats, capabilities: $capabilities)';
 }
 
 

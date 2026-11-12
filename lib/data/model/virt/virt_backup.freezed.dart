@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt_backup.dart';
@@ -9,6 +9,7 @@ part of 'virt_backup.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -31,16 +32,21 @@ $VirtBackupCopyWith<VirtBackup> get copyWith => _$VirtBackupCopyWithImpl<VirtBac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackup&&(identical(other.id, id) || other.id == id)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.node, node) || other.node == node)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.size, size) || other.size == size)&&(identical(other.format, format) || other.format == format)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.protected, protected) || other.protected == protected)&&(identical(other.verification, verification) || other.verification == verification)&&(identical(other.kind, kind) || other.kind == kind));
+  final _this = this as VirtBackup;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackup&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.storage, _this.storage) || other.storage == _this.storage)&&(identical(other.node, _this.node) || other.node == _this.node)&&(identical(other.vmid, _this.vmid) || other.vmid == _this.vmid)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.format, _this.format) || other.format == _this.format)&&(identical(other.notes, _this.notes) || other.notes == _this.notes)&&(identical(other.protected, _this.protected) || other.protected == _this.protected)&&(identical(other.verification, _this.verification) || other.verification == _this.verification)&&(identical(other.kind, _this.kind) || other.kind == _this.kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,storage,node,vmid,createdAt,size,format,notes,protected,verification,kind);
+int get hashCode {
+  final _this = this as VirtBackup;
+  return Object.hash(runtimeType,_this.id,_this.storage,_this.node,_this.vmid,_this.createdAt,_this.size,_this.format,_this.notes,_this.protected,_this.verification,_this.kind);
+}
 
 @override
 String toString() {
-  return 'VirtBackup(id: $id, storage: $storage, node: $node, vmid: $vmid, createdAt: $createdAt, size: $size, format: $format, notes: $notes, protected: $protected, verification: $verification, kind: $kind)';
+  final _this = this as VirtBackup;
+  return 'VirtBackup(id: ${_this.id}, storage: ${_this.storage}, node: ${_this.node}, vmid: ${_this.vmid}, createdAt: ${_this.createdAt}, size: ${_this.size}, format: ${_this.format}, notes: ${_this.notes}, protected: ${_this.protected}, verification: ${_this.verification}, kind: ${_this.kind})';
 }
 
 
@@ -69,7 +75,7 @@ class _$VirtBackupCopyWithImpl<$Res>
 /// Create a copy of VirtBackup
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? storage = null,Object? node = null,Object? vmid = freezed,Object? createdAt = freezed,Object? size = freezed,Object? format = freezed,Object? notes = freezed,Object? protected = null,Object? verification = freezed,Object? kind = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtBackup(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,storage: null == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
 as String,node: null == node ? _self.node : node // ignore: cast_nullable_to_non_nullable
@@ -253,16 +259,18 @@ _$VirtBackupCopyWith<_VirtBackup> get copyWith => __$VirtBackupCopyWithImpl<_Vir
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackup&&(identical(other.id, id) || other.id == id)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.node, node) || other.node == node)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.size, size) || other.size == size)&&(identical(other.format, format) || other.format == format)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.protected, protected) || other.protected == protected)&&(identical(other.verification, verification) || other.verification == verification)&&(identical(other.kind, kind) || other.kind == kind));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackup&&(identical(other.id, id) || other.id == id)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.node, node) || other.node == node)&&(identical(other.vmid, vmid) || other.vmid == vmid)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.size, size) || other.size == size)&&(identical(other.format, format) || other.format == format)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.protected, protected) || other.protected == protected)&&(identical(other.verification, verification) || other.verification == verification)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,storage,node,vmid,createdAt,size,format,notes,protected,verification,kind);
+int get hashCode {
+    return Object.hash(runtimeType,id,storage,node,vmid,createdAt,size,format,notes,protected,verification,kind);
+}
 
 @override
 String toString() {
-  return 'VirtBackup(id: $id, storage: $storage, node: $node, vmid: $vmid, createdAt: $createdAt, size: $size, format: $format, notes: $notes, protected: $protected, verification: $verification, kind: $kind)';
+    return 'VirtBackup(id: $id, storage: $storage, node: $node, vmid: $vmid, createdAt: $createdAt, size: $size, format: $format, notes: $notes, protected: $protected, verification: $verification, kind: $kind)';
 }
 
 
@@ -340,16 +348,21 @@ $VirtBackupJobCopyWith<VirtBackupJob> get copyWith => _$VirtBackupJobCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.all, all) || other.all == all)&&const DeepCollectionEquality().equals(other.vmids, vmids)&&const DeepCollectionEquality().equals(other.exclude, exclude)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.node, node) || other.node == node)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.notesTemplate, notesTemplate) || other.notesTemplate == notesTemplate)&&(identical(other.mailNotification, mailNotification) || other.mailNotification == mailNotification)&&(identical(other.prune, prune) || other.prune == prune));
+  final _this = this as VirtBackupJob;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtBackupJob&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.schedule, _this.schedule) || other.schedule == _this.schedule)&&(identical(other.storage, _this.storage) || other.storage == _this.storage)&&(identical(other.mode, _this.mode) || other.mode == _this.mode)&&(identical(other.compress, _this.compress) || other.compress == _this.compress)&&(identical(other.keep, _this.keep) || other.keep == _this.keep)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.all, _this.all) || other.all == _this.all)&&const DeepCollectionEquality().equals(other.vmids, _this.vmids)&&const DeepCollectionEquality().equals(other.exclude, _this.exclude)&&(identical(other.pool, _this.pool) || other.pool == _this.pool)&&(identical(other.node, _this.node) || other.node == _this.node)&&(identical(other.comment, _this.comment) || other.comment == _this.comment)&&(identical(other.notesTemplate, _this.notesTemplate) || other.notesTemplate == _this.notesTemplate)&&(identical(other.mailNotification, _this.mailNotification) || other.mailNotification == _this.mailNotification)&&(identical(other.prune, _this.prune) || other.prune == _this.prune));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled,all,const DeepCollectionEquality().hash(vmids),const DeepCollectionEquality().hash(exclude),pool,node,comment,notesTemplate,mailNotification,prune);
+int get hashCode {
+  final _this = this as VirtBackupJob;
+  return Object.hash(runtimeType,_this.id,_this.schedule,_this.storage,_this.mode,_this.compress,_this.keep,_this.enabled,_this.all,const DeepCollectionEquality().hash(_this.vmids),const DeepCollectionEquality().hash(_this.exclude),_this.pool,_this.node,_this.comment,_this.notesTemplate,_this.mailNotification,_this.prune);
+}
 
 @override
 String toString() {
-  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled, all: $all, vmids: $vmids, exclude: $exclude, pool: $pool, node: $node, comment: $comment, notesTemplate: $notesTemplate, mailNotification: $mailNotification, prune: $prune)';
+  final _this = this as VirtBackupJob;
+  return 'VirtBackupJob(id: ${_this.id}, schedule: ${_this.schedule}, storage: ${_this.storage}, mode: ${_this.mode}, compress: ${_this.compress}, keep: ${_this.keep}, enabled: ${_this.enabled}, all: ${_this.all}, vmids: ${_this.vmids}, exclude: ${_this.exclude}, pool: ${_this.pool}, node: ${_this.node}, comment: ${_this.comment}, notesTemplate: ${_this.notesTemplate}, mailNotification: ${_this.mailNotification}, prune: ${_this.prune})';
 }
 
 
@@ -378,7 +391,7 @@ class _$VirtBackupJobCopyWithImpl<$Res>
 /// Create a copy of VirtBackupJob
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? schedule = freezed,Object? storage = freezed,Object? mode = freezed,Object? compress = freezed,Object? keep = freezed,Object? enabled = null,Object? all = null,Object? vmids = null,Object? exclude = null,Object? pool = freezed,Object? node = freezed,Object? comment = freezed,Object? notesTemplate = freezed,Object? mailNotification = freezed,Object? prune = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtBackupJob(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,schedule: freezed == schedule ? _self.schedule : schedule // ignore: cast_nullable_to_non_nullable
 as String?,storage: freezed == storage ? _self.storage : storage // ignore: cast_nullable_to_non_nullable
@@ -536,7 +549,7 @@ return $default(_that.id,_that.schedule,_that.storage,_that.mode,_that.compress,
 
 
 class _VirtBackupJob extends VirtBackupJob {
-  const _VirtBackupJob({required this.id, this.schedule, this.storage, this.mode, this.compress, this.keep, this.enabled = true, this.all = false, final  List<int> vmids = const <int>[], final  List<int> exclude = const <int>[], this.pool, this.node, this.comment, this.notesTemplate, this.mailNotification, this.prune}): _vmids = vmids,_exclude = exclude,super._();
+  const _VirtBackupJob({required this.id, this.schedule, this.storage, this.mode, this.compress, this.keep, this.enabled = true, this.all = false,  List<int> vmids = const <int>[],  List<int> exclude = const <int>[], this.pool, this.node, this.comment, this.notesTemplate, this.mailNotification, this.prune}): _vmids = vmids,_exclude = exclude,super._();
   
 
 @override final  String id;
@@ -595,16 +608,18 @@ _$VirtBackupJobCopyWith<_VirtBackupJob> get copyWith => __$VirtBackupJobCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.all, all) || other.all == all)&&const DeepCollectionEquality().equals(other._vmids, _vmids)&&const DeepCollectionEquality().equals(other._exclude, _exclude)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.node, node) || other.node == node)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.notesTemplate, notesTemplate) || other.notesTemplate == notesTemplate)&&(identical(other.mailNotification, mailNotification) || other.mailNotification == mailNotification)&&(identical(other.prune, prune) || other.prune == prune));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtBackupJob&&(identical(other.id, id) || other.id == id)&&(identical(other.schedule, schedule) || other.schedule == schedule)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.compress, compress) || other.compress == compress)&&(identical(other.keep, keep) || other.keep == keep)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.all, all) || other.all == all)&&const DeepCollectionEquality().equals(other.vmids, _vmids)&&const DeepCollectionEquality().equals(other.exclude, _exclude)&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.node, node) || other.node == node)&&(identical(other.comment, comment) || other.comment == comment)&&(identical(other.notesTemplate, notesTemplate) || other.notesTemplate == notesTemplate)&&(identical(other.mailNotification, mailNotification) || other.mailNotification == mailNotification)&&(identical(other.prune, prune) || other.prune == prune));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled,all,const DeepCollectionEquality().hash(_vmids),const DeepCollectionEquality().hash(_exclude),pool,node,comment,notesTemplate,mailNotification,prune);
+int get hashCode {
+    return Object.hash(runtimeType,id,schedule,storage,mode,compress,keep,enabled,all,const DeepCollectionEquality().hash(_vmids),const DeepCollectionEquality().hash(_exclude),pool,node,comment,notesTemplate,mailNotification,prune);
+}
 
 @override
 String toString() {
-  return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled, all: $all, vmids: $vmids, exclude: $exclude, pool: $pool, node: $node, comment: $comment, notesTemplate: $notesTemplate, mailNotification: $mailNotification, prune: $prune)';
+    return 'VirtBackupJob(id: $id, schedule: $schedule, storage: $storage, mode: $mode, compress: $compress, keep: $keep, enabled: $enabled, all: $all, vmids: $vmids, exclude: $exclude, pool: $pool, node: $node, comment: $comment, notesTemplate: $notesTemplate, mailNotification: $mailNotification, prune: $prune)';
 }
 
 

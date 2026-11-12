@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'snippet.dart';
@@ -9,6 +9,7 @@ part of 'snippet.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -31,16 +32,21 @@ $SnippetCopyWith<Snippet> get copyWith => _$SnippetCopyWithImpl<Snippet>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Snippet&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.autoRunOn, autoRunOn));
+  final _this = this as Snippet;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Snippet&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.script, _this.script) || other.script == _this.script)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.note, _this.note) || other.note == _this.note)&&const DeepCollectionEquality().equals(other.autoRunOn, _this.autoRunOn));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,script,const DeepCollectionEquality().hash(tags),note,const DeepCollectionEquality().hash(autoRunOn));
+int get hashCode {
+  final _this = this as Snippet;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.script,const DeepCollectionEquality().hash(_this.tags),_this.note,const DeepCollectionEquality().hash(_this.autoRunOn));
+}
 
 @override
 String toString() {
-  return 'Snippet(id: $id, name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
+  final _this = this as Snippet;
+  return 'Snippet(id: ${_this.id}, name: ${_this.name}, script: ${_this.script}, tags: ${_this.tags}, note: ${_this.note}, autoRunOn: ${_this.autoRunOn})';
 }
 
 
@@ -69,7 +75,7 @@ class _$SnippetCopyWithImpl<$Res>
 /// Create a copy of Snippet
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? script = null,Object? tags = freezed,Object? note = freezed,Object? autoRunOn = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Snippet(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,script: null == script ? _self.script : script // ignore: cast_nullable_to_non_nullable
@@ -217,7 +223,7 @@ return $default(_that.id,_that.name,_that.script,_that.tags,_that.note,_that.aut
 @JsonSerializable()
 
 class _Snippet implements Snippet {
-  const _Snippet({required this.id, required this.name, required this.script, final  List<String>? tags, this.note, final  List<String>? autoRunOn}): _tags = tags,_autoRunOn = autoRunOn;
+  const _Snippet({required this.id, required this.name, required this.script,  List<String>? tags, this.note,  List<String>? autoRunOn}): _tags = tags,_autoRunOn = autoRunOn;
   factory _Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
 
 /// Generated. A snippet used to be keyed by [name], so renaming one was a
@@ -260,16 +266,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Snippet&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._autoRunOn, _autoRunOn));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Snippet&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.script, script) || other.script == script)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.autoRunOn, _autoRunOn));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,script,const DeepCollectionEquality().hash(_tags),note,const DeepCollectionEquality().hash(_autoRunOn));
+int get hashCode {
+    return Object.hash(runtimeType,id,name,script,const DeepCollectionEquality().hash(_tags),note,const DeepCollectionEquality().hash(_autoRunOn));
+}
 
 @override
 String toString() {
-  return 'Snippet(id: $id, name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
+    return 'Snippet(id: $id, name: $name, script: $script, tags: $tags, note: $note, autoRunOn: $autoRunOn)';
 }
 
 

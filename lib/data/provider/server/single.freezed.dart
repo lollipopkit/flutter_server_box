@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'single.dart';
@@ -9,6 +9,7 @@ part of 'single.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -64,16 +65,21 @@ $ServerStateCopyWith<ServerState> get copyWith => _$ServerStateCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.agentAccess, agentAccess) || other.agentAccess == agentAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&(identical(other.agentCapabilities, agentCapabilities) || other.agentCapabilities == agentCapabilities));
+  final _this = this as ServerState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, _this.spi) || other.spi == _this.spi)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.conn, _this.conn) || other.conn == _this.conn)&&(identical(other.latencyMs, _this.latencyMs) || other.latencyMs == _this.latencyMs)&&(identical(other.client, _this.client) || other.client == _this.client)&&(identical(other.agentAccess, _this.agentAccess) || other.agentAccess == _this.agentAccess)&&(identical(other.agentVersion, _this.agentVersion) || other.agentVersion == _this.agentVersion)&&(identical(other.agentCapabilities, _this.agentCapabilities) || other.agentCapabilities == _this.agentCapabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,agentAccess,agentVersion,agentCapabilities);
+int get hashCode {
+  final _this = this as ServerState;
+  return Object.hash(runtimeType,_this.spi,_this.status,_this.conn,_this.latencyMs,_this.client,_this.agentAccess,_this.agentVersion,_this.agentCapabilities);
+}
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, agentAccess: $agentAccess, agentVersion: $agentVersion, agentCapabilities: $agentCapabilities)';
+  final _this = this as ServerState;
+  return 'ServerState(spi: ${_this.spi}, status: ${_this.status}, conn: ${_this.conn}, latencyMs: ${_this.latencyMs}, client: ${_this.client}, agentAccess: ${_this.agentAccess}, agentVersion: ${_this.agentVersion}, agentCapabilities: ${_this.agentCapabilities})';
 }
 
 
@@ -102,7 +108,7 @@ class _$ServerStateCopyWithImpl<$Res>
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? latencyMs = freezed,Object? client = freezed,Object? agentAccess = freezed,Object? agentVersion = freezed,Object? agentCapabilities = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServerState(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_to_non_nullable
@@ -322,16 +328,18 @@ _$ServerStateCopyWith<_ServerState> get copyWith => __$ServerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.agentAccess, agentAccess) || other.agentAccess == agentAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&(identical(other.agentCapabilities, agentCapabilities) || other.agentCapabilities == agentCapabilities));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.agentAccess, agentAccess) || other.agentAccess == agentAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&(identical(other.agentCapabilities, agentCapabilities) || other.agentCapabilities == agentCapabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,agentAccess,agentVersion,agentCapabilities);
+int get hashCode {
+    return Object.hash(runtimeType,spi,status,conn,latencyMs,client,agentAccess,agentVersion,agentCapabilities);
+}
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, agentAccess: $agentAccess, agentVersion: $agentVersion, agentCapabilities: $agentCapabilities)';
+    return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, agentAccess: $agentAccess, agentVersion: $agentVersion, agentCapabilities: $agentCapabilities)';
 }
 
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt_libvirt.dart';
@@ -9,6 +9,7 @@ part of 'virt_libvirt.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$VirtHwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VirtHwChange()';
+    return 'VirtHwChange()';
 }
 
 
@@ -312,16 +313,18 @@ $VirtHwChange_CpuCopyWith<VirtHwChange_Cpu> get copyWith => _$VirtHwChange_CpuCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Cpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.current, current) || other.current == current));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Cpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.current, current) || other.current == current));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sockets,cores,current);
+int get hashCode {
+    return Object.hash(runtimeType,sockets,cores,current);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.cpu(sockets: $sockets, cores: $cores, current: $current)';
+    return 'VirtHwChange.cpu(sockets: $sockets, cores: $cores, current: $current)';
 }
 
 
@@ -381,16 +384,18 @@ $VirtHwChange_MemoryCopyWith<VirtHwChange_Memory> get copyWith => _$VirtHwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Memory&&(identical(other.memoryMib, memoryMib) || other.memoryMib == memoryMib)&&(identical(other.currentMib, currentMib) || other.currentMib == currentMib));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Memory&&(identical(other.memoryMib, memoryMib) || other.memoryMib == memoryMib)&&(identical(other.currentMib, currentMib) || other.currentMib == currentMib));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memoryMib,currentMib);
+int get hashCode {
+    return Object.hash(runtimeType,memoryMib,currentMib);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.memory(memoryMib: $memoryMib, currentMib: $currentMib)';
+    return 'VirtHwChange.memory(memoryMib: $memoryMib, currentMib: $currentMib)';
 }
 
 
@@ -451,16 +456,18 @@ $VirtHwChange_GrowDiskCopyWith<VirtHwChange_GrowDisk> get copyWith => _$VirtHwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_GrowDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.path, path) || other.path == path)&&(identical(other.live, live) || other.live == live));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_GrowDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.path, path) || other.path == path)&&(identical(other.live, live) || other.live == live));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,bytes,path,live);
+int get hashCode {
+    return Object.hash(runtimeType,target,bytes,path,live);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.growDisk(target: $target, bytes: $bytes, path: $path, live: $live)';
+    return 'VirtHwChange.growDisk(target: $target, bytes: $bytes, path: $path, live: $live)';
 }
 
 
@@ -525,16 +532,18 @@ $VirtHwChange_AddDiskCopyWith<VirtHwChange_AddDisk> get copyWith => _$VirtHwChan
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddDisk&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.format, format) || other.format == format)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddDisk&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.format, format) || other.format == format)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,volume,gib,format,target,bus);
+int get hashCode {
+    return Object.hash(runtimeType,pool,volume,gib,format,target,bus);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.addDisk(pool: $pool, volume: $volume, gib: $gib, format: $format, target: $target, bus: $bus)';
+    return 'VirtHwChange.addDisk(pool: $pool, volume: $volume, gib: $gib, format: $format, target: $target, bus: $bus)';
 }
 
 
@@ -599,16 +608,18 @@ $VirtHwChange_AttachVolumeCopyWith<VirtHwChange_AttachVolume> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AttachVolume&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AttachVolume&&(identical(other.path, path) || other.path == path)&&(identical(other.format, format) || other.format == format)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,path,format,target,bus);
+int get hashCode {
+    return Object.hash(runtimeType,path,format,target,bus);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.attachVolume(path: $path, format: $format, target: $target, bus: $bus)';
+    return 'VirtHwChange.attachVolume(path: $path, format: $format, target: $target, bus: $bus)';
 }
 
 
@@ -671,16 +682,18 @@ $VirtHwChange_RemoveDiskCopyWith<VirtHwChange_RemoveDisk> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.deletePath, deletePath) || other.deletePath == deletePath)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.deletePath, deletePath) || other.deletePath == deletePath)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,deletePath,config,live);
+int get hashCode {
+    return Object.hash(runtimeType,target,deletePath,config,live);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.removeDisk(target: $target, deletePath: $deletePath, config: $config, live: $live)';
+    return 'VirtHwChange.removeDisk(target: $target, deletePath: $deletePath, config: $config, live: $live)';
 }
 
 
@@ -742,16 +755,18 @@ $VirtHwChange_AddCdromCopyWith<VirtHwChange_AddCdrom> get copyWith => _$VirtHwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddCdrom&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.source, source) || other.source == source));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddCdrom&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.source, source) || other.source == source));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,bus,source);
+int get hashCode {
+    return Object.hash(runtimeType,target,bus,source);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.addCdrom(target: $target, bus: $bus, source: $source)';
+    return 'VirtHwChange.addCdrom(target: $target, bus: $bus, source: $source)';
 }
 
 
@@ -813,16 +828,18 @@ $VirtHwChange_SetMediaCopyWith<VirtHwChange_SetMedia> get copyWith => _$VirtHwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_SetMedia&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_SetMedia&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,source,config,live);
+int get hashCode {
+    return Object.hash(runtimeType,target,source,config,live);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.setMedia(target: $target, source: $source, config: $config, live: $live)';
+    return 'VirtHwChange.setMedia(target: $target, source: $source, config: $config, live: $live)';
 }
 
 
@@ -885,16 +902,18 @@ $VirtHwChange_AddNicCopyWith<VirtHwChange_AddNic> get copyWith => _$VirtHwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,source,model,mac);
+int get hashCode {
+    return Object.hash(runtimeType,kind,source,model,mac);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.addNic(kind: $kind, source: $source, model: $model, mac: $mac)';
+    return 'VirtHwChange.addNic(kind: $kind, source: $source, model: $model, mac: $mac)';
 }
 
 
@@ -956,16 +975,18 @@ $VirtHwChange_RemoveNicCopyWith<VirtHwChange_RemoveNic> get copyWith => _$VirtHw
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.liveKind, liveKind) || other.liveKind == liveKind));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.liveKind, liveKind) || other.liveKind == liveKind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mac,kind,liveKind);
+int get hashCode {
+    return Object.hash(runtimeType,mac,kind,liveKind);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.removeNic(mac: $mac, kind: $kind, liveKind: $liveKind)';
+    return 'VirtHwChange.removeNic(mac: $mac, kind: $kind, liveKind: $liveKind)';
 }
 
 
@@ -1032,16 +1053,18 @@ $VirtHwChange_UpdateNicCopyWith<VirtHwChange_UpdateNic> get copyWith => _$VirtHw
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder)&&(identical(other.liveBootOrder, liveBootOrder) || other.liveBootOrder == liveBootOrder)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder)&&(identical(other.liveBootOrder, liveBootOrder) || other.liveBootOrder == liveBootOrder)&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mac,kind,source,model,linkUp,bootOrder,liveBootOrder,config,live);
+int get hashCode {
+    return Object.hash(runtimeType,mac,kind,source,model,linkUp,bootOrder,liveBootOrder,config,live);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.updateNic(mac: $mac, kind: $kind, source: $source, model: $model, linkUp: $linkUp, bootOrder: $bootOrder, liveBootOrder: $liveBootOrder, config: $config, live: $live)';
+    return 'VirtHwChange.updateNic(mac: $mac, kind: $kind, source: $source, model: $model, linkUp: $linkUp, bootOrder: $bootOrder, liveBootOrder: $liveBootOrder, config: $config, live: $live)';
 }
 
 
@@ -1091,7 +1114,7 @@ as bool,
 
 
 class VirtHwChange_Boot extends VirtHwChange {
-  const VirtHwChange_Boot({required final  List<String> order}): _order = order,super._();
+  const VirtHwChange_Boot({required  List<String> order}): _order = order,super._();
   
 
  final  List<String> _order;
@@ -1112,16 +1135,18 @@ $VirtHwChange_BootCopyWith<VirtHwChange_Boot> get copyWith => _$VirtHwChange_Boo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Boot&&const DeepCollectionEquality().equals(other._order, _order));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Boot&&const DeepCollectionEquality().equals(other.order, _order));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_order));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_order));
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.boot(order: $order)';
+    return 'VirtHwChange.boot(order: $order)';
 }
 
 
@@ -1178,16 +1203,18 @@ $VirtHwChange_AutostartCopyWith<VirtHwChange_Autostart> get copyWith => _$VirtHw
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Autostart&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Autostart&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,on_);
+int get hashCode {
+    return Object.hash(runtimeType,on_);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.autostart(on_: $on_)';
+    return 'VirtHwChange.autostart(on_: $on_)';
 }
 
 
@@ -1244,16 +1271,18 @@ $VirtHwChange_DescriptionCopyWith<VirtHwChange_Description> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Description&&(identical(other.text, text) || other.text == text));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Description&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode {
+    return Object.hash(runtimeType,text);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.description(text: $text)';
+    return 'VirtHwChange.description(text: $text)';
 }
 
 
@@ -1310,16 +1339,18 @@ $VirtHwChange_RenameCopyWith<VirtHwChange_Rename> get copyWith => _$VirtHwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Rename&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Rename&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.rename(name: $name)';
+    return 'VirtHwChange.rename(name: $name)';
 }
 
 
@@ -1379,16 +1410,18 @@ $VirtHwChange_UpdateDiskCopyWith<VirtHwChange_UpdateDisk> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.newTarget, newTarget) || other.newTarget == newTarget)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.cache, cache) || other.cache == cache));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.newTarget, newTarget) || other.newTarget == newTarget)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.cache, cache) || other.cache == cache));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,target,newTarget,bus,cache);
+int get hashCode {
+    return Object.hash(runtimeType,target,newTarget,bus,cache);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.updateDisk(target: $target, newTarget: $newTarget, bus: $bus, cache: $cache)';
+    return 'VirtHwChange.updateDisk(target: $target, newTarget: $newTarget, bus: $bus, cache: $cache)';
 }
 
 
@@ -1450,16 +1483,18 @@ $VirtHwChange_UpdateNicHardwareCopyWith<VirtHwChange_UpdateNicHardware> get copy
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateNicHardware&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.newMac, newMac) || other.newMac == newMac)&&(identical(other.model, model) || other.model == model));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_UpdateNicHardware&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.newMac, newMac) || other.newMac == newMac)&&(identical(other.model, model) || other.model == model));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mac,newMac,model);
+int get hashCode {
+    return Object.hash(runtimeType,mac,newMac,model);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.updateNicHardware(mac: $mac, newMac: $newMac, model: $model)';
+    return 'VirtHwChange.updateNicHardware(mac: $mac, newMac: $newMac, model: $model)';
 }
 
 
@@ -1519,16 +1554,18 @@ $VirtHwChange_FirmwareCopyWith<VirtHwChange_Firmware> get copyWith => _$VirtHwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Firmware&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Firmware&&(identical(other.efi, efi) || other.efi == efi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,efi,secureBoot);
+int get hashCode {
+    return Object.hash(runtimeType,efi,secureBoot);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.firmware(efi: $efi, secureBoot: $secureBoot)';
+    return 'VirtHwChange.firmware(efi: $efi, secureBoot: $secureBoot)';
 }
 
 
@@ -1588,16 +1625,18 @@ $VirtHwChange_DisplayCopyWith<VirtHwChange_Display> get copyWith => _$VirtHwChan
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Display&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.video, video) || other.video == video));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_Display&&(identical(other.graphics, graphics) || other.graphics == graphics)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.video, video) || other.video == video));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,graphics,listen,video);
+int get hashCode {
+    return Object.hash(runtimeType,graphics,listen,video);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.display(graphics: $graphics, listen: $listen, video: $video)';
+    return 'VirtHwChange.display(graphics: $graphics, listen: $listen, video: $video)';
 }
 
 
@@ -1656,16 +1695,18 @@ $VirtHwChange_AddDeviceCopyWith<VirtHwChange_AddDevice> get copyWith => _$VirtHw
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddDevice&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_AddDevice&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.addDevice(device: $device)';
+    return 'VirtHwChange.addDevice(device: $device)';
 }
 
 
@@ -1731,16 +1772,18 @@ $VirtHwChange_RemoveDeviceCopyWith<VirtHwChange_RemoveDevice> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveDevice&&(identical(other.key, key) || other.key == key));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RemoveDevice&&(identical(other.key, key) || other.key == key));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key);
+int get hashCode {
+    return Object.hash(runtimeType,key);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.removeDevice(key: $key)';
+    return 'VirtHwChange.removeDevice(key: $key)';
 }
 
 
@@ -1797,16 +1840,18 @@ $VirtHwChange_RevertLiveCopyWith<VirtHwChange_RevertLive> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RevertLive&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwChange_RevertLive&&(identical(other.liveXml, liveXml) || other.liveXml == liveXml));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,liveXml);
+int get hashCode {
+    return Object.hash(runtimeType,liveXml);
+}
 
 @override
 String toString() {
-  return 'VirtHwChange.revertLive(liveXml: $liveXml)';
+    return 'VirtHwChange.revertLive(liveXml: $liveXml)';
 }
 
 
@@ -1853,7 +1898,7 @@ mixin _$VirtHwNewDevice {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice);
 }
 
 
@@ -1862,7 +1907,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VirtHwNewDevice()';
+    return 'VirtHwNewDevice()';
 }
 
 
@@ -2029,16 +2074,18 @@ $VirtHwNewDevice_TpmCopyWith<VirtHwNewDevice_Tpm> get copyWith => _$VirtHwNewDev
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Tpm&&(identical(other.model, model) || other.model == model));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Tpm&&(identical(other.model, model) || other.model == model));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,model);
+int get hashCode {
+    return Object.hash(runtimeType,model);
+}
 
 @override
 String toString() {
-  return 'VirtHwNewDevice.tpm(model: $model)';
+    return 'VirtHwNewDevice.tpm(model: $model)';
 }
 
 
@@ -2098,16 +2145,18 @@ $VirtHwNewDevice_UsbCopyWith<VirtHwNewDevice_Usb> get copyWith => _$VirtHwNewDev
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Usb&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.product, product) || other.product == product)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Usb&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.product, product) || other.product == product)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,vendor,product,bus,device);
+int get hashCode {
+    return Object.hash(runtimeType,vendor,product,bus,device);
+}
 
 @override
 String toString() {
-  return 'VirtHwNewDevice.usb(vendor: $vendor, product: $product, bus: $bus, device: $device)';
+    return 'VirtHwNewDevice.usb(vendor: $vendor, product: $product, bus: $bus, device: $device)';
 }
 
 
@@ -2167,16 +2216,18 @@ $VirtHwNewDevice_PciCopyWith<VirtHwNewDevice_Pci> get copyWith => _$VirtHwNewDev
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Pci&&(identical(other.address, address) || other.address == address));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHwNewDevice_Pci&&(identical(other.address, address) || other.address == address));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,address);
+int get hashCode {
+    return Object.hash(runtimeType,address);
+}
 
 @override
 String toString() {
-  return 'VirtHwNewDevice.pci(address: $address)';
+    return 'VirtHwNewDevice.pci(address: $address)';
 }
 
 
@@ -2228,16 +2279,21 @@ $VirtResourceOpCopyWith<VirtResourceOp> get copyWith => _$VirtResourceOpCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp&&(identical(other.name, name) || other.name == name));
+  final _this = this as VirtResourceOp;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp&&(identical(other.name, _this.name) || other.name == _this.name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+  final _this = this as VirtResourceOp;
+  return Object.hash(runtimeType,_this.name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp(name: $name)';
+  final _this = this as VirtResourceOp;
+  return 'VirtResourceOp(name: ${_this.name})';
 }
 
 
@@ -2506,16 +2562,18 @@ $VirtResourceOp_PoolCreateCopyWith<VirtResourceOp_PoolCreate> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&(identical(other.autostart, autostart) || other.autostart == autostart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.target, target) || other.target == target)&&(identical(other.source, source) || other.source == source)&&(identical(other.autostart, autostart) || other.autostart == autostart));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,poolType,target,source,autostart);
+int get hashCode {
+    return Object.hash(runtimeType,name,poolType,target,source,autostart);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolCreate(name: $name, poolType: $poolType, target: $target, source: $source, autostart: $autostart)';
+    return 'VirtResourceOp.poolCreate(name: $name, poolType: $poolType, target: $target, source: $source, autostart: $autostart)';
 }
 
 
@@ -2576,16 +2634,18 @@ $VirtResourceOp_PoolStartCopyWith<VirtResourceOp_PoolStart> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolStart&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolStart&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolStart(name: $name)';
+    return 'VirtResourceOp.poolStart(name: $name)';
 }
 
 
@@ -2642,16 +2702,18 @@ $VirtResourceOp_PoolStopCopyWith<VirtResourceOp_PoolStop> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolStop&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolStop&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolStop(name: $name)';
+    return 'VirtResourceOp.poolStop(name: $name)';
 }
 
 
@@ -2709,16 +2771,18 @@ $VirtResourceOp_PoolAutostartCopyWith<VirtResourceOp_PoolAutostart> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolAutostart&&(identical(other.name, name) || other.name == name)&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolAutostart&&(identical(other.name, name) || other.name == name)&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,on_);
+int get hashCode {
+    return Object.hash(runtimeType,name,on_);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolAutostart(name: $name, on_: $on_)';
+    return 'VirtResourceOp.poolAutostart(name: $name, on_: $on_)';
 }
 
 
@@ -2776,16 +2840,18 @@ $VirtResourceOp_PoolRefreshCopyWith<VirtResourceOp_PoolRefresh> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolRefresh&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolRefresh&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolRefresh(name: $name)';
+    return 'VirtResourceOp.poolRefresh(name: $name)';
 }
 
 
@@ -2844,16 +2910,18 @@ $VirtResourceOp_PoolDeleteCopyWith<VirtResourceOp_PoolDelete> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolDelete&&(identical(other.name, name) || other.name == name)&&(identical(other.active, active) || other.active == active)&&(identical(other.deleteStorage, deleteStorage) || other.deleteStorage == deleteStorage));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_PoolDelete&&(identical(other.name, name) || other.name == name)&&(identical(other.active, active) || other.active == active)&&(identical(other.deleteStorage, deleteStorage) || other.deleteStorage == deleteStorage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,active,deleteStorage);
+int get hashCode {
+    return Object.hash(runtimeType,name,active,deleteStorage);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.poolDelete(name: $name, active: $active, deleteStorage: $deleteStorage)';
+    return 'VirtResourceOp.poolDelete(name: $name, active: $active, deleteStorage: $deleteStorage)';
 }
 
 
@@ -2915,16 +2983,18 @@ $VirtResourceOp_VolCreateCopyWith<VirtResourceOp_VolCreate> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolCreate&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.format, format) || other.format == format));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolCreate&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.format, format) || other.format == format));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,name,bytes,format);
+int get hashCode {
+    return Object.hash(runtimeType,pool,name,bytes,format);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.volCreate(pool: $pool, name: $name, bytes: $bytes, format: $format)';
+    return 'VirtResourceOp.volCreate(pool: $pool, name: $name, bytes: $bytes, format: $format)';
 }
 
 
@@ -2985,16 +3055,18 @@ $VirtResourceOp_VolDeleteCopyWith<VirtResourceOp_VolDelete> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,name);
+int get hashCode {
+    return Object.hash(runtimeType,pool,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.volDelete(pool: $pool, name: $name)';
+    return 'VirtResourceOp.volDelete(pool: $pool, name: $name)';
 }
 
 
@@ -3054,16 +3126,18 @@ $VirtResourceOp_VolResizeCopyWith<VirtResourceOp_VolResize> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolResize&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.bytes, bytes) || other.bytes == bytes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolResize&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.bytes, bytes) || other.bytes == bytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,name,bytes);
+int get hashCode {
+    return Object.hash(runtimeType,pool,name,bytes);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.volResize(pool: $pool, name: $name, bytes: $bytes)';
+    return 'VirtResourceOp.volResize(pool: $pool, name: $name, bytes: $bytes)';
 }
 
 
@@ -3124,16 +3198,18 @@ $VirtResourceOp_VolCloneCopyWith<VirtResourceOp_VolClone> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolClone&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.newName, newName) || other.newName == newName));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_VolClone&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.newName, newName) || other.newName == newName));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,name,newName);
+int get hashCode {
+    return Object.hash(runtimeType,pool,name,newName);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.volClone(pool: $pool, name: $name, newName: $newName)';
+    return 'VirtResourceOp.volClone(pool: $pool, name: $name, newName: $newName)';
 }
 
 
@@ -3196,16 +3272,18 @@ $VirtResourceOp_NetCreateCopyWith<VirtResourceOp_NetCreate> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.ipv4, ipv4) || other.ipv4 == ipv4)&&(identical(other.autostart, autostart) || other.autostart == autostart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.ipv4, ipv4) || other.ipv4 == ipv4)&&(identical(other.autostart, autostart) || other.autostart == autostart));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,mode,bridge,ipv4,autostart);
+int get hashCode {
+    return Object.hash(runtimeType,name,mode,bridge,ipv4,autostart);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.netCreate(name: $name, mode: $mode, bridge: $bridge, ipv4: $ipv4, autostart: $autostart)';
+    return 'VirtResourceOp.netCreate(name: $name, mode: $mode, bridge: $bridge, ipv4: $ipv4, autostart: $autostart)';
 }
 
 
@@ -3266,16 +3344,18 @@ $VirtResourceOp_NetStartCopyWith<VirtResourceOp_NetStart> get copyWith => _$Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetStart&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetStart&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.netStart(name: $name)';
+    return 'VirtResourceOp.netStart(name: $name)';
 }
 
 
@@ -3332,16 +3412,18 @@ $VirtResourceOp_NetStopCopyWith<VirtResourceOp_NetStop> get copyWith => _$VirtRe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetStop&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetStop&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.netStop(name: $name)';
+    return 'VirtResourceOp.netStop(name: $name)';
 }
 
 
@@ -3399,16 +3481,18 @@ $VirtResourceOp_NetAutostartCopyWith<VirtResourceOp_NetAutostart> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetAutostart&&(identical(other.name, name) || other.name == name)&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetAutostart&&(identical(other.name, name) || other.name == name)&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,on_);
+int get hashCode {
+    return Object.hash(runtimeType,name,on_);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.netAutostart(name: $name, on_: $on_)';
+    return 'VirtResourceOp.netAutostart(name: $name, on_: $on_)';
 }
 
 
@@ -3466,16 +3550,18 @@ $VirtResourceOp_NetDeleteCopyWith<VirtResourceOp_NetDelete> get copyWith => _$Vi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetDelete&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtResourceOp_NetDelete&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'VirtResourceOp.netDelete(name: $name)';
+    return 'VirtResourceOp.netDelete(name: $name)';
 }
 
 

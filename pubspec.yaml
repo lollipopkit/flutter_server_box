@@ -5,7 +5,7 @@ version: 1.0.1925+1925
 
 environment:
   sdk: ">=3.11.0"
-  flutter: ">=3.47.0"
+  flutter: ">=3.50.0"
 
 dependencies:
   flutter:
@@ -123,6 +123,13 @@ dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:
     path: packages/fl_lib
+  # TODO: remove once freezed releases the fix (rrousselGit/freezed#1376).
+  # 4.0.x targets `PlanError._()` in copyWith (FRB's single-variant enum).
+  freezed:
+    git:
+      url: https://github.com/uveshm003/freezed
+      ref: 0133556f71242fb57602d7a0e5e877e26b7a9d97
+      path: packages/freezed
 
 dev_dependencies:
   integration_test:
@@ -133,13 +140,11 @@ dev_dependencies:
   # earlier resolution that flag is live, and without it a conflicting output
   # is a y/n prompt — or a failed build when nothing is there to answer.
   build_runner: ^2.15.0
-  drift_dev: ^2.34.0
-  # drift_dev 2.34.0 still calls DartPlaceholder.when(), removed by sqlparser
-  # 0.44.6. Keep its companion parser at the last compatible release.
-  sqlparser: 0.44.5
+  # Same minor as `drift`, whose generated code it writes.
+  drift_dev: ">=2.34.6 <2.35.0"
   flutter_lints: ^6.0.0
   json_serializable: ^6.13.0
-  freezed: ^3.0.0
+  freezed: ^4.0.1
   riverpod_generator: ^4.0.3
   test: ^1.29.0
   # Fake time for unit tests of timers that are not widgets — see

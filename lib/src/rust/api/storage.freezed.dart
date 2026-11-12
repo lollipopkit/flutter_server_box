@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'storage.dart';
@@ -9,6 +9,7 @@ part of 'storage.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$StorageAction {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'StorageAction()';
+    return 'StorageAction()';
 }
 
 
@@ -316,16 +317,18 @@ $StorageAction_PartitionCopyWith<StorageAction_Partition> get copyWith => _$Stor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Partition&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Partition&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.partition(device: $device)';
+    return 'StorageAction.partition(device: $device)';
 }
 
 
@@ -385,16 +388,18 @@ $StorageAction_FormatCopyWith<StorageAction_Format> get copyWith => _$StorageAct
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Format&&(identical(other.device, device) || other.device == device)&&(identical(other.fstype, fstype) || other.fstype == fstype)&&(identical(other.label, label) || other.label == label)&&(identical(other.encrypt, encrypt) || other.encrypt == encrypt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Format&&(identical(other.device, device) || other.device == device)&&(identical(other.fstype, fstype) || other.fstype == fstype)&&(identical(other.label, label) || other.label == label)&&(identical(other.encrypt, encrypt) || other.encrypt == encrypt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device,fstype,label,encrypt);
+int get hashCode {
+    return Object.hash(runtimeType,device,fstype,label,encrypt);
+}
 
 @override
 String toString() {
-  return 'StorageAction.format(device: $device, fstype: $fstype, label: $label, encrypt: $encrypt)';
+    return 'StorageAction.format(device: $device, fstype: $fstype, label: $label, encrypt: $encrypt)';
 }
 
 
@@ -457,16 +462,18 @@ $StorageAction_MountCopyWith<StorageAction_Mount> get copyWith => _$StorageActio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Mount&&(identical(other.device, device) || other.device == device)&&(identical(other.mountpoint, mountpoint) || other.mountpoint == mountpoint)&&(identical(other.persist, persist) || other.persist == persist)&&(identical(other.own, own) || other.own == own));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Mount&&(identical(other.device, device) || other.device == device)&&(identical(other.mountpoint, mountpoint) || other.mountpoint == mountpoint)&&(identical(other.persist, persist) || other.persist == persist)&&(identical(other.own, own) || other.own == own));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device,mountpoint,persist,own);
+int get hashCode {
+    return Object.hash(runtimeType,device,mountpoint,persist,own);
+}
 
 @override
 String toString() {
-  return 'StorageAction.mount(device: $device, mountpoint: $mountpoint, persist: $persist, own: $own)';
+    return 'StorageAction.mount(device: $device, mountpoint: $mountpoint, persist: $persist, own: $own)';
 }
 
 
@@ -526,16 +533,18 @@ $StorageAction_UnmountCopyWith<StorageAction_Unmount> get copyWith => _$StorageA
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Unmount&&(identical(other.mountpoint, mountpoint) || other.mountpoint == mountpoint));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Unmount&&(identical(other.mountpoint, mountpoint) || other.mountpoint == mountpoint));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mountpoint);
+int get hashCode {
+    return Object.hash(runtimeType,mountpoint);
+}
 
 @override
 String toString() {
-  return 'StorageAction.unmount(mountpoint: $mountpoint)';
+    return 'StorageAction.unmount(mountpoint: $mountpoint)';
 }
 
 
@@ -577,7 +586,7 @@ as String,
 
 
 class StorageAction_CreateRaid extends StorageAction {
-  const StorageAction_CreateRaid({required this.name, required this.level, required final  List<String> devices}): _devices = devices,super._();
+  const StorageAction_CreateRaid({required this.name, required this.level, required  List<String> devices}): _devices = devices,super._();
   
 
  final  String name;
@@ -600,16 +609,18 @@ $StorageAction_CreateRaidCopyWith<StorageAction_CreateRaid> get copyWith => _$St
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_CreateRaid&&(identical(other.name, name) || other.name == name)&&(identical(other.level, level) || other.level == level)&&const DeepCollectionEquality().equals(other._devices, _devices));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_CreateRaid&&(identical(other.name, name) || other.name == name)&&(identical(other.level, level) || other.level == level)&&const DeepCollectionEquality().equals(other.devices, _devices));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,level,const DeepCollectionEquality().hash(_devices));
+int get hashCode {
+    return Object.hash(runtimeType,name,level,const DeepCollectionEquality().hash(_devices));
+}
 
 @override
 String toString() {
-  return 'StorageAction.createRaid(name: $name, level: $level, devices: $devices)';
+    return 'StorageAction.createRaid(name: $name, level: $level, devices: $devices)';
 }
 
 
@@ -669,16 +680,18 @@ $StorageAction_AddToRaidCopyWith<StorageAction_AddToRaid> get copyWith => _$Stor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddToRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddToRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,array,device);
+int get hashCode {
+    return Object.hash(runtimeType,array,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.addToRaid(array: $array, device: $device)';
+    return 'StorageAction.addToRaid(array: $array, device: $device)';
 }
 
 
@@ -737,16 +750,18 @@ $StorageAction_RemoveFromRaidCopyWith<StorageAction_RemoveFromRaid> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_RemoveFromRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_RemoveFromRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,array,device);
+int get hashCode {
+    return Object.hash(runtimeType,array,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.removeFromRaid(array: $array, device: $device)';
+    return 'StorageAction.removeFromRaid(array: $array, device: $device)';
 }
 
 
@@ -804,16 +819,18 @@ $StorageAction_DeleteRaidCopyWith<StorageAction_DeleteRaid> get copyWith => _$St
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_DeleteRaid&&(identical(other.array, array) || other.array == array));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_DeleteRaid&&(identical(other.array, array) || other.array == array));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,array);
+int get hashCode {
+    return Object.hash(runtimeType,array);
+}
 
 @override
 String toString() {
-  return 'StorageAction.deleteRaid(array: $array)';
+    return 'StorageAction.deleteRaid(array: $array)';
 }
 
 
@@ -855,7 +872,7 @@ as String,
 
 
 class StorageAction_CreatePool extends StorageAction {
-  const StorageAction_CreatePool({required this.name, required this.layout, required final  List<String> devices}): _devices = devices,super._();
+  const StorageAction_CreatePool({required this.name, required this.layout, required  List<String> devices}): _devices = devices,super._();
   
 
  final  String name;
@@ -878,16 +895,18 @@ $StorageAction_CreatePoolCopyWith<StorageAction_CreatePool> get copyWith => _$St
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_CreatePool&&(identical(other.name, name) || other.name == name)&&(identical(other.layout, layout) || other.layout == layout)&&const DeepCollectionEquality().equals(other._devices, _devices));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_CreatePool&&(identical(other.name, name) || other.name == name)&&(identical(other.layout, layout) || other.layout == layout)&&const DeepCollectionEquality().equals(other.devices, _devices));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,layout,const DeepCollectionEquality().hash(_devices));
+int get hashCode {
+    return Object.hash(runtimeType,name,layout,const DeepCollectionEquality().hash(_devices));
+}
 
 @override
 String toString() {
-  return 'StorageAction.createPool(name: $name, layout: $layout, devices: $devices)';
+    return 'StorageAction.createPool(name: $name, layout: $layout, devices: $devices)';
 }
 
 
@@ -946,16 +965,18 @@ $StorageAction_ScrubPoolCopyWith<StorageAction_ScrubPool> get copyWith => _$Stor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ScrubPool&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ScrubPool&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'StorageAction.scrubPool(name: $name)';
+    return 'StorageAction.scrubPool(name: $name)';
 }
 
 
@@ -1012,16 +1033,18 @@ $StorageAction_DestroyPoolCopyWith<StorageAction_DestroyPool> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_DestroyPool&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_DestroyPool&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'StorageAction.destroyPool(name: $name)';
+    return 'StorageAction.destroyPool(name: $name)';
 }
 
 
@@ -1079,16 +1102,18 @@ $StorageAction_SmartTestCopyWith<StorageAction_SmartTest> get copyWith => _$Stor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_SmartTest&&(identical(other.device, device) || other.device == device)&&(identical(other.long, long) || other.long == long));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_SmartTest&&(identical(other.device, device) || other.device == device)&&(identical(other.long, long) || other.long == long));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device,long);
+int get hashCode {
+    return Object.hash(runtimeType,device,long);
+}
 
 @override
 String toString() {
-  return 'StorageAction.smartTest(device: $device, long: $long)';
+    return 'StorageAction.smartTest(device: $device, long: $long)';
 }
 
 
@@ -1147,16 +1172,18 @@ $StorageAction_GrowRaidCopyWith<StorageAction_GrowRaid> get copyWith => _$Storag
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_GrowRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_GrowRaid&&(identical(other.array, array) || other.array == array)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,array,device);
+int get hashCode {
+    return Object.hash(runtimeType,array,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.growRaid(array: $array, device: $device)';
+    return 'StorageAction.growRaid(array: $array, device: $device)';
 }
 
 
@@ -1214,16 +1241,18 @@ $StorageAction_ExpandFilesystemCopyWith<StorageAction_ExpandFilesystem> get copy
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ExpandFilesystem&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ExpandFilesystem&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.expandFilesystem(device: $device)';
+    return 'StorageAction.expandFilesystem(device: $device)';
 }
 
 
@@ -1265,7 +1294,7 @@ as String,
 
 
 class StorageAction_AddToPool extends StorageAction {
-  const StorageAction_AddToPool({required this.name, required this.layout, required final  List<String> devices}): _devices = devices,super._();
+  const StorageAction_AddToPool({required this.name, required this.layout, required  List<String> devices}): _devices = devices,super._();
   
 
  final  String name;
@@ -1288,16 +1317,18 @@ $StorageAction_AddToPoolCopyWith<StorageAction_AddToPool> get copyWith => _$Stor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddToPool&&(identical(other.name, name) || other.name == name)&&(identical(other.layout, layout) || other.layout == layout)&&const DeepCollectionEquality().equals(other._devices, _devices));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddToPool&&(identical(other.name, name) || other.name == name)&&(identical(other.layout, layout) || other.layout == layout)&&const DeepCollectionEquality().equals(other.devices, _devices));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,layout,const DeepCollectionEquality().hash(_devices));
+int get hashCode {
+    return Object.hash(runtimeType,name,layout,const DeepCollectionEquality().hash(_devices));
+}
 
 @override
 String toString() {
-  return 'StorageAction.addToPool(name: $name, layout: $layout, devices: $devices)';
+    return 'StorageAction.addToPool(name: $name, layout: $layout, devices: $devices)';
 }
 
 
@@ -1358,16 +1389,18 @@ $StorageAction_ReplaceInPoolCopyWith<StorageAction_ReplaceInPool> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ReplaceInPool&&(identical(other.name, name) || other.name == name)&&(identical(other.old, old) || other.old == old)&&(identical(other.new_, new_) || other.new_ == new_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_ReplaceInPool&&(identical(other.name, name) || other.name == name)&&(identical(other.old, old) || other.old == old)&&(identical(other.new_, new_) || other.new_ == new_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,old,new_);
+int get hashCode {
+    return Object.hash(runtimeType,name,old,new_);
+}
 
 @override
 String toString() {
-  return 'StorageAction.replaceInPool(name: $name, old: $old, new_: $new_)';
+    return 'StorageAction.replaceInPool(name: $name, old: $old, new_: $new_)';
 }
 
 
@@ -1428,16 +1461,18 @@ $StorageAction_AttachToPoolCopyWith<StorageAction_AttachToPool> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AttachToPool&&(identical(other.name, name) || other.name == name)&&(identical(other.existing, existing) || other.existing == existing)&&(identical(other.new_, new_) || other.new_ == new_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AttachToPool&&(identical(other.name, name) || other.name == name)&&(identical(other.existing, existing) || other.existing == existing)&&(identical(other.new_, new_) || other.new_ == new_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,existing,new_);
+int get hashCode {
+    return Object.hash(runtimeType,name,existing,new_);
+}
 
 @override
 String toString() {
-  return 'StorageAction.attachToPool(name: $name, existing: $existing, new_: $new_)';
+    return 'StorageAction.attachToPool(name: $name, existing: $existing, new_: $new_)';
 }
 
 
@@ -1481,7 +1516,7 @@ as String,
 
 
 class StorageAction_AddSpare extends StorageAction {
-  const StorageAction_AddSpare({required this.name, required final  List<String> devices}): _devices = devices,super._();
+  const StorageAction_AddSpare({required this.name, required  List<String> devices}): _devices = devices,super._();
   
 
  final  String name;
@@ -1503,16 +1538,18 @@ $StorageAction_AddSpareCopyWith<StorageAction_AddSpare> get copyWith => _$Storag
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddSpare&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other._devices, _devices));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_AddSpare&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.devices, _devices));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(_devices));
+int get hashCode {
+    return Object.hash(runtimeType,name,const DeepCollectionEquality().hash(_devices));
+}
 
 @override
 String toString() {
-  return 'StorageAction.addSpare(name: $name, devices: $devices)';
+    return 'StorageAction.addSpare(name: $name, devices: $devices)';
 }
 
 
@@ -1571,16 +1608,18 @@ $StorageAction_RemoveFromPoolCopyWith<StorageAction_RemoveFromPool> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_RemoveFromPool&&(identical(other.name, name) || other.name == name)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_RemoveFromPool&&(identical(other.name, name) || other.name == name)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,device);
+int get hashCode {
+    return Object.hash(runtimeType,name,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.removeFromPool(name: $name, device: $device)';
+    return 'StorageAction.removeFromPool(name: $name, device: $device)';
 }
 
 
@@ -1639,16 +1678,18 @@ $StorageAction_OnlineInPoolCopyWith<StorageAction_OnlineInPool> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_OnlineInPool&&(identical(other.name, name) || other.name == name)&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_OnlineInPool&&(identical(other.name, name) || other.name == name)&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,device);
+int get hashCode {
+    return Object.hash(runtimeType,name,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.onlineInPool(name: $name, device: $device)';
+    return 'StorageAction.onlineInPool(name: $name, device: $device)';
 }
 
 
@@ -1706,16 +1747,18 @@ $StorageAction_GrowPartitionCopyWith<StorageAction_GrowPartition> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_GrowPartition&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_GrowPartition&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.growPartition(device: $device)';
+    return 'StorageAction.growPartition(device: $device)';
 }
 
 
@@ -1772,16 +1815,18 @@ $StorageAction_UnlockCopyWith<StorageAction_Unlock> get copyWith => _$StorageAct
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Unlock&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Unlock&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.unlock(device: $device)';
+    return 'StorageAction.unlock(device: $device)';
 }
 
 
@@ -1838,16 +1883,18 @@ $StorageAction_LockCopyWith<StorageAction_Lock> get copyWith => _$StorageAction_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Lock&&(identical(other.device, device) || other.device == device));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageAction_Lock&&(identical(other.device, device) || other.device == device));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device);
+int get hashCode {
+    return Object.hash(runtimeType,device);
+}
 
 @override
 String toString() {
-  return 'StorageAction.lock(device: $device)';
+    return 'StorageAction.lock(device: $device)';
 }
 
 

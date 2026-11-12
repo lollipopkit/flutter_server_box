@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'server_share.dart';
@@ -9,6 +9,7 @@ part of 'server_share.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -42,16 +43,21 @@ $ServerShareCopyWith<ServerShare> get copyWith => _$ServerShareCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerShare&&(identical(other.version, version) || other.version == version)&&(identical(other.spi, spi) || other.spi == spi)&&const DeepCollectionEquality().equals(other.keys, keys)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+  final _this = this as ServerShare;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerShare&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.spi, _this.spi) || other.spi == _this.spi)&&const DeepCollectionEquality().equals(other.keys, _this.keys)&&(identical(other.pve, _this.pve) || other.pve == _this.pve)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,spi,const DeepCollectionEquality().hash(keys),pve,expiresAt);
+int get hashCode {
+  final _this = this as ServerShare;
+  return Object.hash(runtimeType,_this.version,_this.spi,const DeepCollectionEquality().hash(_this.keys),_this.pve,_this.expiresAt);
+}
 
 @override
 String toString() {
-  return 'ServerShare(version: $version, spi: $spi, keys: $keys, pve: $pve, expiresAt: $expiresAt)';
+  final _this = this as ServerShare;
+  return 'ServerShare(version: ${_this.version}, spi: ${_this.spi}, keys: ${_this.keys}, pve: ${_this.pve}, expiresAt: ${_this.expiresAt})';
 }
 
 
@@ -80,7 +86,7 @@ class _$ServerShareCopyWithImpl<$Res>
 /// Create a copy of ServerShare
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? spi = null,Object? keys = null,Object? pve = freezed,Object? expiresAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServerShare(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,keys: null == keys ? _self.keys : keys // ignore: cast_nullable_to_non_nullable
@@ -248,7 +254,7 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 @JsonSerializable()
 
 class _ServerShare extends ServerShare {
-  const _ServerShare({required this.version, required this.spi, final  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], this.pve, this.expiresAt}): _keys = keys,super._();
+  const _ServerShare({required this.version, required this.spi,  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], this.pve, this.expiresAt}): _keys = keys,super._();
   factory _ServerShare.fromJson(Map<String, dynamic> json) => _$ServerShareFromJson(json);
 
 @override final  int version;
@@ -293,16 +299,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerShare&&(identical(other.version, version) || other.version == version)&&(identical(other.spi, spi) || other.spi == spi)&&const DeepCollectionEquality().equals(other._keys, _keys)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerShare&&(identical(other.version, version) || other.version == version)&&(identical(other.spi, spi) || other.spi == spi)&&const DeepCollectionEquality().equals(other.keys, _keys)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,spi,const DeepCollectionEquality().hash(_keys),pve,expiresAt);
+int get hashCode {
+    return Object.hash(runtimeType,version,spi,const DeepCollectionEquality().hash(_keys),pve,expiresAt);
+}
 
 @override
 String toString() {
-  return 'ServerShare(version: $version, spi: $spi, keys: $keys, pve: $pve, expiresAt: $expiresAt)';
+    return 'ServerShare(version: $version, spi: $spi, keys: $keys, pve: $pve, expiresAt: $expiresAt)';
 }
 
 

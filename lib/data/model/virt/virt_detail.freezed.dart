@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt_detail.dart';
@@ -9,6 +9,7 @@ part of 'virt_detail.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -31,16 +32,21 @@ $VirtDiskCopyWith<VirtDisk> get copyWith => _$VirtDiskCopyWithImpl<VirtDisk>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisk&&(identical(other.device, device) || other.device == device)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.size, size) || other.size == size));
+  final _this = this as VirtDisk;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisk&&(identical(other.device, _this.device) || other.device == _this.device)&&(identical(other.sourceType, _this.sourceType) || other.sourceType == _this.sourceType)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.target, _this.target) || other.target == _this.target)&&(identical(other.bus, _this.bus) || other.bus == _this.bus)&&(identical(other.format, _this.format) || other.format == _this.format)&&(identical(other.readonly, _this.readonly) || other.readonly == _this.readonly)&&(identical(other.size, _this.size) || other.size == _this.size));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device,sourceType,source,target,bus,format,readonly,size);
+int get hashCode {
+  final _this = this as VirtDisk;
+  return Object.hash(runtimeType,_this.device,_this.sourceType,_this.source,_this.target,_this.bus,_this.format,_this.readonly,_this.size);
+}
 
 @override
 String toString() {
-  return 'VirtDisk(device: $device, sourceType: $sourceType, source: $source, target: $target, bus: $bus, format: $format, readonly: $readonly, size: $size)';
+  final _this = this as VirtDisk;
+  return 'VirtDisk(device: ${_this.device}, sourceType: ${_this.sourceType}, source: ${_this.source}, target: ${_this.target}, bus: ${_this.bus}, format: ${_this.format}, readonly: ${_this.readonly}, size: ${_this.size})';
 }
 
 
@@ -69,7 +75,7 @@ class _$VirtDiskCopyWithImpl<$Res>
 /// Create a copy of VirtDisk
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? device = null,Object? sourceType = freezed,Object? source = freezed,Object? target = freezed,Object? bus = freezed,Object? format = freezed,Object? readonly = null,Object? size = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtDisk(
 device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
 as String,sourceType: freezed == sourceType ? _self.sourceType : sourceType // ignore: cast_nullable_to_non_nullable
 as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
@@ -247,16 +253,18 @@ _$VirtDiskCopyWith<_VirtDisk> get copyWith => __$VirtDiskCopyWithImpl<_VirtDisk>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisk&&(identical(other.device, device) || other.device == device)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.size, size) || other.size == size));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisk&&(identical(other.device, device) || other.device == device)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.size, size) || other.size == size));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,device,sourceType,source,target,bus,format,readonly,size);
+int get hashCode {
+    return Object.hash(runtimeType,device,sourceType,source,target,bus,format,readonly,size);
+}
 
 @override
 String toString() {
-  return 'VirtDisk(device: $device, sourceType: $sourceType, source: $source, target: $target, bus: $bus, format: $format, readonly: $readonly, size: $size)';
+    return 'VirtDisk(device: $device, sourceType: $sourceType, source: $source, target: $target, bus: $bus, format: $format, readonly: $readonly, size: $size)';
 }
 
 
@@ -320,16 +328,21 @@ $VirtNicCopyWith<VirtNic> get copyWith => _$VirtNicCopyWithImpl<VirtNic>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.target, target) || other.target == target));
+  final _this = this as VirtNic;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNic&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.mac, _this.mac) || other.mac == _this.mac)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.model, _this.model) || other.model == _this.model)&&(identical(other.target, _this.target) || other.target == _this.target));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,mac,source,model,target);
+int get hashCode {
+  final _this = this as VirtNic;
+  return Object.hash(runtimeType,_this.kind,_this.mac,_this.source,_this.model,_this.target);
+}
 
 @override
 String toString() {
-  return 'VirtNic(kind: $kind, mac: $mac, source: $source, model: $model, target: $target)';
+  final _this = this as VirtNic;
+  return 'VirtNic(kind: ${_this.kind}, mac: ${_this.mac}, source: ${_this.source}, model: ${_this.model}, target: ${_this.target})';
 }
 
 
@@ -358,7 +371,7 @@ class _$VirtNicCopyWithImpl<$Res>
 /// Create a copy of VirtNic
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? mac = freezed,Object? source = freezed,Object? model = freezed,Object? target = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtNic(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as String,mac: freezed == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
 as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
@@ -529,16 +542,18 @@ _$VirtNicCopyWith<_VirtNic> get copyWith => __$VirtNicCopyWithImpl<_VirtNic>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.target, target) || other.target == target));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.target, target) || other.target == target));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,mac,source,model,target);
+int get hashCode {
+    return Object.hash(runtimeType,kind,mac,source,model,target);
+}
 
 @override
 String toString() {
-  return 'VirtNic(kind: $kind, mac: $mac, source: $source, model: $model, target: $target)';
+    return 'VirtNic(kind: $kind, mac: $mac, source: $source, model: $model, target: $target)';
 }
 
 
@@ -595,16 +610,21 @@ $VirtGraphicsCopyWith<VirtGraphics> get copyWith => _$VirtGraphicsCopyWithImpl<V
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGraphics&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.autoport, autoport) || other.autoport == autoport)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.socket, socket) || other.socket == socket));
+  final _this = this as VirtGraphics;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGraphics&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.tlsPort, _this.tlsPort) || other.tlsPort == _this.tlsPort)&&(identical(other.autoport, _this.autoport) || other.autoport == _this.autoport)&&(identical(other.listen, _this.listen) || other.listen == _this.listen)&&(identical(other.socket, _this.socket) || other.socket == _this.socket));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,port,tlsPort,autoport,listen,socket);
+int get hashCode {
+  final _this = this as VirtGraphics;
+  return Object.hash(runtimeType,_this.kind,_this.port,_this.tlsPort,_this.autoport,_this.listen,_this.socket);
+}
 
 @override
 String toString() {
-  return 'VirtGraphics(kind: $kind, port: $port, tlsPort: $tlsPort, autoport: $autoport, listen: $listen, socket: $socket)';
+  final _this = this as VirtGraphics;
+  return 'VirtGraphics(kind: ${_this.kind}, port: ${_this.port}, tlsPort: ${_this.tlsPort}, autoport: ${_this.autoport}, listen: ${_this.listen}, socket: ${_this.socket})';
 }
 
 
@@ -633,7 +653,7 @@ class _$VirtGraphicsCopyWithImpl<$Res>
 /// Create a copy of VirtGraphics
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? port = freezed,Object? tlsPort = freezed,Object? autoport = null,Object? listen = freezed,Object? socket = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtGraphics(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as String,port: freezed == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
 as int?,tlsPort: freezed == tlsPort ? _self.tlsPort : tlsPort // ignore: cast_nullable_to_non_nullable
@@ -802,16 +822,18 @@ _$VirtGraphicsCopyWith<_VirtGraphics> get copyWith => __$VirtGraphicsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGraphics&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.autoport, autoport) || other.autoport == autoport)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.socket, socket) || other.socket == socket));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGraphics&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.autoport, autoport) || other.autoport == autoport)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,port,tlsPort,autoport,listen,socket);
+int get hashCode {
+    return Object.hash(runtimeType,kind,port,tlsPort,autoport,listen,socket);
+}
 
 @override
 String toString() {
-  return 'VirtGraphics(kind: $kind, port: $port, tlsPort: $tlsPort, autoport: $autoport, listen: $listen, socket: $socket)';
+    return 'VirtGraphics(kind: $kind, port: $port, tlsPort: $tlsPort, autoport: $autoport, listen: $listen, socket: $socket)';
 }
 
 
@@ -869,16 +891,21 @@ $VirtDisplayCopyWith<VirtDisplay> get copyWith => _$VirtDisplayCopyWithImpl<Virt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisplay&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.socket, socket) || other.socket == socket));
+  final _this = this as VirtDisplay;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisplay&&(identical(other.uri, _this.uri) || other.uri == _this.uri)&&(identical(other.protocol, _this.protocol) || other.protocol == _this.protocol)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.tlsPort, _this.tlsPort) || other.tlsPort == _this.tlsPort)&&(identical(other.socket, _this.socket) || other.socket == _this.socket));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uri,protocol,host,port,tlsPort,socket);
+int get hashCode {
+  final _this = this as VirtDisplay;
+  return Object.hash(runtimeType,_this.uri,_this.protocol,_this.host,_this.port,_this.tlsPort,_this.socket);
+}
 
 @override
 String toString() {
-  return 'VirtDisplay(uri: $uri, protocol: $protocol, host: $host, port: $port, tlsPort: $tlsPort, socket: $socket)';
+  final _this = this as VirtDisplay;
+  return 'VirtDisplay(uri: ${_this.uri}, protocol: ${_this.protocol}, host: ${_this.host}, port: ${_this.port}, tlsPort: ${_this.tlsPort}, socket: ${_this.socket})';
 }
 
 
@@ -907,7 +934,7 @@ class _$VirtDisplayCopyWithImpl<$Res>
 /// Create a copy of VirtDisplay
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? uri = null,Object? protocol = null,Object? host = freezed,Object? port = freezed,Object? tlsPort = freezed,Object? socket = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtDisplay(
 uri: null == uri ? _self.uri : uri // ignore: cast_nullable_to_non_nullable
 as String,protocol: null == protocol ? _self.protocol : protocol // ignore: cast_nullable_to_non_nullable
 as String,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
@@ -1076,16 +1103,18 @@ _$VirtDisplayCopyWith<_VirtDisplay> get copyWith => __$VirtDisplayCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisplay&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.socket, socket) || other.socket == socket));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisplay&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uri,protocol,host,port,tlsPort,socket);
+int get hashCode {
+    return Object.hash(runtimeType,uri,protocol,host,port,tlsPort,socket);
+}
 
 @override
 String toString() {
-  return 'VirtDisplay(uri: $uri, protocol: $protocol, host: $host, port: $port, tlsPort: $tlsPort, socket: $socket)';
+    return 'VirtDisplay(uri: $uri, protocol: $protocol, host: $host, port: $port, tlsPort: $tlsPort, socket: $socket)';
 }
 
 
@@ -1144,16 +1173,21 @@ $VirtGuestDetailCopyWith<VirtGuestDetail> get copyWith => _$VirtGuestDetailCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuestDetail&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.graphics, graphics)&&(identical(other.display, display) || other.display == display)&&const DeepCollectionEquality().equals(other.consoles, consoles)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine));
+  final _this = this as VirtGuestDetail;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuestDetail&&const DeepCollectionEquality().equals(other.disks, _this.disks)&&const DeepCollectionEquality().equals(other.nics, _this.nics)&&const DeepCollectionEquality().equals(other.graphics, _this.graphics)&&(identical(other.display, _this.display) || other.display == _this.display)&&const DeepCollectionEquality().equals(other.consoles, _this.consoles)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.arch, _this.arch) || other.arch == _this.arch)&&(identical(other.machine, _this.machine) || other.machine == _this.machine));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(graphics),display,const DeepCollectionEquality().hash(consoles),description,arch,machine);
+int get hashCode {
+  final _this = this as VirtGuestDetail;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.disks),const DeepCollectionEquality().hash(_this.nics),const DeepCollectionEquality().hash(_this.graphics),_this.display,const DeepCollectionEquality().hash(_this.consoles),_this.description,_this.arch,_this.machine);
+}
 
 @override
 String toString() {
-  return 'VirtGuestDetail(disks: $disks, nics: $nics, graphics: $graphics, display: $display, consoles: $consoles, description: $description, arch: $arch, machine: $machine)';
+  final _this = this as VirtGuestDetail;
+  return 'VirtGuestDetail(disks: ${_this.disks}, nics: ${_this.nics}, graphics: ${_this.graphics}, display: ${_this.display}, consoles: ${_this.consoles}, description: ${_this.description}, arch: ${_this.arch}, machine: ${_this.machine})';
 }
 
 
@@ -1182,7 +1216,7 @@ class _$VirtGuestDetailCopyWithImpl<$Res>
 /// Create a copy of VirtGuestDetail
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? disks = null,Object? nics = null,Object? graphics = null,Object? display = freezed,Object? consoles = null,Object? description = freezed,Object? arch = freezed,Object? machine = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtGuestDetail(
 disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
 as List<VirtDisk>,nics: null == nics ? _self.nics : nics // ignore: cast_nullable_to_non_nullable
 as List<VirtNic>,graphics: null == graphics ? _self.graphics : graphics // ignore: cast_nullable_to_non_nullable
@@ -1344,7 +1378,7 @@ return $default(_that.disks,_that.nics,_that.graphics,_that.display,_that.consol
 
 
 class _VirtGuestDetail implements VirtGuestDetail {
-  const _VirtGuestDetail({final  List<VirtDisk> disks = const <VirtDisk>[], final  List<VirtNic> nics = const <VirtNic>[], final  List<VirtGraphics> graphics = const <VirtGraphics>[], this.display, final  Set<VirtConsoleKind> consoles = const <VirtConsoleKind>{}, this.description, this.arch, this.machine}): _disks = disks,_nics = nics,_graphics = graphics,_consoles = consoles;
+  const _VirtGuestDetail({ List<VirtDisk> disks = const <VirtDisk>[],  List<VirtNic> nics = const <VirtNic>[],  List<VirtGraphics> graphics = const <VirtGraphics>[], this.display,  Set<VirtConsoleKind> consoles = const <VirtConsoleKind>{}, this.description, this.arch, this.machine}): _disks = disks,_nics = nics,_graphics = graphics,_consoles = consoles;
   
 
  final  List<VirtDisk> _disks;
@@ -1392,16 +1426,18 @@ _$VirtGuestDetailCopyWith<_VirtGuestDetail> get copyWith => __$VirtGuestDetailCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuestDetail&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._graphics, _graphics)&&(identical(other.display, display) || other.display == display)&&const DeepCollectionEquality().equals(other._consoles, _consoles)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuestDetail&&const DeepCollectionEquality().equals(other.disks, _disks)&&const DeepCollectionEquality().equals(other.nics, _nics)&&const DeepCollectionEquality().equals(other.graphics, _graphics)&&(identical(other.display, display) || other.display == display)&&const DeepCollectionEquality().equals(other.consoles, _consoles)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_graphics),display,const DeepCollectionEquality().hash(_consoles),description,arch,machine);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_graphics),display,const DeepCollectionEquality().hash(_consoles),description,arch,machine);
+}
 
 @override
 String toString() {
-  return 'VirtGuestDetail(disks: $disks, nics: $nics, graphics: $graphics, display: $display, consoles: $consoles, description: $description, arch: $arch, machine: $machine)';
+    return 'VirtGuestDetail(disks: $disks, nics: $nics, graphics: $graphics, display: $display, consoles: $consoles, description: $description, arch: $arch, machine: $machine)';
 }
 
 

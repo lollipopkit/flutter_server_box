@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'bmc.dart';
@@ -9,6 +9,7 @@ part of 'bmc.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -29,16 +30,21 @@ $BmcStateCopyWith<BmcState> get copyWith => _$BmcStateCopyWithImpl<BmcState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated)&&(identical(other.isPowering, isPowering) || other.isPowering == isPowering));
+  final _this = this as BmcState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcState&&(identical(other.topology, _this.topology) || other.topology == _this.topology)&&(identical(other.sensors, _this.sensors) || other.sensors == _this.sensors)&&(identical(other.failure, _this.failure) || other.failure == _this.failure)&&(identical(other.failureDetail, _this.failureDetail) || other.failureDetail == _this.failureDetail)&&(identical(other.isBusy, _this.isBusy) || other.isBusy == _this.isBusy)&&(identical(other.sensorsTruncated, _this.sensorsTruncated) || other.sensorsTruncated == _this.sensorsTruncated)&&(identical(other.isPowering, _this.isPowering) || other.isPowering == _this.isPowering));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated,isPowering);
+int get hashCode {
+  final _this = this as BmcState;
+  return Object.hash(runtimeType,_this.topology,_this.sensors,_this.failure,_this.failureDetail,_this.isBusy,_this.sensorsTruncated,_this.isPowering);
+}
 
 @override
 String toString() {
-  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated, isPowering: $isPowering)';
+  final _this = this as BmcState;
+  return 'BmcState(topology: ${_this.topology}, sensors: ${_this.sensors}, failure: ${_this.failure}, failureDetail: ${_this.failureDetail}, isBusy: ${_this.isBusy}, sensorsTruncated: ${_this.sensorsTruncated}, isPowering: ${_this.isPowering})';
 }
 
 
@@ -67,7 +73,7 @@ class _$BmcStateCopyWithImpl<$Res>
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? topology = freezed,Object? sensors = null,Object? failure = freezed,Object? failureDetail = freezed,Object? isBusy = null,Object? sensorsTruncated = null,Object? isPowering = null,}) {
-  return _then(_self.copyWith(
+  return _then(BmcState(
 topology: freezed == topology ? _self.topology : topology // ignore: cast_nullable_to_non_nullable
 as RedfishTopology?,sensors: null == sensors ? _self.sensors : sensors // ignore: cast_nullable_to_non_nullable
 as BmcSensors,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
@@ -241,16 +247,18 @@ _$BmcStateCopyWith<_BmcState> get copyWith => __$BmcStateCopyWithImpl<_BmcState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated)&&(identical(other.isPowering, isPowering) || other.isPowering == isPowering));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated)&&(identical(other.isPowering, isPowering) || other.isPowering == isPowering));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated,isPowering);
+int get hashCode {
+    return Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated,isPowering);
+}
 
 @override
 String toString() {
-  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated, isPowering: $isPowering)';
+    return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated, isPowering: $isPowering)';
 }
 
 

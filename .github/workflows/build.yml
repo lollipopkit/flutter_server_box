@@ -339,16 +339,16 @@ jobs:
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
-      # Info.plist takes the value from a build setting, and an empty one reads
-      # as off: check it arrived.
+      # A build phase writes the build setting into Info.plist as a boolean:
+      # check it arrived.
       - name: Check the renderer
         shell: bash
         env:
-          EXPECTED: ${{ matrix.impeller }}
+          EXPECTED: ${{ matrix.impeller == 'YES' && 'true' || 'false' }}
         run: |
           set -euo pipefail
           plist="build/macos/Build/Products/Release/Server Box.app/Contents/Info.plist"
-          got="$(/usr/libexec/PlistBuddy -c 'Print :FLTEnableImpeller' "$plist")"
+          got="$(plutil -extract FLTEnableImpeller raw -expect bool "$plist")"
           echo "FLTEnableImpeller=$got"
           [[ "$got" == "$EXPECTED" ]] || { echo "::error::FLTEnableImpeller is '$got', expected '$EXPECTED'"; exit 1; }
       # Verify every Mach-O instead of trusting the requested architecture.

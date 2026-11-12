@@ -567,10 +567,10 @@ void main() {
     final c = container({'kvm': _Exec((_) => _ok(_overview()))});
     final hw = c.listen(virtHardwareProvider('kvm', _run), (_, _) {});
     await _until(() => !c.read(virtHardwareProvider('kvm', _run)).isLoading);
-    expect(c.exists(virtHostProvider('kvm')), isTrue);
+    expect(c.read(virtHostProvider('kvm').exists), isTrue);
 
     hw.close();
-    await _until(() => !c.exists(virtHostProvider('kvm')));
+    await _until(() => !c.read(virtHostProvider('kvm').exists));
   });
 
   test('a pool is not changed while something is uploaded into it, nor '

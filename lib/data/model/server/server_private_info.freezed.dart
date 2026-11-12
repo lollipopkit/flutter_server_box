@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'server_private_info.dart';
@@ -9,6 +9,7 @@ part of 'server_private_info.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -83,12 +84,16 @@ $SpiCopyWith<Spi> get copyWith => _$SpiCopyWithImpl<Spi>(this as Spi, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.sshEnabled, sshEnabled) || other.sshEnabled == sshEnabled)&&(identical(other.monitorEnabled, monitorEnabled) || other.monitorEnabled == monitorEnabled)&&(identical(other.local, local) || other.local == local)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other.envs, envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, disabledCmdTypes));
+  final _this = this as Spi;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.ssh, _this.ssh) || other.ssh == _this.ssh)&&(identical(other.monitorHttp, _this.monitorHttp) || other.monitorHttp == _this.monitorHttp)&&(identical(other.sshEnabled, _this.sshEnabled) || other.sshEnabled == _this.sshEnabled)&&(identical(other.monitorEnabled, _this.monitorEnabled) || other.monitorEnabled == _this.monitorEnabled)&&(identical(other.local, _this.local) || other.local == _this.local)&&(identical(other.preferredTransport, _this.preferredTransport) || other.preferredTransport == _this.preferredTransport)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.autoConnect, _this.autoConnect) || other.autoConnect == _this.autoConnect)&&(identical(other.custom, _this.custom) || other.custom == _this.custom)&&(identical(other.wolCfg, _this.wolCfg) || other.wolCfg == _this.wolCfg)&&(identical(other.bmc, _this.bmc) || other.bmc == _this.bmc)&&const DeepCollectionEquality().equals(other.envs, _this.envs)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.customSystemType, _this.customSystemType) || other.customSystemType == _this.customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, _this.disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,sshEnabled,monitorEnabled,local,preferredTransport,const DeepCollectionEquality().hash(tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(envs),id,customSystemType,const DeepCollectionEquality().hash(disabledCmdTypes));
+int get hashCode {
+  final _this = this as Spi;
+  return Object.hash(runtimeType,_this.name,_this.ssh,_this.monitorHttp,_this.sshEnabled,_this.monitorEnabled,_this.local,_this.preferredTransport,const DeepCollectionEquality().hash(_this.tags),_this.autoConnect,_this.custom,_this.wolCfg,_this.bmc,const DeepCollectionEquality().hash(_this.envs),_this.id,_this.customSystemType,const DeepCollectionEquality().hash(_this.disabledCmdTypes));
+}
 
 
 
@@ -117,7 +122,7 @@ class _$SpiCopyWithImpl<$Res>
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? ssh = freezed,Object? monitorHttp = freezed,Object? sshEnabled = null,Object? monitorEnabled = null,Object? local = null,Object? preferredTransport = freezed,Object? tags = freezed,Object? autoConnect = null,Object? custom = freezed,Object? wolCfg = freezed,Object? bmc = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Spi(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,ssh: freezed == ssh ? _self.ssh : ssh // ignore: cast_nullable_to_non_nullable
 as SshCredential?,monitorHttp: freezed == monitorHttp ? _self.monitorHttp : monitorHttp // ignore: cast_nullable_to_non_nullable
@@ -275,7 +280,7 @@ return $default(_that.name,_that.ssh,_that.monitorHttp,_that.sshEnabled,_that.mo
 
 @JsonSerializable(includeIfNull: false)
 class _Spi extends Spi {
-  const _Spi({required this.name, this.ssh, this.monitorHttp, this.sshEnabled = true, this.monitorEnabled = true, this.local = false, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.preferredTransport, final  List<String>? tags, this.autoConnect = true, this.custom, this.wolCfg, this.bmc, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType, @JsonKey(includeIfNull: false) final  List<String>? disabledCmdTypes}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
+  const _Spi({required this.name, this.ssh, this.monitorHttp, this.sshEnabled = true, this.monitorEnabled = true, this.local = false, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.preferredTransport,  List<String>? tags, this.autoConnect = true, this.custom, this.wolCfg, this.bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
   factory _Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
 @override final  String name;
@@ -389,12 +394,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.sshEnabled, sshEnabled) || other.sshEnabled == sshEnabled)&&(identical(other.monitorEnabled, monitorEnabled) || other.monitorEnabled == monitorEnabled)&&(identical(other.local, local) || other.local == local)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other._envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other._disabledCmdTypes, _disabledCmdTypes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.sshEnabled, sshEnabled) || other.sshEnabled == sshEnabled)&&(identical(other.monitorEnabled, monitorEnabled) || other.monitorEnabled == monitorEnabled)&&(identical(other.local, local) || other.local == local)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other.envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, _disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,sshEnabled,monitorEnabled,local,preferredTransport,const DeepCollectionEquality().hash(_tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(_envs),id,customSystemType,const DeepCollectionEquality().hash(_disabledCmdTypes));
+int get hashCode {
+    return Object.hash(runtimeType,name,ssh,monitorHttp,sshEnabled,monitorEnabled,local,preferredTransport,const DeepCollectionEquality().hash(_tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(_envs),id,customSystemType,const DeepCollectionEquality().hash(_disabledCmdTypes));
+}
 
 
 

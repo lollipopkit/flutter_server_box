@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'pve_config.dart';
@@ -9,6 +9,7 @@ part of 'pve_config.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -39,12 +40,16 @@ $PveConfigCopyWith<PveConfig> get copyWith => _$PveConfigCopyWithImpl<PveConfig>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PveConfig&&(identical(other.addr, addr) || other.addr == addr)&&(identical(other.auth, auth) || other.auth == auth)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.tokenId, tokenId) || other.tokenId == tokenId)&&(identical(other.tokenSecret, tokenSecret) || other.tokenSecret == tokenSecret)&&(identical(other.certSha256, certSha256) || other.certSha256 == certSha256));
+  final _this = this as PveConfig;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PveConfig&&(identical(other.addr, _this.addr) || other.addr == _this.addr)&&(identical(other.auth, _this.auth) || other.auth == _this.auth)&&(identical(other.pwd, _this.pwd) || other.pwd == _this.pwd)&&(identical(other.tokenId, _this.tokenId) || other.tokenId == _this.tokenId)&&(identical(other.tokenSecret, _this.tokenSecret) || other.tokenSecret == _this.tokenSecret)&&(identical(other.certSha256, _this.certSha256) || other.certSha256 == _this.certSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,addr,auth,pwd,tokenId,tokenSecret,certSha256);
+int get hashCode {
+  final _this = this as PveConfig;
+  return Object.hash(runtimeType,_this.addr,_this.auth,_this.pwd,_this.tokenId,_this.tokenSecret,_this.certSha256);
+}
 
 
 
@@ -73,7 +78,7 @@ class _$PveConfigCopyWithImpl<$Res>
 /// Create a copy of PveConfig
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? addr = null,Object? auth = null,Object? pwd = freezed,Object? tokenId = freezed,Object? tokenSecret = freezed,Object? certSha256 = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(PveConfig(
 addr: null == addr ? _self.addr : addr // ignore: cast_nullable_to_non_nullable
 as String,auth: null == auth ? _self.auth : auth // ignore: cast_nullable_to_non_nullable
 as PveAuth,pwd: freezed == pwd ? _self.pwd : pwd // ignore: cast_nullable_to_non_nullable
@@ -255,12 +260,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PveConfig&&(identical(other.addr, addr) || other.addr == addr)&&(identical(other.auth, auth) || other.auth == auth)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.tokenId, tokenId) || other.tokenId == tokenId)&&(identical(other.tokenSecret, tokenSecret) || other.tokenSecret == tokenSecret)&&(identical(other.certSha256, certSha256) || other.certSha256 == certSha256));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PveConfig&&(identical(other.addr, addr) || other.addr == addr)&&(identical(other.auth, auth) || other.auth == auth)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.tokenId, tokenId) || other.tokenId == tokenId)&&(identical(other.tokenSecret, tokenSecret) || other.tokenSecret == tokenSecret)&&(identical(other.certSha256, certSha256) || other.certSha256 == certSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,addr,auth,pwd,tokenId,tokenSecret,certSha256);
+int get hashCode {
+    return Object.hash(runtimeType,addr,auth,pwd,tokenId,tokenSecret,certSha256);
+}
 
 
 

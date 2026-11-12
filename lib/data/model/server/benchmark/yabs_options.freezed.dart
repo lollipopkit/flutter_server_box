@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'yabs_options.dart';
@@ -9,6 +9,7 @@ part of 'yabs_options.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -47,16 +48,21 @@ $YabsOptionsCopyWith<YabsOptions> get copyWith => _$YabsOptionsCopyWithImpl<Yabs
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsOptions&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.network, network) || other.network == network)&&(identical(other.reducedNetwork, reducedNetwork) || other.reducedNetwork == reducedNetwork)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.geekbenchVersion, geekbenchVersion) || other.geekbenchVersion == geekbenchVersion)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.preferPrecompiledBinaries, preferPrecompiledBinaries) || other.preferPrecompiledBinaries == preferPrecompiledBinaries)&&(identical(other.workDir, workDir) || other.workDir == workDir));
+  final _this = this as YabsOptions;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsOptions&&(identical(other.disk, _this.disk) || other.disk == _this.disk)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.reducedNetwork, _this.reducedNetwork) || other.reducedNetwork == _this.reducedNetwork)&&(identical(other.cpu, _this.cpu) || other.cpu == _this.cpu)&&(identical(other.geekbenchVersion, _this.geekbenchVersion) || other.geekbenchVersion == _this.geekbenchVersion)&&(identical(other.ipInfo, _this.ipInfo) || other.ipInfo == _this.ipInfo)&&(identical(other.preferPrecompiledBinaries, _this.preferPrecompiledBinaries) || other.preferPrecompiledBinaries == _this.preferPrecompiledBinaries)&&(identical(other.workDir, _this.workDir) || other.workDir == _this.workDir));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,disk,network,reducedNetwork,cpu,geekbenchVersion,ipInfo,preferPrecompiledBinaries,workDir);
+int get hashCode {
+  final _this = this as YabsOptions;
+  return Object.hash(runtimeType,_this.disk,_this.network,_this.reducedNetwork,_this.cpu,_this.geekbenchVersion,_this.ipInfo,_this.preferPrecompiledBinaries,_this.workDir);
+}
 
 @override
 String toString() {
-  return 'YabsOptions(disk: $disk, network: $network, reducedNetwork: $reducedNetwork, cpu: $cpu, geekbenchVersion: $geekbenchVersion, ipInfo: $ipInfo, preferPrecompiledBinaries: $preferPrecompiledBinaries, workDir: $workDir)';
+  final _this = this as YabsOptions;
+  return 'YabsOptions(disk: ${_this.disk}, network: ${_this.network}, reducedNetwork: ${_this.reducedNetwork}, cpu: ${_this.cpu}, geekbenchVersion: ${_this.geekbenchVersion}, ipInfo: ${_this.ipInfo}, preferPrecompiledBinaries: ${_this.preferPrecompiledBinaries}, workDir: ${_this.workDir})';
 }
 
 
@@ -85,7 +91,7 @@ class _$YabsOptionsCopyWithImpl<$Res>
 /// Create a copy of YabsOptions
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? disk = null,Object? network = null,Object? reducedNetwork = null,Object? cpu = null,Object? geekbenchVersion = null,Object? ipInfo = null,Object? preferPrecompiledBinaries = null,Object? workDir = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsOptions(
 disk: null == disk ? _self.disk : disk // ignore: cast_nullable_to_non_nullable
 as bool,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
 as bool,reducedNetwork: null == reducedNetwork ? _self.reducedNetwork : reducedNetwork // ignore: cast_nullable_to_non_nullable
@@ -279,16 +285,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsOptions&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.network, network) || other.network == network)&&(identical(other.reducedNetwork, reducedNetwork) || other.reducedNetwork == reducedNetwork)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.geekbenchVersion, geekbenchVersion) || other.geekbenchVersion == geekbenchVersion)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.preferPrecompiledBinaries, preferPrecompiledBinaries) || other.preferPrecompiledBinaries == preferPrecompiledBinaries)&&(identical(other.workDir, workDir) || other.workDir == workDir));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsOptions&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.network, network) || other.network == network)&&(identical(other.reducedNetwork, reducedNetwork) || other.reducedNetwork == reducedNetwork)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.geekbenchVersion, geekbenchVersion) || other.geekbenchVersion == geekbenchVersion)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.preferPrecompiledBinaries, preferPrecompiledBinaries) || other.preferPrecompiledBinaries == preferPrecompiledBinaries)&&(identical(other.workDir, workDir) || other.workDir == workDir));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,disk,network,reducedNetwork,cpu,geekbenchVersion,ipInfo,preferPrecompiledBinaries,workDir);
+int get hashCode {
+    return Object.hash(runtimeType,disk,network,reducedNetwork,cpu,geekbenchVersion,ipInfo,preferPrecompiledBinaries,workDir);
+}
 
 @override
 String toString() {
-  return 'YabsOptions(disk: $disk, network: $network, reducedNetwork: $reducedNetwork, cpu: $cpu, geekbenchVersion: $geekbenchVersion, ipInfo: $ipInfo, preferPrecompiledBinaries: $preferPrecompiledBinaries, workDir: $workDir)';
+    return 'YabsOptions(disk: $disk, network: $network, reducedNetwork: $reducedNetwork, cpu: $cpu, geekbenchVersion: $geekbenchVersion, ipInfo: $ipInfo, preferPrecompiledBinaries: $preferPrecompiledBinaries, workDir: $workDir)';
 }
 
 

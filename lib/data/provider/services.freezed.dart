@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'services.dart';
@@ -9,6 +9,7 @@ part of 'services.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $ServicesStateCopyWith<ServicesState> get copyWith => _$ServicesStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServicesState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other.units, units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter)&&(identical(other.manager, manager) || other.manager == manager)&&(identical(other.notice, notice) || other.notice == notice)&&(identical(other.noticeDetail, noticeDetail) || other.noticeDetail == noticeDetail)&&(identical(other.failure, failure) || other.failure == failure));
+  final _this = this as ServicesState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServicesState&&(identical(other.isBusy, _this.isBusy) || other.isBusy == _this.isBusy)&&const DeepCollectionEquality().equals(other.units, _this.units)&&(identical(other.scopeFilter, _this.scopeFilter) || other.scopeFilter == _this.scopeFilter)&&(identical(other.manager, _this.manager) || other.manager == _this.manager)&&(identical(other.notice, _this.notice) || other.notice == _this.notice)&&(identical(other.noticeDetail, _this.noticeDetail) || other.noticeDetail == _this.noticeDetail)&&(identical(other.failure, _this.failure) || other.failure == _this.failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(units),scopeFilter,manager,notice,noticeDetail,failure);
+int get hashCode {
+  final _this = this as ServicesState;
+  return Object.hash(runtimeType,_this.isBusy,const DeepCollectionEquality().hash(_this.units),_this.scopeFilter,_this.manager,_this.notice,_this.noticeDetail,_this.failure);
+}
 
 @override
 String toString() {
-  return 'ServicesState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter, manager: $manager, notice: $notice, noticeDetail: $noticeDetail, failure: $failure)';
+  final _this = this as ServicesState;
+  return 'ServicesState(isBusy: ${_this.isBusy}, units: ${_this.units}, scopeFilter: ${_this.scopeFilter}, manager: ${_this.manager}, notice: ${_this.notice}, noticeDetail: ${_this.noticeDetail}, failure: ${_this.failure})';
 }
 
 
@@ -63,7 +69,7 @@ class _$ServicesStateCopyWithImpl<$Res>
 /// Create a copy of ServicesState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? isBusy = null,Object? units = null,Object? scopeFilter = null,Object? manager = freezed,Object? notice = freezed,Object? noticeDetail = freezed,Object? failure = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServicesState(
 isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,units: null == units ? _self.units : units // ignore: cast_nullable_to_non_nullable
 as List<ServiceUnit>,scopeFilter: null == scopeFilter ? _self.scopeFilter : scopeFilter // ignore: cast_nullable_to_non_nullable
@@ -212,7 +218,7 @@ return $default(_that.isBusy,_that.units,_that.scopeFilter,_that.manager,_that.n
 
 
 class _ServicesState implements ServicesState {
-  const _ServicesState({this.isBusy = false, final  List<ServiceUnit> units = const <ServiceUnit>[], this.scopeFilter = ServiceScopeFilter.all, this.manager, this.notice, this.noticeDetail, this.failure}): _units = units;
+  const _ServicesState({this.isBusy = false,  List<ServiceUnit> units = const <ServiceUnit>[], this.scopeFilter = ServiceScopeFilter.all, this.manager, this.notice, this.noticeDetail, this.failure}): _units = units;
   
 
 @override@JsonKey() final  bool isBusy;
@@ -239,16 +245,18 @@ _$ServicesStateCopyWith<_ServicesState> get copyWith => __$ServicesStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServicesState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other._units, _units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter)&&(identical(other.manager, manager) || other.manager == manager)&&(identical(other.notice, notice) || other.notice == notice)&&(identical(other.noticeDetail, noticeDetail) || other.noticeDetail == noticeDetail)&&(identical(other.failure, failure) || other.failure == failure));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServicesState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other.units, _units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter)&&(identical(other.manager, manager) || other.manager == manager)&&(identical(other.notice, notice) || other.notice == notice)&&(identical(other.noticeDetail, noticeDetail) || other.noticeDetail == noticeDetail)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(_units),scopeFilter,manager,notice,noticeDetail,failure);
+int get hashCode {
+    return Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(_units),scopeFilter,manager,notice,noticeDetail,failure);
+}
 
 @override
 String toString() {
-  return 'ServicesState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter, manager: $manager, notice: $notice, noticeDetail: $noticeDetail, failure: $failure)';
+    return 'ServicesState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter, manager: $manager, notice: $notice, noticeDetail: $noticeDetail, failure: $failure)';
 }
 
 

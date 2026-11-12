@@ -9,9 +9,9 @@ part 'virtual_keyboard.freezed.dart';
 @freezed
 abstract class VirtKeyState with _$VirtKeyState {
   const factory VirtKeyState({
-    @Default(false) final bool ctrl,
-    @Default(false) final bool alt,
-    @Default(false) final bool shift,
+    @Default(false) bool ctrl,
+    @Default(false) bool alt,
+    @Default(false) bool shift,
   }) = _VirtKeyState;
 }
 

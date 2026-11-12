@@ -293,7 +293,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   /// Settings is not a round trip of its own.
   int? _readSnapshotCount() {
     final provider = virtSnapshotsProvider(_serverId, _guest.id);
-    if (!ref.exists(provider)) return null;
+    if (!ref.read(provider.exists)) return null;
     return ref.watch(provider).value?.length;
   }
 
