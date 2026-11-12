@@ -1566,10 +1566,10 @@ packages:
     dependency: transitive
     description:
       name: rage
-      sha256: "4c3c1f584f1088638c4d0ddc2f576d524abf76fe21e22d6acca831e9dd986df5"
+      sha256: efb7255460061c2de173e6a58f4a4c4885826ebf9e3d62af4be76964f52579cb
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   re_editor:
     dependency: transitive
     description:
