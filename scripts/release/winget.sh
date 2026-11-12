@@ -2,10 +2,13 @@
 # The winget package (`winget install lollipopkit.serverbox`, #1572), from the
 # manifests in .github/winget/.
 #
+# Submitted by hand after a release: `release`, `check`, `submit`.
+#
+#   winget.sh release <version> <dir>  renders from the published release
 #   winget.sh render <dir>   VERSION, URL, SHA256, RELEASE_DATE, RELEASE_NOTES_URL
 #   winget.sh check <dir>    against the schema of their ManifestVersion
-#   winget.sh submit <dir>   GH_TOKEN: a classic `public_repo` token of the
-#                            account holding the winget-pkgs fork
+#   winget.sh submit <dir>   as the `gh` account holding the winget-pkgs fork
+#                            (a token needs `public_repo` and `workflow`)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -13,6 +16,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TEMPLATE_DIR="$REPO_ROOT/.github/winget"
 PACKAGE_ID=lollipopkit.serverbox
 UPSTREAM=microsoft/winget-pkgs
+REPO=lollipopkit/flutter_server_box
+INSTALLER_PREFIX=ServerBox
 # winget-pkgs refuses a deprecated ManifestVersion. The templates and this
 # move together.
 MANIFEST_VERSION=1.28.0
@@ -34,6 +39,22 @@ render() {
     envsubst '${VERSION} ${URL} ${SHA256} ${RELEASE_DATE} ${RELEASE_NOTES_URL}' \
       < "$f" > "$out/$(basename "$f")"
   done
+}
+
+# release <version> <dir>
+release() {
+  local name
+  VERSION=$1
+  name="${INSTALLER_PREFIX}_v${VERSION}_windows_amd64.exe"
+  URL="https://github.com/$REPO/releases/download/v$VERSION/$name"
+  # From the release's own checksums rather than a second download.
+  SHA256="$(gh release download "v$VERSION" --repo "$REPO" -p SHA256SUMS -O - |
+    awk -v f="$name" '$2 == f || $2 == "*" f { print $1 }')"
+  [[ "$SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "no checksum for $name" >&2; return 1; }
+  RELEASE_DATE="$(gh api "repos/$REPO/releases/tags/v$VERSION" --jq '.published_at[:10]')"
+  RELEASE_NOTES_URL="https://github.com/$REPO/releases/tag/v$VERSION"
+  export VERSION URL SHA256 RELEASE_DATE RELEASE_NOTES_URL
+  render "$2"
 }
 
 check() {
@@ -146,8 +167,12 @@ case "${1:-}" in
     [[ $# -eq 2 ]] || { echo "usage: $0 $1 <dir>" >&2; exit 2; }
     "$1" "$2"
     ;;
+  release)
+    [[ $# -eq 3 ]] || { echo "usage: $0 release <version> <dir>" >&2; exit 2; }
+    release "$2" "$3"
+    ;;
   *)
-    echo "usage: $0 render|check|submit <dir>" >&2
+    echo "usage: $0 release <version> <dir> | render|check|submit <dir>" >&2
     exit 2
     ;;
 esac
