@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'snippet.dart';
@@ -9,6 +9,7 @@ part of 'snippet.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $SnippetStateCopyWith<SnippetState> get copyWith => _$SnippetStateCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SnippetState&&const DeepCollectionEquality().equals(other.snippets, snippets)&&const DeepCollectionEquality().equals(other.tags, tags));
+  final _this = this as SnippetState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SnippetState&&const DeepCollectionEquality().equals(other.snippets, _this.snippets)&&const DeepCollectionEquality().equals(other.tags, _this.tags));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(tags));
+int get hashCode {
+  final _this = this as SnippetState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.snippets),const DeepCollectionEquality().hash(_this.tags));
+}
 
 @override
 String toString() {
-  return 'SnippetState(snippets: $snippets, tags: $tags)';
+  final _this = this as SnippetState;
+  return 'SnippetState(snippets: ${_this.snippets}, tags: ${_this.tags})';
 }
 
 
@@ -63,7 +69,7 @@ class _$SnippetStateCopyWithImpl<$Res>
 /// Create a copy of SnippetState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? snippets = null,Object? tags = null,}) {
-  return _then(_self.copyWith(
+  return _then(SnippetState(
 snippets: null == snippets ? _self.snippets : snippets // ignore: cast_nullable_to_non_nullable
 as List<Snippet>,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as Set<String>,
@@ -207,7 +213,7 @@ return $default(_that.snippets,_that.tags);case _:
 
 
 class _SnippetState implements SnippetState {
-  const _SnippetState({final  List<Snippet> snippets = const <Snippet>[], final  Set<String> tags = const <String>{}}): _snippets = snippets,_tags = tags;
+  const _SnippetState({ List<Snippet> snippets = const <Snippet>[],  Set<String> tags = const <String>{}}): _snippets = snippets,_tags = tags;
   
 
  final  List<Snippet> _snippets;
@@ -235,16 +241,18 @@ _$SnippetStateCopyWith<_SnippetState> get copyWith => __$SnippetStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SnippetState&&const DeepCollectionEquality().equals(other._snippets, _snippets)&&const DeepCollectionEquality().equals(other._tags, _tags));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SnippetState&&const DeepCollectionEquality().equals(other.snippets, _snippets)&&const DeepCollectionEquality().equals(other.tags, _tags));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_tags));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_tags));
+}
 
 @override
 String toString() {
-  return 'SnippetState(snippets: $snippets, tags: $tags)';
+    return 'SnippetState(snippets: $snippets, tags: $tags)';
 }
 
 

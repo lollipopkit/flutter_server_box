@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'connection_stat.dart';
@@ -9,6 +9,7 @@ part of 'connection_stat.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $ConnectionStatCopyWith<ConnectionStat> get copyWith => _$ConnectionStatCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionStat&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.result, result) || other.result == result)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs));
+  final _this = this as ConnectionStat;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionStat&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.serverName, _this.serverName) || other.serverName == _this.serverName)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp)&&(identical(other.result, _this.result) || other.result == _this.result)&&(identical(other.errorMessage, _this.errorMessage) || other.errorMessage == _this.errorMessage)&&(identical(other.durationMs, _this.durationMs) || other.durationMs == _this.durationMs));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,serverId,serverName,timestamp,result,errorMessage,durationMs);
+int get hashCode {
+  final _this = this as ConnectionStat;
+  return Object.hash(runtimeType,_this.serverId,_this.serverName,_this.timestamp,_this.result,_this.errorMessage,_this.durationMs);
+}
 
 @override
 String toString() {
-  return 'ConnectionStat(serverId: $serverId, serverName: $serverName, timestamp: $timestamp, result: $result, errorMessage: $errorMessage, durationMs: $durationMs)';
+  final _this = this as ConnectionStat;
+  return 'ConnectionStat(serverId: ${_this.serverId}, serverName: ${_this.serverName}, timestamp: ${_this.timestamp}, result: ${_this.result}, errorMessage: ${_this.errorMessage}, durationMs: ${_this.durationMs})';
 }
 
 
@@ -66,7 +72,7 @@ class _$ConnectionStatCopyWithImpl<$Res>
 /// Create a copy of ConnectionStat
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? serverName = null,Object? timestamp = null,Object? result = null,Object? errorMessage = null,Object? durationMs = null,}) {
-  return _then(_self.copyWith(
+  return _then(ConnectionStat(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,serverName: null == serverName ? _self.serverName : serverName // ignore: cast_nullable_to_non_nullable
 as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
@@ -237,16 +243,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionStat&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.result, result) || other.result == result)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionStat&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.result, result) || other.result == result)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,serverId,serverName,timestamp,result,errorMessage,durationMs);
+int get hashCode {
+    return Object.hash(runtimeType,serverId,serverName,timestamp,result,errorMessage,durationMs);
+}
 
 @override
 String toString() {
-  return 'ConnectionStat(serverId: $serverId, serverName: $serverName, timestamp: $timestamp, result: $result, errorMessage: $errorMessage, durationMs: $durationMs)';
+    return 'ConnectionStat(serverId: $serverId, serverName: $serverName, timestamp: $timestamp, result: $result, errorMessage: $errorMessage, durationMs: $durationMs)';
 }
 
 
@@ -306,16 +314,21 @@ $ServerConnectionStatsCopyWith<ServerConnectionStats> get copyWith => _$ServerCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerConnectionStats&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.totalAttempts, totalAttempts) || other.totalAttempts == totalAttempts)&&(identical(other.successCount, successCount) || other.successCount == successCount)&&(identical(other.failureCount, failureCount) || other.failureCount == failureCount)&&(identical(other.lastSuccessTime, lastSuccessTime) || other.lastSuccessTime == lastSuccessTime)&&(identical(other.lastFailureTime, lastFailureTime) || other.lastFailureTime == lastFailureTime)&&const DeepCollectionEquality().equals(other.recentConnections, recentConnections)&&(identical(other.successRate, successRate) || other.successRate == successRate));
+  final _this = this as ServerConnectionStats;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerConnectionStats&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.serverName, _this.serverName) || other.serverName == _this.serverName)&&(identical(other.totalAttempts, _this.totalAttempts) || other.totalAttempts == _this.totalAttempts)&&(identical(other.successCount, _this.successCount) || other.successCount == _this.successCount)&&(identical(other.failureCount, _this.failureCount) || other.failureCount == _this.failureCount)&&(identical(other.lastSuccessTime, _this.lastSuccessTime) || other.lastSuccessTime == _this.lastSuccessTime)&&(identical(other.lastFailureTime, _this.lastFailureTime) || other.lastFailureTime == _this.lastFailureTime)&&const DeepCollectionEquality().equals(other.recentConnections, _this.recentConnections)&&(identical(other.successRate, _this.successRate) || other.successRate == _this.successRate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,serverId,serverName,totalAttempts,successCount,failureCount,lastSuccessTime,lastFailureTime,const DeepCollectionEquality().hash(recentConnections),successRate);
+int get hashCode {
+  final _this = this as ServerConnectionStats;
+  return Object.hash(runtimeType,_this.serverId,_this.serverName,_this.totalAttempts,_this.successCount,_this.failureCount,_this.lastSuccessTime,_this.lastFailureTime,const DeepCollectionEquality().hash(_this.recentConnections),_this.successRate);
+}
 
 @override
 String toString() {
-  return 'ServerConnectionStats(serverId: $serverId, serverName: $serverName, totalAttempts: $totalAttempts, successCount: $successCount, failureCount: $failureCount, lastSuccessTime: $lastSuccessTime, lastFailureTime: $lastFailureTime, recentConnections: $recentConnections, successRate: $successRate)';
+  final _this = this as ServerConnectionStats;
+  return 'ServerConnectionStats(serverId: ${_this.serverId}, serverName: ${_this.serverName}, totalAttempts: ${_this.totalAttempts}, successCount: ${_this.successCount}, failureCount: ${_this.failureCount}, lastSuccessTime: ${_this.lastSuccessTime}, lastFailureTime: ${_this.lastFailureTime}, recentConnections: ${_this.recentConnections}, successRate: ${_this.successRate})';
 }
 
 
@@ -344,7 +357,7 @@ class _$ServerConnectionStatsCopyWithImpl<$Res>
 /// Create a copy of ServerConnectionStats
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? serverName = null,Object? totalAttempts = null,Object? successCount = null,Object? failureCount = null,Object? lastSuccessTime = freezed,Object? lastFailureTime = freezed,Object? recentConnections = null,Object? successRate = null,}) {
-  return _then(_self.copyWith(
+  return _then(ServerConnectionStats(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,serverName: null == serverName ? _self.serverName : serverName // ignore: cast_nullable_to_non_nullable
 as String,totalAttempts: null == totalAttempts ? _self.totalAttempts : totalAttempts // ignore: cast_nullable_to_non_nullable
@@ -495,7 +508,7 @@ return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.succes
 @JsonSerializable()
 
 class _ServerConnectionStats implements ServerConnectionStats {
-  const _ServerConnectionStats({required this.serverId, required this.serverName, required this.totalAttempts, required this.successCount, required this.failureCount, this.lastSuccessTime = null, this.lastFailureTime = null, final  List<ConnectionStat> recentConnections = const [], required this.successRate}): _recentConnections = recentConnections;
+  const _ServerConnectionStats({required this.serverId, required this.serverName, required this.totalAttempts, required this.successCount, required this.failureCount, this.lastSuccessTime = null, this.lastFailureTime = null,  List<ConnectionStat> recentConnections = const [], required this.successRate}): _recentConnections = recentConnections;
   factory _ServerConnectionStats.fromJson(Map<String, dynamic> json) => _$ServerConnectionStatsFromJson(json);
 
 @override final  String serverId;
@@ -527,16 +540,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerConnectionStats&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.totalAttempts, totalAttempts) || other.totalAttempts == totalAttempts)&&(identical(other.successCount, successCount) || other.successCount == successCount)&&(identical(other.failureCount, failureCount) || other.failureCount == failureCount)&&(identical(other.lastSuccessTime, lastSuccessTime) || other.lastSuccessTime == lastSuccessTime)&&(identical(other.lastFailureTime, lastFailureTime) || other.lastFailureTime == lastFailureTime)&&const DeepCollectionEquality().equals(other._recentConnections, _recentConnections)&&(identical(other.successRate, successRate) || other.successRate == successRate));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerConnectionStats&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.serverName, serverName) || other.serverName == serverName)&&(identical(other.totalAttempts, totalAttempts) || other.totalAttempts == totalAttempts)&&(identical(other.successCount, successCount) || other.successCount == successCount)&&(identical(other.failureCount, failureCount) || other.failureCount == failureCount)&&(identical(other.lastSuccessTime, lastSuccessTime) || other.lastSuccessTime == lastSuccessTime)&&(identical(other.lastFailureTime, lastFailureTime) || other.lastFailureTime == lastFailureTime)&&const DeepCollectionEquality().equals(other.recentConnections, _recentConnections)&&(identical(other.successRate, successRate) || other.successRate == successRate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,serverId,serverName,totalAttempts,successCount,failureCount,lastSuccessTime,lastFailureTime,const DeepCollectionEquality().hash(_recentConnections),successRate);
+int get hashCode {
+    return Object.hash(runtimeType,serverId,serverName,totalAttempts,successCount,failureCount,lastSuccessTime,lastFailureTime,const DeepCollectionEquality().hash(_recentConnections),successRate);
+}
 
 @override
 String toString() {
-  return 'ServerConnectionStats(serverId: $serverId, serverName: $serverName, totalAttempts: $totalAttempts, successCount: $successCount, failureCount: $failureCount, lastSuccessTime: $lastSuccessTime, lastFailureTime: $lastFailureTime, recentConnections: $recentConnections, successRate: $successRate)';
+    return 'ServerConnectionStats(serverId: $serverId, serverName: $serverName, totalAttempts: $totalAttempts, successCount: $successCount, failureCount: $failureCount, lastSuccessTime: $lastSuccessTime, lastFailureTime: $lastFailureTime, recentConnections: $recentConnections, successRate: $successRate)';
 }
 
 

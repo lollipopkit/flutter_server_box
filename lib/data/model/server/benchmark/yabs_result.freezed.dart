@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'yabs_result.dart';
@@ -9,6 +9,7 @@ part of 'yabs_result.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -29,16 +30,21 @@ $YabsResultCopyWith<YabsResult> get copyWith => _$YabsResultCopyWithImpl<YabsRes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsResult&&(identical(other.version, version) || other.version == version)&&(identical(other.time, time) || other.time == time)&&(identical(other.os, os) || other.os == os)&&(identical(other.net, net) || other.net == net)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.mem, mem) || other.mem == mem)&&(identical(other.partition, partition) || other.partition == partition)&&const DeepCollectionEquality().equals(other.fio, fio)&&const DeepCollectionEquality().equals(other.iperf, iperf)&&const DeepCollectionEquality().equals(other.geekbench, geekbench)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.runtime, runtime) || other.runtime == runtime));
+  final _this = this as YabsResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsResult&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.time, _this.time) || other.time == _this.time)&&(identical(other.os, _this.os) || other.os == _this.os)&&(identical(other.net, _this.net) || other.net == _this.net)&&(identical(other.cpu, _this.cpu) || other.cpu == _this.cpu)&&(identical(other.mem, _this.mem) || other.mem == _this.mem)&&(identical(other.partition, _this.partition) || other.partition == _this.partition)&&const DeepCollectionEquality().equals(other.fio, _this.fio)&&const DeepCollectionEquality().equals(other.iperf, _this.iperf)&&const DeepCollectionEquality().equals(other.geekbench, _this.geekbench)&&(identical(other.ipInfo, _this.ipInfo) || other.ipInfo == _this.ipInfo)&&(identical(other.runtime, _this.runtime) || other.runtime == _this.runtime));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,time,os,net,cpu,mem,partition,const DeepCollectionEquality().hash(fio),const DeepCollectionEquality().hash(iperf),const DeepCollectionEquality().hash(geekbench),ipInfo,runtime);
+int get hashCode {
+  final _this = this as YabsResult;
+  return Object.hash(runtimeType,_this.version,_this.time,_this.os,_this.net,_this.cpu,_this.mem,_this.partition,const DeepCollectionEquality().hash(_this.fio),const DeepCollectionEquality().hash(_this.iperf),const DeepCollectionEquality().hash(_this.geekbench),_this.ipInfo,_this.runtime);
+}
 
 @override
 String toString() {
-  return 'YabsResult(version: $version, time: $time, os: $os, net: $net, cpu: $cpu, mem: $mem, partition: $partition, fio: $fio, iperf: $iperf, geekbench: $geekbench, ipInfo: $ipInfo, runtime: $runtime)';
+  final _this = this as YabsResult;
+  return 'YabsResult(version: ${_this.version}, time: ${_this.time}, os: ${_this.os}, net: ${_this.net}, cpu: ${_this.cpu}, mem: ${_this.mem}, partition: ${_this.partition}, fio: ${_this.fio}, iperf: ${_this.iperf}, geekbench: ${_this.geekbench}, ipInfo: ${_this.ipInfo}, runtime: ${_this.runtime})';
 }
 
 
@@ -67,7 +73,7 @@ class _$YabsResultCopyWithImpl<$Res>
 /// Create a copy of YabsResult
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? time = null,Object? os = null,Object? net = null,Object? cpu = null,Object? mem = null,Object? partition = freezed,Object? fio = null,Object? iperf = null,Object? geekbench = null,Object? ipInfo = freezed,Object? runtime = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(YabsResult(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as String,time: null == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
 as String,os: null == os ? _self.os : os // ignore: cast_nullable_to_non_nullable
@@ -281,7 +287,7 @@ return $default(_that.version,_that.time,_that.os,_that.net,_that.cpu,_that.mem,
 @JsonSerializable()
 
 class _YabsResult extends YabsResult {
-  const _YabsResult({this.version = '', this.time = '', this.os = const YabsOs(), this.net = const YabsNet(), this.cpu = const YabsCpu(), this.mem = const YabsMem(), this.partition, final  List<YabsFio> fio = const [], final  List<YabsIperf> iperf = const [], final  List<YabsGeekbench> geekbench = const [], @JsonKey(name: 'ip_info') this.ipInfo, this.runtime}): _fio = fio,_iperf = iperf,_geekbench = geekbench,super._();
+  const _YabsResult({this.version = '', this.time = '', this.os = const YabsOs(), this.net = const YabsNet(), this.cpu = const YabsCpu(), this.mem = const YabsMem(), this.partition,  List<YabsFio> fio = const [],  List<YabsIperf> iperf = const [],  List<YabsGeekbench> geekbench = const [], @JsonKey(name: 'ip_info') this.ipInfo, this.runtime}): _fio = fio,_iperf = iperf,_geekbench = geekbench,super._();
   factory _YabsResult.fromJson(Map<String, dynamic> json) => _$YabsResultFromJson(json);
 
 @override@JsonKey() final  String version;
@@ -329,16 +335,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsResult&&(identical(other.version, version) || other.version == version)&&(identical(other.time, time) || other.time == time)&&(identical(other.os, os) || other.os == os)&&(identical(other.net, net) || other.net == net)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.mem, mem) || other.mem == mem)&&(identical(other.partition, partition) || other.partition == partition)&&const DeepCollectionEquality().equals(other._fio, _fio)&&const DeepCollectionEquality().equals(other._iperf, _iperf)&&const DeepCollectionEquality().equals(other._geekbench, _geekbench)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.runtime, runtime) || other.runtime == runtime));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsResult&&(identical(other.version, version) || other.version == version)&&(identical(other.time, time) || other.time == time)&&(identical(other.os, os) || other.os == os)&&(identical(other.net, net) || other.net == net)&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.mem, mem) || other.mem == mem)&&(identical(other.partition, partition) || other.partition == partition)&&const DeepCollectionEquality().equals(other.fio, _fio)&&const DeepCollectionEquality().equals(other.iperf, _iperf)&&const DeepCollectionEquality().equals(other.geekbench, _geekbench)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo)&&(identical(other.runtime, runtime) || other.runtime == runtime));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,time,os,net,cpu,mem,partition,const DeepCollectionEquality().hash(_fio),const DeepCollectionEquality().hash(_iperf),const DeepCollectionEquality().hash(_geekbench),ipInfo,runtime);
+int get hashCode {
+    return Object.hash(runtimeType,version,time,os,net,cpu,mem,partition,const DeepCollectionEquality().hash(_fio),const DeepCollectionEquality().hash(_iperf),const DeepCollectionEquality().hash(_geekbench),ipInfo,runtime);
+}
 
 @override
 String toString() {
-  return 'YabsResult(version: $version, time: $time, os: $os, net: $net, cpu: $cpu, mem: $mem, partition: $partition, fio: $fio, iperf: $iperf, geekbench: $geekbench, ipInfo: $ipInfo, runtime: $runtime)';
+    return 'YabsResult(version: $version, time: $time, os: $os, net: $net, cpu: $cpu, mem: $mem, partition: $partition, fio: $fio, iperf: $iperf, geekbench: $geekbench, ipInfo: $ipInfo, runtime: $runtime)';
 }
 
 
@@ -467,16 +475,21 @@ $YabsOsCopyWith<YabsOs> get copyWith => _$YabsOsCopyWithImpl<YabsOs>(this as Yab
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsOs&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.distro, distro) || other.distro == distro)&&(identical(other.kernel, kernel) || other.kernel == kernel)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&(identical(other.vm, vm) || other.vm == vm));
+  final _this = this as YabsOs;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsOs&&(identical(other.arch, _this.arch) || other.arch == _this.arch)&&(identical(other.distro, _this.distro) || other.distro == _this.distro)&&(identical(other.kernel, _this.kernel) || other.kernel == _this.kernel)&&(identical(other.uptime, _this.uptime) || other.uptime == _this.uptime)&&(identical(other.vm, _this.vm) || other.vm == _this.vm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,arch,distro,kernel,uptime,vm);
+int get hashCode {
+  final _this = this as YabsOs;
+  return Object.hash(runtimeType,_this.arch,_this.distro,_this.kernel,_this.uptime,_this.vm);
+}
 
 @override
 String toString() {
-  return 'YabsOs(arch: $arch, distro: $distro, kernel: $kernel, uptime: $uptime, vm: $vm)';
+  final _this = this as YabsOs;
+  return 'YabsOs(arch: ${_this.arch}, distro: ${_this.distro}, kernel: ${_this.kernel}, uptime: ${_this.uptime}, vm: ${_this.vm})';
 }
 
 
@@ -505,7 +518,7 @@ class _$YabsOsCopyWithImpl<$Res>
 /// Create a copy of YabsOs
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? arch = null,Object? distro = null,Object? kernel = null,Object? uptime = freezed,Object? vm = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsOs(
 arch: null == arch ? _self.arch : arch // ignore: cast_nullable_to_non_nullable
 as String,distro: null == distro ? _self.distro : distro // ignore: cast_nullable_to_non_nullable
 as String,kernel: null == kernel ? _self.kernel : kernel // ignore: cast_nullable_to_non_nullable
@@ -677,16 +690,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsOs&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.distro, distro) || other.distro == distro)&&(identical(other.kernel, kernel) || other.kernel == kernel)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&(identical(other.vm, vm) || other.vm == vm));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsOs&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.distro, distro) || other.distro == distro)&&(identical(other.kernel, kernel) || other.kernel == kernel)&&(identical(other.uptime, uptime) || other.uptime == uptime)&&(identical(other.vm, vm) || other.vm == vm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,arch,distro,kernel,uptime,vm);
+int get hashCode {
+    return Object.hash(runtimeType,arch,distro,kernel,uptime,vm);
+}
 
 @override
 String toString() {
-  return 'YabsOs(arch: $arch, distro: $distro, kernel: $kernel, uptime: $uptime, vm: $vm)';
+    return 'YabsOs(arch: $arch, distro: $distro, kernel: $kernel, uptime: $uptime, vm: $vm)';
 }
 
 
@@ -745,16 +760,21 @@ $YabsNetCopyWith<YabsNet> get copyWith => _$YabsNetCopyWithImpl<YabsNet>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsNet&&(identical(other.ipv4, ipv4) || other.ipv4 == ipv4)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6));
+  final _this = this as YabsNet;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsNet&&(identical(other.ipv4, _this.ipv4) || other.ipv4 == _this.ipv4)&&(identical(other.ipv6, _this.ipv6) || other.ipv6 == _this.ipv6));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ipv4,ipv6);
+int get hashCode {
+  final _this = this as YabsNet;
+  return Object.hash(runtimeType,_this.ipv4,_this.ipv6);
+}
 
 @override
 String toString() {
-  return 'YabsNet(ipv4: $ipv4, ipv6: $ipv6)';
+  final _this = this as YabsNet;
+  return 'YabsNet(ipv4: ${_this.ipv4}, ipv6: ${_this.ipv6})';
 }
 
 
@@ -783,7 +803,7 @@ class _$YabsNetCopyWithImpl<$Res>
 /// Create a copy of YabsNet
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? ipv4 = null,Object? ipv6 = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsNet(
 ipv4: null == ipv4 ? _self.ipv4 : ipv4 // ignore: cast_nullable_to_non_nullable
 as bool,ipv6: null == ipv6 ? _self.ipv6 : ipv6 // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -946,16 +966,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsNet&&(identical(other.ipv4, ipv4) || other.ipv4 == ipv4)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsNet&&(identical(other.ipv4, ipv4) || other.ipv4 == ipv4)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ipv4,ipv6);
+int get hashCode {
+    return Object.hash(runtimeType,ipv4,ipv6);
+}
 
 @override
 String toString() {
-  return 'YabsNet(ipv4: $ipv4, ipv6: $ipv6)';
+    return 'YabsNet(ipv4: $ipv4, ipv6: $ipv6)';
 }
 
 
@@ -1014,16 +1036,21 @@ $YabsCpuCopyWith<YabsCpu> get copyWith => _$YabsCpuCopyWithImpl<YabsCpu>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsCpu&&(identical(other.model, model) || other.model == model)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.freq, freq) || other.freq == freq)&&(identical(other.aes, aes) || other.aes == aes)&&(identical(other.virt, virt) || other.virt == virt));
+  final _this = this as YabsCpu;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsCpu&&(identical(other.model, _this.model) || other.model == _this.model)&&(identical(other.cores, _this.cores) || other.cores == _this.cores)&&(identical(other.freq, _this.freq) || other.freq == _this.freq)&&(identical(other.aes, _this.aes) || other.aes == _this.aes)&&(identical(other.virt, _this.virt) || other.virt == _this.virt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,model,cores,freq,aes,virt);
+int get hashCode {
+  final _this = this as YabsCpu;
+  return Object.hash(runtimeType,_this.model,_this.cores,_this.freq,_this.aes,_this.virt);
+}
 
 @override
 String toString() {
-  return 'YabsCpu(model: $model, cores: $cores, freq: $freq, aes: $aes, virt: $virt)';
+  final _this = this as YabsCpu;
+  return 'YabsCpu(model: ${_this.model}, cores: ${_this.cores}, freq: ${_this.freq}, aes: ${_this.aes}, virt: ${_this.virt})';
 }
 
 
@@ -1052,7 +1079,7 @@ class _$YabsCpuCopyWithImpl<$Res>
 /// Create a copy of YabsCpu
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? model = null,Object? cores = freezed,Object? freq = null,Object? aes = null,Object? virt = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsCpu(
 model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String,cores: freezed == cores ? _self.cores : cores // ignore: cast_nullable_to_non_nullable
 as int?,freq: null == freq ? _self.freq : freq // ignore: cast_nullable_to_non_nullable
@@ -1224,16 +1251,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsCpu&&(identical(other.model, model) || other.model == model)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.freq, freq) || other.freq == freq)&&(identical(other.aes, aes) || other.aes == aes)&&(identical(other.virt, virt) || other.virt == virt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsCpu&&(identical(other.model, model) || other.model == model)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.freq, freq) || other.freq == freq)&&(identical(other.aes, aes) || other.aes == aes)&&(identical(other.virt, virt) || other.virt == virt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,model,cores,freq,aes,virt);
+int get hashCode {
+    return Object.hash(runtimeType,model,cores,freq,aes,virt);
+}
 
 @override
 String toString() {
-  return 'YabsCpu(model: $model, cores: $cores, freq: $freq, aes: $aes, virt: $virt)';
+    return 'YabsCpu(model: $model, cores: $cores, freq: $freq, aes: $aes, virt: $virt)';
 }
 
 
@@ -1292,16 +1321,21 @@ $YabsMemCopyWith<YabsMem> get copyWith => _$YabsMemCopyWithImpl<YabsMem>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsMem&&(identical(other.ram, ram) || other.ram == ram)&&(identical(other.ramUnits, ramUnits) || other.ramUnits == ramUnits)&&(identical(other.swap, swap) || other.swap == swap)&&(identical(other.swapUnits, swapUnits) || other.swapUnits == swapUnits)&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.diskUnits, diskUnits) || other.diskUnits == diskUnits));
+  final _this = this as YabsMem;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsMem&&(identical(other.ram, _this.ram) || other.ram == _this.ram)&&(identical(other.ramUnits, _this.ramUnits) || other.ramUnits == _this.ramUnits)&&(identical(other.swap, _this.swap) || other.swap == _this.swap)&&(identical(other.swapUnits, _this.swapUnits) || other.swapUnits == _this.swapUnits)&&(identical(other.disk, _this.disk) || other.disk == _this.disk)&&(identical(other.diskUnits, _this.diskUnits) || other.diskUnits == _this.diskUnits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ram,ramUnits,swap,swapUnits,disk,diskUnits);
+int get hashCode {
+  final _this = this as YabsMem;
+  return Object.hash(runtimeType,_this.ram,_this.ramUnits,_this.swap,_this.swapUnits,_this.disk,_this.diskUnits);
+}
 
 @override
 String toString() {
-  return 'YabsMem(ram: $ram, ramUnits: $ramUnits, swap: $swap, swapUnits: $swapUnits, disk: $disk, diskUnits: $diskUnits)';
+  final _this = this as YabsMem;
+  return 'YabsMem(ram: ${_this.ram}, ramUnits: ${_this.ramUnits}, swap: ${_this.swap}, swapUnits: ${_this.swapUnits}, disk: ${_this.disk}, diskUnits: ${_this.diskUnits})';
 }
 
 
@@ -1330,7 +1364,7 @@ class _$YabsMemCopyWithImpl<$Res>
 /// Create a copy of YabsMem
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? ram = freezed,Object? ramUnits = null,Object? swap = freezed,Object? swapUnits = null,Object? disk = freezed,Object? diskUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsMem(
 ram: freezed == ram ? _self.ram : ram // ignore: cast_nullable_to_non_nullable
 as int?,ramUnits: null == ramUnits ? _self.ramUnits : ramUnits // ignore: cast_nullable_to_non_nullable
 as String,swap: freezed == swap ? _self.swap : swap // ignore: cast_nullable_to_non_nullable
@@ -1501,16 +1535,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsMem&&(identical(other.ram, ram) || other.ram == ram)&&(identical(other.ramUnits, ramUnits) || other.ramUnits == ramUnits)&&(identical(other.swap, swap) || other.swap == swap)&&(identical(other.swapUnits, swapUnits) || other.swapUnits == swapUnits)&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.diskUnits, diskUnits) || other.diskUnits == diskUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsMem&&(identical(other.ram, ram) || other.ram == ram)&&(identical(other.ramUnits, ramUnits) || other.ramUnits == ramUnits)&&(identical(other.swap, swap) || other.swap == swap)&&(identical(other.swapUnits, swapUnits) || other.swapUnits == swapUnits)&&(identical(other.disk, disk) || other.disk == disk)&&(identical(other.diskUnits, diskUnits) || other.diskUnits == diskUnits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ram,ramUnits,swap,swapUnits,disk,diskUnits);
+int get hashCode {
+    return Object.hash(runtimeType,ram,ramUnits,swap,swapUnits,disk,diskUnits);
+}
 
 @override
 String toString() {
-  return 'YabsMem(ram: $ram, ramUnits: $ramUnits, swap: $swap, swapUnits: $swapUnits, disk: $disk, diskUnits: $diskUnits)';
+    return 'YabsMem(ram: $ram, ramUnits: $ramUnits, swap: $swap, swapUnits: $swapUnits, disk: $disk, diskUnits: $diskUnits)';
 }
 
 
@@ -1571,16 +1607,21 @@ $YabsFioCopyWith<YabsFio> get copyWith => _$YabsFioCopyWithImpl<YabsFio>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsFio&&(identical(other.bs, bs) || other.bs == bs)&&(identical(other.speedRead, speedRead) || other.speedRead == speedRead)&&(identical(other.iopsRead, iopsRead) || other.iopsRead == iopsRead)&&(identical(other.speedWrite, speedWrite) || other.speedWrite == speedWrite)&&(identical(other.iopsWrite, iopsWrite) || other.iopsWrite == iopsWrite)&&(identical(other.speedTotal, speedTotal) || other.speedTotal == speedTotal)&&(identical(other.iopsTotal, iopsTotal) || other.iopsTotal == iopsTotal)&&(identical(other.speedUnits, speedUnits) || other.speedUnits == speedUnits));
+  final _this = this as YabsFio;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsFio&&(identical(other.bs, _this.bs) || other.bs == _this.bs)&&(identical(other.speedRead, _this.speedRead) || other.speedRead == _this.speedRead)&&(identical(other.iopsRead, _this.iopsRead) || other.iopsRead == _this.iopsRead)&&(identical(other.speedWrite, _this.speedWrite) || other.speedWrite == _this.speedWrite)&&(identical(other.iopsWrite, _this.iopsWrite) || other.iopsWrite == _this.iopsWrite)&&(identical(other.speedTotal, _this.speedTotal) || other.speedTotal == _this.speedTotal)&&(identical(other.iopsTotal, _this.iopsTotal) || other.iopsTotal == _this.iopsTotal)&&(identical(other.speedUnits, _this.speedUnits) || other.speedUnits == _this.speedUnits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,bs,speedRead,iopsRead,speedWrite,iopsWrite,speedTotal,iopsTotal,speedUnits);
+int get hashCode {
+  final _this = this as YabsFio;
+  return Object.hash(runtimeType,_this.bs,_this.speedRead,_this.iopsRead,_this.speedWrite,_this.iopsWrite,_this.speedTotal,_this.iopsTotal,_this.speedUnits);
+}
 
 @override
 String toString() {
-  return 'YabsFio(bs: $bs, speedRead: $speedRead, iopsRead: $iopsRead, speedWrite: $speedWrite, iopsWrite: $iopsWrite, speedTotal: $speedTotal, iopsTotal: $iopsTotal, speedUnits: $speedUnits)';
+  final _this = this as YabsFio;
+  return 'YabsFio(bs: ${_this.bs}, speedRead: ${_this.speedRead}, iopsRead: ${_this.iopsRead}, speedWrite: ${_this.speedWrite}, iopsWrite: ${_this.iopsWrite}, speedTotal: ${_this.speedTotal}, iopsTotal: ${_this.iopsTotal}, speedUnits: ${_this.speedUnits})';
 }
 
 
@@ -1609,7 +1650,7 @@ class _$YabsFioCopyWithImpl<$Res>
 /// Create a copy of YabsFio
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? bs = null,Object? speedRead = freezed,Object? iopsRead = freezed,Object? speedWrite = freezed,Object? iopsWrite = freezed,Object? speedTotal = freezed,Object? iopsTotal = freezed,Object? speedUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsFio(
 bs: null == bs ? _self.bs : bs // ignore: cast_nullable_to_non_nullable
 as String,speedRead: freezed == speedRead ? _self.speedRead : speedRead // ignore: cast_nullable_to_non_nullable
 as double?,iopsRead: freezed == iopsRead ? _self.iopsRead : iopsRead // ignore: cast_nullable_to_non_nullable
@@ -1785,16 +1826,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsFio&&(identical(other.bs, bs) || other.bs == bs)&&(identical(other.speedRead, speedRead) || other.speedRead == speedRead)&&(identical(other.iopsRead, iopsRead) || other.iopsRead == iopsRead)&&(identical(other.speedWrite, speedWrite) || other.speedWrite == speedWrite)&&(identical(other.iopsWrite, iopsWrite) || other.iopsWrite == iopsWrite)&&(identical(other.speedTotal, speedTotal) || other.speedTotal == speedTotal)&&(identical(other.iopsTotal, iopsTotal) || other.iopsTotal == iopsTotal)&&(identical(other.speedUnits, speedUnits) || other.speedUnits == speedUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsFio&&(identical(other.bs, bs) || other.bs == bs)&&(identical(other.speedRead, speedRead) || other.speedRead == speedRead)&&(identical(other.iopsRead, iopsRead) || other.iopsRead == iopsRead)&&(identical(other.speedWrite, speedWrite) || other.speedWrite == speedWrite)&&(identical(other.iopsWrite, iopsWrite) || other.iopsWrite == iopsWrite)&&(identical(other.speedTotal, speedTotal) || other.speedTotal == speedTotal)&&(identical(other.iopsTotal, iopsTotal) || other.iopsTotal == iopsTotal)&&(identical(other.speedUnits, speedUnits) || other.speedUnits == speedUnits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,bs,speedRead,iopsRead,speedWrite,iopsWrite,speedTotal,iopsTotal,speedUnits);
+int get hashCode {
+    return Object.hash(runtimeType,bs,speedRead,iopsRead,speedWrite,iopsWrite,speedTotal,iopsTotal,speedUnits);
+}
 
 @override
 String toString() {
-  return 'YabsFio(bs: $bs, speedRead: $speedRead, iopsRead: $iopsRead, speedWrite: $speedWrite, iopsWrite: $iopsWrite, speedTotal: $speedTotal, iopsTotal: $iopsTotal, speedUnits: $speedUnits)';
+    return 'YabsFio(bs: $bs, speedRead: $speedRead, iopsRead: $iopsRead, speedWrite: $speedWrite, iopsWrite: $iopsWrite, speedTotal: $speedTotal, iopsTotal: $iopsTotal, speedUnits: $speedUnits)';
 }
 
 
@@ -1857,16 +1900,21 @@ $YabsIperfCopyWith<YabsIperf> get copyWith => _$YabsIperfCopyWithImpl<YabsIperf>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsIperf&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.loc, loc) || other.loc == loc)&&(identical(other.send, send) || other.send == send)&&(identical(other.recv, recv) || other.recv == recv)&&(identical(other.latency, latency) || other.latency == latency));
+  final _this = this as YabsIperf;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsIperf&&(identical(other.mode, _this.mode) || other.mode == _this.mode)&&(identical(other.provider, _this.provider) || other.provider == _this.provider)&&(identical(other.loc, _this.loc) || other.loc == _this.loc)&&(identical(other.send, _this.send) || other.send == _this.send)&&(identical(other.recv, _this.recv) || other.recv == _this.recv)&&(identical(other.latency, _this.latency) || other.latency == _this.latency));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,provider,loc,send,recv,latency);
+int get hashCode {
+  final _this = this as YabsIperf;
+  return Object.hash(runtimeType,_this.mode,_this.provider,_this.loc,_this.send,_this.recv,_this.latency);
+}
 
 @override
 String toString() {
-  return 'YabsIperf(mode: $mode, provider: $provider, loc: $loc, send: $send, recv: $recv, latency: $latency)';
+  final _this = this as YabsIperf;
+  return 'YabsIperf(mode: ${_this.mode}, provider: ${_this.provider}, loc: ${_this.loc}, send: ${_this.send}, recv: ${_this.recv}, latency: ${_this.latency})';
 }
 
 
@@ -1895,7 +1943,7 @@ class _$YabsIperfCopyWithImpl<$Res>
 /// Create a copy of YabsIperf
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? mode = null,Object? provider = null,Object? loc = null,Object? send = null,Object? recv = null,Object? latency = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsIperf(
 mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as String,provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,loc: null == loc ? _self.loc : loc // ignore: cast_nullable_to_non_nullable
@@ -2067,16 +2115,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsIperf&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.loc, loc) || other.loc == loc)&&(identical(other.send, send) || other.send == send)&&(identical(other.recv, recv) || other.recv == recv)&&(identical(other.latency, latency) || other.latency == latency));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsIperf&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.loc, loc) || other.loc == loc)&&(identical(other.send, send) || other.send == send)&&(identical(other.recv, recv) || other.recv == recv)&&(identical(other.latency, latency) || other.latency == latency));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,provider,loc,send,recv,latency);
+int get hashCode {
+    return Object.hash(runtimeType,mode,provider,loc,send,recv,latency);
+}
 
 @override
 String toString() {
-  return 'YabsIperf(mode: $mode, provider: $provider, loc: $loc, send: $send, recv: $recv, latency: $latency)';
+    return 'YabsIperf(mode: $mode, provider: $provider, loc: $loc, send: $send, recv: $recv, latency: $latency)';
 }
 
 
@@ -2141,16 +2191,21 @@ $YabsGeekbenchCopyWith<YabsGeekbench> get copyWith => _$YabsGeekbenchCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsGeekbench&&(identical(other.version, version) || other.version == version)&&(identical(other.single, single) || other.single == single)&&(identical(other.multi, multi) || other.multi == multi)&&(identical(other.url, url) || other.url == url));
+  final _this = this as YabsGeekbench;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsGeekbench&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.single, _this.single) || other.single == _this.single)&&(identical(other.multi, _this.multi) || other.multi == _this.multi)&&(identical(other.url, _this.url) || other.url == _this.url));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,single,multi,url);
+int get hashCode {
+  final _this = this as YabsGeekbench;
+  return Object.hash(runtimeType,_this.version,_this.single,_this.multi,_this.url);
+}
 
 @override
 String toString() {
-  return 'YabsGeekbench(version: $version, single: $single, multi: $multi, url: $url)';
+  final _this = this as YabsGeekbench;
+  return 'YabsGeekbench(version: ${_this.version}, single: ${_this.single}, multi: ${_this.multi}, url: ${_this.url})';
 }
 
 
@@ -2179,7 +2234,7 @@ class _$YabsGeekbenchCopyWithImpl<$Res>
 /// Create a copy of YabsGeekbench
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? version = freezed,Object? single = freezed,Object? multi = freezed,Object? url = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsGeekbench(
 version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int?,single: freezed == single ? _self.single : single // ignore: cast_nullable_to_non_nullable
 as int?,multi: freezed == multi ? _self.multi : multi // ignore: cast_nullable_to_non_nullable
@@ -2351,16 +2406,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsGeekbench&&(identical(other.version, version) || other.version == version)&&(identical(other.single, single) || other.single == single)&&(identical(other.multi, multi) || other.multi == multi)&&(identical(other.url, url) || other.url == url));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsGeekbench&&(identical(other.version, version) || other.version == version)&&(identical(other.single, single) || other.single == single)&&(identical(other.multi, multi) || other.multi == multi)&&(identical(other.url, url) || other.url == url));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,version,single,multi,url);
+int get hashCode {
+    return Object.hash(runtimeType,version,single,multi,url);
+}
 
 @override
 String toString() {
-  return 'YabsGeekbench(version: $version, single: $single, multi: $multi, url: $url)';
+    return 'YabsGeekbench(version: $version, single: $single, multi: $multi, url: $url)';
 }
 
 
@@ -2418,16 +2475,21 @@ $YabsIpInfoCopyWith<YabsIpInfo> get copyWith => _$YabsIpInfoCopyWithImpl<YabsIpI
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsIpInfo&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.isp, isp) || other.isp == isp)&&(identical(other.asn, asn) || other.asn == asn)&&(identical(other.org, org) || other.org == org)&&(identical(other.city, city) || other.city == city)&&(identical(other.region, region) || other.region == region)&&(identical(other.regionCode, regionCode) || other.regionCode == regionCode)&&(identical(other.country, country) || other.country == country));
+  final _this = this as YabsIpInfo;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsIpInfo&&(identical(other.protocol, _this.protocol) || other.protocol == _this.protocol)&&(identical(other.isp, _this.isp) || other.isp == _this.isp)&&(identical(other.asn, _this.asn) || other.asn == _this.asn)&&(identical(other.org, _this.org) || other.org == _this.org)&&(identical(other.city, _this.city) || other.city == _this.city)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.regionCode, _this.regionCode) || other.regionCode == _this.regionCode)&&(identical(other.country, _this.country) || other.country == _this.country));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,protocol,isp,asn,org,city,region,regionCode,country);
+int get hashCode {
+  final _this = this as YabsIpInfo;
+  return Object.hash(runtimeType,_this.protocol,_this.isp,_this.asn,_this.org,_this.city,_this.region,_this.regionCode,_this.country);
+}
 
 @override
 String toString() {
-  return 'YabsIpInfo(protocol: $protocol, isp: $isp, asn: $asn, org: $org, city: $city, region: $region, regionCode: $regionCode, country: $country)';
+  final _this = this as YabsIpInfo;
+  return 'YabsIpInfo(protocol: ${_this.protocol}, isp: ${_this.isp}, asn: ${_this.asn}, org: ${_this.org}, city: ${_this.city}, region: ${_this.region}, regionCode: ${_this.regionCode}, country: ${_this.country})';
 }
 
 
@@ -2456,7 +2518,7 @@ class _$YabsIpInfoCopyWithImpl<$Res>
 /// Create a copy of YabsIpInfo
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? protocol = null,Object? isp = null,Object? asn = null,Object? org = null,Object? city = null,Object? region = null,Object? regionCode = null,Object? country = null,}) {
-  return _then(_self.copyWith(
+  return _then(YabsIpInfo(
 protocol: null == protocol ? _self.protocol : protocol // ignore: cast_nullable_to_non_nullable
 as String,isp: null == isp ? _self.isp : isp // ignore: cast_nullable_to_non_nullable
 as String,asn: null == asn ? _self.asn : asn // ignore: cast_nullable_to_non_nullable
@@ -2631,16 +2693,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsIpInfo&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.isp, isp) || other.isp == isp)&&(identical(other.asn, asn) || other.asn == asn)&&(identical(other.org, org) || other.org == org)&&(identical(other.city, city) || other.city == city)&&(identical(other.region, region) || other.region == region)&&(identical(other.regionCode, regionCode) || other.regionCode == regionCode)&&(identical(other.country, country) || other.country == country));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsIpInfo&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.isp, isp) || other.isp == isp)&&(identical(other.asn, asn) || other.asn == asn)&&(identical(other.org, org) || other.org == org)&&(identical(other.city, city) || other.city == city)&&(identical(other.region, region) || other.region == region)&&(identical(other.regionCode, regionCode) || other.regionCode == regionCode)&&(identical(other.country, country) || other.country == country));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,protocol,isp,asn,org,city,region,regionCode,country);
+int get hashCode {
+    return Object.hash(runtimeType,protocol,isp,asn,org,city,region,regionCode,country);
+}
 
 @override
 String toString() {
-  return 'YabsIpInfo(protocol: $protocol, isp: $isp, asn: $asn, org: $org, city: $city, region: $region, regionCode: $regionCode, country: $country)';
+    return 'YabsIpInfo(protocol: $protocol, isp: $isp, asn: $asn, org: $org, city: $city, region: $region, regionCode: $regionCode, country: $country)';
 }
 
 
@@ -2703,16 +2767,21 @@ $YabsRuntimeCopyWith<YabsRuntime> get copyWith => _$YabsRuntimeCopyWithImpl<Yabs
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsRuntime&&(identical(other.start, start) || other.start == start)&&(identical(other.end, end) || other.end == end)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed));
+  final _this = this as YabsRuntime;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YabsRuntime&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.end, _this.end) || other.end == _this.end)&&(identical(other.elapsed, _this.elapsed) || other.elapsed == _this.elapsed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,start,end,elapsed);
+int get hashCode {
+  final _this = this as YabsRuntime;
+  return Object.hash(runtimeType,_this.start,_this.end,_this.elapsed);
+}
 
 @override
 String toString() {
-  return 'YabsRuntime(start: $start, end: $end, elapsed: $elapsed)';
+  final _this = this as YabsRuntime;
+  return 'YabsRuntime(start: ${_this.start}, end: ${_this.end}, elapsed: ${_this.elapsed})';
 }
 
 
@@ -2741,7 +2810,7 @@ class _$YabsRuntimeCopyWithImpl<$Res>
 /// Create a copy of YabsRuntime
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? start = freezed,Object? end = freezed,Object? elapsed = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(YabsRuntime(
 start: freezed == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
 as int?,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
 as int?,elapsed: freezed == elapsed ? _self.elapsed : elapsed // ignore: cast_nullable_to_non_nullable
@@ -2907,16 +2976,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsRuntime&&(identical(other.start, start) || other.start == start)&&(identical(other.end, end) || other.end == end)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _YabsRuntime&&(identical(other.start, start) || other.start == start)&&(identical(other.end, end) || other.end == end)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,start,end,elapsed);
+int get hashCode {
+    return Object.hash(runtimeType,start,end,elapsed);
+}
 
 @override
 String toString() {
-  return 'YabsRuntime(start: $start, end: $end, elapsed: $elapsed)';
+    return 'YabsRuntime(start: $start, end: $end, elapsed: $elapsed)';
 }
 
 

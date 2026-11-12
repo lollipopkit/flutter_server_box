@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'benchmark.dart';
@@ -9,6 +9,7 @@ part of 'benchmark.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -29,16 +30,21 @@ $BenchmarkStateCopyWith<BenchmarkState> get copyWith => _$BenchmarkStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BenchmarkState&&(identical(other.active, active) || other.active == active)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.error, error) || other.error == error));
+  final _this = this as BenchmarkState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BenchmarkState&&(identical(other.active, _this.active) || other.active == _this.active)&&const DeepCollectionEquality().equals(other.history, _this.history)&&(identical(other.isBusy, _this.isBusy) || other.isBusy == _this.isBusy)&&(identical(other.error, _this.error) || other.error == _this.error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,active,const DeepCollectionEquality().hash(history),isBusy,error);
+int get hashCode {
+  final _this = this as BenchmarkState;
+  return Object.hash(runtimeType,_this.active,const DeepCollectionEquality().hash(_this.history),_this.isBusy,_this.error);
+}
 
 @override
 String toString() {
-  return 'BenchmarkState(active: $active, history: $history, isBusy: $isBusy, error: $error)';
+  final _this = this as BenchmarkState;
+  return 'BenchmarkState(active: ${_this.active}, history: ${_this.history}, isBusy: ${_this.isBusy}, error: ${_this.error})';
 }
 
 
@@ -67,7 +73,7 @@ class _$BenchmarkStateCopyWithImpl<$Res>
 /// Create a copy of BenchmarkState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? active = freezed,Object? history = null,Object? isBusy = null,Object? error = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(BenchmarkState(
 active: freezed == active ? _self.active : active // ignore: cast_nullable_to_non_nullable
 as BenchmarkRun?,history: null == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
 as List<BenchmarkRun>,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
@@ -213,7 +219,7 @@ return $default(_that.active,_that.history,_that.isBusy,_that.error);case _:
 
 
 class _BenchmarkState implements BenchmarkState {
-  const _BenchmarkState({this.active, final  List<BenchmarkRun> history = const <BenchmarkRun>[], this.isBusy = false, this.error}): _history = history;
+  const _BenchmarkState({this.active,  List<BenchmarkRun> history = const <BenchmarkRun>[], this.isBusy = false, this.error}): _history = history;
   
 
 /// The run in flight, picked back up from storage when the page opens.
@@ -241,16 +247,18 @@ _$BenchmarkStateCopyWith<_BenchmarkState> get copyWith => __$BenchmarkStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BenchmarkState&&(identical(other.active, active) || other.active == active)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.error, error) || other.error == error));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BenchmarkState&&(identical(other.active, active) || other.active == active)&&const DeepCollectionEquality().equals(other.history, _history)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,active,const DeepCollectionEquality().hash(_history),isBusy,error);
+int get hashCode {
+    return Object.hash(runtimeType,active,const DeepCollectionEquality().hash(_history),isBusy,error);
+}
 
 @override
 String toString() {
-  return 'BenchmarkState(active: $active, history: $history, isBusy: $isBusy, error: $error)';
+    return 'BenchmarkState(active: $active, history: $history, isBusy: $isBusy, error: $error)';
 }
 
 

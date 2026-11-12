@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'bmc_credential.dart';
@@ -9,6 +9,7 @@ part of 'bmc_credential.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $BmcCredentialStateCopyWith<BmcCredentialState> get copyWith => _$BmcCredentialS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcCredentialState&&const DeepCollectionEquality().equals(other.creds, creds));
+  final _this = this as BmcCredentialState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcCredentialState&&const DeepCollectionEquality().equals(other.creds, _this.creds));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(creds));
+int get hashCode {
+  final _this = this as BmcCredentialState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.creds));
+}
 
 @override
 String toString() {
-  return 'BmcCredentialState(creds: $creds)';
+  final _this = this as BmcCredentialState;
+  return 'BmcCredentialState(creds: ${_this.creds})';
 }
 
 
@@ -63,7 +69,7 @@ class _$BmcCredentialStateCopyWithImpl<$Res>
 /// Create a copy of BmcCredentialState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? creds = null,}) {
-  return _then(_self.copyWith(
+  return _then(BmcCredentialState(
 creds: null == creds ? _self.creds : creds // ignore: cast_nullable_to_non_nullable
 as List<BmcCredential>,
   ));
@@ -206,7 +212,7 @@ return $default(_that.creds);case _:
 
 
 class _BmcCredentialState implements BmcCredentialState {
-  const _BmcCredentialState({final  List<BmcCredential> creds = const <BmcCredential>[]}): _creds = creds;
+  const _BmcCredentialState({ List<BmcCredential> creds = const <BmcCredential>[]}): _creds = creds;
   
 
  final  List<BmcCredential> _creds;
@@ -227,16 +233,18 @@ _$BmcCredentialStateCopyWith<_BmcCredentialState> get copyWith => __$BmcCredenti
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcCredentialState&&const DeepCollectionEquality().equals(other._creds, _creds));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcCredentialState&&const DeepCollectionEquality().equals(other.creds, _creds));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_creds));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_creds));
+}
 
 @override
 String toString() {
-  return 'BmcCredentialState(creds: $creds)';
+    return 'BmcCredentialState(creds: $creds)';
 }
 
 

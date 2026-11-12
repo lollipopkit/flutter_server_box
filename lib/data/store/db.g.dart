@@ -10444,7 +10444,7 @@ class $$PrivateKeysTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$PrivateKeysTable, PrivateKeyRow>(table),
                   $$PrivateKeysTableReferences(db, table, e),
                 ),
               )
@@ -10763,7 +10763,7 @@ class $$BmcCredentialsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$BmcCredentialsTable, BmcCredentialRow>(table),
                   $$BmcCredentialsTableReferences(db, table, e),
                 ),
               )
@@ -12812,7 +12812,7 @@ class $$ServersTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServersTable, ServerRow>(table),
                   $$ServersTableReferences(db, table, e),
                 ),
               )
@@ -13413,7 +13413,7 @@ class $$ServerTagsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerTagsTable, ServerTagRow>(table),
                   $$ServerTagsTableReferences(db, table, e),
                 ),
               )
@@ -13686,7 +13686,7 @@ class $$ServerEnvsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerEnvsTable, ServerEnvRow>(table),
                   $$ServerEnvsTableReferences(db, table, e),
                 ),
               )
@@ -14032,7 +14032,7 @@ class $$ServerJumpsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerJumpsTable, ServerJumpRow>(table),
                   $$ServerJumpsTableReferences(db, table, e),
                 ),
               )
@@ -14335,7 +14335,9 @@ class $$ServerIdentityFilesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerIdentityFilesTable, ServerIdentityFileRow>(
+                    table,
+                  ),
                   $$ServerIdentityFilesTableReferences(db, table, e),
                 ),
               )
@@ -14603,7 +14605,9 @@ class $$ServerDisabledCmdsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerDisabledCmdsTable, ServerDisabledCmdRow>(
+                    table,
+                  ),
                   $$ServerDisabledCmdsTableReferences(db, table, e),
                 ),
               )
@@ -14880,7 +14884,7 @@ class $$KnownHostsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$KnownHostsTable, KnownHostRow>(table),
                   $$KnownHostsTableReferences(db, table, e),
                 ),
               )
@@ -15277,7 +15281,7 @@ class $$SnippetsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$SnippetsTable, SnippetRow>(table),
                   $$SnippetsTableReferences(db, table, e),
                 ),
               )
@@ -15536,7 +15540,7 @@ class $$SnippetTagsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$SnippetTagsTable, SnippetTagRow>(table),
                   $$SnippetTagsTableReferences(db, table, e),
                 ),
               )
@@ -15865,7 +15869,7 @@ class $$SnippetAutoRunOnTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$SnippetAutoRunOnTable, SnippetAutoRunRow>(table),
                   $$SnippetAutoRunOnTableReferences(db, table, e),
                 ),
               )
@@ -16292,7 +16296,7 @@ class $$PortForwardsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$PortForwardsTable, PortForwardRow>(table),
                   $$PortForwardsTableReferences(db, table, e),
                 ),
               )
@@ -16796,7 +16800,10 @@ class $$RemoteDesktopProfilesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<
+                    $RemoteDesktopProfilesTable,
+                    RemoteDesktopProfileRow
+                  >(table),
                   $$RemoteDesktopProfilesTableReferences(db, table, e),
                 ),
               )
@@ -17075,7 +17082,7 @@ class $$ContainerHostsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ContainerHostsTable, ContainerHostRow>(table),
                   $$ContainerHostsTableReferences(db, table, e),
                 ),
               )
@@ -17335,7 +17342,9 @@ class $$ContainerRuntimesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ContainerRuntimesTable, ContainerRuntimeRow>(
+                    table,
+                  ),
                   $$ContainerRuntimesTableReferences(db, table, e),
                 ),
               )
@@ -17690,7 +17699,7 @@ class $$ServerPvesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerPvesTable, ServerPveRow>(table),
                   $$ServerPvesTableReferences(db, table, e),
                 ),
               )
@@ -18045,7 +18054,7 @@ class $$ConnStatsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ConnStatsTable, ConnStatRow>(table),
                   $$ConnStatsTableReferences(db, table, e),
                 ),
               )
@@ -18318,7 +18327,7 @@ class $$ServerDistsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ServerDistsTable, ServerDistRow>(table),
                   $$ServerDistsTableReferences(db, table, e),
                 ),
               )
@@ -18751,7 +18760,7 @@ class $$BenchmarkRunsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$BenchmarkRunsTable, BenchmarkRunRow>(table),
                   $$BenchmarkRunsTableReferences(db, table, e),
                 ),
               )
@@ -18947,7 +18956,16 @@ class $$TombstonesTableTableManager
                 deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$TombstonesTable, TombstoneRow>(table),
+                  BaseReferences<_$AppDb, $TombstonesTable, TombstoneRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -19066,7 +19084,16 @@ class $$SyncStatesTableTableManager
           createCompanionCallback: ({required String k, required String v}) =>
               SyncStatesCompanion.insert(k: k, v: v),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$SyncStatesTable, SyncStateRow>(table),
+                  BaseReferences<_$AppDb, $SyncStatesTable, SyncStateRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -19208,7 +19235,16 @@ class $$SyncRecordsTableTableManager
               ({required String c, required String id, required String hlc}) =>
                   SyncRecordsCompanion.insert(c: c, id: id, hlc: hlc),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$SyncRecordsTable, SyncRecordRow>(table),
+                  BaseReferences<_$AppDb, $SyncRecordsTable, SyncRecordRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -19390,7 +19426,16 @@ class $$SyncPassedTableTableManager
                 required String d,
               }) => SyncPassedCompanion.insert(e: e, c: c, id: id, h: h, d: d),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$SyncPassedTable, SyncPassedRow>(table),
+                  BaseReferences<_$AppDb, $SyncPassedTable, SyncPassedRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),

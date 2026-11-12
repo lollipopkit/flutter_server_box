@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'remote_desktop.dart';
@@ -9,6 +9,7 @@ part of 'remote_desktop.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,12 +29,16 @@ $RemoteDesktopProfileCopyWith<RemoteDesktopProfile> get copyWith => _$RemoteDesk
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.username, username) || other.username == username)&&(identical(other.password, password) || other.password == password)&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.viewOnly, viewOnly) || other.viewOnly == viewOnly)&&(identical(other.shared, shared) || other.shared == shared)&&(identical(other.trustedCertSha256, trustedCertSha256) || other.trustedCertSha256 == trustedCertSha256));
+  final _this = this as RemoteDesktopProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.protocol, _this.protocol) || other.protocol == _this.protocol)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.password, _this.password) || other.password == _this.password)&&(identical(other.domain, _this.domain) || other.domain == _this.domain)&&(identical(other.viewOnly, _this.viewOnly) || other.viewOnly == _this.viewOnly)&&(identical(other.shared, _this.shared) || other.shared == _this.shared)&&(identical(other.trustedCertSha256, _this.trustedCertSha256) || other.trustedCertSha256 == _this.trustedCertSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,protocol,host,port,username,password,domain,viewOnly,shared,trustedCertSha256);
+int get hashCode {
+  final _this = this as RemoteDesktopProfile;
+  return Object.hash(runtimeType,_this.id,_this.serverId,_this.name,_this.protocol,_this.host,_this.port,_this.username,_this.password,_this.domain,_this.viewOnly,_this.shared,_this.trustedCertSha256);
+}
 
 
 
@@ -62,7 +67,7 @@ class _$RemoteDesktopProfileCopyWithImpl<$Res>
 /// Create a copy of RemoteDesktopProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? protocol = null,Object? host = null,Object? port = null,Object? username = freezed,Object? password = freezed,Object? domain = freezed,Object? viewOnly = null,Object? shared = null,Object? trustedCertSha256 = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RemoteDesktopProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -245,12 +250,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RemoteDesktopProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.username, username) || other.username == username)&&(identical(other.password, password) || other.password == password)&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.viewOnly, viewOnly) || other.viewOnly == viewOnly)&&(identical(other.shared, shared) || other.shared == shared)&&(identical(other.trustedCertSha256, trustedCertSha256) || other.trustedCertSha256 == trustedCertSha256));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RemoteDesktopProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.username, username) || other.username == username)&&(identical(other.password, password) || other.password == password)&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.viewOnly, viewOnly) || other.viewOnly == viewOnly)&&(identical(other.shared, shared) || other.shared == shared)&&(identical(other.trustedCertSha256, trustedCertSha256) || other.trustedCertSha256 == trustedCertSha256));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,protocol,host,port,username,password,domain,viewOnly,shared,trustedCertSha256);
+int get hashCode {
+    return Object.hash(runtimeType,id,serverId,name,protocol,host,port,username,password,domain,viewOnly,shared,trustedCertSha256);
+}
 
 
 

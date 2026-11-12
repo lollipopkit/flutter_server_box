@@ -22,8 +22,8 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>FLTEnableImpeller</key>
-	<string>$(FLT_ENABLE_IMPELLER)</string>
+	<!-- FLTEnableImpeller: a boolean the Runner build phase "Set FLTEnableImpeller"
+	     writes from FLT_ENABLE_IMPELLER (Configs/AppInfo.xcconfig). -->
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>

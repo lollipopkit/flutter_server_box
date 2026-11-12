@@ -233,7 +233,7 @@ final class VirtReadTool extends ToolFunc {
       final head = '## $name ($id, ${hosts[id]!.name})';
       // Not read unless it exists: reading it would load it.
       final provider = virtHostProvider(id);
-      if (!c.exists(provider)) {
+      if (!c.read(provider.exists)) {
         out.add('$head\nNot loaded this session.');
         continue;
       }
@@ -527,7 +527,7 @@ final class RemoteDesktopTool extends ToolFunc {
         final servers = c.read(serversProvider).servers;
         final only = _str(args, 'server_id');
         // Sessions only if there are any: reading it would start the tracker.
-        final live = c.exists(remoteDesktopSessionsProvider)
+        final live = c.read(remoteDesktopSessionsProvider.exists)
             ? c.read(remoteDesktopSessionsProvider).sessions
             : const <String, RemoteDesktopSessionView>{};
         final profiles = [
@@ -565,7 +565,7 @@ final class RemoteDesktopTool extends ToolFunc {
       case 'disconnect':
         final p = _profile(args);
         // No tracker, no session: nothing to close.
-        if (c.exists(remoteDesktopSessionsProvider)) {
+        if (c.read(remoteDesktopSessionsProvider.exists)) {
           await c.read(remoteDesktopSessionsProvider.notifier).closeForProfile(p.id);
         }
         return LlmToolResult.text('Closed ${p.name}.');

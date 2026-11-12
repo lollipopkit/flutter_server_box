@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'snippet.dart';
@@ -9,6 +9,7 @@ part of 'snippet.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $PlanErrorCopyWith<PlanError> get copyWith => _$PlanErrorCopyWithImpl<PlanError>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlanError&&(identical(other.key, key) || other.key == key));
+  final _this = this as PlanError;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlanError&&(identical(other.key, _this.key) || other.key == _this.key));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key);
+int get hashCode {
+  final _this = this as PlanError;
+  return Object.hash(runtimeType,_this.key);
+}
 
 @override
 String toString() {
-  return 'PlanError(key: $key)';
+  final _this = this as PlanError;
+  return 'PlanError(key: ${_this.key})';
 }
 
 
@@ -63,7 +69,7 @@ class _$PlanErrorCopyWithImpl<$Res>
 /// Create a copy of PlanError
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? key = null,}) {
-  return _then(_self.copyWith(
+  return _then(PlanError.unanswerable(
 key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -215,16 +221,18 @@ $PlanError_UnanswerableCopyWith<PlanError_Unanswerable> get copyWith => _$PlanEr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlanError_Unanswerable&&(identical(other.key, key) || other.key == key));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PlanError_Unanswerable&&(identical(other.key, key) || other.key == key));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key);
+int get hashCode {
+    return Object.hash(runtimeType,key);
+}
 
 @override
 String toString() {
-  return 'PlanError.unanswerable(key: $key)';
+    return 'PlanError.unanswerable(key: $key)';
 }
 
 
@@ -271,7 +279,7 @@ mixin _$Step {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Step);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Step);
 }
 
 
@@ -280,7 +288,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Step()';
+    return 'Step()';
 }
 
 
@@ -453,16 +461,18 @@ $Step_TextCopyWith<Step_Text> get copyWith => _$Step_TextCopyWithImpl<Step_Text>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Text&&(identical(other.text, text) || other.text == text));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Text&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode {
+    return Object.hash(runtimeType,text);
+}
 
 @override
 String toString() {
-  return 'Step.text(text: $text)';
+    return 'Step.text(text: $text)';
 }
 
 
@@ -522,16 +532,18 @@ $Step_ComboCopyWith<Step_Combo> get copyWith => _$Step_ComboCopyWithImpl<Step_Co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Combo&&(identical(other.ctrl, ctrl) || other.ctrl == ctrl)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.key, key) || other.key == key)&&(identical(other.rest, rest) || other.rest == rest));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Combo&&(identical(other.ctrl, ctrl) || other.ctrl == ctrl)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.key, key) || other.key == key)&&(identical(other.rest, rest) || other.rest == rest));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ctrl,alt,key,rest);
+int get hashCode {
+    return Object.hash(runtimeType,ctrl,alt,key,rest);
+}
 
 @override
 String toString() {
-  return 'Step.combo(ctrl: $ctrl, alt: $alt, key: $key, rest: $rest)';
+    return 'Step.combo(ctrl: $ctrl, alt: $alt, key: $key, rest: $rest)';
 }
 
 
@@ -591,16 +603,18 @@ $Step_SleepCopyWith<Step_Sleep> get copyWith => _$Step_SleepCopyWithImpl<Step_Sl
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Sleep&&(identical(other.seconds, seconds) || other.seconds == seconds));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Sleep&&(identical(other.seconds, seconds) || other.seconds == seconds));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,seconds);
+int get hashCode {
+    return Object.hash(runtimeType,seconds);
+}
 
 @override
 String toString() {
-  return 'Step.sleep(seconds: $seconds)';
+    return 'Step.sleep(seconds: $seconds)';
 }
 
 
@@ -657,16 +671,18 @@ $Step_EnterCopyWith<Step_Enter> get copyWith => _$Step_EnterCopyWithImpl<Step_En
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Enter&&(identical(other.times, times) || other.times == times));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Step_Enter&&(identical(other.times, times) || other.times == times));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,times);
+int get hashCode {
+    return Object.hash(runtimeType,times);
+}
 
 @override
 String toString() {
-  return 'Step.enter(times: $times)';
+    return 'Step.enter(times: $times)';
 }
 
 

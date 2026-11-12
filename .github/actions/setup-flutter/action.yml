@@ -85,7 +85,7 @@ runs:
       uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       with:
         channel: stable
-        flutter-version: 3.47.8
+        flutter-version: 3.50.0
 
     # After the job has used it, so what `flutter` downloads on first use
     # (engine artifacts, the Dart SDK) is in it too. A key that already exists

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'port_forward.dart';
@@ -9,6 +9,7 @@ part of 'port_forward.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $PortForwardConfigCopyWith<PortForwardConfig> get copyWith => _$PortForwardConfi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
+  final _this = this as PortForwardConfig;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardConfig&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.localHost, _this.localHost) || other.localHost == _this.localHost)&&(identical(other.localPort, _this.localPort) || other.localPort == _this.localPort)&&(identical(other.remoteHost, _this.remoteHost) || other.remoteHost == _this.remoteHost)&&(identical(other.remotePort, _this.remotePort) || other.remotePort == _this.remotePort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
+int get hashCode {
+  final _this = this as PortForwardConfig;
+  return Object.hash(runtimeType,_this.id,_this.serverId,_this.name,_this.type,_this.localHost,_this.localPort,_this.remoteHost,_this.remotePort);
+}
 
 @override
 String toString() {
-  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, type: $type, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort)';
+  final _this = this as PortForwardConfig;
+  return 'PortForwardConfig(id: ${_this.id}, serverId: ${_this.serverId}, name: ${_this.name}, type: ${_this.type}, localHost: ${_this.localHost}, localPort: ${_this.localPort}, remoteHost: ${_this.remoteHost}, remotePort: ${_this.remotePort})';
 }
 
 
@@ -63,7 +69,7 @@ class _$PortForwardConfigCopyWithImpl<$Res>
 /// Create a copy of PortForwardConfig
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? type = null,Object? localHost = freezed,Object? localPort = null,Object? remoteHost = freezed,Object? remotePort = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(PortForwardConfig(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -235,16 +241,18 @@ _$PortForwardConfigCopyWith<_PortForwardConfig> get copyWith => __$PortForwardCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
+int get hashCode {
+    return Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
+}
 
 @override
 String toString() {
-  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, type: $type, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort)';
+    return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, type: $type, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort)';
 }
 
 
@@ -303,16 +311,21 @@ $PortForwardStateCopyWith<PortForwardState> get copyWith => _$PortForwardStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&const DeepCollectionEquality().equals(other.configs, configs)&&const DeepCollectionEquality().equals(other.activeForwards, activeForwards));
+  final _this = this as PortForwardState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardState&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&const DeepCollectionEquality().equals(other.configs, _this.configs)&&const DeepCollectionEquality().equals(other.activeForwards, _this.activeForwards));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,const DeepCollectionEquality().hash(configs),const DeepCollectionEquality().hash(activeForwards));
+int get hashCode {
+  final _this = this as PortForwardState;
+  return Object.hash(runtimeType,_this.serverId,const DeepCollectionEquality().hash(_this.configs),const DeepCollectionEquality().hash(_this.activeForwards));
+}
 
 @override
 String toString() {
-  return 'PortForwardState(serverId: $serverId, configs: $configs, activeForwards: $activeForwards)';
+  final _this = this as PortForwardState;
+  return 'PortForwardState(serverId: ${_this.serverId}, configs: ${_this.configs}, activeForwards: ${_this.activeForwards})';
 }
 
 
@@ -341,7 +354,7 @@ class _$PortForwardStateCopyWithImpl<$Res>
 /// Create a copy of PortForwardState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? configs = null,Object? activeForwards = null,}) {
-  return _then(_self.copyWith(
+  return _then(PortForwardState(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,configs: null == configs ? _self.configs : configs // ignore: cast_nullable_to_non_nullable
 as List<PortForwardConfig>,activeForwards: null == activeForwards ? _self.activeForwards : activeForwards // ignore: cast_nullable_to_non_nullable
@@ -486,7 +499,7 @@ return $default(_that.serverId,_that.configs,_that.activeForwards);case _:
 
 
 class _PortForwardState implements PortForwardState {
-  const _PortForwardState({required this.serverId, final  List<PortForwardConfig> configs = const [], final  Map<String, PortForwardStatus> activeForwards = const {}}): _configs = configs,_activeForwards = activeForwards;
+  const _PortForwardState({required this.serverId,  List<PortForwardConfig> configs = const [],  Map<String, PortForwardStatus> activeForwards = const {}}): _configs = configs,_activeForwards = activeForwards;
   
 
 @override final  String serverId;
@@ -515,16 +528,18 @@ _$PortForwardStateCopyWith<_PortForwardState> get copyWith => __$PortForwardStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&const DeepCollectionEquality().equals(other._configs, _configs)&&const DeepCollectionEquality().equals(other._activeForwards, _activeForwards));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&const DeepCollectionEquality().equals(other.configs, _configs)&&const DeepCollectionEquality().equals(other.activeForwards, _activeForwards));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,const DeepCollectionEquality().hash(_configs),const DeepCollectionEquality().hash(_activeForwards));
+int get hashCode {
+    return Object.hash(runtimeType,serverId,const DeepCollectionEquality().hash(_configs),const DeepCollectionEquality().hash(_activeForwards));
+}
 
 @override
 String toString() {
-  return 'PortForwardState(serverId: $serverId, configs: $configs, activeForwards: $activeForwards)';
+    return 'PortForwardState(serverId: $serverId, configs: $configs, activeForwards: $activeForwards)';
 }
 
 

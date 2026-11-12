@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virtual_keyboard.dart';
@@ -9,6 +9,7 @@ part of 'virtual_keyboard.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $VirtKeyStateCopyWith<VirtKeyState> get copyWith => _$VirtKeyStateCopyWithImpl<V
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtKeyState&&(identical(other.ctrl, ctrl) || other.ctrl == ctrl)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.shift, shift) || other.shift == shift));
+  final _this = this as VirtKeyState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtKeyState&&(identical(other.ctrl, _this.ctrl) || other.ctrl == _this.ctrl)&&(identical(other.alt, _this.alt) || other.alt == _this.alt)&&(identical(other.shift, _this.shift) || other.shift == _this.shift));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ctrl,alt,shift);
+int get hashCode {
+  final _this = this as VirtKeyState;
+  return Object.hash(runtimeType,_this.ctrl,_this.alt,_this.shift);
+}
 
 @override
 String toString() {
-  return 'VirtKeyState(ctrl: $ctrl, alt: $alt, shift: $shift)';
+  final _this = this as VirtKeyState;
+  return 'VirtKeyState(ctrl: ${_this.ctrl}, alt: ${_this.alt}, shift: ${_this.shift})';
 }
 
 
@@ -63,7 +69,7 @@ class _$VirtKeyStateCopyWithImpl<$Res>
 /// Create a copy of VirtKeyState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? ctrl = null,Object? alt = null,Object? shift = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtKeyState(
 ctrl: null == ctrl ? _self.ctrl : ctrl // ignore: cast_nullable_to_non_nullable
 as bool,alt: null == alt ? _self.alt : alt // ignore: cast_nullable_to_non_nullable
 as bool,shift: null == shift ? _self.shift : shift // ignore: cast_nullable_to_non_nullable
@@ -225,16 +231,18 @@ _$VirtKeyStateCopyWith<_VirtKeyState> get copyWith => __$VirtKeyStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtKeyState&&(identical(other.ctrl, ctrl) || other.ctrl == ctrl)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.shift, shift) || other.shift == shift));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtKeyState&&(identical(other.ctrl, ctrl) || other.ctrl == ctrl)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.shift, shift) || other.shift == shift));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ctrl,alt,shift);
+int get hashCode {
+    return Object.hash(runtimeType,ctrl,alt,shift);
+}
 
 @override
 String toString() {
-  return 'VirtKeyState(ctrl: $ctrl, alt: $alt, shift: $shift)';
+    return 'VirtKeyState(ctrl: $ctrl, alt: $alt, shift: $shift)';
 }
 
 

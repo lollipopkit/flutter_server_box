@@ -92,12 +92,12 @@ class ServersNotifier extends _$ServersNotifier {
     for (final entry in previousServers.entries) {
       if (newState.servers.containsKey(entry.key)) continue;
       final provider = serverProvider(entry.key);
-      if (ref.exists(provider)) ref.invalidate(provider);
+      if (ref.read(provider.exists)) ref.invalidate(provider);
     }
     for (final entry in newState.servers.entries) {
       if (previousServers[entry.key] == entry.value) continue;
       final provider = serverProvider(entry.key);
-      if (ref.exists(provider)) {
+      if (ref.read(provider.exists)) {
         ref.read(provider.notifier).updateSpi(entry.value);
       }
     }

@@ -18,6 +18,9 @@ analyzer:
     - "**/*.pb.dart"
     - "**/*.pbenum.dart"
     - "**/*.pbjson.dart"
+    # `flutter gen-l10n`'s output: its template still names flutter_localizations'
+    # deprecated delegates (flutter/flutter#191072).
+    - lib/generated/**
     - build/**
     - android/**
     - ios/**

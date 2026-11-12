@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'disk_smart.dart';
@@ -9,6 +9,7 @@ part of 'disk_smart.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,12 +29,16 @@ $DiskSmartCopyWith<DiskSmart> get copyWith => _$DiskSmartCopyWithImpl<DiskSmart>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other.smartAttributes, smartAttributes));
+  final _this = this as DiskSmart;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiskSmart&&(identical(other.device, _this.device) || other.device == _this.device)&&(identical(other.healthy, _this.healthy) || other.healthy == _this.healthy)&&(identical(other.temperature, _this.temperature) || other.temperature == _this.temperature)&&(identical(other.model, _this.model) || other.model == _this.model)&&(identical(other.serial, _this.serial) || other.serial == _this.serial)&&(identical(other.powerOnHours, _this.powerOnHours) || other.powerOnHours == _this.powerOnHours)&&(identical(other.powerCycleCount, _this.powerCycleCount) || other.powerCycleCount == _this.powerCycleCount)&&const DeepCollectionEquality().equals(other.smartAttributes, _this.smartAttributes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(smartAttributes));
+int get hashCode {
+  final _this = this as DiskSmart;
+  return Object.hash(runtimeType,_this.device,_this.healthy,_this.temperature,_this.model,_this.serial,_this.powerOnHours,_this.powerCycleCount,const DeepCollectionEquality().hash(_this.smartAttributes));
+}
 
 
 
@@ -62,7 +67,7 @@ class _$DiskSmartCopyWithImpl<$Res>
 /// Create a copy of DiskSmart
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? device = null,Object? healthy = freezed,Object? temperature = freezed,Object? model = freezed,Object? serial = freezed,Object? powerOnHours = freezed,Object? powerCycleCount = freezed,Object? smartAttributes = null,}) {
-  return _then(_self.copyWith(
+  return _then(DiskSmart(
 device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
 as String,healthy: freezed == healthy ? _self.healthy : healthy // ignore: cast_nullable_to_non_nullable
 as bool?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
@@ -212,7 +217,7 @@ return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.s
 @JsonSerializable()
 
 class _DiskSmart extends DiskSmart {
-  const _DiskSmart({required this.device, this.healthy, this.temperature, this.model, this.serial, this.powerOnHours, this.powerCycleCount, required final  Map<String, SmartAttribute> smartAttributes}): _smartAttributes = smartAttributes,super._();
+  const _DiskSmart({required this.device, this.healthy, this.temperature, this.model, this.serial, this.powerOnHours, this.powerCycleCount, required  Map<String, SmartAttribute> smartAttributes}): _smartAttributes = smartAttributes,super._();
   factory _DiskSmart.fromJson(Map<String, dynamic> json) => _$DiskSmartFromJson(json);
 
 @override final  String device;
@@ -243,12 +248,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other._smartAttributes, _smartAttributes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other.smartAttributes, _smartAttributes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(_smartAttributes));
+int get hashCode {
+    return Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(_smartAttributes));
+}
 
 
 
@@ -310,12 +317,16 @@ $SmartAttributeCopyWith<SmartAttribute> get copyWith => _$SmartAttributeCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SmartAttribute&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value)&&(identical(other.worst, worst) || other.worst == worst)&&(identical(other.thresh, thresh) || other.thresh == thresh)&&(identical(other.whenFailed, whenFailed) || other.whenFailed == whenFailed)&&const DeepCollectionEquality().equals(other.rawValue, rawValue)&&(identical(other.rawString, rawString) || other.rawString == rawString)&&(identical(other.flags, flags) || other.flags == flags));
+  final _this = this as SmartAttribute;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SmartAttribute&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.worst, _this.worst) || other.worst == _this.worst)&&(identical(other.thresh, _this.thresh) || other.thresh == _this.thresh)&&(identical(other.whenFailed, _this.whenFailed) || other.whenFailed == _this.whenFailed)&&const DeepCollectionEquality().equals(other.rawValue, _this.rawValue)&&(identical(other.rawString, _this.rawString) || other.rawString == _this.rawString)&&(identical(other.flags, _this.flags) || other.flags == _this.flags));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,value,worst,thresh,whenFailed,const DeepCollectionEquality().hash(rawValue),rawString,flags);
+int get hashCode {
+  final _this = this as SmartAttribute;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.value,_this.worst,_this.thresh,_this.whenFailed,const DeepCollectionEquality().hash(_this.rawValue),_this.rawString,_this.flags);
+}
 
 
 
@@ -344,7 +355,7 @@ class _$SmartAttributeCopyWithImpl<$Res>
 /// Create a copy of SmartAttribute
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? name = null,Object? value = freezed,Object? worst = freezed,Object? thresh = freezed,Object? whenFailed = freezed,Object? rawValue = freezed,Object? rawString = freezed,Object? flags = null,}) {
-  return _then(_self.copyWith(
+  return _then(SmartAttribute(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,value: freezed == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
@@ -530,12 +541,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SmartAttribute&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value)&&(identical(other.worst, worst) || other.worst == worst)&&(identical(other.thresh, thresh) || other.thresh == thresh)&&(identical(other.whenFailed, whenFailed) || other.whenFailed == whenFailed)&&const DeepCollectionEquality().equals(other.rawValue, rawValue)&&(identical(other.rawString, rawString) || other.rawString == rawString)&&(identical(other.flags, flags) || other.flags == flags));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SmartAttribute&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.value, value) || other.value == value)&&(identical(other.worst, worst) || other.worst == worst)&&(identical(other.thresh, thresh) || other.thresh == thresh)&&(identical(other.whenFailed, whenFailed) || other.whenFailed == whenFailed)&&const DeepCollectionEquality().equals(other.rawValue, rawValue)&&(identical(other.rawString, rawString) || other.rawString == rawString)&&(identical(other.flags, flags) || other.flags == flags));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,value,worst,thresh,whenFailed,const DeepCollectionEquality().hash(rawValue),rawString,flags);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,value,worst,thresh,whenFailed,const DeepCollectionEquality().hash(rawValue),rawString,flags);
+}
 
 
 
@@ -607,12 +620,16 @@ $SmartAttributeFlagsCopyWith<SmartAttributeFlags> get copyWith => _$SmartAttribu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SmartAttributeFlags&&(identical(other.value, value) || other.value == value)&&(identical(other.string, string) || other.string == string)&&(identical(other.prefailure, prefailure) || other.prefailure == prefailure)&&(identical(other.updatedOnline, updatedOnline) || other.updatedOnline == updatedOnline)&&(identical(other.performance, performance) || other.performance == performance)&&(identical(other.errorRate, errorRate) || other.errorRate == errorRate)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.autoKeep, autoKeep) || other.autoKeep == autoKeep));
+  final _this = this as SmartAttributeFlags;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SmartAttributeFlags&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.string, _this.string) || other.string == _this.string)&&(identical(other.prefailure, _this.prefailure) || other.prefailure == _this.prefailure)&&(identical(other.updatedOnline, _this.updatedOnline) || other.updatedOnline == _this.updatedOnline)&&(identical(other.performance, _this.performance) || other.performance == _this.performance)&&(identical(other.errorRate, _this.errorRate) || other.errorRate == _this.errorRate)&&(identical(other.eventCount, _this.eventCount) || other.eventCount == _this.eventCount)&&(identical(other.autoKeep, _this.autoKeep) || other.autoKeep == _this.autoKeep));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,value,string,prefailure,updatedOnline,performance,errorRate,eventCount,autoKeep);
+int get hashCode {
+  final _this = this as SmartAttributeFlags;
+  return Object.hash(runtimeType,_this.value,_this.string,_this.prefailure,_this.updatedOnline,_this.performance,_this.errorRate,_this.eventCount,_this.autoKeep);
+}
 
 
 
@@ -641,7 +658,7 @@ class _$SmartAttributeFlagsCopyWithImpl<$Res>
 /// Create a copy of SmartAttributeFlags
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? value = freezed,Object? string = freezed,Object? prefailure = null,Object? updatedOnline = null,Object? performance = null,Object? errorRate = null,Object? eventCount = null,Object? autoKeep = null,}) {
-  return _then(_self.copyWith(
+  return _then(SmartAttributeFlags(
 value: freezed == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as int?,string: freezed == string ? _self.string : string // ignore: cast_nullable_to_non_nullable
 as String?,prefailure: null == prefailure ? _self.prefailure : prefailure // ignore: cast_nullable_to_non_nullable
@@ -816,12 +833,14 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SmartAttributeFlags&&(identical(other.value, value) || other.value == value)&&(identical(other.string, string) || other.string == string)&&(identical(other.prefailure, prefailure) || other.prefailure == prefailure)&&(identical(other.updatedOnline, updatedOnline) || other.updatedOnline == updatedOnline)&&(identical(other.performance, performance) || other.performance == performance)&&(identical(other.errorRate, errorRate) || other.errorRate == errorRate)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.autoKeep, autoKeep) || other.autoKeep == autoKeep));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SmartAttributeFlags&&(identical(other.value, value) || other.value == value)&&(identical(other.string, string) || other.string == string)&&(identical(other.prefailure, prefailure) || other.prefailure == prefailure)&&(identical(other.updatedOnline, updatedOnline) || other.updatedOnline == updatedOnline)&&(identical(other.performance, performance) || other.performance == performance)&&(identical(other.errorRate, errorRate) || other.errorRate == errorRate)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.autoKeep, autoKeep) || other.autoKeep == autoKeep));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,value,string,prefailure,updatedOnline,performance,errorRate,eventCount,autoKeep);
+int get hashCode {
+    return Object.hash(runtimeType,value,string,prefailure,updatedOnline,performance,errorRate,eventCount,autoKeep);
+}
 
 
 

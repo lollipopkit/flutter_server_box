@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'remote_desktop.dart';
@@ -9,6 +9,7 @@ part of 'remote_desktop.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$RemoteDesktopEvent {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent()';
+    return 'RemoteDesktopEvent()';
 }
 
 
@@ -245,16 +246,18 @@ $RemoteDesktopEvent_ConnectionStateCopyWith<RemoteDesktopEvent_ConnectionState> 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_ConnectionState&&(identical(other.state, state) || other.state == state)&&(identical(other.attempt, attempt) || other.attempt == attempt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_ConnectionState&&(identical(other.state, state) || other.state == state)&&(identical(other.attempt, attempt) || other.attempt == attempt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,attempt);
+int get hashCode {
+    return Object.hash(runtimeType,state,attempt);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.connectionState(state: $state, attempt: $attempt)';
+    return 'RemoteDesktopEvent.connectionState(state: $state, attempt: $attempt)';
 }
 
 
@@ -315,16 +318,18 @@ $RemoteDesktopEvent_FrameCopyWith<RemoteDesktopEvent_Frame> get copyWith => _$Re
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Frame&&const DeepCollectionEquality().equals(other.bgra, bgra)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.sequence, sequence) || other.sequence == sequence));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Frame&&const DeepCollectionEquality().equals(other.bgra, bgra)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.sequence, sequence) || other.sequence == sequence));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(bgra),width,height,sequence);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(bgra),width,height,sequence);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.frame(bgra: $bgra, width: $width, height: $height, sequence: $sequence)';
+    return 'RemoteDesktopEvent.frame(bgra: $bgra, width: $width, height: $height, sequence: $sequence)';
 }
 
 
@@ -385,16 +390,18 @@ $RemoteDesktopEvent_ResolutionCopyWith<RemoteDesktopEvent_Resolution> get copyWi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Resolution&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Resolution&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,width,height);
+int get hashCode {
+    return Object.hash(runtimeType,width,height);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.resolution(width: $width, height: $height)';
+    return 'RemoteDesktopEvent.resolution(width: $width, height: $height)';
 }
 
 
@@ -447,7 +454,7 @@ class RemoteDesktopEvent_CursorDefault extends RemoteDesktopEvent {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorDefault);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorDefault);
 }
 
 
@@ -456,7 +463,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.cursorDefault()';
+    return 'RemoteDesktopEvent.cursorDefault()';
 }
 
 
@@ -479,7 +486,7 @@ class RemoteDesktopEvent_CursorHidden extends RemoteDesktopEvent {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorHidden);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorHidden);
 }
 
 
@@ -488,7 +495,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.cursorHidden()';
+    return 'RemoteDesktopEvent.cursorHidden()';
 }
 
 
@@ -517,16 +524,18 @@ $RemoteDesktopEvent_CursorPositionCopyWith<RemoteDesktopEvent_CursorPosition> ge
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorPosition&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorPosition&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,x,y);
+int get hashCode {
+    return Object.hash(runtimeType,x,y);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.cursorPosition(x: $x, y: $y)';
+    return 'RemoteDesktopEvent.cursorPosition(x: $x, y: $y)';
 }
 
 
@@ -588,16 +597,18 @@ $RemoteDesktopEvent_CursorBitmapCopyWith<RemoteDesktopEvent_CursorBitmap> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorBitmap&&const DeepCollectionEquality().equals(other.rgba, rgba)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.hotspotX, hotspotX) || other.hotspotX == hotspotX)&&(identical(other.hotspotY, hotspotY) || other.hotspotY == hotspotY));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CursorBitmap&&const DeepCollectionEquality().equals(other.rgba, rgba)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.hotspotX, hotspotX) || other.hotspotX == hotspotX)&&(identical(other.hotspotY, hotspotY) || other.hotspotY == hotspotY));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(rgba),width,height,hotspotX,hotspotY);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(rgba),width,height,hotspotX,hotspotY);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.cursorBitmap(rgba: $rgba, width: $width, height: $height, hotspotX: $hotspotX, hotspotY: $hotspotY)';
+    return 'RemoteDesktopEvent.cursorBitmap(rgba: $rgba, width: $width, height: $height, hotspotX: $hotspotX, hotspotY: $hotspotY)';
 }
 
 
@@ -658,16 +669,18 @@ $RemoteDesktopEvent_ClipboardTextCopyWith<RemoteDesktopEvent_ClipboardText> get 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_ClipboardText&&(identical(other.text, text) || other.text == text));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_ClipboardText&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode {
+    return Object.hash(runtimeType,text);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.clipboardText(text: $text)';
+    return 'RemoteDesktopEvent.clipboardText(text: $text)';
 }
 
 
@@ -729,16 +742,18 @@ $RemoteDesktopEvent_CertificateRequestCopyWith<RemoteDesktopEvent_CertificateReq
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CertificateRequest&&(identical(other.sha256, sha256) || other.sha256 == sha256)&&(identical(other.subject, subject) || other.subject == subject)&&(identical(other.issuer, issuer) || other.issuer == issuer)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.previousSha256, previousSha256) || other.previousSha256 == previousSha256));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_CertificateRequest&&(identical(other.sha256, sha256) || other.sha256 == sha256)&&(identical(other.subject, subject) || other.subject == subject)&&(identical(other.issuer, issuer) || other.issuer == issuer)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.previousSha256, previousSha256) || other.previousSha256 == previousSha256));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sha256,subject,issuer,validFrom,validTo,previousSha256);
+int get hashCode {
+    return Object.hash(runtimeType,sha256,subject,issuer,validFrom,validTo,previousSha256);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.certificateRequest(sha256: $sha256, subject: $subject, issuer: $issuer, validFrom: $validFrom, validTo: $validTo, previousSha256: $previousSha256)';
+    return 'RemoteDesktopEvent.certificateRequest(sha256: $sha256, subject: $subject, issuer: $issuer, validFrom: $validFrom, validTo: $validTo, previousSha256: $previousSha256)';
 }
 
 
@@ -801,16 +816,18 @@ $RemoteDesktopEvent_ErrorCopyWith<RemoteDesktopEvent_Error> get copyWith => _$Re
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Error&&(identical(other.message, message) || other.message == message)&&(identical(other.retryable, retryable) || other.retryable == retryable));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Error&&(identical(other.message, message) || other.message == message)&&(identical(other.retryable, retryable) || other.retryable == retryable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message,retryable);
+int get hashCode {
+    return Object.hash(runtimeType,message,retryable);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.error(message: $message, retryable: $retryable)';
+    return 'RemoteDesktopEvent.error(message: $message, retryable: $retryable)';
 }
 
 
@@ -870,16 +887,18 @@ $RemoteDesktopEvent_EndedCopyWith<RemoteDesktopEvent_Ended> get copyWith => _$Re
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Ended&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.message, message) || other.message == message));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Ended&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.message, message) || other.message == message));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,reason,failure,message);
+int get hashCode {
+    return Object.hash(runtimeType,reason,failure,message);
+}
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.ended(reason: $reason, failure: $failure, message: $message)';
+    return 'RemoteDesktopEvent.ended(reason: $reason, failure: $failure, message: $message)';
 }
 
 

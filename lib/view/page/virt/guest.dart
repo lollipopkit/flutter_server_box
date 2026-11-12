@@ -214,7 +214,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
   /// read it themselves.
   String? _hardwareRevision(VirtGuest guest) {
     final provider = virtHardwareProvider(widget.serverId, guest.id);
-    if (!ref.exists(provider)) return null;
+    if (!ref.read(provider.exists)) return null;
     return ref.watch(provider.select((a) => a.value?.revision));
   }
 
@@ -401,7 +401,7 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
   /// read this session already has — the notice is not worth a round trip to
   /// the host for every guest opened.
   ///
-  /// `ref.exists` does not subscribe: while the Hardware view is shown, it is
+  /// Reading `exists` does not subscribe: while the Hardware view is shown, it is
   /// what reads the hardware, and this watches it too, so the notice follows
   /// the first read and every one after it. Any other view is reached by a
   /// rebuild, which sees the read the Hardware view left.
@@ -415,7 +415,7 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
       return null;
     }
     final provider = virtHardwareProvider(widget.serverId, guest.id);
-    if (view != VirtGuestViewKind.hardware && !ref.exists(provider)) {
+    if (view != VirtGuestViewKind.hardware && !ref.read(provider.exists)) {
       return null;
     }
     final hw = ref.watch(provider).value;

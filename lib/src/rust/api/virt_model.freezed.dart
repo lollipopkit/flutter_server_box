@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt_model.dart';
@@ -9,6 +9,7 @@ part of 'virt_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail()';
+    return 'Detail()';
 }
 
 
@@ -293,7 +294,7 @@ class Detail_NoUser extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoUser);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoUser);
 }
 
 
@@ -302,7 +303,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.noUser()';
+    return 'Detail.noUser()';
 }
 
 
@@ -325,7 +326,7 @@ class Detail_PasswordRequired extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_PasswordRequired);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_PasswordRequired);
 }
 
 
@@ -334,7 +335,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.passwordRequired()';
+    return 'Detail.passwordRequired()';
 }
 
 
@@ -357,7 +358,7 @@ class Detail_TokenIncomplete extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TokenIncomplete);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TokenIncomplete);
 }
 
 
@@ -366,7 +367,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.tokenIncomplete()';
+    return 'Detail.tokenIncomplete()';
 }
 
 
@@ -389,7 +390,7 @@ class Detail_OtpRequired extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRequired);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRequired);
 }
 
 
@@ -398,7 +399,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.otpRequired()';
+    return 'Detail.otpRequired()';
 }
 
 
@@ -421,7 +422,7 @@ class Detail_OtpEmpty extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpEmpty);
 }
 
 
@@ -430,7 +431,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.otpEmpty()';
+    return 'Detail.otpEmpty()';
 }
 
 
@@ -453,7 +454,7 @@ class Detail_OtpRejected extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRejected);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRejected);
 }
 
 
@@ -462,7 +463,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.otpRejected()';
+    return 'Detail.otpRejected()';
 }
 
 
@@ -485,7 +486,7 @@ class Detail_InvalidBody extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidBody);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidBody);
 }
 
 
@@ -494,7 +495,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.invalidBody()';
+    return 'Detail.invalidBody()';
 }
 
 
@@ -517,7 +518,7 @@ class Detail_InvalidData extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidData);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidData);
 }
 
 
@@ -526,7 +527,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.invalidData()';
+    return 'Detail.invalidData()';
 }
 
 
@@ -549,7 +550,7 @@ class Detail_MissingTicket extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_MissingTicket);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_MissingTicket);
 }
 
 
@@ -558,7 +559,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.missingTicket()';
+    return 'Detail.missingTicket()';
 }
 
 
@@ -588,16 +589,18 @@ $Detail_NoPrivilegesCopyWith<Detail_NoPrivileges> get copyWith => _$Detail_NoPri
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoPrivileges&&(identical(other.token, token) || other.token == token)&&(identical(other.account, account) || other.account == account)&&(identical(other.command, command) || other.command == command));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoPrivileges&&(identical(other.token, token) || other.token == token)&&(identical(other.account, account) || other.account == account)&&(identical(other.command, command) || other.command == command));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,token,account,command);
+int get hashCode {
+    return Object.hash(runtimeType,token,account,command);
+}
 
 @override
 String toString() {
-  return 'Detail.noPrivileges(token: $token, account: $account, command: $command)';
+    return 'Detail.noPrivileges(token: $token, account: $account, command: $command)';
 }
 
 
@@ -651,7 +654,7 @@ class Detail_NotOffered extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NotOffered);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NotOffered);
 }
 
 
@@ -660,7 +663,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.notOffered()';
+    return 'Detail.notOffered()';
 }
 
 
@@ -690,16 +693,18 @@ $Detail_TaskStillRunningCopyWith<Detail_TaskStillRunning> get copyWith => _$Deta
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TaskStillRunning&&(identical(other.node, node) || other.node == node)&&(identical(other.upid, upid) || other.upid == upid)&&(identical(other.minutes, minutes) || other.minutes == minutes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TaskStillRunning&&(identical(other.node, node) || other.node == node)&&(identical(other.upid, upid) || other.upid == upid)&&(identical(other.minutes, minutes) || other.minutes == minutes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,node,upid,minutes);
+int get hashCode {
+    return Object.hash(runtimeType,node,upid,minutes);
+}
 
 @override
 String toString() {
-  return 'Detail.taskStillRunning(node: $node, upid: $upid, minutes: $minutes)';
+    return 'Detail.taskStillRunning(node: $node, upid: $upid, minutes: $minutes)';
 }
 
 
@@ -753,7 +758,7 @@ class Detail_CertNotPresented extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CertNotPresented);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CertNotPresented);
 }
 
 
@@ -762,7 +767,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.certNotPresented()';
+    return 'Detail.certNotPresented()';
 }
 
 
@@ -793,16 +798,18 @@ $Detail_NeedsPrivilegeCopyWith<Detail_NeedsPrivilege> get copyWith => _$Detail_N
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NeedsPrivilege&&(identical(other.account, account) || other.account == account)&&(identical(other.privilege, privilege) || other.privilege == privilege)&&(identical(other.path, path) || other.path == path)&&(identical(other.command, command) || other.command == command));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NeedsPrivilege&&(identical(other.account, account) || other.account == account)&&(identical(other.privilege, privilege) || other.privilege == privilege)&&(identical(other.path, path) || other.path == path)&&(identical(other.command, command) || other.command == command));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,account,privilege,path,command);
+int get hashCode {
+    return Object.hash(runtimeType,account,privilege,path,command);
+}
 
 @override
 String toString() {
-  return 'Detail.needsPrivilege(account: $account, privilege: $privilege, path: $path, command: $command)';
+    return 'Detail.needsPrivilege(account: $account, privilege: $privilege, path: $path, command: $command)';
 }
 
 
@@ -862,16 +869,18 @@ $Detail_RefusedCopyWith<Detail_Refused> get copyWith => _$Detail_RefusedCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_Refused&&(identical(other.issue, issue) || other.issue == issue));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_Refused&&(identical(other.issue, issue) || other.issue == issue));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,issue);
+int get hashCode {
+    return Object.hash(runtimeType,issue);
+}
 
 @override
 String toString() {
-  return 'Detail.refused(issue: $issue)';
+    return 'Detail.refused(issue: $issue)';
 }
 
 
@@ -928,16 +937,18 @@ $Detail_CreateRefusedCopyWith<Detail_CreateRefused> get copyWith => _$Detail_Cre
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CreateRefused&&(identical(other.issue, issue) || other.issue == issue));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CreateRefused&&(identical(other.issue, issue) || other.issue == issue));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,issue);
+int get hashCode {
+    return Object.hash(runtimeType,issue);
+}
 
 @override
 String toString() {
-  return 'Detail.createRefused(issue: $issue)';
+    return 'Detail.createRefused(issue: $issue)';
 }
 
 
@@ -994,16 +1005,18 @@ $Detail_HardwareRefusedCopyWith<Detail_HardwareRefused> get copyWith => _$Detail
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_HardwareRefused&&(identical(other.issue, issue) || other.issue == issue));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_HardwareRefused&&(identical(other.issue, issue) || other.issue == issue));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,issue);
+int get hashCode {
+    return Object.hash(runtimeType,issue);
+}
 
 @override
 String toString() {
-  return 'Detail.hardwareRefused(issue: $issue)';
+    return 'Detail.hardwareRefused(issue: $issue)';
 }
 
 
@@ -1060,16 +1073,18 @@ $Detail_BackupRefusedCopyWith<Detail_BackupRefused> get copyWith => _$Detail_Bac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_BackupRefused&&(identical(other.issue, issue) || other.issue == issue));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_BackupRefused&&(identical(other.issue, issue) || other.issue == issue));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,issue);
+int get hashCode {
+    return Object.hash(runtimeType,issue);
+}
 
 @override
 String toString() {
-  return 'Detail.backupRefused(issue: $issue)';
+    return 'Detail.backupRefused(issue: $issue)';
 }
 
 
@@ -1111,7 +1126,7 @@ as BackupIssue,
 
 
 class Detail_ApplyTouchesManagement extends Detail {
-  const Detail_ApplyTouchesManagement({required final  List<String> ifaces}): _ifaces = ifaces,super._();
+  const Detail_ApplyTouchesManagement({required  List<String> ifaces}): _ifaces = ifaces,super._();
   
 
  final  List<String> _ifaces;
@@ -1132,16 +1147,18 @@ $Detail_ApplyTouchesManagementCopyWith<Detail_ApplyTouchesManagement> get copyWi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyTouchesManagement&&const DeepCollectionEquality().equals(other._ifaces, _ifaces));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyTouchesManagement&&const DeepCollectionEquality().equals(other.ifaces, _ifaces));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_ifaces));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_ifaces));
+}
 
 @override
 String toString() {
-  return 'Detail.applyTouchesManagement(ifaces: $ifaces)';
+    return 'Detail.applyTouchesManagement(ifaces: $ifaces)';
 }
 
 
@@ -1193,7 +1210,7 @@ class Detail_ApplyUnreadable extends Detail {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyUnreadable);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyUnreadable);
 }
 
 
@@ -1202,7 +1219,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Detail.applyUnreadable()';
+    return 'Detail.applyUnreadable()';
 }
 
 
@@ -1220,7 +1237,7 @@ mixin _$HwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange);
 }
 
 
@@ -1229,7 +1246,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'HwChange()';
+    return 'HwChange()';
 }
 
 
@@ -1519,16 +1536,18 @@ $HwChange_SetCpuCopyWith<HwChange_SetCpu> get copyWith => _$HwChange_SetCpuCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetCpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpuType, cpuType) || other.cpuType == cpuType));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetCpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.online, online) || other.online == online)&&(identical(other.cpuType, cpuType) || other.cpuType == cpuType));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sockets,cores,online,cpuType);
+int get hashCode {
+    return Object.hash(runtimeType,sockets,cores,online,cpuType);
+}
 
 @override
 String toString() {
-  return 'HwChange.setCpu(sockets: $sockets, cores: $cores, online: $online, cpuType: $cpuType)';
+    return 'HwChange.setCpu(sockets: $sockets, cores: $cores, online: $online, cpuType: $cpuType)';
 }
 
 
@@ -1590,16 +1609,18 @@ $HwChange_SetMemoryCopyWith<HwChange_SetMemory> get copyWith => _$HwChange_SetMe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetMemory&&(identical(other.mib, mib) || other.mib == mib)&&(identical(other.minMib, minMib) || other.minMib == minMib)&&(identical(other.swapMib, swapMib) || other.swapMib == swapMib));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetMemory&&(identical(other.mib, mib) || other.mib == mib)&&(identical(other.minMib, minMib) || other.minMib == minMib)&&(identical(other.swapMib, swapMib) || other.swapMib == swapMib));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mib,minMib,swapMib);
+int get hashCode {
+    return Object.hash(runtimeType,mib,minMib,swapMib);
+}
 
 @override
 String toString() {
-  return 'HwChange.setMemory(mib: $mib, minMib: $minMib, swapMib: $swapMib)';
+    return 'HwChange.setMemory(mib: $mib, minMib: $minMib, swapMib: $swapMib)';
 }
 
 
@@ -1659,16 +1680,18 @@ $HwChange_GrowDiskCopyWith<HwChange_GrowDisk> get copyWith => _$HwChange_GrowDis
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_GrowDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.bytes, bytes) || other.bytes == bytes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_GrowDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.bytes, bytes) || other.bytes == bytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,bytes);
+int get hashCode {
+    return Object.hash(runtimeType,key,bytes);
+}
 
 @override
 String toString() {
-  return 'HwChange.growDisk(key: $key, bytes: $bytes)';
+    return 'HwChange.growDisk(key: $key, bytes: $bytes)';
 }
 
 
@@ -1728,16 +1751,18 @@ $HwChange_AddDiskCopyWith<HwChange_AddDisk> get copyWith => _$HwChange_AddDiskCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddDisk&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddDisk&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,gib,mountPoint);
+int get hashCode {
+    return Object.hash(runtimeType,pool,gib,mountPoint);
+}
 
 @override
 String toString() {
-  return 'HwChange.addDisk(pool: $pool, gib: $gib, mountPoint: $mountPoint)';
+    return 'HwChange.addDisk(pool: $pool, gib: $gib, mountPoint: $mountPoint)';
 }
 
 
@@ -1797,16 +1822,18 @@ $HwChange_AttachVolumeCopyWith<HwChange_AttachVolume> get copyWith => _$HwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AttachVolume&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AttachVolume&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.mountPoint, mountPoint) || other.mountPoint == mountPoint));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,volume,mountPoint);
+int get hashCode {
+    return Object.hash(runtimeType,volume,mountPoint);
+}
 
 @override
 String toString() {
-  return 'HwChange.attachVolume(volume: $volume, mountPoint: $mountPoint)';
+    return 'HwChange.attachVolume(volume: $volume, mountPoint: $mountPoint)';
 }
 
 
@@ -1865,16 +1892,18 @@ $HwChange_RemoveDiskCopyWith<HwChange_RemoveDisk> get copyWith => _$HwChange_Rem
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.deleteVolume, deleteVolume) || other.deleteVolume == deleteVolume));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.deleteVolume, deleteVolume) || other.deleteVolume == deleteVolume));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,deleteVolume);
+int get hashCode {
+    return Object.hash(runtimeType,key,deleteVolume);
+}
 
 @override
 String toString() {
-  return 'HwChange.removeDisk(key: $key, deleteVolume: $deleteVolume)';
+    return 'HwChange.removeDisk(key: $key, deleteVolume: $deleteVolume)';
 }
 
 
@@ -1932,16 +1961,18 @@ $HwChange_AddCdromCopyWith<HwChange_AddCdrom> get copyWith => _$HwChange_AddCdro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddCdrom&&(identical(other.media, media) || other.media == media));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddCdrom&&(identical(other.media, media) || other.media == media));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,media);
+int get hashCode {
+    return Object.hash(runtimeType,media);
+}
 
 @override
 String toString() {
-  return 'HwChange.addCdrom(media: $media)';
+    return 'HwChange.addCdrom(media: $media)';
 }
 
 
@@ -1999,16 +2030,18 @@ $HwChange_SetMediaCopyWith<HwChange_SetMedia> get copyWith => _$HwChange_SetMedi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetMedia&&(identical(other.key, key) || other.key == key)&&(identical(other.media, media) || other.media == media));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetMedia&&(identical(other.key, key) || other.key == key)&&(identical(other.media, media) || other.media == media));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,media);
+int get hashCode {
+    return Object.hash(runtimeType,key,media);
+}
 
 @override
 String toString() {
-  return 'HwChange.setMedia(key: $key, media: $media)';
+    return 'HwChange.setMedia(key: $key, media: $media)';
 }
 
 
@@ -2067,16 +2100,18 @@ $HwChange_AddNicCopyWith<HwChange_AddNic> get copyWith => _$HwChange_AddNicCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddNic&&(identical(other.network, network) || other.network == network)&&(identical(other.model, model) || other.model == model));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddNic&&(identical(other.network, network) || other.network == network)&&(identical(other.model, model) || other.model == model));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,model);
+int get hashCode {
+    return Object.hash(runtimeType,network,model);
+}
 
 @override
 String toString() {
-  return 'HwChange.addNic(network: $network, model: $model)';
+    return 'HwChange.addNic(network: $network, model: $model)';
 }
 
 
@@ -2134,16 +2169,18 @@ $HwChange_RemoveNicCopyWith<HwChange_RemoveNic> get copyWith => _$HwChange_Remov
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveNic&&(identical(other.key, key) || other.key == key));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveNic&&(identical(other.key, key) || other.key == key));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key);
+int get hashCode {
+    return Object.hash(runtimeType,key);
+}
 
 @override
 String toString() {
-  return 'HwChange.removeNic(key: $key)';
+    return 'HwChange.removeNic(key: $key)';
 }
 
 
@@ -2203,16 +2240,18 @@ $HwChange_UpdateNicCopyWith<HwChange_UpdateNic> get copyWith => _$HwChange_Updat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_UpdateNic&&(identical(other.key, key) || other.key == key)&&(identical(other.network, network) || other.network == network)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.firewall, firewall) || other.firewall == firewall));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_UpdateNic&&(identical(other.key, key) || other.key == key)&&(identical(other.network, network) || other.network == network)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.firewall, firewall) || other.firewall == firewall));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,network,linkUp,firewall);
+int get hashCode {
+    return Object.hash(runtimeType,key,network,linkUp,firewall);
+}
 
 @override
 String toString() {
-  return 'HwChange.updateNic(key: $key, network: $network, linkUp: $linkUp, firewall: $firewall)';
+    return 'HwChange.updateNic(key: $key, network: $network, linkUp: $linkUp, firewall: $firewall)';
 }
 
 
@@ -2257,7 +2296,7 @@ as bool?,
 
 
 class HwChange_SetBoot extends HwChange {
-  const HwChange_SetBoot({required final  List<String> order}): _order = order,super._();
+  const HwChange_SetBoot({required  List<String> order}): _order = order,super._();
   
 
  final  List<String> _order;
@@ -2278,16 +2317,18 @@ $HwChange_SetBootCopyWith<HwChange_SetBoot> get copyWith => _$HwChange_SetBootCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetBoot&&const DeepCollectionEquality().equals(other._order, _order));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetBoot&&const DeepCollectionEquality().equals(other.order, _order));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_order));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_order));
+}
 
 @override
 String toString() {
-  return 'HwChange.setBoot(order: $order)';
+    return 'HwChange.setBoot(order: $order)';
 }
 
 
@@ -2344,16 +2385,18 @@ $HwChange_SetAutostartCopyWith<HwChange_SetAutostart> get copyWith => _$HwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetAutostart&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetAutostart&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,on_);
+int get hashCode {
+    return Object.hash(runtimeType,on_);
+}
 
 @override
 String toString() {
-  return 'HwChange.setAutostart(on_: $on_)';
+    return 'HwChange.setAutostart(on_: $on_)';
 }
 
 
@@ -2410,16 +2453,18 @@ $HwChange_SetNameCopyWith<HwChange_SetName> get copyWith => _$HwChange_SetNameCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetName&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetName&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name);
+int get hashCode {
+    return Object.hash(runtimeType,name);
+}
 
 @override
 String toString() {
-  return 'HwChange.setName(name: $name)';
+    return 'HwChange.setName(name: $name)';
 }
 
 
@@ -2476,16 +2521,18 @@ $HwChange_SetDescriptionCopyWith<HwChange_SetDescription> get copyWith => _$HwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetDescription&&(identical(other.text, text) || other.text == text));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetDescription&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode {
+    return Object.hash(runtimeType,text);
+}
 
 @override
 String toString() {
-  return 'HwChange.setDescription(text: $text)';
+    return 'HwChange.setDescription(text: $text)';
 }
 
 
@@ -2542,16 +2589,18 @@ $HwChange_SetProtectionCopyWith<HwChange_SetProtection> get copyWith => _$HwChan
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetProtection&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetProtection&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,on_);
+int get hashCode {
+    return Object.hash(runtimeType,on_);
+}
 
 @override
 String toString() {
-  return 'HwChange.setProtection(on_: $on_)';
+    return 'HwChange.setProtection(on_: $on_)';
 }
 
 
@@ -2610,16 +2659,18 @@ $HwChange_UpdateDiskCopyWith<HwChange_UpdateDisk> get copyWith => _$HwChange_Upd
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_UpdateDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.cache, cache) || other.cache == cache));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_UpdateDisk&&(identical(other.key, key) || other.key == key)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.cache, cache) || other.cache == cache));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,bus,cache);
+int get hashCode {
+    return Object.hash(runtimeType,key,bus,cache);
+}
 
 @override
 String toString() {
-  return 'HwChange.updateDisk(key: $key, bus: $bus, cache: $cache)';
+    return 'HwChange.updateDisk(key: $key, bus: $bus, cache: $cache)';
 }
 
 
@@ -2680,16 +2731,18 @@ $HwChange_SetNicHardwareCopyWith<HwChange_SetNicHardware> get copyWith => _$HwCh
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetNicHardware&&(identical(other.key, key) || other.key == key)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetNicHardware&&(identical(other.key, key) || other.key == key)&&(identical(other.model, model) || other.model == model)&&(identical(other.mac, mac) || other.mac == mac));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key,model,mac);
+int get hashCode {
+    return Object.hash(runtimeType,key,model,mac);
+}
 
 @override
 String toString() {
-  return 'HwChange.setNicHardware(key: $key, model: $model, mac: $mac)';
+    return 'HwChange.setNicHardware(key: $key, model: $model, mac: $mac)';
 }
 
 
@@ -2750,16 +2803,18 @@ $HwChange_SetFirmwareCopyWith<HwChange_SetFirmware> get copyWith => _$HwChange_S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetFirmware&&(identical(other.uefi, uefi) || other.uefi == uefi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.storage, storage) || other.storage == storage));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetFirmware&&(identical(other.uefi, uefi) || other.uefi == uefi)&&(identical(other.secureBoot, secureBoot) || other.secureBoot == secureBoot)&&(identical(other.storage, storage) || other.storage == storage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uefi,secureBoot,storage);
+int get hashCode {
+    return Object.hash(runtimeType,uefi,secureBoot,storage);
+}
 
 @override
 String toString() {
-  return 'HwChange.setFirmware(uefi: $uefi, secureBoot: $secureBoot, storage: $storage)';
+    return 'HwChange.setFirmware(uefi: $uefi, secureBoot: $secureBoot, storage: $storage)';
 }
 
 
@@ -2820,16 +2875,18 @@ $HwChange_SetDisplayCopyWith<HwChange_SetDisplay> get copyWith => _$HwChange_Set
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetDisplay&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.gpu, gpu) || other.gpu == gpu));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_SetDisplay&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.gpu, gpu) || other.gpu == gpu));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,protocol,listen,gpu);
+int get hashCode {
+    return Object.hash(runtimeType,protocol,listen,gpu);
+}
 
 @override
 String toString() {
-  return 'HwChange.setDisplay(protocol: $protocol, listen: $listen, gpu: $gpu)';
+    return 'HwChange.setDisplay(protocol: $protocol, listen: $listen, gpu: $gpu)';
 }
 
 
@@ -2891,16 +2948,18 @@ $HwChange_AddDeviceCopyWith<HwChange_AddDevice> get copyWith => _$HwChange_AddDe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddDevice&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.host, host) || other.host == host)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.usbNaming, usbNaming) || other.usbNaming == usbNaming));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_AddDevice&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.host, host) || other.host == host)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.usbNaming, usbNaming) || other.usbNaming == usbNaming));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,host,storage,usbNaming);
+int get hashCode {
+    return Object.hash(runtimeType,kind,host,storage,usbNaming);
+}
 
 @override
 String toString() {
-  return 'HwChange.addDevice(kind: $kind, host: $host, storage: $storage, usbNaming: $usbNaming)';
+    return 'HwChange.addDevice(kind: $kind, host: $host, storage: $storage, usbNaming: $usbNaming)';
 }
 
 
@@ -2960,16 +3019,18 @@ $HwChange_RemoveDeviceCopyWith<HwChange_RemoveDevice> get copyWith => _$HwChange
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveDevice&&(identical(other.key, key) || other.key == key));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_RemoveDevice&&(identical(other.key, key) || other.key == key));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,key);
+int get hashCode {
+    return Object.hash(runtimeType,key);
+}
 
 @override
 String toString() {
-  return 'HwChange.removeDevice(key: $key)';
+    return 'HwChange.removeDevice(key: $key)';
 }
 
 
@@ -3011,7 +3072,7 @@ as String,
 
 
 class HwChange_Revert extends HwChange {
-  const HwChange_Revert({required final  List<String> keys}): _keys = keys,super._();
+  const HwChange_Revert({required  List<String> keys}): _keys = keys,super._();
   
 
  final  List<String> _keys;
@@ -3032,16 +3093,18 @@ $HwChange_RevertCopyWith<HwChange_Revert> get copyWith => _$HwChange_RevertCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_Revert&&const DeepCollectionEquality().equals(other._keys, _keys));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HwChange_Revert&&const DeepCollectionEquality().equals(other.keys, _keys));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_keys));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_keys));
+}
 
 @override
 String toString() {
-  return 'HwChange.revert(keys: $keys)';
+    return 'HwChange.revert(keys: $keys)';
 }
 
 
@@ -3088,7 +3151,7 @@ mixin _$ResourceChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange);
 }
 
 
@@ -3097,7 +3160,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ResourceChange()';
+    return 'ResourceChange()';
 }
 
 
@@ -3339,7 +3402,7 @@ return networkRevert(_that.node);case _:
 
 
 class ResourceChange_PoolCreate extends ResourceChange {
-  const ResourceChange_PoolCreate({required this.name, required this.poolType, required this.source, this.target, this.node, required final  List<String> content, required this.autostart}): _content = content,super._();
+  const ResourceChange_PoolCreate({required this.name, required this.poolType, required this.source, this.target, this.node, required  List<String> content, required this.autostart}): _content = content,super._();
   
 
  final  String name;
@@ -3366,16 +3429,18 @@ $ResourceChange_PoolCreateCopyWith<ResourceChange_PoolCreate> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.node, node) || other.node == node)&&const DeepCollectionEquality().equals(other._content, _content)&&(identical(other.autostart, autostart) || other.autostart == autostart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.poolType, poolType) || other.poolType == poolType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.node, node) || other.node == node)&&const DeepCollectionEquality().equals(other.content, _content)&&(identical(other.autostart, autostart) || other.autostart == autostart));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,poolType,source,target,node,const DeepCollectionEquality().hash(_content),autostart);
+int get hashCode {
+    return Object.hash(runtimeType,name,poolType,source,target,node,const DeepCollectionEquality().hash(_content),autostart);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.poolCreate(name: $name, poolType: $poolType, source: $source, target: $target, node: $node, content: $content, autostart: $autostart)';
+    return 'ResourceChange.poolCreate(name: $name, poolType: $poolType, source: $source, target: $target, node: $node, content: $content, autostart: $autostart)';
 }
 
 
@@ -3439,16 +3504,18 @@ $ResourceChange_PoolSetActiveCopyWith<ResourceChange_PoolSetActive> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolSetActive&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.active, active) || other.active == active));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolSetActive&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.active, active) || other.active == active));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,active);
+int get hashCode {
+    return Object.hash(runtimeType,pool,active);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.poolSetActive(pool: $pool, active: $active)';
+    return 'ResourceChange.poolSetActive(pool: $pool, active: $active)';
 }
 
 
@@ -3507,16 +3574,18 @@ $ResourceChange_PoolSetAutostartCopyWith<ResourceChange_PoolSetAutostart> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolSetAutostart&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolSetAutostart&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,on_);
+int get hashCode {
+    return Object.hash(runtimeType,pool,on_);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.poolSetAutostart(pool: $pool, on_: $on_)';
+    return 'ResourceChange.poolSetAutostart(pool: $pool, on_: $on_)';
 }
 
 
@@ -3574,16 +3643,18 @@ $ResourceChange_PoolRefreshCopyWith<ResourceChange_PoolRefresh> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolRefresh&&(identical(other.pool, pool) || other.pool == pool));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolRefresh&&(identical(other.pool, pool) || other.pool == pool));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool);
+int get hashCode {
+    return Object.hash(runtimeType,pool);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.poolRefresh(pool: $pool)';
+    return 'ResourceChange.poolRefresh(pool: $pool)';
 }
 
 
@@ -3641,16 +3712,18 @@ $ResourceChange_PoolDeleteCopyWith<ResourceChange_PoolDelete> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.deleteStorage, deleteStorage) || other.deleteStorage == deleteStorage));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_PoolDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.deleteStorage, deleteStorage) || other.deleteStorage == deleteStorage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,deleteStorage);
+int get hashCode {
+    return Object.hash(runtimeType,pool,deleteStorage);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.poolDelete(pool: $pool, deleteStorage: $deleteStorage)';
+    return 'ResourceChange.poolDelete(pool: $pool, deleteStorage: $deleteStorage)';
 }
 
 
@@ -3711,16 +3784,18 @@ $ResourceChange_VolumeCreateCopyWith<ResourceChange_VolumeCreate> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeCreate&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.format, format) || other.format == format));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeCreate&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.name, name) || other.name == name)&&(identical(other.gib, gib) || other.gib == gib)&&(identical(other.format, format) || other.format == format));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,name,gib,format);
+int get hashCode {
+    return Object.hash(runtimeType,pool,name,gib,format);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.volumeCreate(pool: $pool, name: $name, gib: $gib, format: $format)';
+    return 'ResourceChange.volumeCreate(pool: $pool, name: $name, gib: $gib, format: $format)';
 }
 
 
@@ -3781,16 +3856,18 @@ $ResourceChange_VolumeDeleteCopyWith<ResourceChange_VolumeDelete> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeDelete&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,volume);
+int get hashCode {
+    return Object.hash(runtimeType,pool,volume);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.volumeDelete(pool: $pool, volume: $volume)';
+    return 'ResourceChange.volumeDelete(pool: $pool, volume: $volume)';
 }
 
 
@@ -3850,16 +3927,18 @@ $ResourceChange_VolumeResizeCopyWith<ResourceChange_VolumeResize> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeResize&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.bytes, bytes) || other.bytes == bytes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeResize&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.bytes, bytes) || other.bytes == bytes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,volume,bytes);
+int get hashCode {
+    return Object.hash(runtimeType,pool,volume,bytes);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.volumeResize(pool: $pool, volume: $volume, bytes: $bytes)';
+    return 'ResourceChange.volumeResize(pool: $pool, volume: $volume, bytes: $bytes)';
 }
 
 
@@ -3920,16 +3999,18 @@ $ResourceChange_VolumeCloneCopyWith<ResourceChange_VolumeClone> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeClone&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.name, name) || other.name == name));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_VolumeClone&&(identical(other.pool, pool) || other.pool == pool)&&(identical(other.volume, volume) || other.volume == volume)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,pool,volume,name);
+int get hashCode {
+    return Object.hash(runtimeType,pool,volume,name);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.volumeClone(pool: $pool, volume: $volume, name: $name)';
+    return 'ResourceChange.volumeClone(pool: $pool, volume: $volume, name: $name)';
 }
 
 
@@ -3996,16 +4077,18 @@ $ResourceChange_NetworkCreateCopyWith<ResourceChange_NetworkCreate> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.node, node) || other.node == node)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&(identical(other.dhcpStart, dhcpStart) || other.dhcpStart == dhcpStart)&&(identical(other.dhcpEnd, dhcpEnd) || other.dhcpEnd == dhcpEnd)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.autostart, autostart) || other.autostart == autostart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkCreate&&(identical(other.name, name) || other.name == name)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.node, node) || other.node == node)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&(identical(other.dhcpStart, dhcpStart) || other.dhcpStart == dhcpStart)&&(identical(other.dhcpEnd, dhcpEnd) || other.dhcpEnd == dhcpEnd)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.autostart, autostart) || other.autostart == autostart));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,mode,node,bridge,cidr,dhcpStart,dhcpEnd,vlanAware,autostart);
+int get hashCode {
+    return Object.hash(runtimeType,name,mode,node,bridge,cidr,dhcpStart,dhcpEnd,vlanAware,autostart);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkCreate(name: $name, mode: $mode, node: $node, bridge: $bridge, cidr: $cidr, dhcpStart: $dhcpStart, dhcpEnd: $dhcpEnd, vlanAware: $vlanAware, autostart: $autostart)';
+    return 'ResourceChange.networkCreate(name: $name, mode: $mode, node: $node, bridge: $bridge, cidr: $cidr, dhcpStart: $dhcpStart, dhcpEnd: $dhcpEnd, vlanAware: $vlanAware, autostart: $autostart)';
 }
 
 
@@ -4055,7 +4138,7 @@ as bool,
 
 
 class ResourceChange_NetworkEdit extends ResourceChange {
-  const ResourceChange_NetworkEdit({required this.network, required this.mode, this.bridge, this.address, this.prefix, this.dhcpStart, this.dhcpEnd, required final  List<NetHost> hosts, required this.restart, this.baseXml}): _hosts = hosts,super._();
+  const ResourceChange_NetworkEdit({required this.network, required this.mode, this.bridge, this.address, this.prefix, this.dhcpStart, this.dhcpEnd, required  List<NetHost> hosts, required this.restart, this.baseXml}): _hosts = hosts,super._();
   
 
  final  String network;
@@ -4085,16 +4168,18 @@ $ResourceChange_NetworkEditCopyWith<ResourceChange_NetworkEdit> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkEdit&&(identical(other.network, network) || other.network == network)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.address, address) || other.address == address)&&(identical(other.prefix, prefix) || other.prefix == prefix)&&(identical(other.dhcpStart, dhcpStart) || other.dhcpStart == dhcpStart)&&(identical(other.dhcpEnd, dhcpEnd) || other.dhcpEnd == dhcpEnd)&&const DeepCollectionEquality().equals(other._hosts, _hosts)&&(identical(other.restart, restart) || other.restart == restart)&&(identical(other.baseXml, baseXml) || other.baseXml == baseXml));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkEdit&&(identical(other.network, network) || other.network == network)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.bridge, bridge) || other.bridge == bridge)&&(identical(other.address, address) || other.address == address)&&(identical(other.prefix, prefix) || other.prefix == prefix)&&(identical(other.dhcpStart, dhcpStart) || other.dhcpStart == dhcpStart)&&(identical(other.dhcpEnd, dhcpEnd) || other.dhcpEnd == dhcpEnd)&&const DeepCollectionEquality().equals(other.hosts, _hosts)&&(identical(other.restart, restart) || other.restart == restart)&&(identical(other.baseXml, baseXml) || other.baseXml == baseXml));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,mode,bridge,address,prefix,dhcpStart,dhcpEnd,const DeepCollectionEquality().hash(_hosts),restart,baseXml);
+int get hashCode {
+    return Object.hash(runtimeType,network,mode,bridge,address,prefix,dhcpStart,dhcpEnd,const DeepCollectionEquality().hash(_hosts),restart,baseXml);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkEdit(network: $network, mode: $mode, bridge: $bridge, address: $address, prefix: $prefix, dhcpStart: $dhcpStart, dhcpEnd: $dhcpEnd, hosts: $hosts, restart: $restart, baseXml: $baseXml)';
+    return 'ResourceChange.networkEdit(network: $network, mode: $mode, bridge: $bridge, address: $address, prefix: $prefix, dhcpStart: $dhcpStart, dhcpEnd: $dhcpEnd, hosts: $hosts, restart: $restart, baseXml: $baseXml)';
 }
 
 
@@ -4165,16 +4250,18 @@ $ResourceChange_NetworkEditBridgeCopyWith<ResourceChange_NetworkEditBridge> get 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkEditBridge&&(identical(other.network, network) || other.network == network)&&(identical(other.ports, ports) || other.ports == ports)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.autostart, autostart) || other.autostart == autostart));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkEditBridge&&(identical(other.network, network) || other.network == network)&&(identical(other.ports, ports) || other.ports == ports)&&(identical(other.cidr, cidr) || other.cidr == cidr)&&(identical(other.gateway, gateway) || other.gateway == gateway)&&(identical(other.vlanAware, vlanAware) || other.vlanAware == vlanAware)&&(identical(other.autostart, autostart) || other.autostart == autostart));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,ports,cidr,gateway,vlanAware,autostart);
+int get hashCode {
+    return Object.hash(runtimeType,network,ports,cidr,gateway,vlanAware,autostart);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkEditBridge(network: $network, ports: $ports, cidr: $cidr, gateway: $gateway, vlanAware: $vlanAware, autostart: $autostart)';
+    return 'ResourceChange.networkEditBridge(network: $network, ports: $ports, cidr: $cidr, gateway: $gateway, vlanAware: $vlanAware, autostart: $autostart)';
 }
 
 
@@ -4237,16 +4324,18 @@ $ResourceChange_NetworkRestartCopyWith<ResourceChange_NetworkRestart> get copyWi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkRestart&&(identical(other.network, network) || other.network == network)&&(identical(other.baseXml, baseXml) || other.baseXml == baseXml));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkRestart&&(identical(other.network, network) || other.network == network)&&(identical(other.baseXml, baseXml) || other.baseXml == baseXml));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,baseXml);
+int get hashCode {
+    return Object.hash(runtimeType,network,baseXml);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkRestart(network: $network, baseXml: $baseXml)';
+    return 'ResourceChange.networkRestart(network: $network, baseXml: $baseXml)';
 }
 
 
@@ -4305,16 +4394,18 @@ $ResourceChange_NetworkSetActiveCopyWith<ResourceChange_NetworkSetActive> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkSetActive&&(identical(other.network, network) || other.network == network)&&(identical(other.active, active) || other.active == active));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkSetActive&&(identical(other.network, network) || other.network == network)&&(identical(other.active, active) || other.active == active));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,active);
+int get hashCode {
+    return Object.hash(runtimeType,network,active);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkSetActive(network: $network, active: $active)';
+    return 'ResourceChange.networkSetActive(network: $network, active: $active)';
 }
 
 
@@ -4373,16 +4464,18 @@ $ResourceChange_NetworkSetAutostartCopyWith<ResourceChange_NetworkSetAutostart> 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkSetAutostart&&(identical(other.network, network) || other.network == network)&&(identical(other.on_, on_) || other.on_ == on_));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkSetAutostart&&(identical(other.network, network) || other.network == network)&&(identical(other.on_, on_) || other.on_ == on_));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network,on_);
+int get hashCode {
+    return Object.hash(runtimeType,network,on_);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkSetAutostart(network: $network, on_: $on_)';
+    return 'ResourceChange.networkSetAutostart(network: $network, on_: $on_)';
 }
 
 
@@ -4440,16 +4533,18 @@ $ResourceChange_NetworkDeleteCopyWith<ResourceChange_NetworkDelete> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkDelete&&(identical(other.network, network) || other.network == network));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkDelete&&(identical(other.network, network) || other.network == network));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,network);
+int get hashCode {
+    return Object.hash(runtimeType,network);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkDelete(network: $network)';
+    return 'ResourceChange.networkDelete(network: $network)';
 }
 
 
@@ -4506,16 +4601,18 @@ $ResourceChange_NetworkApplyCopyWith<ResourceChange_NetworkApply> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkApply&&(identical(other.node, node) || other.node == node));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkApply&&(identical(other.node, node) || other.node == node));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,node);
+int get hashCode {
+    return Object.hash(runtimeType,node);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkApply(node: $node)';
+    return 'ResourceChange.networkApply(node: $node)';
 }
 
 
@@ -4572,16 +4669,18 @@ $ResourceChange_NetworkRevertCopyWith<ResourceChange_NetworkRevert> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkRevert&&(identical(other.node, node) || other.node == node));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ResourceChange_NetworkRevert&&(identical(other.node, node) || other.node == node));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,node);
+int get hashCode {
+    return Object.hash(runtimeType,node);
+}
 
 @override
 String toString() {
-  return 'ResourceChange.networkRevert(node: $node)';
+    return 'ResourceChange.networkRevert(node: $node)';
 }
 
 

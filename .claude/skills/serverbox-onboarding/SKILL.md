@@ -79,7 +79,7 @@ make monitor-dev                # Monitor API on :3770 + panel dev server on :30
 make build PLATFORM=<android|ios|macos|linux|windows>
 ```
 
-Values as of writing: Flutter >= 3.47.0, Dart SDK >= 3.11.0, Rust pinned to
+Values as of writing: Flutter >= 3.50.0, Dart SDK >= 3.11.0, Rust pinned to
 1.98.1 for the FFI crate, Node 24 for the monitor panel and the docs site.
 
 ## What costs people an afternoon

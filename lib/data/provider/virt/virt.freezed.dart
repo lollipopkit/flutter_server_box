@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'virt.dart';
@@ -9,6 +9,7 @@ part of 'virt.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -28,16 +29,21 @@ $VirtProbeCopyWith<VirtProbe> get copyWith => _$VirtProbeCopyWithImpl<VirtProbe>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.error, error) || other.error == error));
+  final _this = this as VirtProbe;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtProbe&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.pve, _this.pve) || other.pve == _this.pve)&&(identical(other.container, _this.container) || other.container == _this.container)&&(identical(other.error, _this.error) || other.error == _this.error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,version,pve,container,error);
+int get hashCode {
+  final _this = this as VirtProbe;
+  return Object.hash(runtimeType,_this.status,_this.version,_this.pve,_this.container,_this.error);
+}
 
 @override
 String toString() {
-  return 'VirtProbe(status: $status, version: $version, pve: $pve, container: $container, error: $error)';
+  final _this = this as VirtProbe;
+  return 'VirtProbe(status: ${_this.status}, version: ${_this.version}, pve: ${_this.pve}, container: ${_this.container}, error: ${_this.error})';
 }
 
 
@@ -66,7 +72,7 @@ class _$VirtProbeCopyWithImpl<$Res>
 /// Create a copy of VirtProbe
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? version = freezed,Object? pve = freezed,Object? container = freezed,Object? error = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtProbe(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as VirtProbeStatus,version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as String?,pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
@@ -235,16 +241,18 @@ _$VirtProbeCopyWith<_VirtProbe> get copyWith => __$VirtProbeCopyWithImpl<_VirtPr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.error, error) || other.error == error));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtProbe&&(identical(other.status, status) || other.status == status)&&(identical(other.version, version) || other.version == version)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.container, container) || other.container == container)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,version,pve,container,error);
+int get hashCode {
+    return Object.hash(runtimeType,status,version,pve,container,error);
+}
 
 @override
 String toString() {
-  return 'VirtProbe(status: $status, version: $version, pve: $pve, container: $container, error: $error)';
+    return 'VirtProbe(status: $status, version: $version, pve: $pve, container: $container, error: $error)';
 }
 
 
@@ -305,16 +313,21 @@ $VirtHostsStateCopyWith<VirtHostsState> get copyWith => _$VirtHostsStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostsState&&const DeepCollectionEquality().equals(other.hosts, hosts)&&const DeepCollectionEquality().equals(other.others, others)&&const DeepCollectionEquality().equals(other.probes, probes));
+  final _this = this as VirtHostsState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostsState&&const DeepCollectionEquality().equals(other.hosts, _this.hosts)&&const DeepCollectionEquality().equals(other.others, _this.others)&&const DeepCollectionEquality().equals(other.probes, _this.probes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(hosts),const DeepCollectionEquality().hash(others),const DeepCollectionEquality().hash(probes));
+int get hashCode {
+  final _this = this as VirtHostsState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.hosts),const DeepCollectionEquality().hash(_this.others),const DeepCollectionEquality().hash(_this.probes));
+}
 
 @override
 String toString() {
-  return 'VirtHostsState(hosts: $hosts, others: $others, probes: $probes)';
+  final _this = this as VirtHostsState;
+  return 'VirtHostsState(hosts: ${_this.hosts}, others: ${_this.others}, probes: ${_this.probes})';
 }
 
 
@@ -343,7 +356,7 @@ class _$VirtHostsStateCopyWithImpl<$Res>
 /// Create a copy of VirtHostsState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? hosts = null,Object? others = null,Object? probes = null,}) {
-  return _then(_self.copyWith(
+  return _then(VirtHostsState(
 hosts: null == hosts ? _self.hosts : hosts // ignore: cast_nullable_to_non_nullable
 as Map<String, VirtHostKind>,others: null == others ? _self.others : others // ignore: cast_nullable_to_non_nullable
 as List<String>,probes: null == probes ? _self.probes : probes // ignore: cast_nullable_to_non_nullable
@@ -488,7 +501,7 @@ return $default(_that.hosts,_that.others,_that.probes);case _:
 
 
 class _VirtHostsState extends VirtHostsState {
-  const _VirtHostsState({final  Map<String, VirtHostKind> hosts = const <String, VirtHostKind>{}, final  List<String> others = const <String>[], final  Map<String, VirtProbe> probes = const <String, VirtProbe>{}}): _hosts = hosts,_others = others,_probes = probes,super._();
+  const _VirtHostsState({ Map<String, VirtHostKind> hosts = const <String, VirtHostKind>{},  List<String> others = const <String>[],  Map<String, VirtProbe> probes = const <String, VirtProbe>{}}): _hosts = hosts,_others = others,_probes = probes,super._();
   
 
 /// Virtualization hosts in the server list's order, with their kind.
@@ -533,16 +546,18 @@ _$VirtHostsStateCopyWith<_VirtHostsState> get copyWith => __$VirtHostsStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostsState&&const DeepCollectionEquality().equals(other._hosts, _hosts)&&const DeepCollectionEquality().equals(other._others, _others)&&const DeepCollectionEquality().equals(other._probes, _probes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostsState&&const DeepCollectionEquality().equals(other.hosts, _hosts)&&const DeepCollectionEquality().equals(other.others, _others)&&const DeepCollectionEquality().equals(other.probes, _probes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_hosts),const DeepCollectionEquality().hash(_others),const DeepCollectionEquality().hash(_probes));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_hosts),const DeepCollectionEquality().hash(_others),const DeepCollectionEquality().hash(_probes));
+}
 
 @override
 String toString() {
-  return 'VirtHostsState(hosts: $hosts, others: $others, probes: $probes)';
+    return 'VirtHostsState(hosts: $hosts, others: $others, probes: $probes)';
 }
 
 
@@ -619,16 +634,21 @@ $VirtHostStateCopyWith<VirtHostState> get copyWith => _$VirtHostStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.endpoint, endpoint) || other.endpoint == endpoint)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, busy)&&const DeepCollectionEquality().equals(other.snapshotOps, snapshotOps)&&const DeepCollectionEquality().equals(other.deleting, deleting)&&const DeepCollectionEquality().equals(other.editing, editing)&&const DeepCollectionEquality().equals(other.copyOps, copyOps)&&const DeepCollectionEquality().equals(other.resourceOps, resourceOps)&&const DeepCollectionEquality().equals(other.uploads, uploads)&&const DeepCollectionEquality().equals(other.samples, samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as VirtHostState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtHostState&&(identical(other.serverId, _this.serverId) || other.serverId == _this.serverId)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.endpoint, _this.endpoint) || other.endpoint == _this.endpoint)&&(identical(other.data, _this.data) || other.data == _this.data)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&const DeepCollectionEquality().equals(other.busy, _this.busy)&&const DeepCollectionEquality().equals(other.snapshotOps, _this.snapshotOps)&&const DeepCollectionEquality().equals(other.deleting, _this.deleting)&&const DeepCollectionEquality().equals(other.editing, _this.editing)&&const DeepCollectionEquality().equals(other.copyOps, _this.copyOps)&&const DeepCollectionEquality().equals(other.resourceOps, _this.resourceOps)&&const DeepCollectionEquality().equals(other.uploads, _this.uploads)&&const DeepCollectionEquality().equals(other.samples, _this.samples)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,endpoint,data,error,loading,const DeepCollectionEquality().hash(busy),const DeepCollectionEquality().hash(snapshotOps),const DeepCollectionEquality().hash(deleting),const DeepCollectionEquality().hash(editing),const DeepCollectionEquality().hash(copyOps),const DeepCollectionEquality().hash(resourceOps),const DeepCollectionEquality().hash(uploads),const DeepCollectionEquality().hash(samples),updatedAt);
+int get hashCode {
+  final _this = this as VirtHostState;
+  return Object.hash(runtimeType,_this.serverId,_this.kind,_this.endpoint,_this.data,_this.error,_this.loading,const DeepCollectionEquality().hash(_this.busy),const DeepCollectionEquality().hash(_this.snapshotOps),const DeepCollectionEquality().hash(_this.deleting),const DeepCollectionEquality().hash(_this.editing),const DeepCollectionEquality().hash(_this.copyOps),const DeepCollectionEquality().hash(_this.resourceOps),const DeepCollectionEquality().hash(_this.uploads),const DeepCollectionEquality().hash(_this.samples),_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, endpoint: $endpoint, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, resourceOps: $resourceOps, uploads: $uploads, samples: $samples, updatedAt: $updatedAt)';
+  final _this = this as VirtHostState;
+  return 'VirtHostState(serverId: ${_this.serverId}, kind: ${_this.kind}, endpoint: ${_this.endpoint}, data: ${_this.data}, error: ${_this.error}, loading: ${_this.loading}, busy: ${_this.busy}, snapshotOps: ${_this.snapshotOps}, deleting: ${_this.deleting}, editing: ${_this.editing}, copyOps: ${_this.copyOps}, resourceOps: ${_this.resourceOps}, uploads: ${_this.uploads}, samples: ${_this.samples}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -657,7 +677,7 @@ class _$VirtHostStateCopyWithImpl<$Res>
 /// Create a copy of VirtHostState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? kind = freezed,Object? endpoint = null,Object? data = freezed,Object? error = freezed,Object? loading = null,Object? busy = null,Object? snapshotOps = null,Object? deleting = null,Object? editing = null,Object? copyOps = null,Object? resourceOps = null,Object? uploads = null,Object? samples = null,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VirtHostState(
 serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as VirtHostKind?,endpoint: null == endpoint ? _self.endpoint : endpoint // ignore: cast_nullable_to_non_nullable
@@ -826,7 +846,7 @@ return $default(_that.serverId,_that.kind,_that.endpoint,_that.data,_that.error,
 
 
 class _VirtHostState extends VirtHostState {
-  const _VirtHostState({required this.serverId, this.kind, this.endpoint = 0, this.data, this.error, this.loading = false, final  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{}, final  Map<String, VirtSnapshotOp> snapshotOps = const <String, VirtSnapshotOp>{}, final  Set<String> deleting = const <String>{}, final  Set<String> editing = const <String>{}, final  Map<String, VirtCopyOp> copyOps = const <String, VirtCopyOp>{}, final  Set<String> resourceOps = const <String>{}, final  Map<String, VirtUploadProgress> uploads = const <String, VirtUploadProgress>{}, final  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_snapshotOps = snapshotOps,_deleting = deleting,_editing = editing,_copyOps = copyOps,_resourceOps = resourceOps,_uploads = uploads,_samples = samples,super._();
+  const _VirtHostState({required this.serverId, this.kind, this.endpoint = 0, this.data, this.error, this.loading = false,  Map<String, VirtPowerAction> busy = const <String, VirtPowerAction>{},  Map<String, VirtSnapshotOp> snapshotOps = const <String, VirtSnapshotOp>{},  Set<String> deleting = const <String>{},  Set<String> editing = const <String>{},  Map<String, VirtCopyOp> copyOps = const <String, VirtCopyOp>{},  Set<String> resourceOps = const <String>{},  Map<String, VirtUploadProgress> uploads = const <String, VirtUploadProgress>{},  Map<String, List<VirtStats>> samples = const <String, List<VirtStats>>{}, this.updatedAt}): _busy = busy,_snapshotOps = snapshotOps,_deleting = deleting,_editing = editing,_copyOps = copyOps,_resourceOps = resourceOps,_uploads = uploads,_samples = samples,super._();
   
 
 @override final  String serverId;
@@ -938,16 +958,18 @@ _$VirtHostStateCopyWith<_VirtHostState> get copyWith => __$VirtHostStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.endpoint, endpoint) || other.endpoint == endpoint)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other._busy, _busy)&&const DeepCollectionEquality().equals(other._snapshotOps, _snapshotOps)&&const DeepCollectionEquality().equals(other._deleting, _deleting)&&const DeepCollectionEquality().equals(other._editing, _editing)&&const DeepCollectionEquality().equals(other._copyOps, _copyOps)&&const DeepCollectionEquality().equals(other._resourceOps, _resourceOps)&&const DeepCollectionEquality().equals(other._uploads, _uploads)&&const DeepCollectionEquality().equals(other._samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtHostState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.endpoint, endpoint) || other.endpoint == endpoint)&&(identical(other.data, data) || other.data == data)&&(identical(other.error, error) || other.error == error)&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.busy, _busy)&&const DeepCollectionEquality().equals(other.snapshotOps, _snapshotOps)&&const DeepCollectionEquality().equals(other.deleting, _deleting)&&const DeepCollectionEquality().equals(other.editing, _editing)&&const DeepCollectionEquality().equals(other.copyOps, _copyOps)&&const DeepCollectionEquality().equals(other.resourceOps, _resourceOps)&&const DeepCollectionEquality().equals(other.uploads, _uploads)&&const DeepCollectionEquality().equals(other.samples, _samples)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,serverId,kind,endpoint,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_snapshotOps),const DeepCollectionEquality().hash(_deleting),const DeepCollectionEquality().hash(_editing),const DeepCollectionEquality().hash(_copyOps),const DeepCollectionEquality().hash(_resourceOps),const DeepCollectionEquality().hash(_uploads),const DeepCollectionEquality().hash(_samples),updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,serverId,kind,endpoint,data,error,loading,const DeepCollectionEquality().hash(_busy),const DeepCollectionEquality().hash(_snapshotOps),const DeepCollectionEquality().hash(_deleting),const DeepCollectionEquality().hash(_editing),const DeepCollectionEquality().hash(_copyOps),const DeepCollectionEquality().hash(_resourceOps),const DeepCollectionEquality().hash(_uploads),const DeepCollectionEquality().hash(_samples),updatedAt);
+}
 
 @override
 String toString() {
-  return 'VirtHostState(serverId: $serverId, kind: $kind, endpoint: $endpoint, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, resourceOps: $resourceOps, uploads: $uploads, samples: $samples, updatedAt: $updatedAt)';
+    return 'VirtHostState(serverId: $serverId, kind: $kind, endpoint: $endpoint, data: $data, error: $error, loading: $loading, busy: $busy, snapshotOps: $snapshotOps, deleting: $deleting, editing: $editing, copyOps: $copyOps, resourceOps: $resourceOps, uploads: $uploads, samples: $samples, updatedAt: $updatedAt)';
 }
 
 

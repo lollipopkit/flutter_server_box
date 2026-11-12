@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'private_key.dart';
@@ -9,6 +9,7 @@ part of 'private_key.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $PrivateKeyStateCopyWith<PrivateKeyState> get copyWith => _$PrivateKeyStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrivateKeyState&&const DeepCollectionEquality().equals(other.keys, keys));
+  final _this = this as PrivateKeyState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrivateKeyState&&const DeepCollectionEquality().equals(other.keys, _this.keys));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(keys));
+int get hashCode {
+  final _this = this as PrivateKeyState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.keys));
+}
 
 @override
 String toString() {
-  return 'PrivateKeyState(keys: $keys)';
+  final _this = this as PrivateKeyState;
+  return 'PrivateKeyState(keys: ${_this.keys})';
 }
 
 
@@ -63,7 +69,7 @@ class _$PrivateKeyStateCopyWithImpl<$Res>
 /// Create a copy of PrivateKeyState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? keys = null,}) {
-  return _then(_self.copyWith(
+  return _then(PrivateKeyState(
 keys: null == keys ? _self.keys : keys // ignore: cast_nullable_to_non_nullable
 as List<PrivateKeyInfo>,
   ));
@@ -206,7 +212,7 @@ return $default(_that.keys);case _:
 
 
 class _PrivateKeyState implements PrivateKeyState {
-  const _PrivateKeyState({final  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[]}): _keys = keys;
+  const _PrivateKeyState({ List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[]}): _keys = keys;
   
 
  final  List<PrivateKeyInfo> _keys;
@@ -227,16 +233,18 @@ _$PrivateKeyStateCopyWith<_PrivateKeyState> get copyWith => __$PrivateKeyStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PrivateKeyState&&const DeepCollectionEquality().equals(other._keys, _keys));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PrivateKeyState&&const DeepCollectionEquality().equals(other.keys, _keys));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_keys));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_keys));
+}
 
 @override
 String toString() {
-  return 'PrivateKeyState(keys: $keys)';
+    return 'PrivateKeyState(keys: $keys)';
 }
 
 

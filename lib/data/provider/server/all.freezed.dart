@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'all.dart';
@@ -9,6 +9,7 @@ part of 'all.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $ServersStateCopyWith<ServersState> get copyWith => _$ServersStateCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServersState&&const DeepCollectionEquality().equals(other.servers, servers)&&const DeepCollectionEquality().equals(other.serverOrder, serverOrder)&&const DeepCollectionEquality().equals(other.tags, tags)&&const DeepCollectionEquality().equals(other.manualDisconnectedIds, manualDisconnectedIds)&&(identical(other.autoRefreshTimer, autoRefreshTimer) || other.autoRefreshTimer == autoRefreshTimer));
+  final _this = this as ServersState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServersState&&const DeepCollectionEquality().equals(other.servers, _this.servers)&&const DeepCollectionEquality().equals(other.serverOrder, _this.serverOrder)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&const DeepCollectionEquality().equals(other.manualDisconnectedIds, _this.manualDisconnectedIds)&&(identical(other.autoRefreshTimer, _this.autoRefreshTimer) || other.autoRefreshTimer == _this.autoRefreshTimer));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(servers),const DeepCollectionEquality().hash(serverOrder),const DeepCollectionEquality().hash(tags),const DeepCollectionEquality().hash(manualDisconnectedIds),autoRefreshTimer);
+int get hashCode {
+  final _this = this as ServersState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.servers),const DeepCollectionEquality().hash(_this.serverOrder),const DeepCollectionEquality().hash(_this.tags),const DeepCollectionEquality().hash(_this.manualDisconnectedIds),_this.autoRefreshTimer);
+}
 
 @override
 String toString() {
-  return 'ServersState(servers: $servers, serverOrder: $serverOrder, tags: $tags, manualDisconnectedIds: $manualDisconnectedIds, autoRefreshTimer: $autoRefreshTimer)';
+  final _this = this as ServersState;
+  return 'ServersState(servers: ${_this.servers}, serverOrder: ${_this.serverOrder}, tags: ${_this.tags}, manualDisconnectedIds: ${_this.manualDisconnectedIds}, autoRefreshTimer: ${_this.autoRefreshTimer})';
 }
 
 
@@ -63,7 +69,7 @@ class _$ServersStateCopyWithImpl<$Res>
 /// Create a copy of ServersState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? servers = null,Object? serverOrder = null,Object? tags = null,Object? manualDisconnectedIds = null,Object? autoRefreshTimer = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ServersState(
 servers: null == servers ? _self.servers : servers // ignore: cast_nullable_to_non_nullable
 as Map<String, Spi>,serverOrder: null == serverOrder ? _self.serverOrder : serverOrder // ignore: cast_nullable_to_non_nullable
 as List<String>,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
@@ -210,7 +216,7 @@ return $default(_that.servers,_that.serverOrder,_that.tags,_that.manualDisconnec
 
 
 class _ServersState implements ServersState {
-  const _ServersState({final  Map<String, Spi> servers = const {}, final  List<String> serverOrder = const [], final  Set<String> tags = const <String>{}, final  Set<String> manualDisconnectedIds = const <String>{}, this.autoRefreshTimer}): _servers = servers,_serverOrder = serverOrder,_tags = tags,_manualDisconnectedIds = manualDisconnectedIds;
+  const _ServersState({ Map<String, Spi> servers = const {},  List<String> serverOrder = const [],  Set<String> tags = const <String>{},  Set<String> manualDisconnectedIds = const <String>{}, this.autoRefreshTimer}): _servers = servers,_serverOrder = serverOrder,_tags = tags,_manualDisconnectedIds = manualDisconnectedIds;
   
 
  final  Map<String, Spi> _servers;
@@ -253,16 +259,18 @@ _$ServersStateCopyWith<_ServersState> get copyWith => __$ServersStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServersState&&const DeepCollectionEquality().equals(other._servers, _servers)&&const DeepCollectionEquality().equals(other._serverOrder, _serverOrder)&&const DeepCollectionEquality().equals(other._tags, _tags)&&const DeepCollectionEquality().equals(other._manualDisconnectedIds, _manualDisconnectedIds)&&(identical(other.autoRefreshTimer, autoRefreshTimer) || other.autoRefreshTimer == autoRefreshTimer));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServersState&&const DeepCollectionEquality().equals(other.servers, _servers)&&const DeepCollectionEquality().equals(other.serverOrder, _serverOrder)&&const DeepCollectionEquality().equals(other.tags, _tags)&&const DeepCollectionEquality().equals(other.manualDisconnectedIds, _manualDisconnectedIds)&&(identical(other.autoRefreshTimer, autoRefreshTimer) || other.autoRefreshTimer == autoRefreshTimer));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_servers),const DeepCollectionEquality().hash(_serverOrder),const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_manualDisconnectedIds),autoRefreshTimer);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_servers),const DeepCollectionEquality().hash(_serverOrder),const DeepCollectionEquality().hash(_tags),const DeepCollectionEquality().hash(_manualDisconnectedIds),autoRefreshTimer);
+}
 
 @override
 String toString() {
-  return 'ServersState(servers: $servers, serverOrder: $serverOrder, tags: $tags, manualDisconnectedIds: $manualDisconnectedIds, autoRefreshTimer: $autoRefreshTimer)';
+    return 'ServersState(servers: $servers, serverOrder: $serverOrder, tags: $tags, manualDisconnectedIds: $manualDisconnectedIds, autoRefreshTimer: $autoRefreshTimer)';
 }
 
 

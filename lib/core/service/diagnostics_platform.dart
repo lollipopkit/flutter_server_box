@@ -62,7 +62,7 @@ abstract final class DiagnosticsPlatform {
       };
       if (described == null) return;
       final (device, os) = described;
-      sentry.Sentry.configureScope((scope) {
+      await sentry.Sentry.configureScope((scope) {
         scope.setContexts(sentry.SentryDevice.type, device);
         scope.setContexts(sentry.SentryOperatingSystem.type, os);
       });

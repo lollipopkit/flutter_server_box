@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'firewall.dart';
@@ -9,6 +9,7 @@ part of 'firewall.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$ChangeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChangeError()';
+    return 'ChangeError()';
 }
 
 
@@ -203,7 +204,7 @@ class ChangeError_Unchanged extends ChangeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Unchanged);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Unchanged);
 }
 
 
@@ -212,7 +213,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChangeError.unchanged()';
+    return 'ChangeError.unchanged()';
 }
 
 
@@ -240,16 +241,18 @@ $ChangeError_DraftCopyWith<ChangeError_Draft> get copyWith => _$ChangeError_Draf
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Draft&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Draft&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'ChangeError.draft(field0: $field0)';
+    return 'ChangeError.draft(field0: $field0)';
 }
 
 
@@ -306,16 +309,18 @@ $ChangeError_InputCopyWith<ChangeError_Input> get copyWith => _$ChangeError_Inpu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Input&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_Input&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'ChangeError.input(field0: $field0)';
+    return 'ChangeError.input(field0: $field0)';
 }
 
 
@@ -367,7 +372,7 @@ class ChangeError_NoSuchRule extends ChangeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_NoSuchRule);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_NoSuchRule);
 }
 
 
@@ -376,7 +381,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChangeError.noSuchRule()';
+    return 'ChangeError.noSuchRule()';
 }
 
 
@@ -399,7 +404,7 @@ class ChangeError_NoSuchZone extends ChangeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_NoSuchZone);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChangeError_NoSuchZone);
 }
 
 
@@ -408,7 +413,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChangeError.noSuchZone()';
+    return 'ChangeError.noSuchZone()';
 }
 
 
@@ -426,7 +431,7 @@ mixin _$FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange);
 }
 
 
@@ -435,7 +440,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange()';
+    return 'FirewalldChange()';
 }
 
 
@@ -651,7 +656,7 @@ class FirewalldChange_Start extends FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Start);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Start);
 }
 
 
@@ -660,7 +665,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange.start()';
+    return 'FirewalldChange.start()';
 }
 
 
@@ -683,7 +688,7 @@ class FirewalldChange_Stop extends FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Stop);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Stop);
 }
 
 
@@ -692,7 +697,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange.stop()';
+    return 'FirewalldChange.stop()';
 }
 
 
@@ -715,7 +720,7 @@ class FirewalldChange_Reload extends FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Reload);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Reload);
 }
 
 
@@ -724,7 +729,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange.reload()';
+    return 'FirewalldChange.reload()';
 }
 
 
@@ -747,7 +752,7 @@ class FirewalldChange_RuntimeToPermanent extends FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_RuntimeToPermanent);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_RuntimeToPermanent);
 }
 
 
@@ -756,7 +761,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange.runtimeToPermanent()';
+    return 'FirewalldChange.runtimeToPermanent()';
 }
 
 
@@ -779,7 +784,7 @@ class FirewalldChange_PanicOff extends FirewalldChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_PanicOff);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_PanicOff);
 }
 
 
@@ -788,7 +793,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'FirewalldChange.panicOff()';
+    return 'FirewalldChange.panicOff()';
 }
 
 
@@ -816,16 +821,18 @@ $FirewalldChange_DefaultZoneCopyWith<FirewalldChange_DefaultZone> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_DefaultZone&&(identical(other.zone, zone) || other.zone == zone));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_DefaultZone&&(identical(other.zone, zone) || other.zone == zone));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone);
+int get hashCode {
+    return Object.hash(runtimeType,zone);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.defaultZone(zone: $zone)';
+    return 'FirewalldChange.defaultZone(zone: $zone)';
 }
 
 
@@ -883,16 +890,18 @@ $FirewalldChange_TargetCopyWith<FirewalldChange_Target> get copyWith => _$Firewa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Target&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.target, target) || other.target == target));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Target&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.target, target) || other.target == target));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,target);
+int get hashCode {
+    return Object.hash(runtimeType,zone,target);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.target(zone: $zone, target: $target)';
+    return 'FirewalldChange.target(zone: $zone, target: $target)';
 }
 
 
@@ -951,16 +960,18 @@ $FirewalldChange_MasqueradeCopyWith<FirewalldChange_Masquerade> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Masquerade&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Masquerade&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.enabled, enabled) || other.enabled == enabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,enabled);
+int get hashCode {
+    return Object.hash(runtimeType,zone,enabled);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.masquerade(zone: $zone, enabled: $enabled)';
+    return 'FirewalldChange.masquerade(zone: $zone, enabled: $enabled)';
 }
 
 
@@ -1020,16 +1031,18 @@ $FirewalldChange_AddCopyWith<FirewalldChange_Add> get copyWith => _$FirewalldCha
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Add&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.item, item) || other.item == item)&&(identical(other.value, value) || other.value == value));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Add&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.item, item) || other.item == item)&&(identical(other.value, value) || other.value == value));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,item,value);
+int get hashCode {
+    return Object.hash(runtimeType,zone,item,value);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.add(zone: $zone, item: $item, value: $value)';
+    return 'FirewalldChange.add(zone: $zone, item: $item, value: $value)';
 }
 
 
@@ -1090,16 +1103,18 @@ $FirewalldChange_RemoveCopyWith<FirewalldChange_Remove> get copyWith => _$Firewa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Remove&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.item, item) || other.item == item)&&(identical(other.value, value) || other.value == value));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_Remove&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.item, item) || other.item == item)&&(identical(other.value, value) || other.value == value));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,item,value);
+int get hashCode {
+    return Object.hash(runtimeType,zone,item,value);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.remove(zone: $zone, item: $item, value: $value)';
+    return 'FirewalldChange.remove(zone: $zone, item: $item, value: $value)';
 }
 
 
@@ -1159,16 +1174,18 @@ $FirewalldChange_ChangeInterfaceCopyWith<FirewalldChange_ChangeInterface> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_ChangeInterface&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.iface, iface) || other.iface == iface));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_ChangeInterface&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.iface, iface) || other.iface == iface));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,iface);
+int get hashCode {
+    return Object.hash(runtimeType,zone,iface);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.changeInterface(zone: $zone, iface: $iface)';
+    return 'FirewalldChange.changeInterface(zone: $zone, iface: $iface)';
 }
 
 
@@ -1227,16 +1244,18 @@ $FirewalldChange_RemoveInterfaceCopyWith<FirewalldChange_RemoveInterface> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_RemoveInterface&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.iface, iface) || other.iface == iface));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is FirewalldChange_RemoveInterface&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.iface, iface) || other.iface == iface));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,zone,iface);
+int get hashCode {
+    return Object.hash(runtimeType,zone,iface);
+}
 
 @override
 String toString() {
-  return 'FirewalldChange.removeInterface(zone: $zone, iface: $iface)';
+    return 'FirewalldChange.removeInterface(zone: $zone, iface: $iface)';
 }
 
 
@@ -1284,7 +1303,7 @@ mixin _$UfwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange);
 }
 
 
@@ -1293,7 +1312,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UfwChange()';
+    return 'UfwChange()';
 }
 
 
@@ -1479,7 +1498,7 @@ class UfwChange_Enable extends UfwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Enable);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Enable);
 }
 
 
@@ -1488,7 +1507,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UfwChange.enable()';
+    return 'UfwChange.enable()';
 }
 
 
@@ -1511,7 +1530,7 @@ class UfwChange_Disable extends UfwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Disable);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Disable);
 }
 
 
@@ -1520,7 +1539,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UfwChange.disable()';
+    return 'UfwChange.disable()';
 }
 
 
@@ -1543,7 +1562,7 @@ class UfwChange_Reload extends UfwChange {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Reload);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Reload);
 }
 
 
@@ -1552,7 +1571,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'UfwChange.reload()';
+    return 'UfwChange.reload()';
 }
 
 
@@ -1581,16 +1600,18 @@ $UfwChange_PolicyCopyWith<UfwChange_Policy> get copyWith => _$UfwChange_PolicyCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Policy&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.policy, policy) || other.policy == policy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Policy&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.policy, policy) || other.policy == policy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,chain,policy);
+int get hashCode {
+    return Object.hash(runtimeType,chain,policy);
+}
 
 @override
 String toString() {
-  return 'UfwChange.policy(chain: $chain, policy: $policy)';
+    return 'UfwChange.policy(chain: $chain, policy: $policy)';
 }
 
 
@@ -1648,16 +1669,18 @@ $UfwChange_LoggingCopyWith<UfwChange_Logging> get copyWith => _$UfwChange_Loggin
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Logging&&(identical(other.level, level) || other.level == level));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_Logging&&(identical(other.level, level) || other.level == level));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,level);
+int get hashCode {
+    return Object.hash(runtimeType,level);
+}
 
 @override
 String toString() {
-  return 'UfwChange.logging(level: $level)';
+    return 'UfwChange.logging(level: $level)';
 }
 
 
@@ -1714,16 +1737,18 @@ $UfwChange_AddRuleCopyWith<UfwChange_AddRule> get copyWith => _$UfwChange_AddRul
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_AddRule&&(identical(other.draft, draft) || other.draft == draft));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_AddRule&&(identical(other.draft, draft) || other.draft == draft));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,draft);
+int get hashCode {
+    return Object.hash(runtimeType,draft);
+}
 
 @override
 String toString() {
-  return 'UfwChange.addRule(draft: $draft)';
+    return 'UfwChange.addRule(draft: $draft)';
 }
 
 
@@ -1765,7 +1790,7 @@ as UfwRuleDraft,
 
 
 class UfwChange_DeleteRule extends UfwChange {
-  const UfwChange_DeleteRule({required final  List<String> tuples}): _tuples = tuples,super._();
+  const UfwChange_DeleteRule({required  List<String> tuples}): _tuples = tuples,super._();
   
 
  final  List<String> _tuples;
@@ -1786,16 +1811,18 @@ $UfwChange_DeleteRuleCopyWith<UfwChange_DeleteRule> get copyWith => _$UfwChange_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_DeleteRule&&const DeepCollectionEquality().equals(other._tuples, _tuples));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UfwChange_DeleteRule&&const DeepCollectionEquality().equals(other.tuples, _tuples));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_tuples));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_tuples));
+}
 
 @override
 String toString() {
-  return 'UfwChange.deleteRule(tuples: $tuples)';
+    return 'UfwChange.deleteRule(tuples: $tuples)';
 }
 
 

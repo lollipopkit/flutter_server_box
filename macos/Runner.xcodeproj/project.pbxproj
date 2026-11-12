@@ -189,6 +189,7 @@
 				33CC10E92044A3C60003C045 /* Sources */,
 				33CC10EA2044A3C60003C045 /* Frameworks */,
 				33CC10EB2044A3C60003C045 /* Resources */,
+				B7E1F0A2C3D4E5F607182930 /* Set FLTEnableImpeller */,
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
 				A1B2C3D4E5F60718293A4B5C /* Fix Objective-C Framework Resources */,
@@ -332,6 +333,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "FRAMEWORK=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/objective_c.framework\"\nif [ -d \"$FRAMEWORK/Versions\" ]; then\n  if [ ! -L \"$FRAMEWORK/Versions/Current\" ]; then\n    (cd \"$FRAMEWORK/Versions\" && ln -sf A Current)\n  fi\n  rm -f \"$FRAMEWORK/Resources\"\n  ln -sf Versions/Current/Resources \"$FRAMEWORK/Resources\"\nfi\n";
+		};
+		B7E1F0A2C3D4E5F607182930 /* Set FLTEnableImpeller */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Set FLTEnableImpeller";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "case \"$FLT_ENABLE_IMPELLER\" in\n  YES|NO) ;;\n  *) echo \"error: FLT_ENABLE_IMPELLER must be YES or NO, got '$FLT_ENABLE_IMPELLER'\"; exit 1 ;;\nesac\nplutil -replace FLTEnableImpeller -bool \"$FLT_ENABLE_IMPELLER\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

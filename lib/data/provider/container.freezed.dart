@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'container.dart';
@@ -9,6 +9,7 @@ part of 'container.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $ContainerStateCopyWith<ContainerState> get copyWith => _$ContainerStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ContainerState&&const DeepCollectionEquality().equals(other.items, items)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.diskUsage, diskUsage) || other.diskUsage == diskUsage)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
+  final _this = this as ContainerState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ContainerState&&const DeepCollectionEquality().equals(other.items, _this.items)&&const DeepCollectionEquality().equals(other.images, _this.images)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.containersError, _this.containersError) || other.containersError == _this.containersError)&&(identical(other.imagesError, _this.imagesError) || other.imagesError == _this.imagesError)&&(identical(other.runLog, _this.runLog) || other.runLog == _this.runLog)&&(identical(other.diskUsage, _this.diskUsage) || other.diskUsage == _this.diskUsage)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.isBusy, _this.isBusy) || other.isBusy == _this.isBusy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),const DeepCollectionEquality().hash(images),version,containersError,imagesError,runLog,diskUsage,type,isBusy);
+int get hashCode {
+  final _this = this as ContainerState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.items),const DeepCollectionEquality().hash(_this.images),_this.version,_this.containersError,_this.imagesError,_this.runLog,_this.diskUsage,_this.type,_this.isBusy);
+}
 
 @override
 String toString() {
-  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, diskUsage: $diskUsage, type: $type, isBusy: $isBusy)';
+  final _this = this as ContainerState;
+  return 'ContainerState(items: ${_this.items}, images: ${_this.images}, version: ${_this.version}, containersError: ${_this.containersError}, imagesError: ${_this.imagesError}, runLog: ${_this.runLog}, diskUsage: ${_this.diskUsage}, type: ${_this.type}, isBusy: ${_this.isBusy})';
 }
 
 
@@ -63,7 +69,7 @@ class _$ContainerStateCopyWithImpl<$Res>
 /// Create a copy of ContainerState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? items = freezed,Object? images = freezed,Object? version = freezed,Object? containersError = freezed,Object? imagesError = freezed,Object? runLog = freezed,Object? diskUsage = freezed,Object? type = null,Object? isBusy = null,}) {
-  return _then(_self.copyWith(
+  return _then(ContainerState(
 items: freezed == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<ContainerPs>?,images: freezed == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
 as List<ContainerImg>?,version: freezed == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
@@ -214,7 +220,7 @@ return $default(_that.items,_that.images,_that.version,_that.containersError,_th
 
 
 class _ContainerState implements ContainerState {
-  const _ContainerState({final  List<ContainerPs>? items = null, final  List<ContainerImg>? images = null, this.version = null, this.containersError = null, this.imagesError = null, this.runLog = null, this.diskUsage = null, this.type = ContainerType.docker, this.isBusy = false}): _items = items,_images = images;
+  const _ContainerState({ List<ContainerPs>? items = null,  List<ContainerImg>? images = null, this.version = null, this.containersError = null, this.imagesError = null, this.runLog = null, this.diskUsage = null, this.type = ContainerType.docker, this.isBusy = false}): _items = items,_images = images;
   
 
  final  List<ContainerPs>? _items;
@@ -253,16 +259,18 @@ _$ContainerStateCopyWith<_ContainerState> get copyWith => __$ContainerStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ContainerState&&const DeepCollectionEquality().equals(other._items, _items)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.diskUsage, diskUsage) || other.diskUsage == diskUsage)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ContainerState&&const DeepCollectionEquality().equals(other.items, _items)&&const DeepCollectionEquality().equals(other.images, _images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.diskUsage, diskUsage) || other.diskUsage == diskUsage)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_images),version,containersError,imagesError,runLog,diskUsage,type,isBusy);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_images),version,containersError,imagesError,runLog,diskUsage,type,isBusy);
+}
 
 @override
 String toString() {
-  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, diskUsage: $diskUsage, type: $type, isBusy: $isBusy)';
+    return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, diskUsage: $diskUsage, type: $type, isBusy: $isBusy)';
 }
 
 
