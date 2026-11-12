@@ -206,10 +206,15 @@ class _ServerPickerSheetState extends ConsumerState<_ServerPickerSheet> {
     // the same call the server tab makes, so the two lists never disagree.
     // Per tag, as there: the order under a tag is the one the tab shows
     // under it.
-    final sorted = ServerSortOrder.of(_tag).apply(
+    final sort = ServerSortOrder.of(_tag);
+    // Watched for an order that reads a machine's state, as the tab does: a
+    // reading that changes while this is open moves the row.
+    final sorted = sort.apply(
       order,
       byId,
-      (id) => ref.read(serverProvider(id)),
+      (id) => sort.field.readsStatus
+          ? ref.watch(serverProvider(id))
+          : ref.read(serverProvider(id)),
     );
 
     final where = widget.where;
