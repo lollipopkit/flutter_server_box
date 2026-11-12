@@ -16,6 +16,7 @@ import 'package:server_box/view/page/monitor/notices.dart';
 import 'package:server_box/view/page/monitor/overview.dart';
 import 'package:server_box/view/page/server/add_menu.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 import 'package:server_box/view/widget/swap_switcher.dart';
 
 /// Every server reached through a `monitor` agent, from the agents' side: how
@@ -40,6 +41,8 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
   /// chosen shows the first that offers it, and says so.
   String? _serverId;
 
+  static bool _isAgent(Spi spi) => spi.monitorOn != null;
+
   // Not kept alive: the home page disposes a tab off screen, and with it the
   // agents it polled.
 
@@ -49,7 +52,7 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
     final all = ref.watch(serversProvider);
     final servers = <Spi>[
       for (final id in all.serverOrder)
-        if (all.servers[id] case final spi? when spi.monitorOn != null) spi,
+        if (all.servers[id] case final spi? when _isAgent(spi)) spi,
     ];
     if (_serverId != null && !servers.any((s) => s.id == _serverId)) _serverId = null;
     final offered = {
@@ -172,7 +175,7 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
             icon: Icons.dns_outlined,
             label: server ?? libL10n.all,
             color: server == null ? null : Theme.of(context).colorScheme.primary,
-            onTap: () => _pickServer(servers, scope),
+            onTap: () => _pickServer(scope),
           ),
         ...actions,
       ],
@@ -285,33 +288,28 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
     ],
   );
 
-  Future<void> _pickServer(List<Spi> servers, List<Spi> scope) => showRowsSheet<void>(
-    context,
-    rows: (ctx) {
-      void pick(String? id) {
-        Navigator.of(ctx).pop();
-        setState(() => _serverId = id);
-      }
-
-      return [
-        // A section read from one server at a time has no "all".
-        if (!_section.scoped) ...[
-          SheetChoiceTile(
+  Future<void> _pickServer(List<Spi> scope) async {
+    final pick = await pickServerOr<()>(
+      context,
+      where: (_, spi) => _isAgent(spi),
+      selectedId: _section.scoped ? scope.firstOrNull?.id : _serverId,
+      // A section read from one server at a time has no "all".
+      extras: [
+        if (!_section.scoped)
+          ServerPickerExtra(
             icon: Icons.dns_outlined,
             title: libL10n.all,
+            value: (),
             selected: _serverId == null,
-            onTap: () => pick(null),
           ),
-          const Divider(height: 1),
-        ],
-        for (final spi in servers)
-          SheetChoiceTile(
-            icon: Icons.dns_outlined,
-            title: spi.name,
-            selected: (_section.scoped ? scope.firstOrNull?.id : _serverId) == spi.id,
-            onTap: () => pick(spi.id),
-          ),
-      ];
-    },
-  );
+      ],
+    );
+    if (pick == null || !mounted) return;
+    setState(() {
+      _serverId = switch (pick) {
+        PickedServer(:final spi) => spi.id,
+        PickedExtra() => null,
+      };
+    });
+  }
 }

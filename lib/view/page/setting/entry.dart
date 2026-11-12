@@ -63,6 +63,7 @@ import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'about.dart';

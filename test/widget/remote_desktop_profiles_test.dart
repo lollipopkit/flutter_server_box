@@ -526,7 +526,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
     // The editor keeps Save in its own app bar.
     expect(
       find.descendant(
@@ -622,7 +622,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(
       find.descendant(
-        of: find.byType(PromptSheet),
+        of: find.byType(SheetScaffold),
         matching: find.byType(TextField),
       ),
       'temporary-password',

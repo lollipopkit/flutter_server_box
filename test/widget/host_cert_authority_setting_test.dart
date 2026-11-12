@@ -39,7 +39,7 @@ void main() {
 
   /// In the editor, not elsewhere on the settings page.
   Finder inDialog(Finder finder) =>
-      find.descendant(of: find.byType(PromptSheet).first, matching: finder);
+      find.descendant(of: find.byType(SheetScaffold).first, matching: finder);
 
   Future<void> frames(WidgetTester tester, [int n = 6]) async {
     for (var i = 0; i < n; i++) {

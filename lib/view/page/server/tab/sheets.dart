@@ -47,17 +47,7 @@ extension _Sheets on _ServerPageState {
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [
-        for (final order in ServerSortOrder.all)
-          SheetChoiceTile(
-            icon: order.icon,
-            title: order.label,
-            selected: order.isCurrentFor(tag),
-            onTap: () {
-              order.save(tag);
-              Navigator.of(ctx).pop();
-              _sortVersion.notify();
-            },
-          ),
+        ...serverSortRows(ctx, tag, _sortVersion.notify),
         const Divider(height: 1),
         StatefulBuilder(
           builder: (_, setSheetState) {

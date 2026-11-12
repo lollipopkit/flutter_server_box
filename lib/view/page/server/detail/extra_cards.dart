@@ -185,14 +185,8 @@ extension on _ServerDetailPageState {
 
     showRowsSheet<void>(
       context,
+      title: '${item.name} · ${item.id}',
       rows: (_) => [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
-          child: Text(
-            '${item.name} · ${item.id}',
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-          ),
-        ),
         for (final (i, row) in rows.indexed) ...[
           if (i > 0) const Divider(height: 1, indent: 17, endIndent: 17),
           ServerDetailReadoutRow(k: row.k, v: row.v),
@@ -417,14 +411,8 @@ extension on _ServerDetailPageState {
 
     showRowsSheet<void>(
       context,
+      title: '${smart.device} · ${l10n.attributes}',
       rows: (_) => [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
-          child: Text(
-            '${smart.device} · ${l10n.attributes}',
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-          ),
-        ),
         for (final (i, row) in rows.indexed) ...[
           // A line between the readings, not around them: this is a table of
           // numbers and the rule is what keeps a name with its own value.

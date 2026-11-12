@@ -6,14 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/app_link.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/widget/app_link.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
@@ -214,19 +213,12 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     final snippet = _draft();
     if (snippet == null) return;
 
-    final servers = ref.read(serversProvider);
-    final spis = [for (final id in servers.serverOrder) ?servers.servers[id]];
-    if (spis.isEmpty) {
+    if (ref.read(serversProvider).servers.isEmpty) {
       Toast.show(libL10n.empty);
       return;
     }
 
-    final chosen = await context.showPickSingleSheet<Spi>(
-      title: libL10n.server,
-      items: spis,
-      display: (spi) => spi.name,
-      avatar: (spi) => distIcon(spi.id, size: 17),
-    );
+    final chosen = await pickServer(context, title: libL10n.server);
     if (chosen == null || !mounted) return;
 
     unawaited(
@@ -306,26 +298,14 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
             onTap: () async {
-              // Exclude deleted servers without mutating the stored selection.
-              final validServerIds = vals
-                  .where(
-                    (e) => ref.read(serversProvider).serverOrder.contains(e),
-                  )
-                  .toList();
-              final serverIds = await context.showPickSheet(
+              final picked = await pickServers(
+                context,
                 title: l10n.autoRun,
-                items: ref.read(serversProvider).serverOrder,
-                display: (e) => ref.read(serversProvider).servers[e]?.name ?? e,
-                // From the cache: the dialog lists every server, including
-                // ones with no live status, so nothing else here knows what
-                // they run.
-                avatar: (e) =>
-                    distIcon(e, size: 17),
-                initial: validServerIds,
+                initial: vals,
                 clearable: true,
               );
-              if (serverIds != null) {
-                _autoRunOn.value = serverIds;
+              if (picked != null) {
+                _autoRunOn.value = [for (final spi in picked) spi.id];
               }
             },
           );

@@ -1458,7 +1458,7 @@ void main() {
     await open(tester, 'web-01');
     // Running: neither choice switches.
     await tap(tester, _key('hw:fw:bios'));
-    expect(find.byType(PromptSheet), findsNothing);
+    expect(find.byType(SheetScaffold), findsNothing);
     expect(text(app_locale.l10n.virtHwFirmwareStopped), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
 
