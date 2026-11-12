@@ -5670,8 +5670,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Layoutvorlagen · neuer Arbeitsbereich auf dem Server des fokussierten Bereichs';
 
   @override
-  String get workspaceMoveTo =>
-      'In Arbeitsbereich verschieben, Verbindung bleibt bestehen';
+  String get workspaceMoveTo => 'In Arbeitsbereich verschieben';
 
   @override
   String workspaceMoved(String server, String workspace) {

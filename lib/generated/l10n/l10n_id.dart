@@ -5595,7 +5595,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Templat tata letak · ruang kerja baru di server panel yang difokuskan';
 
   @override
-  String get workspaceMoveTo => 'Pindahkan ke ruang kerja, tetap terhubung';
+  String get workspaceMoveTo => 'Pindahkan ke ruang kerja';
 
   @override
   String workspaceMoved(String server, String workspace) {

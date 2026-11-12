@@ -5338,7 +5338,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'レイアウトテンプレート · フォーカス中のペインのサーバーで新しいワークスペースを作成';
 
   @override
-  String get workspaceMoveTo => '接続を保ったままワークスペースに移動';
+  String get workspaceMoveTo => 'ワークスペースに移動';
 
   @override
   String workspaceMoved(String server, String workspace) {

@@ -1572,7 +1572,7 @@
   "workspaceTemplateOf": "{workspace} 的版面配置",
   "workspaceTemplateSaved": "已儲存範本「{name}」",
   "workspaceTemplatesHead": "版面配置範本 · 依目前區塊的伺服器新增工作區",
-  "workspaceMoveTo": "移到工作區，連線保持",
+  "workspaceMoveTo": "移到工作區",
   "workspaceMoved": "終端機 {server} 已移到「{workspace}」，連線保持",
   "workspaceNew": "新工作區",
   "workspaceIntoFocused": "放入焦點區塊",

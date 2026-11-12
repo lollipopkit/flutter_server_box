@@ -1588,7 +1588,7 @@
   "workspaceTemplateOf": "طرح‌بندی {workspace}",
   "workspaceTemplateSaved": "الگوی «{name}» ذخیره شد",
   "workspaceTemplatesHead": "الگوهای طرح‌بندی · فضای کاری جدید روی سرور قاب فوکوس‌شده",
-  "workspaceMoveTo": "انتقال به فضای کاری، بدون قطع اتصال",
+  "workspaceMoveTo": "انتقال به فضای کاری",
   "workspaceMoved": "ترمینال {server} به «{workspace}» منتقل شد، همچنان متصل است",
   "workspaceNew": "فضای کاری جدید",
   "workspaceIntoFocused": "به داخل قاب فوکوس‌شده",

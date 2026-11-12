@@ -5646,8 +5646,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Indelingssjablonen · nieuwe werkruimte op de server van het actieve paneel';
 
   @override
-  String get workspaceMoveTo =>
-      'Naar werkruimte verplaatsen, verbinding blijft';
+  String get workspaceMoveTo => 'Naar werkruimte verplaatsen';
 
   @override
   String workspaceMoved(String server, String workspace) {

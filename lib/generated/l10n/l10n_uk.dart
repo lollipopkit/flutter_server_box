@@ -5640,8 +5640,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Шаблони макета · новий робочий простір на сервері активної панелі';
 
   @override
-  String get workspaceMoveTo =>
-      'Перемістити в робочий простір, не розриваючи з\'єднання';
+  String get workspaceMoveTo => 'Перемістити в робочий простір';
 
   @override
   String workspaceMoved(String server, String workspace) {

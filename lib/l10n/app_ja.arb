@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "{workspace} のレイアウト",
   "workspaceTemplateSaved": "テンプレート「{name}」を保存しました",
   "workspaceTemplatesHead": "レイアウトテンプレート · フォーカス中のペインのサーバーで新しいワークスペースを作成",
-  "workspaceMoveTo": "接続を保ったままワークスペースに移動",
+  "workspaceMoveTo": "ワークスペースに移動",
   "workspaceMoved": "ターミナル {server} を「{workspace}」に移動しました（接続は維持）",
   "workspaceNew": "新しいワークスペース",
   "workspaceIntoFocused": "フォーカス中のペインに",

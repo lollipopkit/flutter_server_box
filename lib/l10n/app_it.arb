@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Layout di {workspace}",
   "workspaceTemplateSaved": "Modello “{name}” salvato",
   "workspaceTemplatesHead": "Modelli di layout · nuova area di lavoro sul server del riquadro attivo",
-  "workspaceMoveTo": "Sposta in un'area di lavoro, restando connesso",
+  "workspaceMoveTo": "Sposta in un'area di lavoro",
   "workspaceMoved": "Terminale {server} spostato in “{workspace}”, ancora connesso",
   "workspaceNew": "Nuova area di lavoro",
   "workspaceIntoFocused": "Nel riquadro attivo",

@@ -115,4 +115,42 @@ void main() {
     expect(trailingTaps, 1);
     expect(tapped, 2);
   });
+  group('how many tabs a width holds', () {
+    test('each its whole pill, beside the trailing button', () {
+      expect(NavBarMetrics.capacity(320), 4);
+      expect(NavBarMetrics.capacity(390), 5);
+      expect(NavBarMetrics.capacity(430), 5);
+      expect(NavBarMetrics.capacity(48 + 64 * 7), 7);
+    });
+
+    test('never none', () {
+      expect(NavBarMetrics.capacity(60), 1);
+    });
+
+    testWidgets('that many are drawn without a pill cut', (tester) async {
+      const width = 390.0;
+      tester.view.physicalSize = const Size(width, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final count = NavBarMetrics.capacity(width);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: AppNavBar(
+              selectedIndex: 0,
+              onSelected: (_) {},
+              items: [for (var i = 0; i < count; i++) _item('tab $i')],
+              trailing: _item('more'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final first = tester.getSize(find.byIcon(Icons.circle).first);
+      expect(first.width, greaterThan(0));
+      // One more would not have a pill's width each.
+      expect((width - NavBarMetrics.trailingWidth) / (count + 1), lessThan(NavBarMetrics.indicatorWidth));
+    });
+  });
 }

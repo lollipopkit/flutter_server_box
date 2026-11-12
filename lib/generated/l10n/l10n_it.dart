@@ -5658,8 +5658,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Modelli di layout · nuova area di lavoro sul server del riquadro attivo';
 
   @override
-  String get workspaceMoveTo =>
-      'Sposta in un\'area di lavoro, restando connesso';
+  String get workspaceMoveTo => 'Sposta in un\'area di lavoro';
 
   @override
   String workspaceMoved(String server, String workspace) {

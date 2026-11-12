@@ -1571,7 +1571,7 @@
   "workspaceTemplateOf": "Layout von {workspace}",
   "workspaceTemplateSaved": "Vorlage „{name}“ gespeichert",
   "workspaceTemplatesHead": "Layoutvorlagen · neuer Arbeitsbereich auf dem Server des fokussierten Bereichs",
-  "workspaceMoveTo": "In Arbeitsbereich verschieben, Verbindung bleibt bestehen",
+  "workspaceMoveTo": "In Arbeitsbereich verschieben",
   "workspaceMoved": "Terminal {server} nach „{workspace}“ verschoben, weiterhin verbunden",
   "workspaceNew": "Neuer Arbeitsbereich",
   "workspaceIntoFocused": "In den fokussierten Bereich",

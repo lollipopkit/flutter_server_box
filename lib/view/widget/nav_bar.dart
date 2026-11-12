@@ -24,6 +24,13 @@ abstract final class NavBarMetrics {
   /// What the trailing button takes at the right edge.
   static const trailingWidth = 48.0;
 
+  /// How many tabs a bar [width] wide draws beside the trailing button: each
+  /// its whole pill. The rest are behind that button.
+  static int capacity(double width) {
+    final fit = (width - trailingWidth) ~/ indicatorWidth;
+    return fit < 1 ? 1 : fit;
+  }
+
   /// Above the pill and below the name, once large text has made the bar
   /// taller than [height]. Small enough that at the default text size the
   /// bar is [height] exactly, as it was.

@@ -93,11 +93,25 @@ extension _HomePageStrip on _HomePageState {
   }
 
   Widget _buildBottomBar() {
+    // The bar's own width, which is not the window's wherever something
+    // stands beside it.
+    return LayoutBuilder(
+      builder: (context, constraints) => _buildBar(context, constraints.maxWidth),
+    );
+  }
+
+  Widget _buildBar(BuildContext context, double width) {
     return ListenableBuilder(
       listenable: _selectIndex,
       builder: (context, child) {
         if (_isServerFullscreenMode) return UIs.placeholder;
-        final shown = _barTabs;
+        // As many as the width holds: a bar arranged on a tablet's rail, and
+        // synced, is more than a phone has room for. Less the side insets the
+        // bar keeps clear of.
+        final room = width.isFinite ? width : MediaQuery.sizeOf(context).width;
+        final shown = _barTabs
+            .take(NavBarMetrics.capacity(room - MediaQuery.paddingOf(context).horizontal))
+            .toList();
         final overflow = _tabs.length - shown.length;
         return AppNavBar(
           key: _navKey,
