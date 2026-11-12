@@ -16,6 +16,7 @@ import 'package:server_box/core/service/program_status_alerts.dart';
 import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/core/wake_lock.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
@@ -60,7 +61,6 @@ import 'package:server_box/view/page/ssh/widget/tmux_window_bar.dart';
 import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -435,8 +435,6 @@ class SSHPageState extends ConsumerState<SSHPage>
     });
   }
 
-  /// Used to activate the wake lock while at least one terminal page exists.
-  static var _sshConnCount = 0;
   late final String _sessionId = ShortId.generate();
 
   /// See [_ProgramStatus]. The listener is a field: an extension method's
@@ -580,9 +578,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _keyboardHandlerActive = false;
     _detachKeyboardHandler();
 
-    if (--_sshConnCount <= 0) {
-      WakelockPlus.disable();
-    }
+    WakeLock.instance.terminalClosed();
 
     // Remove session entry
     TermSessionManager.remove(_sessionId);
@@ -627,9 +623,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _sess.onForegroundDone = _onForegroundSessionDone;
     _sess.onSwitched = _followBottom;
 
-    if (++_sshConnCount == 1) {
-      WakelockPlus.enable();
-    }
+    WakeLock.instance.terminalOpened();
 
     // Add session entry (for Android notifications & iOS Live Activities)
     TermSessionManager.add(
@@ -1582,8 +1576,6 @@ class SSHPageState extends ConsumerState<SSHPage>
     _startVirtKeyIntroWhenVisible();
     await _initTerminal();
     if (!mounted) return;
-
-    if (Stores.setting.sshWakeLock.fetch()) unawaited(WakelockPlus.enable());
 
     _keyboardHandlerReady = true;
     _attachKeyboardHandler();

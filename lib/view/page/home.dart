@@ -12,6 +12,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
+import 'package:server_box/core/wake_lock.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
@@ -38,7 +39,6 @@ import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/tray.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'home/lifecycle.dart';
 part 'home/nav.dart';
@@ -178,7 +178,7 @@ class _HomePageState extends ConsumerState<HomePage>
       Future(() => _notifier.closeServer());
     }
     _pageController.dispose();
-    WakelockPlus.disable();
+    WakeLock.instance.stop();
 
     _selectIndex.removeListener(_publishCurrentTab);
     _selectIndex.removeListener(_dropFocus);
@@ -200,9 +200,7 @@ class _HomePageState extends ConsumerState<HomePage>
       _selectIndex.value = 0;
     }
     _pageController = PageController(initialPage: _selectIndex.value);
-    if (Stores.setting.generalWakeLock.fetch()) {
-      WakelockPlus.enable();
-    }
+    WakeLock.instance.start();
 
     // Listen to homeTabs changes
     Stores.setting.homeTabs.listenable().addListener(_handleHomeTabsChanged);
