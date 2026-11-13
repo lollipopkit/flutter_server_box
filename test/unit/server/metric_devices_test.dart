@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/status/memory.dart';
-import 'package:server_box/data/model/server/status/swap_area.dart';
 import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/swap_area.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
