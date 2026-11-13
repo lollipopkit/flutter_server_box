@@ -214,6 +214,45 @@ fn swap_parse_meminfo() {
     assert_eq!(s.cached, 1024);
 }
 
+/// `commands::MEM`'s output: the meminfo totals, then each swap area (#1829).
+const MEM_WITH_SWAPS: &str = "MemTotal:       8040600 kB\nSwapTotal:      6291452 kB\nSwapFree:       5242876 kB\nSwapCached:     1024 kB\n__SBM_SWAPS__\nFilename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/dev/zram0                              partition\t4194300\t\t1048576\t\t100\n/home/my\\040swap                        file\t\t2097152\t\t0\t\t-2\n";
+
+#[test]
+fn swap_areas_parse_proc_swaps() {
+    let areas = linux::parse_swap_areas(MEM_WITH_SWAPS);
+    assert_eq!(
+        areas,
+        vec![
+            SwapArea {
+                path: "/dev/zram0".into(),
+                kind: "partition".into(),
+                size: 4194300 * 1024,
+                used: 1048576 * 1024,
+                priority: 100,
+            },
+            SwapArea {
+                path: "/home/my swap".into(),
+                kind: "file".into(),
+                size: 2097152 * 1024,
+                used: 0,
+                priority: -2,
+            },
+        ]
+    );
+    // The totals are read from meminfo's half alone.
+    let s = linux::parse_swap(MEM_WITH_SWAPS).unwrap();
+    assert_eq!((s.total, s.free), (6291452, 5242876));
+    assert_eq!(linux::parse_mem(MEM_WITH_SWAPS).unwrap().total, 8040600);
+}
+
+/// A script from before the marker, and a machine with no swap on, which
+/// prints the header alone.
+#[test]
+fn swap_areas_absent() {
+    assert!(linux::parse_swap_areas("SwapTotal: 0 kB\nSwapFree: 0 kB").is_empty());
+    assert!(linux::parse_swap_areas("SwapTotal: 0 kB\n__SBM_SWAPS__\nFilename\tType\tSize\tUsed\tPriority\n").is_empty());
+}
+
 // ---------- Disk: disk_test.dart ----------
 
 /// Dart 'parse lsblk JSON output': 5 entries

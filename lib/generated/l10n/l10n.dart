@@ -2208,6 +2208,12 @@ abstract class AppLocalizations {
   /// **'Use Podman by default'**
   String get usePodmanByDefault;
 
+  /// The order the kernel uses swap areas in: higher first.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priority;
+
   /// User-facing label or message for used.
   ///
   /// In en, this message translates to:

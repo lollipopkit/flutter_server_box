@@ -281,6 +281,7 @@
   "updateServerStatusInterval": "Intervalo de atualização do estado do servidor",
   "useNoPwd": "Não usar senha",
   "usePodmanByDefault": "Usar Podman por padrão",
+  "priority": "Prioridade",
   "used": "Usado",
   "viewDetails": "Ver detalhes",
   "virtKeyHelpIME": "Ligar/desligar o teclado",

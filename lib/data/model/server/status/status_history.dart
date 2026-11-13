@@ -48,6 +48,10 @@ class StatusHistory {
   final _temps = _DeviceHistory();
   Map<String, List<double?>> get tempsByDevice => _temps.byDevice;
 
+  /// Percent per swap area, by path.
+  final _swaps = _DeviceHistory();
+  Map<String, List<double?>> get swapsByDevice => _swaps.byDevice;
+
   /// Bytes per second per block device and per interface, for the chart to
   /// draw a line each once a metric is being read in full.
   ///
@@ -92,6 +96,7 @@ class StatusHistory {
     // `time` already holds this sample, so a series appearing now is padded to
     // one short of it.
     _temps.add(s.temps, time.length);
+    _swaps.add(s.swaps, time.length);
     _diskReads.add(s.diskReads, time.length);
     _diskWrites.add(s.diskWrites, time.length);
     _netRx.add(s.netRxs, time.length);
@@ -133,6 +138,7 @@ class StatusHistory {
     temp: temp[i],
     battery: battery[i],
     temps: _temps.at(i),
+    swaps: _swaps.at(i),
     diskReads: _diskReads.at(i),
     diskWrites: _diskWrites.at(i),
     netRxs: _netRx.at(i),
@@ -143,7 +149,7 @@ class StatusHistory {
     for (final f in [time, cpu, mem, swap, disk, netRx, netTx, diskRead, diskWrite, gpu, temp, battery]) {
       f.clear();
     }
-    for (final d in [_temps, _diskReads, _diskWrites, _netRx, _netTx]) {
+    for (final d in [_temps, _swaps, _diskReads, _diskWrites, _netRx, _netTx]) {
       d.byDevice.clear();
     }
   }
@@ -199,6 +205,7 @@ class StatusHistorySample {
   final double? temp;
   final double? battery;
   final Map<String, double>? temps;
+  final Map<String, double>? swaps;
   final Map<String, double>? diskReads;
   final Map<String, double>? diskWrites;
   final Map<String, double>? netRxs;
@@ -218,6 +225,7 @@ class StatusHistorySample {
     this.temp,
     this.battery,
     this.temps,
+    this.swaps,
     this.diskReads,
     this.diskWrites,
     this.netRxs,

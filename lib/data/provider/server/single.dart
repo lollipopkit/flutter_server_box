@@ -313,6 +313,7 @@ class ServerNotifier extends _$ServerNotifier
     status.amd = source.amd?.toList();
     status.diskUsage = source.diskUsage;
     status.blockDevices = source.blockDevices;
+    status.swapAreas = source.swapAreas;
     status.osId = source.osId;
     status.osIdLike = source.osIdLike;
     // Carried, for the reason the mappers do not clear it: it refreshes on the

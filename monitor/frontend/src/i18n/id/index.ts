@@ -32,6 +32,7 @@ const id = {
 	gpu: 'GPU',
 	back: 'Kembali',
 	swap: 'Memori swap',
+	swapPriority: 'Prioritas {priority}',
 	disks: 'Disk',
 	blockDevices: 'Perangkat blok',
 	notMounted: 'Tidak di-mount',

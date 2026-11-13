@@ -105,6 +105,24 @@ void main() {
         MonitorMetrics.fromJson(body(const {})),
       );
       expect(status.blockDevices, isEmpty);
+      expect(status.swapAreas, isEmpty);
+    });
+
+    test('each swap area, in bytes as the agent sends them', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          body({
+            'swap_areas': const [
+              {'path': '/dev/zram0', 'kind': 'partition', 'size': 4294967296, 'used': 1073741824, 'priority': 100},
+            ],
+          }),
+        ),
+      );
+      final zram = status.swapAreas.single;
+      expect(zram.path, '/dev/zram0');
+      expect(zram.usedPercent, 0.25);
+      expect(zram.priority, 100);
     });
   });
 

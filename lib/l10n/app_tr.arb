@@ -281,6 +281,7 @@
   "updateServerStatusInterval": "Sunucu durumu güncelleme aralığı",
   "useNoPwd": "Parola kullanma",
   "usePodmanByDefault": "Varsayılan olarak Podman kullan",
+  "priority": "Öncelik",
   "used": "Kullanılan",
   "viewDetails": "Detayları Görüntüle",
   "virtKeyHelpIME": "Klavyeyi aç/kapat",

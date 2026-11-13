@@ -1222,6 +1222,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get usePodmanByDefault => 'Varsayılan olarak Podman kullan';
 
   @override
+  String get priority => 'Öncelik';
+
+  @override
   String get used => 'Kullanılan';
 
   @override

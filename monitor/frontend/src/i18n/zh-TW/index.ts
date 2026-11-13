@@ -32,6 +32,7 @@ const zh_TW = {
 	gpu: 'GPU',
 	back: '返回',
 	swap: '交換分割區',
+	swapPriority: '優先順序 {priority}',
 	disks: '磁碟',
 	blockDevices: '區塊裝置',
 	notMounted: '未掛載',

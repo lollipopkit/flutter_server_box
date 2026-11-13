@@ -327,6 +327,7 @@
   "updateServerStatusInterval": "伺服器狀態更新間隔",
   "useNoPwd": "不使用密碼",
   "usePodmanByDefault": "預設使用 Podman",
+  "priority": "優先順序",
   "used": "已使用",
   "viewDetails": "檢視詳情",
   "virtKeyHelpIME": "打開/關閉鍵盤",

@@ -114,6 +114,20 @@ impl Swap {
     }
 }
 
+/// One active swap area as `/proc/swaps` lists it: a partition, a file or a
+/// zram device. Sizes in bytes, unlike [`Swap`]; [`Swap`] is their sum.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SwapArea {
+    /// `/dev/zram0`, `/swapfile`, `/dev/sda2`
+    pub path: String,
+    /// `/proc/swaps` Type: `partition` or `file`.
+    pub kind: String,
+    pub size: u64,
+    pub used: u64,
+    /// Higher is used first; the kernel numbers areas without one from -2 down.
+    pub priority: i32,
+}
+
 /// One block device as `lsblk` lists it, whether or not anything is mounted
 /// from it: what a disk is, how it is split, and which parts are in use.
 ///

@@ -14,6 +14,7 @@ import 'package:server_box/data/model/server/status/net_speed.dart';
 import 'package:server_box/data/model/server/status/nvdia.dart';
 import 'package:server_box/data/model/server/status/sensors.dart';
 import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/swap_area.dart';
 import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
 
@@ -21,6 +22,9 @@ class ServerStatus {
   Cpus cpu;
   Memory mem;
   Swap swap;
+
+  /// Each swap area [swap] adds up. Linux only.
+  List<SwapArea> swapAreas = const [];
   List<Disk> disk;
 
   /// Every block device, mounted or not. Linux only.

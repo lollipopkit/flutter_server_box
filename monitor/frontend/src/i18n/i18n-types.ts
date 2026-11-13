@@ -152,6 +152,11 @@ type RootTranslation = {
 	 */
 	swap: string
 	/**
+	 * P​r​i​o​r​i​t​y​ ​{​p​r​i​o​r​i​t​y​}
+	 * @param {number} priority
+	 */
+	swapPriority: RequiredParams<'priority'>
+	/**
 	 * D​i​s​k​s
 	 */
 	disks: string
@@ -10687,6 +10692,10 @@ export type TranslationFunctions = {
 	 * Swap
 	 */
 	swap: () => LocalizedString
+	/**
+	 * Priority {priority}
+	 */
+	swapPriority: (arg: { priority: number }) => LocalizedString
 	/**
 	 * Disks
 	 */

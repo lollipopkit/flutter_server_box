@@ -240,6 +240,16 @@
               m.swap.usage_percent,
             )}
           {/if}
+          {#if (m.swap_areas?.length ?? 0) > 1}
+            {#each m.swap_areas ?? [] as a (a.path)}
+              {@const pct = a.size > 0 ? (a.used / a.size) * 100 : 0}
+              {@render labeledBar(
+                a.path,
+                `${fmtBytes(a.used)} / ${fmtBytes(a.size)} (${pct.toFixed(1)}%) · ${$LL.swapPriority({ priority: a.priority })}`,
+                pct,
+              )}
+            {/each}
+          {/if}
         </div>
       </Card>
     {/if}

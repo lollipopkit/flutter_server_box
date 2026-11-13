@@ -6,6 +6,10 @@ use crate::{
     monitoring::timeseries::CpuCoreTime,
 };
 use chrono::{DateTime, Utc};
+use sbm_parser::types::{
+    AmdSmiItem, Battery, BlockDevice, Conn, DiskIoPiece, DiskSmart, GpuItem, GpuMemProcess,
+    SensorItem, SwapArea,
+};
 use serde::{Deserialize, Serialize};
 
 /// The subset of `MonitoringConfig` that takes effect immediately on a
@@ -45,6 +49,10 @@ pub struct SystemMetrics {
     pub cpu_cores: Vec<CpuCoreTime>,
     pub memory: MemoryMetrics,
     pub swap: SwapMetrics,
+    /// Each swap area `swap` adds up (Linux `/proc/swaps`, #1829). Sizes in
+    /// bytes.
+    #[serde(default)]
+    pub swap_areas: Vec<SwapArea>,
     pub disk: DiskMetrics,
     pub network: NetworkMetrics,
     /// The single reading the home-page card shows: a CPU sensor when one is
@@ -80,24 +88,24 @@ pub struct SystemMetrics {
     /// Every block device, mounted or not (Linux `lsblk`, #1829). Sizes in
     /// bytes.
     #[serde(default)]
-    pub block_devices: Vec<sbm_parser::types::BlockDevice>,
+    pub block_devices: Vec<BlockDevice>,
     #[serde(default)]
     pub ifaces: Vec<IfaceMetrics>,
     /// System uptime, already formatted by the collection script (e.g. "up 3 days, 2:14")
     pub uptime: Option<String>,
-    pub conn: Option<sbm_parser::types::Conn>,
+    pub conn: Option<Conn>,
     /// Cumulative per-device sector counters (not a rate — see `diskio_rate`)
     #[serde(default)]
-    pub diskio: Vec<sbm_parser::types::DiskIoPiece>,
+    pub diskio: Vec<DiskIoPiece>,
     /// Bytes/sec since the previous cycle, derived from `diskio`'s cumulative
     /// counters + `timestamp` deltas; empty on the first cycle (no baseline)
     /// or for a device that just appeared
     #[serde(default)]
     pub diskio_rate: Vec<DiskIoRate>,
     #[serde(default)]
-    pub batteries: Vec<sbm_parser::types::Battery>,
+    pub batteries: Vec<Battery>,
     #[serde(default)]
-    pub sensors: Vec<sbm_parser::types::SensorItem>,
+    pub sensors: Vec<SensorItem>,
     #[serde(default)]
     pub disk_smart: Vec<SmartSummary>,
     /// The machine's own interface addresses, as `sbm_parser::common::parse_ips`
@@ -120,7 +128,7 @@ pub struct SystemMetrics {
     /// extended command. Linux DRM/sysfs GPUs are sampled every cycle instead.
     /// Not part of the API.
     #[serde(skip, default)]
-    pub amd_cache: Vec<sbm_parser::types::AmdSmiItem>,
+    pub amd_cache: Vec<AmdSmiItem>,
 }
 
 /// What one custom command printed.
@@ -145,8 +153,8 @@ pub struct SmartSummary {
     pub power_cycle_count: Option<i64>,
 }
 
-impl From<&sbm_parser::types::DiskSmart> for SmartSummary {
-    fn from(d: &sbm_parser::types::DiskSmart) -> Self {
+impl From<&DiskSmart> for SmartSummary {
+    fn from(d: &DiskSmart) -> Self {
         Self {
             device: d.device.clone(),
             healthy: d.healthy,
@@ -216,11 +224,11 @@ pub struct GpuMetrics {
     /// Empty for drivers that list none (Intel, AMD through DRM). Absent on
     /// older agents.
     #[serde(default)]
-    pub processes: Vec<sbm_parser::types::GpuMemProcess>,
+    pub processes: Vec<GpuMemProcess>,
 }
 
-impl From<sbm_parser::types::GpuItem> for GpuMetrics {
-    fn from(gpu: sbm_parser::types::GpuItem) -> Self {
+impl From<GpuItem> for GpuMetrics {
+    fn from(gpu: GpuItem) -> Self {
         let (memory_used, memory_total, memory_unit, processes) = gpu
             .memory
             .map(|memory| {

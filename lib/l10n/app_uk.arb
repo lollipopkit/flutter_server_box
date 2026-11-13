@@ -282,6 +282,7 @@
   "updateServerStatusInterval": "Інтервал оновлення статусу сервера",
   "useNoPwd": "Не використовувати пароль",
   "usePodmanByDefault": "Використовувати Podman за замовчуванням",
+  "priority": "Пріоритет",
   "used": "Використано",
   "viewDetails": "Переглянути деталі",
   "virtKeyHelpIME": "Увімкнути/вимкнути клавіатуру",

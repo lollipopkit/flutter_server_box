@@ -32,6 +32,7 @@ const ja = {
 	gpu: 'GPU',
 	back: '戻る',
 	swap: 'スワップ',
+	swapPriority: '優先度 {priority}',
 	disks: 'ディスク',
 	blockDevices: 'ブロックデバイス',
 	notMounted: '未マウント',

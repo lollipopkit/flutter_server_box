@@ -1222,6 +1222,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get usePodmanByDefault => 'استفاده پیش‌فرض از Podman';
 
   @override
+  String get priority => 'اولویت';
+
+  @override
   String get used => 'مصرف‌شده';
 
   @override

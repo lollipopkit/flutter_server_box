@@ -281,6 +281,7 @@
   "updateServerStatusInterval": "サーバー状態の更新間隔",
   "useNoPwd": "パスワードを使用しない",
   "usePodmanByDefault": "デフォルトでPodmanを使用",
+  "priority": "優先度",
   "used": "使用済み",
   "viewDetails": "詳細を表示",
   "virtKeyHelpIME": "キーボードのオン/オフ",

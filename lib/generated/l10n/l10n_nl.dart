@@ -1227,6 +1227,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get usePodmanByDefault => 'Valt terug op Podman';
 
   @override
+  String get priority => 'Prioriteit';
+
+  @override
   String get used => 'Gebruikt';
 
   @override

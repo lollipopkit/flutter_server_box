@@ -23,6 +23,11 @@ MonitorMetrics _$MonitorMetricsFromJson(
       const [],
   memory: MonitorMemoryMetrics.fromJson(json['memory'] as Map<String, dynamic>),
   swap: MonitorSwapMetrics.fromJson(json['swap'] as Map<String, dynamic>),
+  swapAreas:
+      (json['swap_areas'] as List<dynamic>?)
+          ?.map((e) => SwapArea.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   disk: MonitorDiskMetrics.fromJson(json['disk'] as Map<String, dynamic>),
   network: MonitorNetworkMetrics.fromJson(
     json['network'] as Map<String, dynamic>,
@@ -101,6 +106,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'cpu_cores': instance.cpuCores,
       'memory': instance.memory,
       'swap': instance.swap,
+      'swap_areas': instance.swapAreas,
       'disk': instance.disk,
       'network': instance.network,
       'temperature': instance.temperature,

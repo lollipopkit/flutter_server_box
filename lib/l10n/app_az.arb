@@ -342,6 +342,7 @@
   "updateServerStatusInterval": "Server statusunun yenilənmə intervalı",
   "useNoPwd": "Parol istifadə etmə",
   "usePodmanByDefault": "Standart olaraq Podman istifadə et",
+  "priority": "Prioritet",
   "used": "İstifadə olunur",
   "viewDetails": "Təfərrüatlara bax",
   "virtKeyHelpIME": "Klaviaturanı aç/bağla",

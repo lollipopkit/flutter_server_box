@@ -19618,6 +19618,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SwapArea> dco_decode_list_swap_area(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_swap_area).toList();
+  }
+
+  @protected
   List<SystemGroup> dco_decode_list_system_group(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_system_group).toList();
@@ -21772,33 +21778,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   StatusReport dco_decode_status_report(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 24)
-      throw Exception('unexpected arr length: expect 24 but see ${arr.length}');
+    if (arr.length != 25)
+      throw Exception('unexpected arr length: expect 25 but see ${arr.length}');
     return StatusReport(
       cpu: dco_decode_list_cpu_core(arr[0]),
       cpuBrand: dco_decode_list_record_string_u_32(arr[1]),
       mem: dco_decode_opt_box_autoadd_memory(arr[2]),
       swap: dco_decode_opt_box_autoadd_swap(arr[3]),
-      disks: dco_decode_list_disk(arr[4]),
-      diskUsed: dco_decode_u_64(arr[5]),
-      diskSize: dco_decode_u_64(arr[6]),
-      blockDevices: dco_decode_list_status_block_device(arr[7]),
-      net: dco_decode_list_net_iface(arr[8]),
-      temps: dco_decode_list_record_string_f_64(arr[9]),
-      conn: dco_decode_opt_box_autoadd_conn(arr[10]),
-      uptime: dco_decode_opt_String(arr[11]),
-      sys: dco_decode_opt_String(arr[12]),
-      osId: dco_decode_opt_String(arr[13]),
-      osIdLike: dco_decode_list_String(arr[14]),
-      host: dco_decode_opt_String(arr[15]),
-      ips: dco_decode_list_String(arr[16]),
-      diskio: dco_decode_list_disk_io_piece(arr[17]),
-      batteries: dco_decode_list_battery(arr[18]),
-      sensors: dco_decode_list_sensor_item(arr[19]),
-      nvidia: dco_decode_list_nvidia_smi_item(arr[20]),
-      amd: dco_decode_list_amd_smi_item(arr[21]),
-      gpus: dco_decode_list_gpu_item(arr[22]),
-      diskSmart: dco_decode_list_smart_report(arr[23]),
+      swapAreas: dco_decode_list_swap_area(arr[4]),
+      disks: dco_decode_list_disk(arr[5]),
+      diskUsed: dco_decode_u_64(arr[6]),
+      diskSize: dco_decode_u_64(arr[7]),
+      blockDevices: dco_decode_list_status_block_device(arr[8]),
+      net: dco_decode_list_net_iface(arr[9]),
+      temps: dco_decode_list_record_string_f_64(arr[10]),
+      conn: dco_decode_opt_box_autoadd_conn(arr[11]),
+      uptime: dco_decode_opt_String(arr[12]),
+      sys: dco_decode_opt_String(arr[13]),
+      osId: dco_decode_opt_String(arr[14]),
+      osIdLike: dco_decode_list_String(arr[15]),
+      host: dco_decode_opt_String(arr[16]),
+      ips: dco_decode_list_String(arr[17]),
+      diskio: dco_decode_list_disk_io_piece(arr[18]),
+      batteries: dco_decode_list_battery(arr[19]),
+      sensors: dco_decode_list_sensor_item(arr[20]),
+      nvidia: dco_decode_list_nvidia_smi_item(arr[21]),
+      amd: dco_decode_list_amd_smi_item(arr[22]),
+      gpus: dco_decode_list_gpu_item(arr[23]),
+      diskSmart: dco_decode_list_smart_report(arr[24]),
     );
   }
 
@@ -21998,6 +22005,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       total: dco_decode_u_64(arr[0]),
       free: dco_decode_u_64(arr[1]),
       cached: dco_decode_u_64(arr[2]),
+    );
+  }
+
+  @protected
+  SwapArea dco_decode_swap_area(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return SwapArea(
+      path: dco_decode_String(arr[0]),
+      kind: dco_decode_String(arr[1]),
+      size: dco_decode_u_64(arr[2]),
+      used: dco_decode_u_64(arr[3]),
+      priority: dco_decode_i_32(arr[4]),
     );
   }
 
@@ -27924,6 +27946,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SwapArea> sse_decode_list_swap_area(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <SwapArea>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_swap_area(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<SystemGroup> sse_decode_list_system_group(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -30987,6 +31021,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_cpuBrand = sse_decode_list_record_string_u_32(deserializer);
     final var_mem = sse_decode_opt_box_autoadd_memory(deserializer);
     final var_swap = sse_decode_opt_box_autoadd_swap(deserializer);
+    final var_swapAreas = sse_decode_list_swap_area(deserializer);
     final var_disks = sse_decode_list_disk(deserializer);
     final var_diskUsed = sse_decode_u_64(deserializer);
     final var_diskSize = sse_decode_u_64(deserializer);
@@ -31012,6 +31047,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       cpuBrand: var_cpuBrand,
       mem: var_mem,
       swap: var_swap,
+      swapAreas: var_swapAreas,
       disks: var_disks,
       diskUsed: var_diskUsed,
       diskSize: var_diskSize,
@@ -31285,6 +31321,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_free = sse_decode_u_64(deserializer);
     final var_cached = sse_decode_u_64(deserializer);
     return Swap(total: var_total, free: var_free, cached: var_cached);
+  }
+
+  @protected
+  SwapArea sse_decode_swap_area(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_path = sse_decode_String(deserializer);
+    final var_kind = sse_decode_String(deserializer);
+    final var_size = sse_decode_u_64(deserializer);
+    final var_used = sse_decode_u_64(deserializer);
+    final var_priority = sse_decode_i_32(deserializer);
+    return SwapArea(
+      path: var_path,
+      kind: var_kind,
+      size: var_size,
+      used: var_used,
+      priority: var_priority,
+    );
   }
 
   @protected
@@ -36929,6 +36982,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_swap_area(
+    List<SwapArea> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_swap_area(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_system_group(
     List<SystemGroup> self,
     SseSerializer serializer,
@@ -39562,6 +39627,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_record_string_u_32(self.cpuBrand, serializer);
     sse_encode_opt_box_autoadd_memory(self.mem, serializer);
     sse_encode_opt_box_autoadd_swap(self.swap, serializer);
+    sse_encode_list_swap_area(self.swapAreas, serializer);
     sse_encode_list_disk(self.disks, serializer);
     sse_encode_u_64(self.diskUsed, serializer);
     sse_encode_u_64(self.diskSize, serializer);
@@ -39795,6 +39861,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_64(self.total, serializer);
     sse_encode_u_64(self.free, serializer);
     sse_encode_u_64(self.cached, serializer);
+  }
+
+  @protected
+  void sse_encode_swap_area(SwapArea self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_String(self.kind, serializer);
+    sse_encode_u_64(self.size, serializer);
+    sse_encode_u_64(self.used, serializer);
+    sse_encode_i_32(self.priority, serializer);
   }
 
   @protected

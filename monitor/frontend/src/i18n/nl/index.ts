@@ -32,6 +32,7 @@ const nl = {
 	gpu: 'GPU',
 	back: 'Terug',
 	swap: 'Wisselgeheugen',
+	swapPriority: 'Prioriteit {priority}',
 	disks: 'Schijven',
 	blockDevices: 'Blokapparaten',
 	notMounted: 'Niet aangekoppeld',

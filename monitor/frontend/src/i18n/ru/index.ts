@@ -32,6 +32,7 @@ const ru = {
 	gpu: 'GPU',
 	back: 'Назад',
 	swap: 'Подкачка',
+	swapPriority: 'Приоритет {priority}',
 	disks: 'Диски',
 	blockDevices: 'Блочные устройства',
 	notMounted: 'Не смонтировано',

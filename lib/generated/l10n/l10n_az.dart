@@ -1223,6 +1223,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get usePodmanByDefault => 'Standart olaraq Podman istifadə et';
 
   @override
+  String get priority => 'Prioritet';
+
+  @override
   String get used => 'İstifadə olunur';
 
   @override

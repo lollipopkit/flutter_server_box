@@ -346,6 +346,7 @@
   "updateServerStatusInterval": "فاصله زمانی به‌روزرسانی وضعیت سرور",
   "useNoPwd": "بدون گذرواژه",
   "usePodmanByDefault": "استفاده پیش‌فرض از Podman",
+  "priority": "اولویت",
   "used": "مصرف‌شده",
   "viewDetails": "مشاهده جزئیات",
   "virtKeyHelpIME": "روشن/خاموش کردن صفحه‌کلید",

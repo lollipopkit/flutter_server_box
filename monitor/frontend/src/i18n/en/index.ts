@@ -32,6 +32,7 @@ const en = {
 	gpu: 'GPU',
 	back: 'Back',
 	swap: 'Swap',
+	swapPriority: 'Priority {priority:number}',
 	disks: 'Disks',
 	blockDevices: 'Block devices',
 	notMounted: 'Not mounted',

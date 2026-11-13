@@ -12,7 +12,7 @@ use sbm_parser::types;
 use serde_json::Value;
 pub use sbm_parser::types::{
     AmdSmiItem, Battery, BatteryStatus, Conn, CpuCore, Disk, DiskIoPiece, GpuItem, GpuMem, GpuMemProcess, Memory, NetIface, NvidiaSmiItem,
-    SensorItem, SmartAttributeFlags, Swap,
+    SensorItem, SmartAttributeFlags, Swap, SwapArea,
 };
 
 /// Collection command, single source of truth shared with the app's script generation
@@ -42,6 +42,7 @@ pub struct StatusReport {
     pub cpu_brand: Vec<(String, u32)>,
     pub mem: Option<Memory>,
     pub swap: Option<Swap>,
+    pub swap_areas: Vec<SwapArea>,
     pub disks: Vec<Disk>,
     /// The disk total in KiB, by `sbm_parser::types::disk_usage` — the one the
     /// monitor agent stores — with network filesystems only when asked for.
@@ -178,6 +179,7 @@ pub fn parse_status(system: SystemType, raw: HashMap<String, String>, temp_divis
         cpu_brand: status.cpu_brand,
         mem: status.mem,
         swap: status.swap,
+        swap_areas: status.swap_areas,
         disks: status.disks,
         disk_used,
         disk_size,
@@ -224,6 +226,15 @@ pub struct _Swap {
     pub total: u64,
     pub free: u64,
     pub cached: u64,
+}
+
+#[frb(mirror(SwapArea))]
+pub struct _SwapArea {
+    pub path: String,
+    pub kind: String,
+    pub size: u64,
+    pub used: u64,
+    pub priority: i32,
 }
 
 #[frb(mirror(Disk))]

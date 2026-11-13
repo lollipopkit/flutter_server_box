@@ -281,6 +281,7 @@
   "updateServerStatusInterval": "Interne server status bijwerking interval",
   "useNoPwd": "Geen wachtwoord gebruiken",
   "usePodmanByDefault": "Valt terug op Podman",
+  "priority": "Prioriteit",
   "used": "Gebruikt",
   "viewDetails": "Details bekijken",
   "virtKeyHelpIME": "Toetsenbord aan/uit zetten",

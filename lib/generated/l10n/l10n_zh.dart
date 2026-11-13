@@ -1139,6 +1139,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get usePodmanByDefault => '默认使用 Podman';
 
   @override
+  String get priority => '优先级';
+
+  @override
   String get used => '已用';
 
   @override
@@ -7983,6 +7986,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get usePodmanByDefault => '預設使用 Podman';
+
+  @override
+  String get priority => '優先順序';
 
   @override
   String get used => '已使用';

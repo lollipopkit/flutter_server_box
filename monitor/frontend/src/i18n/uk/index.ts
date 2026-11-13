@@ -32,6 +32,7 @@ const uk = {
 	gpu: 'GPU',
 	back: 'Назад',
 	swap: 'Своп',
+	swapPriority: 'Пріоритет {priority}',
 	disks: 'Диски',
 	blockDevices: 'Блокові пристрої',
 	notMounted: 'Не змонтовано',
