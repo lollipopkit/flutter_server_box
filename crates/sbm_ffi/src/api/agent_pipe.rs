@@ -103,9 +103,18 @@ impl AgentPipe {
     pub async fn write(&self, data: Vec<u8>) -> Result<(), String> {
         #[cfg(windows)]
         {
+            // As [read]: an agent that stops reading leaves a write pending
+            // once the pipe's buffer is full, and [close] needs this lock.
+            let closed = self.close.notified();
+            if self.closed.load(Ordering::Acquire) {
+                return Err("closed".into());
+            }
             let mut writer = self.writer.lock().await;
             let writer = writer.as_mut().ok_or("closed")?;
-            writer.write_all(&data).await.map_err(|e| e.to_string())
+            tokio::select! {
+                written = writer.write_all(&data) => written.map_err(|e| e.to_string()),
+                _ = closed => Err("closed".into()),
+            }
         }
         #[cfg(not(windows))]
         {
@@ -114,8 +123,8 @@ impl AgentPipe {
         }
     }
 
-    /// Ends the connection: a [read] waiting answers none, and the handle is
-    /// released here, not when Dart drops this.
+    /// Ends the connection: a [read] waiting answers none, a [write] waiting
+    /// fails, and the handle is released here, not when Dart drops this.
     pub async fn close(&self) {
         #[cfg(windows)]
         {
@@ -182,6 +191,43 @@ mod tests {
         assert_eq!(read.unwrap().unwrap().unwrap(), None);
         assert!(pipe.write(b"x".to_vec()).await.is_err());
         tokio::time::timeout(Duration::from_secs(1), held).await.unwrap().unwrap();
+    }
+
+    #[tokio::test]
+    async fn close_ends_a_write_the_agent_never_reads() {
+        let name = pipe_name("full");
+        let server = ServerOptions::new()
+            .first_pipe_instance(true)
+            .in_buffer_size(1024)
+            .create(&name)
+            .unwrap();
+        let held = tokio::spawn(async move {
+            server.connect().await.unwrap();
+            // Connected, never read from, until the test is over.
+            tokio::time::sleep(Duration::from_secs(10)).await;
+            drop(server);
+        });
+
+        let pipe = std::sync::Arc::new(AgentPipe::connect(name, 1000).await.unwrap());
+        let writing = tokio::spawn({
+            let pipe = pipe.clone();
+            // Until the agent's side is full: Windows grows a pipe's buffer
+            // past what it was created with, so no one size is enough.
+            async move {
+                loop {
+                    pipe.write(vec![0u8; 1 << 16]).await?;
+                }
+                #[allow(unreachable_code)]
+                Ok::<(), String>(())
+            }
+        });
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        assert!(!writing.is_finished(), "the write should be waiting on the agent");
+
+        tokio::time::timeout(Duration::from_secs(1), pipe.close()).await.unwrap();
+        let written = tokio::time::timeout(Duration::from_secs(1), writing).await;
+        assert!(written.unwrap().unwrap().is_err());
+        held.abort();
     }
 
     #[tokio::test]

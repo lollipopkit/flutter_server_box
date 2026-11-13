@@ -41467,8 +41467,8 @@ class AgentPipeImpl extends RustOpaque implements AgentPipe {
         RustLib.instance.api.rust_arc_decrement_strong_count_AgentPipePtr,
   );
 
-  /// Ends the connection: a [read] waiting answers none, and the handle is
-  /// released here, not when Dart drops this.
+  /// Ends the connection: a [read] waiting answers none, a [write] waiting
+  /// fails, and the handle is released here, not when Dart drops this.
   Future<void> close() =>
       RustLib.instance.api.crateApiAgentPipeAgentPipeClose(that: this);
 

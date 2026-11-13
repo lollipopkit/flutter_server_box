@@ -27,12 +27,12 @@
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::agent_pipe::*;
 use crate::api::bmc::*;
+use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -24035,12 +24035,12 @@ crate::api::virt_libvirt::VirtResourceOp::NetDelete{name} => { <i32>::sse_encode
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::agent_pipe::*;
 use crate::api::bmc::*;
+use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -24183,12 +24183,12 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::agent_pipe::*;
 use crate::api::bmc::*;
+use crate::api::virt::*;
+use crate::api::pve::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

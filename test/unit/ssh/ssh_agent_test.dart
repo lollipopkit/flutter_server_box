@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/ssh/agent.dart';
+import 'package:server_box/core/ssh/auth.dart';
 import 'package:server_box/core/ssh/client.dart';
 import 'package:server_box/core/ssh/config.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -49,6 +50,12 @@ void main() {
       // A variable's value is taken as it is, never read for tokens again.
       expect(expand(r'${PCT}/a.sock'), '/has-%u/a.sock');
     });
+
+    test('%i is this process\'s user id', () {
+      final uid = (Process.runSync('id', ['-u']).stdout as String).trim();
+      expect(expand('/run/user/%i/gnupg/S.gpg-agent.ssh'),
+          '/run/user/$uid/gnupg/S.gpg-agent.ssh');
+    }, skip: isWindows);
 
     test('a token this does not know names no socket', () {
       expect(expand('/tmp/%C.sock'), isNull);
@@ -194,6 +201,27 @@ void main() {
       expect(await client.onPasswordRequest!(), 'account-password');
     });
 
+    test('one that is not there leaves the server\'s own prompt', () async {
+      final client = await _createClient(
+        identityAgent: '${dir.path}/missing.sock',
+        onKeyboardInteractive: (_, _) async => null,
+      );
+
+      expect(client.signers, isEmpty);
+      expect(client.onUserInfoRequest, isNotNull);
+    });
+
+    test('a stored key that does not parse leaves the agent\'s', () async {
+      final client = await _createClient(
+        identityAgent: path,
+        keyId: 'broken',
+        privateKey: 'not a key',
+      );
+
+      expect(client.identities, isNull);
+      expect(client.signers, hasLength(1));
+    });
+
     test('one that is not there, and nothing else, is said', () async {
       await expectLater(
         _createClient(identityAgent: '${dir.path}/missing.sock'),
@@ -210,6 +238,9 @@ void main() {
 Future<SSHClient> _createClient({
   required String identityAgent,
   String? pwd,
+  String? keyId,
+  String? privateKey,
+  SSHKeyboardInteractiveHandler? onKeyboardInteractive,
 }) async {
   final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
   final peers = <Socket>[];
@@ -229,9 +260,12 @@ Future<SSHClient> _createClient({
         port: server.port,
         user: 'tester',
         pwd: pwd,
+        keyId: keyId,
         identityAgent: identityAgent,
       ),
     ),
+    privateKey: privateKey,
+    onKeyboardInteractive: onKeyboardInteractive,
     knownHostFingerprints: const {},
   );
   client.authenticated.ignore();

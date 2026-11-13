@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
@@ -43,8 +44,8 @@ abstract final class SSHConfig {
 
   /// The socket an `IdentityAgent` value names, as OpenSSH reads one:
   /// `SSH_AUTH_SOCK` (or any `$NAME`) is that variable's value, anything else
-  /// a path with `~`, `${NAME}` and the tokens `%%`, `%d`, `%u`, `%h`, `%n`,
-  /// `%k`, `%p`, `%r`, `%l` and `%L` expanded in one pass. Null when it names a
+  /// a path with `~`, `${NAME}` and the tokens `%%`, `%d`, `%u`, `%i`, `%h`,
+  /// `%n`, `%k`, `%p`, `%r`, `%l` and `%L` expanded in one pass. Null when it names a
   /// variable that is not set, or a token this does not know.
   static String? expandIdentityAgent(
     String value, {
@@ -68,6 +69,7 @@ abstract final class SSHConfig {
       '%': '%',
       'd': _homePath ?? '',
       'u': env['USER'] ?? env['USERNAME'] ?? '',
+      'i': ?_localUid,
       'h': hostname,
       'n': originalHost ?? hostname,
       'k': originalHost ?? hostname,
@@ -84,6 +86,19 @@ abstract final class SSHConfig {
     });
     return unresolved ? null : _expandTilde(expanded);
   }
+
+  /// This process's numeric user id; none on Windows, which has no such
+  /// thing.
+  static final String? _localUid = () {
+    if (Platform.isWindows) return null;
+    try {
+      final getuid = DynamicLibrary.process()
+          .lookupFunction<Uint32 Function(), int Function()>('getuid');
+      return '${getuid()}';
+    } catch (_) {
+      return null;
+    }
+  }();
 
   static final _envVariable = RegExp(r'^\$([A-Za-z_][A-Za-z0-9_]*)$');
   static final _agentReference = RegExp(

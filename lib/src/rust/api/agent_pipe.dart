@@ -8,8 +8,8 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AgentPipe>>
 abstract class AgentPipe implements RustOpaqueInterface {
-  /// Ends the connection: a [read] waiting answers none, and the handle is
-  /// released here, not when Dart drops this.
+  /// Ends the connection: a [read] waiting answers none, a [write] waiting
+  /// fails, and the handle is released here, not when Dart drops this.
   Future<void> close();
 
   /// Opens the pipe at [path], waiting up to [timeout_ms] while every

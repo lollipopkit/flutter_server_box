@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -20,11 +22,13 @@ Map<String, (String, bool, Object?)> _serverColumns() => {
     ),
 };
 
-/// `server` as v39 created it: today's table less the column, derived and
-/// asserted by [serverDdlBeforeIdentityAgent].
+/// `server` as v39 created it: the DDL that release's Drift wrote, kept in
+/// `test/fixtures/schema/` and never regenerated.
 Future<void> createV39Server() async {
   await createTables(SqliteDb.instance);
-  replaceServerTable(serverDdlBeforeIdentityAgent(freshServerDdl()));
+  replaceServerTable(
+    File('test/fixtures/schema/server_v39.sql').readAsStringSync(),
+  );
 }
 
 void main() {

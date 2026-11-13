@@ -322,7 +322,13 @@ Future<SSHClient> _authenticatedClient({
 }) async {
   final agent = await openSshAgent(
     ssh,
-    hasOtherAuth: ssh.pwd?.isNotEmpty == true || ssh.keyRefs.isNotEmpty,
+    // Keyboard-interactive counts: an imported host offers `SSH_AUTH_SOCK`'s
+    // agent as OpenSSH does, and where there is none, the server's own prompt
+    // is still the way in.
+    hasOtherAuth:
+        ssh.pwd?.isNotEmpty == true ||
+        ssh.keyRefs.isNotEmpty ||
+        onKeyboardInteractive != null,
     originalHost: spi.name,
   );
   try {
@@ -456,7 +462,17 @@ Future<SSHClient> _clientWith({
     // Must use [compute] here, instead of [Computer.shared.start].
     // Which [identitiesOf] does, for whatever it has not parsed yet.
     identities = await identitiesOf(openedKeys);
-  } catch (e) {
+  } catch (e, s) {
+    // As a key that cannot be read, above: another way in goes on.
+    if (ssh.pwd?.isNotEmpty == true || agentKeys.isNotEmpty) {
+      Loggers.app.warning(
+        'SSH key for ${spi.name} does not parse; going on with '
+        '${agentKeys.isEmpty ? 'the password' : 'the agent\'s keys'}',
+        e,
+        s,
+      );
+      return passwordClient();
+    }
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
     // neither the key nor the server, and matching none of the handling every
