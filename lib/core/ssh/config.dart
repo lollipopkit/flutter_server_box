@@ -220,13 +220,17 @@ abstract final class SSHConfig {
   }
 
   /// Whether `ForwardAgent` [value] forwards the agent the host
-  /// authenticates with: `yes`, or that agent named again. Another agent is
-  /// one a server cannot hold apart from it, and is said, not kept.
+  /// authenticates with: `yes`, or that agent named again, however spelled
+  /// (`~/…` and the absolute path are one socket). Another agent is one a
+  /// server cannot hold apart from it, and is said, not kept.
   static bool _forwardsIdentityAgent(
     String alias,
     String? value,
-    String? identityAgent,
-  ) {
+    String? identityAgent, {
+    required String hostname,
+    required String remoteUser,
+    required int port,
+  }) {
     switch (value?.toLowerCase()) {
       case null || 'no':
         return false;
@@ -235,6 +239,15 @@ abstract final class SSHConfig {
     }
     final own = identityAgent ?? SshCredential.authSock;
     if (value == own || value == '\$$own') return true;
+    String? resolve(String name) => expandIdentityAgent(
+      name,
+      hostname: hostname,
+      remoteUser: remoteUser,
+      originalHost: alias,
+      port: port,
+    );
+    final ownPath = resolve(own);
+    if (ownPath != null && resolve(value!) == ownPath) return true;
     Loggers.app.warning(
       'SSH config host $alias forwards an agent other than the one it '
       'authenticates with ($value); not forwarding.',
@@ -343,7 +356,14 @@ abstract final class SSHConfig {
           final v when v.isEmpty || v.toLowerCase() == 'none' => null,
           final v => v,
         },
-        forwardAgent: _forwardsIdentityAgent(alias, forwardAgent, identityAgent),
+        forwardAgent: _forwardsIdentityAgent(
+          alias,
+          forwardAgent,
+          identityAgent,
+          hostname: hostname,
+          remoteUser: user ?? 'root',
+          port: port ?? 22,
+        ),
         proxyCommand: resolvedProxy,
       ),
     );
