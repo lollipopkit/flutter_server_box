@@ -7301,4 +7301,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud відхилив синхронізацію ($reason)';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return 'Не вдалося знайти сокет ssh-agent за $name';
+  }
+
+  @override
+  String get sshAgentUnsupported =>
+      'Цей пристрій не може використовувати ssh-agent';
+
+  @override
+  String sshAgentNotPipe(String path) {
+    return 'У Windows ssh-agent доступний через named pipe, а $path ним не є';
+  }
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return 'Не вдалося підключитися до ssh-agent за адресою $path: $reason';
+  }
 }

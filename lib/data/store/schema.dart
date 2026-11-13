@@ -111,7 +111,8 @@ abstract final class SchemaVersion {
   /// v38: the terminal and file tabs' saved sessions dropped
   /// v39: what is synced by category (`sync_passed`), the secrets and the
   /// Agent's stores synced, benchmarks a sync root
-  static const current = 39;
+  /// v40: `server.ssh_identity_agent`
+  static const current = 40;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

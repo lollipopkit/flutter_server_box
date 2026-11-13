@@ -151,6 +151,15 @@ extension _Discovery on _ServerEditPageState {
 }
 
 extension _Actions on _ServerEditPageState {
+  /// What the agent fields say, or what the server held where this build
+  /// shows none of them: a value from another machine is carried through.
+  String? get _identityAgent {
+    if (!sshAgentSupported) return spi?.ssh?.identityAgent;
+    if (!_useAgent.value) return null;
+    return _identityAgentCtrl.text.trim().selfNotEmptyOrNull ??
+        SshCredential.authSock;
+  }
+
   Iterable<ShellCmdType> get _diskInfoCmdTypes => const [
     StatusCmdType.disk,
     BSDStatusCmdType.disk,
@@ -622,7 +631,11 @@ extension _Actions on _ServerEditPageState {
       // Either key source counts. A server imported with an IdentityFile has
       // a key and no password, and asking it to confirm "no authentication"
       // on every save would be asking about something that is not true.
-      final hasKey = selectedKey != null || _keyPath.value != null;
+      // An agent this build cannot reach is carried, not counted.
+      final hasKey =
+          selectedKey != null ||
+          _keyPath.value != null ||
+          (sshAgentSupported && _identityAgent != null);
       if (!hasKey && _passwordController.text.isEmpty) {
         final ok = await context.showSheet<bool>(
           title: libL10n.attention,
@@ -776,6 +789,7 @@ extension _Actions on _ServerEditPageState {
                     : [path],
               _ => null,
             },
+            identityAgent: _identityAgent,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
@@ -1029,6 +1043,11 @@ extension _Utils on _ServerEditPageState {
             .indexWhere((e) => e.id == ssh.keyId);
       }
       _keyPath.value = ssh.resolvedIdentityFiles.firstOrNull;
+      _useAgent.value = ssh.identityAgent != null;
+      _identityAgentCtrl.text = switch (ssh.identityAgent) {
+        null || SshCredential.authSock => '',
+        final agent => agent,
+      };
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';

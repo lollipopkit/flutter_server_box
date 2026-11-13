@@ -7235,4 +7235,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud eşitlemeyi reddetti ($reason)';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return '$name değerinden bir ssh-agent soketi bulunamıyor';
+  }
+
+  @override
+  String get sshAgentUnsupported => 'Bu cihaz ssh-agent kullanamaz';
+
+  @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows\'ta ssh-agent\'a named pipe ile ulaşılır ve $path bir named pipe değil';
+  }
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return '$path konumundaki ssh-agent\'a ulaşılamıyor: $reason';
+  }
 }

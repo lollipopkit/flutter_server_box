@@ -2035,5 +2035,10 @@
   "syncStatePassword": "La contraseña no coincide",
   "syncStateUpdate": "Actualización necesaria",
   "syncStateRunning": "Sincronizando",
-  "syncRefused": "LK Cloud rechazó la sincronización ({reason})"
+  "syncRefused": "LK Cloud rechazó la sincronización ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "No se encuentra ningún socket de ssh-agent a partir de {name}",
+  "sshAgentUnsupported": "Este dispositivo no puede usar un ssh-agent",
+  "sshAgentNotPipe": "En Windows se llega a un ssh-agent mediante una named pipe, y {path} no lo es",
+  "sshAgentUnreachable": "No se puede conectar con el ssh-agent en {path}: {reason}"
 }

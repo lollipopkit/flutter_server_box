@@ -6960,4 +6960,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud が同期を拒否しました（$reason）';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return '$name から ssh-agent のソケットが見つかりません';
+  }
+
+  @override
+  String get sshAgentUnsupported => 'このデバイスでは ssh-agent を使用できません';
+
+  @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows では ssh-agent に named pipe で接続します。$path は named pipe ではありません';
+  }
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return '$path の ssh-agent に接続できません: $reason';
+  }
 }

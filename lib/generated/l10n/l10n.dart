@@ -12352,6 +12352,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LK Cloud refused the sync ({reason})'**
   String syncRefused(String reason);
+
+  /// No description provided for @sshAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'ssh-agent'**
+  String get sshAgent;
+
+  /// No description provided for @sshAgentUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'No ssh-agent socket can be found from {name}'**
+  String sshAgentUnset(String name);
+
+  /// No description provided for @sshAgentUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This device cannot use an ssh-agent'**
+  String get sshAgentUnsupported;
+
+  /// No description provided for @sshAgentNotPipe.
+  ///
+  /// In en, this message translates to:
+  /// **'On Windows an ssh-agent is reached through a named pipe, and {path} is not one'**
+  String sshAgentNotPipe(String path);
+
+  /// No description provided for @sshAgentUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the ssh-agent at {path}: {reason}'**
+  String sshAgentUnreachable(String path, String reason);
 }
 
 class _AppLocalizationsDelegate

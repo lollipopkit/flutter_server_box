@@ -1241,6 +1241,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _sshIdentityAgentMeta = const VerificationMeta(
+    'sshIdentityAgent',
+  );
+  @override
+  late final GeneratedColumn<String> sshIdentityAgent = GeneratedColumn<String>(
+    'ssh_identity_agent',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     updatedAt,
@@ -1282,6 +1293,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     geoLat,
     geoLon,
     diskCountsNetwork,
+    sshIdentityAgent,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1578,6 +1590,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         ),
       );
     }
+    if (data.containsKey('ssh_identity_agent')) {
+      context.handle(
+        _sshIdentityAgentMeta,
+        sshIdentityAgent.isAcceptableOrUnknown(
+          data['ssh_identity_agent']!,
+          _sshIdentityAgentMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1743,6 +1764,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}disk_counts_network'],
       )!,
+      sshIdentityAgent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ssh_identity_agent'],
+      ),
     );
   }
 
@@ -1860,6 +1885,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// Last, where `ALTER TABLE ... ADD COLUMN` puts it on an install that was
   /// already past v32, so both have one shape.
   final bool diskCountsNetwork;
+
+  /// [SshCredential.identityAgent]. Last, for the reason [diskCountsNetwork]
+  /// is.
+  final String? sshIdentityAgent;
   const ServerRow({
     required this.updatedAt,
     required this.rev,
@@ -1900,6 +1929,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.geoLat,
     this.geoLon,
     required this.diskCountsNetwork,
+    this.sshIdentityAgent,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2001,6 +2031,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       map['geo_lon'] = Variable<double>(geoLon);
     }
     map['disk_counts_network'] = Variable<bool>(diskCountsNetwork);
+    if (!nullToAbsent || sshIdentityAgent != null) {
+      map['ssh_identity_agent'] = Variable<String>(sshIdentityAgent);
+    }
     return map;
   }
 
@@ -2101,6 +2134,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ? const Value.absent()
           : Value(geoLon),
       diskCountsNetwork: Value(diskCountsNetwork),
+      sshIdentityAgent: sshIdentityAgent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sshIdentityAgent),
     );
   }
 
@@ -2157,6 +2193,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       geoLat: serializer.fromJson<double?>(json['geoLat']),
       geoLon: serializer.fromJson<double?>(json['geoLon']),
       diskCountsNetwork: serializer.fromJson<bool>(json['diskCountsNetwork']),
+      sshIdentityAgent: serializer.fromJson<String?>(json['sshIdentityAgent']),
     );
   }
   @override
@@ -2204,6 +2241,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'geoLat': serializer.toJson<double?>(geoLat),
       'geoLon': serializer.toJson<double?>(geoLon),
       'diskCountsNetwork': serializer.toJson<bool>(diskCountsNetwork),
+      'sshIdentityAgent': serializer.toJson<String?>(sshIdentityAgent),
     };
   }
 
@@ -2247,6 +2285,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<double?> geoLat = const Value.absent(),
     Value<double?> geoLon = const Value.absent(),
     bool? diskCountsNetwork,
+    Value<String?> sshIdentityAgent = const Value.absent(),
   }) => ServerRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
@@ -2302,6 +2341,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     geoLat: geoLat.present ? geoLat.value : this.geoLat,
     geoLon: geoLon.present ? geoLon.value : this.geoLon,
     diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
+    sshIdentityAgent: sshIdentityAgent.present
+        ? sshIdentityAgent.value
+        : this.sshIdentityAgent,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -2382,6 +2424,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       diskCountsNetwork: data.diskCountsNetwork.present
           ? data.diskCountsNetwork.value
           : this.diskCountsNetwork,
+      sshIdentityAgent: data.sshIdentityAgent.present
+          ? data.sshIdentityAgent.value
+          : this.sshIdentityAgent,
     );
   }
 
@@ -2426,7 +2471,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('scriptDir: $scriptDir, ')
           ..write('geoLat: $geoLat, ')
           ..write('geoLon: $geoLon, ')
-          ..write('diskCountsNetwork: $diskCountsNetwork')
+          ..write('diskCountsNetwork: $diskCountsNetwork, ')
+          ..write('sshIdentityAgent: $sshIdentityAgent')
           ..write(')'))
         .toString();
   }
@@ -2472,6 +2518,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     geoLat,
     geoLon,
     diskCountsNetwork,
+    sshIdentityAgent,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2515,7 +2562,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.scriptDir == this.scriptDir &&
           other.geoLat == this.geoLat &&
           other.geoLon == this.geoLon &&
-          other.diskCountsNetwork == this.diskCountsNetwork);
+          other.diskCountsNetwork == this.diskCountsNetwork &&
+          other.sshIdentityAgent == this.sshIdentityAgent);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -2558,6 +2606,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<double?> geoLat;
   final Value<double?> geoLon;
   final Value<bool> diskCountsNetwork;
+  final Value<String?> sshIdentityAgent;
   const ServersCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
@@ -2598,6 +2647,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.geoLat = const Value.absent(),
     this.geoLon = const Value.absent(),
     this.diskCountsNetwork = const Value.absent(),
+    this.sshIdentityAgent = const Value.absent(),
   });
   ServersCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -2639,6 +2689,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.geoLat = const Value.absent(),
     this.geoLon = const Value.absent(),
     this.diskCountsNetwork = const Value.absent(),
+    this.sshIdentityAgent = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
   static Insertable<ServerRow> custom({
@@ -2681,6 +2732,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<double>? geoLat,
     Expression<double>? geoLon,
     Expression<bool>? diskCountsNetwork,
+    Expression<String>? sshIdentityAgent,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2724,6 +2776,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (geoLat != null) 'geo_lat': geoLat,
       if (geoLon != null) 'geo_lon': geoLon,
       if (diskCountsNetwork != null) 'disk_counts_network': diskCountsNetwork,
+      if (sshIdentityAgent != null) 'ssh_identity_agent': sshIdentityAgent,
     });
   }
 
@@ -2767,6 +2820,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<double?>? geoLat,
     Value<double?>? geoLon,
     Value<bool>? diskCountsNetwork,
+    Value<String?>? sshIdentityAgent,
   }) {
     return ServersCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2809,6 +2863,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       geoLat: geoLat ?? this.geoLat,
       geoLon: geoLon ?? this.geoLon,
       diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
+      sshIdentityAgent: sshIdentityAgent ?? this.sshIdentityAgent,
     );
   }
 
@@ -2936,6 +2991,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (diskCountsNetwork.present) {
       map['disk_counts_network'] = Variable<bool>(diskCountsNetwork.value);
     }
+    if (sshIdentityAgent.present) {
+      map['ssh_identity_agent'] = Variable<String>(sshIdentityAgent.value);
+    }
     return map;
   }
 
@@ -2980,7 +3038,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('scriptDir: $scriptDir, ')
           ..write('geoLat: $geoLat, ')
           ..write('geoLon: $geoLon, ')
-          ..write('diskCountsNetwork: $diskCountsNetwork')
+          ..write('diskCountsNetwork: $diskCountsNetwork, ')
+          ..write('sshIdentityAgent: $sshIdentityAgent')
           ..write(')'))
         .toString();
   }
@@ -10857,6 +10916,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<double?> geoLat,
       Value<double?> geoLon,
       Value<bool> diskCountsNetwork,
+      Value<String?> sshIdentityAgent,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -10899,6 +10959,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<double?> geoLat,
       Value<double?> geoLon,
       Value<bool> diskCountsNetwork,
+      Value<String?> sshIdentityAgent,
     });
 
 final class $$ServersTableReferences
@@ -11402,6 +11463,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<bool> get diskCountsNetwork => $composableBuilder(
     column: $table.diskCountsNetwork,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sshIdentityAgent => $composableBuilder(
+    column: $table.sshIdentityAgent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11996,6 +12062,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sshIdentityAgent => $composableBuilder(
+    column: $table.sshIdentityAgent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PrivateKeysTableOrderingComposer get sshKeyId {
     final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -12198,6 +12269,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<bool> get diskCountsNetwork => $composableBuilder(
     column: $table.diskCountsNetwork,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sshIdentityAgent => $composableBuilder(
+    column: $table.sshIdentityAgent,
     builder: (column) => column,
   );
 
@@ -12686,6 +12762,7 @@ class $$ServersTableTableManager
                 Value<double?> geoLat = const Value.absent(),
                 Value<double?> geoLon = const Value.absent(),
                 Value<bool> diskCountsNetwork = const Value.absent(),
+                Value<String?> sshIdentityAgent = const Value.absent(),
               }) => ServersCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12726,6 +12803,7 @@ class $$ServersTableTableManager
                 geoLat: geoLat,
                 geoLon: geoLon,
                 diskCountsNetwork: diskCountsNetwork,
+                sshIdentityAgent: sshIdentityAgent,
               ),
           createCompanionCallback:
               ({
@@ -12768,6 +12846,7 @@ class $$ServersTableTableManager
                 Value<double?> geoLat = const Value.absent(),
                 Value<double?> geoLon = const Value.absent(),
                 Value<bool> diskCountsNetwork = const Value.absent(),
+                Value<String?> sshIdentityAgent = const Value.absent(),
               }) => ServersCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12808,6 +12887,7 @@ class $$ServersTableTableManager
                 geoLat: geoLat,
                 geoLon: geoLon,
                 diskCountsNetwork: diskCountsNetwork,
+                sshIdentityAgent: sshIdentityAgent,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -340,6 +340,7 @@ extension _Widgets on _ServerEditPageState {
         children.add(_buildKeyAuth());
       }
       children.add(_buildKeyPath());
+      if (sshAgentSupported) children.add(_buildAgent());
       children.add(password);
       return Column(children: children);
     });
@@ -364,6 +365,29 @@ extension _Widgets on _ServerEditPageState {
           onPressed: () => _keyPath.value = null,
         ),
       ).cardx;
+    });
+  }
+
+  Widget _buildAgent() {
+    return _useAgent.listenVal((on) {
+      final toggle = ListTile(
+        title: Text(l10n.sshAgent),
+        trailing: SwitchX(value: on, onChanged: (v) => _useAgent.value = v),
+      );
+      if (!on) return toggle;
+      return Column(
+        children: [
+          toggle,
+          Input(
+            controller: _identityAgentCtrl,
+            type: TextInputType.text,
+            label: 'IdentityAgent',
+            hint: SshCredential.authSock,
+            icon: Icons.cable,
+            suggestion: false,
+          ),
+        ],
+      );
     });
   }
 

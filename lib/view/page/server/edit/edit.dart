@@ -13,6 +13,7 @@ import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
+import 'package:server_box/core/ssh/agent.dart';
 import 'package:server_box/core/ssh/jump_chain.dart';
 import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
@@ -178,6 +179,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// Held here so that opening an imported server and saving it does not
   /// quietly drop the key it was connecting with.
   final _keyPath = ValueNotifier<String?>(null);
+
+  /// Whether the keys of an ssh-agent are offered, and which one
+  /// (`SshCredential.identityAgent`); an empty field is `SSH_AUTH_SOCK`.
+  final _useAgent = ValueNotifier(false);
+  final _identityAgentCtrl = TextEditingController();
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
 
@@ -303,6 +309,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
     _keyIdx.dispose();
     _keyPath.dispose();
+    _useAgent.dispose();
+    _identityAgentCtrl.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
     _monitorCert.dispose();

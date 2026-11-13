@@ -99,3 +99,9 @@ Two things bite when pointing this at a different tag:
 Do not regenerate these files to make a failing test pass. They are a record
 of what a shipped release wrote, and editing them to suit the current decoder
 removes the only evidence the decoder is wrong.
+
+# `server` as a release created it (`schema/`)
+
+Input for the `m039` step's test: `server_v39.sql` is the `CREATE TABLE` the
+Drift of schema v39 (main at `645487fae`) wrote, read back from `sqlite_master`.
+Never regenerated.
