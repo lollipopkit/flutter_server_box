@@ -7246,6 +7246,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'Serverə yönləndir';
+
+  @override
   String sshAgentUnset(String name) {
     return '$name əsasında ssh-agent soketi tapılmır';
   }

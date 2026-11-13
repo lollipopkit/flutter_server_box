@@ -75,6 +75,7 @@ The following fields belong inside `ssh`:
 | `pubKeyId` | No | ID of a private key stored in the App, not a PEM file path |
 | `keyPath` | No | Desktop-only private-key path produced by a `~/.ssh/config` import; read from disk when connecting |
 | `identityAgent` | No | The ssh-agent whose keys are offered, as `IdentityAgent` names one: `SSH_AUTH_SOCK` or a socket path; on Windows a named pipe, and `SSH_AUTH_SOCK` with the variable unset is `\\.\pipe\openssh-ssh-agent`. Omitted, no agent is used. Linux, Windows and the DMG build on macOS |
+| `forwardAgent` | No | Forward `identityAgent` to the server's sessions, as `ForwardAgent yes`; whoever is root there can sign with its keys while connected. Defaults to `false` |
 | `alterUrl` | No | Fallback address in the form `user@ip:port` |
 | `jumpIds` | No | Jump-server chain specified by server ID |
 | `proxyCommand` | No | ProxyCommand; on a phone it runs in the built-in Linux environment. Mutually exclusive with `jumpIds` |

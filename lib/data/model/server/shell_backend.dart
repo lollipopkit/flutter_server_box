@@ -27,9 +27,12 @@ class SshShellBackend implements ShellBackend {
     required int height,
     Map<String, String>? environment,
   }) async {
+    // The user's terminal is where a forwarded agent is for; the app's own
+    // channels (status, files, the Agent's commands) never ask for it.
     final session = await client.shell(
       pty: SSHPtyConfig(width: width, height: height),
       environment: environment,
+      forwardAgent: true,
     );
     return SshShellSession(session);
   }
@@ -45,6 +48,7 @@ class SshShellBackend implements ShellBackend {
       command,
       pty: SSHPtyConfig(width: width, height: height),
       environment: environment,
+      forwardAgent: true,
     );
     return SshShellSession(session);
   }

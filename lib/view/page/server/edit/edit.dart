@@ -183,6 +183,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// Whether the keys of an ssh-agent are offered, and which one
   /// (`SshCredential.identityAgent`); an empty field is `SSH_AUTH_SOCK`.
   final _useAgent = ValueNotifier(false);
+  final _forwardAgent = ValueNotifier(false);
   final _identityAgentCtrl = TextEditingController();
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
@@ -310,6 +311,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _keyIdx.dispose();
     _keyPath.dispose();
     _useAgent.dispose();
+    _forwardAgent.dispose();
     _identityAgentCtrl.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();

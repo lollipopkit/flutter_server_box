@@ -171,15 +171,48 @@ void main() {
       await dir.delete(recursive: true);
     });
 
-    test('offers its keys after the stored ones', () async {
+    test('is handed to the client, to bind and ask for keys', () async {
       final client = await _createClient(identityAgent: path);
 
+      expect(client.forwardAgent, isNull);
       expect(client.identities, isNull);
-      expect(client.signers, hasLength(1));
+      expect(client.signers, isNull);
+      final keys = await client.identityAgent!.identities();
       expect(
-        client.signers!.single.publicKey,
+        keys.single.publicKey,
         SSHKeyPair.fromPem(_testPrivateKey).single.toPublicKey().encode(),
       );
+    });
+
+    test('is forwarded, each channel on a connection of its own', () async {
+      final client = await _createClient(
+        identityAgent: path,
+        forwardAgent: true,
+      );
+      expect(agentHungUp, hasLength(1));
+
+      final forwarded = await client.forwardAgent!();
+      expect(agentHungUp, hasLength(2));
+      expect(await forwarded.identities(), hasLength(1));
+      await forwarded.close();
+    });
+
+    test('one not there at sign-in is forwarded once it is', () async {
+      final late = '${dir.path}/late.sock';
+      final client = await _createClient(
+        identityAgent: late,
+        forwardAgent: true,
+        pwd: 'account-password',
+      );
+      expect(client.identityAgent, isNull);
+
+      final started = await ServerSocket.bind(
+        InternetAddress(late, type: InternetAddressType.unix),
+        0,
+      );
+      addTearDown(started.close);
+      final forwarded = await client.forwardAgent!();
+      addTearDown(forwarded.close);
     });
 
     test('is let go once authentication is over', () async {
@@ -197,7 +230,7 @@ void main() {
         pwd: 'account-password',
       );
 
-      expect(client.signers, isEmpty);
+      expect(client.identityAgent, isNull);
       expect(await client.onPasswordRequest!(), 'account-password');
     });
 
@@ -207,7 +240,7 @@ void main() {
         onKeyboardInteractive: (_, _) async => null,
       );
 
-      expect(client.signers, isEmpty);
+      expect(client.identityAgent, isNull);
       expect(client.onUserInfoRequest, isNotNull);
     });
 
@@ -219,7 +252,7 @@ void main() {
       );
 
       expect(client.identities, isNull);
-      expect(client.signers, hasLength(1));
+      expect(client.identityAgent, isNotNull);
     });
 
     test('one that is not there, and nothing else, is said', () async {
@@ -240,6 +273,7 @@ Future<SSHClient> _createClient({
   String? pwd,
   String? keyId,
   String? privateKey,
+  bool forwardAgent = false,
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
 }) async {
   final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
@@ -262,6 +296,7 @@ Future<SSHClient> _createClient({
         pwd: pwd,
         keyId: keyId,
         identityAgent: identityAgent,
+        forwardAgent: forwardAgent,
       ),
     ),
     privateKey: privateKey,

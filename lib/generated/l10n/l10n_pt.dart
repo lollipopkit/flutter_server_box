@@ -7324,6 +7324,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'Encaminhar para o servidor';
+
+  @override
   String sshAgentUnset(String name) {
     return 'Nenhum socket de ssh-agent encontrado a partir de $name';
   }

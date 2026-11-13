@@ -102,6 +102,10 @@ removes the only evidence the decoder is wrong.
 
 # `server` as a release created it (`schema/`)
 
-Input for the `m039` step's test: `server_v39.sql` is the `CREATE TABLE` the
-Drift of schema v39 (main at `645487fae`) wrote, read back from `sqlite_master`.
-Never regenerated.
+Each is the `CREATE TABLE` the Drift of that schema wrote, read back from
+`sqlite_master`; input for the test of the step from it. Never regenerated.
+
+| File | Main at |
+| --- | --- |
+| `server_v39.sql` | `645487fae` |
+| `server_v40.sql` | `ff3eac150` |

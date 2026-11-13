@@ -2037,6 +2037,7 @@
   "syncStateRunning": "Sincronizzazione in corso",
   "syncRefused": "LK Cloud ha rifiutato la sincronizzazione ({reason})",
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "Inoltra al server",
   "sshAgentUnset": "Nessun socket ssh-agent trovato da {name}",
   "sshAgentUnsupported": "Questo dispositivo non può usare un ssh-agent",
   "sshAgentNotPipe": "Su Windows un ssh-agent si raggiunge tramite una named pipe, e {path} non lo è",

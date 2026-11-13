@@ -7240,6 +7240,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'Sunucuya ilet';
+
+  @override
   String sshAgentUnset(String name) {
     return '$name değerinden bir ssh-agent soketi bulunamıyor';
   }

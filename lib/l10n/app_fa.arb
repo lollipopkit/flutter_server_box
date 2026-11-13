@@ -1720,6 +1720,7 @@
   "syncStateRunning": "در حال همگام‌سازی",
   "syncRefused": "LK Cloud همگام‌سازی را رد کرد ({reason})",
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "ارسال به سرور",
   "sshAgentUnset": "هیچ سوکت ssh-agent از {name} پیدا نشد",
   "sshAgentUnsupported": "این دستگاه نمی‌تواند از ssh-agent استفاده کند",
   "sshAgentNotPipe": "در Windows دسترسی به ssh-agent از طریق named pipe است و {path} یک named pipe نیست",

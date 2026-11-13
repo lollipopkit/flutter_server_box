@@ -40,6 +40,7 @@ final class _Client implements SSHClient {
     SSHPtyConfig? pty,
     SSHX11Config? x11,
     Map<String, String>? environment,
+    bool forwardAgent = false,
   }) async => _session;
 
   @override

@@ -386,6 +386,15 @@ extension _Widgets on _ServerEditPageState {
             icon: Icons.cable,
             suggestion: false,
           ),
+          _forwardAgent.listenVal(
+            (forward) => ListTile(
+              title: Text(l10n.sshAgentForward),
+              trailing: SwitchX(
+                value: forward,
+                onChanged: (v) => _forwardAgent.value = v,
+              ),
+            ),
+          ),
         ],
       );
     });

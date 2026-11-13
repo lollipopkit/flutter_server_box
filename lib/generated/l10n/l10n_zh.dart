@@ -6855,6 +6855,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => '转发到服务器';
+
+  @override
   String sshAgentUnset(String name) {
     return '无法从 $name 找到 ssh-agent 的 socket';
   }
@@ -13726,6 +13729,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshAgent => 'ssh-agent';
+
+  @override
+  String get sshAgentForward => '轉發到伺服器';
 
   @override
   String sshAgentUnset(String name) {

@@ -303,8 +303,18 @@ void main() {
         final save = await openEditor(tester, withAgent);
 
         expect(find.text(socket), findsOneWidget);
+        final forward = find.descendant(
+          of: find.widgetWithText(ListTile, app_locale.l10n.sshAgentForward),
+          matching: find.byType(Switch),
+        );
+        await tester.ensureVisible(forward);
+        await tester.pump();
+        await tester.tap(forward);
+        await tester.pump();
+
         final persisted = await save();
         expect(persisted?.ssh?.identityAgent, socket);
+        expect(persisted?.ssh?.forwardAgent, isTrue);
       });
     });
 

@@ -344,7 +344,10 @@ Future<SSHClient> _authenticatedClient({
       onKeyboardInteractive: onKeyboardInteractive,
       hostKeyVerifier: hostKeyVerifier,
       hostCertificateTrust: hostCertificateTrust,
-      agentKeys: agent?.keys ?? const [],
+      agent: agent,
+      forwardAgent: ssh.forwardAgent
+          ? sshAgentConnector(ssh, originalHost: spi.name)
+          : null,
     );
     if (agent != null) {
       // Needed only to sign; once authentication is over either way, nothing
@@ -352,12 +355,12 @@ Future<SSHClient> _authenticatedClient({
       unawaited(
         client.authenticated
             .catchError((Object _) {})
-            .whenComplete(agent.client.close),
+            .whenComplete(agent.close),
       );
     }
     return client;
   } catch (_) {
-    await agent?.client.close();
+    await agent?.close();
     rethrow;
   }
 }
@@ -374,16 +377,18 @@ Future<SSHClient> _clientWith({
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
-  required List<SSHSigner> agentKeys,
+  required SSHAgentClient? agent,
+  required Future<SSHAgentClient> Function()? forwardAgent,
 }) async {
   SSHClient passwordClient() {
     onStatus?.call(
-      agentKeys.isEmpty ? GenSSHClientStatus.pwd : GenSSHClientStatus.key,
+      agent == null ? GenSSHClientStatus.pwd : GenSSHClientStatus.key,
     );
     return SSHClient(
       socket,
       username: alterUser ?? ssh.user,
-      signers: agentKeys,
+      identityAgent: agent,
+      forwardAgent: forwardAgent,
       onPasswordRequest: () => ssh.pwd,
       onUserInfoRequest: onKeyboardInteractive == null
           ? null
@@ -420,10 +425,10 @@ Future<SSHClient> _clientWith({
         keyMaterial.putIfAbsent(entry.key, () => entry.value);
       }
     } catch (e, s) {
-      if (ssh.pwd?.isNotEmpty != true && agentKeys.isEmpty) rethrow;
+      if (ssh.pwd?.isNotEmpty != true && agent == null) rethrow;
       Loggers.app.warning(
         'SSH key unavailable for ${spi.name}; going on with '
-        '${agentKeys.isEmpty ? 'the password' : 'the agent\'s keys'}',
+        '${agent == null ? 'the password' : 'the agent\'s keys'}',
         e,
         s,
       );
@@ -431,7 +436,7 @@ Future<SSHClient> _clientWith({
     }
   }
   if (keyMaterial.isEmpty) {
-    if (ssh.pwd?.isNotEmpty == true || agentKeys.isNotEmpty) {
+    if (ssh.pwd?.isNotEmpty == true || agent != null) {
       return passwordClient();
     }
     throw SSHErr(
@@ -464,10 +469,10 @@ Future<SSHClient> _clientWith({
     identities = await identitiesOf(openedKeys);
   } catch (e, s) {
     // As a key that cannot be read, above: another way in goes on.
-    if (ssh.pwd?.isNotEmpty == true || agentKeys.isNotEmpty) {
+    if (ssh.pwd?.isNotEmpty == true || agent != null) {
       Loggers.app.warning(
         'SSH key for ${spi.name} does not parse; going on with '
-        '${agentKeys.isEmpty ? 'the password' : 'the agent\'s keys'}',
+        '${agent == null ? 'the password' : 'the agent\'s keys'}',
         e,
         s,
       );
@@ -493,7 +498,8 @@ Future<SSHClient> _clientWith({
     // user and failed with a permission error naming neither.
     username: alterUser ?? ssh.user,
     identities: identities,
-    signers: agentKeys,
+    identityAgent: agent,
+    forwardAgent: forwardAgent,
     onPasswordRequest: ssh.pwd?.isNotEmpty == true ? () => ssh.pwd : null,
     onUserInfoRequest: onKeyboardInteractive == null
         ? null

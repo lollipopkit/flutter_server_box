@@ -64,8 +64,20 @@ const identityAgentColumn = ', "ssh_identity_agent" TEXT NULL';
 
 /// `server` as it was before v40, asserted to have been found.
 String serverDdlBeforeIdentityAgent(String fresh) {
-  expect(fresh, contains(identityAgentColumn));
-  return fresh.replaceFirst(identityAgentColumn, '');
+  final before = serverDdlBeforeForwardAgent(fresh);
+  expect(before, contains(identityAgentColumn));
+  return before.replaceFirst(identityAgentColumn, '');
+}
+
+/// The column m040 added: last, where `ADD COLUMN` puts it too.
+const forwardAgentColumn =
+    ', "ssh_forward_agent" INTEGER NOT NULL DEFAULT 0 '
+    'CHECK ("ssh_forward_agent" IN (0, 1))';
+
+/// `server` as it was before v41, asserted to have been found.
+String serverDdlBeforeForwardAgent(String fresh) {
+  expect(fresh, contains(forwardAgentColumn));
+  return fresh.replaceFirst(forwardAgentColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

@@ -2037,6 +2037,7 @@
   "syncStateRunning": "Menyinkronkan",
   "syncRefused": "LK Cloud menolak sinkronisasi ({reason})",
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "Teruskan ke server",
   "sshAgentUnset": "Tidak ada soket ssh-agent yang ditemukan dari {name}",
   "sshAgentUnsupported": "Perangkat ini tidak dapat menggunakan ssh-agent",
   "sshAgentNotPipe": "Di Windows, ssh-agent dijangkau melalui named pipe, dan {path} bukan named pipe",

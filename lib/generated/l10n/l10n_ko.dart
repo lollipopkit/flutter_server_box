@@ -6966,6 +6966,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => '서버로 전달';
+
+  @override
   String sshAgentUnset(String name) {
     return '$name에서 ssh-agent 소켓을 찾을 수 없습니다';
   }

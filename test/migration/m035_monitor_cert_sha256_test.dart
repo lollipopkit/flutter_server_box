@@ -21,6 +21,7 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
 import 'package:server_box/data/store/migrations/m039_ssh_identity_agent.dart';
+import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -95,6 +96,7 @@ void main() {
     await _createV35();
     await const MonitorCertSha256Migration().apply();
     await const SshIdentityAgentMigration().apply();
+    await const SshForwardAgentMigration().apply();
 
     expect(_xinfo('server'), fresh);
   });

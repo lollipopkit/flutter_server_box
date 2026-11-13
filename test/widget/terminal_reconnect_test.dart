@@ -298,6 +298,7 @@ class _PollerClient implements SSHClient {
     SSHPtyConfig? pty = const SSHPtyConfig(),
     SSHX11Config? x11,
     Map<String, String>? environment,
+    bool forwardAgent = false,
   }) async {
     shellsAsked++;
     if (diesWithShell) answers = false;

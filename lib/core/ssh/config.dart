@@ -219,6 +219,42 @@ abstract final class SSHConfig {
     return blocks;
   }
 
+  /// Whether `ForwardAgent` [value] forwards the agent the host
+  /// authenticates with: `yes`, or that agent named again, however spelled
+  /// (`~/…` and the absolute path are one socket). Another agent is one a
+  /// server cannot hold apart from it, and is said, not kept.
+  static bool _forwardsIdentityAgent(
+    String alias,
+    String? value,
+    String? identityAgent, {
+    required String hostname,
+    required String remoteUser,
+    required int port,
+  }) {
+    switch (value?.toLowerCase()) {
+      case null || 'no':
+        return false;
+      case 'yes':
+        return true;
+    }
+    final own = identityAgent ?? SshCredential.authSock;
+    if (value == own || value == '\$$own') return true;
+    String? resolve(String name) => expandIdentityAgent(
+      name,
+      hostname: hostname,
+      remoteUser: remoteUser,
+      originalHost: alias,
+      port: port,
+    );
+    final ownPath = resolve(own);
+    if (ownPath != null && resolve(value!) == ownPath) return true;
+    Loggers.app.warning(
+      'SSH config host $alias forwards an agent other than the one it '
+      'authenticates with ($value); not forwarding.',
+    );
+    return false;
+  }
+
   /// Every concrete host name a block names, in order and once each.
   static List<String> _aliasesOf(List<_SSHConfigBlock> blocks) {
     final aliases = <String>[];
@@ -244,6 +280,7 @@ abstract final class SSHConfig {
     String? proxyJump;
     String? proxyCommand;
     String? identityAgent;
+    String? forwardAgent;
     final identityFiles = <String>[];
 
     for (final block in blocks) {
@@ -276,6 +313,8 @@ abstract final class SSHConfig {
           // would set.
           case 'identityagent' when identityAgent == null:
             identityAgent = value;
+          case 'forwardagent' when forwardAgent == null:
+            forwardAgent = value;
         }
       }
     }
@@ -317,6 +356,14 @@ abstract final class SSHConfig {
           final v when v.isEmpty || v.toLowerCase() == 'none' => null,
           final v => v,
         },
+        forwardAgent: _forwardsIdentityAgent(
+          alias,
+          forwardAgent,
+          identityAgent,
+          hostname: hostname,
+          remoteUser: user ?? 'root',
+          port: port ?? 22,
+        ),
         proxyCommand: resolvedProxy,
       ),
     );

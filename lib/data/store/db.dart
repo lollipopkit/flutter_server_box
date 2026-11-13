@@ -216,6 +216,11 @@ class Servers extends Table with SyncMeta {
   /// is.
   TextColumn get sshIdentityAgent => text().nullable()();
 
+  /// [SshCredential.forwardAgent]. Last, for the reason [diskCountsNetwork]
+  /// is.
+  BoolColumn get sshForwardAgent =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 

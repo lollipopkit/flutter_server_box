@@ -7304,6 +7304,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'ارسال به سرور';
+
+  @override
   String sshAgentUnset(String name) {
     return 'هیچ سوکت ssh-agent از $name پیدا نشد';
   }

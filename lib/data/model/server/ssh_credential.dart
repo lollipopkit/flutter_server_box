@@ -77,6 +77,11 @@ final class SshCredential {
   /// The [identityAgent] that is whatever `$SSH_AUTH_SOCK` points at.
   static const authSock = 'SSH_AUTH_SOCK';
 
+  /// Whether [identityAgent] is offered to the server's sessions too, as
+  /// OpenSSH's `ForwardAgent`: whoever is root there can sign with its keys
+  /// while connected, so off unless asked for.
+  final bool forwardAgent;
+
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
 
@@ -126,6 +131,7 @@ final class SshCredential {
     this.keyPath,
     this.identityFiles,
     this.identityAgent,
+    this.forwardAgent = false,
     this.alterUrl,
     this.jumpId,
     this.jumpIds,
@@ -255,6 +261,7 @@ final class SshCredential {
     Object? keyPath = _unset,
     Object? identityFiles = _unset,
     Object? identityAgent = _unset,
+    bool? forwardAgent,
     Object? alterUrl = _unset,
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
@@ -275,6 +282,7 @@ final class SshCredential {
       identityAgent: identityAgent == _unset
           ? this.identityAgent
           : identityAgent as String?,
+      forwardAgent: forwardAgent ?? this.forwardAgent,
       alterUrl: alterUrl == _unset ? this.alterUrl : alterUrl as String?,
       jumpId: jumpId == _unset ? this.jumpId : jumpId as String?,
       jumpIds: jumpIds == _unset ? this.jumpIds : (jumpIds as List<String>?),
@@ -297,6 +305,9 @@ final class SshCredential {
         keyId == other.keyId &&
         listEquals(resolvedIdentityFiles, other.resolvedIdentityFiles) &&
         identityAgent == other.identityAgent &&
+        // Asked for when a session opens, with the handler the client was
+        // made with.
+        forwardAgent == other.forwardAgent &&
         proxyCommand == other.proxyCommand &&
         // Changing how the socket is obtained needs a reconnect just as much
         // as changing the address does
@@ -326,6 +337,7 @@ final class SshCredential {
     keyId,
     Object.hashAll(resolvedIdentityFiles),
     identityAgent,
+    forwardAgent,
     alterUrl,
     // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
     // fields it is derived from. Old storage and an import write [jumpId]

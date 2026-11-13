@@ -2037,6 +2037,7 @@
   "syncStateRunning": "同期中",
   "syncRefused": "LK Cloud が同期を拒否しました（{reason}）",
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "サーバーに転送",
   "sshAgentUnset": "{name} から ssh-agent のソケットが見つかりません",
   "sshAgentUnsupported": "このデバイスでは ssh-agent を使用できません",
   "sshAgentNotPipe": "Windows では ssh-agent に named pipe で接続します。{path} は named pipe ではありません",
