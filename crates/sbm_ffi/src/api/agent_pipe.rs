@@ -12,9 +12,10 @@ use std::{
 
 #[cfg(windows)]
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, ReadHalf, WriteHalf},
+    io::{split, AsyncReadExt, AsyncWriteExt, ReadHalf, WriteHalf},
     net::windows::named_pipe::{ClientOptions, NamedPipeClient},
     sync::{Mutex, Notify},
+    time::{sleep, Instant},
 };
 
 /// One connection to an agent's pipe. Opaque whatever the platform: the
@@ -41,20 +42,20 @@ impl AgentPipe {
     pub async fn connect(path: String, timeout_ms: u32) -> Result<AgentPipe, String> {
         #[cfg(windows)]
         {
-            let deadline = tokio::time::Instant::now() + Duration::from_millis(timeout_ms.into());
+            let deadline = Instant::now() + Duration::from_millis(timeout_ms.into());
             let client = loop {
                 match ClientOptions::new().open(&path) {
                     Ok(client) => break client,
                     Err(e)
                         if e.raw_os_error() == Some(ERROR_PIPE_BUSY)
-                            && tokio::time::Instant::now() < deadline =>
+                            && Instant::now() < deadline =>
                     {
-                        tokio::time::sleep(Duration::from_millis(50)).await;
+                        sleep(Duration::from_millis(50)).await;
                     }
                     Err(e) => return Err(e.to_string()),
                 }
             };
-            let (reader, writer) = tokio::io::split(client);
+            let (reader, writer) = split(client);
             Ok(AgentPipe {
                 reader: Mutex::new(Some(reader)),
                 writer: Mutex::new(Some(writer)),
@@ -141,17 +142,18 @@ impl AgentPipe {
 #[cfg(all(test, windows))]
 mod tests {
     use super::*;
-    use tokio::net::windows::named_pipe::ServerOptions;
+    use std::{process, sync::Arc};
+    use tokio::{net::windows::named_pipe::ServerOptions, spawn, time::timeout};
 
     fn pipe_name(tag: &str) -> String {
-        format!(r"\\.\pipe\sbm-agent-pipe-test-{tag}-{}", std::process::id())
+        format!(r"\\.\pipe\sbm-agent-pipe-test-{tag}-{}", process::id())
     }
 
     #[tokio::test]
     async fn bytes_go_both_ways() {
         let name = pipe_name("echo");
         let server = ServerOptions::new().first_pipe_instance(true).create(&name).unwrap();
-        let echo = tokio::spawn(async move {
+        let echo = spawn(async move {
             server.connect().await.unwrap();
             let mut server = server;
             let mut buf = [0u8; 64];
@@ -171,7 +173,7 @@ mod tests {
     async fn close_ends_a_waiting_read() {
         let name = pipe_name("close");
         let server = ServerOptions::new().first_pipe_instance(true).create(&name).unwrap();
-        let held = tokio::spawn(async move {
+        let held = spawn(async move {
             server.connect().await.unwrap();
             let mut server = server;
             let mut buf = [0u8; 1];
@@ -179,18 +181,18 @@ mod tests {
             assert_eq!(server.read(&mut buf).await.unwrap(), 0);
         });
 
-        let pipe = std::sync::Arc::new(AgentPipe::connect(name, 1000).await.unwrap());
-        let reading = tokio::spawn({
+        let pipe = Arc::new(AgentPipe::connect(name, 1000).await.unwrap());
+        let reading = spawn({
             let pipe = pipe.clone();
             async move { pipe.read().await }
         });
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        sleep(Duration::from_millis(50)).await;
         pipe.close().await;
 
-        let read = tokio::time::timeout(Duration::from_secs(1), reading).await;
+        let read = timeout(Duration::from_secs(1), reading).await;
         assert_eq!(read.unwrap().unwrap().unwrap(), None);
         assert!(pipe.write(b"x".to_vec()).await.is_err());
-        tokio::time::timeout(Duration::from_secs(1), held).await.unwrap().unwrap();
+        timeout(Duration::from_secs(1), held).await.unwrap().unwrap();
     }
 
     #[tokio::test]
@@ -201,15 +203,15 @@ mod tests {
             .in_buffer_size(1024)
             .create(&name)
             .unwrap();
-        let held = tokio::spawn(async move {
+        let held = spawn(async move {
             server.connect().await.unwrap();
             // Connected, never read from, until the test is over.
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            sleep(Duration::from_secs(10)).await;
             drop(server);
         });
 
-        let pipe = std::sync::Arc::new(AgentPipe::connect(name, 1000).await.unwrap());
-        let writing = tokio::spawn({
+        let pipe = Arc::new(AgentPipe::connect(name, 1000).await.unwrap());
+        let writing = spawn({
             let pipe = pipe.clone();
             // Until the agent's side is full: Windows grows a pipe's buffer
             // past what it was created with, so no one size is enough.
@@ -221,11 +223,11 @@ mod tests {
                 Ok::<(), String>(())
             }
         });
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        sleep(Duration::from_millis(100)).await;
         assert!(!writing.is_finished(), "the write should be waiting on the agent");
 
-        tokio::time::timeout(Duration::from_secs(1), pipe.close()).await.unwrap();
-        let written = tokio::time::timeout(Duration::from_secs(1), writing).await;
+        timeout(Duration::from_secs(1), pipe.close()).await.unwrap();
+        let written = timeout(Duration::from_secs(1), writing).await;
         assert!(written.unwrap().unwrap().is_err());
         held.abort();
     }
