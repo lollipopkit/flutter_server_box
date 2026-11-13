@@ -270,7 +270,7 @@ Host env
 Host spelled
   HostName 10.0.0.6
   IdentityAgent ~/.1password/agent.sock
-  ForwardAgent \${HOME}/.1password/agent.sock
+  ForwardAgent %d/.1password/agent.sock
 
 Host *
   ForwardAgent yes
