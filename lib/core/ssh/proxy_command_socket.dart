@@ -143,9 +143,8 @@ class ProxyCommandSocket implements SSHSocket {
       );
       throw SSHErr(
         type: SSHErrType.connect,
-        message: _explain(
-          'ProxyCommand process start timed out after ${timeout!.inSeconds}s.',
-        ),
+        message:
+            'ProxyCommand process start timed out after ${timeout!.inSeconds}s.',
       );
     } catch (_) {
       guest?.release();
@@ -201,31 +200,6 @@ class ProxyCommandSocket implements SSHSocket {
       done: done,
       release: guest?.release,
     );
-  }
-
-  /// [message], plus what a sandboxed build has almost certainly done to it.
-  ///
-  /// Measured on a build signed with `app-sandbox`, against the same binary
-  /// signed without it: the child does not merely lose access to `~/.ssh`, its
-  /// `$HOME` is replaced by the app's container. So `~` silently points
-  /// somewhere else and only an absolute path into the real home reports
-  /// `Operation not permitted`.
-  ///
-  /// Which makes the failure unrecognisable. `ssh -W %h:%p alias` cannot read
-  /// `~/.ssh/config`, so the alias is never resolved, ssh takes it for a literal
-  /// hostname and reports `connect to host alias port 22: Operation timed
-  /// out` — a network fault, naming the user's jump host, with nothing anywhere
-  /// saying "sandbox".
-  ///
-  /// Appended rather than substituted, and hedged: a command that touches no
-  /// home-directory path works there (`nc %h %p` was measured working, network
-  /// access being granted), so this is the likely cause and not the certain one.
-  static String _explain(String message) =>
-      explain(message, sandboxed: Pfs.isMacSandboxed);
-
-  static String explain(String message, {required bool sandboxed}) {
-    if (!sandboxed) return message;
-    return '$message\n\n${l10n.proxyCommandSandboxed}';
   }
 
   /// Everything a hostname, an IPv4 or IPv6 literal, or a POSIX user name is

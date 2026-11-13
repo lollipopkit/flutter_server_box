@@ -490,10 +490,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get image => 'Зображення';
 
   @override
-  String get macDmgBody =>
-      'App Store вимагає запускати застосунок у пісочниці, а з пісочниці не відкрити термінал. Версія DMG може.\n\nВерсія з App Store може перестати оновлюватися.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS не дозволив прочитати дані попередньої версії';
 
@@ -503,10 +499,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get macDmgImportFailed =>
       'Не вдалося прочитати дані попередньої версії';
-
-  @override
-  String get macDmgTip =>
-      'У версії DMG доступні локальний термінал і локальний запуск фрагментів коду.';
 
   @override
   String get macDmgTitle => 'Збірка DMG';
@@ -810,17 +802,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Адреса BMC має бути URL, наприклад https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Ця версія працює в sandbox. Командам передається порожній домашній каталог замість вашого, тому команди, яким потрібен ~/.ssh, завершаться помилкою. У версії DMG цього обмеження немає.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Не вдалося прочитати файл приватного ключа $path: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Ця збірка не може читати файли поза своїм контейнером, тож ключ за шляхом $path недоступний. Імпортуйте ключ у налаштуваннях або скористайтеся збіркою DMG.';
   }
 
   @override

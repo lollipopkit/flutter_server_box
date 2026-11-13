@@ -973,12 +973,6 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get image;
 
-  /// Explanatory message shown in the mac DMG dialog or notice.
-  ///
-  /// In en, this message translates to:
-  /// **'The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.'**
-  String get macDmgBody;
-
   /// User-facing label or message for mac DMG import denied.
   ///
   /// In en, this message translates to:
@@ -996,12 +990,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not read the previous build’s data'**
   String get macDmgImportFailed;
-
-  /// Help text for the mac DMG setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Local terminal and running snippets locally (DMG build)'**
-  String get macDmgTip;
 
   /// Title shown for the mac DMG dialog or section.
   ///
@@ -1525,23 +1513,11 @@ abstract class AppLocalizations {
   /// **'The BMC address must be a URL, e.g. https://10.0.0.9'**
   String get bmcAddrInvalid;
 
-  /// User-facing label or message for proxy command sandboxed.
-  ///
-  /// In en, this message translates to:
-  /// **'This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.'**
-  String get proxyCommandSandboxed;
-
   /// User-facing label or message for private key file unreadable.
   ///
   /// In en, this message translates to:
   /// **'Cannot read the private key file {path}: {reason}'**
   String privateKeyFileUnreadable(String path, String reason);
-
-  /// User-facing label or message for private key file sandboxed.
-  ///
-  /// In en, this message translates to:
-  /// **'This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.'**
-  String privateKeyFileSandboxed(String path);
 
   /// User-facing label or message for push token.
   ///

@@ -10,10 +10,9 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/src/rust/api/agent_pipe.dart';
 
-/// Whether this build can reach an ssh-agent: a Unix socket, or on Windows a
-/// named pipe. The Mac App Store build's sandbox keeps one out of reach.
-bool get sshAgentSupported =>
-    isLinux || isWindows || (isMacOS && !Pfs.isMacSandboxed);
+/// Whether this platform can reach an ssh-agent: a Unix socket, or on Windows
+/// a named pipe. Phones have none to reach.
+bool get sshAgentSupported => isDesktop;
 
 /// Where Windows' OpenSSH agent listens when `SSH_AUTH_SOCK` says nothing, as
 /// its `ssh` assumes.

@@ -89,13 +89,6 @@ enum IncomingShare {
   }
 
   private static func read(_ url: URL) -> String? {
-    // The App Store build is sandboxed and a file dropped on the app comes
-    // with a scoped grant rather than blanket read access. The DMG build is
-    // not sandboxed and this answers false there, which is why the result is
-    // checked rather than the call being conditional on the build.
-    let scoped = url.startAccessingSecurityScopedResource()
-    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-
     guard
       let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
       let size = attrs[.size] as? Int, size <= maxBytes,

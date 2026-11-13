@@ -157,7 +157,7 @@ fi
 #   `comparator: ">="` — and spelling it `">= :ventura"` is the same
 #   requirement written the way the `Homebrew/OSDependsOn` cop rejects.
 # - The `zap` paths were checked against what a real run leaves behind. The
-#   DMG build is **not** sandboxed (`macos/Runner/ReleaseDmg.entitlements`
+#   DMG build is **not** sandboxed (`macos/Runner/Release.entitlements`
 #   sets `app-sandbox` false), so its data is under Application Support keyed
 #   by the app's name, not in a container keyed by its bundle id — which is
 #   what this cask used to name, and what a Homebrew install never creates.

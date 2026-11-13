@@ -811,16 +811,9 @@ extension _Widgets on _ServerEditPageState {
       suggestion: false,
       maxLines: 3,
     );
-    // Said here as well as in the failure, because the failure is what this
-    // is meant to save someone from: on a sandboxed build the command runs
-    // and fails for a reason nothing in its output mentions; on a phone it
-    // runs in the Linux system, where `nc` and the like have to be installed
-    // before anything can.
-    final tip = Pfs.isMacSandboxed
-        ? l10n.proxyCommandSandboxed
-        : isAndroid || isIOS
-        ? l10n.proxyCommandMobileTip
-        : null;
+    // On a phone the command runs in the Linux system, where `nc` and the
+    // like have to be installed before anything can.
+    final tip = isAndroid || isIOS ? l10n.proxyCommandMobileTip : null;
     if (tip == null) return input;
     return Column(
       mainAxisSize: MainAxisSize.min,

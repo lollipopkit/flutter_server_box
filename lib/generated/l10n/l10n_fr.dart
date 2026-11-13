@@ -494,10 +494,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get image => 'Image';
 
   @override
-  String get macDmgBody =>
-      'L’App Store impose un bac à sable, et un bac à sable ne peut pas ouvrir de terminal. La version DMG le peut.\n\nLa version App Store pourrait ne plus être mise à jour.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS n’a pas autorisé la lecture des données de la version précédente';
 
@@ -507,10 +503,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get macDmgImportFailed =>
       'Impossible de lire les données de la version précédente';
-
-  @override
-  String get macDmgTip =>
-      'La version DMG prend en charge le terminal local et l’exécution locale d’extraits de code.';
 
   @override
   String get macDmgTitle => 'Version DMG';
@@ -815,17 +807,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'adresse du BMC doit être une URL, par ex. https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Cette version est en sandbox : les commandes utilisent un dossier personnel vide plutôt que le vôtre. Celles qui dépendent de ~/.ssh échoueront donc. La version DMG n’a pas cette restriction.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Impossible de lire le fichier de clé privée $path : $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Cette version ne peut pas lire les fichiers hors de son conteneur, la clé située à $path est donc inaccessible. Importez la clé dans les réglages, ou utilisez la version DMG.';
   }
 
   @override

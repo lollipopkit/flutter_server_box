@@ -20,17 +20,8 @@ import 'package:server_box/data/res/misc.dart';
 /// Derived from what the app itself claims rather than re-deciding it here, so
 /// the suite means "wherever a local shell is offered, it works" — and cannot
 /// drift from the thing it is checking.
-///
-/// The App Store build is sandboxed and claims nothing: a sandboxed process
-/// cannot open a pseudo-terminal's slave device. Measured — `Process.run`
-/// succeeds, the `forkpty` child exits 255 before it can exec, and neither a
-/// home-relative-path nor a `/dev/` exception changes it. Run these against
-/// the DMG configuration, which is signed without the sandbox.
-String? get _cannotRun {
-  if (LocalShellBackend.isSupported) return null;
-  return 'this build offers no local shell'
-      '${Platform.isMacOS && LocalShellBackend.isSandboxed ? ' — it is sandboxed, so it cannot host a pseudo-terminal' : ''}';
-}
+String? get _cannotRun =>
+    LocalShellBackend.isSupported ? null : 'this build offers no local shell';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

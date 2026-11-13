@@ -540,6 +540,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'introVer',
     'featureIntroVer',
     'diagnosticsConsentVer',
+    // The App Store build's, retired: an older build still writes it, and it
+    // stays on that device.
+    // TODO(migration): drop once no supported build writes `dmgTipBuild`.
     'dmgTipBuild',
     'legacyStatusNoticePending',
     'firstTimeReadSSHCfg',
@@ -729,12 +732,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
   late final serverLogoUrl = propertyDefault('serverLogoUrl', '');
 
   late final betaTest = propertyDefault('betaTest', false);
-
-  /// The build number the App Store build last mentioned the DMG one for.
-  ///
-  /// `-1` means never again. Only the sandboxed macOS build reads it — see
-  /// `DmgNotice`, which is where the once-per-version rule lives.
-  late final dmgTipBuild = propertyDefault('dmgTipBuild', 0);
 
   /// For desktop only.
   /// Record the position and size of the window.

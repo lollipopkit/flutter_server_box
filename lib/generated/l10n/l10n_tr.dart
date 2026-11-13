@@ -488,10 +488,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get image => 'Görüntü';
 
   @override
-  String get macDmgBody =>
-      'App Store bu uygulamanın kum havuzunda çalışmasını ister ve kum havuzu terminal açamaz. DMG sürümü açabilir.\n\nApp Store sürümü ileride güncellenmeyebilir.';
-
-  @override
   String get macDmgImportDenied => 'macOS önceki sürümün verisini okutmadı';
 
   @override
@@ -499,10 +495,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => 'Önceki sürümün verisi okunamadı';
-
-  @override
-  String get macDmgTip =>
-      'DMG sürümü yerel terminali ve kod snippet’lerini yerel olarak çalıştırmayı destekler.';
 
   @override
   String get macDmgTitle => 'DMG sürümü';
@@ -805,17 +797,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'BMC adresi bir URL olmalı, örneğin https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Bu sürüm sandbox içinde çalışır. Komutlara sizin home dizininiz yerine boş bir home dizini verilir; bu nedenle ~/.ssh gerektiren komutlar başarısız olur. DMG sürümünde bu kısıtlama yoktur.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Özel anahtar dosyası $path okunamadı: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Bu sürüm kendi kapsayıcısı dışındaki dosyaları okuyamıyor, bu yüzden $path konumundaki anahtara erişilemiyor. Anahtarı Ayarlar\'dan içe aktarın ya da DMG sürümünü kullanın.';
   }
 
   @override

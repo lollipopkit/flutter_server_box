@@ -22,7 +22,6 @@ extension _App on _AppSettingsPageState {
         if (isAndroid) _buildBgRun(),
         if (isDesktop) _buildHideTitleBar(),
         _buildMotion(),
-        if (DmgNotice.applies) _buildDmgNotice(),
         // Not in a release build: debug and profile builds, the ones tested
         // on a device, can read and edit the raw settings.
         if (!kReleaseMode) _buildEditRawSettings(),
@@ -108,22 +107,6 @@ extension _App on _AppSettingsPageState {
           },
         );
       },
-    );
-  }
-
-  /// The App Store build's one standing entry about the DMG build. The line in
-  /// the update dialog is asked to go away and does; this one stays, so there
-  /// is somewhere to read the whole thing afterwards.
-  SettingsRow _buildDmgNotice() {
-    final label = l10n.macDmgTitle;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(MingCute.apple_fill),
-        title: Text(label),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => DmgNotice.show(context),
-      ),
     );
   }
 

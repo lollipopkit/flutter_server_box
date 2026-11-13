@@ -18,15 +18,9 @@ usually the one your terminal app opens.
 | Platform | Availability |
 |---|---|
 | Linux, Windows | Available |
-| macOS (DMG build) | Available |
-| macOS (App Store build) | Not available |
+| macOS | Available |
 | Android | Available, with different shell capabilities from desktop |
 | iOS | Not available |
-
-**The macOS App Store build has no local shell.** Its sandbox prevents the App
-from opening a pseudo-terminal, so the local-shell entry is hidden. The DMG
-build can provide a shell. Server Box checks which build is running and shows
-the entry only when that build supports it.
 
 **iOS has no local shell.** App Store apps cannot start processes, and the
 sandbox does not contain a `/bin/sh` executable.

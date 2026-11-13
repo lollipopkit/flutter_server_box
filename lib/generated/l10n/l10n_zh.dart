@@ -461,10 +461,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get image => '镜像';
 
   @override
-  String get macDmgBody =>
-      '受 macOS App Store 沙盒限制，商店版本无法使用本机终端。改用 DMG 版本即可使用完整功能。\n\nApp Store 版本后续可能停止更新。';
-
-  @override
   String get macDmgImportDenied => 'macOS 拒绝了读取旧版本数据的权限请求';
 
   @override
@@ -472,9 +468,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => '无法读取旧版本数据';
-
-  @override
-  String get macDmgTip => 'DMG 版支持本机终端和在本机运行代码片段';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -757,17 +750,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcAddrInvalid => 'BMC 地址必须是 URL，例如 https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      '此版本运行在沙盒中，命令使用的是空白的 home 目录。因此，依赖 ~/.ssh 的命令会失败。DMG 版不受此限制。';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '无法读取私钥文件 $path：$reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return '此版本无法读取沙盒外的文件，因此无法访问 $path 中的密钥。请在设置中导入密钥，或改用 DMG 版。';
   }
 
   @override
@@ -7334,10 +7318,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get image => '映像檔';
 
   @override
-  String get macDmgBody =>
-      'App Store 要求本應用沙盒執行，而沙盒內無法開啟終端。DMG 版可以開啟。\n\nApp Store 版以後可能停止更新。';
-
-  @override
   String get macDmgImportDenied => 'macOS 不允許讀取此前安裝版本的資料';
 
   @override
@@ -7345,9 +7325,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get macDmgImportFailed => '讀不到此前安裝版本的資料';
-
-  @override
-  String get macDmgTip => 'DMG 版支持本機終端和在本機運行代碼片段';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -7630,17 +7607,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcAddrInvalid => 'BMC 位址必須是 URL，例如 https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      '此版本運行在沙盒中，命令使用的是空白的 home 目錄。因此，依賴 ~/.ssh 的命令會失敗。DMG 版不受此限制。';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '無法讀取私鑰檔案 $path：$reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return '此版本無法讀取沙盒外的檔案，因此無法存取 $path 中的金鑰。請在設定中匯入金鑰，或改用 DMG 版。';
   }
 
   @override

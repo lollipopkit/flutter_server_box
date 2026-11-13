@@ -490,10 +490,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get image => 'ایمیج';
 
   @override
-  String get macDmgBody =>
-      'فروشگاه App Store الزام می‌کند که این برنامه محدود به Sandbox باشد، و محیط Sandbox امکان باز کردن ترمینال را ندارد. اما نسخه DMG این امکان را دارد.\n\nممکن است به‌روزرسانی نسخه App Store متوقف شود.';
-
-  @override
   String get macDmgImportDenied =>
       'سیستم‌عامل macOS اجازه خواندن داده‌های نسخه قبلی را نداد';
 
@@ -502,10 +498,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => 'امکان خواندن داده‌های نسخه قبلی وجود نداشت';
-
-  @override
-  String get macDmgTip =>
-      'نسخه DMG از ترمینال محلی و اجرای قطعه‌کدها روی همین دستگاه پشتیبانی می‌کند.';
 
   @override
   String get macDmgTitle => 'نسخه DMG';
@@ -807,17 +799,8 @@ class AppLocalizationsFa extends AppLocalizations {
       'نشانی BMC باید یک URL باشد، مانند https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'این نسخه در sandbox اجرا می‌شود: دستورها به‌جای پوشه خانگی شما از یک پوشه خانگی خالی استفاده می‌کنند. بنابراین دستورهایی که به ~/.ssh نیاز دارند با خطا روبه‌رو می‌شوند. نسخه DMG این محدودیت را ندارد.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'خواندن فایل کلید خصوصی $path ممکن نیست: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'این نسخه نمی‌تواند فایل‌های خارج از کانتینر خود را بخواند، بنابراین کلید در $path غیرقابل دسترس است. کلید را در «تنظیمات» وارد کنید یا از نسخه DMG استفاده نمایید.';
   }
 
   @override

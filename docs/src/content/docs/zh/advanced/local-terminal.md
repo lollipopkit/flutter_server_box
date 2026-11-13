@@ -14,12 +14,9 @@ description: 在运行 Server Box 的设备上打开本地终端
 | 平台 | 支持情况 |
 |---|---|
 | Linux、Windows | 支持 |
-| macOS（DMG 版本） | 支持 |
-| macOS（App Store 版本） | 不支持 |
+| macOS | 支持 |
 | Android | 支持（受系统权限限制，环境与桌面端不同） |
 | iOS | 不支持 |
-
-**macOS App Store 版本不支持本机 Shell。** 受限于 macOS 应用沙盒，App Store 版本无法创建伪终端（PTY），因此会自动隐藏该入口；独立分发的 DMG 版本则可正常使用。
 
 **iOS 不支持本机 Shell。** iOS 系统禁止应用直接派生外部进程，且沙盒内无 `/bin/sh` 可供调用。
 

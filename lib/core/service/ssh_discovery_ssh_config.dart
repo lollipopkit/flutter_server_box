@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_tty/fl_tty.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
@@ -19,12 +18,9 @@ final class SshConfigDiscovery implements SshDiscovery {
   /// see is still offered, to be picked by hand.
   static Future<bool> isAvailable() async {
     if (!isDesktop) return false;
-    if (_sandboxed) return true;
     final (_, exists) = await SSHConfig.configExistsAsync();
     return exists;
   }
-
-  static bool get _sandboxed => isMacOS && !ProcessExec.isSupported;
 
   @override
   String get id => 'ssh_config';
@@ -53,13 +49,6 @@ final class SshConfigDiscovery implements SshDiscovery {
       if (e is! PathAccessException && !'$e'.contains('not permitted')) {
         rethrow;
       }
-      throw SshDiscoveryException(
-        l10n.sshConfigPermissionDenied,
-        tip: l10n.sshConfigManualSelect,
-        needsFile: true,
-      );
-    }
-    if (servers.isEmpty && input == null && _sandboxed) {
       throw SshDiscoveryException(
         l10n.sshConfigPermissionDenied,
         tip: l10n.sshConfigManualSelect,

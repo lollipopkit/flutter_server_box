@@ -490,10 +490,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get image => 'Gambar';
 
   @override
-  String get macDmgBody =>
-      'App Store mengharuskan aplikasi ini berjalan dalam sandbox, dan sandbox tidak bisa membuka terminal. Versi DMG bisa.\n\nVersi App Store mungkin berhenti diperbarui.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS tidak mengizinkan membaca data versi sebelumnya';
 
@@ -502,10 +498,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => 'Tidak bisa membaca data versi sebelumnya';
-
-  @override
-  String get macDmgTip =>
-      'Versi DMG mendukung terminal lokal dan menjalankan snippet kode secara lokal.';
 
   @override
   String get macDmgTitle => 'Versi DMG';
@@ -809,17 +801,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Alamat BMC harus berupa URL, mis. https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Versi ini berjalan di sandbox: perintah menggunakan direktori home kosong, bukan milik Anda. Karena itu, perintah yang bergantung pada ~/.ssh akan gagal. Versi DMG tidak memiliki batasan ini.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Berkas kunci privat $path tidak dapat dibaca: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Build ini tidak dapat membaca berkas di luar kontainernya, sehingga kunci di $path tidak terjangkau. Impor kunci di Pengaturan, atau gunakan versi DMG.';
   }
 
   @override
