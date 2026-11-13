@@ -7333,6 +7333,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este dispositivo não pode usar um ssh-agent';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'No Windows, um ssh-agent é acessado por um named pipe, e $path não é um';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return 'Não foi possível acessar o ssh-agent em $path: $reason';
   }

@@ -2039,5 +2039,6 @@
   "sshAgent": "ssh-agent",
   "sshAgentUnset": "{name} əsasında ssh-agent soketi tapılmır",
   "sshAgentUnsupported": "Bu cihaz ssh-agent istifadə edə bilməz",
+  "sshAgentNotPipe": "Windows-da ssh-agent-ə named pipe vasitəsilə qoşulur, {path} isə named pipe deyil",
   "sshAgentUnreachable": "{path} ünvanındakı ssh-agent-ə qoşulmaq mümkün deyil: {reason}"
 }

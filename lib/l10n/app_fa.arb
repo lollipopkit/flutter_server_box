@@ -1722,5 +1722,6 @@
   "sshAgent": "ssh-agent",
   "sshAgentUnset": "هیچ سوکت ssh-agent از {name} پیدا نشد",
   "sshAgentUnsupported": "این دستگاه نمی‌تواند از ssh-agent استفاده کند",
+  "sshAgentNotPipe": "در Windows دسترسی به ssh-agent از طریق named pipe است و {path} یک named pipe نیست",
   "sshAgentUnreachable": "دسترسی به ssh-agent در {path} ممکن نیست: {reason}"
 }

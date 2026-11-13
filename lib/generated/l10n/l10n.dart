@@ -12371,6 +12371,12 @@ abstract class AppLocalizations {
   /// **'This device cannot use an ssh-agent'**
   String get sshAgentUnsupported;
 
+  /// No description provided for @sshAgentNotPipe.
+  ///
+  /// In en, this message translates to:
+  /// **'On Windows an ssh-agent is reached through a named pipe, and {path} is not one'**
+  String sshAgentNotPipe(String path);
+
   /// No description provided for @sshAgentUnreachable.
   ///
   /// In en, this message translates to:

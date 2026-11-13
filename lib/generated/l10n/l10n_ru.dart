@@ -7315,6 +7315,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это устройство не может использовать ssh-agent';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'В Windows ssh-agent доступен через named pipe, а $path им не является';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return 'Не удалось подключиться к ssh-agent по адресу $path: $reason';
   }

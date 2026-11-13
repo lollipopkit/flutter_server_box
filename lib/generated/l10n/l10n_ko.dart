@@ -6974,6 +6974,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshAgentUnsupported => '이 기기에서는 ssh-agent를 사용할 수 없습니다';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows에서는 named pipe로 ssh-agent에 연결하는데, $path은(는) named pipe가 아닙니다';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return '$path의 ssh-agent에 연결할 수 없습니다: $reason';
   }

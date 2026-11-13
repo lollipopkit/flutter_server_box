@@ -56,7 +56,73 @@ void main() {
     });
   });
 
-  group('the agent a server names', skip: !sshAgentSupported, () {
+  test('a named pipe is told from a socket file', () {
+    expect(isNamedPipe(windowsAgentPipe), isTrue);
+    expect(isNamedPipe('//./pipe/openssh-ssh-agent'), isTrue);
+    expect(isNamedPipe(r'\\?\PIPE\agent'), isTrue);
+    expect(isNamedPipe('/tmp/agent.sock'), isFalse);
+    expect(isNamedPipe(r'C:\Users\me\agent.sock'), isFalse);
+  });
+
+  group('a pipe as a socket', () {
+    test('carries an agent conversation', () async {
+      final io = _FakePipe.answering(
+        SSHKeyPairAgent(SSHKeyPair.fromPem(_testPrivateKey)),
+      );
+      final agent = SSHAgentClient(PipeSocket(io));
+
+      expect(await agent.identities(), hasLength(1));
+      await agent.close();
+      expect(io.closed, isTrue);
+    });
+
+    test('the far end hanging up ends it', () async {
+      final io = _FakePipe();
+      final socket = PipeSocket(io);
+      final ended = socket.stream.toList();
+
+      io.reads.add(null);
+
+      await socket.done;
+      expect(await ended, isEmpty);
+      expect(io.closed, isTrue);
+    });
+
+    test('closing does not wait for a write the pipe never takes', () async {
+      final io = _FakePipe()..writeHangs = true;
+      final socket = PipeSocket(io);
+      socket.stream.listen(null);
+      socket.sink.add([1, 2, 3]);
+      await Future<void>.delayed(Duration.zero);
+
+      await socket.close().timeout(const Duration(seconds: 1));
+
+      expect(io.closed, isTrue);
+      await socket.done;
+    });
+
+    test('a failed write reaches done and the stream, once', () async {
+      // A read already under way when the end comes still answers.
+      final io = _FakePipe()
+        ..writeError = StateError('broken pipe')
+        ..readsAfterClose = true;
+      final socket = PipeSocket(io);
+      final errors = <Object>[];
+      socket.stream.listen(null, onError: errors.add);
+
+      socket.sink.add([1]);
+
+      await expectLater(socket.done, throwsA(isA<StateError>()));
+      // Bytes the pipe still hands over after the end are dropped, not added
+      // to a closed stream.
+      io.reads.add(Uint8List.fromList([9]));
+      await Future<void>.delayed(Duration.zero);
+      expect(errors, hasLength(1));
+      expect(io.closed, isTrue);
+    });
+  });
+
+  group('the agent a server names', skip: !sshAgentSupported || isWindows, () {
     late Directory dir;
     late ServerSocket agentSocket;
     late String path;
@@ -200,3 +266,50 @@ class _Frames {
 final String _testPrivateKey = File(
   'packages/dartssh2/test/fixtures/ssh-ed25519/id_ed25519',
 ).readAsStringSync();
+
+/// A pipe whose reads a test feeds, or which answers like [answering]'s agent.
+class _FakePipe implements PipeIo {
+  _FakePipe();
+
+  factory _FakePipe.answering(SSHAgentHandler agent) {
+    final pipe = _FakePipe();
+    final frames = _Frames();
+    pipe._onWrite = (bytes) async {
+      for (final request in frames.add(bytes)) {
+        pipe.reads.add(_frame(await agent.handleRequest(request)));
+      }
+    };
+    return pipe;
+  }
+
+  final reads = StreamController<Uint8List?>();
+  late final _reads = StreamIterator(reads.stream);
+  Future<void> Function(List<int>)? _onWrite;
+  var writeHangs = false;
+  Object? writeError;
+  var closed = false;
+
+  /// Whether a read waiting when this closes still answers with what comes.
+  var readsAfterClose = false;
+
+  @override
+  Future<Uint8List?> read() async {
+    if (closed && !readsAfterClose) return null;
+    final more = await _reads.moveNext();
+    return more && (readsAfterClose || !closed) ? _reads.current : null;
+  }
+
+  @override
+  Future<void> write(List<int> data) async {
+    if (writeHangs) return Completer<void>().future;
+    if (writeError case final e?) throw e;
+    await _onWrite?.call(data);
+  }
+
+  @override
+  Future<void> close() async {
+    closed = true;
+    // What the real one does: a read waiting answers none.
+    if (!readsAfterClose) reads.add(null);
+  }
+}

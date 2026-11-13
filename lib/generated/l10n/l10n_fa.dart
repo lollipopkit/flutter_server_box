@@ -7313,6 +7313,11 @@ class AppLocalizationsFa extends AppLocalizations {
       'این دستگاه نمی‌تواند از ssh-agent استفاده کند';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'در Windows دسترسی به ssh-agent از طریق named pipe است و $path یک named pipe نیست';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return 'دسترسی به ssh-agent در $path ممکن نیست: $reason';
   }

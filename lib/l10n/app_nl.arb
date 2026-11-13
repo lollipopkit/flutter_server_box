@@ -2039,5 +2039,6 @@
   "sshAgent": "ssh-agent",
   "sshAgentUnset": "Uit {name} is geen ssh-agent-socket te vinden",
   "sshAgentUnsupported": "Dit apparaat kan geen ssh-agent gebruiken",
+  "sshAgentNotPipe": "Op Windows bereik je een ssh-agent via een named pipe, en {path} is er geen",
   "sshAgentUnreachable": "Kan de ssh-agent op {path} niet bereiken: {reason}"
 }

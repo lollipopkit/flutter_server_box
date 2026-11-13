@@ -7269,6 +7269,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshAgentUnsupported => 'This device cannot use an ssh-agent';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'On Windows an ssh-agent is reached through a named pipe, and $path is not one';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return 'Cannot reach the ssh-agent at $path: $reason';
   }

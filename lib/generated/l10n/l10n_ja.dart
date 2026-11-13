@@ -6973,6 +6973,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshAgentUnsupported => 'このデバイスでは ssh-agent を使用できません';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows では ssh-agent に named pipe で接続します。$path は named pipe ではありません';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return '$path の ssh-agent に接続できません: $reason';
   }

@@ -7266,6 +7266,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Perangkat ini tidak dapat menggunakan ssh-agent';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'Di Windows, ssh-agent dijangkau melalui named pipe, dan $path bukan named pipe';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return 'Tidak dapat menjangkau ssh-agent di $path: $reason';
   }

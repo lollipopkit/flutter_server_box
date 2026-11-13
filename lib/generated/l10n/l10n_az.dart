@@ -7254,6 +7254,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshAgentUnsupported => 'Bu cihaz ssh-agent istifadə edə bilməz';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows-da ssh-agent-ə named pipe vasitəsilə qoşulur, $path isə named pipe deyil';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return '$path ünvanındakı ssh-agent-ə qoşulmaq mümkün deyil: $reason';
   }

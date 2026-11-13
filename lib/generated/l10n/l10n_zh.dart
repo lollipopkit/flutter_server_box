@@ -6863,6 +6863,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshAgentUnsupported => '此设备无法使用 ssh-agent';
 
   @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows 上需通过 named pipe 连接 ssh-agent，$path 不是 named pipe';
+  }
+
+  @override
   String sshAgentUnreachable(String path, String reason) {
     return '无法连接 $path 的 ssh-agent：$reason';
   }
@@ -13729,6 +13734,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshAgentUnsupported => '此裝置無法使用 ssh-agent';
+
+  @override
+  String sshAgentNotPipe(String path) {
+    return 'Windows 上需透過 named pipe 連線 ssh-agent，$path 不是 named pipe';
+  }
 
   @override
   String sshAgentUnreachable(String path, String reason) {

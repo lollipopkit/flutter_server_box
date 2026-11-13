@@ -1,3 +1,4 @@
+pub mod agent_pipe;
 pub mod backup;
 pub mod bench;
 pub mod bmc;
