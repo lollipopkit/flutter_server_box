@@ -2035,5 +2035,9 @@
   "syncStatePassword": "密码不一致",
   "syncStateUpdate": "需要更新",
   "syncStateRunning": "同步中",
-  "syncRefused": "LK Cloud 拒绝了同步（{reason}）"
+  "syncRefused": "LK Cloud 拒绝了同步（{reason}）",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "无法从 {name} 找到 ssh-agent 的 socket",
+  "sshAgentUnsupported": "此设备无法使用 ssh-agent",
+  "sshAgentUnreachable": "无法连接 {path} 的 ssh-agent：{reason}"
 }

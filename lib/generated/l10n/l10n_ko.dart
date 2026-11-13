@@ -6961,4 +6961,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud가 동기화를 거부했습니다 ($reason)';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return '$name에서 ssh-agent 소켓을 찾을 수 없습니다';
+  }
+
+  @override
+  String get sshAgentUnsupported => '이 기기에서는 ssh-agent를 사용할 수 없습니다';
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return '$path의 ssh-agent에 연결할 수 없습니다: $reason';
+  }
 }

@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Пароль не збігається",
   "syncStateUpdate": "Потрібне оновлення",
   "syncStateRunning": "Синхронізація",
-  "syncRefused": "LK Cloud відхилив синхронізацію ({reason})"
+  "syncRefused": "LK Cloud відхилив синхронізацію ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "Не вдалося знайти сокет ssh-agent за {name}",
+  "sshAgentUnsupported": "Цей пристрій не може використовувати ssh-agent",
+  "sshAgentUnreachable": "Не вдалося підключитися до ssh-agent за адресою {path}: {reason}"
 }

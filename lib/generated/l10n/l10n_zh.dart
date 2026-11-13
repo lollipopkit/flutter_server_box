@@ -6850,6 +6850,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud 拒绝了同步（$reason）';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return '无法从 $name 找到 ssh-agent 的 socket';
+  }
+
+  @override
+  String get sshAgentUnsupported => '此设备无法使用 ssh-agent';
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return '无法连接 $path 的 ssh-agent：$reason';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13701,5 +13717,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String syncRefused(String reason) {
     return 'LK Cloud 拒絕了同步（$reason）';
+  }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return '無法從 $name 找到 ssh-agent 的 socket';
+  }
+
+  @override
+  String get sshAgentUnsupported => '此裝置無法使用 ssh-agent';
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return '無法連線 $path 的 ssh-agent：$reason';
   }
 }

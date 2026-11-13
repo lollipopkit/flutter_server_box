@@ -216,6 +216,32 @@ Host keyserver
       expect(server.ssh?.keyId, isNull);
     });
 
+    test('IdentityAgent is the first one that applies, SSH_AUTH_SOCK unless '
+        'set; none offers none',
+        () async {
+      await configFile.writeAsString('''
+Host op
+  HostName 10.0.0.1
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+Host plain
+  HostName 10.0.0.2
+  IdentityAgent none
+
+Host env
+  HostName 10.0.0.3
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final agents = {for (final s in servers) s.name: s.ssh?.identityAgent};
+
+      expect(agents, {
+        'op': '~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock',
+        'plain': null,
+        'env': 'SSH_AUTH_SOCK',
+      });
+    });
+
     test('a Windows path keeps its backslashes, as OpenSSH reads it', () async {
       // OpenSSH's `argv_split` escapes only a quote, a backslash, or a space
       // outside quotes. Every backslash used to be an escape, and this path

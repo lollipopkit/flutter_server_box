@@ -35,6 +35,9 @@ enum SSHErrType {
   auth,
   interactiveAuth,
   noPrivateKey,
+
+  /// The ssh-agent a server's keys come from could not be asked.
+  agent,
   segments,
   writeScript,
   getStatus,

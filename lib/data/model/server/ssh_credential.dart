@@ -68,6 +68,15 @@ final class SshCredential {
   /// desktop-only, never copied into the app. Null for a stored key.
   final List<String>? identityFiles;
 
+  /// The ssh-agent whose keys are offered, as OpenSSH's `IdentityAgent` names
+  /// one: `SSH_AUTH_SOCK` for the socket that variable holds, or a socket
+  /// path (`~` and `${VAR}` expanded). Null offers no agent. Read on this
+  /// machine when connecting; the keys never reach the app.
+  final String? identityAgent;
+
+  /// The [identityAgent] that is whatever `$SSH_AUTH_SOCK` points at.
+  static const authSock = 'SSH_AUTH_SOCK';
+
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
 
@@ -116,6 +125,7 @@ final class SshCredential {
     this.keyId,
     this.keyPath,
     this.identityFiles,
+    this.identityAgent,
     this.alterUrl,
     this.jumpId,
     this.jumpIds,
@@ -244,6 +254,7 @@ final class SshCredential {
     Object? keyId = _unset,
     Object? keyPath = _unset,
     Object? identityFiles = _unset,
+    Object? identityAgent = _unset,
     Object? alterUrl = _unset,
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
@@ -261,6 +272,9 @@ final class SshCredential {
       identityFiles: identityFiles == _unset
           ? this.identityFiles
           : identityFiles as List<String>?,
+      identityAgent: identityAgent == _unset
+          ? this.identityAgent
+          : identityAgent as String?,
       alterUrl: alterUrl == _unset ? this.alterUrl : alterUrl as String?,
       jumpId: jumpId == _unset ? this.jumpId : jumpId as String?,
       jumpIds: jumpIds == _unset ? this.jumpIds : (jumpIds as List<String>?),
@@ -282,6 +296,7 @@ final class SshCredential {
         pwd == other.pwd &&
         keyId == other.keyId &&
         listEquals(resolvedIdentityFiles, other.resolvedIdentityFiles) &&
+        identityAgent == other.identityAgent &&
         proxyCommand == other.proxyCommand &&
         // Changing how the socket is obtained needs a reconnect just as much
         // as changing the address does
@@ -310,6 +325,7 @@ final class SshCredential {
     pwd,
     keyId,
     Object.hashAll(resolvedIdentityFiles),
+    identityAgent,
     alterUrl,
     // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
     // fields it is derived from. Old storage and an import write [jumpId]

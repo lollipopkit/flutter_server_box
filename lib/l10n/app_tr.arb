@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Parola eşleşmiyor",
   "syncStateUpdate": "Güncelleme gerekli",
   "syncStateRunning": "Eşitleniyor",
-  "syncRefused": "LK Cloud eşitlemeyi reddetti ({reason})"
+  "syncRefused": "LK Cloud eşitlemeyi reddetti ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "{name} değerinden bir ssh-agent soketi bulunamıyor",
+  "sshAgentUnsupported": "Bu cihaz ssh-agent kullanamaz",
+  "sshAgentUnreachable": "{path} konumundaki ssh-agent'a ulaşılamıyor: {reason}"
 }

@@ -6,8 +6,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/core/ssh/agent.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/pve.dart';
@@ -210,6 +212,100 @@ void main() {
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
+    });
+
+    group('ssh-agent', skip: !sshAgentSupported, () {
+      /// The editor open on [server]; what it returns saves and answers what
+      /// was persisted.
+      Future<Future<Spi?> Function()> openEditor(
+        WidgetTester tester,
+        Spi server,
+      ) async {
+        Spi? persisted;
+        FlutterSecureStorage.setMockInitialValues({});
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              serversProvider.overrideWith(
+                () => _PersistingServersNotifier(
+                  server,
+                  (value) => persisted = value,
+                ),
+              ),
+              privateKeyProvider.overrideWithValue(const PrivateKeyState()),
+            ],
+            child: MaterialApp(
+              builder: ResponsivePoints.builder,
+              locale: const Locale('en'),
+              localizationsDelegates: const [
+                ...app_locale.appLocalizationsDelegates,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Builder(
+                builder: (context) {
+                  app_locale.l10n = AppLocalizations.of(context)!;
+                  context.setLibL10n();
+                  return ServerEditPage(args: ServerEditArgs(server));
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+        return () async {
+          final save = find.widgetWithText(FilledButton, libL10n.save);
+          await tester.ensureVisible(save);
+          await tester.tap(save);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+          return persisted;
+        };
+      }
+
+      testWidgets('switched on with no socket typed is SSH_AUTH_SOCK, and '
+          'counts as a way in', (tester) async {
+        final server = spiFixture(
+          name: 'agent-server',
+          ip: '192.168.1.103',
+          user: 'me',
+          id: 'agent-server-id',
+        );
+        final save = await openEditor(tester, server);
+
+        final toggle = find.descendant(
+          of: find.widgetWithText(ListTile, app_locale.l10n.sshAgent),
+          matching: find.byType(Switch),
+        );
+        await tester.ensureVisible(toggle);
+        await tester.pump();
+        await tester.tap(toggle);
+        await tester.pump();
+
+        // No password and no key: without the agent counting, the
+        // "continue without authentication?" sheet would hold the save.
+        final persisted = await save();
+        expect(persisted?.ssh?.identityAgent, SshCredential.authSock);
+      });
+
+      testWidgets('a socket of its own is shown and kept', (tester) async {
+        const socket = '~/.1password/agent.sock';
+        final server = spiFixture(
+          name: 'agent-server',
+          ip: '192.168.1.104',
+          user: 'me',
+          id: 'agent-server-id',
+        );
+        final withAgent = server.copyWith(
+          ssh: server.ssh!.copyWith(identityAgent: socket),
+        );
+        final save = await openEditor(tester, withAgent);
+
+        expect(find.text(socket), findsOneWidget);
+        final persisted = await save();
+        expect(persisted?.ssh?.identityAgent, socket);
+      });
     });
 
     testWidgets('key auth switched on without a key still saves', (

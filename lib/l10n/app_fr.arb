@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Mot de passe différent",
   "syncStateUpdate": "Mise à jour requise",
   "syncStateRunning": "Synchronisation…",
-  "syncRefused": "LK Cloud a refusé la synchronisation ({reason})"
+  "syncRefused": "LK Cloud a refusé la synchronisation ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "Aucun socket ssh-agent ne peut être trouvé à partir de {name}",
+  "sshAgentUnsupported": "Cet appareil ne peut pas utiliser de ssh-agent",
+  "sshAgentUnreachable": "Impossible de joindre le ssh-agent à {path} : {reason}"
 }

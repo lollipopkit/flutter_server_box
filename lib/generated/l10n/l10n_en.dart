@@ -7256,4 +7256,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud refused the sync ($reason)';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return 'No ssh-agent socket can be found from $name';
+  }
+
+  @override
+  String get sshAgentUnsupported => 'This device cannot use an ssh-agent';
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return 'Cannot reach the ssh-agent at $path: $reason';
+  }
 }

@@ -7299,4 +7299,21 @@ class AppLocalizationsFa extends AppLocalizations {
   String syncRefused(String reason) {
     return 'LK Cloud همگام‌سازی را رد کرد ($reason)';
   }
+
+  @override
+  String get sshAgent => 'ssh-agent';
+
+  @override
+  String sshAgentUnset(String name) {
+    return 'هیچ سوکت ssh-agent از $name پیدا نشد';
+  }
+
+  @override
+  String get sshAgentUnsupported =>
+      'این دستگاه نمی‌تواند از ssh-agent استفاده کند';
+
+  @override
+  String sshAgentUnreachable(String path, String reason) {
+    return 'دسترسی به ssh-agent در $path ممکن نیست: $reason';
+  }
 }

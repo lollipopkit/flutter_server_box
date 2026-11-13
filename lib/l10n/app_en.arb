@@ -9364,5 +9364,11 @@
   "syncStateUpdate": "Update required",
   "syncStateRunning": "Syncing",
   "syncRefused": "LK Cloud refused the sync ({reason})",
-  "@syncRefused": {"placeholders": {"reason": {"type": "String"}}}
+  "@syncRefused": {"placeholders": {"reason": {"type": "String"}}},
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "No ssh-agent socket can be found from {name}",
+  "@sshAgentUnset": {"placeholders": {"name": {"type": "String"}}},
+  "sshAgentUnsupported": "This device cannot use an ssh-agent",
+  "sshAgentUnreachable": "Cannot reach the ssh-agent at {path}: {reason}",
+  "@sshAgentUnreachable": {"placeholders": {"path": {"type": "String"}, "reason": {"type": "String"}}}
 }

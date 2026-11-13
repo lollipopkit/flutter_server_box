@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Parol uyğun gəlmir",
   "syncStateUpdate": "Yeniləmə tələb olunur",
   "syncStateRunning": "Sinxronlaşdırılır",
-  "syncRefused": "LK Cloud sinxronizasiyanı rədd etdi ({reason})"
+  "syncRefused": "LK Cloud sinxronizasiyanı rədd etdi ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "{name} əsasında ssh-agent soketi tapılmır",
+  "sshAgentUnsupported": "Bu cihaz ssh-agent istifadə edə bilməz",
+  "sshAgentUnreachable": "{path} ünvanındakı ssh-agent-ə qoşulmaq mümkün deyil: {reason}"
 }

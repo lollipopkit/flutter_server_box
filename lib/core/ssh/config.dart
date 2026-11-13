@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -39,6 +40,55 @@ abstract final class SSHConfig {
         .replaceAll(escapedPercent, '%');
     return _expandTilde(expanded);
   }
+
+  /// The socket an `IdentityAgent` value names, as OpenSSH reads one:
+  /// `SSH_AUTH_SOCK` (or any `$NAME`) is that variable's value, anything else
+  /// a path with `~`, `${NAME}` and the tokens `%%`, `%d`, `%u`, `%h`, `%n`,
+  /// `%k`, `%p`, `%r`, `%l` and `%L` expanded in one pass. Null when it names a
+  /// variable that is not set, or a token this does not know.
+  static String? expandIdentityAgent(
+    String value, {
+    required String hostname,
+    required String remoteUser,
+    String? originalHost,
+    int port = 22,
+    @visibleForTesting Map<String, String>? environment,
+  }) {
+    final env = environment ?? Platform.environment;
+    String? variable(String name) {
+      final v = env[name];
+      return v == null || v.isEmpty ? null : v;
+    }
+
+    if (value == SshCredential.authSock) return variable(value);
+    if (_envVariable.firstMatch(value) case final m?) return variable(m[1]!);
+
+    final localHost = Platform.localHostname;
+    final tokens = {
+      '%': '%',
+      'd': _homePath ?? '',
+      'u': env['USER'] ?? env['USERNAME'] ?? '',
+      'h': hostname,
+      'n': originalHost ?? hostname,
+      'k': originalHost ?? hostname,
+      'p': '$port',
+      'r': remoteUser,
+      'l': localHost,
+      'L': localHost.split('.').first,
+    };
+    var unresolved = false;
+    final expanded = value.replaceAllMapped(_agentReference, (m) {
+      final v = m[1] != null ? variable(m[1]!) : tokens[m[2]];
+      if (v == null) unresolved = true;
+      return v ?? '';
+    });
+    return unresolved ? null : _expandTilde(expanded);
+  }
+
+  static final _envVariable = RegExp(r'^\$([A-Za-z_][A-Za-z0-9_]*)$');
+  static final _agentReference = RegExp(
+    r'\$\{([A-Za-z_][A-Za-z0-9_]*)\}|%(.?)',
+  );
 
   static String _expandTilde(String path) {
     if (!path.startsWith('~')) return path;
@@ -178,6 +228,7 @@ abstract final class SSHConfig {
     int? port;
     String? proxyJump;
     String? proxyCommand;
+    String? identityAgent;
     final identityFiles = <String>[];
 
     for (final block in blocks) {
@@ -206,6 +257,10 @@ abstract final class SSHConfig {
             proxyJump = value;
           case 'proxycommand' when proxyCommand == null:
             proxyCommand = value;
+          // First wins, `none` included: it turns off one a later `Host *`
+          // would set.
+          case 'identityagent' when identityAgent == null:
+            identityAgent = value;
         }
       }
     }
@@ -241,6 +296,12 @@ abstract final class SSHConfig {
         port: port ?? 22,
         user: user ?? 'root',
         identityFiles: identityFiles.isEmpty ? null : identityFiles,
+        // OpenSSH asks `$SSH_AUTH_SOCK`'s agent unless told otherwise.
+        identityAgent: switch (identityAgent) {
+          null => SshCredential.authSock,
+          final v when v.isEmpty || v.toLowerCase() == 'none' => null,
+          final v => v,
+        },
         proxyCommand: resolvedProxy,
       ),
     );

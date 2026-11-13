@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/ssh/agent.dart';
 import 'package:server_box/core/ssh/algorithms.dart';
 import 'package:server_box/core/ssh/auth.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
@@ -319,11 +320,64 @@ Future<SSHClient> _authenticatedClient({
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
 }) async {
+  final agent = await openSshAgent(
+    ssh,
+    hasOtherAuth: ssh.pwd?.isNotEmpty == true || ssh.keyRefs.isNotEmpty,
+    originalHost: spi.name,
+  );
+  try {
+    final client = await _clientWith(
+      socket: socket,
+      spi: spi,
+      ssh: ssh,
+      timeout: timeout,
+      alterUser: alterUser,
+      privateKey: privateKey,
+      privateKeysByKeyId: privateKeysByKeyId,
+      onStatus: onStatus,
+      onKeyboardInteractive: onKeyboardInteractive,
+      hostKeyVerifier: hostKeyVerifier,
+      hostCertificateTrust: hostCertificateTrust,
+      agentKeys: agent?.keys ?? const [],
+    );
+    if (agent != null) {
+      // Needed only to sign; once authentication is over either way, nothing
+      // asks it again.
+      unawaited(
+        client.authenticated
+            .catchError((Object _) {})
+            .whenComplete(agent.client.close),
+      );
+    }
+    return client;
+  } catch (_) {
+    await agent?.client.close();
+    rethrow;
+  }
+}
+
+Future<SSHClient> _clientWith({
+  required SSHSocket socket,
+  required Spi spi,
+  required SshCredential ssh,
+  required Duration timeout,
+  required String? alterUser,
+  required String? privateKey,
+  required Map<String, String>? privateKeysByKeyId,
+  required void Function(GenSSHClientStatus)? onStatus,
+  required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required HostKeyVerifier hostKeyVerifier,
+  required SSHHostCertificateTrust? hostCertificateTrust,
+  required List<SSHSigner> agentKeys,
+}) async {
   SSHClient passwordClient() {
-    onStatus?.call(GenSSHClientStatus.pwd);
+    onStatus?.call(
+      agentKeys.isEmpty ? GenSSHClientStatus.pwd : GenSSHClientStatus.key,
+    );
     return SSHClient(
       socket,
       username: alterUser ?? ssh.user,
+      signers: agentKeys,
       onPasswordRequest: () => ssh.pwd,
       onUserInfoRequest: onKeyboardInteractive == null
           ? null
@@ -360,9 +414,10 @@ Future<SSHClient> _authenticatedClient({
         keyMaterial.putIfAbsent(entry.key, () => entry.value);
       }
     } catch (e, s) {
-      if (ssh.pwd?.isNotEmpty != true) rethrow;
+      if (ssh.pwd?.isNotEmpty != true && agentKeys.isEmpty) rethrow;
       Loggers.app.warning(
-        'SSH key unavailable for ${spi.name}; falling back to password',
+        'SSH key unavailable for ${spi.name}; going on with '
+        '${agentKeys.isEmpty ? 'the password' : 'the agent\'s keys'}',
         e,
         s,
       );
@@ -370,7 +425,9 @@ Future<SSHClient> _authenticatedClient({
     }
   }
   if (keyMaterial.isEmpty) {
-    if (ssh.pwd?.isNotEmpty == true) return passwordClient();
+    if (ssh.pwd?.isNotEmpty == true || agentKeys.isNotEmpty) {
+      return passwordClient();
+    }
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyNotFoundFmt(
@@ -420,6 +477,7 @@ Future<SSHClient> _authenticatedClient({
     // user and failed with a permission error naming neither.
     username: alterUser ?? ssh.user,
     identities: identities,
+    signers: agentKeys,
     onPasswordRequest: ssh.pwd?.isNotEmpty == true ? () => ssh.pwd : null,
     onUserInfoRequest: onKeyboardInteractive == null
         ? null

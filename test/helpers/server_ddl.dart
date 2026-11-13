@@ -54,8 +54,18 @@ const monitorIgnoreCertColumn =
 /// m035 put `monitor_cert_sha256`, the anchor asserted to have been found.
 String serverDdlBeforeMonitorCertPin(String fresh) {
   const anchor = '"monitor_cert_sha256" TEXT NULL, ';
-  expect(fresh, contains(anchor));
-  return fresh.replaceFirst(anchor, monitorIgnoreCertColumn);
+  final before = serverDdlBeforeIdentityAgent(fresh);
+  expect(before, contains(anchor));
+  return before.replaceFirst(anchor, monitorIgnoreCertColumn);
+}
+
+/// The column m039 added: last, where `ADD COLUMN` puts it too.
+const identityAgentColumn = ', "ssh_identity_agent" TEXT NULL';
+
+/// `server` as it was before v40, asserted to have been found.
+String serverDdlBeforeIdentityAgent(String fresh) {
+  expect(fresh, contains(identityAgentColumn));
+  return fresh.replaceFirst(identityAgentColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

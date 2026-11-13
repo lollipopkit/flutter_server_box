@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Kata sandi tidak cocok",
   "syncStateUpdate": "Perlu diperbarui",
   "syncStateRunning": "Menyinkronkan",
-  "syncRefused": "LK Cloud menolak sinkronisasi ({reason})"
+  "syncRefused": "LK Cloud menolak sinkronisasi ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "Tidak ada soket ssh-agent yang ditemukan dari {name}",
+  "sshAgentUnsupported": "Perangkat ini tidak dapat menggunakan ssh-agent",
+  "sshAgentUnreachable": "Tidak dapat menjangkau ssh-agent di {path}: {reason}"
 }

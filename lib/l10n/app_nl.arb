@@ -2035,5 +2035,9 @@
   "syncStatePassword": "Wachtwoord komt niet overeen",
   "syncStateUpdate": "Update vereist",
   "syncStateRunning": "Bezig met synchroniseren",
-  "syncRefused": "LK Cloud weigerde de synchronisatie ({reason})"
+  "syncRefused": "LK Cloud weigerde de synchronisatie ({reason})",
+  "sshAgent": "ssh-agent",
+  "sshAgentUnset": "Uit {name} is geen ssh-agent-socket te vinden",
+  "sshAgentUnsupported": "Dit apparaat kan geen ssh-agent gebruiken",
+  "sshAgentUnreachable": "Kan de ssh-agent op {path} niet bereiken: {reason}"
 }
