@@ -3,10 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 
-/// Work that suspension would cut off: a file transfer.
-///
-/// TODO: hold it for an Agent reply too, once fl_pi_llm can say whether any
-/// chat is running (#1635).
+/// Work that suspension would cut off: a file transfer, an Agent reply.
 ///
 /// While anything holds it, iOS is asked for background time when the app
 /// leaves the foreground, rather than suspending the process at once and

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/in_flight_work.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -68,6 +69,24 @@ abstract final class LlmHost {
     Stores.setting.agentLocalExec.listenable().addListener(
       Chats.reconfigureSoon,
     );
+    _holdWhileWorking();
+  }
+
+  static var _holding = false;
+
+  /// [InFlightWork] while a chat writes a reply or runs a tool.
+  static void _holdWhileWorking() {
+    if (_holding) return;
+    _holding = true;
+    void Function()? release;
+    Chats.working.addListener(() {
+      if (Chats.working.value) {
+        release ??= InFlightWork.hold();
+      } else {
+        release?.call();
+        release = null;
+      }
+    });
   }
 
   /// Where the skills the app ships are, among its assets.

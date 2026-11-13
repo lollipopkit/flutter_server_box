@@ -422,6 +422,12 @@ impl AgentMode {
             // not wherever it is sent on to with the key.
             .redirect(reqwest::redirect::Policy::none())
             .connect_timeout(Duration::from_secs(20))
+            // A dead connection fails after a minute or so of silence; a model
+            // thinking without a word still answers the probes. The timeout is
+            // the last resort, as fl_pi_llm's `stallTimeout`.
+            .tcp_keepalive(Duration::from_secs(30))
+            .tcp_keepalive_interval(Duration::from_secs(10))
+            .tcp_keepalive_retries(3)
             .read_timeout(Duration::from_secs(300))
             .build()
             .expect("a valid HTTP client");

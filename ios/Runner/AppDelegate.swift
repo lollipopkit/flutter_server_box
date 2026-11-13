@@ -392,22 +392,35 @@ import UserNotifications
     }
 }
 
-/// Background time for a file transfer that is running when the app leaves
-/// the foreground.
+/// Background time for work running when the app leaves the foreground: a
+/// file transfer, an Agent reply.
 ///
 /// Without it the process is suspended at once, and the connection under the
-/// work is often gone by the time it resumes. The system grants a few
-/// minutes, not indefinitely: once they run out the task is ended here, as
-/// the expiration handler must, and the work is suspended with the app.
+/// work is often gone by the time it resumes. The system grants about half a
+/// minute, not indefinitely: once it runs out the task is ended here, as the
+/// expiration handler must, and the work is suspended with the app. Asked for
+/// again when the app is back in the foreground, for the next time it leaves.
 private enum InFlightWork {
     private static var task: UIBackgroundTaskIdentifier = .invalid
+    private static var inFlight = false
+    private static var foreground: NSObjectProtocol?
 
     static func set(_ inFlight: Bool) {
+        self.inFlight = inFlight
         guard inFlight else {
             end(task)
             return
         }
-        guard task == .invalid else { return }
+        if foreground == nil {
+            foreground = NotificationCenter.default.addObserver(
+                forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+            ) { _ in begin() }
+        }
+        begin()
+    }
+
+    private static func begin() {
+        guard inFlight, task == .invalid else { return }
         // The handler ends the task it was registered for, never whichever
         // one is current when it runs: an expiry still queued when Dart turns
         // the work off and on again would otherwise end the new task.

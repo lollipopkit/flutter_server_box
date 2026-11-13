@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/service/in_flight_work.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -338,6 +339,19 @@ void main() {
     }
 
     String toolResult() => '${(seen.last['messages'] as List).last['content']}';
+
+    test('holds background time while the reply runs, not while it waits', () async {
+      final holds = <int>[];
+      void record() => holds.add(InFlightWork.holds);
+      Chats.working.addListener(record);
+      addTearDown(() => Chats.working.removeListener(record));
+      final (chat, sending) = await asked();
+      expect(holds, contains(1));
+      expect(InFlightWork.holds, 0);
+      Chats.cancelInput(chat.id);
+      await sending;
+      expect(InFlightWork.holds, 0);
+    });
 
     test('needs no approval, and a secret never reaches the model', () async {
       final (chat, sending) = await asked();
