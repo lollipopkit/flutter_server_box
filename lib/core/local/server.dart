@@ -10,9 +10,9 @@ abstract final class LocalServer {
   /// with a `/proc` the platform increasingly hides, and iOS starts no
   /// processes at all, so neither would be describing the machine.
   ///
-  /// [ProcessExec.isSupported] as well, for the sandboxed macOS build: that
-  /// one is the App Store's, and it cannot open a terminal either — a server
-  /// whose terminal button fails is not one to offer.
+  /// [ProcessExec.isSupported] as well: a build that cannot start a process
+  /// cannot open a terminal either, and a server whose terminal button fails
+  /// is not one to offer.
   static bool get isSupported =>
       (isLinux || isMacOS || isWindows) && ProcessExec.isSupported;
 

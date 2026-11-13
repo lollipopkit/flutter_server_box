@@ -30,7 +30,7 @@ import 'package:server_box/view/page/home/incoming.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/home_tab_page.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
-import 'package:server_box/view/page/notice/dmg_notice.dart';
+import 'package:server_box/view/page/notice/sandbox_import_notice.dart';
 import 'package:server_box/view/page/notice/store_unreadable_notice.dart';
 import 'package:server_box/view/page/server/widget/legacy_status_notice.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
@@ -570,10 +570,6 @@ class _HomePageState extends ConsumerState<HomePage>
           githubReleasesUrl: Urls.githubReleasesApi,
           storeUrl: Urls.appStore,
           context: context,
-          noticeBuilder: (ctx) => DmgNotice.forUpdate(
-            ctx,
-            build: AppUpdateIface.newestBuild.value ?? BuildData.build,
-          ),
         ),
       );
     }

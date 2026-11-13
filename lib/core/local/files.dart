@@ -54,7 +54,7 @@ abstract final class LocalFiles {
   ///
   /// TODO: remove after no supported install can have used the documents path.
   static Future<void> _importLegacyDocuments() async {
-    if (!isLinux && !isWindows && !(isMacOS && !Pfs.isMacSandboxed)) return;
+    if (!isDesktop) return;
 
     final legacyPath = await Paths.userFilesPath(BuildData.name);
     if (legacyPath == Paths.file) return;

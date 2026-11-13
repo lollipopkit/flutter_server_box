@@ -26,15 +26,7 @@ void main() {
     await Paths.init(BuildData.name);
   });
 
-  test('the data directory follows the entitlement, not the platform', () {
-    if (Pfs.isMacSandboxed) {
-      // The container is the sandboxed build's documents directory, and where
-      // every install to date has its data.
-      expect(Paths.doc, contains('/Library/Containers/'));
-      expect(Paths.doc, endsWith('/Data/Documents'));
-      return;
-    }
-
+  test('the data directory is Application Support, not a container', () {
     // Not `~/Documents`, which is the user's own folder and behind a
     // permission prompt this app has no way to explain.
     expect(

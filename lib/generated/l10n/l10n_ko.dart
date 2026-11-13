@@ -474,10 +474,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get image => '이미지';
 
   @override
-  String get macDmgBody =>
-      'App Store는 이 앱을 샌드박스에서 실행하도록 요구하며, 샌드박스에서는 터미널을 열 수 없습니다. DMG 버전은 가능합니다.\n\nApp Store 버전은 이후 업데이트가 중단될 수 있습니다.';
-
-  @override
   String get macDmgImportDenied => 'macOS가 이전 버전의 데이터를 읽도록 허용하지 않았습니다';
 
   @override
@@ -485,9 +481,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => '이전 버전의 데이터를 읽지 못했습니다';
-
-  @override
-  String get macDmgTip => 'DMG 버전에서는 로컬 터미널과 코드 snippet의 로컬 실행을 사용할 수 있습니다.';
 
   @override
   String get macDmgTitle => 'DMG 버전';
@@ -773,17 +766,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcAddrInvalid => 'BMC 주소는 URL이어야 합니다. 예: https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      '이 버전은 sandbox에서 실행됩니다. 명령에는 사용자의 home이 아닌 빈 home 디렉터리가 전달되므로 ~/.ssh에 의존하는 명령은 실패합니다. DMG 버전에는 이 제한이 없습니다.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '개인 키 파일 $path을(를) 읽을 수 없습니다: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return '이 빌드는 컨테이너 밖의 파일을 읽을 수 없어 $path의 키에 접근할 수 없습니다. 설정에서 키를 가져오거나 DMG 버전을 사용하세요.';
   }
 
   @override

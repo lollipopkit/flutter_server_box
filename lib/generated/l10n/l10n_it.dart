@@ -492,10 +492,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get image => 'Immagine';
 
   @override
-  String get macDmgBody =>
-      'L’App Store richiede che questa app sia in sandbox, e una sandbox non può aprire un terminale. La versione DMG sì.\n\nLa versione App Store potrebbe non essere più aggiornata.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS non ha permesso di leggere i dati della versione precedente';
 
@@ -505,10 +501,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get macDmgImportFailed =>
       'Impossibile leggere i dati della versione precedente';
-
-  @override
-  String get macDmgTip =>
-      'La versione DMG supporta il terminale locale e l’esecuzione locale degli snippet di codice.';
 
   @override
   String get macDmgTitle => 'Versione DMG';
@@ -812,17 +804,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'indirizzo del BMC deve essere un URL, ad es. https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Questa versione è in sandbox: i comandi usano una cartella home vuota invece della tua. Perciò, quelli che dipendono da ~/.ssh non funzioneranno. La versione DMG non ha questa limitazione.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Impossibile leggere il file della chiave privata $path: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Questa build non può leggere file fuori dal proprio container, quindi la chiave in $path non è raggiungibile. Importa la chiave nelle impostazioni oppure usa la versione DMG.';
   }
 
   @override

@@ -245,17 +245,6 @@ Map<String, String> resolvePrivateKeys(
   final keyPaths = ssh.resolvedIdentityFiles;
   if (keyPaths.isEmpty) return const {};
 
-  // Only ever reachable on desktop — `~/.ssh/config` import is the only writer
-  // of `keyPath` — and not on one particular desktop build: the App Store one
-  // is sandboxed and `~/.ssh` is outside its container, so this would fail
-  // there with a file error that says nothing about why.
-  if (Pfs.isMacSandboxed) {
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPaths.first),
-    );
-  }
-
   final keys = <String, String>{};
   Object? lastError;
   for (final keyPath in keyPaths) {
@@ -304,12 +293,6 @@ Future<Map<String, String>> resolvePrivateKeysAsync(
   }
   final keyPaths = ssh.resolvedIdentityFiles;
   if (keyPaths.isEmpty) return const {};
-  if (Pfs.isMacSandboxed) {
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyFileSandboxed(keyPaths.first),
-    );
-  }
 
   final keys = <String, String>{};
   Object? lastError;

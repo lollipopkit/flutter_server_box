@@ -607,10 +607,6 @@
   "@image": {
     "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
   },
-  "macDmgBody": "The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.",
-  "@macDmgBody": {
-    "description": "Explanatory message shown in the mac DMG dialog or notice."
-  },
   "macDmgImportDenied": "macOS would not let this read the previous build’s data",
   "@macDmgImportDenied": {
     "description": "User-facing label or message for mac DMG import denied."
@@ -622,10 +618,6 @@
   "macDmgImportFailed": "Could not read the previous build’s data",
   "@macDmgImportFailed": {
     "description": "Error message shown when mac DMG import failed."
-  },
-  "macDmgTip": "Local terminal and running snippets locally (DMG build)",
-  "@macDmgTip": {
-    "description": "Help text for the mac DMG setting or action."
   },
   "macDmgTitle": "DMG build",
   "@macDmgTitle": {
@@ -1021,10 +1013,6 @@
   "@bmcAddrInvalid": {
     "description": "User-facing label or message for BMC addr invalid."
   },
-  "proxyCommandSandboxed": "This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.",
-  "@proxyCommandSandboxed": {
-    "description": "User-facing label or message for proxy command sandboxed."
-  },
   "privateKeyFileUnreadable": "Cannot read the private key file {path}: {reason}",
   "@privateKeyFileUnreadable": {
     "description": "User-facing label or message for private key file unreadable.",
@@ -1033,15 +1021,6 @@
         "type": "String"
       },
       "reason": {
-        "type": "String"
-      }
-    }
-  },
-  "privateKeyFileSandboxed": "This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.",
-  "@privateKeyFileSandboxed": {
-    "description": "User-facing label or message for private key file sandboxed.",
-    "placeholders": {
-      "path": {
         "type": "String"
       }
     }

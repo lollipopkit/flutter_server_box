@@ -472,10 +472,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get image => 'イメージ';
 
   @override
-  String get macDmgBody =>
-      'App Store はこのアプリをサンドボックスで動かすことを要求し、サンドボックスではターミナルを開けません。DMG 版なら開けます。\n\nApp Store 版は今後更新が止まる可能性があります。';
-
-  @override
   String get macDmgImportDenied => 'macOS が以前のバージョンのデータの読み取りを許可しませんでした';
 
   @override
@@ -483,9 +479,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get macDmgImportFailed => '以前のバージョンのデータを読み取れませんでした';
-
-  @override
-  String get macDmgTip => 'DMG 版ではローカルターミナルとコードスニペットのローカル実行を利用できます。';
 
   @override
   String get macDmgTitle => 'DMG 版';
@@ -772,17 +765,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bmcAddrInvalid => 'BMC のアドレスは URL である必要があります(例: https://10.0.0.9)';
 
   @override
-  String get proxyCommandSandboxed =>
-      'このバージョンはサンドボックス内で動作します。コマンドにはユーザー自身のものではなく、空の home ディレクトリが渡されるため、~/.ssh に依存するコマンドは失敗します。DMG 版にはこの制限はありません。';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '秘密鍵ファイル $path を読み込めません: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'このビルドはコンテナ外のファイルを読み込めないため、$path の鍵に到達できません。設定から鍵をインポートするか、DMG 版をご利用ください。';
   }
 
   @override

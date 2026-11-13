@@ -2,21 +2,16 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// The two macOS products differ in one entitlement and nothing else.
+/// Every macOS build is unsandboxed: the App Store build, the one product
+/// that had to be sandboxed, is no longer made.
 ///
-/// The App Store requires the sandbox; the DMG is signed without it, which is
-/// the only reason it can host a terminal on this machine
-/// (`LocalShellBackend.isSupported`) and the reason its data lives somewhere
-/// else (`Paths`, `SandboxImport`). Both of those read the entitlement at
-/// runtime, so a mistake here is not a build error — it is a shipped product
-/// that quietly lost a feature, or an App Store submission that is rejected.
-///
-/// That is not hypothetical: the DMG shipped sandboxed from v1.0.1450 until
-/// `ReleaseDmg.entitlements` was added, and nothing went red for two months.
+/// The entitlement is read at runtime — a local terminal (`LocalShellBackend`)
+/// and where the data lives (`Paths`) — so a mistake here is not a build error
+/// but a shipped app that quietly lost a feature and its data. The DMG once
+/// shipped sandboxed for two months with nothing going red.
 void main() {
   const debugProfile = 'macos/Runner/DebugProfile.entitlements';
   const release = 'macos/Runner/Release.entitlements';
-  const releaseDmg = 'macos/Runner/ReleaseDmg.entitlements';
   const pbxproj = 'macos/Runner.xcodeproj/project.pbxproj';
   const dmgScript = 'scripts/release/release-macos-dmg.sh';
 
@@ -44,43 +39,21 @@ void main() {
       .map((e) => e.group(1)!)
       .toSet();
 
-  test('the App Store build is sandboxed and the DMG one is not', () {
-    expect(sandboxOf(release), true);
-    expect(sandboxOf(releaseDmg), false);
-  });
-
-  test('the two products differ in the sandbox and nothing else', () {
-    // Anything added to one and forgotten in the other is a capability the
-    // other build silently does without — iCloud, for one, which both need.
-    expect(keysOf(releaseDmg), keysOf(release));
-  });
-
-  test('the project wires the App Store entitlements', () {
-    final project = read(pbxproj);
-    expect(project.contains('Runner/Release.entitlements'), true);
-
-    // The DMG's entitlements are applied by the release script alone. Wiring
-    // them into a build configuration is how an unsandboxed binary would end
-    // up submitted to the App Store.
-    expect(project.contains('ReleaseDmg'), false);
-  });
-
-  test('the release script is what swaps them', () {
-    expect(
-      read(dmgScript).contains(
-        'CODE_SIGN_ENTITLEMENTS = Runner/ReleaseDmg.entitlements',
-      ),
-      true,
-    );
-  });
-
-  test('what you develop against is what ships as the DMG', () {
-    // Debug and Profile share this file. Sandboxed, it would mean no local
-    // terminal while working on one, `SandboxImport` skipping itself, and the
-    // app's data sitting somewhere no release build looks — three code paths
-    // that only the unsandboxed product ever takes, none of them reachable
-    // from `flutter run`.
+  test('no build is sandboxed', () {
+    expect(sandboxOf(release), false);
     expect(sandboxOf(debugProfile), false);
-    expect(sandboxOf(debugProfile), sandboxOf(releaseDmg));
+  });
+
+  test('what is developed against has what ships', () {
+    // Anything Release has that Debug lacks is a capability no `flutter run`
+    // exercises — iCloud, for one.
+    expect(keysOf(debugProfile).containsAll(keysOf(release)), true);
+  });
+
+  test('one set of release entitlements, the one the project names', () {
+    expect(read(pbxproj).contains('Runner/Release.entitlements'), true);
+    expect(File('macos/Runner/ReleaseDmg.entitlements').existsSync(), false);
+    expect(read(dmgScript).contains('CODE_SIGN_ENTITLEMENTS'), false);
+    expect(read(dmgScript).contains('ReleaseDmg'), false);
   });
 }

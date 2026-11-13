@@ -5,8 +5,8 @@ import 'package:meta/meta.dart';
 
 /// What [SandboxImport.run] found, so the UI can say so afterwards.
 enum SandboxImportResult {
-  /// Nothing to do: not the unsandboxed macOS build, this install already has
-  /// data of its own, or the import already happened.
+  /// Nothing to do: not macOS, a build signed sandboxed, an install that
+  /// already has data of its own, or the import already happened.
   skipped,
 
   /// No sandboxed install to take data from.
@@ -31,9 +31,13 @@ enum SandboxImportResult {
 
 /// Taking over the data of the sandboxed build, once.
 ///
-/// macOS ships two builds of this app. The App Store one must be sandboxed;
-/// the DMG one is not, which is the entire difference between them and the
-/// reason only one can open a terminal on this machine.
+/// macOS shipped two builds of this app: the App Store one, sandboxed, and the
+/// DMG one, not. The App Store build is no longer made; this is how someone
+/// still on it moves to the DMG without losing anything.
+///
+/// TODO(migration): remove, with `SandboxImportNotice` and its strings, once
+/// nobody can still be moving off the App Store build (its last release was
+/// before November 2026).
 ///
 /// The sandbox is also a separate data directory: everything installed to date
 /// — App Store, and the DMGs that were still sandboxed — keeps its data in
@@ -103,6 +107,7 @@ abstract final class SandboxImport {
 
   /// Call after `PrefStore.shared.init()` and before any store opens a box.
   static Future<SandboxImportResult> run() async {
+    // A build signed sandboxed would find its own container here.
     if (!isMacOS || Pfs.isMacSandboxed) {
       return _result = SandboxImportResult.skipped;
     }

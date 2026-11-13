@@ -458,7 +458,6 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
 fi
 
 require_file "$WORKSPACE_PATH"
-require_file "$REPO_ROOT/macos/Runner/ReleaseDmg.entitlements"
 
 read -r DEFAULT_MARKETING_VERSION DEFAULT_CURRENT_PROJECT_VERSION <<<"$(read_pubspec_versions)"
 MARKETING_VERSION="${MARKETING_VERSION_OVERRIDE:-$DEFAULT_MARKETING_VERSION}"
@@ -473,10 +472,8 @@ DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${MARKETING_VERSION}}"
 (cd "$REPO_ROOT" && flutter build macos --config-only --release \
   --build-name="$MARKETING_VERSION" --build-number="$CURRENT_PROJECT_VERSION")
 
-# Build one DMG per architecture instead of a universal DMG. The App Store build
-# supports Apple silicon only (macos/Runner/Configs/Release.xcconfig), so Intel
-# users rely on the Developer ID DMG. Separate DMGs also allow each architecture
-# to be verified independently before release.
+# Build one DMG per architecture instead of a universal DMG: each is smaller,
+# and each architecture is verified independently before release.
 #
 # `RELEASE_ARCHS` supports partial retries. If one architecture fails during
 # notarization, rerun only that architecture; the Homebrew cask step reuses any
@@ -535,7 +532,7 @@ EOF
 /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:$APP_BUNDLE_ID string $APP_PROFILE_NAME" "$EXPORT_OPTIONS_PATH"
 
 # Skia on Intel: Impeller's MetalSDF renders glyphs and transitions as noise on
-# an Intel/AMD Mac (#1798). Apple silicon, and the App Store build, keep Impeller.
+# an Intel/AMD Mac (#1798). Apple silicon keeps Impeller.
 # TODO: remove once Flutter fixes MetalSDF on Intel/AMD GPUs.
 impeller_for() {
   case "$1" in
@@ -580,31 +577,13 @@ for arch in $RELEASE_ARCHS; do
 
   echo "==> $arch"
 
-  # The DMG ships unsandboxed, which is what lets it host a terminal on this
-  # machine: a sandboxed process cannot open a pseudo-terminal's slave device.
-  # The App Store build keeps Release.entitlements and its sandbox, and the same
-  # binary hides the feature there — see LocalShellBackend.isSupported.
-  #
-  # An override rather than a second build configuration: the two products differ
-  # in one entitlement and nothing else, and a flavour would be a scheme, a
-  # configuration and a bundle id to keep in step for that one bit.
-  #
-  # The entitlements swap is a project edit and not an xcconfig override, because
-  # `-xcconfig` applies to *every* target in the workspace — including the Swift
-  # Package Manager targets Flutter's plugins are built as. CODE_SIGN_ENTITLEMENTS
-  # is a path relative to each target's own SRCROOT, so a value naming a file in
-  # the Runner project fails to resolve in ~10 package projects and the archive
-  # stops before it compiles anything. An absolute path would resolve, and would
-  # then sign every plugin framework with the app's entitlements.
-  #
-  # Re-applied per architecture because the archive below is followed by a
-  # restore: the checkout is left as it was found even when a build fails.
+  # The provisioning profile is a project edit, re-applied per architecture
+  # because the archive below is followed by a restore: the checkout is left as
+  # it was found even when a build fails.
   APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
     my $profile = $ENV{"APP_PROFILE_NAME"};
     s/"PROVISIONING_PROFILE_SPECIFIER\[sdk=macosx\*\]" = "[^"]*";/"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "$profile";/
       or die "macOS Runner Release provisioning profile setting not found\n";
-    s{CODE_SIGN_ENTITLEMENTS = Runner/Release\.entitlements;}{CODE_SIGN_ENTITLEMENTS = Runner/ReleaseDmg.entitlements;}
-      or die "macOS Runner Release entitlements setting not found\n";
   ' "$RUNNER_PROJECT_FILE"
 
   # Command-line ARCHS takes precedence over both `ARCHS = arm64` in

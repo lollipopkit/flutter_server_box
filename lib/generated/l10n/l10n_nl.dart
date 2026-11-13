@@ -489,10 +489,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get image => 'Afbeelding';
 
   @override
-  String get macDmgBody =>
-      'De App Store vereist een sandbox, en een sandbox kan geen terminal openen. De DMG-versie wel.\n\nDe App Store-versie wordt mogelijk niet meer bijgewerkt.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS liet de gegevens van de vorige versie niet lezen';
 
@@ -502,10 +498,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get macDmgImportFailed =>
       'Kon de gegevens van de vorige versie niet lezen';
-
-  @override
-  String get macDmgTip =>
-      'De DMG-versie ondersteunt een lokale terminal en het lokaal uitvoeren van codefragmenten.';
 
   @override
   String get macDmgTitle => 'DMG-versie';
@@ -809,17 +801,8 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het BMC-adres moet een URL zijn, bijv. https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Deze versie draait in een sandbox. Opdrachten krijgen een lege home-map in plaats van die van jou, waardoor opdrachten die ~/.ssh nodig hebben mislukken. De DMG-versie heeft deze beperking niet.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Privésleutelbestand $path kan niet worden gelezen: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Deze build kan geen bestanden buiten de eigen container lezen, dus de sleutel op $path is onbereikbaar. Importeer de sleutel in Instellingen of gebruik de DMG-versie.';
   }
 
   @override

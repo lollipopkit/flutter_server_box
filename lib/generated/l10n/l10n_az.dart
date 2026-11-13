@@ -490,10 +490,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get image => 'Obraz';
 
   @override
-  String get macDmgBody =>
-      'App Store bu tətbiqin təcrid olunmuş mühitdə işləməsini tələb edir və belə mühit terminal aça bilmir. DMG buraxılışı bunu edə bilir.\n\nApp Store buraxılışının yenilənməsi dayandırıla bilər.';
-
-  @override
   String get macDmgImportDenied =>
       'macOS əvvəlki buraxılışın məlumatlarını oxumağa icazə vermədi';
 
@@ -503,10 +499,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get macDmgImportFailed =>
       'Əvvəlki buraxılışın məlumatlarını oxumaq mümkün olmadı';
-
-  @override
-  String get macDmgTip =>
-      'DMG versiyası yerli terminalı və kod parçalarının bu cihazda icrasını dəstəkləyir.';
 
   @override
   String get macDmgTitle => 'DMG buraxılışı';
@@ -809,17 +801,8 @@ class AppLocalizationsAz extends AppLocalizations {
       'BMC ünvanı URL olmalıdır, məsələn, https://10.0.0.9';
 
   @override
-  String get proxyCommandSandboxed =>
-      'Bu versiya sandbox-da işləyir: əmrlər sənin home qovluğun əvəzinə boş home qovluğundan istifadə edir. Buna görə ~/.ssh fayllarından asılı olan əmrlər işləməyəcək. DMG versiyasında bu məhdudiyyət yoxdur.';
-
-  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Məxfi açar faylı $path oxuna bilmir: $reason';
-  }
-
-  @override
-  String privateKeyFileSandboxed(String path) {
-    return 'Bu buraxılış öz konteynerindən kənardakı faylları oxuya bilmir, buna görə $path yolundakı açar əlçatmazdır. Açarı parametrlərdə idxal et və ya DMG buraxılışından istifadə et.';
   }
 
   @override

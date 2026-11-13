@@ -187,9 +187,8 @@ The command target depends on the platform:
   cannot access the phone's own filesystem, App data, or user files. See
   [Terminal on This Device](/docs/advanced/local-terminal/).
 
-The option is hidden on platforms that cannot run local commands. The
-App Store build of macOS cannot start a shell because it is sandboxed. An iOS
-build without the Linux engine cannot provide local command execution either.
+The option is hidden on platforms that cannot run local commands, such as an
+iOS build without the Linux engine.
 
 ## Conversation history
 
