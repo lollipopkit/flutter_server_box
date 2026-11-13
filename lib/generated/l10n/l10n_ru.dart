@@ -7306,6 +7306,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'Перенаправлять на сервер';
+
+  @override
   String sshAgentUnset(String name) {
     return 'Не удалось найти сокет ssh-agent по $name';
   }

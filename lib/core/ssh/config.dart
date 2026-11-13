@@ -219,6 +219,29 @@ abstract final class SSHConfig {
     return blocks;
   }
 
+  /// Whether `ForwardAgent` [value] forwards the agent the host
+  /// authenticates with: `yes`, or that agent named again. Another agent is
+  /// one a server cannot hold apart from it, and is said, not kept.
+  static bool _forwardsIdentityAgent(
+    String alias,
+    String? value,
+    String? identityAgent,
+  ) {
+    switch (value?.toLowerCase()) {
+      case null || 'no':
+        return false;
+      case 'yes':
+        return true;
+    }
+    final own = identityAgent ?? SshCredential.authSock;
+    if (value == own || value == '\$$own') return true;
+    Loggers.app.warning(
+      'SSH config host $alias forwards an agent other than the one it '
+      'authenticates with ($value); not forwarding.',
+    );
+    return false;
+  }
+
   /// Every concrete host name a block names, in order and once each.
   static List<String> _aliasesOf(List<_SSHConfigBlock> blocks) {
     final aliases = <String>[];
@@ -244,6 +267,7 @@ abstract final class SSHConfig {
     String? proxyJump;
     String? proxyCommand;
     String? identityAgent;
+    String? forwardAgent;
     final identityFiles = <String>[];
 
     for (final block in blocks) {
@@ -276,6 +300,8 @@ abstract final class SSHConfig {
           // would set.
           case 'identityagent' when identityAgent == null:
             identityAgent = value;
+          case 'forwardagent' when forwardAgent == null:
+            forwardAgent = value;
         }
       }
     }
@@ -317,6 +343,7 @@ abstract final class SSHConfig {
           final v when v.isEmpty || v.toLowerCase() == 'none' => null,
           final v => v,
         },
+        forwardAgent: _forwardsIdentityAgent(alias, forwardAgent, identityAgent),
         proxyCommand: resolvedProxy,
       ),
     );

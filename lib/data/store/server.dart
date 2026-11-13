@@ -163,6 +163,7 @@ class ServerStore extends EntityStore<Spi> {
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
               identityAgent: row['ssh_identity_agent'] as String?,
+              forwardAgent: (row['ssh_forward_agent'] as int? ?? 0) == 1,
               // By name, never by index — and null for every row written
               // before the column, which is `sftp` because that was the only
               // one such a build had.
@@ -278,6 +279,7 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_alter_url',
       'ssh_proxy_command',
       'ssh_identity_agent',
+      'ssh_forward_agent',
       'ssh_file_transport',
       'ssh_allow_legacy_algorithms',
       'preferred_transport',
@@ -320,6 +322,7 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.alterUrl,
       ssh?.proxyCommand,
       ssh?.identityAgent,
+      (ssh?.forwardAgent ?? false) ? 1 : 0,
       ssh?.fileTransport.name,
       (ssh?.allowLegacyAlgorithms ?? false) ? 1 : 0,
       // Written only when it means something. A server with one way in has

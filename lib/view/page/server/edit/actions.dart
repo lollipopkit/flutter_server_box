@@ -790,6 +790,10 @@ extension _Actions on _ServerEditPageState {
               _ => null,
             },
             identityAgent: _identityAgent,
+            // Carried where this build shows no agent, as the agent is.
+            forwardAgent: sshAgentSupported
+                ? _identityAgent != null && _forwardAgent.value
+                : spi?.ssh?.forwardAgent ?? false,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
@@ -1044,6 +1048,7 @@ extension _Utils on _ServerEditPageState {
       }
       _keyPath.value = ssh.resolvedIdentityFiles.firstOrNull;
       _useAgent.value = ssh.identityAgent != null;
+      _forwardAgent.value = ssh.forwardAgent;
       _identityAgentCtrl.text = switch (ssh.identityAgent) {
         null || SshCredential.authSock => '',
         final agent => agent,

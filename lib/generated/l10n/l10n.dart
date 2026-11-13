@@ -12359,6 +12359,12 @@ abstract class AppLocalizations {
   /// **'ssh-agent'**
   String get sshAgent;
 
+  /// No description provided for @sshAgentForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward to the server'**
+  String get sshAgentForward;
+
   /// No description provided for @sshAgentUnset.
   ///
   /// In en, this message translates to:

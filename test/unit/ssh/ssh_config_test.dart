@@ -234,11 +234,54 @@ Host env
 
       final servers = await SSHConfig.parseConfig(configFile.path);
       final agents = {for (final s in servers) s.name: s.ssh?.identityAgent};
+      // None of them asks for it.
+      expect(servers.where((s) => s.ssh!.forwardAgent), isEmpty);
 
       expect(agents, {
         'op': '~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock',
         'plain': null,
         'env': 'SSH_AUTH_SOCK',
+      });
+    });
+
+    test('ForwardAgent yes, or the agent signed in with, forwards', () async {
+      await configFile.writeAsString('''
+Host fwd
+  HostName 10.0.0.1
+  ForwardAgent yes
+
+Host no
+  HostName 10.0.0.2
+  ForwardAgent no
+
+Host sock
+  HostName 10.0.0.3
+  ForwardAgent ~/.other/agent.sock
+
+Host same
+  HostName 10.0.0.4
+  IdentityAgent ~/.1password/agent.sock
+  ForwardAgent ~/.1password/agent.sock
+
+Host env
+  HostName 10.0.0.5
+  ForwardAgent \$SSH_AUTH_SOCK
+
+Host *
+  ForwardAgent yes
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final forwards = {for (final s in servers) s.name: s.ssh?.forwardAgent};
+
+      expect(forwards, {
+        'fwd': true,
+        'no': false,
+        // Another agent than the one it signs in with.
+        'sock': false,
+        // The same one, named.
+        'same': true,
+        'env': true,
       });
     });
 

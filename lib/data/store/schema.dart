@@ -112,7 +112,8 @@ abstract final class SchemaVersion {
   /// v39: what is synced by category (`sync_passed`), the secrets and the
   /// Agent's stores synced, benchmarks a sync root
   /// v40: `server.ssh_identity_agent`
-  static const current = 40;
+  /// v41: `server.ssh_forward_agent`
+  static const current = 41;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

@@ -2037,6 +2037,7 @@
   "syncStateRunning": "Синхронизация",
   "syncRefused": "LK Cloud отклонил синхронизацию ({reason})",
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "Перенаправлять на сервер",
   "sshAgentUnset": "Не удалось найти сокет ssh-agent по {name}",
   "sshAgentUnsupported": "Это устройство не может использовать ssh-agent",
   "sshAgentNotPipe": "В Windows ssh-agent доступен через named pipe, а {path} им не является",

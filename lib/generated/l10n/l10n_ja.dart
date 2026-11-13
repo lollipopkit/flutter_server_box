@@ -6965,6 +6965,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'サーバーに転送';
+
+  @override
   String sshAgentUnset(String name) {
     return '$name から ssh-agent のソケットが見つかりません';
   }

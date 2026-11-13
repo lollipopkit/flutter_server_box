@@ -65,6 +65,7 @@ SSH 配置位于 `ssh` 对象内。App 导出文件与导入对话框中的示�
 | `pubKeyId` | 否 | 应用内已保存私钥的记录 ID（非 PEM 文件路径） |
 | `keyPath` | 否 | 私钥文件路径（仅桌面端使用，由 `~/.ssh/config` 导入生成，连接时直接读取该文件） |
 | `identityAgent` | 否 | 提供密钥的 ssh-agent，写法同 `IdentityAgent`：`SSH_AUTH_SOCK` 或 socket 路径；Windows 上为 named pipe，写 `SSH_AUTH_SOCK` 而该变量未设置时为 `\\.\pipe\openssh-ssh-agent`。省略则不使用 agent。Linux、Windows 与 macOS 的 DMG 版本 |
+| `forwardAgent` | 否 | 将 `identityAgent` 转发给服务器的会话，同 `ForwardAgent yes`；连接期间服务器上的 root 可用其中的密钥签名。默认为 `false` |
 | `alterUrl` | 否 | 备用地址，格式为 `user@ip:port` |
 | `jumpIds` | 否 | 跳板机链，按服务器 ID 依次指定 |
 | `proxyCommand` | 否 | ProxyCommand（移动端在内置 Linux 环境中运行，与 `jumpIds` 互斥） |

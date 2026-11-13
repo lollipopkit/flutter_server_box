@@ -13,6 +13,7 @@ import 'package:server_box/data/store/migrations/m028_local_server.dart';
 import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
 import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
 import 'package:server_box/data/store/migrations/m039_ssh_identity_agent.dart';
+import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -204,6 +205,7 @@ void main() {
     await const DiskCountsNetworkMigration().apply();
     await const MonitorCertSha256Migration().apply();
     await const SshIdentityAgentMigration().apply();
+    await const SshForwardAgentMigration().apply();
 
     final store = ServerStore();
     store.put(

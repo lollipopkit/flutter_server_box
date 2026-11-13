@@ -9366,6 +9366,7 @@
   "syncRefused": "LK Cloud refused the sync ({reason})",
   "@syncRefused": {"placeholders": {"reason": {"type": "String"}}},
   "sshAgent": "ssh-agent",
+  "sshAgentForward": "Forward to the server",
   "sshAgentUnset": "No ssh-agent socket can be found from {name}",
   "@sshAgentUnset": {"placeholders": {"name": {"type": "String"}}},
   "sshAgentUnsupported": "This device cannot use an ssh-agent",

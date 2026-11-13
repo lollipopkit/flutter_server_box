@@ -7257,6 +7257,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshAgent => 'ssh-agent';
 
   @override
+  String get sshAgentForward => 'Teruskan ke server';
+
+  @override
   String sshAgentUnset(String name) {
     return 'Tidak ada soket ssh-agent yang ditemukan dari $name';
   }

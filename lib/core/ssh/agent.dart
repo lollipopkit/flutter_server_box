@@ -23,13 +23,14 @@ const windowsAgentPipe = r'\\.\pipe\openssh-ssh-agent';
 bool isNamedPipe(String path) =>
     RegExp(r'^[\\/]{2}[.?][\\/]pipe[\\/]', caseSensitive: false).hasMatch(path);
 
-/// The agent [ssh] names and the keys it holds; null when it names none.
+/// [ssh]'s agent, connected, for an [SSHClient] to bind and ask for keys;
+/// null when it names none.
 ///
 /// An agent that cannot be reached, or one this build cannot reach at all (a
 /// server set up on a desktop, synced to a phone), is an error only when it
 /// was the one way in: with [hasOtherAuth] (a password, a key) the connection
 /// goes on without it, as OpenSSH's does.
-Future<({SSHAgentClient client, List<SSHAgentIdentity> keys})?> openSshAgent(
+Future<SSHAgentClient?> openSshAgent(
   SshCredential ssh, {
   required bool hasOtherAuth,
   String? originalHost,
@@ -42,7 +43,36 @@ Future<({SSHAgentClient client, List<SSHAgentIdentity> keys})?> openSshAgent(
     if (hasOtherAuth) return null;
     throw SSHErr(type: SSHErrType.agent, message: l10n.sshAgentUnsupported);
   }
+  final at = _resolve(ssh, name, originalHost);
+  final path = at.path;
+  if (path == null) return _unavailable(at.problem!, null, hasOtherAuth);
+  try {
+    return await _connect(path);
+  } catch (e) {
+    return _unavailable(l10n.sshAgentUnreachable(path, '$e'), e, hasOtherAuth);
+  }
+}
 
+/// A new connection to [ssh]'s agent at each call, for each channel a server
+/// forwards it on; null when it names none this build can reach. Whether it
+/// answered at sign-in is not asked: one started since is still forwarded.
+Future<SSHAgentClient> Function()? sshAgentConnector(
+  SshCredential ssh, {
+  String? originalHost,
+}) {
+  final name = ssh.identityAgent;
+  if (name == null || !sshAgentSupported) return null;
+  final path = _resolve(ssh, name, originalHost).path;
+  if (path == null) return null;
+  return () => _connect(path);
+}
+
+/// The socket or pipe [name] names for [ssh], or why there is none.
+({String? path, String? problem}) _resolve(
+  SshCredential ssh,
+  String name,
+  String? originalHost,
+) {
   final path =
       SSHConfig.expandIdentityAgent(
         name,
@@ -52,34 +82,29 @@ Future<({SSHAgentClient client, List<SSHAgentIdentity> keys})?> openSshAgent(
         port: ssh.port,
       ) ??
       (isWindows && name == SshCredential.authSock ? windowsAgentPipe : null);
-  if (path == null) {
-    return _unavailable(l10n.sshAgentUnset(name), null, hasOtherAuth);
-  }
+  if (path == null) return (path: null, problem: l10n.sshAgentUnset(name));
   // dart:io has no Unix sockets on Windows, and Windows' agents listen on
   // pipes: a socket path there is one from another environment (MSYS, WSL).
   if (isWindows && !isNamedPipe(path)) {
-    return _unavailable(l10n.sshAgentNotPipe(path), null, hasOtherAuth);
+    return (path: null, problem: l10n.sshAgentNotPipe(path));
   }
-  SSHAgentClient? client;
-  try {
-    const timeout = Duration(seconds: 5);
-    client = SSHAgentClient(
-      isWindows
-          ? PipeSocket(
-              _AgentPipeIo(
-                await AgentPipe.connect(
-                  path: path,
-                  timeoutMs: timeout.inMilliseconds,
-                ),
+  return (path: path, problem: null);
+}
+
+Future<SSHAgentClient> _connect(String path) async {
+  const timeout = Duration(seconds: 5);
+  return SSHAgentClient(
+    isWindows
+        ? PipeSocket(
+            _AgentPipeIo(
+              await AgentPipe.connect(
+                path: path,
+                timeoutMs: timeout.inMilliseconds,
               ),
-            )
-          : await SSHSocket.connectUnix(path, timeout: timeout),
-    );
-    return (client: client, keys: await client.identities());
-  } catch (e) {
-    await client?.close();
-    return _unavailable(l10n.sshAgentUnreachable(path, '$e'), e, hasOtherAuth);
-  }
+            ),
+          )
+        : await SSHSocket.connectUnix(path, timeout: timeout),
+  );
 }
 
 Null _unavailable(String message, Object? cause, bool hasOtherAuth) {
