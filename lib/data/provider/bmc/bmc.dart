@@ -384,6 +384,9 @@ class BmcNotifier extends _$BmcNotifier {
   Future<BmcPowerResult> _write(
     Future<BmcOutcome> Function(BmcClient client, RedfishTopology topology) fn,
   ) async {
+    // One at a time, as `power()`: two writes racing would each read the
+    // system back and the slower answer would outlive the newer one.
+    if (_writing) return BmcPowerResult.failed;
     _writing = true;
     try {
       _writes++;
