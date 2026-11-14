@@ -311,6 +311,38 @@ async fn more_drives_than_the_cap_are_cut_and_said_to_be() {
 }
 
 #[tokio::test]
+async fn simple_storage_answers_where_storage_cannot_be_read() {
+    let (mut fake, mut topology) = discovered("dmtf_rackmount1").await;
+    let system = topology.system.as_mut().unwrap();
+    system.storage = Some("/redfish/v1/Systems/1/Storage".into());
+    fake.forbidden.insert("/redfish/v1/Systems/1/Storage".into());
+
+    let report = storage(&fake, &topology).await.unwrap();
+
+    assert!(!report.drives.is_empty());
+}
+
+#[tokio::test]
+async fn a_later_collection_page_that_fails_keeps_what_was_read() {
+    let (mut fake, topology) = discovered("dmtf_rackmount1").await;
+    let collection = topology.system.as_ref().unwrap().log_services.clone().unwrap();
+    const PAGE2: &str = "/redfish/v1/Systems/1/LogServices?page=2";
+    fake.resources.insert(
+        collection.clone(),
+        json!({"Members": [{"@odata.id": "/redfish/v1/Systems/1/LogServices/Log1"}],
+               "Members@odata.nextLink": PAGE2}),
+    );
+    fake.resources.insert(PAGE2.to_string(), json!({}));
+    fake.forbidden.insert(PAGE2.to_string());
+    fake.resources
+        .insert("/redfish/v1/Systems/1/LogServices/Log1".to_string(), json!({"Id": "Log1"}));
+
+    let services = log_services(&fake, &topology).await.unwrap();
+
+    assert!(services.iter().any(|s| s.id.as_deref() == Some("Log1")), "{services:?}");
+}
+
+#[tokio::test]
 async fn storage_nobody_can_read_is_an_error_not_no_drives() {
     let (fake, topology) = discovered("dmtf_localstorage").await;
     let collection = topology.system.as_ref().unwrap().storage.clone().unwrap();

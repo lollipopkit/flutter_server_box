@@ -142,7 +142,6 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
       if (!mounted) return;
       setState(() {
         _err = bmcErrorText(e);
-        _report = null;
         _loading = false;
       });
     }

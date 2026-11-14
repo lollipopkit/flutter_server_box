@@ -78,7 +78,15 @@ pub async fn storage<T: Transport>(client: &T, topology: &Topology) -> Result<St
         return Ok(unsupported);
     };
     if let Some(collection) = &system.storage {
-        let report = from_storage(client, collection).await?;
+        let report = match from_storage(client, collection).await {
+            Ok(report) => report,
+            // Firmware that keeps the drives in `SimpleStorage` may still
+            // publish an empty or unreadable `Storage`.
+            Err(e) => match &system.simple_storage {
+                Some(simple) => return from_simple_storage(client, simple).await.map_err(|_| e),
+                None => return Err(e),
+            },
+        };
         match &system.simple_storage {
             Some(simple) if report.drives.is_empty() => {
                 return Ok(from_simple_storage(client, simple).await.unwrap_or(report));

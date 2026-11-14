@@ -283,7 +283,13 @@ pub(crate) async fn collection_paths<T: crate::Transport>(
         if read.len() == MAX_COLLECTION_PAGES {
             return Ok((paths, false));
         }
-        let page = client.get(&path).await?;
+        let page = match client.get(&path).await {
+            Ok(page) => page,
+            // The first page is the collection; a later one that fails
+            // leaves what was read.
+            Err(e) if read.is_empty() => return Err(e),
+            Err(_) => return Ok((paths, false)),
+        };
         read.push(path);
         paths.extend(collection_members(&page));
         next = page

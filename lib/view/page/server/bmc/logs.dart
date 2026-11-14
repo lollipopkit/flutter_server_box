@@ -189,11 +189,13 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
     }
   }
 
-  Future<void> _pick(LogService service) async {
+  /// Reads [service]. [keep] leaves what is shown up while it is read again,
+  /// so a refresh that fails leaves the entries it has, with the reason.
+  Future<void> _pick(LogService service, {bool keep = false}) async {
     final read = ++_read;
     setState(() {
       _picked = service;
-      _page = null;
+      if (!keep) _page = null;
       _err = null;
       _loading = true;
     });
@@ -216,7 +218,7 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   Future<void> _reload() async {
     final picked = _picked;
     if (_services == null || picked == null) return _loadServices();
-    await _pick(picked);
+    await _pick(picked, keep: true);
   }
 
   Future<void> _clear(LogService service) async {
@@ -227,7 +229,7 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
     );
     if (ok != true || !mounted) return;
     if (await context.bmcRun(() => _bmc.clearLog(service)) && mounted) {
-      await _pick(service);
+      await _pick(service, keep: true);
     }
   }
 }
