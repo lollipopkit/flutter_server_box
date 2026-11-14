@@ -553,6 +553,7 @@ extension _Widgets on _ServerEditPageState {
             _buildAltUrl(),
             _buildProxyCommand(),
             _buildJumpServer(),
+            if (controlMasterSupported) _buildControlPath(),
             _buildFileTransport(),
             _buildAllowLegacyAlgorithms(),
             _buildScriptDir(),
@@ -824,6 +825,17 @@ extension _Widgets on _ServerEditPageState {
           title: TipText(libL10n.note, tip),
         ).cardx,
       ],
+    );
+  }
+
+  Widget _buildControlPath() {
+    return Input(
+      controller: _controlPathCtrl,
+      type: TextInputType.text,
+      label: 'ControlPath',
+      icon: Icons.hub_outlined,
+      hint: '~/.ssh/cm-%C',
+      suggestion: false,
     );
   }
 

@@ -109,3 +109,4 @@ Each is the `CREATE TABLE` the Drift of that schema wrote, read back from
 | --- | --- |
 | `server_v39.sql` | `645487fae` |
 | `server_v40.sql` | `ff3eac150` |
+| `server_v41.sql` | `afb3850e7` |

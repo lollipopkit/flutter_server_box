@@ -1267,6 +1267,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _sshControlPathMeta = const VerificationMeta(
+    'sshControlPath',
+  );
+  @override
+  late final GeneratedColumn<String> sshControlPath = GeneratedColumn<String>(
+    'ssh_control_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     updatedAt,
@@ -1310,6 +1321,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     diskCountsNetwork,
     sshIdentityAgent,
     sshForwardAgent,
+    sshControlPath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1624,6 +1636,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         ),
       );
     }
+    if (data.containsKey('ssh_control_path')) {
+      context.handle(
+        _sshControlPathMeta,
+        sshControlPath.isAcceptableOrUnknown(
+          data['ssh_control_path']!,
+          _sshControlPathMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1797,6 +1818,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}ssh_forward_agent'],
       )!,
+      sshControlPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ssh_control_path'],
+      ),
     );
   }
 
@@ -1922,6 +1947,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// [SshCredential.forwardAgent]. Last, for the reason [diskCountsNetwork]
   /// is.
   final bool sshForwardAgent;
+
+  /// [SshCredential.controlPath]. Last, for the reason [diskCountsNetwork]
+  /// is.
+  final String? sshControlPath;
   const ServerRow({
     required this.updatedAt,
     required this.rev,
@@ -1964,6 +1993,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     required this.diskCountsNetwork,
     this.sshIdentityAgent,
     required this.sshForwardAgent,
+    this.sshControlPath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2069,6 +2099,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       map['ssh_identity_agent'] = Variable<String>(sshIdentityAgent);
     }
     map['ssh_forward_agent'] = Variable<bool>(sshForwardAgent);
+    if (!nullToAbsent || sshControlPath != null) {
+      map['ssh_control_path'] = Variable<String>(sshControlPath);
+    }
     return map;
   }
 
@@ -2173,6 +2206,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ? const Value.absent()
           : Value(sshIdentityAgent),
       sshForwardAgent: Value(sshForwardAgent),
+      sshControlPath: sshControlPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sshControlPath),
     );
   }
 
@@ -2231,6 +2267,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       diskCountsNetwork: serializer.fromJson<bool>(json['diskCountsNetwork']),
       sshIdentityAgent: serializer.fromJson<String?>(json['sshIdentityAgent']),
       sshForwardAgent: serializer.fromJson<bool>(json['sshForwardAgent']),
+      sshControlPath: serializer.fromJson<String?>(json['sshControlPath']),
     );
   }
   @override
@@ -2280,6 +2317,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'diskCountsNetwork': serializer.toJson<bool>(diskCountsNetwork),
       'sshIdentityAgent': serializer.toJson<String?>(sshIdentityAgent),
       'sshForwardAgent': serializer.toJson<bool>(sshForwardAgent),
+      'sshControlPath': serializer.toJson<String?>(sshControlPath),
     };
   }
 
@@ -2325,6 +2363,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     bool? diskCountsNetwork,
     Value<String?> sshIdentityAgent = const Value.absent(),
     bool? sshForwardAgent,
+    Value<String?> sshControlPath = const Value.absent(),
   }) => ServerRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
@@ -2384,6 +2423,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
         ? sshIdentityAgent.value
         : this.sshIdentityAgent,
     sshForwardAgent: sshForwardAgent ?? this.sshForwardAgent,
+    sshControlPath: sshControlPath.present
+        ? sshControlPath.value
+        : this.sshControlPath,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -2470,6 +2512,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshForwardAgent: data.sshForwardAgent.present
           ? data.sshForwardAgent.value
           : this.sshForwardAgent,
+      sshControlPath: data.sshControlPath.present
+          ? data.sshControlPath.value
+          : this.sshControlPath,
     );
   }
 
@@ -2516,7 +2561,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('geoLon: $geoLon, ')
           ..write('diskCountsNetwork: $diskCountsNetwork, ')
           ..write('sshIdentityAgent: $sshIdentityAgent, ')
-          ..write('sshForwardAgent: $sshForwardAgent')
+          ..write('sshForwardAgent: $sshForwardAgent, ')
+          ..write('sshControlPath: $sshControlPath')
           ..write(')'))
         .toString();
   }
@@ -2564,6 +2610,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     diskCountsNetwork,
     sshIdentityAgent,
     sshForwardAgent,
+    sshControlPath,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2609,7 +2656,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.geoLon == this.geoLon &&
           other.diskCountsNetwork == this.diskCountsNetwork &&
           other.sshIdentityAgent == this.sshIdentityAgent &&
-          other.sshForwardAgent == this.sshForwardAgent);
+          other.sshForwardAgent == this.sshForwardAgent &&
+          other.sshControlPath == this.sshControlPath);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -2654,6 +2702,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<bool> diskCountsNetwork;
   final Value<String?> sshIdentityAgent;
   final Value<bool> sshForwardAgent;
+  final Value<String?> sshControlPath;
   const ServersCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
@@ -2696,6 +2745,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.diskCountsNetwork = const Value.absent(),
     this.sshIdentityAgent = const Value.absent(),
     this.sshForwardAgent = const Value.absent(),
+    this.sshControlPath = const Value.absent(),
   });
   ServersCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -2739,6 +2789,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.diskCountsNetwork = const Value.absent(),
     this.sshIdentityAgent = const Value.absent(),
     this.sshForwardAgent = const Value.absent(),
+    this.sshControlPath = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
   static Insertable<ServerRow> custom({
@@ -2783,6 +2834,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<bool>? diskCountsNetwork,
     Expression<String>? sshIdentityAgent,
     Expression<bool>? sshForwardAgent,
+    Expression<String>? sshControlPath,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2828,6 +2880,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (diskCountsNetwork != null) 'disk_counts_network': diskCountsNetwork,
       if (sshIdentityAgent != null) 'ssh_identity_agent': sshIdentityAgent,
       if (sshForwardAgent != null) 'ssh_forward_agent': sshForwardAgent,
+      if (sshControlPath != null) 'ssh_control_path': sshControlPath,
     });
   }
 
@@ -2873,6 +2926,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<bool>? diskCountsNetwork,
     Value<String?>? sshIdentityAgent,
     Value<bool>? sshForwardAgent,
+    Value<String?>? sshControlPath,
   }) {
     return ServersCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2917,6 +2971,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
       sshIdentityAgent: sshIdentityAgent ?? this.sshIdentityAgent,
       sshForwardAgent: sshForwardAgent ?? this.sshForwardAgent,
+      sshControlPath: sshControlPath ?? this.sshControlPath,
     );
   }
 
@@ -3050,6 +3105,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (sshForwardAgent.present) {
       map['ssh_forward_agent'] = Variable<bool>(sshForwardAgent.value);
     }
+    if (sshControlPath.present) {
+      map['ssh_control_path'] = Variable<String>(sshControlPath.value);
+    }
     return map;
   }
 
@@ -3096,7 +3154,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('geoLon: $geoLon, ')
           ..write('diskCountsNetwork: $diskCountsNetwork, ')
           ..write('sshIdentityAgent: $sshIdentityAgent, ')
-          ..write('sshForwardAgent: $sshForwardAgent')
+          ..write('sshForwardAgent: $sshForwardAgent, ')
+          ..write('sshControlPath: $sshControlPath')
           ..write(')'))
         .toString();
   }
@@ -10975,6 +11034,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<bool> diskCountsNetwork,
       Value<String?> sshIdentityAgent,
       Value<bool> sshForwardAgent,
+      Value<String?> sshControlPath,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -11019,6 +11079,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<bool> diskCountsNetwork,
       Value<String?> sshIdentityAgent,
       Value<bool> sshForwardAgent,
+      Value<String?> sshControlPath,
     });
 
 final class $$ServersTableReferences
@@ -11532,6 +11593,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<bool> get sshForwardAgent => $composableBuilder(
     column: $table.sshForwardAgent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sshControlPath => $composableBuilder(
+    column: $table.sshControlPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12136,6 +12202,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get sshControlPath => $composableBuilder(
+    column: $table.sshControlPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PrivateKeysTableOrderingComposer get sshKeyId {
     final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -12348,6 +12419,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<bool> get sshForwardAgent => $composableBuilder(
     column: $table.sshForwardAgent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sshControlPath => $composableBuilder(
+    column: $table.sshControlPath,
     builder: (column) => column,
   );
 
@@ -12838,6 +12914,7 @@ class $$ServersTableTableManager
                 Value<bool> diskCountsNetwork = const Value.absent(),
                 Value<String?> sshIdentityAgent = const Value.absent(),
                 Value<bool> sshForwardAgent = const Value.absent(),
+                Value<String?> sshControlPath = const Value.absent(),
               }) => ServersCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12880,6 +12957,7 @@ class $$ServersTableTableManager
                 diskCountsNetwork: diskCountsNetwork,
                 sshIdentityAgent: sshIdentityAgent,
                 sshForwardAgent: sshForwardAgent,
+                sshControlPath: sshControlPath,
               ),
           createCompanionCallback:
               ({
@@ -12924,6 +13002,7 @@ class $$ServersTableTableManager
                 Value<bool> diskCountsNetwork = const Value.absent(),
                 Value<String?> sshIdentityAgent = const Value.absent(),
                 Value<bool> sshForwardAgent = const Value.absent(),
+                Value<String?> sshControlPath = const Value.absent(),
               }) => ServersCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12966,6 +13045,7 @@ class $$ServersTableTableManager
                 diskCountsNetwork: diskCountsNetwork,
                 sshIdentityAgent: sshIdentityAgent,
                 sshForwardAgent: sshForwardAgent,
+                sshControlPath: sshControlPath,
               ),
           withReferenceMapper: (p0) => p0
               .map(

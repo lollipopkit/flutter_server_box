@@ -63,6 +63,36 @@ void main() {
     });
   });
 
+  group('ControlPath, as OpenSSH reads it', () {
+    String? expand(String value) => SSHConfig.expandControlPath(
+      value,
+      hostname: '10.0.0.9',
+      remoteUser: 'deploy',
+      originalHost: 'jump',
+      port: 2200,
+      localHost: 'mac.local',
+      environment: const {'RT': '/run/user/1000'},
+    );
+
+    test('%C is the connection hash OpenSSH names its socket by', () {
+      expect(
+        expand('/tmp/cm-%C'),
+        '/tmp/cm-47104946e72bcaf2f1693ee4a1128ca287fb4781',
+      );
+    });
+
+    test('the other tokens, and a variable, in one pass', () {
+      expect(
+        expand(r'${RT}/%r@%h:%p-%n-%L'),
+        '/run/user/1000/deploy@10.0.0.9:2200-jump-mac',
+      );
+    });
+
+    test('a token this does not know names no socket', () {
+      expect(expand('/tmp/cm-%Z'), isNull);
+    });
+  });
+
   test('a named pipe is told from a socket file', () {
     expect(isNamedPipe(windowsAgentPipe), isTrue);
     expect(isNamedPipe('//./pipe/openssh-ssh-agent'), isTrue);
