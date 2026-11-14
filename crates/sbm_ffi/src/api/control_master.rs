@@ -136,12 +136,23 @@ fn connect(path: &str, wait: Duration) -> io::Result<UnixStream> {
     for (dst, src) in addr.sun_path.iter_mut().zip(bytes) {
         *dst = *src as libc::c_char;
     }
-    let fd: RawFd = unsafe { libc::socket(libc::AF_UNIX, libc::SOCK_STREAM, 0) };
+    // Close-on-exec, as std's own sockets are: a process this app starts
+    // (a ProxyCommand, a local shell) must not hold the master's stream open.
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    let kind = libc::SOCK_STREAM | libc::SOCK_CLOEXEC;
+    #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    let kind = libc::SOCK_STREAM;
+    let fd: RawFd = unsafe { libc::socket(libc::AF_UNIX, kind, 0) };
     if fd < 0 {
         return Err(io::Error::last_os_error());
     }
     // Owned from here: dropped, it is closed.
     let stream = unsafe { UnixStream::from_raw_fd(fd) };
+    // No SOCK_CLOEXEC on Apple platforms: set before anything can exec.
+    #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    if unsafe { libc::fcntl(fd, libc::F_SETFD, libc::FD_CLOEXEC) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
     stream.set_nonblocking(true)?;
     let len = (size_of::<libc::sa_family_t>() + bytes.len() + 1) as libc::socklen_t;
     let started = unsafe { libc::connect(fd, (&addr as *const libc::sockaddr_un).cast(), len) };
@@ -524,6 +535,19 @@ mod tests {
         };
 
         assert!(started.elapsed() < Duration::from_secs(5), "{refused}");
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn its_sockets_are_not_inherited_by_a_process_it_starts() {
+        let dir = scratch("cloexec");
+        let path = dir.join("s");
+        let _listener = UnixListener::bind(&path).unwrap();
+
+        let stream = connect(&path.to_string_lossy(), Duration::from_secs(1)).unwrap();
+        let flags = unsafe { libc::fcntl(stream.as_raw_fd(), libc::F_GETFD) };
+
+        assert_ne!(flags & libc::FD_CLOEXEC, 0);
         let _ = fs::remove_dir_all(dir);
     }
 
