@@ -8,8 +8,16 @@ use flutter_rust_bridge::frb;
 
 #[cfg(unix)]
 use std::{
-    io::{Read, Write},
-    os::unix::{io::AsRawFd, net::UnixStream},
+    ffi::CString,
+    io::{self, Read, Write},
+    mem::{size_of, zeroed},
+    net::Shutdown,
+    os::unix::{
+        ffi::OsStrExt,
+        io::{AsRawFd, FromRawFd, RawFd},
+        net::UnixStream,
+    },
+    path::Path,
     sync::Mutex,
     time::Duration,
 };
@@ -58,12 +66,13 @@ impl MuxForward {
     ) -> Result<MuxForward, MuxError> {
         #[cfg(unix)]
         {
-            let unreachable = |e: std::io::Error| MuxError {
+            let unreachable = |e: io::Error| MuxError {
                 unreachable: true,
                 message: e.to_string(),
             };
-            let control = UnixStream::connect(&control_path).map_err(unreachable)?;
-            let timeout = Some(Duration::from_millis(timeout_ms.max(1).into()));
+            let wait = Duration::from_millis(timeout_ms.max(1).into());
+            let control = connect(&control_path, wait).map_err(unreachable)?;
+            let timeout = Some(wait);
             control.set_read_timeout(timeout).map_err(unreachable)?;
             control.set_write_timeout(timeout).map_err(unreachable)?;
             let mut control = control;
@@ -78,7 +87,7 @@ impl MuxForward {
                 unreachable: false,
                 message,
             };
-            let mut stdio = UnixStream::connect(&stdio_path)
+            let mut stdio = connect(&stdio_path, wait)
                 .map_err(|e| refused(format!("stdio socket: {e}")))?;
             stdio
                 .write_all(&token)
@@ -108,9 +117,58 @@ impl MuxForward {
     pub fn close(&self) {
         #[cfg(unix)]
         if let Some(control) = self.control.lock().ok().and_then(|mut c| c.take()) {
-            let _ = control.shutdown(std::net::Shutdown::Both);
+            let _ = control.shutdown(Shutdown::Both);
         }
     }
+}
+
+/// A connection to the socket at [path] within [wait]: a blocking `connect`
+/// to a listener whose backlog is full (a master that stopped accepting)
+/// waits with no end.
+#[cfg(unix)]
+fn connect(path: &str, wait: Duration) -> io::Result<UnixStream> {
+    let bytes = Path::new(path).as_os_str().as_bytes();
+    let mut addr: libc::sockaddr_un = unsafe { zeroed() };
+    if bytes.len() >= addr.sun_path.len() || CString::new(bytes).is_err() {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "socket path"));
+    }
+    addr.sun_family = libc::AF_UNIX as _;
+    for (dst, src) in addr.sun_path.iter_mut().zip(bytes) {
+        *dst = *src as libc::c_char;
+    }
+    let fd: RawFd = unsafe { libc::socket(libc::AF_UNIX, libc::SOCK_STREAM, 0) };
+    if fd < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // Owned from here: dropped, it is closed.
+    let stream = unsafe { UnixStream::from_raw_fd(fd) };
+    stream.set_nonblocking(true)?;
+    let len = (size_of::<libc::sa_family_t>() + bytes.len() + 1) as libc::socklen_t;
+    let started = unsafe { libc::connect(fd, (&addr as *const libc::sockaddr_un).cast(), len) };
+    if started != 0 {
+        // A full backlog is EAGAIN on Linux and ECONNREFUSED on macOS, and
+        // either is an answer: only EINPROGRESS is one still to come.
+        let e = io::Error::last_os_error();
+        if e.raw_os_error() != Some(libc::EINPROGRESS) {
+            return Err(e);
+        }
+        let mut poll = libc::pollfd {
+            fd,
+            events: libc::POLLOUT,
+            revents: 0,
+        };
+        let ms = wait.as_millis().min(i32::MAX as u128) as libc::c_int;
+        match unsafe { libc::poll(&mut poll, 1, ms) } {
+            0 => return Err(io::Error::new(io::ErrorKind::TimedOut, "connect timed out")),
+            n if n < 0 => return Err(io::Error::last_os_error()),
+            _ => {}
+        }
+        if let Some(e) = stream.take_error()? {
+            return Err(e);
+        }
+    }
+    stream.set_nonblocking(false)?;
+    Ok(stream)
 }
 
 #[cfg(unix)]
@@ -205,7 +263,6 @@ fn read_packet(control: &mut UnixStream) -> Result<Vec<u8>, String> {
 /// One byte carrying [fd] as SCM_RIGHTS, as OpenSSH's `mm_send_fd` sends it.
 #[cfg(unix)]
 fn send_fd(control: &UnixStream, fd: libc::c_int) -> Result<(), String> {
-    use std::mem::{size_of, zeroed};
     let mut byte = 0u8;
     let mut iov = libc::iovec {
         iov_base: (&mut byte as *mut u8).cast(),
@@ -230,7 +287,7 @@ fn send_fd(control: &UnixStream, fd: libc::c_int) -> Result<(), String> {
     if sent == 1 {
         Ok(())
     } else {
-        Err(format!("sending a descriptor: {}", std::io::Error::last_os_error()))
+        Err(format!("sending a descriptor: {}", io::Error::last_os_error()))
     }
 }
 
@@ -273,25 +330,25 @@ impl<'a> Reader<'a> {
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
-    use std::{
-        os::unix::{
-            io::{FromRawFd, RawFd},
-            net::UnixListener,
-        },
-        path::PathBuf,
-        thread,
-    };
+    use std::{fs, os::unix::net::UnixListener, path::PathBuf, process, thread};
 
-    /// A directory of its own under /tmp: socket paths have a short limit.
+    /// A socket listening with the smallest backlog: UnixListener's is the
+    /// system's largest, which the descriptor limit runs out before.
+    fn listen_with_no_backlog(path: &Path) -> UnixListener {
+        let listener = UnixListener::bind(path).unwrap();
+        assert_eq!(unsafe { libc::listen(listener.as_raw_fd(), 0) }, 0);
+        listener
+    }
+
+        /// A directory of its own under /tmp: socket paths have a short limit.
     fn scratch(tag: &str) -> PathBuf {
-        let dir = PathBuf::from(format!("/tmp/sbmux-{tag}-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir(&dir).unwrap();
+        let dir = PathBuf::from(format!("/tmp/sbmux-{tag}-{}", process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir(&dir).unwrap();
         dir
     }
 
     fn recv_fd(control: &UnixStream) -> RawFd {
-        use std::mem::{size_of, zeroed};
         let mut byte = 0u8;
         let mut iov = libc::iovec {
             iov_base: (&mut byte as *mut u8).cast(),
@@ -377,7 +434,7 @@ mod tests {
         assert_eq!(&first, b"tokenfrom-master\n");
         assert_eq!(master.join().unwrap(), ("target.example".into(), 2200));
         forward.close();
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -401,7 +458,7 @@ mod tests {
 
         assert!(error.unreachable);
         master.join().unwrap();
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -426,7 +483,7 @@ mod tests {
         assert!(!error.unreachable);
         assert_eq!(error.message, "connect failed");
         master.join().unwrap();
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -444,7 +501,30 @@ mod tests {
         .unwrap();
 
         assert!(error.unreachable);
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn a_master_that_stopped_accepting_does_not_hold_up_the_connect() {
+        let dir = scratch("backlog");
+        let path = dir.join("cm");
+        let _listener = listen_with_no_backlog(&path);
+        let path = path.to_string_lossy().into_owned();
+        let started = std::time::Instant::now();
+
+        // Never accepted: once the backlog is full, a blocking connect waits
+        // on Linux; macOS refuses at once, so there this cannot fail.
+        let mut held = Vec::new();
+        let refused = loop {
+            match connect(&path, Duration::from_millis(200)) {
+                Ok(stream) => held.push(stream),
+                Err(e) => break e,
+            }
+            assert!(held.len() < 1000, "no backlog limit reached");
+        };
+
+        assert!(started.elapsed() < Duration::from_secs(5), "{refused}");
+        let _ = fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -468,6 +548,6 @@ mod tests {
 
         assert!(error.unreachable);
         drop(held.join());
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = fs::remove_dir_all(dir);
     }
 }

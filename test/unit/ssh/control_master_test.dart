@@ -20,7 +20,8 @@ void main() {
     expect(expand('MyBox.Example.COM'), endsWith('-mybox.example.com'));
   });
 
-  group('the master\'s connection is the one with the token', () {
+  group('the master\'s connection is the one with the token',
+      skip: !controlMasterSupported, () {
     late Directory dir;
     late ServerSocket listener;
     late String path;
