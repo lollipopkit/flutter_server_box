@@ -2037,5 +2037,19 @@
   "sshAgentUnset": "Uit {name} is geen ssh-agent-socket te vinden",
   "sshAgentUnsupported": "Dit apparaat kan geen ssh-agent gebruiken",
   "sshAgentNotPipe": "Op Windows bereik je een ssh-agent via een named pipe, en {path} is er geen",
-  "sshAgentUnreachable": "Kan de ssh-agent op {path} niet bereiken: {reason}"
+  "sshAgentUnreachable": "Kan de ssh-agent op {path} niet bereiken: {reason}",
+  "bmcLocator": "Locatorlampje",
+  "bmcBoot": "Boot-override",
+  "bmcBootDisabled": "Standaardvolgorde",
+  "bmcBootOnce": "Alleen volgende start",
+  "bmcBootContinuous": "Elke start",
+  "bmcBootTarget": "Apparaat",
+  "bmcVirtualMedia": "Virtuele media",
+  "bmcInsertMedia": "Plaatsen",
+  "bmcEjectMedia": "Uitwerpen",
+  "bmcImageUrl": "Image-URL",
+  "bmcImageUrlInvalid": "Vereist een http(s)-, NFS- of SMB-URL van de image, zonder inloggegevens",
+  "bmcDrives": "Schijven",
+  "bmcNoStorage": "De service meldt geen opslag",
+  "bmcClearLogConfirm": "{log} op {server} wissen?"
 }

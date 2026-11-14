@@ -7354,4 +7354,49 @@ class AppLocalizationsDe extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'ssh-agent unter $path nicht erreichbar: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Locator-LED';
+
+  @override
+  String get bmcBoot => 'Boot-Override';
+
+  @override
+  String get bmcBootDisabled => 'Standardreihenfolge';
+
+  @override
+  String get bmcBootOnce => 'Nur nächster Start';
+
+  @override
+  String get bmcBootContinuous => 'Jeder Start';
+
+  @override
+  String get bmcBootTarget => 'Gerät';
+
+  @override
+  String get bmcVirtualMedia => 'Virtuelle Medien';
+
+  @override
+  String get bmcInsertMedia => 'Einlegen';
+
+  @override
+  String get bmcEjectMedia => 'Auswerfen';
+
+  @override
+  String get bmcImageUrl => 'Image-URL';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Braucht eine http(s)-, NFS- oder SMB-URL des Images, ohne Zugangsdaten darin';
+
+  @override
+  String get bmcDrives => 'Laufwerke';
+
+  @override
+  String get bmcNoStorage => 'Der Dienst meldet keinen Speicher';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$log auf $server leeren?';
+  }
 }

@@ -6858,6 +6858,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return '无法连接 $path 的 ssh-agent：$reason';
   }
+
+  @override
+  String get bmcLocator => '定位灯';
+
+  @override
+  String get bmcBoot => '启动覆盖';
+
+  @override
+  String get bmcBootDisabled => '默认顺序';
+
+  @override
+  String get bmcBootOnce => '仅下次启动';
+
+  @override
+  String get bmcBootContinuous => '每次启动';
+
+  @override
+  String get bmcBootTarget => '设备';
+
+  @override
+  String get bmcVirtualMedia => '虚拟介质';
+
+  @override
+  String get bmcInsertMedia => '插入';
+
+  @override
+  String get bmcEjectMedia => '弹出';
+
+  @override
+  String get bmcImageUrl => '镜像 URL';
+
+  @override
+  String get bmcImageUrlInvalid => '需要镜像的 http(s)、NFS 或 SMB 地址，且不含凭据';
+
+  @override
+  String get bmcDrives => '硬盘';
+
+  @override
+  String get bmcNoStorage => '该服务未提供存储信息';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '清空 $server 上的 $log？';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13717,5 +13761,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String sshAgentUnreachable(String path, String reason) {
     return '無法連線 $path 的 ssh-agent：$reason';
+  }
+
+  @override
+  String get bmcLocator => '定位燈';
+
+  @override
+  String get bmcBoot => '開機覆寫';
+
+  @override
+  String get bmcBootDisabled => '預設順序';
+
+  @override
+  String get bmcBootOnce => '僅下次開機';
+
+  @override
+  String get bmcBootContinuous => '每次開機';
+
+  @override
+  String get bmcBootTarget => '裝置';
+
+  @override
+  String get bmcVirtualMedia => '虛擬媒體';
+
+  @override
+  String get bmcInsertMedia => '插入';
+
+  @override
+  String get bmcEjectMedia => '退出';
+
+  @override
+  String get bmcImageUrl => '映像檔 URL';
+
+  @override
+  String get bmcImageUrlInvalid => '需要映像檔的 http(s)、NFS 或 SMB 位址，且不含憑證';
+
+  @override
+  String get bmcDrives => '硬碟';
+
+  @override
+  String get bmcNoStorage => '此服務未提供儲存資訊';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '清除 $server 上的 $log？';
   }
 }

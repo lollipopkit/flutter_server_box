@@ -115,6 +115,10 @@ class BmcNotifier extends _$BmcNotifier {
   /// action's request and confirmation may still be going.
   var _powering = false;
 
+  /// Rises on every boot or locator write, so a poll that started before one
+  /// does not put back the system as it was.
+  var _writes = 0;
+
   @override
   BmcState build(Spi spi) {
     final cfg = spi.bmc;
@@ -191,6 +195,7 @@ class BmcNotifier extends _$BmcNotifier {
       return;
     }
     final generation = _generation;
+    final writes = _writes;
     _refreshingIn = generation;
 
     try {
@@ -202,7 +207,7 @@ class BmcNotifier extends _$BmcNotifier {
       }
 
       state = state.copyWith(
-        topology: snapshot.topology,
+        topology: writes == _writes ? snapshot.topology : state.topology,
         sensors: snapshot.sensors,
         sensorsTruncated: snapshot.sensorsTruncated,
         failure: null,
@@ -305,6 +310,79 @@ class BmcNotifier extends _$BmcNotifier {
         // while powering; a read still going skips this one instead.
         if (state.isBusy) unawaited(refresh());
       }
+    }
+  }
+
+  /// Runs [fn] on the client and the discovered topology; `noSystem` before
+  /// the first discovery, `closed` once the config changed under it.
+  Future<T> _with<T>(
+    Future<T> Function(BmcClient client, RedfishTopology topology) fn,
+  ) {
+    final client = _client;
+    final topology = state.topology;
+    if (client == null) {
+      return Future.error(const BmcError(failure: RedfishFailure.closed));
+    }
+    if (topology == null) {
+      return Future.error(const BmcError(failure: RedfishFailure.noSystem));
+    }
+    return fn(client, topology);
+  }
+
+  Future<List<LogService>> logServices() =>
+      _with((c, t) => c.logServices(topology: t));
+
+  Future<LogPage> logEntries(LogService service) =>
+      _with((c, _) => c.logEntries(service: service));
+
+  Future<void> clearLog(LogService service) async {
+    Diag.crumb(SbDiag.bmc, 'clear log');
+    await _with((c, _) => c.clearLog(service: service));
+  }
+
+  Future<StorageReport> storage() => _with((c, t) => c.storage(topology: t));
+
+  Future<List<MediaSlot>> mediaSlots() =>
+      _with((c, t) => c.mediaSlots(topology: t));
+
+  Future<void> insertMedia(MediaSlot slot, String image) async {
+    Diag.crumb(SbDiag.bmc, 'insert media');
+    await _with((c, _) => c.insertMedia(slot: slot, image: image));
+  }
+
+  Future<void> ejectMedia(MediaSlot slot) async {
+    Diag.crumb(SbDiag.bmc, 'eject media');
+    await _with((c, _) => c.ejectMedia(slot: slot));
+  }
+
+  /// Sets the next boot's device, then reads the system back so the card
+  /// shows what the service kept.
+  Future<void> setBoot(BootRequest request) async {
+    Diag.crumb(
+      SbDiag.bmc,
+      'boot',
+      data: {'target': request.target, 'enabled': request.enabled},
+    );
+    _writes++;
+    await _with((c, t) => c.setBoot(topology: t, request: request));
+    await _reread();
+  }
+
+  Future<void> setLocator(bool lit) async {
+    Diag.crumb(SbDiag.bmc, 'locator', data: {'lit': '$lit'});
+    _writes++;
+    await _with((c, t) => c.setLocator(topology: t, lit: lit));
+    await _reread();
+  }
+
+  /// A failed read leaves the last state: the change itself went through.
+  Future<void> _reread() async {
+    final generation = _generation;
+    try {
+      final next = await _with((c, t) => c.rereadSystem(topology: t));
+      if (generation == _generation) state = state.copyWith(topology: next);
+    } catch (e) {
+      Loggers.app.info('BMC reread failed', e is BmcError ? e.message : e);
     }
   }
 

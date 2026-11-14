@@ -379,6 +379,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  BootOverride dco_decode_boot_override(dynamic raw);
+
+  @protected
+  BootRequest dco_decode_boot_request(dynamic raw);
+
+  @protected
   Backup dco_decode_box_autoadd_backup(dynamic raw);
 
   @protected
@@ -401,6 +407,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool dco_decode_box_autoadd_bool(dynamic raw);
+
+  @protected
+  BootOverride dco_decode_box_autoadd_boot_override(dynamic raw);
+
+  @protected
+  BootRequest dco_decode_box_autoadd_boot_request(dynamic raw);
 
   @protected
   CertInfo dco_decode_box_autoadd_cert_info(dynamic raw);
@@ -510,7 +522,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
 
   @protected
+  Locator dco_decode_box_autoadd_locator(dynamic raw);
+
+  @protected
+  LogService dco_decode_box_autoadd_log_service(dynamic raw);
+
+  @protected
   MdSync dco_decode_box_autoadd_md_sync(dynamic raw);
+
+  @protected
+  MediaSlot dco_decode_box_autoadd_media_slot(dynamic raw);
 
   @protected
   Memory dco_decode_box_autoadd_memory(dynamic raw);
@@ -556,6 +577,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RedfishChassis dco_decode_box_autoadd_redfish_chassis(dynamic raw);
+
+  @protected
+  RedfishManager dco_decode_box_autoadd_redfish_manager(dynamic raw);
 
   @protected
   RedfishSystem dco_decode_box_autoadd_redfish_system(dynamic raw);
@@ -894,6 +918,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Display dco_decode_display(dynamic raw);
 
   @protected
+  Drive dco_decode_drive(dynamic raw);
+
+  @protected
   EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
 
   @protected
@@ -1098,6 +1125,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<DiskIoPiece> dco_decode_list_disk_io_piece(dynamic raw);
 
   @protected
+  List<Drive> dco_decode_list_drive(dynamic raw);
+
+  @protected
   List<Effect> dco_decode_list_effect(dynamic raw);
 
   @protected
@@ -1146,10 +1176,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
 
   @protected
+  List<LogEntry> dco_decode_list_log_entry(dynamic raw);
+
+  @protected
+  List<LogService> dco_decode_list_log_service(dynamic raw);
+
+  @protected
   List<MdArray> dco_decode_list_md_array(dynamic raw);
 
   @protected
   List<MdMember> dco_decode_list_md_member(dynamic raw);
+
+  @protected
+  List<MediaSlot> dco_decode_list_media_slot(dynamic raw);
 
   @protected
   List<NetHost> dco_decode_list_net_host(dynamic raw);
@@ -1396,6 +1435,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Volume> dco_decode_list_volume(dynamic raw);
 
   @protected
+  Locator dco_decode_locator(dynamic raw);
+
+  @protected
+  LogEntry dco_decode_log_entry(dynamic raw);
+
+  @protected
+  LogPage dco_decode_log_page(dynamic raw);
+
+  @protected
+  LogScope dco_decode_log_scope(dynamic raw);
+
+  @protected
+  LogService dco_decode_log_service(dynamic raw);
+
+  @protected
   MdArray dco_decode_md_array(dynamic raw);
 
   @protected
@@ -1403,6 +1457,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync dco_decode_md_sync(dynamic raw);
+
+  @protected
+  MediaSlot dco_decode_media_slot(dynamic raw);
 
   @protected
   Memory dco_decode_memory(dynamic raw);
@@ -1448,6 +1505,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
+
+  @protected
+  BootOverride? dco_decode_opt_box_autoadd_boot_override(dynamic raw);
+
+  @protected
+  BootRequest? dco_decode_opt_box_autoadd_boot_request(dynamic raw);
 
   @protected
   CertInfo? dco_decode_opt_box_autoadd_cert_info(dynamic raw);
@@ -1519,6 +1582,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
 
   @protected
+  Locator? dco_decode_opt_box_autoadd_locator(dynamic raw);
+
+  @protected
   MdSync? dco_decode_opt_box_autoadd_md_sync(dynamic raw);
 
   @protected
@@ -1544,6 +1610,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RedfishChassis? dco_decode_opt_box_autoadd_redfish_chassis(dynamic raw);
+
+  @protected
+  RedfishManager? dco_decode_opt_box_autoadd_redfish_manager(dynamic raw);
 
   @protected
   RedfishSystem? dco_decode_opt_box_autoadd_redfish_system(dynamic raw);
@@ -1830,6 +1899,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishFailure dco_decode_redfish_failure(dynamic raw);
 
   @protected
+  RedfishManager dco_decode_redfish_manager(dynamic raw);
+
+  @protected
   RedfishRoot dco_decode_redfish_root(dynamic raw);
 
   @protected
@@ -1983,6 +2055,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageError dco_decode_storage_error(dynamic raw);
+
+  @protected
+  StorageReport dco_decode_storage_report(dynamic raw);
 
   @protected
   StorageView dco_decode_storage_view(dynamic raw);
@@ -2559,6 +2634,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  BootOverride sse_decode_boot_override(SseDeserializer deserializer);
+
+  @protected
+  BootRequest sse_decode_boot_request(SseDeserializer deserializer);
+
+  @protected
   Backup sse_decode_box_autoadd_backup(SseDeserializer deserializer);
 
   @protected
@@ -2587,6 +2668,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
+  BootOverride sse_decode_box_autoadd_boot_override(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  BootRequest sse_decode_box_autoadd_boot_request(SseDeserializer deserializer);
 
   @protected
   CertInfo sse_decode_box_autoadd_cert_info(SseDeserializer deserializer);
@@ -2724,7 +2813,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  Locator sse_decode_box_autoadd_locator(SseDeserializer deserializer);
+
+  @protected
+  LogService sse_decode_box_autoadd_log_service(SseDeserializer deserializer);
+
+  @protected
   MdSync sse_decode_box_autoadd_md_sync(SseDeserializer deserializer);
+
+  @protected
+  MediaSlot sse_decode_box_autoadd_media_slot(SseDeserializer deserializer);
 
   @protected
   Memory sse_decode_box_autoadd_memory(SseDeserializer deserializer);
@@ -2786,6 +2884,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RedfishChassis sse_decode_box_autoadd_redfish_chassis(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RedfishManager sse_decode_box_autoadd_redfish_manager(
     SseDeserializer deserializer,
   );
 
@@ -3204,6 +3307,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Display sse_decode_display(SseDeserializer deserializer);
 
   @protected
+  Drive sse_decode_drive(SseDeserializer deserializer);
+
+  @protected
   EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
 
   @protected
@@ -3424,6 +3530,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<DiskIoPiece> sse_decode_list_disk_io_piece(SseDeserializer deserializer);
 
   @protected
+  List<Drive> sse_decode_list_drive(SseDeserializer deserializer);
+
+  @protected
   List<Effect> sse_decode_list_effect(SseDeserializer deserializer);
 
   @protected
@@ -3488,10 +3597,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<LogEntry> sse_decode_list_log_entry(SseDeserializer deserializer);
+
+  @protected
+  List<LogService> sse_decode_list_log_service(SseDeserializer deserializer);
+
+  @protected
   List<MdArray> sse_decode_list_md_array(SseDeserializer deserializer);
 
   @protected
   List<MdMember> sse_decode_list_md_member(SseDeserializer deserializer);
+
+  @protected
+  List<MediaSlot> sse_decode_list_media_slot(SseDeserializer deserializer);
 
   @protected
   List<NetHost> sse_decode_list_net_host(SseDeserializer deserializer);
@@ -3804,6 +3922,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Volume> sse_decode_list_volume(SseDeserializer deserializer);
 
   @protected
+  Locator sse_decode_locator(SseDeserializer deserializer);
+
+  @protected
+  LogEntry sse_decode_log_entry(SseDeserializer deserializer);
+
+  @protected
+  LogPage sse_decode_log_page(SseDeserializer deserializer);
+
+  @protected
+  LogScope sse_decode_log_scope(SseDeserializer deserializer);
+
+  @protected
+  LogService sse_decode_log_service(SseDeserializer deserializer);
+
+  @protected
   MdArray sse_decode_md_array(SseDeserializer deserializer);
 
   @protected
@@ -3811,6 +3944,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync sse_decode_md_sync(SseDeserializer deserializer);
+
+  @protected
+  MediaSlot sse_decode_media_slot(SseDeserializer deserializer);
 
   @protected
   Memory sse_decode_memory(SseDeserializer deserializer);
@@ -3860,6 +3996,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
+  BootOverride? sse_decode_opt_box_autoadd_boot_override(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  BootRequest? sse_decode_opt_box_autoadd_boot_request(
+    SseDeserializer deserializer,
+  );
 
   @protected
   CertInfo? sse_decode_opt_box_autoadd_cert_info(SseDeserializer deserializer);
@@ -3947,6 +4093,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
 
   @protected
+  Locator? sse_decode_opt_box_autoadd_locator(SseDeserializer deserializer);
+
+  @protected
   MdSync? sse_decode_opt_box_autoadd_md_sync(SseDeserializer deserializer);
 
   @protected
@@ -3980,6 +4129,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RedfishChassis? sse_decode_opt_box_autoadd_redfish_chassis(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RedfishManager? sse_decode_opt_box_autoadd_redfish_manager(
     SseDeserializer deserializer,
   );
 
@@ -4328,6 +4482,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishFailure sse_decode_redfish_failure(SseDeserializer deserializer);
 
   @protected
+  RedfishManager sse_decode_redfish_manager(SseDeserializer deserializer);
+
+  @protected
   RedfishRoot sse_decode_redfish_root(SseDeserializer deserializer);
 
   @protected
@@ -4501,6 +4658,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageError sse_decode_storage_error(SseDeserializer deserializer);
+
+  @protected
+  StorageReport sse_decode_storage_report(SseDeserializer deserializer);
 
   @protected
   StorageView sse_decode_storage_view(SseDeserializer deserializer);
@@ -5128,6 +5288,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_boot_override(BootOverride self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_boot_request(BootRequest self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_backup(Backup self, SseSerializer serializer);
 
   @protected
@@ -5168,6 +5334,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_boot_override(
+    BootOverride self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_boot_request(
+    BootRequest self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_cert_info(
@@ -5353,7 +5531,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_locator(Locator self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_log_service(
+    LogService self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_md_sync(MdSync self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_media_slot(
+    MediaSlot self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_memory(Memory self, SseSerializer serializer);
@@ -5433,6 +5626,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_redfish_chassis(
     RedfishChassis self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_redfish_manager(
+    RedfishManager self,
     SseSerializer serializer,
   );
 
@@ -5959,6 +6158,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_display(Display self, SseSerializer serializer);
 
   @protected
+  void sse_encode_drive(Drive self, SseSerializer serializer);
+
+  @protected
   void sse_encode_ecdsa_signature(
     EcdsaSignature self,
     SseSerializer serializer,
@@ -6250,6 +6452,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_drive(List<Drive> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_effect(List<Effect> self, SseSerializer serializer);
 
   @protected
@@ -6325,10 +6530,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_log_entry(List<LogEntry> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_log_service(
+    List<LogService> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_md_array(List<MdArray> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_md_member(List<MdMember> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_media_slot(
+    List<MediaSlot> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_net_host(List<NetHost> self, SseSerializer serializer);
@@ -6739,6 +6959,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_volume(List<Volume> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_locator(Locator self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_log_entry(LogEntry self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_log_page(LogPage self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_log_scope(LogScope self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_log_service(LogService self, SseSerializer serializer);
+
+  @protected
   void sse_encode_md_array(MdArray self, SseSerializer serializer);
 
   @protected
@@ -6746,6 +6981,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_md_sync(MdSync self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_media_slot(MediaSlot self, SseSerializer serializer);
 
   @protected
   void sse_encode_memory(Memory self, SseSerializer serializer);
@@ -6800,6 +7038,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_boot_override(
+    BootOverride? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_boot_request(
+    BootRequest? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_cert_info(
@@ -6919,6 +7169,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_locator(
+    Locator? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_md_sync(
     MdSync? self,
     SseSerializer serializer,
@@ -6969,6 +7225,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_redfish_chassis(
     RedfishChassis? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_redfish_manager(
+    RedfishManager? self,
     SseSerializer serializer,
   );
 
@@ -7414,6 +7676,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_redfish_manager(
+    RedfishManager self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_redfish_root(RedfishRoot self, SseSerializer serializer);
 
   @protected
@@ -7625,6 +7893,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_storage_error(StorageError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_storage_report(StorageReport self, SseSerializer serializer);
 
   @protected
   void sse_encode_storage_view(StorageView self, SseSerializer serializer);

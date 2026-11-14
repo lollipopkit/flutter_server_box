@@ -7309,4 +7309,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'Не удалось подключиться к ssh-agent по адресу $path: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Индикатор поиска';
+
+  @override
+  String get bmcBoot => 'Переопределение загрузки';
+
+  @override
+  String get bmcBootDisabled => 'Порядок по умолчанию';
+
+  @override
+  String get bmcBootOnce => 'Только следующая загрузка';
+
+  @override
+  String get bmcBootContinuous => 'Каждая загрузка';
+
+  @override
+  String get bmcBootTarget => 'Устройство';
+
+  @override
+  String get bmcVirtualMedia => 'Виртуальные носители';
+
+  @override
+  String get bmcInsertMedia => 'Вставить';
+
+  @override
+  String get bmcEjectMedia => 'Извлечь';
+
+  @override
+  String get bmcImageUrl => 'URL образа';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Нужен http(s)-, NFS- или SMB-адрес образа без учётных данных';
+
+  @override
+  String get bmcDrives => 'Диски';
+
+  @override
+  String get bmcNoStorage => 'Служба не сообщает о хранилище';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return 'Очистить $log на $server?';
+  }
 }

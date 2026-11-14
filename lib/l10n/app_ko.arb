@@ -2037,5 +2037,19 @@
   "sshAgentUnset": "{name}에서 ssh-agent 소켓을 찾을 수 없습니다",
   "sshAgentUnsupported": "이 기기에서는 ssh-agent를 사용할 수 없습니다",
   "sshAgentNotPipe": "Windows에서는 named pipe로 ssh-agent에 연결하는데, {path}은(는) named pipe가 아닙니다",
-  "sshAgentUnreachable": "{path}의 ssh-agent에 연결할 수 없습니다: {reason}"
+  "sshAgentUnreachable": "{path}의 ssh-agent에 연결할 수 없습니다: {reason}",
+  "bmcLocator": "위치 표시등",
+  "bmcBoot": "부팅 재정의",
+  "bmcBootDisabled": "기본 순서",
+  "bmcBootOnce": "다음 부팅만",
+  "bmcBootContinuous": "매 부팅",
+  "bmcBootTarget": "장치",
+  "bmcVirtualMedia": "가상 미디어",
+  "bmcInsertMedia": "삽입",
+  "bmcEjectMedia": "꺼내기",
+  "bmcImageUrl": "이미지 URL",
+  "bmcImageUrlInvalid": "자격 증명이 없는 이미지의 http(s), NFS 또는 SMB URL이 필요합니다",
+  "bmcDrives": "드라이브",
+  "bmcNoStorage": "이 서비스는 스토리지를 보고하지 않습니다",
+  "bmcClearLogConfirm": "{server}의 {log}을(를) 비울까요?"
 }

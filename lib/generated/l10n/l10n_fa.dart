@@ -7307,4 +7307,49 @@ class AppLocalizationsFa extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'دسترسی به ssh-agent در $path ممکن نیست: $reason';
   }
+
+  @override
+  String get bmcLocator => 'چراغ مکان‌یاب';
+
+  @override
+  String get bmcBoot => 'جایگزینی بوت';
+
+  @override
+  String get bmcBootDisabled => 'ترتیب پیش‌فرض';
+
+  @override
+  String get bmcBootOnce => 'فقط بوت بعدی';
+
+  @override
+  String get bmcBootContinuous => 'هر بوت';
+
+  @override
+  String get bmcBootTarget => 'دستگاه';
+
+  @override
+  String get bmcVirtualMedia => 'رسانهٔ مجازی';
+
+  @override
+  String get bmcInsertMedia => 'درج';
+
+  @override
+  String get bmcEjectMedia => 'بیرون دادن';
+
+  @override
+  String get bmcImageUrl => 'نشانی ایمیج';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'نشانی http(s)، NFS یا SMB ایمیج بدون اطلاعات ورود لازم است';
+
+  @override
+  String get bmcDrives => 'دیسک‌ها';
+
+  @override
+  String get bmcNoStorage => 'این سرویس فضای ذخیره‌سازی گزارش نمی‌کند';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$log روی $server پاک شود؟';
+  }
 }

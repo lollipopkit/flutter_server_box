@@ -1,0 +1,440 @@
+{
+ "/redfish/v1/": {
+  "@odata.id": "/redfish/v1",
+  "@odata.type": "#ServiceRoot.v1_15_0.ServiceRoot",
+  "AccountService": {
+   "@odata.id": "/redfish/v1/AccountService"
+  },
+  "Cables": {
+   "@odata.id": "/redfish/v1/Cables"
+  },
+  "CertificateService": {
+   "@odata.id": "/redfish/v1/CertificateService"
+  },
+  "Chassis": {
+   "@odata.id": "/redfish/v1/Chassis"
+  },
+  "EventService": {
+   "@odata.id": "/redfish/v1/EventService"
+  },
+  "Fabrics": {
+   "@odata.id": "/redfish/v1/Fabrics"
+  },
+  "Id": "RootService",
+  "JsonSchemas": {
+   "@odata.id": "/redfish/v1/JsonSchemas"
+  },
+  "Links": {
+   "ManagerProvidingService": {
+    "@odata.id": "/redfish/v1/Managers/bmc"
+   },
+   "Sessions": {
+    "@odata.id": "/redfish/v1/SessionService/Sessions"
+   }
+  },
+  "Managers": {
+   "@odata.id": "/redfish/v1/Managers"
+  },
+  "Name": "Root Service",
+  "ProtocolFeaturesSupported": {
+   "DeepOperations": {
+    "DeepPATCH": false,
+    "DeepPOST": false
+   },
+   "ExcerptQuery": false,
+   "ExpandQuery": {
+    "ExpandAll": false,
+    "Levels": false,
+    "Links": false,
+    "NoLinks": false
+   },
+   "FilterQuery": false,
+   "OnlyMemberQuery": true,
+   "SelectQuery": true
+  },
+  "RedfishVersion": "1.17.0",
+  "Registries": {
+   "@odata.id": "/redfish/v1/Registries"
+  },
+  "SessionService": {
+   "@odata.id": "/redfish/v1/SessionService"
+  },
+  "Systems": {
+   "@odata.id": "/redfish/v1/Systems"
+  },
+  "Tasks": {
+   "@odata.id": "/redfish/v1/TaskService"
+  },
+  "TelemetryService": {
+   "@odata.id": "/redfish/v1/TelemetryService"
+  },
+  "UUID": "24bb5f16-bc0b-46d1-918b-24bb42c37276",
+  "UpdateService": {
+   "@odata.id": "/redfish/v1/UpdateService"
+  }
+ },
+ "/redfish/v1/Chassis": {
+  "@odata.id": "/redfish/v1/Chassis",
+  "@odata.type": "#ChassisCollection.ChassisCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Chassis/chassis"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Chassis Collection"
+ },
+ "/redfish/v1/Chassis/chassis": {
+  "@odata.id": "/redfish/v1/Chassis/chassis",
+  "@odata.type": "#Chassis.v1_22_0.Chassis",
+  "Actions": {
+   "#Chassis.Reset": {
+    "@Redfish.ActionInfo": "/redfish/v1/Chassis/chassis/ResetActionInfo",
+    "target": "/redfish/v1/Chassis/chassis/Actions/Chassis.Reset"
+   }
+  },
+  "Assembly": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/Assembly"
+  },
+  "ChassisType": "RackMount",
+  "EnvironmentMetrics": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/EnvironmentMetrics"
+  },
+  "Id": "chassis",
+  "Links": {
+   "ComputerSystems": [
+    {
+     "@odata.id": "/redfish/v1/Systems/system"
+    }
+   ],
+   "ManagedBy": [
+    {
+     "@odata.id": "/redfish/v1/Managers/bmc"
+    }
+   ],
+   "Processors": [],
+   "Processors@odata.count": 0
+  },
+  "Name": "chassis",
+  "NetworkAdapters": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/NetworkAdapters"
+  },
+  "PowerState": "Off",
+  "PowerSubsystem": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/PowerSubsystem"
+  },
+  "Sensors": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/Sensors"
+  },
+  "Status": {
+   "State": "StandbyOffline"
+  },
+  "ThermalSubsystem": {
+   "@odata.id": "/redfish/v1/Chassis/chassis/ThermalSubsystem"
+  }
+ },
+ "/redfish/v1/Managers": {
+  "@odata.id": "/redfish/v1/Managers",
+  "@odata.type": "#ManagerCollection.ManagerCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/bmc"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Manager Collection"
+ },
+ "/redfish/v1/Managers/bmc": {
+  "@odata.id": "/redfish/v1/Managers/bmc",
+  "@odata.type": "#Manager.v1_15_0.Manager",
+  "Actions": {
+   "#Manager.Reset": {
+    "@Redfish.ActionInfo": "/redfish/v1/Managers/bmc/ResetActionInfo",
+    "target": "/redfish/v1/Managers/bmc/Actions/Manager.Reset"
+   },
+   "#Manager.ResetToDefaults": {
+    "ResetType@Redfish.AllowableValues": [
+     "ResetAll"
+    ],
+    "target": "/redfish/v1/Managers/bmc/Actions/Manager.ResetToDefaults"
+   }
+  },
+  "DateTime": "2026-11-14T05:39:51+00:00",
+  "DateTimeLocalOffset": "+00:00",
+  "Description": "Baseboard Management Controller",
+  "EthernetInterfaces": {
+   "@odata.id": "/redfish/v1/Managers/bmc/EthernetInterfaces"
+  },
+  "Id": "bmc",
+  "LastResetTime": "2026-11-14T05:33:08+00:00",
+  "Links": {
+   "ManagerForChassis": [
+    {
+     "@odata.id": "/redfish/v1/Chassis/chassis"
+    }
+   ],
+   "ManagerForChassis@odata.count": 1,
+   "ManagerForServers": [
+    {
+     "@odata.id": "/redfish/v1/Systems/system"
+    }
+   ],
+   "ManagerForServers@odata.count": 1
+  },
+  "LogServices": {
+   "@odata.id": "/redfish/v1/Managers/bmc/LogServices"
+  },
+  "ManagerDiagnosticData": {
+   "@odata.id": "/redfish/v1/Managers/bmc/ManagerDiagnosticData"
+  },
+  "ManagerType": "BMC",
+  "Model": "OpenBmc",
+  "Name": "OpenBmc Manager",
+  "NetworkProtocol": {
+   "@odata.id": "/redfish/v1/Managers/bmc/NetworkProtocol"
+  },
+  "Oem": {
+   "OpenBmc": {
+    "@odata.id": "/redfish/v1/Managers/bmc#/Oem/OpenBmc",
+    "@odata.type": "#OpenBMCManager.v1_1_0.Manager",
+    "Certificates": {
+     "@odata.id": "/redfish/v1/Managers/bmc/Truststore/Certificates"
+    }
+   }
+  },
+  "PowerState": "On",
+  "ServiceEntryPointUUID": "24bb5f16-bc0b-46d1-918b-24bb42c37276",
+  "ServiceIdentification": "",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  },
+  "TimeZoneName": "UTC",
+  "UUID": "6af7168d-09ba-4c57-9856-62e3e1e94363"
+ },
+ "/redfish/v1/Managers/bmc/LogServices": {
+  "@odata.id": "/redfish/v1/Managers/bmc/LogServices",
+  "@odata.type": "#LogServiceCollection.LogServiceCollection",
+  "Description": "Collection of LogServices for this Manager",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Open BMC Log Services Collection"
+ },
+ "/redfish/v1/Managers/bmc/LogServices/Journal": {
+  "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal",
+  "@odata.type": "#LogService.v1_2_0.LogService",
+  "DateTime": "2026-11-14T05:39:54+00:00",
+  "DateTimeLocalOffset": "+00:00",
+  "Description": "BMC Journal Log Service",
+  "Entries": {
+   "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal/Entries"
+  },
+  "Id": "Journal",
+  "Name": "Open BMC Journal Log Service",
+  "OverWritePolicy": "WrapsWhenFull"
+ },
+ "/redfish/v1/Managers/bmc/LogServices/Journal/Entries": {
+  "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal/Entries",
+  "@odata.type": "#LogEntryCollection.LogEntryCollection",
+  "Description": "Collection of BMC Journal Entries",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal/Entries/cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTE7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM1OTk0ZTt0PTY2MDM1ZTIwZWI2Y2I7eD05MjNjNmI3YTZkZDc5MjNm",
+    "@odata.type": "#LogEntry.v1_9_0.LogEntry",
+    "Created": "2026-11-14T05:33:22.412235+00:00",
+    "EntryType": "Oem",
+    "Id": "cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTE7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM1OTk0ZTt0PTY2MDM1ZTIwZWI2Y2I7eD05MjNjNmI3YTZkZDc5MjNm",
+    "Message": "kernel: Booting Linux on physical CPU 0x0",
+    "Name": "BMC Journal Entry",
+    "OemRecordFormat": "BMC Journal Entry",
+    "Severity": "OK"
+   },
+   {
+    "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal/Entries/cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTI7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM2NmQ4MDt0PTY2MDM1ZTIwZjhiMTI7eD1jZGI4ODdlODFhNzE1MmI3",
+    "@odata.type": "#LogEntry.v1_9_0.LogEntry",
+    "Created": "2026-11-14T05:33:22.466578+00:00",
+    "EntryType": "Oem",
+    "Id": "cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTI7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM2NmQ4MDt0PTY2MDM1ZTIwZjhiMTI7eD1jZGI4ODdlODFhNzE1MmI3",
+    "Message": "kernel: Linux version 6.18.54-35b7027 (oe-user@oe-host) (arm-openbmc-linux-gnueabi-gcc (GCC) 16.1.0, GNU ld (GNU Binutils) 2.46.1) #1 Mon Sep 28 01:43:44 UTC 2026",
+    "Name": "BMC Journal Entry",
+    "OemRecordFormat": "BMC Journal Entry",
+    "Severity": "OK"
+   },
+   {
+    "@odata.id": "/redfish/v1/Managers/bmc/LogServices/Journal/Entries/cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTM7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM2NzRlMjt0PTY2MDM1ZTIwZjkyNzU7eD03YWU3ZjQ3YzI1NjZjZTlk",
+    "@odata.type": "#LogEntry.v1_9_0.LogEntry",
+    "Created": "2026-11-14T05:33:22.468469+00:00",
+    "EntryType": "Oem",
+    "Id": "cz1iMDY1ODcwZGYxODQ0OTNkYjIzNzczZmRkMGVkOTA3ODtpPTM7Yj1lM2RkM2IwMmU0ZmE0YWRjOWUxMDRmMjc4NjBjY2NhMDttPWM2NzRlMjt0PTY2MDM1ZTIwZjkyNzU7eD03YWU3ZjQ3YzI1NjZjZTlk",
+    "Message": "kernel: CPU: ARMv6-compatible processor [410fb767] revision 7 (ARMv7), cr=00c5387d",
+    "Name": "BMC Journal Entry",
+    "OemRecordFormat": "BMC Journal Entry",
+    "Severity": "OK"
+   }
+  ],
+  "Members@odata.count": 819,
+  "Name": "Open BMC Journal Entries"
+ },
+ "/redfish/v1/Systems": {
+  "@odata.id": "/redfish/v1/Systems",
+  "@odata.type": "#ComputerSystemCollection.ComputerSystemCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/system"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Computer System Collection"
+ },
+ "/redfish/v1/Systems/system": {
+  "@odata.id": "/redfish/v1/Systems/system",
+  "@odata.type": "#ComputerSystem.v1_22_0.ComputerSystem",
+  "Actions": {
+   "#ComputerSystem.Reset": {
+    "@Redfish.ActionInfo": "/redfish/v1/Systems/system/ResetActionInfo",
+    "target": "/redfish/v1/Systems/system/Actions/ComputerSystem.Reset"
+   }
+  },
+  "Bios": {
+   "@odata.id": "/redfish/v1/Systems/system/Bios"
+  },
+  "Boot": {
+   "AutomaticRetryAttempts": 3,
+   "AutomaticRetryConfig": "RetryAttempts",
+   "AutomaticRetryConfig@Redfish.AllowableValues": [
+    "Disabled",
+    "RetryAttempts"
+   ],
+   "BootSourceOverrideEnabled": "Disabled",
+   "BootSourceOverrideMode": "UEFI",
+   "BootSourceOverrideMode@Redfish.AllowableValues": [
+    "Legacy",
+    "UEFI"
+   ],
+   "BootSourceOverrideTarget": "None",
+   "BootSourceOverrideTarget@Redfish.AllowableValues": [
+    "None",
+    "Pxe",
+    "Hdd",
+    "Cd",
+    "Diags",
+    "BiosSetup",
+    "Usb"
+   ],
+   "RemainingAutomaticRetryAttempts": 3,
+   "StopBootOnFault": "Never",
+   "TrustedModuleRequiredToBoot": "Disabled"
+  },
+  "BootProgress": {
+   "LastState": "None",
+   "LastStateTime": "1970-01-01T00:00:00.000000+00:00"
+  },
+  "Description": "Computer System",
+  "FabricAdapters": {
+   "@odata.id": "/redfish/v1/Systems/system/FabricAdapters"
+  },
+  "Id": "system",
+  "LastResetTime": "2026-10-24T17:08:40+00:00",
+  "Links": {
+   "Chassis": [
+    {
+     "@odata.id": "/redfish/v1/Chassis/chassis"
+    }
+   ],
+   "ManagedBy": [
+    {
+     "@odata.id": "/redfish/v1/Managers/bmc"
+    }
+   ]
+  },
+  "LocationIndicatorActive": false,
+  "LogServices": {
+   "@odata.id": "/redfish/v1/Systems/system/LogServices"
+  },
+  "Memory": {
+   "@odata.id": "/redfish/v1/Systems/system/Memory"
+  },
+  "MemorySummary": {
+   "TotalSystemMemoryGiB": 0.0
+  },
+  "Name": "system",
+  "PCIeDevices": [],
+  "PCIeDevices@odata.count": 0,
+  "PowerRestorePolicy": "AlwaysOff",
+  "PowerState": "Off",
+  "ProcessorSummary": {
+   "Count": 0
+  },
+  "Processors": {
+   "@odata.id": "/redfish/v1/Systems/system/Processors"
+  },
+  "SerialConsole": {
+   "IPMI": {
+    "ServiceEnabled": true
+   },
+   "MaxConcurrentSessions": 15,
+   "SSH": {
+    "HotKeySequenceDisplay": "Press ~. to exit console",
+    "Port": 2200,
+    "ServiceEnabled": true
+   }
+  },
+  "Status": {
+   "Health": "OK",
+   "State": "Disabled"
+  },
+  "Storage": {
+   "@odata.id": "/redfish/v1/Systems/system/Storage"
+  },
+  "SystemType": "Physical"
+ },
+ "/redfish/v1/Systems/system/LogServices": {
+  "@odata.id": "/redfish/v1/Systems/system/LogServices",
+  "@odata.type": "#LogServiceCollection.LogServiceCollection",
+  "Description": "Collection of LogServices for this Computer System",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/system/LogServices/EventLog"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "System Log Services Collection"
+ },
+ "/redfish/v1/Systems/system/LogServices/EventLog": {
+  "@odata.id": "/redfish/v1/Systems/system/LogServices/EventLog",
+  "@odata.type": "#LogService.v1_2_0.LogService",
+  "Actions": {
+   "#LogService.ClearLog": {
+    "target": "/redfish/v1/Systems/system/LogServices/EventLog/Actions/LogService.ClearLog"
+   }
+  },
+  "DateTime": "2026-11-14T05:39:53+00:00",
+  "DateTimeLocalOffset": "+00:00",
+  "Description": "System Event Log Service",
+  "Entries": {
+   "@odata.id": "/redfish/v1/Systems/system/LogServices/EventLog/Entries"
+  },
+  "Id": "EventLog",
+  "Name": "Event Log Service",
+  "OverWritePolicy": "WrapsWhenFull"
+ },
+ "/redfish/v1/Systems/system/LogServices/EventLog/Entries": {
+  "@odata.id": "/redfish/v1/Systems/system/LogServices/EventLog/Entries",
+  "@odata.type": "#LogEntryCollection.LogEntryCollection",
+  "Description": "Collection of System Event Log Entries",
+  "Members": [],
+  "Members@odata.count": 0,
+  "Name": "System Event Log Entries"
+ },
+ "/redfish/v1/Systems/system/Storage": {
+  "@odata.id": "/redfish/v1/Systems/system/Storage",
+  "@odata.type": "#StorageCollection.StorageCollection",
+  "Members": [],
+  "Members@odata.count": 0,
+  "Name": "Storage Collection"
+ }
+}

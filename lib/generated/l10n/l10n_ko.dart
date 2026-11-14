@@ -6969,4 +6969,49 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return '$path의 ssh-agent에 연결할 수 없습니다: $reason';
   }
+
+  @override
+  String get bmcLocator => '위치 표시등';
+
+  @override
+  String get bmcBoot => '부팅 재정의';
+
+  @override
+  String get bmcBootDisabled => '기본 순서';
+
+  @override
+  String get bmcBootOnce => '다음 부팅만';
+
+  @override
+  String get bmcBootContinuous => '매 부팅';
+
+  @override
+  String get bmcBootTarget => '장치';
+
+  @override
+  String get bmcVirtualMedia => '가상 미디어';
+
+  @override
+  String get bmcInsertMedia => '삽입';
+
+  @override
+  String get bmcEjectMedia => '꺼내기';
+
+  @override
+  String get bmcImageUrl => '이미지 URL';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      '자격 증명이 없는 이미지의 http(s), NFS 또는 SMB URL이 필요합니다';
+
+  @override
+  String get bmcDrives => '드라이브';
+
+  @override
+  String get bmcNoStorage => '이 서비스는 스토리지를 보고하지 않습니다';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$server의 $log을(를) 비울까요?';
+  }
 }

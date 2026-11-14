@@ -7260,4 +7260,49 @@ class AppLocalizationsId extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'Tidak dapat menjangkau ssh-agent di $path: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Lampu penanda';
+
+  @override
+  String get bmcBoot => 'Override boot';
+
+  @override
+  String get bmcBootDisabled => 'Urutan bawaan';
+
+  @override
+  String get bmcBootOnce => 'Hanya boot berikutnya';
+
+  @override
+  String get bmcBootContinuous => 'Setiap boot';
+
+  @override
+  String get bmcBootTarget => 'Perangkat';
+
+  @override
+  String get bmcVirtualMedia => 'Media virtual';
+
+  @override
+  String get bmcInsertMedia => 'Masukkan';
+
+  @override
+  String get bmcEjectMedia => 'Keluarkan';
+
+  @override
+  String get bmcImageUrl => 'URL image';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Perlu URL http(s), NFS, atau SMB dari image, tanpa kredensial';
+
+  @override
+  String get bmcDrives => 'Drive';
+
+  @override
+  String get bmcNoStorage => 'Layanan tidak melaporkan penyimpanan';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return 'Kosongkan $log di $server?';
+  }
 }

@@ -7263,4 +7263,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'Cannot reach the ssh-agent at $path: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Locator light';
+
+  @override
+  String get bmcBoot => 'Boot override';
+
+  @override
+  String get bmcBootDisabled => 'Default order';
+
+  @override
+  String get bmcBootOnce => 'Next boot only';
+
+  @override
+  String get bmcBootContinuous => 'Every boot';
+
+  @override
+  String get bmcBootTarget => 'Device';
+
+  @override
+  String get bmcVirtualMedia => 'Virtual media';
+
+  @override
+  String get bmcInsertMedia => 'Insert';
+
+  @override
+  String get bmcEjectMedia => 'Eject';
+
+  @override
+  String get bmcImageUrl => 'Image URL';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Needs an http(s), NFS or SMB URL of the image, without credentials in it';
+
+  @override
+  String get bmcDrives => 'Drives';
+
+  @override
+  String get bmcNoStorage => 'The service reports no storage';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return 'Clear $log on $server?';
+  }
 }

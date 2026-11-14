@@ -95,6 +95,32 @@ grounds to fail the whole fetch.
 `Vendor` and `Product` are both absent on the H3C. They are free text and worth
 displaying, but nothing may be decided by them.
 
+## Logs are listed, never named — *read*
+
+The machine's event log is `Systems/{id}/LogServices/EventLog` on OpenBMC,
+`Managers/iDRAC.Embedded.1/LogServices/Sel` on iDRAC, `Systems/1/LogServices/IML`
+on iLO; the BMC's own logs sit beside it under the manager. Walk both
+`LogServices` collections. Order differs too (bmcweb oldest first, iDRAC newest
+first), so entries are ordered by `Created` after reading, and a collection
+may be one unpaged response of thousands or pages of ten. An oldest-first log
+longer than the pages read is read from its tail by `$skip`. The next page's
+link is `$skip`/`$top` (bmcweb, iDRAC), `page=N` (iLO) or `$skiptoken`.
+
+## Virtual media may have no actions — *read*
+
+`InsertMedia` and `EjectMedia` came with VirtualMedia 1.1 (2018); before it,
+`Image` and `Inserted` were set with a `PATCH` (DMTF's `public-rackmount1`
+mockup still has no actions). Use the action where the slot has one, the
+properties otherwise. Newer firmware lists the slots under the system, older
+under the manager.
+
+## The locator has two names — *read*
+
+`LocationIndicatorActive` (a boolean) replaced `IndicatorLED` (`Lit`,
+`Blinking`, `Off`) in 2020. Set whichever the system reports; never both.
+iLO's `IndicatorLED` takes `Lit` and not `Blinking`: `Lit` unless the
+system's `AllowableValues` leave it out.
+
 ## Allowable values may be in an `ActionInfo` — *measured*
 
 OpenBMC's bmcweb lists nothing inline on `#ComputerSystem.Reset`: the action
@@ -138,7 +164,12 @@ confidence.
 | `ResetType` allowed | through `ResetActionInfo` only: `ForceOff`, `PowerCycle`, `Nmi`, `GracefulShutdown`, `On`, `ForceOn`, `GracefulRestart`, `ForceRestart` |
 | Sessions | released on close |
 | Certificate | self-signed (`CN=testhost`) |
-| Run | 2026-10-03 |
+| Logs | `EventLog` under the system (clearable), `Journal` under the manager (~850 entries, one unpaged response) |
+| Clearing `EventLog` | answers `500 Base.1.19.InternalError` under QEMU, with or without a body |
+| Boot override | targets `None`, `Pxe`, `Hdd`, `Cd`, `Diags`, `BiosSetup`, `Usb`; modes `Legacy`, `UEFI`; no allowable values for `BootSourceOverrideEnabled`. Set and read back |
+| Locator | `LocationIndicatorActive`, set and read back |
+| Storage | a `Storage` collection with no members; no `VirtualMedia` |
+| Run | 2026-10-03; logs, boot override, locator 2026-11-14 |
 
 Not covered, and worth a row when someone has one: Dell, OpenBMC on real hardware, the
 Supermicro X13/X14 sensor-model switch, HPE iLO's graceful operations, and any

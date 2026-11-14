@@ -2037,5 +2037,19 @@
   "sshAgentUnset": "{name} から ssh-agent のソケットが見つかりません",
   "sshAgentUnsupported": "このデバイスでは ssh-agent を使用できません",
   "sshAgentNotPipe": "Windows では ssh-agent に named pipe で接続します。{path} は named pipe ではありません",
-  "sshAgentUnreachable": "{path} の ssh-agent に接続できません: {reason}"
+  "sshAgentUnreachable": "{path} の ssh-agent に接続できません: {reason}",
+  "bmcLocator": "ロケーターLED",
+  "bmcBoot": "ブートオーバーライド",
+  "bmcBootDisabled": "既定の順序",
+  "bmcBootOnce": "次回の起動のみ",
+  "bmcBootContinuous": "毎回の起動",
+  "bmcBootTarget": "デバイス",
+  "bmcVirtualMedia": "仮想メディア",
+  "bmcInsertMedia": "挿入",
+  "bmcEjectMedia": "取り出し",
+  "bmcImageUrl": "イメージ URL",
+  "bmcImageUrlInvalid": "認証情報を含まない、イメージの http(s)、NFS、SMB の URL が必要です",
+  "bmcDrives": "ドライブ",
+  "bmcNoStorage": "このサービスはストレージを報告していません",
+  "bmcClearLogConfirm": "{server} の {log} を消去しますか？"
 }

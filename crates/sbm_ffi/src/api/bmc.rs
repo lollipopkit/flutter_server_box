@@ -16,7 +16,7 @@ use std::time::Duration;
 use sbm_redfish::{
     cert,
     client::{Client, ClientConfig},
-    model,
+    logs, media, model, storage,
 };
 
 /// How long reading a certificate for review may take — what the Dart
@@ -208,6 +208,7 @@ impl PowerWatch {
 pub struct RedfishRoot {
     pub systems: Option<String>,
     pub chassis: Option<String>,
+    pub managers: Option<String>,
     pub sessions: Option<String>,
     pub version: Option<String>,
     pub product: Option<String>,
@@ -219,6 +220,7 @@ impl From<model::RedfishRoot> for RedfishRoot {
         Self {
             systems: r.systems,
             chassis: r.chassis,
+            managers: r.managers,
             sessions: r.sessions,
             version: r.version,
             product: r.product,
@@ -232,6 +234,7 @@ impl From<RedfishRoot> for model::RedfishRoot {
         Self {
             systems: r.systems,
             chassis: r.chassis,
+            managers: r.managers,
             sessions: r.sessions,
             version: r.version,
             product: r.product,
@@ -251,6 +254,12 @@ pub struct RedfishSystem {
     pub health: Option<String>,
     pub reset_target: Option<String>,
     pub reset_types: Vec<String>,
+    pub boot: Option<BootOverride>,
+    pub locator: Option<Locator>,
+    pub log_services: Option<String>,
+    pub storage: Option<String>,
+    pub simple_storage: Option<String>,
+    pub virtual_media: Option<String>,
 }
 
 impl From<model::RedfishSystem> for RedfishSystem {
@@ -264,6 +273,12 @@ impl From<model::RedfishSystem> for RedfishSystem {
             health: s.health,
             reset_target: s.reset_target,
             reset_types: s.reset_types,
+            boot: s.boot.map(Into::into),
+            locator: s.locator.map(Into::into),
+            log_services: s.log_services,
+            storage: s.storage,
+            simple_storage: s.simple_storage,
+            virtual_media: s.virtual_media,
         }
     }
 }
@@ -279,6 +294,12 @@ impl From<RedfishSystem> for model::RedfishSystem {
             health: s.health,
             reset_target: s.reset_target,
             reset_types: s.reset_types,
+            boot: s.boot.map(Into::into),
+            locator: s.locator.map(Into::into),
+            log_services: s.log_services,
+            storage: s.storage,
+            simple_storage: s.simple_storage,
+            virtual_media: s.virtual_media,
         }
     }
 }
@@ -321,6 +342,122 @@ impl From<RedfishChassis> for model::RedfishChassis {
     }
 }
 
+/// The next boot's device (mirrors sbm_redfish::model::BootOverride).
+#[derive(Debug, Clone, PartialEq)]
+pub struct BootOverride {
+    /// `Disabled`, `Once` or `Continuous`
+    pub enabled: Option<String>,
+    pub target: Option<String>,
+    /// `UEFI` or `Legacy`
+    pub mode: Option<String>,
+    /// What may be asked for; no targets is nothing that can be set
+    pub targets: Vec<String>,
+    pub enabled_values: Vec<String>,
+    pub modes: Vec<String>,
+    /// The targets a person may pick (`targets` without `None`)
+    pub settable_targets: Vec<String>,
+    /// Enabled, for a device
+    pub active: bool,
+}
+
+impl From<model::BootOverride> for BootOverride {
+    fn from(b: model::BootOverride) -> Self {
+        Self {
+            settable_targets: b.settable_targets(),
+            active: b.is_active(),
+            enabled: b.enabled,
+            target: b.target,
+            mode: b.mode,
+            targets: b.targets,
+            enabled_values: b.enabled_values,
+            modes: b.modes,
+        }
+    }
+}
+
+impl From<BootOverride> for model::BootOverride {
+    fn from(b: BootOverride) -> Self {
+        Self {
+            enabled: b.enabled,
+            target: b.target,
+            mode: b.mode,
+            targets: b.targets,
+            enabled_values: b.enabled_values,
+            modes: b.modes,
+        }
+    }
+}
+
+/// A boot override to set (mirrors sbm_redfish::model::BootRequest).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BootRequest {
+    pub target: String,
+    /// `Once` or `Continuous`; `Disabled` turns the override off
+    pub enabled: String,
+    /// Left as it is when `None`
+    pub mode: Option<String>,
+}
+
+/// Where a person picking an override starts; `None` when nothing can be set.
+#[flutter_rust_bridge::frb(sync)]
+pub fn bmc_boot_default(boot: BootOverride) -> Option<BootRequest> {
+    model::BootOverride::from(boot)
+        .default_request()
+        .map(|r| BootRequest { target: r.target, enabled: r.enabled, mode: r.mode })
+}
+
+/// The light that finds the machine (mirrors sbm_redfish::model::Locator).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Locator {
+    /// `on` upstream, a Dart keyword
+    pub lit: bool,
+    /// Set through the deprecated `IndicatorLED`
+    pub legacy: bool,
+}
+
+impl From<model::Locator> for Locator {
+    fn from(l: model::Locator) -> Self {
+        Self { lit: l.on, legacy: l.legacy }
+    }
+}
+
+impl From<Locator> for model::Locator {
+    fn from(l: Locator) -> Self {
+        Self { on: l.lit, legacy: l.legacy }
+    }
+}
+
+/// The BMC itself (mirrors sbm_redfish::model::RedfishManager).
+#[derive(Debug, Clone, PartialEq)]
+pub struct RedfishManager {
+    pub firmware_version: Option<String>,
+    pub model: Option<String>,
+    pub log_services: Option<String>,
+    pub virtual_media: Option<String>,
+}
+
+impl From<model::RedfishManager> for RedfishManager {
+    fn from(m: model::RedfishManager) -> Self {
+        Self {
+            firmware_version: m.firmware_version,
+            model: m.model,
+            log_services: m.log_services,
+            virtual_media: m.virtual_media,
+        }
+    }
+}
+
+impl From<RedfishManager> for model::RedfishManager {
+    fn from(m: RedfishManager) -> Self {
+        Self {
+            firmware_version: m.firmware_version,
+            model: m.model,
+            log_services: m.log_services,
+            virtual_media: m.virtual_media,
+        }
+    }
+}
+
 /// What a service turned out to be, discovered once and passed back on every
 /// poll (mirrors sbm_redfish::model::Topology).
 #[derive(Debug, Clone, PartialEq)]
@@ -328,8 +465,10 @@ pub struct RedfishTopology {
     pub root: RedfishRoot,
     pub system_path: Option<String>,
     pub chassis_path: Option<String>,
+    pub manager_path: Option<String>,
     pub system: Option<RedfishSystem>,
     pub chassis: Option<RedfishChassis>,
+    pub manager: Option<RedfishManager>,
     /// Only the first system is shown; the UI says so
     pub has_multiple_systems: bool,
 }
@@ -340,8 +479,10 @@ impl From<model::Topology> for RedfishTopology {
             root: t.root.into(),
             system_path: t.system_path,
             chassis_path: t.chassis_path,
+            manager_path: t.manager_path,
             system: t.system.map(Into::into),
             chassis: t.chassis.map(Into::into),
+            manager: t.manager.map(Into::into),
             has_multiple_systems: t.has_multiple_systems,
         }
     }
@@ -353,8 +494,10 @@ impl From<RedfishTopology> for model::Topology {
             root: t.root.into(),
             system_path: t.system_path,
             chassis_path: t.chassis_path,
+            manager_path: t.manager_path,
             system: t.system.map(Into::into),
             chassis: t.chassis.map(Into::into),
+            manager: t.manager.map(Into::into),
             has_multiple_systems: t.has_multiple_systems,
         }
     }
@@ -425,6 +568,222 @@ impl From<sbm_redfish::Outcome> for BmcOutcome {
     }
 }
 
+// --- Logs ---
+
+/// Whose a log is (mirrors sbm_redfish::logs::LogScope).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LogScope {
+    /// The machine's
+    System,
+    /// The BMC's own
+    Manager,
+}
+
+/// One log (mirrors sbm_redfish::logs::LogService).
+#[derive(Debug, Clone, PartialEq)]
+pub struct LogService {
+    pub path: String,
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub scope: LogScope,
+    pub entry_type: Option<String>,
+    pub entries: Option<String>,
+    /// Set when the log can be cleared
+    pub clear_target: Option<String>,
+}
+
+impl From<logs::LogService> for LogService {
+    fn from(l: logs::LogService) -> Self {
+        Self {
+            path: l.path,
+            id: l.id,
+            name: l.name,
+            description: l.description,
+            scope: match l.scope {
+                logs::LogScope::System => LogScope::System,
+                logs::LogScope::Manager => LogScope::Manager,
+            },
+            entry_type: l.entry_type,
+            entries: l.entries,
+            clear_target: l.clear_target,
+        }
+    }
+}
+
+impl From<LogService> for logs::LogService {
+    fn from(l: LogService) -> Self {
+        Self {
+            path: l.path,
+            id: l.id,
+            name: l.name,
+            description: l.description,
+            scope: match l.scope {
+                LogScope::System => logs::LogScope::System,
+                LogScope::Manager => logs::LogScope::Manager,
+            },
+            entry_type: l.entry_type,
+            entries: l.entries,
+            clear_target: l.clear_target,
+        }
+    }
+}
+
+/// One entry (mirrors sbm_redfish::logs::LogEntry).
+#[derive(Debug, Clone, PartialEq)]
+pub struct LogEntry {
+    pub id: Option<String>,
+    /// ISO 8601, as the service wrote it
+    pub created: Option<String>,
+    /// `OK`, `Warning` or `Critical`
+    pub severity: Option<String>,
+    pub message: Option<String>,
+    pub message_id: Option<String>,
+    pub entry_type: Option<String>,
+    pub sensor_type: Option<String>,
+}
+
+/// The newest entries, newest first (mirrors sbm_redfish::logs::LogPage).
+#[derive(Debug, Clone, PartialEq)]
+pub struct LogPage {
+    pub entries: Vec<LogEntry>,
+    pub total: Option<u64>,
+    /// More were there than were kept
+    pub truncated: bool,
+}
+
+impl From<logs::LogPage> for LogPage {
+    fn from(p: logs::LogPage) -> Self {
+        Self {
+            entries: p
+                .entries
+                .into_iter()
+                .map(|e| LogEntry {
+                    id: e.id,
+                    created: e.created,
+                    severity: e.severity,
+                    message: e.message,
+                    message_id: e.message_id,
+                    entry_type: e.entry_type,
+                    sensor_type: e.sensor_type,
+                })
+                .collect(),
+            total: p.total,
+            truncated: p.truncated,
+        }
+    }
+}
+
+// --- Storage ---
+
+/// One drive (mirrors sbm_redfish::storage::Drive).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Drive {
+    pub name: Option<String>,
+    pub model: Option<String>,
+    pub serial: Option<String>,
+    pub capacity_bytes: Option<u64>,
+    pub media_type: Option<String>,
+    pub protocol: Option<String>,
+    pub health: Option<String>,
+    pub state: Option<String>,
+    pub failure_predicted: Option<bool>,
+    pub life_left_percent: Option<f64>,
+    pub controller: Option<String>,
+    /// Failing, predicted to, or not OK
+    pub needs_attention: bool,
+}
+
+/// A system's drives (mirrors sbm_redfish::storage::StorageReport).
+#[derive(Debug, Clone, PartialEq)]
+pub struct StorageReport {
+    pub drives: Vec<Drive>,
+    pub truncated: bool,
+    /// The service lists no storage at all
+    pub unsupported: bool,
+}
+
+impl From<storage::StorageReport> for StorageReport {
+    fn from(r: storage::StorageReport) -> Self {
+        Self {
+            drives: r
+                .drives
+                .into_iter()
+                .map(|d| Drive {
+                    needs_attention: d.needs_attention(),
+                    name: d.name,
+                    model: d.model,
+                    serial: d.serial,
+                    capacity_bytes: d.capacity_bytes,
+                    media_type: d.media_type,
+                    protocol: d.protocol,
+                    health: d.health,
+                    state: d.state,
+                    failure_predicted: d.failure_predicted,
+                    life_left_percent: d.life_left_percent,
+                    controller: d.controller,
+                })
+                .collect(),
+            truncated: r.truncated,
+            unsupported: r.unsupported,
+        }
+    }
+}
+
+// --- Virtual media ---
+
+/// One slot an image can be put in (mirrors sbm_redfish::media::MediaSlot).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MediaSlot {
+    pub path: String,
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub media_types: Vec<String>,
+    pub inserted: bool,
+    pub image: Option<String>,
+    pub write_protected: Option<bool>,
+    pub insert_target: Option<String>,
+    pub eject_target: Option<String>,
+}
+
+impl From<media::MediaSlot> for MediaSlot {
+    fn from(m: media::MediaSlot) -> Self {
+        Self {
+            path: m.path,
+            id: m.id,
+            name: m.name,
+            media_types: m.media_types,
+            inserted: m.inserted,
+            image: m.image,
+            write_protected: m.write_protected,
+            insert_target: m.insert_target,
+            eject_target: m.eject_target,
+        }
+    }
+}
+
+impl From<MediaSlot> for media::MediaSlot {
+    fn from(m: MediaSlot) -> Self {
+        Self {
+            path: m.path,
+            id: m.id,
+            name: m.name,
+            media_types: m.media_types,
+            inserted: m.inserted,
+            image: m.image,
+            write_protected: m.write_protected,
+            insert_target: m.insert_target,
+            eject_target: m.eject_target,
+        }
+    }
+}
+
+/// Whether `image` is an address a BMC may be given to fetch an image from.
+#[flutter_rust_bridge::frb(sync)]
+pub fn bmc_is_image_url(image: String) -> bool {
+    media::is_image_url(&image)
+}
+
 // --- Client ---
 
 /// One BMC's Redfish service. Holds a session on a device that allows few, so
@@ -485,6 +844,66 @@ impl BmcClient {
     pub async fn power(&self, topology: RedfishTopology, intent: PowerIntent) -> Result<BmcOutcome, BmcError> {
         let topology = model::Topology::from(topology);
         Ok(sbm_redfish::power(&self.0, &topology, intent.into()).await?.into())
+    }
+
+    /// Every log the system and its BMC keep, the machine's first.
+    pub async fn log_services(&self, topology: RedfishTopology) -> Result<Vec<LogService>, BmcError> {
+        let topology = model::Topology::from(topology);
+        Ok(logs::log_services(&self.0, &topology)
+            .await?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    }
+
+    /// The newest entries of `service`, newest first.
+    pub async fn log_entries(&self, service: LogService) -> Result<LogPage, BmcError> {
+        Ok(logs::log_entries(&self.0, &service.into()).await?.into())
+    }
+
+    /// Empties `service`; `notSupported` without sending anything when it
+    /// cannot be cleared.
+    pub async fn clear_log(&self, service: LogService) -> Result<BmcOutcome, BmcError> {
+        Ok(logs::clear_log(&self.0, &service.into()).await?.into())
+    }
+
+    /// Every drive the system lists, best effort.
+    pub async fn storage(&self, topology: RedfishTopology) -> Result<StorageReport, BmcError> {
+        Ok(storage::storage(&self.0, &model::Topology::from(topology)).await?.into())
+    }
+
+    /// Sets the next boot's device; `notSupported` without sending anything
+    /// for a value the service does not list. `mode` `None` leaves it.
+    pub async fn set_boot(&self, topology: RedfishTopology, request: BootRequest) -> Result<BmcOutcome, BmcError> {
+        let topology = model::Topology::from(topology);
+        let BootRequest { target, enabled, mode } = request;
+        let request = model::BootRequest { target, enabled, mode };
+        Ok(sbm_redfish::set_boot(&self.0, &topology, &request).await?.into())
+    }
+
+    /// Turns the locator light on or off.
+    pub async fn set_locator(&self, topology: RedfishTopology, lit: bool) -> Result<BmcOutcome, BmcError> {
+        let topology = model::Topology::from(topology);
+        Ok(sbm_redfish::set_locator(&self.0, &topology, lit).await?.into())
+    }
+
+    /// Every virtual media slot, the system's then the manager's.
+    pub async fn media_slots(&self, topology: RedfishTopology) -> Result<Vec<MediaSlot>, BmcError> {
+        Ok(media::media_slots(&self.0, &model::Topology::from(topology))
+            .await?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    }
+
+    /// Puts `image` in `slot`, read-only.
+    pub async fn insert_media(&self, slot: MediaSlot, image: String) -> Result<BmcOutcome, BmcError> {
+        Ok(media::insert_media(&self.0, &slot.into(), &image).await?.into())
+    }
+
+    /// Takes the image out of `slot`.
+    pub async fn eject_media(&self, slot: MediaSlot) -> Result<BmcOutcome, BmcError> {
+        Ok(media::eject_media(&self.0, &slot.into()).await?.into())
     }
 
     /// Ends the session. Never fails; safe to call twice.

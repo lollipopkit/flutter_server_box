@@ -2037,5 +2037,19 @@
   "sshAgentUnset": "Nenhum socket de ssh-agent encontrado a partir de {name}",
   "sshAgentUnsupported": "Este dispositivo não pode usar um ssh-agent",
   "sshAgentNotPipe": "No Windows, um ssh-agent é acessado por um named pipe, e {path} não é um",
-  "sshAgentUnreachable": "Não foi possível acessar o ssh-agent em {path}: {reason}"
+  "sshAgentUnreachable": "Não foi possível acessar o ssh-agent em {path}: {reason}",
+  "bmcLocator": "Luz de localização",
+  "bmcBoot": "Substituição de arranque",
+  "bmcBootDisabled": "Ordem padrão",
+  "bmcBootOnce": "Apenas o próximo arranque",
+  "bmcBootContinuous": "Todos os arranques",
+  "bmcBootTarget": "Dispositivo",
+  "bmcVirtualMedia": "Mídia virtual",
+  "bmcInsertMedia": "Inserir",
+  "bmcEjectMedia": "Ejetar",
+  "bmcImageUrl": "URL da imagem",
+  "bmcImageUrlInvalid": "É preciso um URL http(s), NFS ou SMB da imagem, sem credenciais",
+  "bmcDrives": "Discos",
+  "bmcNoStorage": "O serviço não informa armazenamento",
+  "bmcClearLogConfirm": "Limpar {log} em {server}?"
 }

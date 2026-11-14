@@ -28,6 +28,15 @@ extension on _ServerDetailPageState {
         if (value == null || value.isEmpty) continue;
         rows.add(ServerDetailReadoutRow(k: label, v: value));
       }
+      final boot = system.boot;
+      if (boot != null && boot.active) {
+        rows.add(
+          ServerDetailReadoutRow(
+            k: l10n.bmcBoot,
+            v: '${boot.target ?? libL10n.unknown} · ${_bmcBootEnabledText(boot.enabled!)}',
+          ),
+        );
+      }
     }
 
     final sensors = bmc.sensors;
@@ -55,7 +64,7 @@ extension on _ServerDetailPageState {
       mark: Feature.bmc.mark(),
       verdict: switch (bmc) {
         BmcState(failure: final failure?) => (
-          text: _bmcFailureText(failure, bmc.failureDetail),
+          text: bmcFailureText(failure, bmc.failureDetail),
           tone: ReadoutVerdict.bad,
         ),
         BmcState(hasData: false, isBusy: true) => null,
@@ -79,7 +88,12 @@ extension on _ServerDetailPageState {
       rows: rows,
       // Below the readings and never cut off by [kReadoutCardRows]: these are
       // the actions, and a truncated list must not be able to hide them.
-      extra: [if (bmc.hasData) _buildBmcPower(srv, busy: bmc.isPowering)],
+      extra: [
+        if (bmc.hasData) ...[
+          _buildBmcPower(srv, busy: bmc.isPowering),
+          _buildBmcManage(srv, bmc),
+        ],
+      ],
       footer: readoutFooter([
         readoutCountNote(
           rows.length,
@@ -131,6 +145,164 @@ extension on _ServerDetailPageState {
     );
   }
 
+  /// What else the BMC can do for this machine, each offered only where the
+  /// service lists it.
+  Widget _buildBmcManage(ServerState srv, BmcState bmc) {
+    final system = bmc.topology?.system;
+    if (system == null) return UIs.placeholder;
+    final args = SpiRequiredArgs(srv.spi);
+    final locator = system.locator;
+    final boot = system.boot;
+    final hasMedia =
+        system.virtualMedia != null || bmc.topology?.manager?.virtualMedia != null;
+    final hasLogs =
+        system.logServices != null || bmc.topology?.manager?.logServices != null;
+    final busy = bmc.isPowering;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      child: Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: [
+          if (hasLogs)
+            OutlinedButton.icon(
+              onPressed: () => BmcLogsPage.route.go(context, args),
+              icon: const Icon(Icons.receipt_long, size: 17),
+              label: Text(libL10n.logs),
+            ),
+          if (system.storage != null || system.simpleStorage != null)
+            OutlinedButton.icon(
+              onPressed: () => BmcDrivesPage.route.go(context, args),
+              icon: const Icon(Icons.storage, size: 17),
+              label: Text(l10n.bmcDrives),
+            ),
+          if (boot != null && boot.settableTargets.isNotEmpty)
+            OutlinedButton.icon(
+              onPressed: busy ? null : () => _onTapBmcBoot(srv, boot),
+              icon: const Icon(Icons.start, size: 17),
+              label: Text(l10n.bmcBoot),
+            ),
+          if (hasMedia)
+            OutlinedButton.icon(
+              onPressed: busy ? null : () => _onTapBmcMedia(srv),
+              icon: const Icon(Icons.album, size: 17),
+              label: Text(l10n.bmcVirtualMedia),
+            ),
+          if (locator != null)
+            FilterChip(
+              avatar: Icon(
+                locator.lit ? Icons.lightbulb : Icons.lightbulb_outline,
+                size: 17,
+              ),
+              showCheckmark: false,
+              label: Text(l10n.bmcLocator),
+              selected: locator.lit,
+              onSelected: busy
+                  ? null
+                  : (on) => context.bmcRun(
+                      () => ref.read(bmcProvider(srv.spi).notifier).setLocator(on),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onTapBmcBoot(ServerState srv, BootOverride boot) async {
+    final start = bmcBootDefault(boot: boot);
+    if (start == null) return;
+    final picked = ValueNotifier(start);
+    final ok = await context.showSheet<bool>(
+      title: l10n.bmcBoot,
+      child: _BmcBootForm(boot: boot, picked: picked),
+      actions: Btnx.cancelOk,
+    );
+    final request = picked.value;
+    picked.dispose();
+    if (ok != true || !mounted) return;
+    final notifier = ref.read(bmcProvider(srv.spi).notifier);
+    await context.bmcRun(() => notifier.setBoot(request));
+  }
+
+  Future<void> _onTapBmcMedia(ServerState srv) async {
+    final notifier = ref.read(bmcProvider(srv.spi).notifier);
+    final (slots, err) = await context.showLoadingSheet(
+      fn: notifier.mediaSlots,
+      showErr: false,
+      timeout: const Duration(minutes: 2),
+    );
+    if (!mounted) return;
+    if (err != null || slots == null) {
+      Toast.error(libL10n.fail, body: err == null ? null : bmcErrorText(err));
+      return;
+    }
+    if (slots.isEmpty) {
+      Toast.info(libL10n.empty);
+      return;
+    }
+    await context.showSheet<void>(
+      title: l10n.bmcVirtualMedia,
+      childBuilder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final slot in slots)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(slot.inserted ? Icons.album : Icons.radio_button_unchecked),
+              title: Text(slot.name ?? slot.id ?? slot.path),
+              subtitle: Text(
+                slot.image ?? slot.mediaTypes.join(', '),
+                style: UIs.text12Grey,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: slot.inserted
+                  ? TextButton(
+                      onPressed: () => _bmcEject(ctx, notifier, slot),
+                      child: Text(l10n.bmcEjectMedia),
+                    )
+                  : TextButton(
+                      onPressed: () => _bmcInsert(ctx, notifier, slot),
+                      child: Text(l10n.bmcInsertMedia),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _bmcInsert(
+    BuildContext ctx,
+    BmcNotifier notifier,
+    MediaSlot slot,
+  ) async {
+    final image = (await ctx.showInputSheet(
+      title: l10n.bmcInsertMedia,
+      label: l10n.bmcImageUrl,
+      hint: 'https://10.0.0.2/os.iso',
+      type: TextInputType.url,
+    ))?.trim();
+    if (image == null || image.isEmpty || !ctx.mounted) return;
+    if (!bmcIsImageUrl(image: image)) {
+      Toast.error(l10n.bmcImageUrlInvalid);
+      return;
+    }
+    if (await ctx.bmcRun(() => notifier.insertMedia(slot, image)) && ctx.mounted) {
+      ctx.popSheet();
+    }
+  }
+
+  Future<void> _bmcEject(
+    BuildContext ctx,
+    BmcNotifier notifier,
+    MediaSlot slot,
+  ) async {
+    if (await ctx.bmcRun(() => notifier.ejectMedia(slot)) && ctx.mounted) {
+      ctx.popSheet();
+    }
+  }
+
   Future<void> _onTapBmcPower(ServerState srv, PowerIntent intent) async {
     final notifier = ref.read(bmcProvider(srv.spi).notifier);
     final request = notifier.plan(intent);
@@ -178,24 +350,85 @@ extension on _ServerDetailPageState {
     PowerState.unknown => libL10n.unknown,
   };
 
-  String _bmcFailureText(RedfishFailure failure, String? detail) =>
-      switch (failure) {
-        RedfishFailure.certificateRejected ||
-        RedfishFailure.certNotReviewed => l10n.bmcCertRejected,
-        RedfishFailure.unauthorized => l10n.bmcUnauthorized,
-        RedfishFailure.noCredential => l10n.bmcAccountMissing,
-        RedfishFailure.notAService => l10n.bmcNotAService,
-        RedfishFailure.noSystem => l10n.bmcNoSystem,
-        // Names the resource, because it is an answer about one resource
-        RedfishFailure.forbidden => '${libL10n.fail}: ${detail ?? ''}',
-        // Retrying after a fresh read is the fix, so it is worth saying that
-        // rather than showing a generic failure — this is what a change made
-        // through the BMC's own web interface in the meantime looks like.
-        RedfishFailure.preconditionRequired => l10n.bmcStaleWrite,
-        RedfishFailure.invalidUrl => l10n.bmcAddrInvalid,
-        RedfishFailure.unreachable ||
-        RedfishFailure.notSupported ||
-        RedfishFailure.invalidResponse ||
-        RedfishFailure.closed => detail ?? libL10n.fail,
-      };
+}
+
+String _bmcBootEnabledText(String enabled) => switch (enabled) {
+  'Disabled' => l10n.bmcBootDisabled,
+  'Once' => l10n.bmcBootOnce,
+  'Continuous' => l10n.bmcBootContinuous,
+  _ => enabled,
+};
+
+final class _BmcBootForm extends StatelessWidget {
+  final BootOverride boot;
+  final ValueNotifier<BootRequest> picked;
+
+  const _BmcBootForm({required this.boot, required this.picked});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: picked,
+      builder: (_, req, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 13,
+        children: [
+          _group(
+            l10n.bmcBootTarget,
+            boot.settableTargets,
+            req.target,
+            (v) => BootRequest(target: v, enabled: req.enabled, mode: req.mode),
+          ),
+          _group(
+            libL10n.mode,
+            boot.enabledValues,
+            req.enabled,
+            (v) => BootRequest(target: req.target, enabled: v, mode: req.mode),
+            text: _bmcBootEnabledText,
+          ),
+          if (boot.modes.length > 1)
+            _group(
+              'BIOS',
+              boot.modes,
+              req.mode ?? boot.mode,
+              // The one in effect is left as it is: `None` sends nothing.
+              (v) => BootRequest(
+                target: req.target,
+                enabled: req.enabled,
+                mode: v == boot.mode ? null : v,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _group(
+    String title,
+    List<String> values,
+    String? current,
+    BootRequest Function(String) pick, {
+    String Function(String)? text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 7,
+      children: [
+        Text(title, style: UIs.text13Grey),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            for (final v in values)
+              ChoiceChip(
+                label: Text(text?.call(v) ?? v),
+                selected: v == current,
+                onSelected: (_) => picked.value = pick(v),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }
