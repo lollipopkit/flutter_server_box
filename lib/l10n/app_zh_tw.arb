@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "無法從 {name} 找到 ssh-agent 的 socket",
   "sshAgentUnsupported": "此裝置無法使用 ssh-agent",
   "sshAgentNotPipe": "Windows 上需透過 named pipe 連線 ssh-agent，{path} 不是 named pipe",
-  "sshAgentUnreachable": "無法連線 {path} 的 ssh-agent：{reason}"
+  "sshAgentUnreachable": "無法連線 {path} 的 ssh-agent：{reason}",
+  "bmcLocator": "定位燈",
+  "bmcBoot": "開機覆寫",
+  "bmcBootDisabled": "預設順序",
+  "bmcBootOnce": "僅下次開機",
+  "bmcBootContinuous": "每次開機",
+  "bmcBootTarget": "裝置",
+  "bmcVirtualMedia": "虛擬媒體",
+  "bmcInsertMedia": "插入",
+  "bmcEjectMedia": "退出",
+  "bmcImageUrl": "映像檔 URL",
+  "bmcImageUrlInvalid": "需要映像檔的 http(s)、NFS 或 SMB 位址，且不含憑證",
+  "bmcDrives": "硬碟",
+  "bmcNoStorage": "此服務未提供儲存資訊",
+  "bmcClearLogConfirm": "清除 {server} 上的 {log}？",
+  "bmcEntriesTruncated": "僅顯示最新的項目",
+  "bmcDrivesTruncated": "僅顯示前面的幾顆硬碟"
 }

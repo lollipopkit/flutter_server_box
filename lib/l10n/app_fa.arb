@@ -1720,5 +1720,21 @@
   "sshAgentUnset": "هیچ سوکت ssh-agent از {name} پیدا نشد",
   "sshAgentUnsupported": "این دستگاه نمی‌تواند از ssh-agent استفاده کند",
   "sshAgentNotPipe": "در Windows دسترسی به ssh-agent از طریق named pipe است و {path} یک named pipe نیست",
-  "sshAgentUnreachable": "دسترسی به ssh-agent در {path} ممکن نیست: {reason}"
+  "sshAgentUnreachable": "دسترسی به ssh-agent در {path} ممکن نیست: {reason}",
+  "bmcLocator": "چراغ مکان‌یاب",
+  "bmcBoot": "جایگزینی بوت",
+  "bmcBootDisabled": "ترتیب پیش‌فرض",
+  "bmcBootOnce": "فقط بوت بعدی",
+  "bmcBootContinuous": "هر بوت",
+  "bmcBootTarget": "دستگاه",
+  "bmcVirtualMedia": "رسانهٔ مجازی",
+  "bmcInsertMedia": "درج",
+  "bmcEjectMedia": "بیرون دادن",
+  "bmcImageUrl": "نشانی ایمیج",
+  "bmcImageUrlInvalid": "نشانی http(s)، NFS یا SMB ایمیج بدون اطلاعات ورود لازم است",
+  "bmcDrives": "دیسک‌ها",
+  "bmcNoStorage": "این سرویس فضای ذخیره‌سازی گزارش نمی‌کند",
+  "bmcClearLogConfirm": "{log} روی {server} پاک شود؟",
+  "bmcEntriesTruncated": "فقط جدیدترین موارد نمایش داده می‌شود",
+  "bmcDrivesTruncated": "فقط دیسک‌های اول نمایش داده می‌شود"
 }

@@ -7309,4 +7309,55 @@ class AppLocalizationsUk extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'Не вдалося підключитися до ssh-agent за адресою $path: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Індикатор пошуку';
+
+  @override
+  String get bmcBoot => 'Перевизначення завантаження';
+
+  @override
+  String get bmcBootDisabled => 'Типовий порядок';
+
+  @override
+  String get bmcBootOnce => 'Лише наступне завантаження';
+
+  @override
+  String get bmcBootContinuous => 'Кожне завантаження';
+
+  @override
+  String get bmcBootTarget => 'Пристрій';
+
+  @override
+  String get bmcVirtualMedia => 'Віртуальні носії';
+
+  @override
+  String get bmcInsertMedia => 'Вставити';
+
+  @override
+  String get bmcEjectMedia => 'Вийняти';
+
+  @override
+  String get bmcImageUrl => 'URL образу';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Потрібна http(s)-, NFS- або SMB-адреса образу без облікових даних';
+
+  @override
+  String get bmcDrives => 'Диски';
+
+  @override
+  String get bmcNoStorage => 'Служба не повідомляє про сховище';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return 'Очистити $log на $server?';
+  }
+
+  @override
+  String get bmcEntriesTruncated => 'Показано лише найновіші записи';
+
+  @override
+  String get bmcDrivesTruncated => 'Показано лише перші диски';
 }

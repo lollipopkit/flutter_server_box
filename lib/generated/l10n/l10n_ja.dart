@@ -6968,4 +6968,55 @@ class AppLocalizationsJa extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return '$path の ssh-agent に接続できません: $reason';
   }
+
+  @override
+  String get bmcLocator => 'ロケーターLED';
+
+  @override
+  String get bmcBoot => 'ブートオーバーライド';
+
+  @override
+  String get bmcBootDisabled => '既定の順序';
+
+  @override
+  String get bmcBootOnce => '次回の起動のみ';
+
+  @override
+  String get bmcBootContinuous => '毎回の起動';
+
+  @override
+  String get bmcBootTarget => 'デバイス';
+
+  @override
+  String get bmcVirtualMedia => '仮想メディア';
+
+  @override
+  String get bmcInsertMedia => '挿入';
+
+  @override
+  String get bmcEjectMedia => '取り出し';
+
+  @override
+  String get bmcImageUrl => 'イメージ URL';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      '認証情報を含まない、イメージの http(s)、NFS、SMB の URL が必要です';
+
+  @override
+  String get bmcDrives => 'ドライブ';
+
+  @override
+  String get bmcNoStorage => 'このサービスはストレージを報告していません';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$server の $log を消去しますか？';
+  }
+
+  @override
+  String get bmcEntriesTruncated => '最新のエントリのみ表示しています';
+
+  @override
+  String get bmcDrivesTruncated => '最初のドライブのみ表示しています';
 }

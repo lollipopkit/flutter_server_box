@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "Не вдалося знайти сокет ssh-agent за {name}",
   "sshAgentUnsupported": "Цей пристрій не може використовувати ssh-agent",
   "sshAgentNotPipe": "У Windows ssh-agent доступний через named pipe, а {path} ним не є",
-  "sshAgentUnreachable": "Не вдалося підключитися до ssh-agent за адресою {path}: {reason}"
+  "sshAgentUnreachable": "Не вдалося підключитися до ssh-agent за адресою {path}: {reason}",
+  "bmcLocator": "Індикатор пошуку",
+  "bmcBoot": "Перевизначення завантаження",
+  "bmcBootDisabled": "Типовий порядок",
+  "bmcBootOnce": "Лише наступне завантаження",
+  "bmcBootContinuous": "Кожне завантаження",
+  "bmcBootTarget": "Пристрій",
+  "bmcVirtualMedia": "Віртуальні носії",
+  "bmcInsertMedia": "Вставити",
+  "bmcEjectMedia": "Вийняти",
+  "bmcImageUrl": "URL образу",
+  "bmcImageUrlInvalid": "Потрібна http(s)-, NFS- або SMB-адреса образу без облікових даних",
+  "bmcDrives": "Диски",
+  "bmcNoStorage": "Служба не повідомляє про сховище",
+  "bmcClearLogConfirm": "Очистити {log} на {server}?",
+  "bmcEntriesTruncated": "Показано лише найновіші записи",
+  "bmcDrivesTruncated": "Показано лише перші диски"
 }

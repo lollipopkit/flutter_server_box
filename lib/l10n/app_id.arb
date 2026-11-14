@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "Tidak ada soket ssh-agent yang ditemukan dari {name}",
   "sshAgentUnsupported": "Perangkat ini tidak dapat menggunakan ssh-agent",
   "sshAgentNotPipe": "Di Windows, ssh-agent dijangkau melalui named pipe, dan {path} bukan named pipe",
-  "sshAgentUnreachable": "Tidak dapat menjangkau ssh-agent di {path}: {reason}"
+  "sshAgentUnreachable": "Tidak dapat menjangkau ssh-agent di {path}: {reason}",
+  "bmcLocator": "Lampu penanda",
+  "bmcBoot": "Override boot",
+  "bmcBootDisabled": "Urutan bawaan",
+  "bmcBootOnce": "Hanya boot berikutnya",
+  "bmcBootContinuous": "Setiap boot",
+  "bmcBootTarget": "Perangkat",
+  "bmcVirtualMedia": "Media virtual",
+  "bmcInsertMedia": "Masukkan",
+  "bmcEjectMedia": "Keluarkan",
+  "bmcImageUrl": "URL image",
+  "bmcImageUrlInvalid": "Perlu URL http(s), NFS, atau SMB dari image, tanpa kredensial",
+  "bmcDrives": "Drive",
+  "bmcNoStorage": "Layanan tidak melaporkan penyimpanan",
+  "bmcClearLogConfirm": "Kosongkan {log} di {server}?",
+  "bmcEntriesTruncated": "Hanya entri terbaru yang ditampilkan",
+  "bmcDrivesTruncated": "Hanya drive pertama yang ditampilkan"
 }

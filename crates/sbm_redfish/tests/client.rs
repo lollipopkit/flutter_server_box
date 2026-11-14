@@ -719,6 +719,12 @@ async fn an_unsafe_path_is_refused_before_anything_is_sent() {
         "/redfish/v1/../../etc/passwd",
         "/redfish/v1/%2e%2e/secret",
         "/redfish/v1/Systems/1?x=1",
+        // Only `$skip` and `$top`, each once, each a number.
+        "/redfish/v1/Systems/1?$skip=1&$skip=2",
+        "/redfish/v1/Systems/1?$skip=-1",
+        "/redfish/v1/Systems/1?$filter=x",
+        "/redfish/v1/Systems/1?$skip=",
+        "/redfish/v1/Systems/1?$top=1&",
         "/redfish/v1/Systems/1#frag",
         "/redfish/v1/Sys tems",
         "/other/v1/Systems",
@@ -734,6 +740,21 @@ async fn an_unsafe_path_is_refused_before_anything_is_sent() {
     let own = format!("{}/redfish/v1/Systems/1", bmc.url());
     assert_eq!(c.get(&own).await.unwrap()["Model"], "Fake 1U");
     c.close().await;
+}
+
+#[test]
+fn a_collections_paging_link_is_a_path_it_follows() {
+    use sbm_redfish::client::is_safe_path;
+    assert!(is_safe_path("/redfish/v1/Systems/1/LogServices/Sel/Entries?$skip=50"));
+    assert!(is_safe_path("/redfish/v1/Systems/1/LogServices/Sel/Entries?$skip=50&$top=50"));
+    assert!(!is_safe_path("/redfish/v1/Systems/1/LogServices/Sel/Entries?$expand=*"));
+    assert!(is_safe_path("/redfish/v1/Systems/1/LogServices/IML/Entries?page=2"));
+    assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a1-B2.c_~"));
+    // Opaque: percent-encoded and base64-padded tokens are kept as they are.
+    assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=YWJj%3D%3D"));
+    assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a%2Fb"));
+    assert!(!is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a b"));
+    assert!(!is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?page=2&page=3"));
 }
 
 #[tokio::test]

@@ -67,6 +67,7 @@ pub struct RedfishRoot {
     /// how something that answers on the address but is not a BMC looks.
     pub systems: Option<String>,
     pub chassis: Option<String>,
+    pub managers: Option<String>,
     /// Where a session is created. Absent means Basic auth is the only way in.
     pub sessions: Option<String>,
     pub version: Option<String>,
@@ -81,6 +82,7 @@ impl RedfishRoot {
         Self {
             systems: link(json, "Systems"),
             chassis: link(json, "Chassis"),
+            managers: link(json, "Managers"),
             sessions: session_link(json),
             version: text(json, "RedfishVersion"),
             product: text(json, "Product"),
@@ -192,6 +194,17 @@ pub struct RedfishSystem {
     /// only statement the service makes, and acting outside it is certainly
     /// wrong.
     pub reset_types: Vec<String>,
+    /// The next boot's device, where the system says it can be set.
+    pub boot: Option<BootOverride>,
+    /// The light that finds this machine in a rack, where there is one.
+    pub locator: Option<Locator>,
+    /// Links to what the system holds: its logs, its storage (or the
+    /// `SimpleStorage` of firmware before `Storage`), and the virtual media
+    /// newer firmware puts here rather than under the manager.
+    pub log_services: Option<String>,
+    pub storage: Option<String>,
+    pub simple_storage: Option<String>,
+    pub virtual_media: Option<String>,
 }
 
 impl RedfishSystem {
@@ -212,16 +225,14 @@ impl RedfishSystem {
             health: status.and_then(|s| text(s, "HealthRollup").or_else(|| text(s, "Health"))),
             reset_target: reset.and_then(|r| text(r, "target")),
             reset_types: reset
-                .and_then(|r| r.get("ResetType@Redfish.AllowableValues"))
-                .and_then(Value::as_array)
-                .map(|values| {
-                    values
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(str::to_string)
-                        .collect()
-                })
+                .map(|r| allowable(r, "ResetType"))
                 .unwrap_or_default(),
+            boot: json.get("Boot").and_then(BootOverride::from_json),
+            locator: Locator::from_json(json),
+            log_services: link(json, "LogServices"),
+            storage: link(json, "Storage"),
+            simple_storage: link(json, "SimpleStorage"),
+            virtual_media: link(json, "VirtualMedia"),
         }
     }
 
@@ -237,6 +248,237 @@ impl RedfishSystem {
 
     pub fn can_reset(&self) -> bool {
         self.reset_target.is_some() && !self.reset_types.is_empty()
+    }
+}
+
+/// `<key>@Redfish.AllowableValues` on `json`, verbatim; empty when absent.
+/// What a service says a property takes, when it says anything: an empty
+/// list is a service that allows nothing, which is not the same as one that
+/// says nothing at all.
+pub(crate) fn allowable_opt(json: &Value, key: &str) -> Option<Vec<String>> {
+    json.get(format!("{key}@Redfish.AllowableValues"))
+        .and_then(Value::as_array)
+        .map(|values| values.iter().filter_map(Value::as_str).map(str::to_string).collect())
+}
+
+pub(crate) fn allowable(json: &Value, key: &str) -> Vec<String> {
+    allowable_opt(json, key).unwrap_or_default()
+}
+
+/// How many pages of a collection are followed: enough for a collection that
+/// pages by a few, not enough for one that pages without end.
+pub(crate) const MAX_COLLECTION_PAGES: usize = 10;
+
+/// Every member path of `collection`, following its `Members@odata.nextLink`,
+/// and whether the walk reached the end; the error of the first page when it
+/// cannot be read. A link back to a page already read ends the walk.
+pub(crate) async fn collection_paths<T: crate::Transport>(
+    client: &T,
+    collection: &str,
+) -> Result<(Vec<String>, bool), crate::Error> {
+    let mut paths = Vec::new();
+    let mut read: Vec<String> = Vec::new();
+    let mut next = Some(collection.to_string());
+    while let Some(path) = next.take() {
+        if read.len() == MAX_COLLECTION_PAGES {
+            return Ok((paths, false));
+        }
+        let page = match client.get(&path).await {
+            Ok(page) => page,
+            // The first page is the collection; a later one that fails
+            // leaves what was read.
+            Err(e) if read.is_empty() => return Err(e),
+            Err(_) => return Ok((paths, false)),
+        };
+        read.push(path);
+        paths.extend(collection_members(&page));
+        next = page.get("Members@odata.nextLink").and_then(Value::as_str).map(str::to_string);
+        // A link back to a page already read is a cycle, not the end.
+        if next.as_ref().is_some_and(|link| read.contains(link)) {
+            return Ok((paths, false));
+        }
+    }
+    Ok((paths, true))
+}
+
+// --- Boot override ---
+
+/// `ComputerSystem.Boot`: which device the next boot (or every boot) starts
+/// from, in place of the configured order.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct BootOverride {
+    /// `Disabled`, `Once` or `Continuous`.
+    pub enabled: Option<String>,
+    /// `None`, `Pxe`, `Hdd`, `Cd`, `BiosSetup`, …
+    pub target: Option<String>,
+    /// `UEFI` or `Legacy`, where the service has the notion.
+    pub mode: Option<String>,
+    /// What may be asked for. Targets are what the service lists and nothing
+    /// else: with no list there is nothing it said it would take. `enabled`
+    /// with no list is the three the schema defines.
+    pub targets: Vec<String>,
+    pub enabled_values: Vec<String>,
+    pub modes: Vec<String>,
+}
+
+impl BootOverride {
+    fn from_json(boot: &Value) -> Option<Self> {
+        boot.is_object().then(|| {
+            let enabled_values = allowable_opt(boot, "BootSourceOverrideEnabled");
+            Self {
+                enabled: text(boot, "BootSourceOverrideEnabled"),
+                target: text(boot, "BootSourceOverrideTarget"),
+                mode: text(boot, "BootSourceOverrideMode"),
+                targets: allowable(boot, "BootSourceOverrideTarget"),
+                // The three the schema defines only where the service says
+                // nothing; a list it gives, even an empty one, is its answer.
+                enabled_values: enabled_values
+                    .unwrap_or_else(|| ["Disabled", "Once", "Continuous"].map(str::to_string).to_vec()),
+                modes: allowable(boot, "BootSourceOverrideMode"),
+            }
+        })
+    }
+
+    /// The targets a person may pick: `None` is what `Disabled` already says.
+    pub fn settable_targets(&self) -> Vec<String> {
+        self.targets.iter().filter(|t| *t != "None").cloned().collect()
+    }
+
+    pub fn can_set(&self) -> bool {
+        self.targets.iter().any(|t| t != "None")
+    }
+
+    /// Whether an override is in effect: enabled, for a device.
+    pub fn is_active(&self) -> bool {
+        self.enabled.as_deref().is_some_and(|e| e != "Disabled")
+            && self.target.as_deref().is_some_and(|t| t != "None")
+    }
+
+    /// Where a person picking an override starts: what is in effect, else
+    /// the first device for the next boot only. `None` when nothing can be set.
+    pub fn default_request(&self) -> Option<BootRequest> {
+        let targets = self.settable_targets();
+        let target = match &self.target {
+            Some(t) if targets.contains(t) => t.clone(),
+            _ => targets.first()?.clone(),
+        };
+        // `Disabled` is not a pick: it leaves the device chosen and idle.
+        let enabling = || self.enabled_values.iter().filter(|e| e.as_str() != "Disabled");
+        let enabled = match &self.enabled {
+            Some(e) if e != "Disabled" && self.enabled_values.contains(e) => e.clone(),
+            _ => {
+                let once = enabling().find(|e| e.as_str() == "Once");
+                once.or_else(|| enabling().next())?.clone()
+            }
+        };
+        Some(BootRequest { target, enabled, mode: None })
+    }
+}
+
+/// A boot override to set.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BootRequest {
+    pub target: String,
+    /// `Once` or `Continuous`; `Disabled` turns the override off.
+    pub enabled: String,
+    /// Left as it is when `None`.
+    pub mode: Option<String>,
+}
+
+impl BootRequest {
+    /// The `PATCH` body for [`BootOverride`], or `None` for a value it does not
+    /// list: nothing is sent that the service did not say it takes. `None`
+    /// with `Disabled` is how an override is put back — the target is then
+    /// whatever the service had, and is not sent.
+    pub fn body(&self, current: &BootOverride) -> Option<Value> {
+        if !current.enabled_values.contains(&self.enabled) {
+            return None;
+        }
+        // Turning it off says nothing about the device.
+        if self.enabled == "Disabled" {
+            return Some(json!({ "Boot": { "BootSourceOverrideEnabled": "Disabled" } }));
+        }
+        if !current.targets.contains(&self.target) {
+            return None;
+        }
+        let mut boot = json!({
+            "BootSourceOverrideTarget": self.target,
+            "BootSourceOverrideEnabled": self.enabled,
+        });
+        if let Some(mode) = &self.mode {
+            if !current.modes.contains(mode) {
+                return None;
+            }
+            boot["BootSourceOverrideMode"] = json!(mode);
+        }
+        Some(json!({ "Boot": boot }))
+    }
+}
+
+// --- Locator light ---
+
+/// The light that finds the machine in a rack: `LocationIndicatorActive`, or
+/// on firmware before it the deprecated `IndicatorLED` (`Lit`, `Blinking`,
+/// `Off`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Locator {
+    pub on: bool,
+    /// Set through `IndicatorLED` rather than `LocationIndicatorActive`.
+    pub legacy: bool,
+}
+
+impl Locator {
+    fn from_json(json: &Value) -> Option<Self> {
+        if let Some(on) = json.get("LocationIndicatorActive").and_then(Value::as_bool) {
+            return Some(Self { on, legacy: false });
+        }
+        let led = json.get("IndicatorLED").and_then(Value::as_str)?;
+        Some(Self {
+            on: led != "Off",
+            legacy: true,
+        })
+    }
+
+    /// The `PATCH` body that turns the locator of `system` (a
+    /// `ComputerSystem`) [on], or `None` when it has none or lists no value
+    /// for that. `IndicatorLED` takes `Lit` where it is listed or no list is
+    /// given — iLO takes nothing else — and `Blinking` otherwise.
+    pub fn body_for(system: &Value, on: bool) -> Option<Value> {
+        let locator = Self::from_json(system)?;
+        if !locator.legacy {
+            return Some(json!({ "LocationIndicatorActive": on }));
+        }
+        // Silent means every value; a list, even an empty one, is the answer.
+        let allowed = allowable_opt(system, "IndicatorLED");
+        let takes = |v: &str| allowed.as_ref().is_none_or(|a| a.iter().any(|x| x == v));
+        let value = match on {
+            false => takes("Off").then_some("Off"),
+            true if takes("Lit") => Some("Lit"),
+            true => takes("Blinking").then_some("Blinking"),
+        }?;
+        Some(json!({ "IndicatorLED": value }))
+    }
+}
+
+// --- Manager ---
+
+/// The BMC itself (`Manager`), as far as what it holds goes.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RedfishManager {
+    pub firmware_version: Option<String>,
+    pub model: Option<String>,
+    pub log_services: Option<String>,
+    pub virtual_media: Option<String>,
+}
+
+impl RedfishManager {
+    pub fn from_json(json: &Value) -> Self {
+        Self {
+            firmware_version: text(json, "FirmwareVersion"),
+            model: text(json, "Model"),
+            log_services: link(json, "LogServices"),
+            virtual_media: link(json, "VirtualMedia"),
+        }
     }
 }
 
@@ -782,8 +1024,10 @@ pub struct Topology {
     /// see `has_multiple_systems`.
     pub system_path: Option<String>,
     pub chassis_path: Option<String>,
+    pub manager_path: Option<String>,
     pub system: Option<RedfishSystem>,
     pub chassis: Option<RedfishChassis>,
+    pub manager: Option<RedfishManager>,
     /// Set when the service offered more than one system, so the UI can say
     /// that only the first is shown rather than quietly showing one of
     /// several.
@@ -816,6 +1060,7 @@ impl Topology {
 /// The `AllowableValues` an `ActionInfo` resource states for `parameter`
 /// (Redfish `ActionInfo.v1`), verbatim; empty when it states none.
 pub fn action_info_allowable(json: &Value, parameter: &str) -> Vec<String> {
+    // `Parameters[].AllowableValues`, not `<key>@Redfish.AllowableValues`.
     json.get("Parameters")
         .and_then(Value::as_array)
         .into_iter()

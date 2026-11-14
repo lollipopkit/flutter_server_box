@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "Aus {name} lässt sich kein ssh-agent-Socket ermitteln",
   "sshAgentUnsupported": "Dieses Gerät kann keinen ssh-agent verwenden",
   "sshAgentNotPipe": "Unter Windows wird ein ssh-agent über eine Named Pipe erreicht, und {path} ist keine",
-  "sshAgentUnreachable": "ssh-agent unter {path} nicht erreichbar: {reason}"
+  "sshAgentUnreachable": "ssh-agent unter {path} nicht erreichbar: {reason}",
+  "bmcLocator": "Locator-LED",
+  "bmcBoot": "Boot-Override",
+  "bmcBootDisabled": "Standardreihenfolge",
+  "bmcBootOnce": "Nur nächster Start",
+  "bmcBootContinuous": "Jeder Start",
+  "bmcBootTarget": "Gerät",
+  "bmcVirtualMedia": "Virtuelle Medien",
+  "bmcInsertMedia": "Einlegen",
+  "bmcEjectMedia": "Auswerfen",
+  "bmcImageUrl": "Image-URL",
+  "bmcImageUrlInvalid": "Braucht eine http(s)-, NFS- oder SMB-URL des Images, ohne Zugangsdaten darin",
+  "bmcDrives": "Laufwerke",
+  "bmcNoStorage": "Der Dienst meldet keinen Speicher",
+  "bmcClearLogConfirm": "{log} auf {server} leeren?",
+  "bmcEntriesTruncated": "Nur die neuesten Einträge werden gezeigt",
+  "bmcDrivesTruncated": "Nur die ersten Laufwerke werden gezeigt"
 }

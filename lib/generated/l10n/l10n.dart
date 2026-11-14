@@ -12364,6 +12364,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot reach the ssh-agent at {path}: {reason}'**
   String sshAgentUnreachable(String path, String reason);
+
+  /// No description provided for @bmcLocator.
+  ///
+  /// In en, this message translates to:
+  /// **'Locator light'**
+  String get bmcLocator;
+
+  /// No description provided for @bmcBoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot override'**
+  String get bmcBoot;
+
+  /// No description provided for @bmcBootDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Default order'**
+  String get bmcBootDisabled;
+
+  /// No description provided for @bmcBootOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Next boot only'**
+  String get bmcBootOnce;
+
+  /// No description provided for @bmcBootContinuous.
+  ///
+  /// In en, this message translates to:
+  /// **'Every boot'**
+  String get bmcBootContinuous;
+
+  /// No description provided for @bmcBootTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get bmcBootTarget;
+
+  /// No description provided for @bmcVirtualMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual media'**
+  String get bmcVirtualMedia;
+
+  /// No description provided for @bmcInsertMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get bmcInsertMedia;
+
+  /// No description provided for @bmcEjectMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Eject'**
+  String get bmcEjectMedia;
+
+  /// No description provided for @bmcImageUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Image URL'**
+  String get bmcImageUrl;
+
+  /// No description provided for @bmcImageUrlInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs an http(s), NFS or SMB URL of the image, without credentials in it'**
+  String get bmcImageUrlInvalid;
+
+  /// No description provided for @bmcDrives.
+  ///
+  /// In en, this message translates to:
+  /// **'Drives'**
+  String get bmcDrives;
+
+  /// No description provided for @bmcNoStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'The service reports no storage'**
+  String get bmcNoStorage;
+
+  /// No description provided for @bmcClearLogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {log} on {server}?'**
+  String bmcClearLogConfirm(String log, String server);
+
+  /// No description provided for @bmcEntriesTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the newest entries are shown'**
+  String get bmcEntriesTruncated;
+
+  /// No description provided for @bmcDrivesTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first drives are shown'**
+  String get bmcDrivesTruncated;
 }
 
 class _AppLocalizationsDelegate

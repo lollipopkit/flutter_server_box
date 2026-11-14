@@ -256,4 +256,41 @@ void main() {
       expect(watch.observe(now: PowerState.off), isTrue);
     });
   });
+
+  test('an image is only an address a BMC fetches, with no credentials', () {
+    for (final ok in [
+      'https://10.0.0.2/os.iso',
+      'http://mirror.example/a/b.img',
+      'nfs://10.0.0.2/export/os.iso',
+      'smb://nas/share/os.iso',
+    ]) {
+      expect(bmcIsImageUrl(image: ok), isTrue, reason: ok);
+    }
+    for (final bad in [
+      'file:///etc/passwd',
+      // Any user info, credentials or not, is refused.
+      'https://user@10.0.0.2/os.iso',
+      'https://10.0.0.2/',
+      'https://10.0.0.2/a b.iso',
+      '/os.iso',
+    ]) {
+      expect(bmcIsImageUrl(image: bad), isFalse, reason: bad);
+    }
+  });
+
+  test('a boot pick starts from what is in effect, never from None', () {
+    BootOverride boot({String? target, String? enabled}) => BootOverride(
+      target: target,
+      enabled: enabled,
+      targets: const ['None', 'Pxe', 'Hdd'],
+      enabledValues: const ['Disabled', 'Once', 'Continuous'],
+      modes: const [],
+      settableTargets: const ['Pxe', 'Hdd'],
+      active: false,
+    );
+    final idle = bmcBootDefault(boot: boot(target: 'None', enabled: 'Disabled'));
+    expect((idle?.target, idle?.enabled), ('Pxe', 'Once'));
+    final set = bmcBootDefault(boot: boot(target: 'Hdd', enabled: 'Continuous'));
+    expect((set?.target, set?.enabled), ('Hdd', 'Continuous'));
+  });
 }

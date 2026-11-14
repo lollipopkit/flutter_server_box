@@ -272,8 +272,8 @@ impl Client {
     /// path under `/redfish/v1/`, or an absolute URL of this client's own
     /// origin (some firmware answers `Location` that way). Refused: another
     /// origin, `..`, `//`, a backslash, an encoded dot, slash or backslash,
-    /// whitespace or control characters, a query or fragment, or more than
-    /// [`MAX_PATH`] bytes.
+    /// whitespace or control characters, a fragment, a query other than
+    /// paging ([`is_safe_path`]), or more than [`MAX_PATH`] bytes.
     pub fn resolve(&self, raw: &str) -> Result<String, Error> {
         let refuse = || Error::with(Failure::InvalidResponse, "a path outside the service");
         let mut path = raw;
@@ -642,16 +642,45 @@ fn parse_base(input: &str) -> Result<(String, String), Error> {
     Ok((url.origin().ascii_serialization(), prefix))
 }
 
-/// See [`Client::resolve`].
-pub fn is_safe_path(path: &str) -> bool {
+/// See [`Client::resolve`]. The one query allowed is paging, what a
+/// collection's `Members@odata.nextLink` names: `$skip`, `$top` and `page`
+/// (iLO) with a number each, `$skiptoken` with an opaque token.
+pub fn is_safe_path(raw: &str) -> bool {
+    let (path, query) = match raw.split_once('?') {
+        Some((path, query)) => (path, Some(query)),
+        None => (raw, None),
+    };
     let lower = path.to_ascii_lowercase();
-    path.len() <= MAX_PATH
+    raw.len() <= MAX_PATH
         && (path.starts_with(ROOT_PATH) || path == "/redfish/v1")
         && !path.contains("//")
         && !path.contains("..")
-        && !path.contains(['\\', '?', '#'])
+        && !path.contains(['\\', '#'])
         && !path.chars().any(|c| c.is_whitespace() || c.is_control())
         && !["%2e", "%2f", "%5c"].iter().any(|e| lower.contains(e))
+        && query.is_none_or(is_paging_query)
+}
+
+fn is_paging_query(query: &str) -> bool {
+    let mut seen = Vec::new();
+    query.split('&').all(|pair| {
+        let Some((key, value)) = pair.split_once('=') else {
+            return false;
+        };
+        let fresh = !seen.contains(&key);
+        seen.push(key);
+        let value_ok = match key {
+            "$skip" | "$top" | "page" => value.len() <= 9 && value.bytes().all(|b| b.is_ascii_digit()),
+            // Opaque by the specification: opaque enough that only what
+            // would split the query or the URL is refused, which leaves
+            // percent-encoded and base64-padded tokens as they arrive.
+            "$skiptoken" => {
+                value.len() <= 128 && value.bytes().all(|b| b.is_ascii_graphic() && b != b'&' && b != b'#')
+            }
+            _ => false,
+        };
+        fresh && !value.is_empty() && value_ok
+    })
 }
 
 /// What a status means, in the terms the rest of the crate uses.

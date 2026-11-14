@@ -49,6 +49,8 @@ import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/private_key/generate.dart';
 import 'package:server_box/view/page/process/process.dart';
 import 'package:server_box/view/page/scheduled_tasks/scheduled_tasks.dart';
+import 'package:server_box/view/page/server/bmc/drives.dart';
+import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -175,6 +177,8 @@ void main() {
     'ConnectionStatsPage': (c) => ConnectionStatsPage.route.go(c),
     'ContainerPage': (c) => ContainerPage.route.go(c, onServer()),
     'CustomCmdsPage': (c) => CustomCmdsPage.route.go(c, onServer()),
+    'BmcDrivesPage': (c) => BmcDrivesPage.route.go(c, onServer()),
+    'BmcLogsPage': (c) => BmcLogsPage.route.go(c, onServer()),
     'DesktopSettingsPage': (c) => DesktopSettingsPage.route.go(c),
     'FirewallPage': (c) => FirewallPage.route.go(c, onServer()),
     'GroupDetailPage': (c) => GroupDetailPage.route.go(

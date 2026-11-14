@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `hello`, `put_string`, `put_u32`, `read_packet`, `send_fd`, `stdio_forward`, `string`, `take`, `u32`, `write_packet`
+// These functions are ignored because they are not marked as `pub`: `connect`, `hello`, `put_string`, `put_u32`, `read_packet`, `send_fd`, `stdio_forward`, `string`, `take`, `u32`, `write_packet`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Reader`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<MuxForward>>

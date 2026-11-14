@@ -19,18 +19,21 @@
 pub mod cert;
 pub mod client;
 mod error;
+pub mod logs;
+pub mod media;
 pub mod model;
+pub mod storage;
 
 use std::future::Future;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub use client::{Client, Outcome, ROOT_PATH};
+pub use client::{Client, Outcome, ROOT_PATH, Resource};
 pub use error::{Error, Failure};
 use model::{
-    BmcSensors, PowerIntent, RedfishChassis, RedfishRoot, RedfishSystem, ResetRequest, SensorModel, Topology,
-    collection_members,
+    BmcSensors, BootRequest, Locator, PowerIntent, RedfishChassis, RedfishManager, RedfishRoot, RedfishSystem, ResetRequest,
+    SensorModel, Topology, collection_members,
 };
 
 /// How many members of a `Sensors` collection are read.
@@ -49,8 +52,13 @@ pub const MAX_SENSOR_MEMBERS: usize = 64;
 pub trait Transport: Sync {
     /// The resource at `path`, as a JSON object.
     fn get(&self, path: &str) -> impl Future<Output = Result<Value, Error>> + Send;
+    /// The resource at `path` with the `ETag` it was served with, for a
+    /// [`Transport::patch`] that must not overwrite a change made in between.
+    fn fetch(&self, path: &str) -> impl Future<Output = Result<Resource, Error>> + Send;
     /// Sends `body` to `path`.
     fn post(&self, path: &str, body: Value) -> impl Future<Output = Result<Outcome, Error>> + Send;
+    /// Changes the resource at `path`, as of `etag` when there is one.
+    fn patch(&self, path: &str, body: Value, etag: Option<&str>) -> impl Future<Output = Result<Outcome, Error>> + Send;
 }
 
 impl Transport for Client {
@@ -58,8 +66,16 @@ impl Transport for Client {
         Client::get(self, path)
     }
 
+    fn fetch(&self, path: &str) -> impl Future<Output = Result<Resource, Error>> + Send {
+        Client::fetch(self, path)
+    }
+
     fn post(&self, path: &str, body: Value) -> impl Future<Output = Result<Outcome, Error>> + Send {
         Client::post(self, path, body)
+    }
+
+    fn patch(&self, path: &str, body: Value, etag: Option<&str>) -> impl Future<Output = Result<Outcome, Error>> + Send {
+        Client::patch(self, path, body, etag)
     }
 }
 
@@ -76,30 +92,46 @@ pub async fn discover<T: Transport>(client: &T) -> Result<Topology, Error> {
 
     // Independent GETs against a device where one takes seconds, so they are
     // not made to wait for each other.
-    let (systems, chassis_paths) = tokio::join!(
+    let (systems, chassis_paths, manager_paths) = tokio::join!(
         members(client, root.systems.as_deref()),
         members(client, root.chassis.as_deref()),
+        members(client, root.managers.as_deref()),
     );
     let Some(system_path) = systems.first().cloned() else {
         return Err(Error::new(Failure::NoSystem));
     };
     let chassis_path = chassis_paths.first().cloned();
 
-    let system = system_at(client, &system_path).await?;
+    let manager_path = manager_paths.first().cloned();
 
     // A chassis that cannot be read costs the sensor half and nothing else, so
-    // it is not allowed to take the power half down with it
-    let chassis = match &chassis_path {
-        Some(path) => client.get(path).await.ok().map(|c| RedfishChassis::from_json(&c)),
-        None => None,
-    };
+    // it is not allowed to take the power half down with it; nor is a manager,
+    // whose logs and virtual media are optional.
+    let (system, chassis, manager) = tokio::join!(
+        system_at(client, &system_path),
+        async {
+            match &chassis_path {
+                Some(path) => client.get(path).await.ok().map(|c| RedfishChassis::from_json(&c)),
+                None => None,
+            }
+        },
+        async {
+            match &manager_path {
+                Some(path) => client.get(path).await.ok().map(|m| RedfishManager::from_json(&m)),
+                None => None,
+            }
+        },
+    );
+    let system = system?;
 
     Ok(Topology {
         root,
         system_path: Some(system_path),
         chassis_path,
+        manager_path,
         system: Some(system),
         chassis,
+        manager,
         has_multiple_systems: systems.len() > 1,
     })
 }
@@ -142,7 +174,18 @@ pub struct Snapshot {
 /// snapshot. Closes nothing — the caller owns the client.
 pub async fn snapshot<T: Transport>(client: &T, known: Option<&Topology>) -> Result<Snapshot, Error> {
     let topology = match known {
-        Some(known) => known.with_system(read_system(client, known).await?),
+        Some(known) => {
+            let mut topology = known.with_system(read_system(client, known).await?);
+            // A manager that could not be read at discovery is tried again:
+            // its logs and virtual media are reached through nothing else.
+            if topology.manager.is_none()
+                && let Some(path) = topology.manager_path.clone()
+                && let Ok(json) = client.get(&path).await
+            {
+                topology.manager = Some(RedfishManager::from_json(&json));
+            }
+            topology
+        }
         None => discover(client).await?,
     };
     let (sensors, sensors_truncated) = read_sensors(client, topology.chassis.as_ref()).await;
@@ -193,6 +236,36 @@ pub async fn power<T: Transport>(client: &T, topology: &Topology, intent: PowerI
     let request = ResetRequest::build(system, intent)
         .ok_or_else(|| Error::with(Failure::NotSupported, intent.as_str()))?;
     client.post(&request.target, request.body()).await
+}
+
+/// Sets the next boot's device. Read first, for the `ETag` that keeps this
+/// from overwriting a change made in between and for what the service takes
+/// now; nothing is sent for a value it does not list
+/// ([`Failure::NotSupported`]).
+pub async fn set_boot<T: Transport>(client: &T, topology: &Topology, request: &BootRequest) -> Result<Outcome, Error> {
+    let path = topology
+        .system_path
+        .as_deref()
+        .ok_or_else(|| Error::new(Failure::NoSystem))?;
+    let current = client.fetch(path).await?;
+    let boot = RedfishSystem::from_json(&current.json)
+        .boot
+        .ok_or_else(|| Error::with(Failure::NotSupported, "boot override"))?;
+    let body = request
+        .body(&boot)
+        .ok_or_else(|| Error::with(Failure::NotSupported, "boot override value"))?;
+    client.patch(path, body, current.etag.as_deref()).await
+}
+
+/// Turns the locator light on or off.
+pub async fn set_locator<T: Transport>(client: &T, topology: &Topology, on: bool) -> Result<Outcome, Error> {
+    let path = topology
+        .system_path
+        .as_deref()
+        .ok_or_else(|| Error::new(Failure::NoSystem))?;
+    let current = client.fetch(path).await?;
+    let body = Locator::body_for(&current.json, on).ok_or_else(|| Error::with(Failure::NotSupported, "locator"))?;
+    client.patch(path, body, current.etag.as_deref()).await
 }
 
 /// How many sensor members in a row may fail before the sweep stops with what

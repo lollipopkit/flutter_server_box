@@ -7360,4 +7360,56 @@ class AppLocalizationsEs extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'No se puede conectar con el ssh-agent en $path: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Luz de localización';
+
+  @override
+  String get bmcBoot => 'Anulación de arranque';
+
+  @override
+  String get bmcBootDisabled => 'Orden predeterminado';
+
+  @override
+  String get bmcBootOnce => 'Solo el próximo arranque';
+
+  @override
+  String get bmcBootContinuous => 'Cada arranque';
+
+  @override
+  String get bmcBootTarget => 'Dispositivo';
+
+  @override
+  String get bmcVirtualMedia => 'Medios virtuales';
+
+  @override
+  String get bmcInsertMedia => 'Insertar';
+
+  @override
+  String get bmcEjectMedia => 'Expulsar';
+
+  @override
+  String get bmcImageUrl => 'URL de la imagen';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Se necesita una URL http(s), NFS o SMB de la imagen, sin credenciales';
+
+  @override
+  String get bmcDrives => 'Discos';
+
+  @override
+  String get bmcNoStorage => 'El servicio no informa de almacenamiento';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '¿Vaciar $log en $server?';
+  }
+
+  @override
+  String get bmcEntriesTruncated =>
+      'Solo se muestran las entradas más recientes';
+
+  @override
+  String get bmcDrivesTruncated => 'Solo se muestran los primeros discos';
 }

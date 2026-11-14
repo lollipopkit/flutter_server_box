@@ -5,7 +5,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
-use sbm_redfish::{Error, Failure, Outcome, Transport};
+use sbm_redfish::{Error, Failure, Outcome, Resource, Transport};
 use serde_json::{Map, Value};
 
 pub struct FakeTransport {
@@ -13,6 +13,9 @@ pub struct FakeTransport {
     pub forbidden: HashSet<String>,
     pub gets: Mutex<Vec<String>>,
     pub posted: Mutex<Vec<(String, Value)>>,
+    pub patched: Mutex<Vec<(String, Value, Option<String>)>>,
+    /// What a resource is served with, by path.
+    pub etags: HashMap<String, String>,
 }
 
 impl FakeTransport {
@@ -22,6 +25,8 @@ impl FakeTransport {
             forbidden: HashSet::new(),
             gets: Mutex::new(Vec::new()),
             posted: Mutex::new(Vec::new()),
+            patched: Mutex::new(Vec::new()),
+            etags: HashMap::new(),
         }
     }
 
@@ -47,8 +52,20 @@ impl Transport for FakeTransport {
             .ok_or_else(|| Error::with(Failure::Unreachable, format!("no such resource: {path}")))
     }
 
+    async fn fetch(&self, path: &str) -> Result<Resource, Error> {
+        Ok(Resource {
+            json: self.get(path).await?,
+            etag: self.etags.get(path).cloned(),
+        })
+    }
+
     async fn post(&self, path: &str, body: Value) -> Result<Outcome, Error> {
         self.posted.lock().unwrap().push((path.to_string(), body));
+        Ok(Outcome::Done)
+    }
+
+    async fn patch(&self, path: &str, body: Value, etag: Option<&str>) -> Result<Outcome, Error> {
+        self.patched.lock().unwrap().push((path.to_string(), body, etag.map(str::to_string)));
         Ok(Outcome::Done)
     }
 }

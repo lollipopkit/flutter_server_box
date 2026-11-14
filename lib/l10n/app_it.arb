@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "Nessun socket ssh-agent trovato da {name}",
   "sshAgentUnsupported": "Questo dispositivo non può usare un ssh-agent",
   "sshAgentNotPipe": "Su Windows un ssh-agent si raggiunge tramite una named pipe, e {path} non lo è",
-  "sshAgentUnreachable": "Impossibile raggiungere l'ssh-agent in {path}: {reason}"
+  "sshAgentUnreachable": "Impossibile raggiungere l'ssh-agent in {path}: {reason}",
+  "bmcLocator": "Luce di localizzazione",
+  "bmcBoot": "Override di avvio",
+  "bmcBootDisabled": "Ordine predefinito",
+  "bmcBootOnce": "Solo il prossimo avvio",
+  "bmcBootContinuous": "Ogni avvio",
+  "bmcBootTarget": "Dispositivo",
+  "bmcVirtualMedia": "Supporti virtuali",
+  "bmcInsertMedia": "Inserisci",
+  "bmcEjectMedia": "Espelli",
+  "bmcImageUrl": "URL dell'immagine",
+  "bmcImageUrlInvalid": "Serve un URL http(s), NFS o SMB dell'immagine, senza credenziali",
+  "bmcDrives": "Dischi",
+  "bmcNoStorage": "Il servizio non riporta alcuno storage",
+  "bmcClearLogConfirm": "Svuotare {log} su {server}?",
+  "bmcEntriesTruncated": "Sono mostrate solo le voci più recenti",
+  "bmcDrivesTruncated": "Sono mostrati solo i primi dischi"
 }

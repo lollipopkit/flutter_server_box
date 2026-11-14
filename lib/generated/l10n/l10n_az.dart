@@ -7248,4 +7248,55 @@ class AppLocalizationsAz extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return '$path ünvanındakı ssh-agent-ə qoşulmaq mümkün deyil: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Yer göstərici işıq';
+
+  @override
+  String get bmcBoot => 'Yükləmə əvəzləməsi';
+
+  @override
+  String get bmcBootDisabled => 'Standart sıra';
+
+  @override
+  String get bmcBootOnce => 'Yalnız növbəti yükləmə';
+
+  @override
+  String get bmcBootContinuous => 'Hər yükləmə';
+
+  @override
+  String get bmcBootTarget => 'Cihaz';
+
+  @override
+  String get bmcVirtualMedia => 'Virtual media';
+
+  @override
+  String get bmcInsertMedia => 'Daxil et';
+
+  @override
+  String get bmcEjectMedia => 'Çıxar';
+
+  @override
+  String get bmcImageUrl => 'Şəkil URL-i';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Etimadnamə olmadan şəklin http(s), NFS və ya SMB URL-i lazımdır';
+
+  @override
+  String get bmcDrives => 'Disklər';
+
+  @override
+  String get bmcNoStorage => 'Xidmət yaddaş barədə məlumat vermir';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$server üzərində $log təmizlənsin?';
+  }
+
+  @override
+  String get bmcEntriesTruncated => 'Yalnız ən yeni qeydlər göstərilir';
+
+  @override
+  String get bmcDrivesTruncated => 'Yalnız ilk disklər göstərilir';
 }

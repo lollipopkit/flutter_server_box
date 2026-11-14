@@ -7242,4 +7242,55 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return '$path konumundaki ssh-agent\'a ulaşılamıyor: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Konum ışığı';
+
+  @override
+  String get bmcBoot => 'Önyükleme geçersiz kılma';
+
+  @override
+  String get bmcBootDisabled => 'Varsayılan sıra';
+
+  @override
+  String get bmcBootOnce => 'Yalnızca sonraki önyükleme';
+
+  @override
+  String get bmcBootContinuous => 'Her önyükleme';
+
+  @override
+  String get bmcBootTarget => 'Aygıt';
+
+  @override
+  String get bmcVirtualMedia => 'Sanal ortam';
+
+  @override
+  String get bmcInsertMedia => 'Tak';
+
+  @override
+  String get bmcEjectMedia => 'Çıkar';
+
+  @override
+  String get bmcImageUrl => 'Görüntü URL\'si';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Kimlik bilgisi içermeyen, görüntünün http(s), NFS veya SMB URL\'si gerekir';
+
+  @override
+  String get bmcDrives => 'Sürücüler';
+
+  @override
+  String get bmcNoStorage => 'Hizmet depolama bildirmiyor';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$server üzerindeki $log temizlensin mi?';
+  }
+
+  @override
+  String get bmcEntriesTruncated => 'Yalnızca en yeni kayıtlar gösteriliyor';
+
+  @override
+  String get bmcDrivesTruncated => 'Yalnızca ilk sürücüler gösteriliyor';
 }

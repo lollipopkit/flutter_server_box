@@ -7,7 +7,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `readings`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`, `from`
 
 /// The request `intent` becomes on `system`, or `None` when the service allows
 /// nothing that satisfies it — such an intent is not offered.
@@ -15,6 +15,14 @@ ResetRequest? bmcPlan({
   required RedfishSystem system,
   required PowerIntent intent,
 }) => RustLib.instance.api.crateApiBmcBmcPlan(system: system, intent: intent);
+
+/// Where a person picking an override starts; `None` when nothing can be set.
+BootRequest? bmcBootDefault({required BootOverride boot}) =>
+    RustLib.instance.api.crateApiBmcBmcBootDefault(boot: boot);
+
+/// Whether `image` is an address a BMC may be given to fetch an image from.
+bool bmcIsImageUrl({required String image}) =>
+    RustLib.instance.api.crateApiBmcBmcIsImageUrl(image: image);
 
 /// Reads the certificate `host`:`port` presents, sending nothing but a TLS
 /// hello. `unreachable` for a host that is off or not speaking TLS.
@@ -44,11 +52,33 @@ bool certPinAccepts({String? pin, required List<int> der}) =>
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>>
 abstract class BmcClient implements RustOpaqueInterface {
+  /// Empties `service`; `notSupported` without sending anything when it
+  /// cannot be cleared.
+  Future<BmcOutcome> clearLog({required LogService service});
+
   /// Ends the session. Never fails; safe to call twice.
   Future<void> close();
 
   /// The service root and the first system and chassis under it.
   Future<RedfishTopology> discover();
+
+  /// Takes the image out of `slot`.
+  Future<BmcOutcome> ejectMedia({required MediaSlot slot});
+
+  /// Puts `image` in `slot`, read-only.
+  Future<BmcOutcome> insertMedia({
+    required MediaSlot slot,
+    required String image,
+  });
+
+  /// The newest entries of `service`, newest first.
+  Future<LogPage> logEntries({required LogService service});
+
+  /// Every log the system and its BMC keep, the machine's first.
+  Future<List<LogService>> logServices({required RedfishTopology topology});
+
+  /// Every virtual media slot, the system's then the manager's.
+  Future<List<MediaSlot>> mediaSlots({required RedfishTopology topology});
 
   /// Builds a client; nothing is sent until the first request. Without a
   /// pin every handshake is refused as `certificateRejected`, which the app
@@ -77,9 +107,25 @@ abstract class BmcClient implements RustOpaqueInterface {
   /// [`PowerWatch::observe`].
   Future<RedfishTopology> rereadSystem({required RedfishTopology topology});
 
+  /// Sets the next boot's device; `notSupported` without sending anything
+  /// for a value the service does not list. `mode` `None` leaves it.
+  Future<BmcOutcome> setBoot({
+    required RedfishTopology topology,
+    required BootRequest request,
+  });
+
+  /// Turns the locator light on or off.
+  Future<BmcOutcome> setLocator({
+    required RedfishTopology topology,
+    required bool lit,
+  });
+
   /// Reads the machine once: discovery only when `known` is `None`, the
   /// system every time, sensors best effort.
   Future<BmcSnapshot> snapshot({RedfishTopology? known});
+
+  /// Every drive the system lists, best effort.
+  Future<StorageReport> storage({required RedfishTopology topology});
 }
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PowerWatch>>
@@ -215,6 +261,88 @@ class BmcSnapshot {
           sensorsTruncated == other.sensorsTruncated;
 }
 
+/// The next boot's device (mirrors sbm_redfish::model::BootOverride).
+class BootOverride {
+  /// `Disabled`, `Once` or `Continuous`
+  final String? enabled;
+  final String? target;
+
+  /// `UEFI` or `Legacy`
+  final String? mode;
+
+  /// What may be asked for; no targets is nothing that can be set
+  final List<String> targets;
+  final List<String> enabledValues;
+  final List<String> modes;
+
+  /// The targets a person may pick (`targets` without `None`)
+  final List<String> settableTargets;
+
+  /// Enabled, for a device
+  final bool active;
+
+  const BootOverride({
+    this.enabled,
+    this.target,
+    this.mode,
+    required this.targets,
+    required this.enabledValues,
+    required this.modes,
+    required this.settableTargets,
+    required this.active,
+  });
+
+  @override
+  int get hashCode =>
+      enabled.hashCode ^
+      target.hashCode ^
+      mode.hashCode ^
+      targets.hashCode ^
+      enabledValues.hashCode ^
+      modes.hashCode ^
+      settableTargets.hashCode ^
+      active.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BootOverride &&
+          runtimeType == other.runtimeType &&
+          enabled == other.enabled &&
+          target == other.target &&
+          mode == other.mode &&
+          targets == other.targets &&
+          enabledValues == other.enabledValues &&
+          modes == other.modes &&
+          settableTargets == other.settableTargets &&
+          active == other.active;
+}
+
+/// A boot override to set (mirrors sbm_redfish::model::BootRequest).
+class BootRequest {
+  final String target;
+
+  /// `Once` or `Continuous`; `Disabled` turns the override off
+  final String enabled;
+
+  /// Left as it is when `None`
+  final String? mode;
+
+  const BootRequest({required this.target, required this.enabled, this.mode});
+
+  @override
+  int get hashCode => target.hashCode ^ enabled.hashCode ^ mode.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BootRequest &&
+          runtimeType == other.runtimeType &&
+          target == other.target &&
+          enabled == other.enabled &&
+          mode == other.mode;
+}
+
 /// A certificate as shown to someone deciding whether to trust it
 /// (mirrors sbm_redfish::cert::CertInfo).
 class CertInfo {
@@ -264,6 +392,276 @@ class CertInfo {
           issuer == other.issuer &&
           notBefore == other.notBefore &&
           notAfter == other.notAfter;
+}
+
+/// One drive (mirrors sbm_redfish::storage::Drive).
+class Drive {
+  final String? name;
+  final String? model;
+  final String? serial;
+  final BigInt? capacityBytes;
+  final String? mediaType;
+  final String? protocol;
+  final String? health;
+  final String? state;
+  final bool? failurePredicted;
+  final double? lifeLeftPercent;
+  final String? controller;
+
+  /// Failing, predicted to, or not OK
+  final bool needsAttention;
+
+  const Drive({
+    this.name,
+    this.model,
+    this.serial,
+    this.capacityBytes,
+    this.mediaType,
+    this.protocol,
+    this.health,
+    this.state,
+    this.failurePredicted,
+    this.lifeLeftPercent,
+    this.controller,
+    required this.needsAttention,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      model.hashCode ^
+      serial.hashCode ^
+      capacityBytes.hashCode ^
+      mediaType.hashCode ^
+      protocol.hashCode ^
+      health.hashCode ^
+      state.hashCode ^
+      failurePredicted.hashCode ^
+      lifeLeftPercent.hashCode ^
+      controller.hashCode ^
+      needsAttention.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Drive &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          model == other.model &&
+          serial == other.serial &&
+          capacityBytes == other.capacityBytes &&
+          mediaType == other.mediaType &&
+          protocol == other.protocol &&
+          health == other.health &&
+          state == other.state &&
+          failurePredicted == other.failurePredicted &&
+          lifeLeftPercent == other.lifeLeftPercent &&
+          controller == other.controller &&
+          needsAttention == other.needsAttention;
+}
+
+/// The light that finds the machine (mirrors sbm_redfish::model::Locator).
+class Locator {
+  /// `on` upstream, a Dart keyword
+  final bool lit;
+
+  /// Set through the deprecated `IndicatorLED`
+  final bool legacy;
+
+  const Locator({required this.lit, required this.legacy});
+
+  @override
+  int get hashCode => lit.hashCode ^ legacy.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Locator &&
+          runtimeType == other.runtimeType &&
+          lit == other.lit &&
+          legacy == other.legacy;
+}
+
+/// One entry (mirrors sbm_redfish::logs::LogEntry).
+class LogEntry {
+  final String? id;
+
+  /// ISO 8601, as the service wrote it
+  final String? created;
+
+  /// `OK`, `Warning` or `Critical`
+  final String? severity;
+  final String? message;
+  final String? messageId;
+  final String? entryType;
+  final String? sensorType;
+
+  const LogEntry({
+    this.id,
+    this.created,
+    this.severity,
+    this.message,
+    this.messageId,
+    this.entryType,
+    this.sensorType,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      created.hashCode ^
+      severity.hashCode ^
+      message.hashCode ^
+      messageId.hashCode ^
+      entryType.hashCode ^
+      sensorType.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LogEntry &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          created == other.created &&
+          severity == other.severity &&
+          message == other.message &&
+          messageId == other.messageId &&
+          entryType == other.entryType &&
+          sensorType == other.sensorType;
+}
+
+/// The newest entries, newest first (mirrors sbm_redfish::logs::LogPage).
+class LogPage {
+  final List<LogEntry> entries;
+  final BigInt? total;
+
+  /// More were there than were kept
+  final bool truncated;
+
+  const LogPage({required this.entries, this.total, required this.truncated});
+
+  @override
+  int get hashCode => entries.hashCode ^ total.hashCode ^ truncated.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LogPage &&
+          runtimeType == other.runtimeType &&
+          entries == other.entries &&
+          total == other.total &&
+          truncated == other.truncated;
+}
+
+/// Whose a log is (mirrors sbm_redfish::logs::LogScope).
+enum LogScope {
+  /// The machine's
+  system,
+
+  /// The BMC's own
+  manager,
+}
+
+/// One log (mirrors sbm_redfish::logs::LogService).
+class LogService {
+  final String path;
+  final String? id;
+  final String? name;
+  final String? description;
+  final LogScope scope;
+  final String? entryType;
+  final String? entries;
+
+  /// Set when the log can be cleared
+  final String? clearTarget;
+
+  const LogService({
+    required this.path,
+    this.id,
+    this.name,
+    this.description,
+    required this.scope,
+    this.entryType,
+    this.entries,
+    this.clearTarget,
+  });
+
+  @override
+  int get hashCode =>
+      path.hashCode ^
+      id.hashCode ^
+      name.hashCode ^
+      description.hashCode ^
+      scope.hashCode ^
+      entryType.hashCode ^
+      entries.hashCode ^
+      clearTarget.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LogService &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          id == other.id &&
+          name == other.name &&
+          description == other.description &&
+          scope == other.scope &&
+          entryType == other.entryType &&
+          entries == other.entries &&
+          clearTarget == other.clearTarget;
+}
+
+/// One slot an image can be put in (mirrors sbm_redfish::media::MediaSlot).
+class MediaSlot {
+  final String path;
+  final String? id;
+  final String? name;
+  final List<String> mediaTypes;
+  final bool inserted;
+  final String? image;
+  final bool? writeProtected;
+  final String? insertTarget;
+  final String? ejectTarget;
+
+  const MediaSlot({
+    required this.path,
+    this.id,
+    this.name,
+    required this.mediaTypes,
+    required this.inserted,
+    this.image,
+    this.writeProtected,
+    this.insertTarget,
+    this.ejectTarget,
+  });
+
+  @override
+  int get hashCode =>
+      path.hashCode ^
+      id.hashCode ^
+      name.hashCode ^
+      mediaTypes.hashCode ^
+      inserted.hashCode ^
+      image.hashCode ^
+      writeProtected.hashCode ^
+      insertTarget.hashCode ^
+      ejectTarget.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MediaSlot &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          id == other.id &&
+          name == other.name &&
+          mediaTypes == other.mediaTypes &&
+          inserted == other.inserted &&
+          image == other.image &&
+          writeProtected == other.writeProtected &&
+          insertTarget == other.insertTarget &&
+          ejectTarget == other.ejectTarget;
 }
 
 /// What the user asks of a machine (mirrors sbm_redfish::model::PowerIntent),
@@ -366,10 +764,43 @@ enum RedfishFailure {
   closed,
 }
 
+/// The BMC itself (mirrors sbm_redfish::model::RedfishManager).
+class RedfishManager {
+  final String? firmwareVersion;
+  final String? model;
+  final String? logServices;
+  final String? virtualMedia;
+
+  const RedfishManager({
+    this.firmwareVersion,
+    this.model,
+    this.logServices,
+    this.virtualMedia,
+  });
+
+  @override
+  int get hashCode =>
+      firmwareVersion.hashCode ^
+      model.hashCode ^
+      logServices.hashCode ^
+      virtualMedia.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RedfishManager &&
+          runtimeType == other.runtimeType &&
+          firmwareVersion == other.firmwareVersion &&
+          model == other.model &&
+          logServices == other.logServices &&
+          virtualMedia == other.virtualMedia;
+}
+
 /// What `GET /redfish/v1/` said (mirrors sbm_redfish::model::RedfishRoot).
 class RedfishRoot {
   final String? systems;
   final String? chassis;
+  final String? managers;
   final String? sessions;
   final String? version;
   final String? product;
@@ -378,6 +809,7 @@ class RedfishRoot {
   const RedfishRoot({
     this.systems,
     this.chassis,
+    this.managers,
     this.sessions,
     this.version,
     this.product,
@@ -388,6 +820,7 @@ class RedfishRoot {
   int get hashCode =>
       systems.hashCode ^
       chassis.hashCode ^
+      managers.hashCode ^
       sessions.hashCode ^
       version.hashCode ^
       product.hashCode ^
@@ -400,6 +833,7 @@ class RedfishRoot {
           runtimeType == other.runtimeType &&
           systems == other.systems &&
           chassis == other.chassis &&
+          managers == other.managers &&
           sessions == other.sessions &&
           version == other.version &&
           product == other.product &&
@@ -416,6 +850,12 @@ class RedfishSystem {
   final String? health;
   final String? resetTarget;
   final List<String> resetTypes;
+  final BootOverride? boot;
+  final Locator? locator;
+  final String? logServices;
+  final String? storage;
+  final String? simpleStorage;
+  final String? virtualMedia;
 
   const RedfishSystem({
     required this.powerState,
@@ -426,6 +866,12 @@ class RedfishSystem {
     this.health,
     this.resetTarget,
     required this.resetTypes,
+    this.boot,
+    this.locator,
+    this.logServices,
+    this.storage,
+    this.simpleStorage,
+    this.virtualMedia,
   });
 
   @override
@@ -437,7 +883,13 @@ class RedfishSystem {
       biosVersion.hashCode ^
       health.hashCode ^
       resetTarget.hashCode ^
-      resetTypes.hashCode;
+      resetTypes.hashCode ^
+      boot.hashCode ^
+      locator.hashCode ^
+      logServices.hashCode ^
+      storage.hashCode ^
+      simpleStorage.hashCode ^
+      virtualMedia.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -451,7 +903,13 @@ class RedfishSystem {
           biosVersion == other.biosVersion &&
           health == other.health &&
           resetTarget == other.resetTarget &&
-          resetTypes == other.resetTypes;
+          resetTypes == other.resetTypes &&
+          boot == other.boot &&
+          locator == other.locator &&
+          logServices == other.logServices &&
+          storage == other.storage &&
+          simpleStorage == other.simpleStorage &&
+          virtualMedia == other.virtualMedia;
 }
 
 /// What a service turned out to be, discovered once and passed back on every
@@ -460,8 +918,10 @@ class RedfishTopology {
   final RedfishRoot root;
   final String? systemPath;
   final String? chassisPath;
+  final String? managerPath;
   final RedfishSystem? system;
   final RedfishChassis? chassis;
+  final RedfishManager? manager;
 
   /// Only the first system is shown; the UI says so
   final bool hasMultipleSystems;
@@ -470,8 +930,10 @@ class RedfishTopology {
     required this.root,
     this.systemPath,
     this.chassisPath,
+    this.managerPath,
     this.system,
     this.chassis,
+    this.manager,
     required this.hasMultipleSystems,
   });
 
@@ -480,8 +942,10 @@ class RedfishTopology {
       root.hashCode ^
       systemPath.hashCode ^
       chassisPath.hashCode ^
+      managerPath.hashCode ^
       system.hashCode ^
       chassis.hashCode ^
+      manager.hashCode ^
       hasMultipleSystems.hashCode;
 
   @override
@@ -492,8 +956,10 @@ class RedfishTopology {
           root == other.root &&
           systemPath == other.systemPath &&
           chassisPath == other.chassisPath &&
+          managerPath == other.managerPath &&
           system == other.system &&
           chassis == other.chassis &&
+          manager == other.manager &&
           hasMultipleSystems == other.hasMultipleSystems;
 }
 
@@ -518,4 +984,32 @@ class ResetRequest {
           runtimeType == other.runtimeType &&
           target == other.target &&
           resetType == other.resetType;
+}
+
+/// A system's drives (mirrors sbm_redfish::storage::StorageReport).
+class StorageReport {
+  final List<Drive> drives;
+  final bool truncated;
+
+  /// The service lists no storage at all
+  final bool unsupported;
+
+  const StorageReport({
+    required this.drives,
+    required this.truncated,
+    required this.unsupported,
+  });
+
+  @override
+  int get hashCode =>
+      drives.hashCode ^ truncated.hashCode ^ unsupported.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StorageReport &&
+          runtimeType == other.runtimeType &&
+          drives == other.drives &&
+          truncated == other.truncated &&
+          unsupported == other.unsupported;
 }

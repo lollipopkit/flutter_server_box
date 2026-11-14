@@ -1,0 +1,902 @@
+{
+ "/redfish/v1/": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/",
+  "@odata.type": "#ServiceRoot.v1_22_0.ServiceRoot",
+  "AccountService": {
+   "@odata.id": "/redfish/v1/AccountService"
+  },
+  "Chassis": {
+   "@odata.id": "/redfish/v1/Chassis"
+  },
+  "EventService": {
+   "@odata.id": "/redfish/v1/EventService"
+  },
+  "Id": "RootService",
+  "Links": {
+   "Sessions": {
+    "@odata.id": "/redfish/v1/SessionService/Sessions"
+   }
+  },
+  "Managers": {
+   "@odata.id": "/redfish/v1/Managers"
+  },
+  "Name": "Root Service",
+  "ProtocolFeaturesSupported": {
+   "ExcerptQuery": true,
+   "ExpandQuery": {
+    "ExpandAll": true,
+    "Levels": true,
+    "Links": true,
+    "MaxLevels": 6,
+    "NoLinks": true
+   },
+   "FilterQuery": false,
+   "OnlyMemberQuery": true,
+   "SelectQuery": false
+  },
+  "RedfishVersion": "1.15.0",
+  "SessionService": {
+   "@odata.id": "/redfish/v1/SessionService"
+  },
+  "Systems": {
+   "@odata.id": "/redfish/v1/Systems"
+  },
+  "Tasks": {
+   "@odata.id": "/redfish/v1/TaskService"
+  },
+  "UUID": "92384634-2938-2342-8820-489239905423"
+ },
+ "/redfish/v1/Chassis": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis",
+  "@odata.type": "#ChassisCollection.ChassisCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Chassis Collection"
+ },
+ "/redfish/v1/Chassis/1U": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U",
+  "@odata.type": "#Chassis.v1_29_0.Chassis",
+  "AssetTag": "Chicago-45Z-2381",
+  "ChassisType": "RackMount",
+  "Drives": {
+   "@odata.id": "/redfish/v1/Chassis/1U/Drives"
+  },
+  "Id": "1U",
+  "IndicatorLED": "Lit",
+  "Links": {
+   "ComputerSystems": [
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2"
+    }
+   ],
+   "ManagedBy": [
+    {
+     "@odata.id": "/redfish/v1/Managers/BMC"
+    }
+   ],
+   "ManagersInChassis": [
+    {
+     "@odata.id": "/redfish/v1/Managers/BMC"
+    }
+   ]
+  },
+  "Manufacturer": "Contoso",
+  "Model": "3500RX",
+  "Name": "Computer System Chassis",
+  "PartNumber": "224071-J23",
+  "Power": {
+   "@odata.id": "/redfish/v1/Chassis/1U/Power"
+  },
+  "PowerState": "On",
+  "SKU": "8675309",
+  "SerialNumber": "437XR1138R2",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  },
+  "Thermal": {
+   "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+  }
+ },
+ "/redfish/v1/Chassis/1U/Drives": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U/Drives",
+  "@odata.type": "#DriveCollection.DriveCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/35D38F11ACEF7BD3"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/3F5A8C54207B7233"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/32ADF365C6C1B7BD"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/3D58ECBC375FD9F2"
+   }
+  ],
+  "Members@odata.count": 4,
+  "Name": "Drive Collection"
+ },
+ "/redfish/v1/Chassis/1U/Drives/32ADF365C6C1B7BD": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U/Drives/32ADF365C6C1B7BD",
+  "@odata.type": "#Drive.v1_22_0.Drive",
+  "Actions": {
+   "#Drive.SecureErase": {
+    "target": "/redfish/v1/Chassis/1U/Drives/32ADF365C6C1B7BD/Actions/Drive.SecureErase"
+   }
+  },
+  "BlockSizeBytes": 512,
+  "CapableSpeedGbs": 12,
+  "CapacityBytes": 899527000064,
+  "EncryptionAbility": "SelfEncryptingDrive",
+  "EncryptionStatus": "Unlocked",
+  "FailurePredicted": false,
+  "HotspareReplacementMode": "Revertible",
+  "HotspareType": "Global",
+  "Id": "32ADF365C6C1B7BD",
+  "Identifiers": [
+   {
+    "DurableName": "32ADF365C6C1B7BD",
+    "DurableNameFormat": "NAA"
+   }
+  ],
+  "IndicatorLED": "Lit",
+  "Manufacturer": "Contoso",
+  "MediaType": "HDD",
+  "Model": "C123",
+  "Name": "Drive Sample",
+  "NegotiatedSpeedGbs": 12,
+  "PartNumber": "C123-1111",
+  "Protocol": "SAS",
+  "Revision": "100A",
+  "RotationSpeedRPM": 15000,
+  "SerialNumber": "1234570",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Chassis/1U/Drives/35D38F11ACEF7BD3": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U/Drives/35D38F11ACEF7BD3",
+  "@odata.type": "#Drive.v1_22_0.Drive",
+  "Actions": {
+   "#Drive.SecureErase": {
+    "target": "/redfish/v1/Chassis/1U/Drives/35D38F11ACEF7BD3/Actions/Drive.SecureErase"
+   }
+  },
+  "BlockSizeBytes": 512,
+  "CapableSpeedGbs": 12,
+  "CapacityBytes": 899527000064,
+  "EncryptionAbility": "SelfEncryptingDrive",
+  "EncryptionStatus": "Unlocked",
+  "FailurePredicted": false,
+  "HotspareType": "None",
+  "Id": "35D38F11ACEF7BD3",
+  "Identifiers": [
+   {
+    "DurableName": "35D38F11ACEF7BD3",
+    "DurableNameFormat": "NAA"
+   }
+  ],
+  "IndicatorLED": "Lit",
+  "Links": {
+   "Volumes": [
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1/Volumes/1"
+    }
+   ]
+  },
+  "Manufacturer": "Contoso",
+  "MediaType": "HDD",
+  "Model": "C123",
+  "Name": "Drive Sample",
+  "NegotiatedSpeedGbs": 12,
+  "PartNumber": "C123-1111",
+  "Protocol": "SAS",
+  "Revision": "100A",
+  "RotationSpeedRPM": 15000,
+  "SerialNumber": "1234567",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Chassis/1U/Drives/3D58ECBC375FD9F2": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U/Drives/3D58ECBC375FD9F2",
+  "@odata.type": "#Drive.v1_22_0.Drive",
+  "Actions": {
+   "#Drive.SecureErase": {
+    "target": "/redfish/v1/Chassis/1U/Drives/3D58ECBC375FD9F2/Actions/Drive.SecureErase"
+   }
+  },
+  "BlockSizeBytes": 512,
+  "CapableSpeedGbs": 12,
+  "CapacityBytes": 899527000064,
+  "EncryptionAbility": "SelfEncryptingDrive",
+  "EncryptionStatus": "Unlocked",
+  "FailurePredicted": false,
+  "HotspareType": "None",
+  "Id": "3D58ECBC375FD9F2",
+  "Identifiers": [
+   {
+    "DurableName": "32ADF365C6C1B7BD",
+    "DurableNameFormat": "NAA"
+   }
+  ],
+  "IndicatorLED": "Lit",
+  "Links": {
+   "Volumes": [
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1/Volumes/2"
+    },
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1/Volumes/3"
+    }
+   ]
+  },
+  "Manufacturer": "Contoso",
+  "MediaType": "HDD",
+  "Model": "C123",
+  "Name": "Drive Sample",
+  "NegotiatedSpeedGbs": 12,
+  "PartNumber": "C123-1111",
+  "Protocol": "SAS",
+  "Revision": "100A",
+  "RotationSpeedRPM": 15000,
+  "SerialNumber": "1234568",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Chassis/1U/Drives/3F5A8C54207B7233": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Chassis/1U/Drives/3F5A8C54207B7233",
+  "@odata.type": "#Drive.v1_22_0.Drive",
+  "Actions": {
+   "#Drive.SecureErase": {
+    "target": "/redfish/v1/Chassis/1U/Drives/3F5A8C54207B7233/Actions/Drive.SecureErase"
+   }
+  },
+  "BlockSizeBytes": 512,
+  "CapableSpeedGbs": 12,
+  "CapacityBytes": 899527000064,
+  "EncryptionAbility": "SelfEncryptingDrive",
+  "EncryptionStatus": "Unlocked",
+  "FailurePredicted": false,
+  "HotspareType": "None",
+  "Id": "3F5A8C54207B7233",
+  "Identifiers": [
+   {
+    "DurableName": "3F5A8C54207B7233",
+    "DurableNameFormat": "NAA"
+   }
+  ],
+  "IndicatorLED": "Lit",
+  "Links": {
+   "Volumes": [
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1/Volumes/1"
+    }
+   ]
+  },
+  "Manufacturer": "Contoso",
+  "MediaType": "HDD",
+  "Model": "C123",
+  "Name": "Drive Sample",
+  "NegotiatedSpeedGbs": 12,
+  "PartNumber": "C123-1111",
+  "Protocol": "SAS",
+  "Revision": "100A",
+  "RotationSpeedRPM": 15000,
+  "SerialNumber": "1234569",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Managers": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers",
+  "@odata.type": "#ManagerCollection.ManagerCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/BMC"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Manager Collection"
+ },
+ "/redfish/v1/Managers/BMC": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC",
+  "@odata.type": "#Manager.v1_25_0.Manager",
+  "Actions": {
+   "#Manager.Reset": {
+    "ResetType@Redfish.AllowableValues": [
+     "ForceRestart",
+     "GracefulRestart"
+    ],
+    "target": "/redfish/v1/Managers/BMC/Actions/Manager.Reset"
+   }
+  },
+  "CommandShell": {
+   "ConnectTypesSupported": [
+    "Telnet",
+    "SSH"
+   ],
+   "MaxConcurrentSessions": 4,
+   "ServiceEnabled": true
+  },
+  "DateTime": "2015-03-13T04:14:33+06:00",
+  "DateTimeLocalOffset": "+06:00",
+  "Description": "Contoso BMC",
+  "EthernetInterfaces": {
+   "@odata.id": "/redfish/v1/Managers/BMC/EthernetInterfaces"
+  },
+  "FirmwareVersion": "1.00",
+  "GraphicalConsole": {
+   "ConnectTypesSupported": [
+    "KVMIP"
+   ],
+   "MaxConcurrentSessions": 2,
+   "ServiceEnabled": true
+  },
+  "Id": "BMC",
+  "Links": {
+   "ManagerForChassis": [
+    {
+     "@odata.id": "/redfish/v1/Chassis/1U"
+    }
+   ],
+   "ManagerForServers": [
+    {
+     "@odata.id": "/redfish/v1/Systems/437XR1138R2"
+    }
+   ],
+   "ManagerInChassis": {
+    "@odata.id": "/redfish/v1/Chassis/1U"
+   }
+  },
+  "LogServices": {
+   "@odata.id": "/redfish/v1/Managers/BMC/LogServices"
+  },
+  "ManagerType": "BMC",
+  "Model": "Joo Janta 200",
+  "Name": "Manager",
+  "NetworkProtocol": {
+   "@odata.id": "/redfish/v1/Managers/BMC/NetworkProtocol"
+  },
+  "PowerState": "On",
+  "SerialConsole": {
+   "ConnectTypesSupported": [
+    "Telnet",
+    "SSH",
+    "IPMI"
+   ],
+   "MaxConcurrentSessions": 1,
+   "ServiceEnabled": true
+  },
+  "SerialInterfaces": {
+   "@odata.id": "/redfish/v1/Managers/BMC/SerialInterfaces"
+  },
+  "ServiceEntryPointUUID": "92384634-2938-2342-8820-489239905423",
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  },
+  "UUID": "58893887-8974-2487-2389-841168418919",
+  "VirtualMedia": {
+   "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia"
+  }
+ },
+ "/redfish/v1/Managers/BMC/LogServices": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/LogServices",
+  "@odata.type": "#LogServiceCollection.LogServiceCollection",
+  "Description": "Collection of Log Services for this Manager",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Log Service Collection"
+ },
+ "/redfish/v1/Managers/BMC/LogServices/Log": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log",
+  "@odata.type": "#LogService.v1_9_0.LogService",
+  "Actions": {
+   "#LogService.ClearLog": {
+    "target": "/redfish/v1/Managers/BMC/LogServices/Log/Actions/LogService.ClearLog"
+   }
+  },
+  "DateTime": "2015-03-13T04:14:33+06:00",
+  "DateTimeLocalOffset": "+06:00",
+  "Entries": {
+   "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log/Entries"
+  },
+  "Id": "Log",
+  "MaxNumberOfRecords": 1000,
+  "Name": "System Log Service",
+  "OverWritePolicy": "WrapsWhenFull",
+  "ServiceEnabled": true,
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Managers/BMC/LogServices/Log/Entries": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log/Entries",
+  "@odata.type": "#LogEntryCollection.LogEntryCollection",
+  "Description": "Collection of Logs for this System",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log/Entries/1",
+    "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+    "Created": "2012-03-07T14:44:00Z",
+    "EntryType": "Event",
+    "Id": "1",
+    "Links": {
+     "OriginOfCondition": {
+      "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+     }
+    },
+    "Message": "System May be Melting",
+    "MessageArgs": [
+     "88"
+    ],
+    "MessageId": "Event.1.0.TempWayTooHot",
+    "Name": "Log Entry 1",
+    "SensorNumber": 1,
+    "Severity": "Critical"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Log Service Collection"
+ },
+ "/redfish/v1/Managers/BMC/LogServices/Log/Entries/1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/LogServices/Log/Entries/1",
+  "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+  "Created": "2012-03-07T14:44:00Z",
+  "EntryType": "Event",
+  "Id": "1",
+  "Links": {
+   "OriginOfCondition": {
+    "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+   }
+  },
+  "Message": "System May be Melting",
+  "MessageArgs": [
+   "88"
+  ],
+  "MessageId": "Event.1.0.TempWayTooHot",
+  "Name": "Log Entry 1",
+  "SensorNumber": 1,
+  "Severity": "Critical"
+ },
+ "/redfish/v1/Managers/BMC/VirtualMedia": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia",
+  "@odata.type": "#VirtualMediaCollection.VirtualMediaCollection",
+  "Description": "Redfish-BMC Virtual Media Service Settings",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia/Floppy1"
+   },
+   {
+    "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia/CD1"
+   }
+  ],
+  "Members@odata.count": 2,
+  "Name": "Virtual Media Services"
+ },
+ "/redfish/v1/Managers/BMC/VirtualMedia/CD1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia/CD1",
+  "@odata.type": "#VirtualMedia.v1_7_0.VirtualMedia",
+  "ConnectedVia": "Applet",
+  "Id": "CD1",
+  "Image": "redfish.dmtf.org/freeImages/freeOS.1.1.iso",
+  "ImageName": "mymedia-read-only",
+  "Inserted": true,
+  "MediaTypes": [
+   "CD",
+   "DVD"
+  ],
+  "Name": "Virtual CD",
+  "WriteProtected": false
+ },
+ "/redfish/v1/Managers/BMC/VirtualMedia/Floppy1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Managers/BMC/VirtualMedia/Floppy1",
+  "@odata.type": "#VirtualMedia.v1_7_0.VirtualMedia",
+  "ConnectedVia": "URI",
+  "Id": "Floppy1",
+  "Image": "https://www.dmtf.org/freeImages/Sardine.img",
+  "ImageName": "Sardine2.1.43.35.6a",
+  "Inserted": true,
+  "MediaTypes": [
+   "Floppy",
+   "USBStick"
+  ],
+  "Name": "Virtual Removable Media",
+  "WriteProtected": false
+ },
+ "/redfish/v1/Systems": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems",
+  "@odata.type": "#ComputerSystemCollection.ComputerSystemCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Computer System Collection"
+ },
+ "/redfish/v1/Systems/437XR1138R2": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2",
+  "@odata.type": "#ComputerSystem.v1_29_0.ComputerSystem",
+  "Actions": {
+   "#ComputerSystem.Reset": {
+    "ResetType@Redfish.AllowableValues": [
+     "On",
+     "ForceOff",
+     "GracefulShutdown",
+     "GracefulRestart",
+     "ForceRestart",
+     "Nmi",
+     "ForceOn",
+     "PushPowerButton"
+    ],
+    "target": "/redfish/v1/Systems/437XR1138R2/Actions/ComputerSystem.Reset"
+   },
+   "Oem": {
+    "#Contoso.Reset": {
+     "target": "/redfish/v1/Systems/437XR1138R2/Oem/Contoso/Actions/Contoso.Reset"
+    }
+   }
+  },
+  "AssetTag": "Chicago-45Z-2381",
+  "Bios": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/Bios"
+  },
+  "BiosVersion": "P79 v1.33 (02/28/2015)",
+  "Boot": {
+   "BootSourceOverrideEnabled": "Once",
+   "BootSourceOverrideMode": "UEFI",
+   "BootSourceOverrideTarget": "Pxe",
+   "BootSourceOverrideTarget@Redfish.AllowableValues": [
+    "None",
+    "Pxe",
+    "Cd",
+    "Usb",
+    "Hdd",
+    "BiosSetup",
+    "Utilities",
+    "Diags",
+    "SDCard",
+    "UefiTarget"
+   ],
+   "UefiTargetBootSourceOverride": "/0x31/0x33/0x01/0x01"
+  },
+  "Description": "Web Front End node",
+  "EthernetInterfaces": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/EthernetInterfaces"
+  },
+  "HostName": "web483",
+  "HostingRoles": [
+   "ApplicationServer"
+  ],
+  "Id": "437XR1138R2",
+  "IndicatorLED": "Off",
+  "Links": {
+   "Chassis": [
+    {
+     "@odata.id": "/redfish/v1/Chassis/1U"
+    }
+   ],
+   "ManagedBy": [
+    {
+     "@odata.id": "/redfish/v1/Managers/BMC"
+    }
+   ]
+  },
+  "LogServices": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices"
+  },
+  "Manufacturer": "Contoso",
+  "Memory": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/Memory"
+  },
+  "MemorySummary": {
+   "MemoryMirroring": "None",
+   "Status": {
+    "Health": "OK",
+    "HealthRollup": "OK",
+    "State": "Enabled"
+   },
+   "TotalSystemMemoryGiB": 96,
+   "TotalSystemPersistentMemoryGiB": 0
+  },
+  "Model": "3500RX",
+  "Name": "WebFrontEnd483",
+  "Oem": {
+   "Chipwise": {
+    "@odata.type": "#Chipwise.ComputerSystem",
+    "Style": "Executive"
+   },
+   "Contoso": {
+    "@odata.type": "#Contoso.ComputerSystem",
+    "ProductionLocation": {
+     "Country": "USA",
+     "FacilityName": "PacWest Production Facility"
+    }
+   }
+  },
+  "PartNumber": "224071-J23",
+  "PowerState": "On",
+  "ProcessorSummary": {
+   "Count": 2,
+   "Model": "Multi-Core Intel(R) Xeon(R) processor 7xxx Series",
+   "Status": {
+    "Health": "OK",
+    "HealthRollup": "OK",
+    "State": "Enabled"
+   }
+  },
+  "Processors": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/Processors"
+  },
+  "SKU": "8675309",
+  "SerialNumber": "437XR1138R2",
+  "Status": {
+   "Health": "OK",
+   "HealthRollup": "OK",
+   "State": "Enabled"
+  },
+  "Storage": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage"
+  },
+  "SystemType": "Physical",
+  "TrustedModules": [
+   {
+    "FirmwareVersion": "1.13b",
+    "InterfaceType": "TPM1_2",
+    "Status": {
+     "Health": "OK",
+     "State": "Enabled"
+    }
+   }
+  ],
+  "UUID": "38947555-7742-3448-3784-823347823834"
+ },
+ "/redfish/v1/Systems/437XR1138R2/LogServices": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices",
+  "@odata.type": "#LogServiceCollection.LogServiceCollection",
+  "Description": "Collection of Logs for this System",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Log Service Collection"
+ },
+ "/redfish/v1/Systems/437XR1138R2/LogServices/Log1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1",
+  "@odata.type": "#LogService.v1_9_0.LogService",
+  "Actions": {
+   "#LogService.ClearLog": {
+    "target": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Actions/LogService.ClearLog"
+   }
+  },
+  "DateTime": "2015-03-13T04:14:33+06:00",
+  "DateTimeLocalOffset": "+06:00",
+  "Entries": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries"
+  },
+  "Id": "Log1",
+  "MaxNumberOfRecords": 1000,
+  "Name": "System Log Service",
+  "OverWritePolicy": "WrapsWhenFull",
+  "ServiceEnabled": true,
+  "Status": {
+   "Health": "OK",
+   "State": "Enabled"
+  }
+ },
+ "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries",
+  "@odata.nextLink": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries?$skiptoken=2",
+  "@odata.type": "#LogEntryCollection.LogEntryCollection",
+  "Description": "Collection of Logs for this System",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/1",
+    "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+    "Created": "2012-03-07T14:44:00Z",
+    "EntryCode": "Upper Critical - going high",
+    "EntryType": "SEL",
+    "Id": "1",
+    "Links": {
+     "OriginOfCondition": {
+      "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+     }
+    },
+    "Message": "Temperature threshold exceeded",
+    "MessageId": "0x592A28",
+    "Name": "Log Entry 1",
+    "SensorNumber": 1,
+    "SensorType": "Temperature",
+    "Severity": "Critical"
+   },
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/2",
+    "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+    "Created": "2012-03-07T14:45:00Z",
+    "EntryCode": "Upper Critical - going high",
+    "EntryType": "SEL",
+    "Id": "2",
+    "Links": {
+     "OriginOfCondition": {
+      "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+     }
+    },
+    "Message": "Temperature threshold exceeded",
+    "MessageId": "0x592E28",
+    "Name": "Log Entry 2",
+    "SensorNumber": 2,
+    "SensorType": "Temperature",
+    "Severity": "Critical"
+   }
+  ],
+  "Members@odata.count": 2,
+  "Name": "Log Service Collection"
+ },
+ "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/1",
+  "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+  "Created": "2012-03-07T14:44:00Z",
+  "EntryCode": "Upper Critical - going high",
+  "EntryType": "SEL",
+  "Id": "1",
+  "Links": {
+   "OriginOfCondition": {
+    "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+   }
+  },
+  "Message": "Temperature threshold exceeded",
+  "MessageId": "0x592A28",
+  "Name": "Log Entry 1",
+  "SensorNumber": 1,
+  "SensorType": "Temperature",
+  "Severity": "Critical"
+ },
+ "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/2": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/LogServices/Log1/Entries/2",
+  "@odata.type": "#LogEntry.v1_22_0.LogEntry",
+  "Created": "2012-03-07T14:45:00Z",
+  "EntryCode": "Upper Critical - going high",
+  "EntryType": "SEL",
+  "Id": "2",
+  "Links": {
+   "OriginOfCondition": {
+    "@odata.id": "/redfish/v1/Chassis/1U/Thermal"
+   }
+  },
+  "Message": "Temperature threshold exceeded",
+  "MessageId": "0x592E28",
+  "Name": "Log Entry 2",
+  "SensorNumber": 2,
+  "SensorType": "Temperature",
+  "Severity": "Critical"
+ },
+ "/redfish/v1/Systems/437XR1138R2/Storage": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage",
+  "@odata.type": "#StorageCollection.StorageCollection",
+  "Members": [
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1"
+   }
+  ],
+  "Members@odata.count": 1,
+  "Name": "Storage Collection"
+ },
+ "/redfish/v1/Systems/437XR1138R2/Storage/1": {
+  "@Redfish.Copyright": "Copyright 2014-2026 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1",
+  "@odata.type": "#Storage.v1_23_0.Storage",
+  "Actions": {
+   "#Storage.SetEncryptionKey": {
+    "target": "/redfish/v1/Systems/437XR1138R2/Storage/1/Actions/Storage.SetEncryptionKey"
+   }
+  },
+  "Description": "Integrated RAID Controller",
+  "Drives": [
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/35D38F11ACEF7BD3"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/3F5A8C54207B7233"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/32ADF365C6C1B7BD"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/1U/Drives/3D58ECBC375FD9F2"
+   }
+  ],
+  "Id": "1",
+  "Name": "Local Storage Controller",
+  "Status": {
+   "Health": "OK",
+   "HealthRollup": "OK",
+   "State": "Enabled"
+  },
+  "StorageControllers": [
+   {
+    "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1#/StorageControllers/0",
+    "CacheSummary": {
+     "PersistentCacheSizeMiB": 1024,
+     "Status": {
+      "Health": "OK",
+      "State": "Enabled"
+     },
+     "TotalCacheSizeMiB": 1024
+    },
+    "FirmwareVersion": "1.0.0.7",
+    "Identifiers": [
+     {
+      "DurableName": "345C59DBD970859C",
+      "DurableNameFormat": "NAA"
+     }
+    ],
+    "Manufacturer": "Contoso",
+    "MemberId": "0",
+    "Model": "12Gbs Integrated RAID",
+    "Name": "Contoso Integrated RAID",
+    "PartNumber": "CT18754",
+    "SerialNumber": "2M220100SL",
+    "SpeedGbps": 12,
+    "Status": {
+     "Health": "OK",
+     "State": "Enabled"
+    },
+    "SupportedControllerProtocols": [
+     "PCIe"
+    ],
+    "SupportedDeviceProtocols": [
+     "SAS",
+     "SATA"
+    ]
+   }
+  ],
+  "Volumes": {
+   "@odata.id": "/redfish/v1/Systems/437XR1138R2/Storage/1/Volumes"
+  }
+ }
+}

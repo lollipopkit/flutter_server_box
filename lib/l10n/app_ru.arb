@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "Не удалось найти сокет ssh-agent по {name}",
   "sshAgentUnsupported": "Это устройство не может использовать ssh-agent",
   "sshAgentNotPipe": "В Windows ssh-agent доступен через named pipe, а {path} им не является",
-  "sshAgentUnreachable": "Не удалось подключиться к ssh-agent по адресу {path}: {reason}"
+  "sshAgentUnreachable": "Не удалось подключиться к ssh-agent по адресу {path}: {reason}",
+  "bmcLocator": "Индикатор поиска",
+  "bmcBoot": "Переопределение загрузки",
+  "bmcBootDisabled": "Порядок по умолчанию",
+  "bmcBootOnce": "Только следующая загрузка",
+  "bmcBootContinuous": "Каждая загрузка",
+  "bmcBootTarget": "Устройство",
+  "bmcVirtualMedia": "Виртуальные носители",
+  "bmcInsertMedia": "Вставить",
+  "bmcEjectMedia": "Извлечь",
+  "bmcImageUrl": "URL образа",
+  "bmcImageUrlInvalid": "Нужен http(s)-, NFS- или SMB-адрес образа без учётных данных",
+  "bmcDrives": "Диски",
+  "bmcNoStorage": "Служба не сообщает о хранилище",
+  "bmcClearLogConfirm": "Очистить {log} на {server}?",
+  "bmcEntriesTruncated": "Показаны только последние записи",
+  "bmcDrivesTruncated": "Показаны только первые диски"
 }

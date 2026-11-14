@@ -2037,5 +2037,21 @@
   "sshAgentUnset": "{name} değerinden bir ssh-agent soketi bulunamıyor",
   "sshAgentUnsupported": "Bu cihaz ssh-agent kullanamaz",
   "sshAgentNotPipe": "Windows'ta ssh-agent'a named pipe ile ulaşılır ve {path} bir named pipe değil",
-  "sshAgentUnreachable": "{path} konumundaki ssh-agent'a ulaşılamıyor: {reason}"
+  "sshAgentUnreachable": "{path} konumundaki ssh-agent'a ulaşılamıyor: {reason}",
+  "bmcLocator": "Konum ışığı",
+  "bmcBoot": "Önyükleme geçersiz kılma",
+  "bmcBootDisabled": "Varsayılan sıra",
+  "bmcBootOnce": "Yalnızca sonraki önyükleme",
+  "bmcBootContinuous": "Her önyükleme",
+  "bmcBootTarget": "Aygıt",
+  "bmcVirtualMedia": "Sanal ortam",
+  "bmcInsertMedia": "Tak",
+  "bmcEjectMedia": "Çıkar",
+  "bmcImageUrl": "Görüntü URL'si",
+  "bmcImageUrlInvalid": "Kimlik bilgisi içermeyen, görüntünün http(s), NFS veya SMB URL'si gerekir",
+  "bmcDrives": "Sürücüler",
+  "bmcNoStorage": "Hizmet depolama bildirmiyor",
+  "bmcClearLogConfirm": "{server} üzerindeki {log} temizlensin mi?",
+  "bmcEntriesTruncated": "Yalnızca en yeni kayıtlar gösteriliyor",
+  "bmcDrivesTruncated": "Yalnızca ilk sürücüler gösteriliyor"
 }

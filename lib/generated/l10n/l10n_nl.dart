@@ -7325,4 +7325,55 @@ class AppLocalizationsNl extends AppLocalizations {
   String sshAgentUnreachable(String path, String reason) {
     return 'Kan de ssh-agent op $path niet bereiken: $reason';
   }
+
+  @override
+  String get bmcLocator => 'Locatorlampje';
+
+  @override
+  String get bmcBoot => 'Boot-override';
+
+  @override
+  String get bmcBootDisabled => 'Standaardvolgorde';
+
+  @override
+  String get bmcBootOnce => 'Alleen volgende start';
+
+  @override
+  String get bmcBootContinuous => 'Elke start';
+
+  @override
+  String get bmcBootTarget => 'Apparaat';
+
+  @override
+  String get bmcVirtualMedia => 'Virtuele media';
+
+  @override
+  String get bmcInsertMedia => 'Plaatsen';
+
+  @override
+  String get bmcEjectMedia => 'Uitwerpen';
+
+  @override
+  String get bmcImageUrl => 'Image-URL';
+
+  @override
+  String get bmcImageUrlInvalid =>
+      'Vereist een http(s)-, NFS- of SMB-URL van de image, zonder inloggegevens';
+
+  @override
+  String get bmcDrives => 'Schijven';
+
+  @override
+  String get bmcNoStorage => 'De service meldt geen opslag';
+
+  @override
+  String bmcClearLogConfirm(String log, String server) {
+    return '$log op $server wissen?';
+  }
+
+  @override
+  String get bmcEntriesTruncated => 'Alleen de nieuwste items worden getoond';
+
+  @override
+  String get bmcDrivesTruncated => 'Alleen de eerste schijven worden getoond';
 }
