@@ -3,14 +3,10 @@
 <h2 align="center">Flutter Server Box</h2>
 
 <div align="center">
-  <a href="https://lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
-  <img alt="语言" src="https://img.shields.io/badge/语言-dart-cyan">
-  <img alt="license" src="https://img.shields.io/badge/证书-AGPLv3-yellow">
-</div>
-<div align="center">
+  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
   <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-群-pink"></a>
   <a href="https://t.me/lpktg"><img alt="telegram" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
-  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
+  <a href="https://lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
 </div>
 
 <p align="center">

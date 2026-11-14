@@ -74,6 +74,12 @@ pub async fn media_slots<T: Transport>(client: &T, topology: &Topology) -> Resul
         };
         read_any = true;
         for path in paths {
+            // Redfish 2021.1 moved the slots under the system and some
+            // firmware still lists them under both: the same slot twice would
+            // be offered twice, and one eject would look like it did nothing.
+            if slots.iter().any(|s: &MediaSlot| s.path == path) {
+                continue;
+            }
             if let Ok(json) = client.get(&path).await {
                 slots.push(MediaSlot::from_json(&path, &json));
             }
