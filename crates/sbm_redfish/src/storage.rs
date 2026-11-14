@@ -89,7 +89,12 @@ pub async fn storage<T: Transport>(client: &T, topology: &Topology) -> Result<St
         };
         match &system.simple_storage {
             Some(simple) if report.drives.is_empty() => {
-                return Ok(from_simple_storage(client, simple).await.unwrap_or(report));
+                return Ok(match from_simple_storage(client, simple).await {
+                    // The fallback says less than the read it replaces.
+                    Ok(simple) if simple.drives.is_empty() => report,
+                    Ok(simple) => simple,
+                    Err(_) => report,
+                });
             }
             _ => return Ok(report),
         }

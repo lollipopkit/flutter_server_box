@@ -163,14 +163,16 @@ pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Resu
     let mut next = next_link(&first);
     let mut pages = 1;
     let mut unread = false;
+    let mut seen: Vec<String> = vec![first_path.to_string()];
 
     // One entry says nothing about which way the log runs; the page after it
     // does, and knowing that is worth one request.
     if entries.len() < 2 {
         match next.take() {
-            Some(path) if pages < MAX_LOG_PAGES => match client.get(&path).await {
+            Some(path) if pages < MAX_LOG_PAGES && !seen.contains(&path) => match client.get(&path).await {
                 Ok(page) => {
                     pages += 1;
+                    seen.push(path);
                     entries.extend(members(&page));
                     next = next_link(&page);
                 }
@@ -185,14 +187,16 @@ pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Resu
     if let (Some(total), true) = (total, is_oldest_first(&read.entries))
         && total as usize > MAX_LOG_ENTRIES
         && !first_path.contains('?')
-        && let Some((tail, more)) = read_tail(client, first_path, total as usize).await
+        && let Some((tail, more)) = read_tail(client, first_path, total as usize, &read.entries).await
     {
         read = Read { entries: tail, unread: more };
         next = None;
     }
 
     while let Some(path) = next.take() {
-        if pages == MAX_LOG_PAGES {
+        // A service that links back to a page already read would only have
+        // its entries collected twice.
+        if pages == MAX_LOG_PAGES || seen.contains(&path) {
             read.unread = true;
             break;
         }
@@ -201,6 +205,7 @@ pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Resu
             break;
         };
         pages += 1;
+        seen.push(path.clone());
         read.entries.extend(members(&page));
         next = next_link(&page);
     }
@@ -238,9 +243,17 @@ fn is_oldest_first(entries: &[LogEntry]) -> bool {
 
 /// The last [`MAX_LOG_ENTRIES`] entries of an oldest-first log, by `$skip` a
 /// page at a time, and whether more was left; `None` for a service that takes
-/// no `$skip` or answers as though it had not.
-async fn read_tail<T: Transport>(client: &T, path: &str, total: usize) -> Option<(Vec<LogEntry>, bool)> {
-    let mut at = total.saturating_sub(MAX_LOG_ENTRIES);
+/// no `$skip`, or that answers a skipped page with the start of the log —
+/// [`head`] is what that looks like. What it read before a page failed is
+/// kept, said to be cut.
+async fn read_tail<T: Transport>(
+    client: &T,
+    path: &str,
+    total: usize,
+    head: &[LogEntry],
+) -> Option<(Vec<LogEntry>, bool)> {
+    let start = total.saturating_sub(MAX_LOG_ENTRIES);
+    let mut at = start;
     let mut entries: Vec<LogEntry> = Vec::new();
     // `$top` makes the window one request where the service takes it; the
     // ones that do not are read a page at a time.
@@ -250,31 +263,49 @@ async fn read_tail<T: Transport>(client: &T, path: &str, total: usize) -> Option
             break;
         }
         let want = MAX_LOG_ENTRIES - entries.len();
+        let skip = |at: usize| format!("{path}?$skip={at}");
         let page = match with_top {
-            true => match client.get(&format!("{path}?$skip={at}&$top={want}")).await {
+            true => match client.get(&format!("{}&$top={want}", skip(at))).await {
                 Ok(page) => page,
-                Err(_) => {
-                    with_top = false;
-                    client.get(&format!("{path}?$skip={at}")).await.ok()?
-                }
+                Err(_) => match client.get(&skip(at)).await {
+                    Ok(page) => {
+                        with_top = false;
+                        page
+                    }
+                    Err(_) => break,
+                },
             },
-            false => client.get(&format!("{path}?$skip={at}")).await.ok()?,
+            false => match client.get(&skip(at)).await {
+                Ok(page) => page,
+                Err(_) => break,
+            },
         };
         let got = members(&page);
+        // A service that ignores `$skip` answers a skipped page with the
+        // start of the log, and one that hands back a page already read is
+        // stuck: either way this is not the tail.
+        let repeats = match (head.first().and_then(|e| e.id.as_ref()), got.first().and_then(|e| e.id.as_ref())) {
+            (Some(from_head), Some(first)) => from_head == first,
+            _ => match (entries.last().and_then(|e| e.id.as_ref()), got.first().and_then(|e| e.id.as_ref())) {
+                (Some(last), Some(first)) => last == first,
+                _ => false,
+            },
+        };
+        if repeats {
+            // Nothing read yet: the forward walk is the only way. Past the
+            // first page: what was read is real, just not the end.
+            return (!entries.is_empty()).then_some((entries, true));
+        }
         if got.is_empty() {
             break;
         }
-        // A service that ignores `$skip` answers with the same first page;
-        // reading on would only collect it again.
-        let repeats = match (entries.last().and_then(|e| e.id.as_ref()), got.first().and_then(|e| e.id.as_ref())) {
-            (Some(last), Some(first)) => last == first,
-            _ => false,
-        };
-        if repeats {
-            return None;
-        }
         at += got.len();
         entries.extend(got);
+    }
+    // Nothing read: the service takes no `$skip`, and the walk from the
+    // start is what there is.
+    if entries.is_empty() {
+        return None;
     }
     Some((entries, at < total))
 }
@@ -314,7 +345,8 @@ fn instant(created: Option<&str>) -> Option<(i64, u32)> {
     let offset = match rest {
         "Z" | "z" | "" => 0,
         _ if rest.len() == 6 && (rest.starts_with('+') || rest.starts_with('-')) => {
-            let (h, m) = (rest[1..3].parse::<i64>().ok()?, rest[4..6].parse::<i64>().ok()?);
+            let h = rest.get(1..3)?.parse::<i64>().ok()?;
+            let m = rest.get(4..6)?.parse::<i64>().ok()?;
             let seconds = h * 3600 + m * 60;
             if rest.starts_with('-') { -seconds } else { seconds }
         }

@@ -292,11 +292,11 @@ pub(crate) async fn collection_paths<T: crate::Transport>(
         };
         read.push(path);
         paths.extend(collection_members(&page));
-        next = page
-            .get("Members@odata.nextLink")
-            .and_then(Value::as_str)
-            .map(str::to_string)
-            .filter(|link| !read.contains(link));
+        next = page.get("Members@odata.nextLink").and_then(Value::as_str).map(str::to_string);
+        // A link back to a page already read is a cycle, not the end.
+        if next.as_ref().is_some_and(|link| read.contains(link)) {
+            return Ok((paths, false));
+        }
     }
     Ok((paths, true))
 }
@@ -387,9 +387,18 @@ pub struct BootRequest {
 
 impl BootRequest {
     /// The `PATCH` body for [`BootOverride`], or `None` for a value it does not
-    /// list: nothing is sent that the service did not say it takes.
+    /// list: nothing is sent that the service did not say it takes. `None`
+    /// with `Disabled` is how an override is put back — the target is then
+    /// whatever the service had, and is not sent.
     pub fn body(&self, current: &BootOverride) -> Option<Value> {
-        if !current.targets.contains(&self.target) || !current.enabled_values.contains(&self.enabled) {
+        if !current.enabled_values.contains(&self.enabled) {
+            return None;
+        }
+        // Turning it off says nothing about the device.
+        if self.enabled == "Disabled" {
+            return Some(json!({ "Boot": { "BootSourceOverrideEnabled": "Disabled" } }));
+        }
+        if !current.targets.contains(&self.target) {
             return None;
         }
         let mut boot = json!({

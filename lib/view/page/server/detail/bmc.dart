@@ -200,7 +200,7 @@ extension on _ServerDetailPageState {
               selected: locator.lit,
               onSelected: busy
                   ? null
-                  : (on) => context.bmcRun(
+                  : (on) => context.bmcRunTask(
                       () => ref.read(bmcProvider(srv.spi).notifier).setLocator(on),
                     ),
             ),
@@ -222,7 +222,7 @@ extension on _ServerDetailPageState {
     picked.dispose();
     if (ok != true || !mounted) return;
     final notifier = ref.read(bmcProvider(srv.spi).notifier);
-    await context.bmcRun(() => notifier.setBoot(request));
+    await context.bmcRunTask(() => notifier.setBoot(request));
   }
 
   Future<void> _onTapBmcMedia(ServerState srv) async {

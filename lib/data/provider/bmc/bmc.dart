@@ -362,32 +362,41 @@ class BmcNotifier extends _$BmcNotifier {
   }
 
   /// Sets the next boot's device, then reads the system back so the card
-  /// shows what the service kept.
-  Future<void> setBoot(BootRequest request) async {
+  /// shows what the service kept. A service doing the work as a task is
+  /// `accepted`, never applied: what the card shows until then is the old
+  /// value.
+  Future<BmcPowerResult> setBoot(BootRequest request) async {
     Diag.crumb(
       SbDiag.bmc,
       'boot',
       data: {'target': request.target, 'enabled': request.enabled},
     );
-    _writing = true;
-    try {
-      _writes++;
-      await _with((c, t) => c.setBoot(topology: t, request: request));
-      await _reread();
-    } finally {
-      _writing = false;
-    }
+    return _write((c, t) => c.setBoot(topology: t, request: request));
   }
 
-  Future<void> setLocator(bool lit) async {
+  Future<BmcPowerResult> setLocator(bool lit) async {
     Diag.crumb(SbDiag.bmc, 'locator', data: {'lit': '$lit'});
+    return _write((c, t) => c.setLocator(topology: t, lit: lit));
+  }
+
+  /// One write, then the system read back; `accepted` when the service
+  /// answered with a task rather than having done it.
+  Future<BmcPowerResult> _write(
+    Future<BmcOutcome> Function(BmcClient client, RedfishTopology topology) fn,
+  ) async {
     _writing = true;
     try {
       _writes++;
-      await _with((c, t) => c.setLocator(topology: t, lit: lit));
+      final outcome = await _with(fn);
       await _reread();
+      return outcome.task == null
+          ? BmcPowerResult.confirmed
+          : BmcPowerResult.accepted;
     } finally {
       _writing = false;
+      // A rebuild meanwhile skipped its first read, which `refresh` does
+      // while writing; a read still going skips this one instead.
+      if (ref.mounted && state.isBusy) unawaited(refresh());
     }
   }
 

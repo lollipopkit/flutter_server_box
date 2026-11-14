@@ -114,8 +114,17 @@ async fn a_real_bmc_is_managed_and_put_back() {
             .settable_targets()
             .into_iter()
             .find(|t| Some(t) != current.as_ref());
-        match (other, boot.enabled_values.iter().any(|e| e == "Once")) {
-            (Some(target), true) => {
+        // What puts it back has to be a request the service takes, or the
+        // test would leave the override where it set it.
+        let back = BootRequest {
+            target: current.clone().unwrap_or_else(|| "None".into()),
+            enabled: boot.enabled.clone().unwrap_or_else(|| "Disabled".into()),
+            mode: None,
+        };
+        let restorable = back.body(&boot).is_some();
+        match (other.clone(), boot.enabled_values.iter().any(|e| e == "Once"), restorable) {
+            (Some(_), _, false) => println!("boot: the current override cannot be put back"),
+            (Some(target), true, true) => {
                 let set = BootRequest { target: target.clone(), enabled: "Once".into(), mode: None };
                 let applied = async {
                     set_boot(&client, &topology, &set).await?;
@@ -129,19 +138,15 @@ async fn a_real_bmc_is_managed_and_put_back() {
                     },
                     Err(e) => failures.push(format!("boot: {e:?}")),
                 }
-                let back = BootRequest {
-                    target: current.clone().unwrap_or_else(|| "None".into()),
-                    enabled: boot.enabled.clone().unwrap_or_else(|| "Disabled".into()),
-                    mode: None,
-                };
                 if let Err(e) = set_boot(&client, &topology, &back).await {
                     failures.push(format!("boot not put back: {e:?}"));
                 }
             }
-            (None, _) => println!("boot: no other target to try"),
-            (Some(_), false) => println!("boot: `Once` not offered"),
+            (None, _, _) => println!("boot: no other target to try"),
+            (Some(_), false, _) => println!("boot: `Once` not offered"),
         }
     }
+
 
     let drives = storage(&client, &topology).await.unwrap();
     println!("drives: {}, unsupported {}", drives.drives.len(), drives.unsupported);

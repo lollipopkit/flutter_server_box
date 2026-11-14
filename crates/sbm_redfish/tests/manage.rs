@@ -192,6 +192,66 @@ async fn a_service_taking_no_top_is_read_a_page_at_a_time() {
 }
 
 #[tokio::test]
+async fn a_page_that_points_at_itself_is_read_once() {
+    let (mut fake, topology) = discovered("openbmc_romulus").await;
+    let services = log_services(&fake, &topology).await.unwrap();
+    let journal = services.iter().find(|s| s.id.as_deref() == Some("Journal")).unwrap();
+    let entries = journal.entries.clone().unwrap();
+    fake.resources.insert(
+        entries.clone(),
+        json!({"Members": [{"Id": "1", "Created": "2026-01-01T00:00:01Z"}],
+               "Members@odata.nextLink": entries}),
+    );
+
+    let page = log_entries(&fake, journal).await.unwrap();
+
+    assert_eq!(page.entries.len(), 1, "{:?}", page.entries);
+    assert!(page.truncated);
+}
+
+#[tokio::test]
+async fn a_service_ignoring_skip_is_not_read_as_its_tail() {
+    // 300 entries, a page of 200, `$skip` ignored: the tail read gets the
+    // start of the log, which is not where the newest entries are.
+    let mut fake = paged_log(3, 100);
+    for (path, doc) in fake.resources.iter_mut() {
+        if path.contains("$skip=") {
+            *doc = fake_first_page(doc);
+        }
+    }
+
+    let page = log_entries(&fake, &sel()).await.unwrap();
+
+    assert_eq!(page.entries[0].id.as_deref(), Some("299"), "{:?}", page.entries.first());
+}
+
+/// The first hundred of a tail page's owned entries — what a service that
+/// ignores `$skip` would answer with.
+fn fake_first_page(doc: &serde_json::Value) -> serde_json::Value {
+    let mut doc = doc.clone();
+    if let Some(members) = doc.get_mut("Members").and_then(|m| m.as_array_mut()) {
+        members.truncate(100);
+    }
+    doc
+}
+
+#[tokio::test]
+async fn a_tail_page_that_fails_after_one_keeps_what_was_read() {
+    // 20 entries a page, `$top` ignored: the tail is read a page at a time,
+    // and the third of those fails.
+    let mut fake = paged_log(15, 20);
+    fake.resources.retain(|k, _| !k.contains("$top"));
+    fake.forbidden.insert("/redfish/v1/Systems/1/LogServices/Sel/Entries?$skip=140".into());
+
+    let page = log_entries(&fake, &sel()).await.unwrap();
+
+    // 100..119 and 120..139 were read before it did.
+    assert_eq!(page.entries.len(), 40);
+    assert_eq!(page.entries[0].id.as_deref(), Some("139"));
+    assert!(page.truncated);
+}
+
+#[tokio::test]
 async fn a_log_collection_that_pages_is_walked_whole() {
     let (mut fake, topology) = discovered("dmtf_rackmount1").await;
     let collection = topology.system.as_ref().unwrap().log_services.clone().unwrap();
@@ -385,6 +445,21 @@ async fn the_boot_override_states_what_it_takes() {
     let start = boot.default_request().unwrap();
     assert_eq!((start.target.as_str(), start.enabled.as_str()), (boot.settable_targets()[0].as_str(), "Once"));
     assert!(!boot.settable_targets().contains(&"None".to_string()));
+}
+
+#[test]
+fn turning_the_override_off_names_no_device() {
+    use sbm_redfish::model::BootOverride;
+    let boot = BootOverride {
+        targets: vec!["Pxe".into()],
+        enabled_values: vec!["Disabled".into(), "Once".into()],
+        ..Default::default()
+    };
+    let off = BootRequest { target: "None".into(), enabled: "Disabled".into(), mode: None };
+    assert_eq!(
+        off.body(&boot),
+        Some(json!({"Boot": {"BootSourceOverrideEnabled": "Disabled"}}))
+    );
 }
 
 #[test]

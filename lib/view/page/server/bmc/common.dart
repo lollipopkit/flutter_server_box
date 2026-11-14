@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 /// What a BMC's failure means, in this app's words.
@@ -31,18 +32,28 @@ extension BmcRun on BuildContext {
   /// Runs one change behind a loading sheet and says how it went. Bounded by
   /// the client's own timeout per request, not the sheet's: a write is a read
   /// for the ETag, the write, and a read back, each up to it.
-  Future<bool> bmcRun(Future<void> Function() fn) async {
-    final (_, err) = await showLoadingSheet(
+  Future<bool> bmcRun(Future<void> Function() fn) => _bmcRun(fn);
+
+  /// As [bmcRun], for a change the service may take as a task: taken is not
+  /// done, and saying so is the point.
+  Future<bool> bmcRunTask(Future<BmcPowerResult> Function() fn) => _bmcRun(fn);
+
+  Future<bool> _bmcRun<T>(Future<T> Function() fn) async {
+    final (result, err) = await showLoadingSheet(
       fn: fn,
       showErr: false,
       timeout: const Duration(minutes: 2),
     );
-    if (err == null) {
-      Toast.success(libL10n.success);
-    } else {
+    if (err != null) {
       Toast.error(libL10n.fail, body: bmcErrorText(err));
+      return false;
     }
-    return err == null;
+    if (result is BmcPowerResult && result == BmcPowerResult.accepted) {
+      Toast.warn(l10n.bmcPowerAccepted);
+    } else {
+      Toast.success(libL10n.success);
+    }
+    return true;
   }
 }
 
