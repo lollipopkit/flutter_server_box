@@ -671,8 +671,11 @@ fn is_paging_query(query: &str) -> bool {
         seen.push(key);
         let value_ok = match key {
             "$skip" | "$top" | "page" => value.len() <= 9 && value.bytes().all(|b| b.is_ascii_digit()),
+            // Opaque by the specification: opaque enough that only what
+            // would split the query or the URL is refused, which leaves
+            // percent-encoded and base64-padded tokens as they arrive.
             "$skiptoken" => {
-                value.len() <= 128 && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+                value.len() <= 128 && value.bytes().all(|b| b.is_ascii_graphic() && b != b'&' && b != b'#')
             }
             _ => false,
         };

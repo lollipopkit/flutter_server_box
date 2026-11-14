@@ -7014,4 +7014,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$server의 $log을(를) 비울까요?';
   }
+
+  @override
+  String get bmcEntriesTruncated => '최신 항목만 표시됩니다';
+
+  @override
+  String get bmcDrivesTruncated => '처음 몇 개의 드라이브만 표시됩니다';
 }

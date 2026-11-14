@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "자격 증명이 없는 이미지의 http(s), NFS 또는 SMB URL이 필요합니다",
   "bmcDrives": "드라이브",
   "bmcNoStorage": "이 서비스는 스토리지를 보고하지 않습니다",
-  "bmcClearLogConfirm": "{server}의 {log}을(를) 비울까요?"
+  "bmcClearLogConfirm": "{server}의 {log}을(를) 비울까요?",
+  "bmcEntriesTruncated": "최신 항목만 표시됩니다",
+  "bmcDrivesTruncated": "처음 몇 개의 드라이브만 표시됩니다"
 }

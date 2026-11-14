@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Etimadnamə olmadan şəklin http(s), NFS və ya SMB URL-i lazımdır",
   "bmcDrives": "Disklər",
   "bmcNoStorage": "Xidmət yaddaş barədə məlumat vermir",
-  "bmcClearLogConfirm": "{server} üzərində {log} təmizlənsin?"
+  "bmcClearLogConfirm": "{server} üzərində {log} təmizlənsin?",
+  "bmcEntriesTruncated": "Yalnız ən yeni qeydlər göstərilir",
+  "bmcDrivesTruncated": "Yalnız ilk disklər göstərilir"
 }

@@ -6902,6 +6902,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '清空 $server 上的 $log？';
   }
+
+  @override
+  String get bmcEntriesTruncated => '仅显示最新的条目';
+
+  @override
+  String get bmcDrivesTruncated => '仅显示前面的几块硬盘';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13806,4 +13812,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String bmcClearLogConfirm(String log, String server) {
     return '清除 $server 上的 $log？';
   }
+
+  @override
+  String get bmcEntriesTruncated => '僅顯示最新的項目';
+
+  @override
+  String get bmcDrivesTruncated => '僅顯示前面的幾顆硬碟';
 }

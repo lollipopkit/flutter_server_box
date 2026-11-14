@@ -7293,4 +7293,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$server üzərində $log təmizlənsin?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Yalnız ən yeni qeydlər göstərilir';
+
+  @override
+  String get bmcDrivesTruncated => 'Yalnız ilk disklər göstərilir';
 }

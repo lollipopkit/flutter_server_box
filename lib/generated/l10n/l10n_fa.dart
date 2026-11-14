@@ -7352,4 +7352,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$log روی $server پاک شود؟';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'فقط جدیدترین موارد نمایش داده می‌شود';
+
+  @override
+  String get bmcDrivesTruncated => 'فقط دیسک‌های اول نمایش داده می‌شود';
 }

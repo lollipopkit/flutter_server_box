@@ -51,7 +51,11 @@ final class _FakeBmc extends BmcNotifier {
 
   @override
   Future<LogPage> logEntries(LogService service) async => service == _event
-      ? LogPage(entries: eventEntries, total: BigInt.from(500), truncated: true)
+      ? LogPage(
+          entries: eventEntries,
+          total: BigInt.from(eventEntries.isEmpty ? 0 : 500),
+          truncated: eventEntries.isNotEmpty,
+        )
       : const LogPage(
           entries: [LogEntry(id: 'j', message: 'bmcweb started')],
           truncated: false,
@@ -104,6 +108,7 @@ void main() {
     expect(find.text('Journal'), findsOneWidget);
     expect(find.text('CPU 1 over temperature'), findsOneWidget);
     expect(find.byIcon(Icons.delete_sweep), findsOneWidget);
+    expect(find.text(app_locale.l10n.bmcEntriesTruncated), findsOneWidget);
 
     // The BMC's own log cannot be cleared: nothing offers it.
     await tester.tap(find.text('Journal'));

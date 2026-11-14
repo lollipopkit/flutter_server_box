@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Vereist een http(s)-, NFS- of SMB-URL van de image, zonder inloggegevens",
   "bmcDrives": "Schijven",
   "bmcNoStorage": "De service meldt geen opslag",
-  "bmcClearLogConfirm": "{log} op {server} wissen?"
+  "bmcClearLogConfirm": "{log} op {server} wissen?",
+  "bmcEntriesTruncated": "Alleen de nieuwste items worden getoond",
+  "bmcDrivesTruncated": "Alleen de eerste schijven worden getoond"
 }

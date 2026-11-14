@@ -9380,5 +9380,9 @@
   "bmcNoStorage": "The service reports no storage",
   "@bmcNoStorage": {},
   "bmcClearLogConfirm": "Clear {log} on {server}?",
-  "@bmcClearLogConfirm": {"placeholders": {"log": {"type": "String"}, "server": {"type": "String"}}}
+  "@bmcClearLogConfirm": {"placeholders": {"log": {"type": "String"}, "server": {"type": "String"}}},
+  "bmcEntriesTruncated": "Only the newest entries are shown",
+  "@bmcEntriesTruncated": {},
+  "bmcDrivesTruncated": "Only the first drives are shown",
+  "@bmcDrivesTruncated": {}
 }

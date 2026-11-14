@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::model::{Topology, collection_members, odata_id};
+use crate::model::{Topology, collection_paths, odata_id};
 use crate::{Error, Transport};
 
 /// How many drives one read fetches, each a request of its own.
@@ -94,8 +94,10 @@ pub async fn storage<T: Transport>(client: &T, topology: &Topology) -> Result<St
 
 async fn from_storage<T: Transport>(client: &T, collection: &str) -> Result<StorageReport, Error> {
     let mut report = StorageReport::default();
-    let listing = client.get(collection).await?;
-    for path in collection_members(&listing) {
+    let (paths, complete) = collection_paths(client, collection).await?;
+    report.truncated = !complete;
+    let mut attempts = 0;
+    for path in paths {
         let Ok(storage) = client.get(&path).await else { continue };
         let controller = storage.get("Name").and_then(Value::as_str).map(str::to_string);
         let links = storage
@@ -105,10 +107,12 @@ async fn from_storage<T: Transport>(client: &T, collection: &str) -> Result<Stor
             .flatten()
             .filter_map(odata_id);
         for drive in links {
-            if report.drives.len() == MAX_DRIVES {
+            // Requests, not results: a drive that cannot be read costs one too.
+            if attempts == MAX_DRIVES {
                 report.truncated = true;
                 return Ok(report);
             }
+            attempts += 1;
             if let Ok(json) = client.get(drive).await {
                 report.drives.push(Drive {
                     controller: controller.clone(),
@@ -123,8 +127,9 @@ async fn from_storage<T: Transport>(client: &T, collection: &str) -> Result<Stor
 /// `SimpleStorage`: the devices inline, with less said about each.
 async fn from_simple_storage<T: Transport>(client: &T, collection: &str) -> Result<StorageReport, Error> {
     let mut report = StorageReport::default();
-    let listing = client.get(collection).await?;
-    for path in collection_members(&listing) {
+    let (paths, complete) = collection_paths(client, collection).await?;
+    report.truncated = !complete;
+    for path in paths {
         let Ok(simple) = client.get(&path).await else { continue };
         let controller = simple.get("Name").and_then(Value::as_str).map(str::to_string);
         for device in simple

@@ -7354,4 +7354,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return 'Очистить $log на $server?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Показаны только последние записи';
+
+  @override
+  String get bmcDrivesTruncated => 'Показаны только первые диски';
 }

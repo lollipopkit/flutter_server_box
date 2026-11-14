@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Kimlik bilgisi içermeyen, görüntünün http(s), NFS veya SMB URL'si gerekir",
   "bmcDrives": "Sürücüler",
   "bmcNoStorage": "Hizmet depolama bildirmiyor",
-  "bmcClearLogConfirm": "{server} üzerindeki {log} temizlensin mi?"
+  "bmcClearLogConfirm": "{server} üzerindeki {log} temizlensin mi?",
+  "bmcEntriesTruncated": "Yalnızca en yeni kayıtlar gösteriliyor",
+  "bmcDrivesTruncated": "Yalnızca ilk sürücüler gösteriliyor"
 }

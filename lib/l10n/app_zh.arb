@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "需要镜像的 http(s)、NFS 或 SMB 地址，且不含凭据",
   "bmcDrives": "硬盘",
   "bmcNoStorage": "该服务未提供存储信息",
-  "bmcClearLogConfirm": "清空 {server} 上的 {log}？"
+  "bmcClearLogConfirm": "清空 {server} 上的 {log}？",
+  "bmcEntriesTruncated": "仅显示最新的条目",
+  "bmcDrivesTruncated": "仅显示前面的几块硬盘"
 }

@@ -7287,4 +7287,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$server üzerindeki $log temizlensin mi?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Yalnızca en yeni kayıtlar gösteriliyor';
+
+  @override
+  String get bmcDrivesTruncated => 'Yalnızca ilk sürücüler gösteriliyor';
 }

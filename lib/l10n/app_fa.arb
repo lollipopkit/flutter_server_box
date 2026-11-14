@@ -1734,5 +1734,7 @@
   "bmcImageUrlInvalid": "نشانی http(s)، NFS یا SMB ایمیج بدون اطلاعات ورود لازم است",
   "bmcDrives": "دیسک‌ها",
   "bmcNoStorage": "این سرویس فضای ذخیره‌سازی گزارش نمی‌کند",
-  "bmcClearLogConfirm": "{log} روی {server} پاک شود؟"
+  "bmcClearLogConfirm": "{log} روی {server} پاک شود؟",
+  "bmcEntriesTruncated": "فقط جدیدترین موارد نمایش داده می‌شود",
+  "bmcDrivesTruncated": "فقط دیسک‌های اول نمایش داده می‌شود"
 }

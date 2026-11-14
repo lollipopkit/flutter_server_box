@@ -69,7 +69,9 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
       );
     }
     if (report.unsupported) return Center(child: Text(l10n.bmcNoStorage));
-    if (report.drives.isEmpty) return Center(child: Text(libL10n.empty));
+    if (report.drives.isEmpty && _err == null) {
+      return Center(child: Text(libL10n.empty));
+    }
     // Failing first: what anyone opens this for.
     final drives = [
       ...report.drives.where((d) => d.needsAttention),
@@ -78,10 +80,22 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 17),
       children: [
+        // The last answer, and why it may be old.
+        if (_err != null) _buildNotice(_err!, bad: true),
         for (final d in drives) _buildDrive(d),
+        if (report.truncated) _buildNotice(l10n.bmcDrivesTruncated),
       ],
     );
   }
+
+  Widget _buildNotice(String text, {bool bad = false}) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+    child: Text(
+      text,
+      style: bad ? const TextStyle(color: Colors.red) : UIs.text12Grey,
+      textAlign: TextAlign.center,
+    ),
+  );
 
   Widget _buildDrive(Drive d) {
     final color = d.needsAttention
@@ -128,6 +142,7 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
       if (!mounted) return;
       setState(() {
         _err = bmcErrorText(e);
+        _report = null;
         _loading = false;
       });
     }

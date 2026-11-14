@@ -7013,4 +7013,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$server の $log を消去しますか？';
   }
+
+  @override
+  String get bmcEntriesTruncated => '最新のエントリのみ表示しています';
+
+  @override
+  String get bmcDrivesTruncated => '最初のドライブのみ表示しています';
 }

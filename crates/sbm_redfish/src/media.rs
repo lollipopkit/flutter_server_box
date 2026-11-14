@@ -8,7 +8,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::model::{Topology, collection_members};
+use crate::model::{Topology, collection_paths};
 use crate::{Error, Failure, Outcome, Transport};
 
 /// One slot an image can be put in.
@@ -65,15 +65,15 @@ pub async fn media_slots<T: Transport>(client: &T, topology: &Topology) -> Resul
     let mut failure = None;
     let mut read_any = false;
     for collection in [system, manager].into_iter().flatten() {
-        let listing = match client.get(&collection).await {
-            Ok(listing) => listing,
+        let paths = match collection_paths(client, &collection).await {
+            Ok((paths, _)) => paths,
             Err(e) => {
                 failure = Some(e);
                 continue;
             }
         };
         read_any = true;
-        for path in collection_members(&listing) {
+        for path in paths {
             if let Ok(json) = client.get(&path).await {
                 slots.push(MediaSlot::from_json(&path, &json));
             }

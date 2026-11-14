@@ -7418,4 +7418,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return 'Vider $log sur $server ?';
   }
+
+  @override
+  String get bmcEntriesTruncated =>
+      'Seules les entrées les plus récentes sont affichées';
+
+  @override
+  String get bmcDrivesTruncated => 'Seuls les premiers disques sont affichés';
 }

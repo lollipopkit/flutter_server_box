@@ -12448,6 +12448,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear {log} on {server}?'**
   String bmcClearLogConfirm(String log, String server);
+
+  /// No description provided for @bmcEntriesTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the newest entries are shown'**
+  String get bmcEntriesTruncated;
+
+  /// No description provided for @bmcDrivesTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first drives are shown'**
+  String get bmcDrivesTruncated;
 }
 
 class _AppLocalizationsDelegate

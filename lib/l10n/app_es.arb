@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Se necesita una URL http(s), NFS o SMB de la imagen, sin credenciales",
   "bmcDrives": "Discos",
   "bmcNoStorage": "El servicio no informa de almacenamiento",
-  "bmcClearLogConfirm": "¿Vaciar {log} en {server}?"
+  "bmcClearLogConfirm": "¿Vaciar {log} en {server}?",
+  "bmcEntriesTruncated": "Solo se muestran las entradas más recientes",
+  "bmcDrivesTruncated": "Solo se muestran los primeros discos"
 }

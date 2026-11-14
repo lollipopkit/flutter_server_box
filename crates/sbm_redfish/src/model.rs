@@ -252,11 +252,47 @@ impl RedfishSystem {
 }
 
 /// `<key>@Redfish.AllowableValues` on `json`, verbatim; empty when absent.
-pub(crate) fn allowable(json: &Value, key: &str) -> Vec<String> {
+/// What a service says a property takes, when it says anything: an empty
+/// list is a service that allows nothing, which is not the same as one that
+/// says nothing at all.
+pub(crate) fn allowable_opt(json: &Value, key: &str) -> Option<Vec<String>> {
     json.get(format!("{key}@Redfish.AllowableValues"))
         .and_then(Value::as_array)
         .map(|values| values.iter().filter_map(Value::as_str).map(str::to_string).collect())
-        .unwrap_or_default()
+}
+
+pub(crate) fn allowable(json: &Value, key: &str) -> Vec<String> {
+    allowable_opt(json, key).unwrap_or_default()
+}
+
+/// How many pages of a collection are followed: enough for a collection that
+/// pages by a few, not enough for one that pages without end.
+pub(crate) const MAX_COLLECTION_PAGES: usize = 10;
+
+/// Every member path of `collection`, following its `Members@odata.nextLink`,
+/// and whether the walk reached the end; the error of the first page when it
+/// cannot be read. A link back to a page already read ends the walk.
+pub(crate) async fn collection_paths<T: crate::Transport>(
+    client: &T,
+    collection: &str,
+) -> Result<(Vec<String>, bool), crate::Error> {
+    let mut paths = Vec::new();
+    let mut read: Vec<String> = Vec::new();
+    let mut next = Some(collection.to_string());
+    while let Some(path) = next.take() {
+        if read.len() == MAX_COLLECTION_PAGES {
+            return Ok((paths, false));
+        }
+        let page = client.get(&path).await?;
+        read.push(path);
+        paths.extend(collection_members(&page));
+        next = page
+            .get("Members@odata.nextLink")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .filter(|link| !read.contains(link));
+    }
+    Ok((paths, true))
 }
 
 // --- Boot override ---
@@ -282,17 +318,16 @@ pub struct BootOverride {
 impl BootOverride {
     fn from_json(boot: &Value) -> Option<Self> {
         boot.is_object().then(|| {
-            let enabled_values = allowable(boot, "BootSourceOverrideEnabled");
+            let enabled_values = allowable_opt(boot, "BootSourceOverrideEnabled");
             Self {
                 enabled: text(boot, "BootSourceOverrideEnabled"),
                 target: text(boot, "BootSourceOverrideTarget"),
                 mode: text(boot, "BootSourceOverrideMode"),
                 targets: allowable(boot, "BootSourceOverrideTarget"),
-                enabled_values: if enabled_values.is_empty() {
-                    ["Disabled", "Once", "Continuous"].map(str::to_string).to_vec()
-                } else {
-                    enabled_values
-                },
+                // The three the schema defines only where the service says
+                // nothing; a list it gives, even an empty one, is its answer.
+                enabled_values: enabled_values
+                    .unwrap_or_else(|| ["Disabled", "Once", "Continuous"].map(str::to_string).to_vec()),
                 modes: allowable(boot, "BootSourceOverrideMode"),
             }
         })
@@ -321,10 +356,14 @@ impl BootOverride {
             Some(t) if targets.contains(t) => t.clone(),
             _ => targets.first()?.clone(),
         };
+        // `Disabled` is not a pick: it leaves the device chosen and idle.
+        let enabling = || self.enabled_values.iter().filter(|e| e.as_str() != "Disabled");
         let enabled = match &self.enabled {
             Some(e) if e != "Disabled" && self.enabled_values.contains(e) => e.clone(),
-            _ if self.enabled_values.iter().any(|e| e == "Once") => "Once".into(),
-            _ => self.enabled_values.first()?.clone(),
+            _ => {
+                let once = enabling().find(|e| e.as_str() == "Once");
+                once.or_else(|| enabling().next())?.clone()
+            }
         };
         Some(BootRequest { target, enabled, mode: None })
     }
@@ -394,8 +433,9 @@ impl Locator {
         if !locator.legacy {
             return Some(json!({ "LocationIndicatorActive": on }));
         }
-        let allowed = allowable(system, "IndicatorLED");
-        let takes = |v: &str| allowed.is_empty() || allowed.iter().any(|a| a == v);
+        // Silent means every value; a list, even an empty one, is the answer.
+        let allowed = allowable_opt(system, "IndicatorLED");
+        let takes = |v: &str| allowed.as_ref().is_none_or(|a| a.iter().any(|x| x == v));
         let value = match on {
             false => takes("Off").then_some("Off"),
             true if takes("Lit") => Some("Lit"),

@@ -79,6 +79,16 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
     return Column(
       children: [
         if (services.length > 1) _buildPicker(services),
+        // The last read, and why it may be old.
+        if (_page != null && _err != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+            child: Text(
+              _err!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          ),
         Expanded(child: _buildEntries()),
       ],
     );
@@ -114,12 +124,26 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   Widget _buildEntries() {
     final page = _page;
     if (page == null) return _err != null ? _buildErr() : _buildLoading();
-    if (page.entries.isEmpty) return Center(child: Text(libL10n.empty));
     final entries = page.entries;
+    if (entries.isEmpty && !page.truncated) {
+      return Center(child: Text(libL10n.empty));
+    }
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 17),
-      itemCount: entries.length,
-      itemBuilder: (_, i) => _buildEntry(entries[i]),
+      itemCount: entries.length + (page.truncated ? 1 : 0),
+      itemBuilder: (_, i) {
+        if (i == entries.length) {
+          return Padding(
+            padding: const EdgeInsets.all(13),
+            child: Text(
+              l10n.bmcEntriesTruncated,
+              style: UIs.text12Grey,
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+        return _buildEntry(entries[i]);
+      },
     );
   }
 

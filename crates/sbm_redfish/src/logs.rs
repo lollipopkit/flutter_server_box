@@ -5,10 +5,12 @@
 //! and `Lclog` under the manager, iLO `IML` under the system and `IEL` under
 //! the manager — so they are listed, never named.
 
+use std::cmp::Reverse;
+
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::model::{Topology, collection_members, odata_id};
+use crate::model::{Topology, collection_paths, odata_id};
 use crate::{Error, Failure, Outcome, Transport};
 
 /// How many entries one read keeps: a BMC's journal holds thousands, and the
@@ -121,15 +123,15 @@ pub async fn log_services<T: Transport>(client: &T, topology: &Topology) -> Resu
     let mut read_any = false;
     for (collection, scope) in [(system, LogScope::System), (manager, LogScope::Manager)] {
         let Some(collection) = collection else { continue };
-        let listing = match client.get(&collection).await {
-            Ok(listing) => listing,
+        let paths = match collection_paths(client, &collection).await {
+            Ok((paths, _)) => paths,
             Err(e) => {
                 failure = Some(e);
                 continue;
             }
         };
         read_any = true;
-        for path in collection_members(&listing) {
+        for path in paths {
             if let Ok(json) = client.get(&path).await {
                 services.push(LogService::from_json(&path, &json, scope));
             }
@@ -146,10 +148,10 @@ pub async fn log_services<T: Transport>(client: &T, topology: &Topology) -> Resu
 ///
 /// Services list oldest first (bmcweb) or newest first (iDRAC), so only the
 /// whole of what was read can be ordered, by `Created` where entries carry
-/// it. One that lists oldest first and pages past [`MAX_LOG_PAGES`] is read
-/// from its tail by `$skip`, or the newest would be the pages left unread.
-/// Only the first page failing fails the read; a later one ends it with what
-/// was read, said to be cut.
+/// it: an oldest-first log longer than the pages this reads is read from its
+/// tail instead, or what came back would be its oldest entries. Only the
+/// first page failing fails the read; a later one ends it with what was read,
+/// said to be cut.
 pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Result<LogPage, Error> {
     let first_path = service
         .entries
@@ -157,22 +159,58 @@ pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Resu
         .ok_or_else(|| Error::with(Failure::NotSupported, "log has no entries"))?;
     let first = client.get(first_path).await?;
     let total = first.get("Members@odata.count").and_then(Value::as_u64);
-    let head = members(&first);
+    let mut entries = members(&first);
+    let mut next = next_link(&first);
+    let mut pages = 1;
+    let mut unread = false;
 
-    let tail = match tail_path(first_path, &head, next_link(&first).is_some(), total) {
-        Some(tail) => client.get(&tail).await.ok().filter(|page| !members(page).is_empty()),
-        None => None,
-    };
-    let read = match tail {
-        Some(page) => follow(client, members(&page), next_link(&page)).await,
-        None => follow(client, head, next_link(&first)).await,
-    };
+    // One entry says nothing about which way the log runs; the page after it
+    // does, and knowing that is worth one request.
+    if entries.len() < 2 {
+        match next.take() {
+            Some(path) if pages < MAX_LOG_PAGES => match client.get(&path).await {
+                Ok(page) => {
+                    pages += 1;
+                    entries.extend(members(&page));
+                    next = next_link(&page);
+                }
+                Err(_) => unread = true,
+            },
+            Some(_) => unread = true,
+            None => {}
+        }
+    }
 
-    let (mut entries, unread) = read;
-    let count = entries.len();
-    let unread = unread || total.is_some_and(|t| t as usize > count);
-    // Stable: entries with no timestamp keep the service's order among them.
-    entries.sort_by(|a, b| b.created.cmp(&a.created));
+    let mut read = Read { entries, unread };
+    if let (Some(total), true) = (total, is_oldest_first(&read.entries))
+        && total as usize > MAX_LOG_ENTRIES
+        && !first_path.contains('?')
+        && let Some((tail, more)) = read_tail(client, first_path, total as usize).await
+    {
+        read = Read { entries: tail, unread: more };
+        next = None;
+    }
+
+    while let Some(path) = next.take() {
+        if pages == MAX_LOG_PAGES {
+            read.unread = true;
+            break;
+        }
+        let Ok(page) = client.get(&path).await else {
+            read.unread = true;
+            break;
+        };
+        pages += 1;
+        read.entries.extend(members(&page));
+        next = next_link(&page);
+    }
+
+    let count = read.entries.len();
+    let unread = read.unread || total.is_some_and(|t| t as usize > count);
+    let mut entries = read.entries;
+    // Stable, so entries with no timestamp keep the service's order among
+    // themselves; those with none at all go last.
+    entries.sort_by_key(|e| Reverse(instant(e.created.as_deref())));
     entries.truncate(MAX_LOG_ENTRIES);
     Ok(LogPage {
         truncated: unread || entries.len() < count,
@@ -181,35 +219,120 @@ pub async fn log_entries<T: Transport>(client: &T, service: &LogService) -> Resu
     })
 }
 
-/// Where the newest [`MAX_LOG_ENTRIES`] of an oldest-first log start, when
-/// reading from the start would stop at [`MAX_LOG_PAGES`] before them.
-fn tail_path(first_path: &str, head: &[LogEntry], paged: bool, total: Option<u64>) -> Option<String> {
-    let total = total? as usize;
-    let oldest_first = match (head.first(), head.last()) {
-        (Some(a), Some(b)) => a.created.is_some() && b.created.is_some() && a.created < b.created,
-        _ => false,
-    };
-    let skip = total.saturating_sub(MAX_LOG_ENTRIES);
-    (paged && oldest_first && !first_path.contains('?') && skip > 0 && total > head.len() * MAX_LOG_PAGES)
-        .then(|| format!("{first_path}?$skip={skip}"))
+struct Read {
+    entries: Vec<LogEntry>,
+    /// More was left unread.
+    unread: bool,
 }
 
-/// Follows `next` from a page already read, up to [`MAX_LOG_PAGES`] in all;
-/// whether pages were left unread.
-async fn follow<T: Transport>(client: &T, mut entries: Vec<LogEntry>, mut next: Option<String>) -> (Vec<LogEntry>, bool) {
-    let mut pages = 1;
-    while let Some(path) = next.take() {
-        if pages == MAX_LOG_PAGES {
-            return (entries, true);
-        }
-        let Ok(page) = client.get(&path).await else {
-            return (entries, true);
-        };
-        pages += 1;
-        entries.extend(members(&page));
-        next = next_link(&page);
+/// Whether `entries` runs oldest first, from the ends of what it holds: one
+/// entry, or one without a timestamp, says nothing.
+fn is_oldest_first(entries: &[LogEntry]) -> bool {
+    if entries.len() < 2 {
+        return false;
     }
-    (entries, false)
+    let first = entries.first().and_then(|e| instant(e.created.as_deref()));
+    let last = entries.last().and_then(|e| instant(e.created.as_deref()));
+    matches!((first, last), (Some(a), Some(b)) if a < b)
+}
+
+/// The last [`MAX_LOG_ENTRIES`] entries of an oldest-first log, by `$skip` a
+/// page at a time, and whether more was left; `None` for a service that takes
+/// no `$skip` or answers as though it had not.
+async fn read_tail<T: Transport>(client: &T, path: &str, total: usize) -> Option<(Vec<LogEntry>, bool)> {
+    let mut at = total.saturating_sub(MAX_LOG_ENTRIES);
+    let mut entries: Vec<LogEntry> = Vec::new();
+    // `$top` makes the window one request where the service takes it; the
+    // ones that do not are read a page at a time.
+    let mut with_top = true;
+    for _ in 0..MAX_LOG_PAGES {
+        if at >= total || entries.len() >= MAX_LOG_ENTRIES {
+            break;
+        }
+        let want = MAX_LOG_ENTRIES - entries.len();
+        let page = match with_top {
+            true => match client.get(&format!("{path}?$skip={at}&$top={want}")).await {
+                Ok(page) => page,
+                Err(_) => {
+                    with_top = false;
+                    client.get(&format!("{path}?$skip={at}")).await.ok()?
+                }
+            },
+            false => client.get(&format!("{path}?$skip={at}")).await.ok()?,
+        };
+        let got = members(&page);
+        if got.is_empty() {
+            break;
+        }
+        // A service that ignores `$skip` answers with the same first page;
+        // reading on would only collect it again.
+        let repeats = match (entries.last().and_then(|e| e.id.as_ref()), got.first().and_then(|e| e.id.as_ref())) {
+            (Some(last), Some(first)) => last == first,
+            _ => false,
+        };
+        if repeats {
+            return None;
+        }
+        at += got.len();
+        entries.extend(got);
+    }
+    Some((entries, at < total))
+}
+
+/// `Created` as seconds and nanoseconds since the epoch, when it reads as ISO
+/// 8601: what orders entries across time-zone offsets and fractional-second
+/// precision, which comparing the text does not.
+fn instant(created: Option<&str>) -> Option<(i64, u32)> {
+    let text = created?;
+    let bytes = text.as_bytes();
+    if bytes.len() < 19
+        || bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || !matches!(bytes[10], b'T' | b't' | b' ')
+        || bytes[13] != b':'
+        || bytes[16] != b':'
+    {
+        return None;
+    }
+    let num = |range: std::ops::Range<usize>| text.get(range)?.parse::<i64>().ok();
+    let (year, month, day) = (num(0..4)?, num(5..7)?, num(8..10)?);
+    let (hour, minute, second) = (num(11..13)?, num(14..16)?, num(17..19)?);
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) || hour > 23 || minute > 59 || second > 60 {
+        return None;
+    }
+
+    let mut rest = &text[19..];
+    let mut nanos = 0u32;
+    if let Some(after) = rest.strip_prefix('.') {
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        if digits == 0 {
+            return None;
+        }
+        nanos = format!("{:0<9}", &after[..digits.min(9)])[..9].parse().ok()?;
+        rest = &after[digits..];
+    }
+    let offset = match rest {
+        "Z" | "z" | "" => 0,
+        _ if rest.len() == 6 && (rest.starts_with('+') || rest.starts_with('-')) => {
+            let (h, m) = (rest[1..3].parse::<i64>().ok()?, rest[4..6].parse::<i64>().ok()?);
+            let seconds = h * 3600 + m * 60;
+            if rest.starts_with('-') { -seconds } else { seconds }
+        }
+        _ => return None,
+    };
+    let days = days_from_civil(year, month, day);
+    Some((days * 86_400 + hour * 3600 + minute * 60 + second - offset, nanos))
+}
+
+/// Days since 1970-01-01 of a proleptic Gregorian date (Hinnant's algorithm).
+fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = if year >= 0 { year } else { year - 399 } / 400;
+    let yoe = year - era * 400;
+    let mp = (month + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + day - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
 }
 
 fn members(page: &Value) -> Vec<LogEntry> {

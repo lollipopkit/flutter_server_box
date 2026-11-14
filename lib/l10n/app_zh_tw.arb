@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "需要映像檔的 http(s)、NFS 或 SMB 位址，且不含憑證",
   "bmcDrives": "硬碟",
   "bmcNoStorage": "此服務未提供儲存資訊",
-  "bmcClearLogConfirm": "清除 {server} 上的 {log}？"
+  "bmcClearLogConfirm": "清除 {server} 上的 {log}？",
+  "bmcEntriesTruncated": "僅顯示最新的項目",
+  "bmcDrivesTruncated": "僅顯示前面的幾顆硬碟"
 }

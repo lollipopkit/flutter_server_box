@@ -119,6 +119,10 @@ class BmcNotifier extends _$BmcNotifier {
   /// does not put back the system as it was.
   var _writes = 0;
 
+  /// Set from before a write is sent until the system has been read back: a
+  /// poll that starts inside that window is about the state before it.
+  var _writing = false;
+
   @override
   BmcState build(Spi spi) {
     final cfg = spi.bmc;
@@ -191,7 +195,7 @@ class BmcNotifier extends _$BmcNotifier {
     final client = _client;
     // `power` does not skip for a read, the other way round: it is what the
     // user asked for, and the reads it races are reads.
-    if (client == null || _refreshingIn == _generation || _powering) {
+    if (client == null || _refreshingIn == _generation || _powering || _writing) {
       return;
     }
     final generation = _generation;
@@ -207,7 +211,9 @@ class BmcNotifier extends _$BmcNotifier {
       }
 
       state = state.copyWith(
-        topology: writes == _writes ? snapshot.topology : state.topology,
+        topology: writes == _writes && !_writing
+            ? snapshot.topology
+            : state.topology,
         sensors: snapshot.sensors,
         sensorsTruncated: snapshot.sensorsTruncated,
         failure: null,
@@ -363,16 +369,26 @@ class BmcNotifier extends _$BmcNotifier {
       'boot',
       data: {'target': request.target, 'enabled': request.enabled},
     );
-    _writes++;
-    await _with((c, t) => c.setBoot(topology: t, request: request));
-    await _reread();
+    _writing = true;
+    try {
+      _writes++;
+      await _with((c, t) => c.setBoot(topology: t, request: request));
+      await _reread();
+    } finally {
+      _writing = false;
+    }
   }
 
   Future<void> setLocator(bool lit) async {
     Diag.crumb(SbDiag.bmc, 'locator', data: {'lit': '$lit'});
-    _writes++;
-    await _with((c, t) => c.setLocator(topology: t, lit: lit));
-    await _reread();
+    _writing = true;
+    try {
+      _writes++;
+      await _with((c, t) => c.setLocator(topology: t, lit: lit));
+      await _reread();
+    } finally {
+      _writing = false;
+    }
   }
 
   /// A failed read leaves the last state: the change itself went through.

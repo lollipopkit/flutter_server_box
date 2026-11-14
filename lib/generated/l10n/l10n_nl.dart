@@ -7370,4 +7370,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return '$log op $server wissen?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Alleen de nieuwste items worden getoond';
+
+  @override
+  String get bmcDrivesTruncated => 'Alleen de eerste schijven worden getoond';
 }

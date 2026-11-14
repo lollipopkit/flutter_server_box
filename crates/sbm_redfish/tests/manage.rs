@@ -12,7 +12,7 @@ use sbm_redfish::logs::{LogScope, MAX_LOG_ENTRIES, clear_log, log_entries, log_s
 use sbm_redfish::media::{eject_media, insert_media, is_image_url, media_slots};
 use sbm_redfish::model::BootRequest;
 use sbm_redfish::storage::{MAX_DRIVES, storage};
-use sbm_redfish::{Failure, discover, set_boot, set_locator};
+use sbm_redfish::{Failure, discover, set_boot, set_locator, snapshot};
 use serde_json::{Value, json};
 
 async fn discovered(name: &str) -> (FakeTransport, sbm_redfish::model::Topology) {
@@ -75,26 +75,30 @@ async fn a_log_with_more_than_was_returned_says_so() {
     assert!(page.truncated);
 }
 
+/// A log of `pages * per_page` entries, oldest first, that pages by
+/// `per_page` and takes `$top`.
 fn paged_log(pages: usize, per_page: usize) -> FakeTransport {
-    let mut resources = HashMap::new();
-    for page in 0..pages {
-        let path = if page == 0 {
-            "/redfish/v1/Systems/1/LogServices/Sel/Entries".to_string()
-        } else {
-            format!("/redfish/v1/Systems/1/LogServices/Sel/Entries?$skip={}", page * per_page)
-        };
-        let members: Vec<Value> = (0..per_page)
-            .map(|i| {
-                let n = page * per_page + i;
-                json!({"Id": n.to_string(), "Created": format!("2026-01-01T00:{:02}:{:02}Z", n / 60, n % 60)})
-            })
-            .collect();
-        let mut doc = json!({"Members": members, "Members@odata.count": pages * per_page});
-        if page + 1 < pages {
-            doc["Members@odata.nextLink"] =
-                json!(format!("/redfish/v1/Systems/1/LogServices/Sel/Entries?$skip={}", (page + 1) * per_page));
+    const BASE: &str = "/redfish/v1/Systems/1/LogServices/Sel/Entries";
+    paged_log_at(BASE, pages, per_page)
+}
+
+fn paged_log_at(base: &str, pages: usize, per_page: usize) -> FakeTransport {
+    let all: Vec<Value> = (0..pages * per_page)
+        .map(|n| json!({"Id": n.to_string(), "Created": format!("2026-01-01T00:{:02}:{:02}Z", n / 60, n % 60)}))
+        .collect();
+    let render = |at: usize, top: usize| {
+        let end = (at + top).min(all.len());
+        let mut doc = json!({"Members": all[at..end], "Members@odata.count": all.len()});
+        if end < all.len() {
+            doc["Members@odata.nextLink"] = json!(format!("{base}?$skip={end}"));
         }
-        resources.insert(path, doc);
+        doc
+    };
+    let mut resources = HashMap::new();
+    resources.insert(base.to_string(), render(0, per_page));
+    for at in (0..all.len()).step_by(per_page) {
+        resources.insert(format!("{base}?$skip={at}"), render(at, per_page));
+        resources.insert(format!("{base}?$skip={at}&$top={MAX_LOG_ENTRIES}"), render(at, MAX_LOG_ENTRIES));
     }
     FakeTransport::new(resources)
 }
@@ -113,7 +117,8 @@ async fn pages_are_followed_and_the_newest_kept() {
 
     let page = log_entries(&fake, &sel()).await.unwrap();
 
-    assert_eq!(fake.get_count(), 3);
+    // The first page, then the tail in one `$skip`/`$top` request.
+    assert_eq!(fake.get_count(), 2);
     assert_eq!(page.entries.len(), MAX_LOG_ENTRIES);
     assert_eq!(page.entries[0].id.as_deref(), Some("299"));
     assert!(page.truncated);
@@ -125,9 +130,9 @@ async fn a_service_paging_by_ten_cannot_make_a_read_endless() {
 
     let page = log_entries(&fake, &sel()).await.unwrap();
 
-    // The first page, then the tail by `$skip`: twenty pages in all from it.
-    assert_eq!(fake.get_count(), 21);
-    assert!(fake.gets.lock().unwrap()[1].ends_with("?$skip=800"));
+    // Ten entries a page is nineteen pages of the tail; `$top` makes it one.
+    assert_eq!(fake.get_count(), 2);
+    assert!(fake.gets.lock().unwrap()[1].ends_with("?$skip=800&$top=200"));
     assert_eq!(page.entries.len(), MAX_LOG_ENTRIES);
     assert_eq!(page.entries[0].id.as_deref(), Some("999"));
     assert!(page.truncated);
@@ -141,6 +146,77 @@ async fn a_page_that_fails_after_the_first_keeps_what_was_read() {
 
     assert_eq!(page.entries.len(), 20);
     assert!(page.truncated);
+}
+
+#[tokio::test]
+async fn entries_are_ordered_by_instant_not_by_text() {
+    // `10:00+02:00` is `08:00Z`, older than `09:00Z`, though its text sorts
+    // after it; a fraction is newer than the second it lands in.
+    let fake = FakeTransport::new(HashMap::from([(
+        "/redfish/v1/Systems/1/LogServices/Sel".to_string(),
+        json!({"Members@odata.count": 3}),
+    ), (
+        "/redfish/v1/Systems/1/LogServices/Sel/Entries".to_string(),
+        json!({"Members": [
+            {"Id": "a", "Created": "2026-11-14T10:00:00+02:00"},
+            {"Id": "b", "Created": "2026-11-14T09:00:00.500Z"},
+            {"Id": "c", "Created": "2026-11-14T09:00:00Z"}
+        ]}),
+    )]));
+
+    let page = log_entries(&fake, &sel()).await.unwrap();
+
+    let ids: Vec<_> = page.entries.iter().map(|e| e.id.as_deref().unwrap()).collect();
+    assert_eq!(ids, ["b", "c", "a"]);
+}
+
+#[tokio::test]
+async fn a_log_of_one_entry_a_page_is_read_from_its_tail_too() {
+    let fake = paged_log(300, 1);
+
+    let page = log_entries(&fake, &sel()).await.unwrap();
+
+    assert_eq!(page.entries.len(), MAX_LOG_ENTRIES);
+    assert_eq!(page.entries[0].id.as_deref(), Some("299"));
+}
+
+#[tokio::test]
+async fn a_service_taking_no_top_is_read_a_page_at_a_time() {
+    let mut fake = paged_log(100, 10);
+    fake.resources.retain(|k, _| !k.contains("$top"));
+
+    let page = log_entries(&fake, &sel()).await.unwrap();
+
+    assert_eq!(page.entries.len(), MAX_LOG_ENTRIES);
+    assert_eq!(page.entries[0].id.as_deref(), Some("999"));
+}
+
+#[tokio::test]
+async fn a_log_collection_that_pages_is_walked_whole() {
+    let (mut fake, topology) = discovered("dmtf_rackmount1").await;
+    let collection = topology.system.as_ref().unwrap().log_services.clone().unwrap();
+    const SECOND: &str = "/redfish/v1/Systems/1/LogServices/Second";
+    fake.resources.insert(
+        collection,
+        json!({"Members": [], "Members@odata.nextLink": format!("{SECOND}s?page=2")}),
+    );
+    fake.resources
+        .insert(format!("{SECOND}s?page=2"), json!({"Members": [{"@odata.id": SECOND}]}));
+    fake.resources.insert(SECOND.to_string(), json!({"Id": "Second", "Name": "Second log"}));
+
+    let services = log_services(&fake, &topology).await.unwrap();
+
+    assert!(services.iter().any(|s| s.id.as_deref() == Some("Second")), "{services:?}");
+}
+
+#[tokio::test]
+async fn a_manager_a_discovery_missed_is_read_again_on_the_next_one() {
+    let (fake, mut topology) = discovered("openbmc_romulus").await;
+    topology.manager = None;
+
+    let snapshot = snapshot(&fake, Some(&topology)).await.unwrap();
+
+    assert!(snapshot.topology.manager.is_some());
 }
 
 #[tokio::test]
@@ -289,6 +365,31 @@ fn a_service_listing_only_none_offers_no_override() {
     };
     assert!(!boot.can_set());
     assert_eq!(boot.default_request(), None);
+
+    // `Disabled` is not a pick: with nothing else, there is nothing to set.
+    let only_off = BootOverride {
+        targets: vec!["Pxe".into()],
+        enabled_values: vec!["Disabled".into()],
+        ..Default::default()
+    };
+    assert_eq!(only_off.default_request(), None);
+}
+
+#[test]
+fn an_empty_allowable_list_is_the_services_answer_not_silence() {
+    use sbm_redfish::model::{BootOverride, Locator, RedfishSystem};
+    let boot = RedfishSystem::from_json(&json!({
+        "Boot": {"BootSourceOverrideEnabled@Redfish.AllowableValues": [], "BootSourceOverrideTarget": "Pxe"}
+    }))
+    .boot
+    .unwrap();
+    assert_eq!(boot.enabled_values, Vec::<String>::new());
+    assert_eq!(boot.default_request(), None);
+    let _ = BootOverride::default();
+
+    let empty = json!({"IndicatorLED": "Off", "IndicatorLED@Redfish.AllowableValues": []});
+    assert_eq!(Locator::body_for(&empty, true), None);
+    assert_eq!(Locator::body_for(&empty, false), None);
 }
 
 #[tokio::test]

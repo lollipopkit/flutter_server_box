@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "認証情報を含まない、イメージの http(s)、NFS、SMB の URL が必要です",
   "bmcDrives": "ドライブ",
   "bmcNoStorage": "このサービスはストレージを報告していません",
-  "bmcClearLogConfirm": "{server} の {log} を消去しますか？"
+  "bmcClearLogConfirm": "{server} の {log} を消去しますか？",
+  "bmcEntriesTruncated": "最新のエントリのみ表示しています",
+  "bmcDrivesTruncated": "最初のドライブのみ表示しています"
 }

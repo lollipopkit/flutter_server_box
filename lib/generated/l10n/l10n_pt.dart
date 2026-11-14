@@ -7372,4 +7372,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return 'Limpar $log em $server?';
   }
+
+  @override
+  String get bmcEntriesTruncated =>
+      'Apenas as entradas mais recentes são mostradas';
+
+  @override
+  String get bmcDrivesTruncated => 'Apenas os primeiros discos são mostrados';
 }

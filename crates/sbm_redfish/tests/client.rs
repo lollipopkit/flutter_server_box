@@ -750,7 +750,10 @@ fn a_collections_paging_link_is_a_path_it_follows() {
     assert!(!is_safe_path("/redfish/v1/Systems/1/LogServices/Sel/Entries?$expand=*"));
     assert!(is_safe_path("/redfish/v1/Systems/1/LogServices/IML/Entries?page=2"));
     assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a1-B2.c_~"));
-    assert!(!is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a%2Fb"));
+    // Opaque: percent-encoded and base64-padded tokens are kept as they are.
+    assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=YWJj%3D%3D"));
+    assert!(is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a%2Fb"));
+    assert!(!is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?$skiptoken=a b"));
     assert!(!is_safe_path("/redfish/v1/Managers/1/LogServices/Sel/Entries?page=2&page=3"));
 }
 

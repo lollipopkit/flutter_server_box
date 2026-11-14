@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Perlu URL http(s), NFS, atau SMB dari image, tanpa kredensial",
   "bmcDrives": "Drive",
   "bmcNoStorage": "Layanan tidak melaporkan penyimpanan",
-  "bmcClearLogConfirm": "Kosongkan {log} di {server}?"
+  "bmcClearLogConfirm": "Kosongkan {log} di {server}?",
+  "bmcEntriesTruncated": "Hanya entri terbaru yang ditampilkan",
+  "bmcDrivesTruncated": "Hanya drive pertama yang ditampilkan"
 }

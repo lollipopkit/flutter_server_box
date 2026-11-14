@@ -2051,5 +2051,7 @@
   "bmcImageUrlInvalid": "Нужен http(s)-, NFS- или SMB-адрес образа без учётных данных",
   "bmcDrives": "Диски",
   "bmcNoStorage": "Служба не сообщает о хранилище",
-  "bmcClearLogConfirm": "Очистить {log} на {server}?"
+  "bmcClearLogConfirm": "Очистить {log} на {server}?",
+  "bmcEntriesTruncated": "Показаны только последние записи",
+  "bmcDrivesTruncated": "Показаны только первые диски"
 }

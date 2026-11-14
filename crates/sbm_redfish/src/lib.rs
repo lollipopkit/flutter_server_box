@@ -174,7 +174,18 @@ pub struct Snapshot {
 /// snapshot. Closes nothing — the caller owns the client.
 pub async fn snapshot<T: Transport>(client: &T, known: Option<&Topology>) -> Result<Snapshot, Error> {
     let topology = match known {
-        Some(known) => known.with_system(read_system(client, known).await?),
+        Some(known) => {
+            let mut topology = known.with_system(read_system(client, known).await?);
+            // A manager that could not be read at discovery is tried again:
+            // its logs and virtual media are reached through nothing else.
+            if topology.manager.is_none()
+                && let Some(path) = topology.manager_path.clone()
+                && let Ok(json) = client.get(&path).await
+            {
+                topology.manager = Some(RedfishManager::from_json(&json));
+            }
+            topology
+        }
         None => discover(client).await?,
     };
     let (sensors, sensors_truncated) = read_sensors(client, topology.chassis.as_ref()).await;

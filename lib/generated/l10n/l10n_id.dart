@@ -7305,4 +7305,10 @@ class AppLocalizationsId extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return 'Kosongkan $log di $server?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Hanya entri terbaru yang ditampilkan';
+
+  @override
+  String get bmcDrivesTruncated => 'Hanya drive pertama yang ditampilkan';
 }

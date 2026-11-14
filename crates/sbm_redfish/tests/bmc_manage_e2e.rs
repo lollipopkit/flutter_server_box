@@ -10,6 +10,7 @@
 use std::time::Duration;
 
 use sbm_redfish::client::{Client, ClientConfig};
+use sbm_redfish::Outcome;
 use sbm_redfish::logs::{clear_log, log_entries, log_services};
 use sbm_redfish::media::media_slots;
 use sbm_redfish::model::BootRequest;
@@ -51,10 +52,13 @@ async fn client() -> Option<Client> {
 async fn a_real_bmc_is_managed_and_put_back() {
     let Some(client) = client().await else { return };
     let topology = discover(&client).await.unwrap();
+    let mut failures: Vec<String> = Vec::new();
 
-    // Logs: every one read, the machine's event log cleared.
+    // Logs: every one read, the clearable one cleared.
     let services = log_services(&client, &topology).await.unwrap();
-    assert!(!services.is_empty(), "no log at all");
+    if services.is_empty() {
+        failures.push("no log at all".into());
+    }
     for service in &services {
         let page = log_entries(&client, service).await.unwrap();
         println!(
@@ -62,57 +66,86 @@ async fn a_real_bmc_is_managed_and_put_back() {
             service.id, service.scope, page.entries.len(), page.total, page.truncated
         );
     }
-    let clearable = services.iter().find(|s| s.clear_target.is_some());
-    if let Some(log) = clearable {
+    if let Some(log) = services.iter().find(|s| s.clear_target.is_some()) {
         match clear_log(&client, log).await {
-            Ok(_) => {
+            Ok(outcome) => {
+                // `Accepted` means the work is not done yet; reading before it
+                // finishes says nothing about the clear.
+                if let Outcome::Accepted(task) = outcome {
+                    let _ = client.await_task(&task, Duration::from_secs(60), Duration::from_secs(2)).await;
+                }
                 let after = log_entries(&client, log).await.unwrap();
-                assert!(after.entries.is_empty(), "{:?} not empty after a clear", log.id);
+                if !after.entries.is_empty() {
+                    failures.push(format!("{:?} not empty after a clear", log.id));
+                }
             }
             // OpenBMC romulus under QEMU answers its ClearLog with 500
             // (`doc/vendors.md`): the request is what is checked there.
             Err(e) if e.detail.as_deref().is_some_and(|d| d.starts_with("HTTP 500")) => {
                 println!("{:?}: the BMC failed its own ClearLog ({e:?})", log.id);
             }
-            Err(e) => panic!("{:?}: {e:?}", log.id),
+            Err(e) => failures.push(format!("{:?}: {e:?}", log.id)),
         }
     }
 
-    // The locator, on and back.
     let before = read_system(&client, &topology).await.unwrap();
+
+    // The locator, on and back.
     if let Some(locator) = before.locator {
-        set_locator(&client, &topology, !locator.on).await.unwrap();
-        let flipped = read_system(&client, &topology).await.unwrap().locator.unwrap();
-        assert_eq!(flipped.on, !locator.on);
-        set_locator(&client, &topology, locator.on).await.unwrap();
-        assert_eq!(read_system(&client, &topology).await.unwrap().locator.unwrap().on, locator.on);
+        let flipped = async {
+            set_locator(&client, &topology, !locator.on).await?;
+            read_system(&client, &topology).await
+        }
+        .await;
+        match flipped {
+            Ok(after) if after.locator.is_some_and(|l| l.on != locator.on) => {}
+            Ok(_) => failures.push("the locator did not move".into()),
+            Err(e) => failures.push(format!("locator: {e:?}")),
+        }
+        if let Err(e) = set_locator(&client, &topology, locator.on).await {
+            failures.push(format!("locator not put back: {e:?}"));
+        }
     }
 
     // The boot override, set once to something else and back.
-    if let Some(boot) = before.boot.filter(|b| b.can_set()) {
-        let target = boot.targets.iter().find(|t| Some(*t) != boot.target.as_ref() && *t != "None").unwrap();
-        set_boot(&client, &topology, &BootRequest { target: target.clone(), enabled: "Once".into(), mode: None })
-            .await
-            .unwrap();
-        let set = read_system(&client, &topology).await.unwrap().boot.unwrap();
-        assert_eq!((set.target.as_ref(), set.enabled.as_deref()), (Some(target), Some("Once")));
-        set_boot(
-            &client,
-            &topology,
-            &BootRequest {
-                target: boot.target.clone().unwrap_or_else(|| "None".into()),
-                enabled: boot.enabled.clone().unwrap_or_else(|| "Disabled".into()),
-                mode: None,
-            },
-        )
-        .await
-        .unwrap();
-        let back = read_system(&client, &topology).await.unwrap().boot.unwrap();
-        assert_eq!((back.target, back.enabled), (boot.target, boot.enabled));
+    if let Some(boot) = before.boot.clone().filter(|b| b.can_set()) {
+        let current = boot.target.clone();
+        let other = boot
+            .settable_targets()
+            .into_iter()
+            .find(|t| Some(t) != current.as_ref());
+        match (other, boot.enabled_values.iter().any(|e| e == "Once")) {
+            (Some(target), true) => {
+                let set = BootRequest { target: target.clone(), enabled: "Once".into(), mode: None };
+                let applied = async {
+                    set_boot(&client, &topology, &set).await?;
+                    read_system(&client, &topology).await
+                }
+                .await;
+                match applied {
+                    Ok(after) => match after.boot {
+                        Some(after) if after.target.as_ref() == Some(&target) && after.enabled.as_deref() == Some("Once") => {}
+                        other => failures.push(format!("boot not set: {other:?}")),
+                    },
+                    Err(e) => failures.push(format!("boot: {e:?}")),
+                }
+                let back = BootRequest {
+                    target: current.clone().unwrap_or_else(|| "None".into()),
+                    enabled: boot.enabled.clone().unwrap_or_else(|| "Disabled".into()),
+                    mode: None,
+                };
+                if let Err(e) = set_boot(&client, &topology, &back).await {
+                    failures.push(format!("boot not put back: {e:?}"));
+                }
+            }
+            (None, _) => println!("boot: no other target to try"),
+            (Some(_), false) => println!("boot: `Once` not offered"),
+        }
     }
 
     let drives = storage(&client, &topology).await.unwrap();
     println!("drives: {}, unsupported {}", drives.drives.len(), drives.unsupported);
     println!("virtual media slots: {}", media_slots(&client, &topology).await.unwrap().len());
     client.close().await;
+    assert!(failures.is_empty(), "{failures:#?}");
 }

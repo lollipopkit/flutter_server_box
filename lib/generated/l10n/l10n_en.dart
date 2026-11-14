@@ -7308,4 +7308,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String bmcClearLogConfirm(String log, String server) {
     return 'Clear $log on $server?';
   }
+
+  @override
+  String get bmcEntriesTruncated => 'Only the newest entries are shown';
+
+  @override
+  String get bmcDrivesTruncated => 'Only the first drives are shown';
 }

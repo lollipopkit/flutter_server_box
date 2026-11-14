@@ -268,7 +268,8 @@ void main() {
     }
     for (final bad in [
       'file:///etc/passwd',
-      'https://user:pw@10.0.0.2/os.iso',
+      // Any user info, credentials or not, is refused.
+      'https://user@10.0.0.2/os.iso',
       'https://10.0.0.2/',
       'https://10.0.0.2/a b.iso',
       '/os.iso',
