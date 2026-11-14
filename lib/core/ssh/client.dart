@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/ssh/agent.dart';
 import 'package:server_box/core/ssh/algorithms.dart';
 import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/control_master.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/owning_socket.dart';
 import 'package:server_box/core/ssh/proxy_command_socket.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
@@ -163,6 +164,16 @@ Future<SSHClient> genClient(
           for (final jumpSpi_ in jumpSpis) {
             SSHClient? jumpClient;
             try {
+              // A master already connected to the jump opens the stream, as
+              // `ssh -W` through it would: no session of this app's own there.
+              final viaMaster = await openThroughMaster(
+                jumpSpi_,
+                host: ssh.ip,
+                port: ssh.port,
+                timeout: timeout,
+              );
+              if (viaMaster != null) return viaMaster;
+
               String? nextJumpPrivateKey;
               final jumpSpiKeyRef = jumpSpi_.ssh?.keyRef;
               if (jumpSpi != null &&
@@ -196,7 +207,9 @@ Future<SSHClient> genClient(
                       'forwardLocal timed out after ${timeout.inSeconds}s',
                     ),
                   );
-              return _JumpSocket(forwarded, jumpClient);
+              // The jump session is the channel's: closing the target closes it.
+              final carrier = jumpClient;
+              return OwningSocket(forwarded, carrier.close);
             } catch (e, stack) {
               try {
                 jumpClient?.close();
@@ -515,57 +528,6 @@ Future<SSHClient> _clientWith({
     authTimeout: timeout,
   );
 }
-
-/// A forwarded channel that owns the jump connection carrying it.
-///
-/// `forwardLocal` hands back a channel and nothing else, so the authenticated
-/// jump client it came from had no owner: on success nobody held it — closing
-/// the target closed the channel and left the jump session, its socket and its
-/// process running until the far end timed them out — and on a target failure
-/// the socket was destroyed with the jump client still open. Every connection
-/// through a jump host leaked one, and a status poll that keeps failing on the
-/// target's host key leaked one per attempt.
-///
-/// Everything is the channel's; the only addition is that closing this closes
-/// the client behind it, which is the ownership the return type could not
-/// express.
-class _JumpSocket implements SSHSocket {
-  _JumpSocket(this._inner, this._jumpClient);
-
-  final SSHSocket _inner;
-  final SSHClient _jumpClient;
-
-  @override
-  Stream<Uint8List> get stream => _inner.stream;
-
-  @override
-  StreamSink<List<int>> get sink => _inner.sink;
-
-  @override
-  Future<void> get done => _inner.done;
-
-  @override
-  Future<void> close() async {
-    try {
-      await _inner.close();
-    } finally {
-      _jumpClient.close();
-    }
-  }
-
-  @override
-  void destroy() {
-    try {
-      _inner.destroy();
-    } finally {
-      _jumpClient.close();
-    }
-  }
-
-  @override
-  Future<void> flush() => _inner.flush();
-}
-
 
 List<Spi> _resolveJumpCandidates({
   required Spi spi,

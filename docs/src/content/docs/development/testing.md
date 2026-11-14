@@ -46,6 +46,13 @@ The following suites need a real host. They are skipped silently when the requir
 # SBM_E2E_SSH_HOST=<SSH destination or ~/.ssh/config alias>
 cargo test -p sbm_parser --test ssh_e2e
 
+# A server reached through a jump's OpenSSH master (ControlMaster):
+# a master running for the jump, a target only the jump reaches.
+# See the file's header for each variable.
+SBM_E2E_MUX_JUMP=127.0.0.1:2222 SBM_E2E_MUX_USER=e2e \
+SBM_E2E_MUX_CONTROL_PATH='/tmp/cm-%C' SBM_E2E_MUX_TARGET=target \
+SBM_E2E_MUX_AGENT=/tmp/agent.sock \
+flutter test test/e2e/control_master_test.dart
 ```
 
 ## Monitor panel tests

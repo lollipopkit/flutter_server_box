@@ -139,6 +139,7 @@ extension _Discovery on _ServerEditPageState {
     _portController.text = '${ssh.port}';
     if (found.userKnown) _usernameController.text = ssh.user;
     if (ssh.proxyCommand case final cmd?) _proxyCommandCtrl.text = cmd;
+    if (ssh.controlPath case final path?) _controlPathCtrl.text = path;
     if (_nameController.text.isEmpty) _nameController.text = found.server.name;
   }
 
@@ -790,6 +791,10 @@ extension _Actions on _ServerEditPageState {
               _ => null,
             },
             identityAgent: _identityAgent,
+            // Carried where this build shows no field, as the agent is.
+            controlPath: controlMasterSupported
+                ? _controlPathCtrl.text.trim().selfNotEmptyOrNull
+                : spi?.ssh?.controlPath,
             // Carried where this build shows no agent, as the agent is.
             forwardAgent: sshAgentSupported
                 ? _identityAgent != null && _forwardAgent.value
@@ -1056,6 +1061,7 @@ extension _Utils on _ServerEditPageState {
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
+      _controlPathCtrl.text = ssh.controlPath ?? '';
       _fileTransport.value = ssh.fileTransport;
       _allowLegacyAlgorithms.value = ssh.allowLegacyAlgorithms;
     }

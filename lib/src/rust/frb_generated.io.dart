@@ -13,6 +13,7 @@ import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/container.dart';
+import 'package:server_box/src/rust/api/control_master.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
@@ -65,6 +66,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr;
 
   CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_MuxForwardPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForwardPtr;
+
+  CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_PowerWatchPtr => wire
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatchPtr;
 
@@ -107,6 +112,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   LibvirtRates
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    dynamic raw,
+  );
+
+  @protected
+  MuxForward
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
     dynamic raw,
   );
 
@@ -183,6 +194,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MuxForward
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    dynamic raw,
+  );
+
+  @protected
   PveConsoleChannel
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveConsoleChannel(
     dynamic raw,
@@ -251,6 +268,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   LibvirtRates
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    dynamic raw,
+  );
+
+  @protected
+  MuxForward
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
     dynamic raw,
   );
 
@@ -1386,6 +1409,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MonitorReleasePage dco_decode_monitor_release_page(dynamic raw);
 
   @protected
+  MuxError dco_decode_mux_error(dynamic raw);
+
+  @protected
   NetHost dco_decode_net_host(dynamic raw);
 
   @protected
@@ -2266,6 +2292,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MuxForward
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PowerWatch
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     SseDeserializer deserializer,
@@ -2334,6 +2366,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   BmcClient
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MuxForward
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
     SseDeserializer deserializer,
   );
 
@@ -2410,6 +2448,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   LibvirtRates
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MuxForward
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
     SseDeserializer deserializer,
   );
 
@@ -3775,6 +3819,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MuxError sse_decode_mux_error(SseDeserializer deserializer);
+
+  @protected
   NetHost sse_decode_net_host(SseDeserializer deserializer);
 
   @protected
@@ -4779,6 +4826,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    MuxForward self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     PowerWatch self,
     SseSerializer serializer,
@@ -4858,6 +4912,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(
     BmcClient self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    MuxForward self,
     SseSerializer serializer,
   );
 
@@ -4948,6 +5009,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
     LibvirtRates self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    MuxForward self,
     SseSerializer serializer,
   );
 
@@ -6687,6 +6755,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_mux_error(MuxError self, SseSerializer serializer);
+
+  @protected
   void sse_encode_net_host(NetHost self, SseSerializer serializer);
 
   @protected
@@ -8034,6 +8105,40 @@ class RustLibWire implements BaseWire {
       );
   late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates =
       _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForwardPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForwardPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForwardPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForward =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerMuxForwardPtr
           .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void

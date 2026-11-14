@@ -82,6 +82,13 @@ final class SshCredential {
   /// while connected, so off unless asked for.
   final bool forwardAgent;
 
+  /// Where an OpenSSH master connection to this server listens, as
+  /// `ControlPath` names it (tokens expanded when connecting). A server
+  /// reached through this one as a jump asks that master for its stream, as
+  /// `ssh -W` does, when one is running; otherwise this connects as usual.
+  /// Linux and macOS.
+  final String? controlPath;
+
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
 
@@ -132,6 +139,7 @@ final class SshCredential {
     this.identityFiles,
     this.identityAgent,
     this.forwardAgent = false,
+    this.controlPath,
     this.alterUrl,
     this.jumpId,
     this.jumpIds,
@@ -262,6 +270,7 @@ final class SshCredential {
     Object? identityFiles = _unset,
     Object? identityAgent = _unset,
     bool? forwardAgent,
+    Object? controlPath = _unset,
     Object? alterUrl = _unset,
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
@@ -283,6 +292,9 @@ final class SshCredential {
           ? this.identityAgent
           : identityAgent as String?,
       forwardAgent: forwardAgent ?? this.forwardAgent,
+      controlPath: controlPath == _unset
+          ? this.controlPath
+          : controlPath as String?,
       alterUrl: alterUrl == _unset ? this.alterUrl : alterUrl as String?,
       jumpId: jumpId == _unset ? this.jumpId : jumpId as String?,
       jumpIds: jumpIds == _unset ? this.jumpIds : (jumpIds as List<String>?),
@@ -325,7 +337,10 @@ final class SshCredential {
         // Not in [isSameAs], which answers "must this reconnect": the same
         // session carries either protocol, so switching costs a new channel
         // and nothing more. It is still a change, which is what this answers.
-        fileTransport == other.fileTransport;
+        fileTransport == other.fileTransport &&
+        // Not in [isSameAs] either: this server's own connection never uses
+        // its master, only one made through it as a jump.
+        controlPath == other.controlPath;
   }
 
   @override
@@ -338,6 +353,7 @@ final class SshCredential {
     Object.hashAll(resolvedIdentityFiles),
     identityAgent,
     forwardAgent,
+    controlPath,
     alterUrl,
     // [resolvedJumpIds], as [isSameAs] compares them, and not the two raw
     // fields it is derived from. Old storage and an import write [jumpId]

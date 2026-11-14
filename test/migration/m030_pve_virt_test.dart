@@ -28,6 +28,7 @@ import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
 import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
 import 'package:server_box/data/store/migrations/m039_ssh_identity_agent.dart';
 import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
+import 'package:server_box/data/store/migrations/m041_ssh_control_path.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -140,6 +141,7 @@ void main() {
     await const MonitorCertSha256Migration().apply();
     await const SshIdentityAgentMigration().apply();
     await const SshForwardAgentMigration().apply();
+    await const SshControlPathMigration().apply();
 
     expect(_xinfo('server'), freshServer);
     expect(_xinfo('server_pve'), freshPve);

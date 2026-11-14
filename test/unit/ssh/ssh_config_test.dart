@@ -244,6 +244,29 @@ Host env
       });
     });
 
+    test('ControlPath is the first one that applies; none is none', () async {
+      await configFile.writeAsString('''
+Host jump
+  HostName 10.0.0.1
+  ControlPath ~/.ssh/cm-%C
+
+Host off
+  HostName 10.0.0.2
+  ControlPath none
+
+Host plain
+  HostName 10.0.0.3
+
+Host *
+  ControlMaster auto
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      final paths = {for (final s in servers) s.name: s.ssh?.controlPath};
+
+      expect(paths, {'jump': '~/.ssh/cm-%C', 'off': null, 'plain': null});
+    });
+
     test('ForwardAgent yes, or the agent signed in with, forwards', () async {
       await configFile.writeAsString('''
 Host fwd

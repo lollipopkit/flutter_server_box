@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'package:crypto/crypto.dart' show sha1;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -44,8 +46,7 @@ abstract final class SSHConfig {
 
   /// The socket an `IdentityAgent` value names, as OpenSSH reads one:
   /// `SSH_AUTH_SOCK` (or any `$NAME`) is that variable's value, anything else
-  /// a path with `~`, `${NAME}` and the tokens `%%`, `%d`, `%u`, `%i`, `%h`,
-  /// `%n`, `%k`, `%p`, `%r`, `%l` and `%L` expanded in one pass. Null when it names a
+  /// a path expanded as [_expandSocketPath] does. Null when it names a
   /// variable that is not set, or a token this does not know.
   static String? expandIdentityAgent(
     String value, {
@@ -56,15 +57,72 @@ abstract final class SSHConfig {
     @visibleForTesting Map<String, String>? environment,
   }) {
     final env = environment ?? Platform.environment;
-    String? variable(String name) {
-      final v = env[name];
-      return v == null || v.isEmpty ? null : v;
+    if (value == SshCredential.authSock) return _variable(env, value);
+    if (_envVariable.firstMatch(value) case final m?) {
+      return _variable(env, m[1]!);
     }
+    return _expandSocketPath(
+      value,
+      env: env,
+      hostname: hostname,
+      remoteUser: remoteUser,
+      originalHost: originalHost,
+      port: port,
+    );
+  }
 
-    if (value == SshCredential.authSock) return variable(value);
-    if (_envVariable.firstMatch(value) case final m?) return variable(m[1]!);
+  /// The socket an OpenSSH master for this host listens on, as a
+  /// `ControlPath` names it; null for one naming a variable that is not set,
+  /// or a token this does not know.
+  ///
+  /// The host is lowercased first, as OpenSSH does before expanding either
+  /// `%h` or `%C`. `%C` is its connection hash: SHA-1 of the local host name,
+  /// the host, the port, the remote user and the `ProxyJump` value, which a
+  /// host with a jump of its own would need and this does not have, so that
+  /// one's master is not found.
+  static String? expandControlPath(
+    String value, {
+    required String hostname,
+    required String remoteUser,
+    String? originalHost,
+    int port = 22,
+    @visibleForTesting Map<String, String>? environment,
+    @visibleForTesting String? localHost,
+  }) {
+    final env = environment ?? Platform.environment;
+    final thisHost = localHost ?? Platform.localHostname;
+    final host = hostname.toLowerCase();
+    return _expandSocketPath(
+      value,
+      env: env,
+      hostname: host,
+      remoteUser: remoteUser,
+      originalHost: originalHost,
+      port: port,
+      localHost: thisHost,
+      extra: {
+        'C': sha1
+            .convert(utf8.encode('$thisHost$host$port$remoteUser'))
+            .toString(),
+        'j': '',
+      },
+    );
+  }
 
-    final localHost = Platform.localHostname;
+  /// [value] with `~`, `${NAME}` and the tokens `%%`, `%d`, `%u`, `%i`, `%h`,
+  /// `%n`, `%k`, `%p`, `%r`, `%l` and `%L` (and [extra]'s) expanded in one
+  /// pass, so a value never has its own text read for tokens again.
+  static String? _expandSocketPath(
+    String value, {
+    required Map<String, String> env,
+    required String hostname,
+    required String remoteUser,
+    required String? originalHost,
+    required int port,
+    String? localHost,
+    Map<String, String> extra = const {},
+  }) {
+    final thisHost = localHost ?? Platform.localHostname;
     final tokens = {
       '%': '%',
       'd': _homePath ?? '',
@@ -75,16 +133,22 @@ abstract final class SSHConfig {
       'k': originalHost ?? hostname,
       'p': '$port',
       'r': remoteUser,
-      'l': localHost,
-      'L': localHost.split('.').first,
+      'l': thisHost,
+      'L': thisHost.split('.').first,
+      ...extra,
     };
     var unresolved = false;
-    final expanded = value.replaceAllMapped(_agentReference, (m) {
-      final v = m[1] != null ? variable(m[1]!) : tokens[m[2]];
+    final expanded = value.replaceAllMapped(_pathReference, (m) {
+      final v = m[1] != null ? _variable(env, m[1]!) : tokens[m[2]];
       if (v == null) unresolved = true;
       return v ?? '';
     });
     return unresolved ? null : _expandTilde(expanded);
+  }
+
+  static String? _variable(Map<String, String> env, String name) {
+    final v = env[name];
+    return v == null || v.isEmpty ? null : v;
   }
 
   /// This process's numeric user id; none on Windows, which has no such
@@ -101,7 +165,7 @@ abstract final class SSHConfig {
   }();
 
   static final _envVariable = RegExp(r'^\$([A-Za-z_][A-Za-z0-9_]*)$');
-  static final _agentReference = RegExp(
+  static final _pathReference = RegExp(
     r'\$\{([A-Za-z_][A-Za-z0-9_]*)\}|%(.?)',
   );
 
@@ -281,6 +345,7 @@ abstract final class SSHConfig {
     String? proxyCommand;
     String? identityAgent;
     String? forwardAgent;
+    String? controlPath;
     final identityFiles = <String>[];
 
     for (final block in blocks) {
@@ -315,6 +380,8 @@ abstract final class SSHConfig {
             identityAgent = value;
           case 'forwardagent' when forwardAgent == null:
             forwardAgent = value;
+          case 'controlpath' when controlPath == null:
+            controlPath = value;
         }
       }
     }
@@ -364,6 +431,11 @@ abstract final class SSHConfig {
           remoteUser: user ?? 'root',
           port: port ?? 22,
         ),
+        controlPath: switch (controlPath) {
+          null => null,
+          final v when v.isEmpty || v.toLowerCase() == 'none' => null,
+          final v => v,
+        },
         proxyCommand: resolvedProxy,
       ),
     );

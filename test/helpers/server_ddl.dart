@@ -76,8 +76,18 @@ const forwardAgentColumn =
 
 /// `server` as it was before v41, asserted to have been found.
 String serverDdlBeforeForwardAgent(String fresh) {
-  expect(fresh, contains(forwardAgentColumn));
-  return fresh.replaceFirst(forwardAgentColumn, '');
+  final before = serverDdlBeforeControlPath(fresh);
+  expect(before, contains(forwardAgentColumn));
+  return before.replaceFirst(forwardAgentColumn, '');
+}
+
+/// The column m041 added: last, where `ADD COLUMN` puts it too.
+const controlPathColumn = ', "ssh_control_path" TEXT NULL';
+
+/// `server` as it was before v42, asserted to have been found.
+String serverDdlBeforeControlPath(String fresh) {
+  expect(fresh, contains(controlPathColumn));
+  return fresh.replaceFirst(controlPathColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

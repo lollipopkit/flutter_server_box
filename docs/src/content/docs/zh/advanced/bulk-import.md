@@ -68,6 +68,7 @@ SSH 配置位于 `ssh` 对象内。App 导出文件与导入对话框中的示�
 | `forwardAgent` | 否 | 将 `identityAgent` 转发给服务器的会话，同 `ForwardAgent yes`；连接期间服务器上的 root 可用其中的密钥签名。默认为 `false` |
 | `alterUrl` | 否 | 备用地址，格式为 `user@ip:port` |
 | `jumpIds` | 否 | 跳板机链，按服务器 ID 依次指定 |
+| `controlPath` | 否 | 该服务器 OpenSSH 主连接的 socket 路径，写法同 `ControlPath`。以它为跳板机的服务器在主连接运行时经由它连接。Linux 与 macOS |
 | `proxyCommand` | 否 | ProxyCommand（移动端在内置 Linux 环境中运行，与 `jumpIds` 互斥） |
 
 以下字段位于 `pve` 对象内：

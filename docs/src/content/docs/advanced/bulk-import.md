@@ -78,6 +78,7 @@ The following fields belong inside `ssh`:
 | `forwardAgent` | No | Forward `identityAgent` to the server's sessions, as `ForwardAgent yes`; whoever is root there can sign with its keys while connected. Defaults to `false` |
 | `alterUrl` | No | Fallback address in the form `user@ip:port` |
 | `jumpIds` | No | Jump-server chain specified by server ID |
+| `controlPath` | No | Where an OpenSSH master connection to this server listens, as `ControlPath` names it. A server using this one as a jump is reached through that master when it is running. Linux and macOS |
 | `proxyCommand` | No | ProxyCommand; on a phone it runs in the built-in Linux environment. Mutually exclusive with `jumpIds` |
 
 The following fields belong inside `pve`:
