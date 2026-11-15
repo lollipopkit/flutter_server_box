@@ -5,7 +5,7 @@ import FileProvider
 /// through one, by name, with `*at` calls that never follow a link: a
 /// directory the guest swaps for a link after it was checked is refused, not
 /// followed out of the system. Android's provider leaves that window open
-/// because a proot guest can reach everything anyway; an iSH guest cannot.
+/// because a proot guest can reach everything anyway; an iul guest cannot.
 final class DirHandle {
     let fd: Int32
 

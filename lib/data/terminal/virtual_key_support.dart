@@ -47,7 +47,7 @@ extension VirtualKeySupport on VirtualKey {
       // rearranges itself under the user's thumb once something connects.
       VirtualKey.tmux => switch (source) {
         // TODO: iOS once the guest's realfs reports its files as root's; see
-        // `IshShellBackend.supportsTmux`.
+        // `IulShellBackend.supportsTmux`.
         LocalSource() => !isWindows && !isIOS,
         ServerSource(:final spi) when spi.local => !isWindows,
         ServerSource(:final spi) => spi.sshOn != null && !shellUsesAgent,

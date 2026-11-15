@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/ssh/ish_proxy_socket.dart';
+import 'package:server_box/core/ssh/iul_proxy_socket.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -41,7 +41,7 @@ void main() {
 
   testWidgets('a ProxyCommand carries every byte both ways', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     if (IosRootfs.selected == null) {
@@ -56,7 +56,7 @@ void main() {
       client.listen(client.add, onDone: client.close);
     });
 
-    final socket = await IshProxySocket.connect(
+    final socket = await IulProxySocket.connect(
       command: 'nc 127.0.0.1 ${server.port}',
       timeout: const Duration(seconds: 30),
     );
@@ -92,7 +92,7 @@ void main() {
     }
     // The terminal is made raw before the command runs, so connecting
     // succeeds; the command's failure arrives on the stream, with its stderr.
-    final socket = await IshProxySocket.connect(
+    final socket = await IulProxySocket.connect(
       command: 'sbm-no-such-command',
       timeout: const Duration(seconds: 30),
     );

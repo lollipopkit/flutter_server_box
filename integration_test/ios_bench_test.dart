@@ -9,11 +9,10 @@ import 'package:path_provider/path_provider.dart';
 
 /// What the Linux guest costs on the hardware people actually have.
 ///
-/// The fork publishes 7–12x figures for the ARM64 JIT over the x86 interpreter,
-/// measured on a Mac. Those are not the numbers a phone gives, and a phone is
+/// Figures measured on a Mac are not the numbers a phone gives, and a phone is
 /// where this ships — so the suite runs here, in the app, on the device.
 ///
-/// The script and the prebuilt binary are the fork's own and are passed in
+/// The script and the prebuilt binary are fl_userland's own and are passed in
 /// rather than vendored, so there is one copy of each:
 ///
 ///     scripts/ios-bench-defines.sh > /tmp/bench.json
@@ -28,7 +27,7 @@ import 'package:path_provider/path_provider.dart';
 /// Nothing here asserts a duration. Timings depend on the device, its thermal
 /// state and what else is running, and a benchmark that fails the build on a
 /// warm phone would be turned off within a week. It asserts that the suite ran
-/// and reports what it measured; the numbers go in `ISHBENCH|` lines.
+/// and reports what it measured; the numbers go in `IULBENCH|` lines.
 /// Both arrive base64: a define is passed to the frontend server as a literal
 /// `-DNAME=value`, so a value with a newline in it is taken for another source
 /// file to compile.
@@ -46,9 +45,9 @@ void main() {
   // The manifest too: what each system is and where to get it.
   setUpAll(Rootfs.prepare);
 
-  testWidgets('the guest runs the fork\'s benchmark', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+  testWidgets('the guest runs fl_userland\'s benchmark', (_) async {
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     if (_shellbenchB64.isEmpty) {
@@ -62,7 +61,7 @@ void main() {
     if (IosRootfs.selected == null) {
       await IosRootfs.install(distro: LinuxDistro.alpine);
     }
-    const exec = IshExec();
+    const exec = IulExec();
 
     // The C section runs a prebuilt musl aarch64 binary, which is exactly what
     // the guest is. Written through the host path the way the host runner
@@ -88,10 +87,10 @@ void main() {
       r'echo "up1=$(cat /proc/uptime)"; sleep 1; '
       r'echo "up2=$(cat /proc/uptime)"; echo "sN2=$(date +%s%N)"',
     );
-    debugPrint('ISHCLOCK ${clock.stdout.trim().replaceAll("\n", " ")}');
+    debugPrint('IULCLOCK ${clock.stdout.trim().replaceAll("\n", " ")}');
 
-    // Written to the guest and run from there, the way the fork's host runner
-    // does it, so what is measured is the script as the fork ships it. `run`
+    // Written to the guest and run from there, the way fl_userland's host runner
+    // does it, so what is measured is the script as fl_userland ships it. `run`
     // would take it directly now — it writes anything past 4 KB to a file
     // itself, since the session's command line is one 4096-byte block — but a
     // benchmark should not also be measuring that.
@@ -113,10 +112,10 @@ void main() {
     }
 
     for (final row in rows) {
-      debugPrint('ISHBENCH|${row.category}|${row.name}|${row.ms}');
+      debugPrint('IULBENCH|${row.category}|${row.name}|${row.ms}');
     }
     final categories = rows.map((r) => r.category).toSet();
-    debugPrint('ISHBENCH_DONE rows=${rows.length} categories=${categories.join(",")}');
+    debugPrint('IULBENCH_DONE rows=${rows.length} categories=${categories.join(",")}');
 
     // Also to a file, because the printed copy needs a harness attached to be
     // read and the harness is the part that does not work here: the VM service
@@ -128,7 +127,7 @@ void main() {
     //     xcrun devicectl device copy from -d <device> \
     //       --domain-type appDataContainer \
     //       --domain-identifier com.lollipopkit.toolbox \
-    //       --source Documents/ish_bench.txt --destination /tmp/
+    //       --source Documents/iul_bench.txt --destination /tmp/
     final report = StringBuffer()
       ..writeln('clock ${clock.stdout.trim().replaceAll("\n", " ")}')
       ..writeln('rows ${rows.length}');
@@ -137,7 +136,7 @@ void main() {
     }
     final documents = await getApplicationDocumentsDirectory();
     await File(
-      '${documents.path}/ish_bench.txt',
+      '${documents.path}/iul_bench.txt',
     ).writeAsString(report.toString(), flush: true);
 
     expect(

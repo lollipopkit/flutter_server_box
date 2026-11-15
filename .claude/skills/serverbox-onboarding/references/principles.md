@@ -121,8 +121,8 @@ Five platforms from one codebase, with two pieces of native machinery worth
 knowing about:
 
 - **`packages/fl_tty`** is the shell on this device, shared with LLMBox: the
-  pty, proot on Android and ish-arm64 (a fork of iSH, at
-  `packages/fl_tty/third_party/ish-arm64`) on iOS. Its build hook builds all of
+  pty, proot on Android and fl_userland (`iul`, at
+  `packages/fl_tty/third_party/fl_userland`) on iOS. Its build hook builds all of
   it; the engine's libraries are fetched for the submodule's revision.
 - **CocoaPods is gone from iOS and macOS.** `hook/build.dart` and fl_tty's hook
   replaced the per-platform build integrations with Dart build hooks, so there

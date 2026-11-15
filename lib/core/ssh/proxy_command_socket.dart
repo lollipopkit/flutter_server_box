@@ -8,7 +8,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/ssh/ish_proxy_socket.dart';
+import 'package:server_box/core/ssh/iul_proxy_socket.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// An [SSHSocket] over a ProxyCommand's standard streams.
@@ -17,7 +17,7 @@ import 'package:server_box/data/model/app/error.dart';
 /// own on a desktop, and the Linux guest on a phone, where the host has none a
 /// user's tools are in. Android's guest is a process under proot and goes
 /// through this class like the desktop; iOS has no processes to start, and
-/// [IshProxySocket] runs the command in its interpreter instead.
+/// [IulProxySocket] runs the command in its interpreter instead.
 class ProxyCommandSocket implements SSHSocket {
   ProxyCommandSocket._({
     required Process process,
@@ -83,7 +83,7 @@ class ProxyCommandSocket implements SSHSocket {
       jump: jump,
     );
     if (isIOS) {
-      return IshProxySocket.connect(
+      return IulProxySocket.connect(
         command: resolvedCommand,
         timeout: timeout,
       );

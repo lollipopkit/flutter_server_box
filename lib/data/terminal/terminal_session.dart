@@ -273,7 +273,7 @@ class TerminalSession {
       final kind = !local.rootfs
           ? 'host'
           : isIOS
-          ? 'ish'
+          ? 'iul'
           : 'proot';
       Diag.crumb(
         SbDiag.terminal,
@@ -352,7 +352,7 @@ class TerminalSession {
   /// above knows neither.
   ShellBackend _localBackend(LocalSource local) {
     if (local.rootfs && isIOS) {
-      return IshShellBackend(profileId: local.profileId);
+      return IulShellBackend(profileId: local.profileId);
     }
     return LocalShellBackend(
       inRootfs: local.rootfs,
