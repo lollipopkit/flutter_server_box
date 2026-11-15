@@ -274,7 +274,7 @@ jobs:
           mv dist/bins/monitor-bin-linux-arm64/server_box_monitor dist/docker/arm64/
 
       - name: Login to ghcr.io
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -406,7 +406,7 @@ jobs:
         run: sha256sum -- *.tar.gz *.zip *.img > SHA256SUMS
 
       - name: Create Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
           # The version, not the tag, which already carries the word: the tag
