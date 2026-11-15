@@ -240,9 +240,10 @@ final class IulProxySocket implements SSHSocket {
         } on StateError catch (e, s) {
           // -EBUSY: the session lock stayed taken. Busy for a moment is
           // retried next tick; held for good means a guest thread died with it.
+          // No write this tick either: it needs the same lock.
           if (++_busyTicks >= _busyLimit) rethrow;
           Loggers.app.warning('ProxyCommand read busy', e, s);
-          break;
+          return;
         }
         _busyTicks = 0;
         if (chunk == null) {
