@@ -118,7 +118,14 @@ class _WorkspaceTabState extends ConsumerState<WorkspaceTabPage>
       // After the frame: the tab's page is still in the tree this frame and
       // its listeners are on these notifiers.
       final rt = _runtimes.remove(id)!;
-      WidgetsBinding.instance.addPostFrameCallback((_) => rt.dispose());
+      // A closed tab's shell ends with it: its page only disposes the session,
+      // in case it was handed on, and a closed tab has nobody to hand it to.
+      final session =
+          rt.sshKey.currentState?.session ?? rt.session.value ?? rt.handoff;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        session?.close();
+        rt.dispose();
+      });
     }
     final panes = {
       for (final ws in next.all) ...ws.panes.keys,

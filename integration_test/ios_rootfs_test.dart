@@ -14,7 +14,7 @@ import 'package:integration_test/integration_test.dart';
 /// is linked into the app binary and reached by looking its symbols up in the
 /// running process, so a plain `flutter test` would find nothing to call.
 ///
-/// Skipped where the engine is left out (fl_tty's `ish: false` hook
+/// Skipped where the engine is left out (fl_tty's `iul: false` hook
 /// user-define).
 ///
 /// Nothing is staged: the app downloads and unpacks the userland itself, which
@@ -29,7 +29,7 @@ void main() {
     // Not an assertion either way: this test runs on a build that may have
     // been made with the switch off, and that is a valid build.
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     expect(IosRootfs.root, isNotNull);
@@ -56,7 +56,7 @@ void main() {
 
   testWidgets('the app installs a userland by itself', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     // The real path, with nothing staged: download the pinned release, check
@@ -90,7 +90,7 @@ void main() {
 
   testWidgets('a guest runs inside the app and answers', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     // Installed by the test above, or already there. Only when there is
@@ -111,7 +111,7 @@ void main() {
     );
     expect(one, greaterThanOrEqualTo(0), reason: 'open returned $one');
     final text = await readTo(one, 'SBM_IOS_OK');
-    debugPrint('ISHPROBE one=${text.trim()}');
+    debugPrint('IULPROBE one=${text.trim()}');
     expect(text, contains(LinuxDistro.alpine.version));
     expect(text, contains('aarch64'));
     expect(text, contains('root'));
@@ -123,7 +123,7 @@ void main() {
     expect(two, greaterThanOrEqualTo(0), reason: 'open returned $two');
     expect(two, isNot(one));
     final second = await readTo(two, 'SBM_SECOND');
-    debugPrint('ISHPROBE two=${second.trim()}');
+    debugPrint('IULPROBE two=${second.trim()}');
     expect(second, contains('SBM_SECOND'));
     // Each session sees only its own: the first one's marker is not in here.
     expect(second, isNot(contains('SBM_IOS_OK')));
@@ -138,7 +138,7 @@ void main() {
   // metadata was the part worth refusing.
   testWidgets('/dev has what a userland expects', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -163,7 +163,7 @@ void main() {
     );
     expect(session, greaterThanOrEqualTo(0));
     final text = await readTo(session, 'SBM_DEV_OK');
-    debugPrint('ISHPROBE dev=${text.trim()}');
+    debugPrint('IULPROBE dev=${text.trim()}');
 
     expect(text, contains('16'), reason: '/dev/urandom gave nothing');
     expect(text, contains('8'), reason: '/dev/zero gave nothing');
@@ -189,12 +189,12 @@ void main() {
   // other half and is exercised above; this one is `CommandExec`, which promises
   // things a console cannot keep — hence the two files it runs commands with.
   testWidgets('the Agent runs its commands inside the guest', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
-    const exec = IshExec();
+    const exec = IulExec();
 
     final release = await exec.run('cat /etc/alpine-release');
     expect(release.stdout.trim(), LinuxDistro.alpine.version);
@@ -242,14 +242,14 @@ void main() {
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 
   // Where the app stops taking a command, and the reason the test after this
-  // one exists. `sbm_ish_open` packs `/bin/sh`, `-c` and the command into one
+  // one exists. `sbm_iul_open` packs `/bin/sh`, `-c` and the command into one
   // 4096-byte block and answers `-E2BIG`; the guest's own `ARGV_MAX` is 32
   // pages and was never what stopped anything. Bracketed rather than pinned to
   // the byte — what matters is that the wall is near 4 KB and that reaching it
   // is a refusal rather than a command quietly cut short.
   testWidgets('the engine refuses a command it cannot fit', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -268,9 +268,9 @@ void main() {
     final over = IosRootfs.open(command: ofLength(5000));
     // Closed before the assertion: a session leaked here outlives the test.
     if (over >= 0) IosRootfs.close(over);
-    debugPrint('ISHARGV 4000=$fits 5000=$over');
+    debugPrint('IULARGV 4000=$fits 5000=$over');
     // -E2BIG, from the host's errno.h. This is the number a caller sees in
-    // `IshExec`'s "the guest refused a session ($id)".
+    // `IulExec`'s "the guest refused a session ($id)".
     expect(over, -7, reason: '5000 bytes did not give -E2BIG');
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 
@@ -278,12 +278,12 @@ void main() {
   // 4 KB of it used to come back as "refused a session (-7)" — a sentence that
   // says nothing about length and points at the guest rather than at the app.
   testWidgets('a script the engine cannot hold still runs', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
-    const exec = IshExec();
+    const exec = IulExec();
 
     // Well past 4 KB, and past it in the part that varies rather than in one
     // long line, which is the shape a generated script actually has.
@@ -325,12 +325,12 @@ void main() {
   // were simply wrong, which is why all three are checked here rather than the
   // one that was noticed.
   testWidgets('the guest clock is a clock', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
-    const exec = IshExec();
+    const exec = IulExec();
 
     final probe = await exec.run(
       r'cat /proc/uptime; sleep 1; cat /proc/uptime; '
@@ -338,7 +338,7 @@ void main() {
     );
     expect(probe.exitCode, 0, reason: probe.stderr);
     final lines = const LineSplitter().convert(probe.stdout.trim());
-    debugPrint('ISHCLOCK ${lines.join(" | ")}');
+    debugPrint('IULCLOCK ${lines.join(" | ")}');
     expect(lines.length, greaterThanOrEqualTo(5), reason: probe.stdout);
 
     // 1. /proc/uptime, and that a second of sleeping is a second of it. The bug
@@ -392,15 +392,15 @@ void main() {
   //
   // The test above cannot see it: it samples twice around a `sleep 1` and
   // allows 0.5 to 3.0, which a 0.63 jump sits inside. What it reaches is
-  // anything in the guest that measures an interval — the fork's own benchmark
+  // anything in the guest that measures an interval — the guest's benchmark
   // reported a negative duration, which is what found this.
   testWidgets('/proc/uptime keeps its two decimal places', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
-    const exec = IshExec();
+    const exec = IulExec();
 
     // Enough reads that the hundredths land under ten several times over.
     final probe = await exec.run(
@@ -414,7 +414,7 @@ void main() {
     // number, because what broke was the format and not the value.
     final shape = RegExp(r'^\d+\.\d{2} \d+\.\d{2}$');
     final malformed = lines.where((l) => !shape.hasMatch(l)).toList();
-    debugPrint('ISHUPTIME ${lines.first} .. ${lines.last} bad=${malformed.length}');
+    debugPrint('IULUPTIME ${lines.first} .. ${lines.last} bad=${malformed.length}');
     expect(
       malformed,
       isEmpty,

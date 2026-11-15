@@ -23,7 +23,7 @@ import 'package:integration_test/integration_test.dart';
 /// is running and on when the allocator felt like returning pages, and a test
 /// that failed the build on a number like that would be turned off within a
 /// week. It asserts the guest survived the work and reports what it cost, on
-/// `ISHLOAD|` lines.
+/// `IULLOAD|` lines.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -34,8 +34,8 @@ void main() {
   double rss() => ProcessInfo.currentRss / 1024 / 1024;
 
   testWidgets('the guest works hard and the app is still there', (_) async {
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     // Only when there is nothing: `install` without `into:` adds a system
@@ -44,13 +44,13 @@ void main() {
     if (IosRootfs.selected == null) {
       await IosRootfs.install(distro: LinuxDistro.alpine);
     }
-    const exec = IshExec();
+    const exec = IulExec();
 
     // Booted and idle, before any work: what the engine costs simply for
     // existing, which is the number the rest is read against.
     await exec.run('true');
     final idle = rss();
-    debugPrint('ISHLOAD|idle|${idle.toStringAsFixed(1)} MB');
+    debugPrint('IULLOAD|idle|${idle.toStringAsFixed(1)} MB');
 
     // Sustained work of three kinds, because they cost differently: a lot of
     // small processes, one long computation, and a file big enough that the
@@ -70,10 +70,10 @@ echo DONE
     expect(work.stdout, contains('DONE'));
 
     final after = rss();
-    debugPrint('ISHLOAD|after|${after.toStringAsFixed(1)} MB');
-    debugPrint('ISHLOAD|grew|${(after - idle).toStringAsFixed(1)} MB');
+    debugPrint('IULLOAD|after|${after.toStringAsFixed(1)} MB');
+    debugPrint('IULLOAD|grew|${(after - idle).toStringAsFixed(1)} MB');
     debugPrint(
-      'ISHLOAD|peak|${(ProcessInfo.maxRss / 1024 / 1024).toStringAsFixed(1)} MB',
+      'IULLOAD|peak|${(ProcessInfo.maxRss / 1024 / 1024).toStringAsFixed(1)} MB',
     );
 
     // The one thing worth asserting: the guest is still a guest. An
@@ -94,8 +94,8 @@ echo DONE
     // wrote one, so every mirror answered "temporary error (try again later)"
     // and every package was missing. `IosRootfs` seeds one now — at install,
     // and at startup for a userland unpacked before it did.
-    if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
+    if (!IulExec.isSupported) {
+      markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
     }
     await IosRootfs.prepare();
@@ -105,14 +105,14 @@ echo DONE
     if (IosRootfs.selected == null) {
       await IosRootfs.install(distro: LinuxDistro.alpine);
     }
-    const exec = IshExec();
+    const exec = IulExec();
 
     final before = rss();
     // No pipe: a pipeline's status is the last command's, so `| tail` would
     // report success for every failure apk can have.
     final add = await exec.run('apk add --no-cache file');
-    debugPrint('ISHLOAD|apk exit|${add.exitCode}');
-    debugPrint('ISHLOAD|apk cost|${(rss() - before).toStringAsFixed(1)} MB');
+    debugPrint('IULLOAD|apk exit|${add.exitCode}');
+    debugPrint('IULLOAD|apk cost|${(rss() - before).toStringAsFixed(1)} MB');
 
     if (add.exitCode != 0) {
       // How far it got decides what the fix is, and printing that here is
@@ -132,7 +132,7 @@ wget -q -T 8 -O /dev/null http://151.101.194.132/ 2>&1 && echo "addr: ok" || ech
     // unpacked but cannot be executed is the failure this platform is most
     // likely to have, since nothing here is handed to the kernel.
     final ran = await exec.run('file /bin/busybox');
-    debugPrint('ISHLOAD|installed|${ran.stdout.trim()}');
+    debugPrint('IULLOAD|installed|${ran.stdout.trim()}');
     expect(ran.exitCode, 0, reason: ran.stderr);
     expect(ran.stdout, contains('ELF'));
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 10)));

@@ -124,7 +124,7 @@ flutter pub get
 dart run build_runner build
 ```
 
-The iOS Linux engine's libraries live in `packages/fl_tty/build/ish`, outside
+The iOS Linux engine's libraries live in `packages/fl_tty/build/iul`, outside
 what `flutter clean` removes, and fl_tty's build hook fetches them again when
 they are missing.
 

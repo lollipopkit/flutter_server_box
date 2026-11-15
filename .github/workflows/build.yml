@@ -712,6 +712,11 @@ jobs:
           fetch-depth: 0
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
+      - name: Setup Rust targets
+        shell: bash
+        run: |
+          rustup component add llvm-tools
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim aarch64-unknown-linux-musl
       - name: Build (unsigned)
         shell: bash
         run: |
@@ -725,7 +730,7 @@ jobs:
       # absent. Android has `Check proot shipped` for the same reason.
       - name: Check the Linux engine linked
         shell: bash
-        run: packages/fl_tty/scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Frameworks/fl_tty.framework/fl_tty on
+        run: packages/fl_tty/scripts/check-iul-linkage.sh build/ios/iphoneos/Runner.app/Frameworks/fl_tty.framework/fl_tty on
       - name: Package ipa
         shell: bash
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh

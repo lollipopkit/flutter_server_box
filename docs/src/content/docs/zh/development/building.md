@@ -107,7 +107,7 @@ flutter pub get
 dart run build_runner build
 ```
 
-iOS Linux engine 的 libraries 位于 `packages/fl_tty/build/ish`，不在 `flutter clean` 删除的范围内；缺失时 fl_tty 的 build hook 会重新获取。
+iOS Linux engine 的 libraries 位于 `packages/fl_tty/build/iul`，不在 `flutter clean` 删除的范围内；缺失时 fl_tty 的 build hook 会重新获取。
 
 ### 依赖版本不匹配
 

@@ -510,7 +510,17 @@ extension _Sessions on _SSHTabPageState {
     if (at >= 0) _sessions.select(at + 1);
   }
 
-  void _closeTab(String id) => _sessions.remove(id);
+  /// Closes the tab and ends what runs in it.
+  ///
+  /// The page only disposes its session when it goes, because a session may
+  /// have been handed on; a closed tab has nobody to hand it to. Left running,
+  /// its shell kept a Linux system busy until the app restarted.
+  void _closeTab(String id) {
+    // The page's own first: `session` is filled in after the first frame.
+    final data = _sessions.byId(id)?.data;
+    (data?.pageKey.currentState?.session ?? data?.session.value)?.close();
+    _sessions.remove(id);
+  }
 }
 
 /// The buttons on the tab bar.
@@ -689,7 +699,8 @@ extension _Actions on _SSHTabPageState {
     final session = state.handOff();
     final notifier = ref.read(workspacesProvider.notifier);
     notifier.adoptSession(target.isEmpty ? null : target, spi.id, session);
-    _closeTab(tab.id);
+    // Not [_closeTab]: the session lives on in the workspace.
+    _sessions.remove(tab.id);
     ref.read(homeTabRequestProvider.notifier).go(AppTab.workspace);
     Toast.show(
       l10n.workspaceMoved(spi.name, ref.read(workspacesProvider).current.name),

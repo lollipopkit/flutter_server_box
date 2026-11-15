@@ -11,6 +11,11 @@ import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 
+typedef ProxyReadFn = Uint8List? Function(int session, {Duration timeout});
+typedef ProxyWriteFn = int Function(int session, Uint8List bytes);
+typedef ProxyExitCodeFn = int? Function(int session);
+typedef ProxyCloseFn = void Function(int session);
+
 /// A ProxyCommand on iOS: the command in the Linux guest, its terminal turned
 /// into a byte pipe.
 ///
@@ -32,8 +37,40 @@ import 'package:server_box/data/model/app/error.dart';
 /// The command's stderr goes to a file, not the terminal: on a terminal it
 /// would be mixed into SSH's bytes. It is logged when the session ends, as the
 /// desktop logs a process's stderr.
-final class IshProxySocket implements SSHSocket {
-  IshProxySocket._(this._session, this._files, this._errFile);
+final class IulProxySocket implements SSHSocket {
+  IulProxySocket._(
+    this._session,
+    this._files,
+    this._errFile, {
+    ProxyReadFn? read,
+    ProxyWriteFn? tryWrite,
+    ProxyExitCodeFn? exitCode,
+    ProxyCloseFn? closeSession,
+  }) : _read = read ?? IosRootfs.read,
+       _tryWrite = tryWrite ?? IosRootfs.tryWrite,
+       _exitCode = exitCode ?? IosRootfs.exitCode,
+       _closeSession = closeSession ?? IosRootfs.close;
+
+  @visibleForTesting
+  factory IulProxySocket.forTesting({
+    int session = 1,
+    List<File> files = const [],
+    required File errFile,
+    required ProxyReadFn read,
+    required ProxyWriteFn tryWrite,
+    required ProxyExitCodeFn exitCode,
+    required ProxyCloseFn closeSession,
+  }) {
+    return IulProxySocket._(
+      session,
+      files,
+      errFile,
+      read: read,
+      tryWrite: tryWrite,
+      exitCode: exitCode,
+      closeSession: closeSession,
+    ).._start();
+  }
 
   /// Printed by the session once its terminal is raw. Control characters on
   /// both sides, so no shell output or login banner produces it by accident.
@@ -41,7 +78,7 @@ final class IshProxySocket implements SSHSocket {
   static const readyMarker = '\u0001SBM-PROXY-READY\u0002';
   static final _marker = utf8.encode(readyMarker);
 
-  /// How often the session is looked at: a terminal's frame, as [IshExec]'s.
+  /// How often the session is looked at: a terminal's frame, as [IulExec]'s.
   static const _interval = Duration(milliseconds: 16);
 
   /// Reads per look, so a burst is taken in one frame rather than 8 KB a
@@ -52,19 +89,35 @@ final class IshProxySocket implements SSHSocket {
   /// much before it is the wrong command, not a slow one.
   static const _preambleLimit = 64 * 1024;
 
+  /// Ticks in a row whose read found the session lock taken before the
+  /// session is given up. Each such read has already waited about 100 ms
+  /// on this isolate, and a lock held by a guest thread that died is never
+  /// let go.
+  static const _busyLimit = 3;
+
   final int _session;
   final List<File> _files;
   final File _errFile;
+  final ProxyReadFn _read;
+  final ProxyWriteFn _tryWrite;
+  final ProxyExitCodeFn _exitCode;
+  final ProxyCloseFn _closeSession;
 
   final _incoming = StreamController<Uint8List>();
-  final _outgoing = StreamController<List<int>>();
+  // Synchronous delivery ensures data added via `sink.add` reaches `_pending`
+  // before an immediate `flush()` or `close()` checks the queue.
+  final _outgoing = StreamController<List<int>>(sync: true);
   final _pending = ListQueue<Uint8List>();
   var _pendingOffset = 0;
   final _done = Completer<void>();
   final _ready = Completer<void>();
   final _preamble = BytesBuilder(copy: false);
   var _isReady = false;
+  var _closing = false;
+  var _busyTicks = 0;
   var _closed = false;
+  Future<void>? _closingFuture;
+  Future<void>? _finishFuture;
 
   /// Whether the command has sent anything. A proxy that ends before it
   /// has — `nc` not installed, a host it could not reach — failed, and what
@@ -99,15 +152,18 @@ final class IshProxySocket implements SSHSocket {
 
     final name = '.sbm-proxy-${ShortId.generate()}';
     final directory = Directory(root.joinPath('tmp'));
-    await directory.create(recursive: true);
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+      chmodGuestFile(directory.path, 0x3FF);
+    }
     final errFile = File('${directory.path}/$name.err');
     final files = <File>[errFile];
 
     final script = wrap(command, err: '/tmp/$name.err');
     var opened = script;
-    if (IshExec.needsFile(script)) {
+    if (IulExec.needsFile(script)) {
       final file = File('${directory.path}/$name.sh');
-      await file.writeAsString(script);
+      await writeGuestTextFile(file, script);
       files.add(file);
       opened = "sh '/tmp/$name.sh'";
     }
@@ -121,7 +177,7 @@ final class IshProxySocket implements SSHSocket {
       );
     }
 
-    final socket = IshProxySocket._(id, files, errFile).._start();
+    final socket = IulProxySocket._(id, files, errFile).._start();
     try {
       final ready = socket._ready.future;
       await (timeout == null ? ready : ready.timeout(timeout));
@@ -152,11 +208,22 @@ final class IshProxySocket implements SSHSocket {
         'exec sh -c ${quoted(command)} 2>${quoted(err)}';
   }
 
+  @visibleForTesting
+  Future<void> get ready => _ready.future;
+
   void _start() {
     _outgoing.stream.listen(
       (data) {
-        if (_closed || data.isEmpty) return;
+        if (data.isEmpty) return;
+        if (_closed || _closing) {
+          _writeError ??= SSHErr(
+            type: SSHErrType.connect,
+            message: 'ProxyCommand socket is closed',
+          );
+          return;
+        }
         _pending.add(data is Uint8List ? data : Uint8List.fromList(data));
+        if (_isReady) _flushPending();
       },
       onDone: () => unawaited(close()),
     );
@@ -167,13 +234,25 @@ final class IshProxySocket implements SSHSocket {
     if (_closed) return;
     try {
       for (var i = 0; i < _readsPerTick; i++) {
-        final chunk = IosRootfs.read(_session, timeout: Duration.zero);
+        final Uint8List? chunk;
+        try {
+          chunk = _read(_session, timeout: Duration.zero);
+        } on StateError catch (e, s) {
+          // -EBUSY: the session lock stayed taken. Busy for a moment is
+          // retried next tick; held for good means a guest thread died with it.
+          // No write this tick either: it needs the same lock.
+          if (++_busyTicks >= _busyLimit) rethrow;
+          Loggers.app.warning('ProxyCommand read busy', e, s);
+          return;
+        }
+        _busyTicks = 0;
         if (chunk == null) {
           unawaited(_finish());
           return;
         }
         if (chunk.isEmpty) break;
         _receive(chunk);
+        if (_closed) return;
       }
       if (_isReady) _flushPending();
     } catch (e, s) {
@@ -217,7 +296,7 @@ final class IshProxySocket implements SSHSocket {
     while (_pending.isNotEmpty) {
       final head = _pending.first;
       final left = Uint8List.sublistView(head, _pendingOffset);
-      final written = IosRootfs.tryWrite(_session, left);
+      final written = _tryWrite(_session, left);
       if (written < 0) {
         _writeError = SSHErr(
           type: SSHErrType.connect,
@@ -255,12 +334,20 @@ final class IshProxySocket implements SSHSocket {
   static String _text(List<int> bytes) =>
       utf8.decode(bytes, allowMalformed: true).trim();
 
-  Future<void> _finish() async {
-    if (_closed) return;
+  Future<void> _finish() => _finishFuture ??= _runFinish();
+
+  Future<void> _runFinish() async {
     _closed = true;
+    if (_pending.isNotEmpty && _writeError == null) {
+      _writeError = SSHErr(
+        type: SSHErrType.connect,
+        message: 'ProxyCommand closed before all buffered bytes were sent',
+      );
+    }
+    _pending.clear();
     _timer?.cancel();
-    final exitCode = IosRootfs.exitCode(_session);
-    IosRootfs.close(_session);
+    final exitCode = _exitCode(_session);
+    _closeSession(_session);
     final stderr = await _readErr();
     if (!_ready.isCompleted) {
       final said = [_text(_preamble.toBytes()), stderr]
@@ -347,12 +434,30 @@ final class IshProxySocket implements SSHSocket {
     return waiter.future;
   }
 
+  Future<void> _closeGracefully() async {
+    _closing = true;
+    if (_isReady && _pending.isNotEmpty && _writeError == null && !_closed) {
+      _flushPending();
+      if (_pending.isNotEmpty && _writeError == null && !_closed) {
+        try {
+          await flush().timeout(const Duration(seconds: 2), onTimeout: () {});
+        } catch (_) {
+          // `_writeError` is already recorded; continue tearing down the session.
+        }
+      }
+    }
+    await _finish();
+  }
+
   @override
-  Future<void> close() => _finish();
+  Future<void> close() {
+    if (_closed) return _finish();
+    return _closingFuture ??= _closeGracefully();
+  }
 
   @override
   void destroy() => unawaited(_finish());
 
   @override
-  String toString() => 'IshProxySocket(session: $_session)';
+  String toString() => 'IulProxySocket(session: $_session)';
 }

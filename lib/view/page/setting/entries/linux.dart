@@ -481,7 +481,7 @@ extension _Linux on _AppSettingsPageState {
   /// Picking a shell, checked against the system that is actually installed.
   ///
   /// Shape and then existence, because neither failure is visible later: the
-  /// engine answers `ENOENT` from inside `sbm_ish_open`, and a terminal that
+  /// engine answers `ENOENT` from inside `sbm_iul_open`, and a terminal that
   /// opens and dies on sight says nothing about why. The C side falls back to
   /// `/bin/sh` for the same reason, but only a setting that has gone stale —
   /// `apk del` on whatever it named — should ever reach that fallback.
@@ -498,7 +498,7 @@ extension _Linux on _AppSettingsPageState {
         final typed = ctrl.text.trim();
         context.popSheet();
         // Empty is how the default is asked for, here as in the rows below.
-        final chosen = typed.isEmpty ? FlTty.defaultShell : typed;
+        final chosen = typed.isEmpty ? preferredDefaultShell(root) : typed;
         if (!isShellPathValid(chosen) || !await shellExistsIn(root, chosen)) {
           if (!mounted) return;
           await context.showSheet(
