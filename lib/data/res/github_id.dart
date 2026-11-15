@@ -33,7 +33,11 @@ abstract final class GithubIds {
     'Sandarr95',
     'YangYuS8',
     'Explainfuture',
-    'jamalkamaladdin'
+    'jamalkamaladdin',
+    'CR4SH3UR',
+    'Dave-he',
+    'aliafshany',
+    'zintown'
   };
 
   static const participants = <GhId>{
@@ -207,8 +211,6 @@ abstract final class GithubIds {
     'ck629',
     'damle90',
     'devhunk',
-    'Explainfuture',
-    'GT-610',
     'Infinifar',
     'Jamfly',
     'mc-yzy15',
@@ -217,7 +219,6 @@ abstract final class GithubIds {
     'tioners',
     'WhyVPS',
     'x19810000',
-    'YangYuS8',
     'yj1028-bit',
     'yrmuq',
     'zsdili',
@@ -233,7 +234,34 @@ abstract final class GithubIds {
     'KKKKKKKEM',
     'BigGee97',
     'Hatsune39',
-    'c0make'
+    'c0make',
+    'wfgzsdq',
+    'Jintaozyexpress',
+    'StarryHui',
+    'XCShey',
+    'Sdzbr',
+    'AndrewFengNJXL',
+    'Tianxuan666',
+    '1437nb',
+    'Ccat-Q',
+    'buhuinp',
+    'sjmaple',
+    'felixbennettio',
+    'chrisnoy',
+    'pengpercy',
+    'lronkitty',
+    'CryZFix',
+    'ymf2317-tech',
+    'ping-dev-dot',
+    'linsui',
+    'UmeshRaj7',
+    '1208nn',
+    'TZBQWEAS',
+    'wuwawo',
+    'qingwan123',
+    'Quinn-Zero',
+    'comegome',
+    'kwasosdev'
   };
 }
 
