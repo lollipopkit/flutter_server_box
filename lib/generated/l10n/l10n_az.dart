@@ -7299,4 +7299,16 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Yalnız ilk disklər göstərilir';
+
+  @override
+  String get shareStatus => 'Statusu paylaş';
+
+  @override
+  String get hideServerName => 'Server adını gizlət';
+
+  @override
+  String get hideSystemVersion => 'Sistem versiyasını gizlət';
+
+  @override
+  String get average => 'orta';
 }

@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "O serviço não informa armazenamento",
   "bmcClearLogConfirm": "Limpar {log} em {server}?",
   "bmcEntriesTruncated": "Apenas as entradas mais recentes são mostradas",
-  "bmcDrivesTruncated": "Apenas os primeiros discos são mostrados"
+  "bmcDrivesTruncated": "Apenas os primeiros discos são mostrados",
+  "shareStatus": "Compartilhar status",
+  "hideServerName": "Ocultar nome do servidor",
+  "hideSystemVersion": "Ocultar versão do sistema",
+  "average": "média"
 }

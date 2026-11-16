@@ -7019,4 +7019,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => '最初のドライブのみ表示しています';
+
+  @override
+  String get shareStatus => 'ステータスを共有';
+
+  @override
+  String get hideServerName => 'サーバー名を隠す';
+
+  @override
+  String get hideSystemVersion => 'システムバージョンを隠す';
+
+  @override
+  String get average => '平均';
 }

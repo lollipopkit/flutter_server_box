@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "De service meldt geen opslag",
   "bmcClearLogConfirm": "{log} op {server} wissen?",
   "bmcEntriesTruncated": "Alleen de nieuwste items worden getoond",
-  "bmcDrivesTruncated": "Alleen de eerste schijven worden getoond"
+  "bmcDrivesTruncated": "Alleen de eerste schijven worden getoond",
+  "shareStatus": "Status delen",
+  "hideServerName": "Servernaam verbergen",
+  "hideSystemVersion": "Systeemversie verbergen",
+  "average": "gemiddelde"
 }

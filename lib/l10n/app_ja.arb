@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "このサービスはストレージを報告していません",
   "bmcClearLogConfirm": "{server} の {log} を消去しますか？",
   "bmcEntriesTruncated": "最新のエントリのみ表示しています",
-  "bmcDrivesTruncated": "最初のドライブのみ表示しています"
+  "bmcDrivesTruncated": "最初のドライブのみ表示しています",
+  "shareStatus": "ステータスを共有",
+  "hideServerName": "サーバー名を隠す",
+  "hideSystemVersion": "システムバージョンを隠す",
+  "average": "平均"
 }

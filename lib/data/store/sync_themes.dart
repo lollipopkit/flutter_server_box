@@ -200,8 +200,8 @@ abstract final class SyncThemes {
   /// `appBackgroundPath`) at its copy of the theme the synced preset names,
   /// once that is installed here: what `ThemeBackup.reselect` does after a
   /// restore. Never falls back to the default while the theme is still on its
-  /// way, as `ThemePackages.reconcileSelection` would: the fallback would be
-  /// sent as an edit, over the other devices' choice.
+  /// way: the fallback would be sent as an edit, over the other devices'
+  /// choice; until then it is drawn as the default.
   static void reselect() {
     final settings = ThemeHost.settings;
     final preset = settings.appThemePreset.fetch();

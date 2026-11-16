@@ -7311,4 +7311,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Hanya drive pertama yang ditampilkan';
+
+  @override
+  String get shareStatus => 'Bagikan status';
+
+  @override
+  String get hideServerName => 'Sembunyikan nama server';
+
+  @override
+  String get hideSystemVersion => 'Sembunyikan versi sistem';
+
+  @override
+  String get average => 'rata-rata';
 }

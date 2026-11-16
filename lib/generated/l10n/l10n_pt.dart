@@ -7379,4 +7379,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Apenas os primeiros discos são mostrados';
+
+  @override
+  String get shareStatus => 'Compartilhar status';
+
+  @override
+  String get hideServerName => 'Ocultar nome do servidor';
+
+  @override
+  String get hideSystemVersion => 'Ocultar versão do sistema';
+
+  @override
+  String get average => 'média';
 }

@@ -12460,6 +12460,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only the first drives are shown'**
   String get bmcDrivesTruncated;
+
+  /// No description provided for @shareStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Share status'**
+  String get shareStatus;
+
+  /// No description provided for @hideServerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide server name'**
+  String get hideServerName;
+
+  /// No description provided for @hideSystemVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide system version'**
+  String get hideSystemVersion;
+
+  /// No description provided for @average.
+  ///
+  /// In en, this message translates to:
+  /// **'average'**
+  String get average;
 }
 
 class _AppLocalizationsDelegate

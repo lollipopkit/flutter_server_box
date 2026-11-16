@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "Xidmət yaddaş barədə məlumat vermir",
   "bmcClearLogConfirm": "{server} üzərində {log} təmizlənsin?",
   "bmcEntriesTruncated": "Yalnız ən yeni qeydlər göstərilir",
-  "bmcDrivesTruncated": "Yalnız ilk disklər göstərilir"
+  "bmcDrivesTruncated": "Yalnız ilk disklər göstərilir",
+  "shareStatus": "Statusu paylaş",
+  "hideServerName": "Server adını gizlət",
+  "hideSystemVersion": "Sistem versiyasını gizlət",
+  "average": "orta"
 }

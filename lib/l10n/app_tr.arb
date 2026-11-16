@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "Hizmet depolama bildirmiyor",
   "bmcClearLogConfirm": "{server} üzerindeki {log} temizlensin mi?",
   "bmcEntriesTruncated": "Yalnızca en yeni kayıtlar gösteriliyor",
-  "bmcDrivesTruncated": "Yalnızca ilk sürücüler gösteriliyor"
+  "bmcDrivesTruncated": "Yalnızca ilk sürücüler gösteriliyor",
+  "shareStatus": "Durumu paylaş",
+  "hideServerName": "Sunucu adını gizle",
+  "hideSystemVersion": "Sistem sürümünü gizle",
+  "average": "ortalama"
 }

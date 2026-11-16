@@ -6908,6 +6908,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => '仅显示前面的几块硬盘';
+
+  @override
+  String get shareStatus => '分享状态';
+
+  @override
+  String get hideServerName => '隐藏服务器名称';
+
+  @override
+  String get hideSystemVersion => '隐藏系统版本';
+
+  @override
+  String get average => '平均';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13818,4 +13830,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bmcDrivesTruncated => '僅顯示前面的幾顆硬碟';
+
+  @override
+  String get shareStatus => '分享狀態';
+
+  @override
+  String get hideServerName => '隱藏伺服器名稱';
+
+  @override
+  String get hideSystemVersion => '隱藏系統版本';
+
+  @override
+  String get average => '平均';
 }

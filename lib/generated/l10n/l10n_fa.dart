@@ -7358,4 +7358,16 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'فقط دیسک‌های اول نمایش داده می‌شود';
+
+  @override
+  String get shareStatus => 'اشتراک‌گذاری وضعیت';
+
+  @override
+  String get hideServerName => 'پنهان کردن نام سرور';
+
+  @override
+  String get hideSystemVersion => 'پنهان کردن نسخه سیستم';
+
+  @override
+  String get average => 'میانگین';
 }

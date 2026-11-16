@@ -7020,4 +7020,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => '처음 몇 개의 드라이브만 표시됩니다';
+
+  @override
+  String get shareStatus => '상태 공유';
+
+  @override
+  String get hideServerName => '서버 이름 숨기기';
+
+  @override
+  String get hideSystemVersion => '시스템 버전 숨기기';
+
+  @override
+  String get average => '평균';
 }

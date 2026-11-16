@@ -58,6 +58,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
+import 'package:server_box/view/page/server/share_status/page.dart';
 import 'package:server_box/view/page/services/detail.dart';
 import 'package:server_box/view/page/services/services.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
@@ -177,6 +178,7 @@ void main() {
     'ConnectionStatsPage': (c) => ConnectionStatsPage.route.go(c),
     'ContainerPage': (c) => ContainerPage.route.go(c, onServer()),
     'CustomCmdsPage': (c) => CustomCmdsPage.route.go(c, onServer()),
+    'ServerStatusSharePage': (c) => ServerStatusSharePage.route.go(c, onServer()),
     'BmcDrivesPage': (c) => BmcDrivesPage.route.go(c, onServer()),
     'BmcLogsPage': (c) => BmcLogsPage.route.go(c, onServer()),
     'DesktopSettingsPage': (c) => DesktopSettingsPage.route.go(c),
