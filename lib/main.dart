@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show StoreCredentials;
@@ -256,6 +257,9 @@ Future<void> _initApp(ProviderContainer container) async {
   // preference it has not read.
   await AppMotion.init();
   await _initWindow();
+  // No macOS build is sandboxed (#1943), so file_picker's check for the
+  // sandbox's user-selected file entitlements refused every dialog.
+  if (isMacOS) await FilePicker.skipEntitlementsChecks();
 
   await _startBackgroundServices();
 
@@ -369,7 +373,6 @@ Future<void> _initData() async {
   // user's, not a defect to report — the settings page says it failed.
   unawaited(TerminalFont.load(Stores.setting.fontPath.fetch()));
   await ThemePackages.prepareSelectedTheme();
-  ThemePackages.reconcileSelection();
   await AppFont.loadStored();
 }
 
