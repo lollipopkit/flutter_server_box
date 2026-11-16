@@ -520,3 +520,7 @@ pub async fn store_metrics(
 
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "service_tests.rs"]
+mod tests;

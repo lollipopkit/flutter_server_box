@@ -114,11 +114,15 @@ async fn a_detail_reading_that_does_not_move_is_one_row() -> Result<()> {
     }];
 
     // Ten samples a minute apart, every one of them at 40 %: the whole run is
-    // one stretch.
+    // one stretch. The loop's prev is the cycle before, as the monitor's own
+    // sampling loop passes it.
     let start = Utc::now();
+    let mut prev: Option<SystemMetrics> = None;
     for i in 0..10 {
         metrics.timestamp = start + Duration::minutes(i);
-        server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
+        let prev_ref = prev.as_ref();
+        server_box_monitor::monitoring::store_metrics(&pool, &metrics, prev_ref).await?;
+        prev = Some(metrics.clone());
     }
 
     let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
@@ -135,7 +139,8 @@ async fn a_detail_reading_that_does_not_move_is_one_row() -> Result<()> {
     // And one that moves opens a second row.
     metrics.timestamp = start + Duration::minutes(10);
     metrics.disk_details[0].used = 90;
-    server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
+    let prev_ref = prev.as_ref();
+    server_box_monitor::monitoring::store_metrics(&pool, &metrics, prev_ref).await?;
     let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
         .fetch_one(&pool)
         .await?;

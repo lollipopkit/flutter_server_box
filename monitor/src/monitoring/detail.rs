@@ -104,6 +104,11 @@ impl Temp {
 /// whether it continues an open stretch or starts a new one. Separating the
 /// two is what makes the decision testable without a database.
 pub(super) struct DetailSample {
+    /// When the sample before this one was taken, if there was one: a
+    /// stretch is still open only if its `end` is that instant. Everything
+    /// else — a device absent last cycle, a monitor just started — closed
+    /// whatever row it had, whatever the reading says.
+    pub(super) prev_at: Option<DateTime<Utc>>,
     pub(super) disk: Vec<(String, DiskUsage)>,
     pub(super) ifaces: Vec<(String, IfaceRate)>,
     pub(super) gpus: Vec<(String, GpuUsage, String)>,
@@ -135,19 +140,23 @@ pub(super) fn detail_of(
                 if i.rx_bytes < before.rx_bytes || i.tx_bytes < before.tx_bytes {
                     return None;
                 }
-                Some((
-                    i.name.clone(),
-                    IfaceRate {
-                        rx: (i.rx_bytes - before.rx_bytes) as f64 / dt,
-                        tx: (i.tx_bytes - before.tx_bytes) as f64 / dt,
-                    },
-                ))
+                let rate = IfaceRate {
+                    rx: (i.rx_bytes - before.rx_bytes) as f64 / dt,
+                    tx: (i.tx_bytes - before.tx_bytes) as f64 / dt,
+                };
+                // An idle link is no detail: it is the absence of one, which
+                // is what makes 12 000 idle rows a day disappear.
+                if rate.rx < IFACE_FLOOR && rate.tx < IFACE_FLOOR {
+                    return None;
+                }
+                Some((i.name.clone(), rate))
             })
             .collect(),
         _ => Vec::new(),
     };
 
     DetailSample {
+        prev_at: prev.map(|p| p.timestamp),
         disk: metrics
             .disk_details
             .iter()
@@ -188,17 +197,27 @@ pub(super) fn detail_of(
 
 /// Whether `next` continues `open` or closes it.
 ///
-/// A device whose reading moved further than its threshold starts a new
-/// stretch at this sample. One that did not simply extends the open stretch's
-/// `end` — unless that stretch has reached [`MAX_SEGMENT`], or the reading is
-/// so far off that averaging it over the stretch would misreport the
-/// interval.
+/// Open means the stretch was extended at the previous sample — its `end` is
+/// [`DetailSample::prev_at`]. A device absent last cycle, a monitor just
+/// started, an interface whose last traffic was cycles ago: none of these is
+/// a continuation, however equal the readings look, and the stretch is left
+/// with the `end` it had.
+///
+/// A stretch that is open extends unless it has reached [`MAX_SEGMENT`], or
+/// the reading moved further than its column's threshold — one per column,
+/// in the same order as [`Stretch::values`] — before [`MIN_SEGMENT`] had
+/// passed. Young stretches extend regardless of the reading: a device under
+/// load moves every cycle, and cutting there is one row per sample again.
 pub(super) fn continues(
     open: &Stretch,
     next_values: &[f64],
-    threshold: f64,
+    thresholds: &[f64],
     at: DateTime<Utc>,
+    prev_at: Option<DateTime<Utc>>,
 ) -> bool {
+    if prev_at != Some(open.end) {
+        return false;
+    }
     let age = at - open.start;
     if age >= MAX_SEGMENT {
         return false;
@@ -206,17 +225,21 @@ pub(super) fn continues(
     if age < MIN_SEGMENT {
         return true;
     }
-    open.values.iter().zip(next_values).all(|(a, b)| {
+    open.values.iter().zip(next_values).zip(thresholds).all(|((a, b), t)| {
         // Two missing readings are the same missing reading; NaN minus NaN
         // is NaN, which no comparison accepts.
-        a.is_nan() && b.is_nan() || (a - b).abs() <= threshold
+        a.is_nan() && b.is_nan() || (a - b).abs() <= *t
     })
 }
 
-/// The open stretch of one device, as the database holds it.
+/// The stretch of one device, as the database holds it.
 #[derive(Debug, Clone)]
 pub(super) struct Stretch {
     pub(super) start: DateTime<Utc>,
+    pub(super) end: DateTime<Utc>,
+    /// The reading, in the order the table's INSERT binds it. The lookup's
+    /// SELECT names its columns in this same order, and the destructure ties
+    /// the two — reorder one and reorder both.
     pub(super) values: Vec<f64>,
 }
 
@@ -231,10 +254,10 @@ pub(super) async fn store(db: &SqlitePool, metrics: &SystemMetrics, detail: &Det
     let at = metrics.timestamp;
     let mut tx = db.begin().await?;
 
-    store_disk(&mut tx, at, &detail.disk).await?;
-    store_ifaces(&mut tx, at, &detail.ifaces).await?;
-    store_gpus(&mut tx, at, &detail.gpus).await?;
-    store_temps(&mut tx, at, &detail.temps).await?;
+    store_disk(&mut tx, at, detail.prev_at, &detail.disk).await?;
+    store_ifaces(&mut tx, at, detail.prev_at, &detail.ifaces).await?;
+    store_gpus(&mut tx, at, detail.prev_at, &detail.gpus).await?;
+    store_temps(&mut tx, at, detail.prev_at, &detail.temps).await?;
 
     tx.commit().await?;
     Ok(())
@@ -248,23 +271,27 @@ pub(super) async fn store(db: &SqlitePool, metrics: &SystemMetrics, detail: &Det
 async fn store_disk(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     at: DateTime<Utc>,
+    prev_at: Option<DateTime<Utc>>,
     rows: &[(String, DiskUsage)],
 ) -> Result<()> {
     for (mount, reading) in rows {
-        let open = sqlx::query_as::<_, (DateTime<Utc>, i64, i64)>(
-            "SELECT start, used, total FROM metrics_disk_usage
+        let open = sqlx::query_as::<_, (DateTime<Utc>, DateTime<Utc>, i64, i64)>(
+            "SELECT start, end, used, total FROM metrics_disk_usage
              WHERE mount = ? ORDER BY start DESC LIMIT 1",
         )
         .bind(mount)
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, used, total))
+            Some((start, end, used, total))
                 if continues(
-                    &Stretch { start, values: vec![used as f64, total as f64] },
+                    // The threshold is 1 percentage point of usage, which
+                    // over bytes is 1% of the total — not 1 byte.
+                    &Stretch { start, end, values: vec![used as f64, total as f64] },
                     &reading.values(),
-                    1.0,
+                    &[total as f64 * 0.01, total as f64 * 0.01],
                     at,
+                    prev_at,
                 ) =>
             {
                 sqlx::query("UPDATE metrics_disk_usage SET end = ? WHERE mount = ? AND start = ?")
@@ -295,40 +322,33 @@ async fn store_disk(
 async fn store_ifaces(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     at: DateTime<Utc>,
+    prev_at: Option<DateTime<Utc>>,
     rows: &[(String, IfaceRate)],
 ) -> Result<()> {
+    // An idle interface never reaches this loop: [`detail_of`] leaves it out,
+    // and absence is how its stretch ends — at the last sample that saw
+    // traffic, without the idle cycles bolted on.
     for (name, reading) in rows {
-        // An idle interface is not detail: it is the absence of it, which is
-        // what makes 12 000 idle rows a day disappear.
-        if reading.rx < IFACE_FLOOR && reading.tx < IFACE_FLOOR {
-            // Close an open stretch rather than extending it across idle
-            // time, or the row would claim traffic it did not see.
-            sqlx::query(
-                "UPDATE metrics_iface SET end = ?
-                 WHERE name = ? AND end = start",
-            )
-            .bind(at)
-            .bind(name)
-            .execute(&mut **tx)
-            .await?;
-            continue;
-        }
-        let open = sqlx::query_as::<_, (DateTime<Utc>, f64, f64)>(
-            "SELECT start, rx_bytes_per_sec, tx_bytes_per_sec FROM metrics_iface
+        let open = sqlx::query_as::<_, (DateTime<Utc>, DateTime<Utc>, f64, f64)>(
+            "SELECT start, end, rx_bytes_per_sec, tx_bytes_per_sec FROM metrics_iface
              WHERE name = ? ORDER BY start DESC LIMIT 1",
         )
         .bind(name)
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, rx, tx_))
+            Some((start, end, rx, tx_))
                 if continues(
-                    &Stretch { start, values: vec![rx, tx_] },
+                    &Stretch { start, end, values: vec![rx, tx_] },
                     &reading.values(),
                     // Traffic varies by nature; a stretch is cut only when
-                    // the rate is off by more than this share.
-                    reading.rx.max(reading.tx).max(1.0) * 0.5,
+                    // the rate is off by more than this share, per column.
+                    &[
+                        rx.max(reading.rx).max(1.0) * 0.5,
+                        tx_.max(reading.tx).max(1.0) * 0.5,
+                    ],
                     at,
+                    prev_at,
                 ) =>
             {
                 sqlx::query("UPDATE metrics_iface SET end = ? WHERE name = ? AND start = ?")
@@ -359,21 +379,29 @@ async fn store_ifaces(
 async fn store_gpus(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     at: DateTime<Utc>,
+    prev_at: Option<DateTime<Utc>>,
     rows: &[(String, GpuUsage, String)],
 ) -> Result<()> {
     for (id, reading, name) in rows {
-        let open = sqlx::query_as::<_, (DateTime<Utc>, Option<f64>, Option<i64>, Option<i64>)>(
-            "SELECT start, usage_percent, memory_used, memory_total FROM metrics_gpu
+        let open = sqlx::query_as::<_, (
+            DateTime<Utc>,
+            DateTime<Utc>,
+            Option<f64>,
+            Option<i64>,
+            Option<i64>,
+        )>(
+            "SELECT start, end, usage_percent, memory_used, memory_total FROM metrics_gpu
              WHERE id = ? ORDER BY start DESC LIMIT 1",
         )
         .bind(id)
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, usage, mem_used, mem_total))
+            Some((start, end, usage, mem_used, mem_total))
                 if continues(
                     &Stretch {
                         start,
+                        end,
                         values: vec![
                             usage.unwrap_or(f64::NAN),
                             mem_used.unwrap_or(-1) as f64,
@@ -381,12 +409,23 @@ async fn store_gpus(
                         ],
                     },
                     &reading.values(),
-                    5.0,
+                    // Usage by points, memory by a share of its total; a
+                    // total the driver does not report (the -1 sentinel)
+                    // compares as held only while it stays unreported.
+                    &[
+                        5.0,
+                        mem_total.unwrap_or(0).max(0) as f64 * 0.05 + 1.0,
+                        mem_total.unwrap_or(0).max(0) as f64 * 0.05 + 1.0,
+                    ],
                     at,
+                    prev_at,
                 ) =>
             {
-                sqlx::query("UPDATE metrics_gpu SET end = ? WHERE id = ? AND start = ?")
+                // The name is not a reading: it follows the driver's label
+                // and is refreshed rather than held.
+                sqlx::query("UPDATE metrics_gpu SET end = ?, name = ? WHERE id = ? AND start = ?")
                     .bind(at)
+                    .bind(name)
                     .bind(id)
                     .bind(start)
                     .execute(&mut **tx)
@@ -415,23 +454,25 @@ async fn store_gpus(
 async fn store_temps(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     at: DateTime<Utc>,
+    prev_at: Option<DateTime<Utc>>,
     rows: &[(String, Temp)],
 ) -> Result<()> {
     for (device, reading) in rows {
-        let open = sqlx::query_as::<_, (DateTime<Utc>, f64)>(
-            "SELECT start, celsius FROM metrics_temp
+        let open = sqlx::query_as::<_, (DateTime<Utc>, DateTime<Utc>, f64)>(
+            "SELECT start, end, celsius FROM metrics_temp
              WHERE device = ? ORDER BY start DESC LIMIT 1",
         )
         .bind(device)
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, celsius))
+            Some((start, end, celsius))
                 if continues(
-                    &Stretch { start, values: vec![celsius] },
+                    &Stretch { start, end, values: vec![celsius] },
                     &reading.values(),
-                    1.0,
+                    &[1.0],
                     at,
+                    prev_at,
                 ) =>
             {
                 sqlx::query("UPDATE metrics_temp SET end = ? WHERE device = ? AND start = ?")
@@ -457,7 +498,8 @@ async fn store_temps(
     Ok(())
 }
 
-/// Below this, an interface is idle and its stretch ends rather than grows.
+/// Below this, an interface is idle and gets no rows: its stretch ends at
+/// the last sample that saw traffic.
 const IFACE_FLOOR: f64 = 10_000.0;
 
 #[cfg(test)]
@@ -468,35 +510,62 @@ mod tests {
         DateTime::from_timestamp(1_700_000_000 + secs, 0).unwrap()
     }
 
+    fn stretch(start: i64, values: &[f64]) -> Stretch {
+        Stretch {
+            start: at(start),
+            end: at(start + 7),
+            values: values.to_vec(),
+        }
+    }
+
     #[test]
     fn a_reading_inside_its_threshold_extends_the_stretch() {
-        let open = Stretch { start: at(0), values: vec![10.0] };
-        assert!(continues(&open, &[10.4], 1.0, at(60)));
+        let open = stretch(0, &[10.0]);
+        assert!(continues(&open, &[10.4], &[1.0], at(60), Some(open.end)));
     }
 
     #[test]
     fn a_reading_past_its_threshold_opens_a_new_one() {
-        let open = Stretch { start: at(0), values: vec![10.0] };
-        assert!(!continues(&open, &[12.0], 1.0, at(60)));
+        let open = stretch(0, &[10.0]);
+        assert!(!continues(&open, &[12.0], &[1.0], at(60), Some(open.end)));
+    }
+
+    #[test]
+    fn a_stretch_not_extended_last_cycle_is_not_open() {
+        // A device absent last cycle (or a monitor just started) reads the
+        // same, but its stretch ended when it was last seen: bolt the two
+        // together and a remount claims its old reading through the gap.
+        let open = stretch(0, &[10.0]);
+        assert!(!continues(&open, &[10.0], &[1.0], at(60), Some(at(50))));
+        assert!(!continues(&open, &[10.0], &[1.0], at(60), None));
     }
 
     #[test]
     fn a_young_stretch_is_never_cut() {
         // Far past the threshold, but only 7 seconds old: a device under load
         // moves every cycle, and cutting here is one row per sample again.
-        let open = Stretch { start: at(0), values: vec![10.0] };
-        assert!(continues(&open, &[90.0], 1.0, at(7)));
+        let open = stretch(0, &[10.0]);
+        assert!(continues(&open, &[90.0], &[1.0], at(7), Some(open.end)));
     }
 
     #[test]
     fn an_old_stretch_is_cut_even_without_a_change() {
-        let open = Stretch { start: at(0), values: vec![10.0] };
-        assert!(!continues(&open, &[10.0], 1.0, at(3600)));
+        let open = stretch(0, &[10.0]);
+        assert!(!continues(&open, &[10.0], &[1.0], at(3600), Some(open.end)));
+    }
+
+    #[test]
+    fn thresholds_are_per_column() {
+        // Usage within 5 points, memory moved: the stretch opens again.
+        let open = stretch(0, &[10.0, 100.0]);
+        assert!(!continues(&open, &[12.0, 500.0], &[5.0, 10.0], at(60), Some(open.end)));
+        // And the other way.
+        assert!(!continues(&open, &[90.0, 105.0], &[5.0, 10.0], at(60), Some(open.end)));
     }
 
     #[test]
     fn nan_counts_as_the_same_missing_reading() {
-        let open = Stretch { start: at(0), values: vec![f64::NAN] };
-        assert!(continues(&open, &[f64::NAN], 1.0, at(60)));
+        let open = stretch(0, &[f64::NAN]);
+        assert!(continues(&open, &[f64::NAN], &[1.0], at(60), Some(open.end)));
     }
 }
