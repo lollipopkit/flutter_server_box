@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "Служба не сообщает о хранилище",
   "bmcClearLogConfirm": "Очистить {log} на {server}?",
   "bmcEntriesTruncated": "Показаны только последние записи",
-  "bmcDrivesTruncated": "Показаны только первые диски"
+  "bmcDrivesTruncated": "Показаны только первые диски",
+  "shareStatus": "Поделиться статусом",
+  "hideServerName": "Скрыть имя сервера",
+  "hideSystemVersion": "Скрыть версию системы",
+  "average": "среднее"
 }

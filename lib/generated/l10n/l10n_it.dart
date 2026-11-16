@@ -7385,4 +7385,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Sono mostrati solo i primi dischi';
+
+  @override
+  String get shareStatus => 'Condividi stato';
+
+  @override
+  String get hideServerName => 'Nascondi nome del server';
+
+  @override
+  String get hideSystemVersion => 'Nascondi versione del sistema';
+
+  @override
+  String get average => 'media';
 }

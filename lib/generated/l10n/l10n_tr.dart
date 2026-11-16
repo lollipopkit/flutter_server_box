@@ -7293,4 +7293,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Yalnızca ilk sürücüler gösteriliyor';
+
+  @override
+  String get shareStatus => 'Durumu paylaş';
+
+  @override
+  String get hideServerName => 'Sunucu adını gizle';
+
+  @override
+  String get hideSystemVersion => 'Sistem sürümünü gizle';
+
+  @override
+  String get average => 'ortalama';
 }

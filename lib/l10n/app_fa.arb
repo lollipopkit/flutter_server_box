@@ -1736,5 +1736,9 @@
   "bmcNoStorage": "این سرویس فضای ذخیره‌سازی گزارش نمی‌کند",
   "bmcClearLogConfirm": "{log} روی {server} پاک شود؟",
   "bmcEntriesTruncated": "فقط جدیدترین موارد نمایش داده می‌شود",
-  "bmcDrivesTruncated": "فقط دیسک‌های اول نمایش داده می‌شود"
+  "bmcDrivesTruncated": "فقط دیسک‌های اول نمایش داده می‌شود",
+  "shareStatus": "اشتراک‌گذاری وضعیت",
+  "hideServerName": "پنهان کردن نام سرور",
+  "hideSystemVersion": "پنهان کردن نسخه سیستم",
+  "average": "میانگین"
 }

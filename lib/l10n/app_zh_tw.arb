@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "此服務未提供儲存資訊",
   "bmcClearLogConfirm": "清除 {server} 上的 {log}？",
   "bmcEntriesTruncated": "僅顯示最新的項目",
-  "bmcDrivesTruncated": "僅顯示前面的幾顆硬碟"
+  "bmcDrivesTruncated": "僅顯示前面的幾顆硬碟",
+  "shareStatus": "分享狀態",
+  "hideServerName": "隱藏伺服器名稱",
+  "hideSystemVersion": "隱藏系統版本",
+  "average": "平均"
 }

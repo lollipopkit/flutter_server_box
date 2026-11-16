@@ -7360,4 +7360,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Показано лише перші диски';
+
+  @override
+  String get shareStatus => 'Поділитися станом';
+
+  @override
+  String get hideServerName => 'Приховати ім\'я сервера';
+
+  @override
+  String get hideSystemVersion => 'Приховати версію системи';
+
+  @override
+  String get average => 'середнє';
 }

@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "이 서비스는 스토리지를 보고하지 않습니다",
   "bmcClearLogConfirm": "{server}의 {log}을(를) 비울까요?",
   "bmcEntriesTruncated": "최신 항목만 표시됩니다",
-  "bmcDrivesTruncated": "처음 몇 개의 드라이브만 표시됩니다"
+  "bmcDrivesTruncated": "처음 몇 개의 드라이브만 표시됩니다",
+  "shareStatus": "상태 공유",
+  "hideServerName": "서버 이름 숨기기",
+  "hideSystemVersion": "시스템 버전 숨기기",
+  "average": "평균"
 }

@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
+import 'package:server_box/view/page/server/share_status/page.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 
-/// What a server's own page offers in its bar: share, the agent's settings,
-/// edit.
+/// What a server's own page offers in its bar: share, share its status, the
+/// agent's settings, edit.
 ///
 /// One list for both places that page is: pushed on its own, where it draws
 /// its bar, and grown in place in the server tab, where the tab's bar is the
@@ -39,6 +41,11 @@ final class ServerPageAction {
         Icons.share,
         libL10n.share,
         () => ServerShareUi.send(context, spi),
+      ),
+      ServerPageAction._(
+        Icons.image_outlined,
+        context.l10n.shareStatus,
+        () => ServerStatusSharePage.route.go(context, SpiRequiredArgs(spi)),
       ),
       // Beside Edit: the two are the same kind of thing at different ends of
       // the wire — Edit is this app's record of the server, this is the

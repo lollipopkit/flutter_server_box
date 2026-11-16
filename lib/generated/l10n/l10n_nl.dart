@@ -7376,4 +7376,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get bmcDrivesTruncated => 'Alleen de eerste schijven worden getoond';
+
+  @override
+  String get shareStatus => 'Status delen';
+
+  @override
+  String get hideServerName => 'Servernaam verbergen';
+
+  @override
+  String get hideSystemVersion => 'Systeemversie verbergen';
+
+  @override
+  String get average => 'gemiddelde';
 }

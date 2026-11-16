@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "Der Dienst meldet keinen Speicher",
   "bmcClearLogConfirm": "{log} auf {server} leeren?",
   "bmcEntriesTruncated": "Nur die neuesten Einträge werden gezeigt",
-  "bmcDrivesTruncated": "Nur die ersten Laufwerke werden gezeigt"
+  "bmcDrivesTruncated": "Nur die ersten Laufwerke werden gezeigt",
+  "shareStatus": "Status teilen",
+  "hideServerName": "Servernamen ausblenden",
+  "hideSystemVersion": "Systemversion ausblenden",
+  "average": "Durchschnitt"
 }

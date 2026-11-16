@@ -2053,5 +2053,9 @@
   "bmcNoStorage": "Layanan tidak melaporkan penyimpanan",
   "bmcClearLogConfirm": "Kosongkan {log} di {server}?",
   "bmcEntriesTruncated": "Hanya entri terbaru yang ditampilkan",
-  "bmcDrivesTruncated": "Hanya drive pertama yang ditampilkan"
+  "bmcDrivesTruncated": "Hanya drive pertama yang ditampilkan",
+  "shareStatus": "Bagikan status",
+  "hideServerName": "Sembunyikan nama server",
+  "hideSystemVersion": "Sembunyikan versi sistem",
+  "average": "rata-rata"
 }
