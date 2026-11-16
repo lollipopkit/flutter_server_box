@@ -160,6 +160,22 @@ void main() {
     expect(without.sections.containsKey(PosterSection.gpu), isFalse);
   });
 
+  test('a stored window keeps no names, and no per-device readings', () {
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        StatusHistorySample(timeMs: 1000, disk: 40, temp: 30, netRx: 10, netTx: 20),
+        StatusHistorySample(timeMs: 2000, disk: 60, temp: 50, netRx: 30, netTx: 40),
+      ]),
+      live: false,
+    );
+    expect(stored.sections[PosterSection.disk]!.value, '50.0%');
+    expect(stored.sections[PosterSection.disk]!.rows, isEmpty);
+    expect(stored.sections[PosterSection.temp]!.value, '40°C');
+    expect(stored.sections[PosterSection.net]!.title, isNull);
+    expect(stored.sections.containsKey(PosterSection.sensor), isFalse);
+  });
+
   test('SMART on every disk unavailable is not a pass', () {
     final smarts = [
       const DiskSmart(device: 'sda', smartAttributes: {}),

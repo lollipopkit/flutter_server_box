@@ -98,11 +98,11 @@ class StatusPoster {
       if (_mem(srv, w, live) case final b?) sections[PosterSection.mem] = b;
       if (_swap(srv, w, live) case final b?) sections[PosterSection.swap] = b;
       if (_gpu(srv, w, live) case final b?) sections[PosterSection.gpu] = b;
-      if (_disk(srv) case final b?) sections[PosterSection.disk] = b;
+      if (_disk(srv, w, live) case final b?) sections[PosterSection.disk] = b;
       if (_smart(ss.diskSmart) case final b?) sections[PosterSection.smart] = b;
-      if (_temp(srv, w) case final b?) sections[PosterSection.temp] = b;
-      if (_net(srv, w) case final b?) sections[PosterSection.net] = b;
-      if (_sensors(srv) case final b?) sections[PosterSection.sensor] = b;
+      if (_temp(srv, w, live) case final b?) sections[PosterSection.temp] = b;
+      if (_net(srv, w, live) case final b?) sections[PosterSection.net] = b;
+      if (_sensors(srv, live) case final b?) sections[PosterSection.sensor] = b;
       if (_battery(srv, w, live) case final b?) sections[PosterSection.battery] = b;
     }
     return StatusPoster._(
@@ -271,16 +271,22 @@ PosterBlock? _swap(ServerState srv, MetricWindow w, bool live) {
 /// A percentage only: the window does not record the capacity it was of, and
 /// bytes worked out from today's would name a figure it never held. Null when
 /// the window carries no series for it at all.
-PosterBlock? _stored(double? avg, {double? peak}) {
+PosterBlock? _stored(
+  double? avg, {
+  double? peak,
+  String Function(double)? format,
+  bool percent = true,
+}) {
   if (avg == null) return null;
+  final fmt = format ?? ReadingFmt.pct;
   return PosterBlock(
-    value: ReadingFmt.pct(avg),
+    value: fmt(avg),
     note: l10n.average,
-    aside: peak == null ? null : '${l10n.peak} ${ReadingFmt.pct(peak)}',
-    percent: avg / 100,
+    aside: peak == null ? null : '${l10n.peak} ${fmt(peak)}',
+    percent: percent ? avg / 100 : null,
     summary: [
-      '${l10n.average} ${ReadingFmt.pct(avg)}',
-      if (peak != null) '${l10n.peak} ${ReadingFmt.pct(peak)}',
+      '${l10n.average} ${fmt(avg)}',
+      if (peak != null) '${l10n.peak} ${fmt(peak)}',
     ].join(' · '),
   );
 }
@@ -315,7 +321,10 @@ PosterBlock? _gpu(ServerState srv, MetricWindow w, bool live) {
 
 /// The mounted filesystems, largest first: a list of every bind mount and
 /// snap loop device is not what a reader of a poster is after.
-PosterBlock? _disk(ServerState srv) {
+PosterBlock? _disk(ServerState srv, MetricWindow w, bool live) {
+  // The agent keeps one usage for every mount together, and no name: the
+  // largest mounts are a fact of now, not of the range.
+  if (!live) return _stored(_avg(w.disk), peak: _peak(w.disk));
   final ss = srv.status;
   final mounted = <String, Disk>{};
   void walk(Iterable<Disk> disks) {
@@ -376,7 +385,17 @@ PosterBlock? _smart(List<DiskSmart> smarts) {
   return PosterBlock(value: verdict, note: note, summary: verdict);
 }
 
-PosterBlock? _temp(ServerState srv, MetricWindow w) {
+PosterBlock? _temp(ServerState srv, MetricWindow w, bool live) {
+  // One temperature is what a stored window holds — the hottest device's as
+  // it was sampled, without the device's name.
+  if (!live) {
+    return _stored(
+      _avg(w.temp),
+      peak: _peak(w.temp),
+      format: ReadingFmt.temp,
+      percent: false,
+    );
+  }
   final hottest = hottestSensor(srv.status);
   if (hottest == null) return null;
   final (sensor, celsius) = hottest;
@@ -391,7 +410,7 @@ PosterBlock? _temp(ServerState srv, MetricWindow w) {
   );
 }
 
-PosterBlock? _net(ServerState srv, MetricWindow w) {
+PosterBlock? _net(ServerState srv, MetricWindow w, bool live) {
   final ns = srv.status.netSpeed;
   if (ns.devices.isEmpty) return null;
   final rx = cumulativeBytes(w.times, w.netRx).lastWhereOrNull((v) => v != null);
@@ -400,7 +419,8 @@ PosterBlock? _net(ServerState srv, MetricWindow w) {
   final txPeak = _peak(w.netTx);
   final ifaces = ns.realIfaces;
   return PosterBlock(
-    title: ifaces.length == 1 ? ifaces.first : null,
+    // Which interfaces the sum was of is not stored.
+    title: live && ifaces.length == 1 ? ifaces.first : null,
     value: '',
     pair: (
       a: (
@@ -422,7 +442,10 @@ PosterBlock? _net(ServerState srv, MetricWindow w) {
   );
 }
 
-PosterBlock? _sensors(ServerState srv) {
+PosterBlock? _sensors(ServerState srv, bool live) {
+  // Per-device temperatures are not stored, and the machine's present is not
+  // what a range is of.
+  if (!live) return null;
   final rows = [
     for (final s in srv.status.sensors)
       if (s.summary case final v? when v.isNotEmpty)
