@@ -6,7 +6,7 @@ import 'package:server_box/data/store/schema.dart';
 /// The column is nullable because SSH servers have no monitor credential. The
 /// check makes the step safe to retry after a process stops between SQLite
 /// committing the DDL and [SchemaVersion] recording this migration.
-class MonitorInsecureHttpMigration implements SchemaMigration {
+class MonitorInsecureHttpMigration extends SchemaMigration {
   const MonitorInsecureHttpMigration();
 
   @override

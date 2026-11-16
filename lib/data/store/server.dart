@@ -541,6 +541,24 @@ class ServerStore extends EntityStore<Spi> {
           '__server_rename_${ShortId.generate()}',
           old.id,
         ]);
+        // The whole row first, so a column this build does not know (a newer
+        // one's: `SchemaVersion.readsAhead`) moves with it; [write] then sets
+        // only the columns it names.
+        final columns = [
+          for (final row in db.select('PRAGMA table_info(server);')) '"${row['name']}"',
+        ];
+        final values = [
+          for (final c in columns) c == '"id"' || c == '"name"' ? '?' : c,
+        ];
+        db.execute(
+          'INSERT INTO server (${columns.join(', ')}) '
+          'SELECT ${values.join(', ')} FROM server WHERE id = ?;',
+          [
+            for (final c in columns)
+              if (c == '"id"') replacement.id else if (c == '"name"') '__server_rename_${ShortId.generate()}',
+            old.id,
+          ],
+        );
         write(replacement);
         writeLinks(replacement);
 

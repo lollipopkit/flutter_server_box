@@ -7,11 +7,14 @@ import 'package:server_box/data/store/schema.dart';
 ///
 /// Written by hand: Drift creates tables only for a new database.
 /// `m039_ssh_identity_agent_test.dart` checks the two agree.
-class SshIdentityAgentMigration implements SchemaMigration {
+class SshIdentityAgentMigration extends SchemaMigration {
   const SshIdentityAgentMigration();
 
   @override
   int get from => 39;
+
+  @override
+  bool get olderBuildsRead => true;
 
   @override
   Future<void> apply() async {

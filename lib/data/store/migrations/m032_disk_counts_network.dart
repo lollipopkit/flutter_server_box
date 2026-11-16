@@ -11,7 +11,7 @@ import 'package:server_box/data/store/schema.dart';
 /// Written by hand rather than left to Drift, which owns the DDL only for a
 /// database being created; `m032_disk_counts_network_test.dart` checks the two
 /// agree.
-class DiskCountsNetworkMigration implements SchemaMigration {
+class DiskCountsNetworkMigration extends SchemaMigration {
   const DiskCountsNetworkMigration();
 
   @override

@@ -24,7 +24,7 @@ import 'package:server_box/data/store/schema.dart';
 /// from all along.
 ///
 /// Idempotent by construction: a second run deletes nothing.
-class DropGeoCacheMigration implements SchemaMigration {
+class DropGeoCacheMigration extends SchemaMigration {
   const DropGeoCacheMigration();
 
   @override

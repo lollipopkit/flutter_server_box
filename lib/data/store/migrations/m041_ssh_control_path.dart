@@ -6,11 +6,14 @@ import 'package:server_box/data/store/schema.dart';
 ///
 /// Written by hand: Drift creates tables only for a new database.
 /// `m041_ssh_control_path_test.dart` checks the two agree.
-class SshControlPathMigration implements SchemaMigration {
+class SshControlPathMigration extends SchemaMigration {
   const SshControlPathMigration();
 
   @override
   int get from => 41;
+
+  @override
+  bool get olderBuildsRead => true;
 
   @override
   Future<void> apply() async {

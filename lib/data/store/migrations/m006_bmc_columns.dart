@@ -18,7 +18,7 @@ import 'package:server_box/data/store/schema.dart';
 /// Each statement is guarded, so the step is safe to run again after a process
 /// stops partway — the version is recorded only once every statement has run,
 /// so a stop between two of them means all of them run again.
-class BmcColumnsMigration implements SchemaMigration {
+class BmcColumnsMigration extends SchemaMigration {
   const BmcColumnsMigration();
 
   @override

@@ -56,7 +56,7 @@ import 'package:sqlite3/sqlite3.dart';
 /// only once `apply` returns, the copy and the rebuild are one transaction
 /// guarded by the old column still being there, and the tab is appended only
 /// if absent.
-class PveVirtMigration implements SchemaMigration {
+class PveVirtMigration extends SchemaMigration {
   const PveVirtMigration();
 
   static const appliedAt = 30;

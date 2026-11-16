@@ -16,7 +16,7 @@ import 'package:server_box/data/store/schema.dart';
 /// throughout. The two must agree — `m007_private_key_comment_test.dart` is
 /// what checks it, since `tables_schema_test.dart` only ever sees a freshly
 /// created schema and never runs this step.
-class PrivateKeyCommentMigration implements SchemaMigration {
+class PrivateKeyCommentMigration extends SchemaMigration {
   const PrivateKeyCommentMigration();
 
   @override

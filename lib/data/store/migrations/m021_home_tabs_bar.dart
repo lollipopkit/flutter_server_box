@@ -9,7 +9,7 @@ import 'package:server_box/data/store/setting.dart';
 /// reached through "more", so the old five-item default has to be converted
 /// once. A custom order is preserved; only the old set of five tabs is
 /// recognized, which keeps this migration from changing a newer arrangement.
-class HomeTabsBarMigration implements SettingsMigration {
+class HomeTabsBarMigration extends SettingsMigration {
   const HomeTabsBarMigration();
 
 

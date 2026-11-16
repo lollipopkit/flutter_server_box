@@ -24,7 +24,7 @@ import 'package:sqlite3/sqlite3.dart';
 ///
 /// TODO: delete this step and the `known_host` table together, once no install
 /// can still be carrying rows in it.
-class KnownHostsToSettingsMigration implements SchemaMigration {
+class KnownHostsToSettingsMigration extends SchemaMigration {
   const KnownHostsToSettingsMigration();
 
 

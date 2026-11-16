@@ -299,7 +299,7 @@ extension _SyncWidgets on _BackupPageState {
                 l10n.syncPasswordMismatch,
                 () => _onTapSetBakPwd(context),
               ),
-              _ when BakSyncer.remoteTooNew.value != null || lkcLog.tooNew.value || fileLog.tooNew.value => (
+              _ when SchemaVersion.readsAhead || BakSyncer.remoteTooNew.value != null || lkcLog.tooNew.value || fileLog.tooNew.value => (
                 Icons.system_update,
                 Colors.orange,
                 l10n.syncStateUpdate,

@@ -16,7 +16,7 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// Only an address that has no version and is not already a complete endpoint.
 /// `…/api/paas/v4` and `…/v1/chat/completions` are left exactly as they are.
-class AiEndpointVersionMigration implements SettingsMigration {
+class AiEndpointVersionMigration extends SettingsMigration {
   const AiEndpointVersionMigration();
 
 

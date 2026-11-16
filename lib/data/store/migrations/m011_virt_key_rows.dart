@@ -11,7 +11,7 @@ import 'package:server_box/data/store/setting.dart';
 /// TODO: delete this step, [SettingStore.removeRetiredKeys]'s entry for
 /// [legacyKey], and the key itself, once no install and no backup can still be
 /// carrying it.
-class VirtKeyRowsMigration implements SettingsMigration {
+class VirtKeyRowsMigration extends SettingsMigration {
   const VirtKeyRowsMigration();
 
 

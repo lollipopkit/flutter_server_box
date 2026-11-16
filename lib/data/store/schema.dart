@@ -29,7 +29,9 @@ class SchemaTooNewException implements Exception {
 /// shape, instead of every format change leaving a permanent branch behind in
 /// `fromJson` with no way to tell when it became safe to delete. A migration
 /// has a version it belongs to and a version after which it can be removed.
-abstract interface class SchemaMigration {
+abstract class SchemaMigration {
+  const SchemaMigration();
+
   /// Applies to data stored at this version, producing [from] + 1
   int get from;
 
@@ -37,11 +39,22 @@ abstract interface class SchemaMigration {
   /// is already partially migrated: a crash mid-way leaves the version
   /// unchanged, so the step runs again on the next launch.
   Future<void> apply();
+
+  /// Whether a build at [from] reads and writes the data this step leaves as
+  /// if the step had never run: a column added as nullable or with a default,
+  /// which that build neither selects nor names in an upsert. Such a build
+  /// opens the store rather than refusing it ([SchemaVersion.minReader]).
+  ///
+  /// False for anything that rewrites what is already stored: the older build
+  /// would read the new shape as its own, or write its own back over it.
+  bool get olderBuildsRead => false;
 }
 
 /// A step that rewrites only `setting` rows, synchronously, so a restore can
 /// run it inside its own transaction on the settings a file brought back.
-abstract interface class SettingsMigration implements SchemaMigration {
+abstract class SettingsMigration extends SchemaMigration {
+  const SettingsMigration();
+
   void applySync();
 }
 
@@ -123,6 +136,39 @@ abstract final class SchemaVersion {
 
   static void _store(int v) => SettingStore.instance.schemaVersion.put(v);
 
+  /// The lowest [current] of a build that reads storage at [version]: below
+  /// [version] by every step under it that [SchemaMigration.olderBuildsRead].
+  static int minReader(Iterable<SchemaMigration> migrations, int version) {
+    final readable = {
+      for (final m in migrations)
+        if (m.olderBuildsRead) m.from,
+    };
+    var v = version;
+    while (readable.contains(v - 1)) {
+      v--;
+    }
+    return v;
+  }
+
+  /// Whether this build opened storage a newer one wrote ([checkReadable]).
+  /// Nothing syncs then: a record this build sends lacks the fields it does
+  /// not know, and a peer applying it would clear them.
+  static bool get readsAhead => stored > current;
+
+  /// Throws [SchemaTooNewException] when the stored version is ahead of this
+  /// build and the newer build that wrote it did not record this one as a
+  /// reader. Returns whether it is ahead: then nothing may migrate it.
+  static bool checkReadable() {
+    if (!readsAhead) return false;
+    final from = stored;
+    // 0 when the build that wrote it predates the record: nothing older reads.
+    final min = SettingStore.instance.schemaMinReader.fetch();
+    if (min == 0 || min > current) {
+      throw SchemaTooNewException(stored: from, supported: current);
+    }
+    return true;
+  }
+
   /// Brings local storage up to [current], one ordered step at a time.
   ///
   /// Throws [SchemaTooNewException] when the stored version is ahead of this
@@ -145,12 +191,12 @@ abstract final class SchemaVersion {
       byFrom[m.from] = m;
     }
 
-    final from = stored;
-    if (from == current) return;
-    if (from > current) {
-      throw SchemaTooNewException(stored: from, supported: current);
+    if (checkReadable()) {
+      Loggers.app.info('Schema v$stored, read as v$current');
+      return;
     }
 
+    final from = stored;
     for (var v = from; v < current; v++) {
       final step = byFrom[v];
       if (step == null) {
@@ -163,6 +209,9 @@ abstract final class SchemaVersion {
       // Recorded per step, so an interrupted run resumes rather than restarts
       _store(v + 1);
     }
+    final min = minReader(migrations, current);
+    final minStore = SettingStore.instance.schemaMinReader;
+    if (minStore.fetch() != min) minStore.put(min);
   }
 
   /// Marks a fresh install as already current, so its empty stores aren't put

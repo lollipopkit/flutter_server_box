@@ -7,7 +7,7 @@ import 'package:server_box/data/store/schema.dart';
 /// start now begins with none, so nothing reads `sshTabs` or `fileTabs`.
 ///
 /// Idempotent by construction: a second run deletes nothing.
-class DropTabSessionsMigration implements SchemaMigration {
+class DropTabSessionsMigration extends SchemaMigration {
   const DropTabSessionsMigration();
 
   @override

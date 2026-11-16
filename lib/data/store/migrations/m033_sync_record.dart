@@ -15,7 +15,7 @@ import 'package:server_box/data/store/sync_recorder.dart';
 /// for a database being created. `m033_sync_record_test.dart` checks the two
 /// agree. Safe to run again: the table is `IF NOT EXISTS` and the seed only
 /// fills records that have no stamp yet.
-class SyncRecordMigration implements SchemaMigration {
+class SyncRecordMigration extends SchemaMigration {
   const SyncRecordMigration();
 
   @override

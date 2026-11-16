@@ -14,7 +14,7 @@ import 'package:server_box/data/store/schema.dart';
 /// every refresh, and a refresh that fails leaves that cache alone.
 ///
 /// Idempotent by construction: a second run deletes nothing.
-class DropThemeStoreUrlMigration implements SchemaMigration {
+class DropThemeStoreUrlMigration extends SchemaMigration {
   const DropThemeStoreUrlMigration();
 
   @override

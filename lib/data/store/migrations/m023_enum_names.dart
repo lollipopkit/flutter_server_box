@@ -17,7 +17,7 @@ import 'package:server_box/data/store/setting.dart';
 /// depends on which build wrote it, and that is not recorded anywhere. It
 /// converts under today's meaning, which is the one the app has been acting on
 /// anyway, and stops the next removal from doing it again.
-class EnumNamesMigration implements SchemaMigration {
+class EnumNamesMigration extends SchemaMigration {
   const EnumNamesMigration();
 
 

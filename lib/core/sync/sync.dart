@@ -125,6 +125,7 @@ final class BakSyncer extends SyncIface {
     RemoteStorage? rs,
     int milliDelay = 0,
   }) async {
+    if (SchemaVersion.readsAhead) return;
     final target = rs ?? remoteStorage;
     // Only with somewhere to sync to: without a remote the base returns at
     // once, and there is no password question to ask.
@@ -348,6 +349,7 @@ final class BakSyncer extends SyncIface {
   ///
   /// TODO: remove with the rest of the v2/v3 compatibility shims.
   Future<void> inheritLegacyRemote() {
+    if (SchemaVersion.readsAhead) return Future.value();
     final rs = remoteStorage;
     if (rs == null) return Future.value();
     return _inheriting ??= _inheritLegacyRemote(rs);

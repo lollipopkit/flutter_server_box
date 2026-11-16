@@ -11,7 +11,7 @@ import 'package:server_box/data/store/schema.dart';
 ///
 /// The active-conversation table first: it references the other one.
 /// Idempotent by construction: `IF EXISTS`.
-class DropAgentConversationsMigration implements SchemaMigration {
+class DropAgentConversationsMigration extends SchemaMigration {
   const DropAgentConversationsMigration();
 
   @override

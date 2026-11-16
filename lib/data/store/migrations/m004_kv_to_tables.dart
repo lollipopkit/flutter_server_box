@@ -34,7 +34,7 @@ import 'package:sqlite3/sqlite3.dart';
 ///   now, and the old `delServer` cleaned up by hand and missed cases, so an
 ///   upgrading install has statistics and container hosts for servers deleted
 ///   long ago. They cannot be inserted and are not worth keeping.
-class KvToTablesMigration implements SchemaMigration {
+class KvToTablesMigration extends SchemaMigration {
   const KvToTablesMigration();
 
   static const _serverAliasStore = 'm004_server_alias';
