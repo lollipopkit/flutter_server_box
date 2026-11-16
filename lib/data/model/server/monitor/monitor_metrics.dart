@@ -469,8 +469,9 @@ class MonitorSmartSummary {
 }
 
 /// One bucket from `GET /api/v1/metrics/history?minutes=N`
-/// (monitor's `HistoryPoint`, `monitor/src/api/server.rs`). Aggregate-only —
-/// no per-core/per-disk/per-iface breakdown, unlike the live `/metrics` snapshot.
+/// (monitor's `HistoryPoint`, `monitor/src/api/server.rs`). The aggregate is
+/// always there; the per-device lists are absent on windows the Monitor kept
+/// before it stored them, and on agents older than that.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MonitorHistoryPoint {
   final String timestamp;
@@ -488,6 +489,11 @@ class MonitorHistoryPoint {
   final double diskioWriteSpeed;
   final double? batteryPercent;
 
+  final List<MonitorHistoryMount> mounts;
+  final List<MonitorHistoryIface> ifaces;
+  final List<MonitorHistoryGpu> gpus;
+  final List<MonitorHistoryTemp> temps;
+
   const MonitorHistoryPoint({
     required this.timestamp,
     required this.cpu,
@@ -500,10 +506,81 @@ class MonitorHistoryPoint {
     required this.diskioReadSpeed,
     required this.diskioWriteSpeed,
     this.batteryPercent,
+    this.mounts = const [],
+    this.ifaces = const [],
+    this.gpus = const [],
+    this.temps = const [],
   });
 
   factory MonitorHistoryPoint.fromJson(Map<String, dynamic> json) =>
       _$MonitorHistoryPointFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorHistoryPointToJson(this);
+}
+
+/// A mount's size over a bucket: bytes, as the Monitor wrote them.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorHistoryMount {
+  final String mount;
+  final int used;
+  final int total;
+
+  const MonitorHistoryMount({
+    required this.mount,
+    required this.used,
+    required this.total,
+  });
+
+  factory MonitorHistoryMount.fromJson(Map<String, dynamic> json) =>
+      _$MonitorHistoryMountFromJson(json);
+}
+
+/// An interface's rate over a stretch. The Monitor holds it as a rate, not a
+/// counter: an idle link is absent rather than zero, and a counter could not
+/// be merged across an idle stretch without losing what flowed then.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorHistoryIface {
+  final String name;
+  final double rxBytesPerSec;
+  final double txBytesPerSec;
+
+  const MonitorHistoryIface({
+    required this.name,
+    required this.rxBytesPerSec,
+    required this.txBytesPerSec,
+  });
+
+  factory MonitorHistoryIface.fromJson(Map<String, dynamic> json) =>
+      _$MonitorHistoryIfaceFromJson(json);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorHistoryGpu {
+  final String id;
+  final String name;
+  final double? usagePercent;
+  final int? memoryUsed;
+  final int? memoryTotal;
+
+  const MonitorHistoryGpu({
+    required this.id,
+    required this.name,
+    this.usagePercent,
+    this.memoryUsed,
+    this.memoryTotal,
+  });
+
+  factory MonitorHistoryGpu.fromJson(Map<String, dynamic> json) =>
+      _$MonitorHistoryGpuFromJson(json);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorHistoryTemp {
+  final String device;
+  final double celsius;
+
+  const MonitorHistoryTemp({required this.device, required this.celsius});
+
+  factory MonitorHistoryTemp.fromJson(Map<String, dynamic> json) =>
+      _$MonitorHistoryTempFromJson(json);
 }

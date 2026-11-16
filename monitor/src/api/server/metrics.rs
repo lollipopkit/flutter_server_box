@@ -6,8 +6,10 @@ use crate::{
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse},
     utils::error::Result,
 };
+use chrono::{DateTime, Utc};
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::sync::Arc;
 use super::*;
 
@@ -181,6 +183,48 @@ pub(super) struct HistoryPoint {
     diskio_read_speed: f64,
     diskio_write_speed: f64,
     battery_percent: Option<f64>,
+    /// Per-mount totals, busiest first at write time (migration 044). Absent
+    /// for a window older than that migration, and for points that fell in a
+    /// bucket with no detail rows.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    mounts: Vec<HistoryMount>,
+    /// Per-interface cumulative counters, so a client can take its own rate
+    /// against the point before.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    ifaces: Vec<HistoryIface>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    gpus: Vec<HistoryGpu>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    temps: Vec<HistoryTemp>,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryMount {
+    mount: String,
+    used: i64,
+    total: i64,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryIface {
+    name: String,
+    rx_bytes_per_sec: f64,
+    tx_bytes_per_sec: f64,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryGpu {
+    id: String,
+    name: String,
+    usage_percent: Option<f64>,
+    memory_used: Option<i64>,
+    memory_total: Option<i64>,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryTemp {
+    device: String,
+    celsius: f64,
 }
 
 /// Bucketed time series from system_metrics.
@@ -336,8 +380,14 @@ pub(super) async fn get_metrics_history(
             diskio_read_speed,
             diskio_write_speed,
             battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
+            mounts: Vec::new(),
+            ifaces: Vec::new(),
+            gpus: Vec::new(),
+            temps: Vec::new(),
         });
     }
+
+    attach_history_detail(&app_state.db, bucket_secs, cutoff, until, &mut points).await?;
 
     // A bucket boundary is an absolute multiple of `bucket_secs` while the
     // window's start is wherever "now minus N minutes" falls, so the first
@@ -350,6 +400,154 @@ pub(super) async fn get_metrics_history(
     }
 
     Ok(HttpResponse::Ok().json(&points))
+}
+
+/// The per-device stretches that overlap each bucket, attached to the point
+/// whose instant they cover.
+///
+/// A bucket that covers no stretch (everything before migration 044) keeps
+/// its vectors empty, which `skip_serializing_if` turns into a missing
+/// field: a client sees "this window has no mount detail", never an empty
+/// list it might read as "a machine with no mounts".
+///
+/// A stretch that spans several buckets appears in each of them with the
+/// value it held. That is what the stretch means: the reading did not change
+/// across that interval, and a chart drawn from these points is a step, not
+/// a line through samples that were never taken.
+async fn attach_history_detail(
+    db: &sqlx::SqlitePool,
+    bucket_secs: i64,
+    cutoff: DateTime<Utc>,
+    until: Option<DateTime<Utc>>,
+    points: &mut [HistoryPoint],
+) -> Result<()> {
+    use sqlx::Row;
+    if points.is_empty() {
+        return Ok(());
+    }
+    let upper = until.unwrap_or_else(Utc::now);
+
+    // A point's instant is its bucket's start (`min(timestamp)`, floored by
+    // the same division), so every bucket is `[t, t + bucket_secs)`.
+    let bucket_of = |instant: DateTime<Utc>| instant.timestamp().div_euclid(bucket_secs);
+    let index: HashMap<i64, usize> = points
+        .iter()
+        .enumerate()
+        .filter_map(|(i, p)| {
+            chrono::DateTime::parse_from_rfc3339(&p.timestamp)
+                .ok()
+                .map(|t| (bucket_of(t.with_timezone(&Utc)), i))
+        })
+        .collect();
+
+    // One query a table: every stretch overlapping the window, which is the
+    // stretches that started before its end and ended after its start.
+    let mounts = sqlx::query(
+        "SELECT mount, start, end, used, total FROM metrics_disk_usage
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let ifaces = sqlx::query(
+        "SELECT name, start, end, rx_bytes_per_sec, tx_bytes_per_sec FROM metrics_iface
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let gpus = sqlx::query(
+        "SELECT id, name, start, end, usage_percent, memory_used, memory_total FROM metrics_gpu
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let temps = sqlx::query(
+        "SELECT device, start, end, celsius FROM metrics_temp
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+
+    // A stretch is placed in every bucket it overlaps, so a six-hour stretch
+    // is one row in each bucket of a window that covers it — never in the
+    // first only, which would draw a spike at the start and a gap after.
+    let each_bucket = |start: DateTime<Utc>, end: DateTime<Utc>, f: &mut dyn FnMut(usize)| {
+        let first = bucket_of(start.max(cutoff));
+        let last = bucket_of(end.min(upper));
+        for bucket in first..=last {
+            if let Some(&i) = index.get(&bucket) {
+                f(i);
+            }
+        }
+    };
+
+    for row in mounts {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let mount: String = row.get("mount");
+        let used: i64 = row.get("used");
+        let total: i64 = row.get("total");
+        each_bucket(start, end, &mut |i| {
+            points[i].mounts.push(HistoryMount {
+                mount: mount.clone(),
+                used,
+                total,
+            });
+        });
+    }
+    for row in ifaces {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let name: String = row.get("name");
+        let rx: f64 = row.get("rx_bytes_per_sec");
+        let tx: f64 = row.get("tx_bytes_per_sec");
+        each_bucket(start, end, &mut |i| {
+            points[i].ifaces.push(HistoryIface {
+                name: name.clone(),
+                rx_bytes_per_sec: rx,
+                tx_bytes_per_sec: tx,
+            });
+        });
+    }
+    for row in gpus {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let id: String = row.get("id");
+        let name: String = row.get("name");
+        let usage: Option<f64> = row.get("usage_percent");
+        let mem_used: Option<i64> = row.get("memory_used");
+        let mem_total: Option<i64> = row.get("memory_total");
+        each_bucket(start, end, &mut |i| {
+            points[i].gpus.push(HistoryGpu {
+                id: id.clone(),
+                name: name.clone(),
+                usage_percent: usage,
+                memory_used: mem_used,
+                memory_total: mem_total,
+            });
+        });
+    }
+    for row in temps {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let device: String = row.get("device");
+        let celsius: f64 = row.get("celsius");
+        each_bucket(start, end, &mut |i| {
+            points[i].temps.push(HistoryTemp {
+                device: device.clone(),
+                celsius,
+            });
+        });
+    }
+
+    Ok(())
 }
 
 pub(super) async fn get_velocity(

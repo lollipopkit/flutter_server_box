@@ -73,6 +73,12 @@ pub const KEPT: &[Kept] = &[
 /// (`every_table_is_kept_or_left_out`).
 pub const LEFT_OUT: &[&str] = &[
     "system_metrics",
+    // The per-device detail behind each sample (migration 044), the same
+    // history by another name.
+    "metrics_disk_usage",
+    "metrics_iface",
+    "metrics_gpu",
+    "metrics_temp",
     "alerts",
     "network_totals",
     "config_versions",

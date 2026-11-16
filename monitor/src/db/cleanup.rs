@@ -295,14 +295,37 @@ impl DataCleanupService {
 
         let deleted_count = result.rows_affected();
 
-        if deleted_count > 0 {
+        // The per-device tables behind each sample; see migration 044. Deleting
+        // `system_metrics` alone would leave them to grow without bound. Each
+        // row is a stretch, so it goes when the stretch ended before the
+        // cutoff rather than when it began.
+        let mut detail = 0u64;
+        for table in [
+            "metrics_disk_usage",
+            "metrics_iface",
+            "metrics_gpu",
+            "metrics_temp",
+        ] {
+            // `query`, not `query!`: the table name is a loop variable out of
+            // the list just above, which the macro cannot check at build time.
+            let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+                "DELETE FROM {table} WHERE end < ?"
+            )))
+            .bind(cutoff_date)
+            .execute(&self.pool)
+            .await?
+            .rows_affected();
+            detail += rows;
+        }
+
+        if deleted_count > 0 || detail > 0 {
             info!(
-                "Deleted {} old metrics records older than {} days",
-                deleted_count, self.config.metrics_days
+                "Deleted {} old metrics records and {} detail rows older than {} days",
+                deleted_count, detail, self.config.metrics_days
             );
         }
 
-        Ok(deleted_count)
+        Ok(deleted_count + detail)
     }
 
     async fn cleanup_old_alerts(&self) -> Result<u64> {

@@ -79,6 +79,37 @@ window's length (default 60, at least 5, at most 7 days), ending at `to` or
 now. The App includes `minutes` in each request, so Monitor versions that predate
 `from` and `to` can still handle it.
 
+### Per-device detail
+
+Each point carries the aggregate and, since migration 044, the devices behind
+it: `mounts` (used and total bytes), `ifaces` (a rate, see below), `gpus`
+(usage and memory) and `temps` (every temperature sensor). A field is
+**absent** when that bucket holds no detail — every window older than
+migration 044, and any Monitor that predates it — never an empty list, which
+a client would read as "a machine with no mounts". A client that draws these
+must treat a missing field as a gap, not as zeros.
+
+Detail is stored as **stretches, not samples**. `metrics_disk_usage`,
+`metrics_iface`, `metrics_gpu` and `metrics_temp` each hold one row per
+stretch of time over which a device's reading held: `start`, `end` and the
+value. A reading that does not move (a disk at 10 % all day) is one row, not
+one row per sample; a reading that moves past its table's threshold opens a
+new row. Stretches younger than 30 seconds are extended rather than cut, and
+no stretch runs longer than an hour even unchanged — so sustained load
+cannot flood the tables and a slowly drifting value still leaves points to
+draw.
+
+Thresholds: disk usage 1 percentage point, GPU usage 5 points, temperature
+1 °C, and an interface is recorded only while it moves at least 10 KB/s
+(either direction) — an idle link is no detail, and most links are idle most
+of the time.
+
+In an answer, a stretch appears in **every bucket it overlaps**, with the
+value it held: a six-hour stretch is six points in a one-hour-bucket answer,
+not a spike at its start and a gap after. Interface figures are rates
+(`rx_bytes_per_sec`, `tx_bytes_per_sec`), so a client does not derive them
+again from counters it may only hold part of.
+
 ## Access model
 
 The Monitor has one account, signed in with its password alone, and it may do

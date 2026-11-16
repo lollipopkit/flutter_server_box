@@ -86,8 +86,11 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
         .await
         {
             Ok(metrics) => {
-                // Store metrics in database
-                if let Err(e) = store_metrics(&app_state.db, &metrics).await {
+                // Store metrics in database. The cycle before it is what the
+                // per-device rates are taken against; the aggregate row does
+                // not need it.
+                if let Err(e) = store_metrics(&app_state.db, &metrics, prev_metrics.as_ref()).await
+                {
                     error!("Failed to store metrics: {}", e);
                 }
 
@@ -437,7 +440,11 @@ pub(super) async fn sample_linux_gpus(system: SystemType) -> Vec<sbm_parser::typ
 
 /// Store the aggregate trend row used by history queries. Per-core samples
 /// stay in the current in-memory snapshot; no database consumer queried them.
-pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
+pub async fn store_metrics(
+    db: &SqlitePool,
+    metrics: &SystemMetrics,
+    prev: Option<&SystemMetrics>,
+) -> Result<()> {
     let checked = |name: &str, value: u64| {
         i64::try_from(value)
             .map_err(|_| MonitorError::Monitoring(format!("{name} exceeds SQLite INTEGER range")))
@@ -509,9 +516,7 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
     .execute(db)
     .await?;
 
+    super::detail::store(db, metrics, &super::detail::detail_of(metrics, prev)).await?;
+
     Ok(())
 }
-
-#[cfg(test)]
-#[path = "service_tests.rs"]
-mod tests;

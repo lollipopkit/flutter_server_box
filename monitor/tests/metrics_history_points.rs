@@ -146,6 +146,80 @@ async fn history(srv: &TestServer, query: &str) -> Vec<serde_json::Value> {
     resp.json().await.unwrap()
 }
 
+/// A stretch is drawn in every bucket it overlaps, with the value it held —
+/// once per bucket, and never in a bucket it does not reach.
+#[ntex::test]
+async fn a_stretch_appears_in_every_bucket_it_covers() {
+    // Samples across the window, since the detail rows are attached to
+    // points and a window with no samples has none.
+    let now = Utc::now();
+    let at: Vec<_> = (0..12).map(|i| now - Duration::minutes(20 - i * 2)).collect();
+    let state = state_with(&at).await;
+    // One stretch: the disk sat at 40 % for the last half hour.
+    sqlx::query(
+        "INSERT INTO metrics_disk_usage (mount, start, end, used, total) VALUES ('/data', ?1, ?2, 40, 100)",
+    )
+    .bind(now - Duration::minutes(30))
+    .bind(now)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    // And an interface busy for the last minute only.
+    sqlx::query(
+        "INSERT INTO metrics_iface (name, start, end, rx_bytes_per_sec, tx_bytes_per_sec)
+         VALUES ('eth0', ?1, ?2, 1000, 2000)",
+    )
+    .bind(now - Duration::minutes(1))
+    .bind(now)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO metrics_gpu (id, start, end, name, usage_percent, memory_used, memory_total)
+         VALUES ('card0', ?1, ?2, 'Test GPU', 25, 512, 2048)",
+    )
+    .bind(now - Duration::minutes(30))
+    .bind(now)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO metrics_temp (device, start, end, celsius) VALUES ('coretemp', ?1, ?2, 41.5)",
+    )
+    .bind(now - Duration::minutes(30))
+    .bind(now)
+    .execute(&state.db)
+    .await
+    .unwrap();
+
+    let srv = test_server(state).await;
+    let points = history(&srv, "minutes=20&max_points=4").await;
+    let with_mounts = points.iter().filter(|p| p.get("mounts").is_some()).count();
+    assert!(
+        with_mounts >= 2,
+        "a half-hour stretch reaches several 5-minute buckets, got {with_mounts}"
+    );
+    for p in &points {
+        if let Some(mounts) = p.get("mounts") {
+            assert_eq!(mounts[0]["mount"], "/data");
+            assert_eq!(mounts[0]["used"], 40);
+            assert_eq!(mounts[0]["total"], 100);
+        }
+        if let Some(gpus) = p.get("gpus") {
+            assert_eq!(gpus[0]["name"], "Test GPU");
+            assert_eq!(gpus[0]["usage_percent"], 25.0);
+        }
+    }
+    // The interface moved only in the last minute, so most buckets have no
+    // interface entry at all rather than one claiming zero traffic.
+    let with_ifaces = points.iter().filter(|p| p.get("ifaces").is_some()).count();
+    assert!(
+        with_ifaces < points.len(),
+        "an idle interface is no detail, got {with_ifaces} of {}",
+        points.len()
+    );
+}
+
 #[ntex::test]
 async fn max_points_is_a_ceiling() {
     let srv = test_server(state_with_samples(60).await).await;

@@ -76,7 +76,7 @@ async fn store_metrics_writes_diskio_and_battery_columns() -> Result<()> {
     let pool = setup_test_db().await?;
     let metrics = sample_metrics();
 
-    server_box_monitor::monitoring::store_metrics(&pool, &metrics).await?;
+    server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
 
     let row = sqlx::query("SELECT diskio_read_bytes, diskio_write_bytes, battery_percent FROM system_metrics")
         .fetch_one(&pool)
@@ -91,6 +91,58 @@ async fn store_metrics_writes_diskio_and_battery_columns() -> Result<()> {
     // (1000 + 500) sectors * 512 bytes/sector
     assert_eq!(write_bytes, 1500 * 512);
     assert_eq!(battery_percent, 77.0);
+
+    Ok(())
+}
+
+/// The detail tables hold stretches, not samples: a reading that does not
+/// move occupies one row however often it is sampled, and one that moves
+/// opens a new row.
+#[tokio::test]
+async fn a_detail_reading_that_does_not_move_is_one_row() -> Result<()> {
+    use chrono::Duration;
+
+    let pool = setup_test_db().await?;
+    let mut metrics = sample_metrics();
+    metrics.disk_details = vec![server_box_monitor::monitoring::DiskDetail {
+        path: "/dev/sda1".into(),
+        mount: "/".into(),
+        fs_type: Some("ext4".into()),
+        used: 40,
+        total: 100,
+        usage_percent: 40.0,
+    }];
+
+    // Ten samples a minute apart, every one of them at 40 %: the whole run is
+    // one stretch.
+    let start = Utc::now();
+    for i in 0..10 {
+        metrics.timestamp = start + Duration::minutes(i);
+        server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
+    }
+
+    let rows: Vec<(i64,)> = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
+        .fetch_all(&pool)
+        .await?
+        .into_iter()
+        .map(|(n,)| (n,))
+        .collect();
+    assert_eq!(rows[0].0, 1, "ten unchanged samples are one stretch");
+
+    let (end,): (chrono::DateTime<Utc>,) =
+        sqlx::query_as("SELECT end FROM metrics_disk_usage LIMIT 1")
+            .fetch_one(&pool)
+            .await?;
+    assert_eq!(end, start + Duration::minutes(9), "the stretch runs to the last sample");
+
+    // And one that moves opens a second row.
+    metrics.timestamp = start + Duration::minutes(10);
+    metrics.disk_details[0].used = 90;
+    server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
+    let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
+        .fetch_one(&pool)
+        .await?;
+    assert_eq!(count, 2, "a moved reading opens a new stretch");
 
     Ok(())
 }
