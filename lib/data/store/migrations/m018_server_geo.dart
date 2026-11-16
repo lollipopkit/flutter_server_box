@@ -16,7 +16,7 @@ import 'package:server_box/data/store/schema.dart';
 /// Each statement is guarded, so the step is safe to run again after a process
 /// stops partway — the version is recorded only once every statement has run,
 /// so a stop between the two means both run again.
-class ServerGeoMigration implements SchemaMigration {
+class ServerGeoMigration extends SchemaMigration {
   const ServerGeoMigration();
 
   @override

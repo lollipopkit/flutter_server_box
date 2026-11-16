@@ -13,6 +13,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -21,14 +22,28 @@ import 'package:server_box/data/store/stores.dart';
 import '../helpers/test_db.dart';
 
 /// A step that does nothing, so a list can be assembled to a shape.
-class _Noop implements SchemaMigration {
-  const _Noop(this.from);
+class _Noop extends SchemaMigration {
+  const _Noop(this.from, {this.olderBuildsRead = false});
 
   @override
   final int from;
 
   @override
+  final bool olderBuildsRead;
+
+  @override
   Future<void> apply() async {}
+}
+
+/// A step that fails partway, as a killed process leaves it.
+class _Throws extends SchemaMigration {
+  const _Throws(this.from);
+
+  @override
+  final int from;
+
+  @override
+  Future<void> apply() async => throw StateError('stopped');
 }
 
 void main() {
@@ -59,6 +74,20 @@ void main() {
         reason: '${m.runtimeType} converts from a version nothing is at',
       );
     }
+  });
+
+  test('a reader is as old as the readable steps under a version reach', () {
+    const steps = [
+      _Noop(4),
+      _Noop(5, olderBuildsRead: true),
+      _Noop(6),
+      _Noop(7, olderBuildsRead: true),
+      _Noop(8, olderBuildsRead: true),
+    ];
+    expect(SchemaVersion.minReader(steps, 9), 7);
+    expect(SchemaVersion.minReader(steps, 7), 7);
+    expect(SchemaVersion.minReader(steps, 6), 5);
+    expect(SchemaVersion.minReader(steps, 5), 5);
   });
 
   test('names each version once', () {
@@ -115,6 +144,53 @@ void main() {
       expect(
         () => SchemaVersion.migrate(kSchemaMigrations),
         throwsA(isA<SchemaTooNewException>()),
+      );
+    });
+
+    test('refuses it when the newer build names a reader above this one', () {
+      SettingStore.instance.schemaVersion.put(SchemaVersion.current + 2);
+      SettingStore.instance.schemaMinReader.put(SchemaVersion.current + 1);
+
+      expect(
+        () => SchemaVersion.migrate(kSchemaMigrations),
+        throwsA(isA<SchemaTooNewException>()),
+      );
+    });
+
+    test('opens it, unchanged and not synced, when this build is a reader', () async {
+      SettingStore.instance.schemaVersion.put(SchemaVersion.current + 2);
+      SettingStore.instance.schemaMinReader.put(SchemaVersion.current);
+
+      await SchemaVersion.migrate(kSchemaMigrations);
+
+      expect(SchemaVersion.readsAhead, isTrue);
+      expect(fileLog.on(), isFalse);
+      expect(SchemaVersion.stored, SchemaVersion.current + 2);
+      expect(SettingStore.instance.schemaMinReader.fetch(), SchemaVersion.current);
+    });
+
+    test('a run stopped partway leaves no older reader recorded', () async {
+      const from = SchemaVersion.current - 1;
+      SettingStore.instance.schemaVersion.put(from);
+      SettingStore.instance.schemaMinReader.put(from);
+
+      await expectLater(
+        SchemaVersion.migrate(const [_Throws(from)]),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(SettingStore.instance.schemaMinReader.fetch(), 0);
+    });
+
+    test('records the oldest reader of what it leaves', () async {
+      SettingStore.instance.schemaVersion.put(SchemaVersion.current);
+
+      await SchemaVersion.migrate(kSchemaMigrations);
+
+      expect(SchemaVersion.readsAhead, isFalse);
+      expect(
+        SettingStore.instance.schemaMinReader.fetch(),
+        SchemaVersion.minReader(kSchemaMigrations, SchemaVersion.current),
       );
     });
   });

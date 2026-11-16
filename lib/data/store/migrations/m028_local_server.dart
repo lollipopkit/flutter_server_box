@@ -14,7 +14,7 @@ import 'package:server_box/data/store/schema.dart';
 /// is off across the drop and on again after; `legacy_alter_table` stops the
 /// rename rewriting the children's foreign keys towards a table about to be
 /// dropped.
-class LocalServerMigration implements SchemaMigration {
+class LocalServerMigration extends SchemaMigration {
   const LocalServerMigration();
 
   @override

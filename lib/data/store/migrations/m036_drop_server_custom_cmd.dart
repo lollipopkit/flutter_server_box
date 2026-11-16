@@ -8,7 +8,7 @@ import 'package:server_box/data/store/schema.dart';
 /// those of servers that never connected since; they go with the table.
 ///
 /// Idempotent by construction: `IF EXISTS`.
-class DropServerCustomCmdMigration implements SchemaMigration {
+class DropServerCustomCmdMigration extends SchemaMigration {
   const DropServerCustomCmdMigration();
 
   @override

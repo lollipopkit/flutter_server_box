@@ -29,7 +29,7 @@ import 'package:server_box/data/store/schema.dart';
 /// rewrites references to the old name inside other objects' definitions —
 /// helpful in general, and here it would rewrite the child tables' foreign
 /// keys to point at a table that is about to not exist.
-class BothTransportsMigration implements SchemaMigration {
+class BothTransportsMigration extends SchemaMigration {
   const BothTransportsMigration();
 
   @override

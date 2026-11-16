@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Adds the sync root that stores RDP and VNC connection profiles.
-class RemoteDesktopProfilesMigration implements SchemaMigration {
+class RemoteDesktopProfilesMigration extends SchemaMigration {
   const RemoteDesktopProfilesMigration();
 
   @override

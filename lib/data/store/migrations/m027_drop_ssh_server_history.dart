@@ -8,7 +8,7 @@ import 'package:server_box/data/store/schema.dart';
 /// every saved server with search and sorting, so nothing replaces this list.
 ///
 /// Idempotent by construction: a second run deletes nothing.
-class DropSshServerHistoryMigration implements SchemaMigration {
+class DropSshServerHistoryMigration extends SchemaMigration {
   const DropSshServerHistoryMigration();
 
   @override

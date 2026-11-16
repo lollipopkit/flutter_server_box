@@ -31,7 +31,7 @@ import 'package:server_box/data/store/setting.dart';
 /// provider configuration and the Agent's placement would read as defaults
 /// with the real values sitting in rows no code looks at. `Backup.restore`
 /// and `BackupV2.merge` call [apply] for that reason.
-class GroupedSettingsMigration implements SettingsMigration {
+class GroupedSettingsMigration extends SettingsMigration {
   const GroupedSettingsMigration();
 
 

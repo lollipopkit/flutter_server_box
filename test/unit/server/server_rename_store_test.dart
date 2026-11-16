@@ -329,4 +329,16 @@ void main() {
       );
     },
   );
+
+  test('a column this build does not know moves with the row', () {
+    // As a newer build's step leaves it: `SchemaVersion.readsAhead`.
+    final db = SqliteDb.instance;
+    db.execute("ALTER TABLE server ADD COLUMN future TEXT NOT NULL DEFAULT '';");
+    db.execute("UPDATE server SET future = 'kept', ssh_control_path = 'auto' WHERE id = ?;", [original.id]);
+
+    servers.rename(original, original.copyWith(id: 'server-new', name: 'renamed'));
+
+    final rows = db.select('SELECT id, name, future FROM server WHERE id IN (?, ?);', [original.id, 'server-new']);
+    expect(rows.map((r) => (r['id'], r['name'], r['future'])), [('server-new', 'renamed', 'kept')]);
+  });
 }

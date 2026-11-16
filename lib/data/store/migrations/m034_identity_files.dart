@@ -14,7 +14,7 @@ import 'package:server_box/data/store/schema.dart';
 /// The DDL is written here rather than left to Drift, which only creates
 /// tables for a database being made; `m034_identity_files_test.dart` checks
 /// the two agree.
-class IdentityFilesMigration implements SchemaMigration {
+class IdentityFilesMigration extends SchemaMigration {
   const IdentityFilesMigration();
 
   /// What the store wrote before this step for more than one path.

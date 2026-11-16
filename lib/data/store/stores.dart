@@ -183,12 +183,11 @@ abstract final class Stores {
     // and every write after it (the sweep, the Hive import, the retired keys)
     // would otherwise touch a database a newer build wrote — and the rescue
     // screen's "nothing has been changed" would be untrue. `main` catches it.
-    final stored = setting.schemaVersion.fetch();
-    if (stored > SchemaVersion.current) {
-      throw SchemaTooNewException(stored: stored, supported: SchemaVersion.current);
-    }
+    // One this build reads ([SchemaVersion.readsAhead]) is opened as it is.
+    final ahead = SchemaVersion.checkReadable();
 
     connectionStats.init();
+    if (ahead) return;
 
     // Before every fixup below. Each of them writes a flag meaning "this device
     // has been dealt with", and running them against the empty stores would set

@@ -22,7 +22,7 @@ import 'package:sqlite3/sqlite3.dart';
 /// Safe to run again after a process stopped partway: the version is recorded
 /// only once `apply` returns, and the rebuild is one transaction guarded by
 /// the old column still being there.
-class MonitorCertSha256Migration implements SchemaMigration {
+class MonitorCertSha256Migration extends SchemaMigration {
   const MonitorCertSha256Migration();
 
   static const appliedAt = 35;

@@ -37,7 +37,7 @@ import 'package:server_box/data/store/setting.dart';
 ///
 /// TODO: drop the flag reads here and the two keys from `removeRetiredKeys`
 /// once no install and no backup can still be carrying them.
-class SettingsFixupsMigration implements SettingsMigration {
+class SettingsFixupsMigration extends SettingsMigration {
   const SettingsFixupsMigration();
 
 

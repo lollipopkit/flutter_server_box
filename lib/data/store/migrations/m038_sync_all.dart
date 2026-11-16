@@ -12,7 +12,7 @@ import 'package:server_box/data/store/sync_recorder.dart';
 ///   (`SyncedStores.seed`, `SyncRecorder.seedRecords`).
 /// - The logs are joined again: what was left out of them (the settings,
 ///   until now off unless turned on) goes out from every device.
-class SyncAllMigration implements SchemaMigration {
+class SyncAllMigration extends SchemaMigration {
   const SyncAllMigration();
 
   @override

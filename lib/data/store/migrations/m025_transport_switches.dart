@@ -10,7 +10,7 @@ import 'package:server_box/data/store/schema.dart';
 /// configuration stay while the app stops using it.
 ///
 /// Both default to true, which is what every existing row was doing.
-class TransportSwitchesMigration implements SchemaMigration {
+class TransportSwitchesMigration extends SchemaMigration {
   const TransportSwitchesMigration();
 
   @override

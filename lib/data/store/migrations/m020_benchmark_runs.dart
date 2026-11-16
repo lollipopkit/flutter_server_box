@@ -12,7 +12,7 @@ import 'package:server_box/data/store/schema.dart';
 ///
 /// Nothing is backfilled. There is nothing to backfill from: no earlier build
 /// could run a benchmark, so every install starts with an empty history.
-class BenchmarkRunsMigration implements SchemaMigration {
+class BenchmarkRunsMigration extends SchemaMigration {
   const BenchmarkRunsMigration();
 
   @override

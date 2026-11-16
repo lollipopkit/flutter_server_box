@@ -20,7 +20,7 @@ import 'package:server_box/data/store/setting.dart';
 /// an Android widget preference gets the notice; a false positive costs one
 /// dialog, and a false negative is a widget that stopped working with no
 /// explanation anywhere.
-class LegacyStatusUrlsMigration implements SchemaMigration {
+class LegacyStatusUrlsMigration extends SchemaMigration {
   const LegacyStatusUrlsMigration();
 
   /// The prefix the Android widget's configuration used, before it kept its

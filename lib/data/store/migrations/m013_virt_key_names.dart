@@ -20,7 +20,7 @@ import 'package:server_box/data/store/setting.dart';
 /// Also run after a restore, from `Backup.merge` and `BackupV2.merge`: a file
 /// written before this carries the indices, and the version has long since
 /// moved past the point where the migrator would look.
-class VirtKeyNamesMigration implements SettingsMigration {
+class VirtKeyNamesMigration extends SettingsMigration {
   const VirtKeyNamesMigration();
 
 

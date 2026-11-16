@@ -23,7 +23,7 @@ import 'package:server_box/data/store/setting.dart';
 /// exclusion list is one switch per server on the settings page.
 ///
 /// TODO: drop together with `SettingStore.watchServerIds`.
-class WatchSelectionToExclusionMigration implements SchemaMigration {
+class WatchSelectionToExclusionMigration extends SchemaMigration {
   const WatchSelectionToExclusionMigration();
 
   @override

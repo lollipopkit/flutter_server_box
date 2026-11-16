@@ -16,7 +16,7 @@ import 'package:server_box/data/store/schema.dart';
 /// The two have to agree — `m014_ssh_file_transport_test.dart` is what checks
 /// it, since `tables_schema_test.dart` only ever sees a freshly created schema
 /// and never runs this step.
-class SshFileTransportMigration implements SchemaMigration {
+class SshFileTransportMigration extends SchemaMigration {
   const SshFileTransportMigration();
 
   @override

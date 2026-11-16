@@ -18,7 +18,7 @@ import 'package:server_box/data/store/schema.dart';
 /// Nothing is backfilled. There is nothing to backfill from: the reading comes
 /// from a status poll, so every server fills its own row the first time it
 /// connects after this ships, and draws the neutral mark until then.
-class ServerDistMigration implements SchemaMigration {
+class ServerDistMigration extends SchemaMigration {
   const ServerDistMigration();
 
   @override

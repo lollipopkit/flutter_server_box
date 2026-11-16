@@ -681,6 +681,15 @@ class SettingStore extends SqliteStore with ThemeSettings {
     updateLastModified: false,
   );
 
+  /// The lowest [SchemaVersion.current] that reads this storage as it is
+  /// ([SchemaVersion.minReader]), recorded by the build that last migrated it.
+  /// 0 when no build has: nothing older reads it. Internal, as [schemaVersion].
+  late final schemaMinReader = propertyDefault(
+    '${StoreDefaults.prefixKey}schemaMinReader',
+    0,
+    updateLastModified: false,
+  );
+
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
 

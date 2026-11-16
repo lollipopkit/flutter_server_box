@@ -15,7 +15,7 @@ import 'package:server_box/data/store/schema.dart';
 /// table Drift will not revisit, and `createTables` is `IF NOT EXISTS`
 /// throughout. `m026_ssh_legacy_algorithms_test.dart` is what checks the two
 /// agree.
-class SshLegacyAlgorithmsMigration implements SchemaMigration {
+class SshLegacyAlgorithmsMigration extends SchemaMigration {
   const SshLegacyAlgorithmsMigration();
 
   @override
