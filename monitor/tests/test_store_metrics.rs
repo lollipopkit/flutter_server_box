@@ -121,13 +121,10 @@ async fn a_detail_reading_that_does_not_move_is_one_row() -> Result<()> {
         server_box_monitor::monitoring::store_metrics(&pool, &metrics, None).await?;
     }
 
-    let rows: Vec<(i64,)> = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
-        .fetch_all(&pool)
-        .await?
-        .into_iter()
-        .map(|(n,)| (n,))
-        .collect();
-    assert_eq!(rows[0].0, 1, "ten unchanged samples are one stretch");
+    let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM metrics_disk_usage")
+        .fetch_one(&pool)
+        .await?;
+    assert_eq!(count, 1, "ten unchanged samples are one stretch");
 
     let (end,): (chrono::DateTime<Utc>,) =
         sqlx::query_as("SELECT end FROM metrics_disk_usage LIMIT 1")

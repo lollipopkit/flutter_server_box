@@ -26,34 +26,6 @@ use sqlx::SqlitePool;
 use crate::utils::error::Result;
 use super::metrics::SystemMetrics;
 
-/// How little the reading may move before a new stretch opens, and the
-/// shortest a stretch may be.
-pub(super) struct Change<T> {
-    /// A new reading further than this from the open stretch's closes it.
-    pub(super) threshold: T,
-}
-
-#[derive(Clone, Copy)]
-pub(super) enum Table {
-    DiskUsage,
-    Iface,
-    Gpu,
-    Temp,
-}
-
-impl Table {
-    const ALL: [Table; 4] = [Table::DiskUsage, Table::Iface, Table::Gpu, Table::Temp];
-
-    fn name(self) -> &'static str {
-        match self {
-            Table::DiskUsage => "metrics_disk_usage",
-            Table::Iface => "metrics_iface",
-            Table::Gpu => "metrics_gpu",
-            Table::Temp => "metrics_temp",
-        }
-    }
-}
-
 /// A stretch too young to cut, however far the reading moved: a device
 /// working hard moves further than the threshold every cycle, and cutting
 /// there is one row per sample again.
@@ -64,14 +36,10 @@ const MIN_SEGMENT: Duration = Duration::seconds(30);
 /// points a chart can draw over days rather than one flat row.
 const MAX_SEGMENT: Duration = Duration::hours(1);
 
-/// The value on a stretch, as the column that holds it.
-pub(super) trait Reading: Clone + Copy {
-    /// The first value of the row, after the key columns.
-    fn values(self) -> Vec<f64>;
-}
-
 // ---------------------------------------------------------------------------
-// The per-device readings, as they come out of one sample.
+// The per-device readings, as they come out of one sample. `values` is the
+// reading as the columns hold it, in the order the INSERT binds them; a
+// reading the device does not report is NaN, which compares as itself below.
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
@@ -80,9 +48,9 @@ pub(super) struct DiskUsage {
     pub(super) total: u64,
 }
 
-impl Reading for DiskUsage {
-    fn values(self) -> Vec<f64> {
-        vec![self.used as f64, self.total as f64]
+impl DiskUsage {
+    fn values(self) -> [f64; 2] {
+        [self.used as f64, self.total as f64]
     }
 }
 
@@ -92,9 +60,9 @@ pub(super) struct IfaceRate {
     pub(super) tx: f64,
 }
 
-impl Reading for IfaceRate {
-    fn values(self) -> Vec<f64> {
-        vec![self.rx, self.tx]
+impl IfaceRate {
+    fn values(self) -> [f64; 2] {
+        [self.rx, self.tx]
     }
 }
 
@@ -105,9 +73,9 @@ pub(super) struct GpuUsage {
     pub(super) mem_total: Option<i64>,
 }
 
-impl Reading for GpuUsage {
-    fn values(self) -> Vec<f64> {
-        vec![
+impl GpuUsage {
+    fn values(self) -> [f64; 3] {
+        [
             self.usage.unwrap_or(f64::NAN),
             self.mem_used.unwrap_or(-1) as f64,
             self.mem_total.unwrap_or(-1) as f64,
@@ -120,9 +88,9 @@ pub(super) struct Temp {
     pub(super) celsius: f64,
 }
 
-impl Reading for Temp {
-    fn values(self) -> Vec<f64> {
-        vec![self.celsius]
+impl Temp {
+    fn values(self) -> [f64; 1] {
+        [self.celsius]
     }
 }
 
@@ -491,14 +459,6 @@ async fn store_temps(
 
 /// Below this, an interface is idle and its stretch ends rather than grows.
 const IFACE_FLOOR: f64 = 10_000.0;
-
-/// The tables [`store`] writes, for the cleanup job and the backup's list.
-pub(super) const TABLES: [&str; 4] = [
-    "metrics_disk_usage",
-    "metrics_iface",
-    "metrics_gpu",
-    "metrics_temp",
-];
 
 #[cfg(test)]
 mod tests {
