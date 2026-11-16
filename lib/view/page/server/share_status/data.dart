@@ -82,13 +82,21 @@ class StatusPoster {
   final DateTime at;
   final Map<PosterSection, PosterBlock> sections;
 
-  factory StatusPoster.of(ServerState srv, MetricWindow w, {DateTime? at}) {
+  /// [live] whether [w] is what this app watched now; a stored window's
+  /// figures are the window's, and a series it does not carry leaves its
+  /// section out rather than reading the machine's present.
+  factory StatusPoster.of(
+    ServerState srv,
+    MetricWindow w, {
+    DateTime? at,
+    bool live = true,
+  }) {
     final ss = srv.status;
     final sections = <PosterSection, PosterBlock>{};
     if (!serverNeverSampled(srv)) {
-      sections[PosterSection.cpu] = _cpu(srv, w);
-      if (_mem(srv, w) case final b?) sections[PosterSection.mem] = b;
-      if (_swap(srv, w) case final b?) sections[PosterSection.swap] = b;
+      sections[PosterSection.cpu] = _cpu(srv, w, live);
+      if (_mem(srv, w, live) case final b?) sections[PosterSection.mem] = b;
+      if (_swap(srv, w, live) case final b?) sections[PosterSection.swap] = b;
       if (_gpu(srv) case final b?) sections[PosterSection.gpu] = b;
       if (_disk(srv) case final b?) sections[PosterSection.disk] = b;
       if (_smart(ss.diskSmart) case final b?) sections[PosterSection.smart] = b;
@@ -187,9 +195,9 @@ double? _peak(List<double?> values) {
   return top;
 }
 
-PosterBlock _cpu(ServerState srv, MetricWindow w) {
+PosterBlock _cpu(ServerState srv, MetricWindow w, bool live) {
   final ss = srv.status;
-  final avg = _avg(w.cpu) ?? ss.cpu.usedPercent();
+  final avg = _avg(w.cpu) ?? (live ? ss.cpu.usedPercent() : null);
   final peak = _peak(w.cpu);
   final cores = ss.cpu.coresCount;
   final title = [
@@ -200,8 +208,9 @@ PosterBlock _cpu(ServerState srv, MetricWindow w) {
     title: title.isEmpty ? null : title,
     aside: peak == null ? null : '${l10n.peak} ${ReadingFmt.pct(peak)}',
     value: ReadingFmt.pct(avg),
-    note: l10n.average,
-    bars: _cores(ss, cores),
+    note: avg == null ? null : l10n.average,
+    // Each core now, which a stored window does not hold.
+    bars: live ? _cores(ss, cores) : const [],
     chart: _chart(
       w,
       [HistorySeries('CPU', ChartPalette.accent, w.cpu)],
@@ -226,35 +235,47 @@ List<double> _cores(ServerStatus ss, int count) {
   return loads;
 }
 
-PosterBlock? _mem(ServerState srv, MetricWindow w) {
+PosterBlock? _mem(ServerState srv, MetricWindow w, bool live) {
   final mem = srv.status.mem;
   final now = mem.usedPercent;
   if (now == null) return null;
-  return _share(
-    _avg(w.mem) ?? now * 100,
-    totalKb: mem.total,
-  );
-}
-
-PosterBlock? _swap(ServerState srv, MetricWindow w) {
-  final swap = srv.status.swap;
-  if (swap.total <= 0) return null;
-  return _share(
-    _avg(w.swap) ?? swap.usedPercent * 100,
-    totalKb: swap.total,
-  );
-}
-
-/// A share of a whole, averaged over the window as the CPU's is, so every
-/// figure under the range's badge is of that range.
-PosterBlock _share(double percent, {required int totalKb}) {
-  final used = (totalKb * percent / 100 * 1024).bytes2Str;
-  final total = (totalKb * 1024).bytes2Str;
+  if (!live) return _stored(_avg(w.mem));
+  final total = (mem.total * 1024).bytes2Str;
+  final used = (mem.used * 1024).bytes2Str;
   return PosterBlock(
     value: used,
-    note: '${l10n.ofFmt(total)} · ${l10n.average} ${ReadingFmt.pct(percent)}',
-    percent: percent / 100,
-    summary: '${l10n.average} $used / $total',
+    note: '${l10n.ofFmt(total)} · ${ReadingFmt.pct(now * 100)}',
+    percent: now,
+    summary: '$used / $total',
+  );
+}
+
+PosterBlock? _swap(ServerState srv, MetricWindow w, bool live) {
+  final swap = srv.status.swap;
+  if (swap.total <= 0) return null;
+  if (!live) return _stored(_avg(w.swap));
+  final total = (swap.total * 1024).bytes2Str;
+  final used = ((swap.total - swap.free) * 1024).bytes2Str;
+  return PosterBlock(
+    value: used,
+    note: '${l10n.ofFmt(total)} · ${ReadingFmt.pct(swap.usedPercent * 100)}',
+    percent: swap.usedPercent,
+    summary: '$used / $total',
+  );
+}
+
+/// A stored window's share of a whole, as the window averaged it.
+///
+/// The percentage only: the window does not record the capacity it was of,
+/// and bytes worked out from today's would name a figure it never held.
+/// Null when the window carries no series for it at all.
+PosterBlock? _stored(double? avg) {
+  if (avg == null) return null;
+  return PosterBlock(
+    value: ReadingFmt.pct(avg),
+    note: l10n.average,
+    percent: avg / 100,
+    summary: '${l10n.average} ${ReadingFmt.pct(avg)}',
   );
 }
 
@@ -319,20 +340,25 @@ PosterBlock? _disk(ServerState srv) {
 }
 
 PosterBlock? _smart(List<DiskSmart> smarts) {
-  if (smarts.isEmpty) return null;
-  final failing = smarts.where((e) => e.healthy == false).length;
-  final warning = smarts
-      .where((e) => !e.notApplicable && (e.healthy == null || e.faults.isNotEmpty))
+  // A disk that cannot answer SMART has said nothing, not passed.
+  final applicable = smarts.where((e) => !e.notApplicable).toList();
+  if (applicable.isEmpty) return null;
+  final failing = applicable.where((e) => e.healthy == false).length;
+  final warning = applicable
+      .where((e) => e.healthy == null || e.faults.isNotEmpty)
       .length;
   final verdict = failing > 0
       ? l10n.diskFailingFmt(failing)
       : warning > 0
       ? l10n.diskWarningFmt(warning)
       : l10n.diskAllPassed;
-  final first = smarts.first;
+  final first = applicable.first;
   final note = [
-    if (smarts.length > 1) l10n.devicesFmt(smarts.length) else first.device,
-    if (smarts.length == 1)
+    if (applicable.length > 1)
+      l10n.devicesFmt(applicable.length)
+    else
+      first.device,
+    if (applicable.length == 1)
       if (first.powerOnHours case final h?) '${l10n.powerOnHours} $h h',
   ].join(' · ');
   return PosterBlock(value: verdict, note: note, summary: verdict);

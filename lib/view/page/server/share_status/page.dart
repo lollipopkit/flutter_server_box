@@ -67,7 +67,11 @@ final class _State extends ConsumerState<ServerStatusSharePage> {
     final window = _range == HistoryRange.live
         ? MetricWindow.live(srv.status.history)
         : MetricWindow.of(_windows[_range]?.samples ?? const []);
-    final poster = StatusPoster.of(srv, window);
+    final poster = StatusPoster.of(
+      srv,
+      window,
+      live: _range == HistoryRange.live,
+    );
     final tabs = [_Tab.content, if (stored) _Tab.range, _Tab.privacy];
     if (!tabs.contains(_tab)) _tab = _Tab.content;
 
@@ -313,6 +317,13 @@ final class _State extends ConsumerState<ServerStatusSharePage> {
             to: to,
           );
       if (!mounted) return;
+      if (samples.isEmpty) {
+        // No history to draw: kept uncached, so the buttons stay off and
+        // asking again asks the agent again.
+        Toast.error(l10n.noData);
+        setState(() => _range = HistoryRange.live);
+        return;
+      }
       setState(() => _windows[range] = (samples: samples, at: to));
     } catch (e, s) {
       Loggers.app.warning('Share status history ${range.label}', e, s);

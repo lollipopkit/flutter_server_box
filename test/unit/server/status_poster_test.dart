@@ -5,8 +5,10 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status/conn.dart';
 import 'package:server_box/data/model/server/status/cpu.dart';
 import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/disk_smart.dart';
 import 'package:server_box/data/model/server/status/memory.dart';
 import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
@@ -94,6 +96,48 @@ void main() {
     );
     expect(hidden, isNot(contains('web')));
     expect(hidden, isNot(contains('Debian')));
+  });
+
+  test('a stored window reads only what it carries', () {
+    // A window with the CPU's series and nothing else: memory is left out
+    // rather than read from the machine's present.
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        StatusHistorySample(timeMs: 1000, cpu: 10),
+        StatusHistorySample(timeMs: 2000, cpu: 30),
+      ]),
+      live: false,
+    );
+    expect(stored.sections.keys, isNot(contains(PosterSection.mem)));
+    final cpu = stored.sections[PosterSection.cpu]!;
+    expect(cpu.value, '20.0%');
+    expect(cpu.bars, isEmpty, reason: 'each core now is not of the window');
+    expect(cpu.aside, contains('30.0%'));
+  });
+
+  test('a stored window without its series has no CPU figure', () {
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([StatusHistorySample(timeMs: 1000)]),
+      live: false,
+    );
+    expect(stored.sections[PosterSection.cpu]?.value, '--');
+    expect(stored.sections[PosterSection.cpu]?.note, isNull);
+  });
+
+  test('SMART on every disk unavailable is not a pass', () {
+    final smarts = [
+      const DiskSmart(device: 'sda', smartAttributes: {}),
+      const DiskSmart(device: 'sdb', smartAttributes: {}),
+    ];
+    expect(smarts.every((e) => e.notApplicable), isTrue);
+    final status = srv.status..diskSmart = smarts;
+    final poster = StatusPoster.of(
+      ServerState(spi: srv.spi, status: status),
+      MetricWindow.live(status.history),
+    );
+    expect(poster.sections.containsKey(PosterSection.smart), isFalse);
   });
 
   test('a machine not yet sampled has nothing to show', () {
