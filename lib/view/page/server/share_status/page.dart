@@ -42,7 +42,7 @@ const _sideFrom = StatusPosterCard.width + 26 + _sideWidth;
 const _sideWidth = 340.0;
 
 /// How wide the saved image is, in pixels.
-const _imageWidth = 1080.0;
+const _imageWidth = 2160.0;
 
 final class _State extends ConsumerState<ServerStatusSharePage> {
   final _poster = GlobalKey();
@@ -256,18 +256,22 @@ final class _State extends ConsumerState<ServerStatusSharePage> {
   }
 
   Widget _rangeTab() {
-    return SegmentedButton<HistoryRange>(
-      segments: [
-        for (final r in _ranges)
-          ButtonSegment(
-            value: r,
-            label: _busy.contains(r)
-                ? const SizedBox.square(dimension: 15, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(r.label),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 7,
+      children: [
+        SegmentedTabs<HistoryRange>(
+          expand: true,
+          // The panel is `surfaceContainer` already.
+          trackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          segments: [
+            for (final r in _ranges) SegmentedTab(value: r, label: r.label),
+          ],
+          selected: _range,
+          onSelected: _selectRange,
+        ),
+        if (_busy.contains(_range)) const LinearProgressIndicator(),
       ],
-      selected: {_range},
-      onSelectionChanged: (s) => _selectRange(s.first),
     );
   }
 

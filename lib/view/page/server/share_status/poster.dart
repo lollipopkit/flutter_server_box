@@ -40,10 +40,9 @@ class StatusPosterCard extends StatelessWidget {
     return Container(
       width: width,
       padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(17),
-      ),
+      // Square: the image is the poster, and rounded corners would be
+      // transparent pixels around it.
+      color: scheme.surfaceContainer,
       child: DefaultTextStyle.merge(
         style: TextStyle(color: scheme.onSurface, fontSize: 13),
         child: Column(
