@@ -197,6 +197,10 @@ abstract final class SchemaVersion {
     }
 
     final from = stored;
+    final minStore = SettingStore.instance.schemaMinReader;
+    // Cleared before the first step writes: storage a run stopped partway
+    // through is read by no older build.
+    if (from < current && minStore.fetch() != 0) minStore.put(0);
     for (var v = from; v < current; v++) {
       final step = byFrom[v];
       if (step == null) {
@@ -210,7 +214,6 @@ abstract final class SchemaVersion {
       _store(v + 1);
     }
     final min = minReader(migrations, current);
-    final minStore = SettingStore.instance.schemaMinReader;
     if (minStore.fetch() != min) minStore.put(min);
   }
 

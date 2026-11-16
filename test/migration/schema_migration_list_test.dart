@@ -35,6 +35,17 @@ class _Noop extends SchemaMigration {
   Future<void> apply() async {}
 }
 
+/// A step that fails partway, as a killed process leaves it.
+class _Throws extends SchemaMigration {
+  const _Throws(this.from);
+
+  @override
+  final int from;
+
+  @override
+  Future<void> apply() async => throw StateError('stopped');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -156,6 +167,19 @@ void main() {
       expect(fileLog.on(), isFalse);
       expect(SchemaVersion.stored, SchemaVersion.current + 2);
       expect(SettingStore.instance.schemaMinReader.fetch(), SchemaVersion.current);
+    });
+
+    test('a run stopped partway leaves no older reader recorded', () async {
+      const from = SchemaVersion.current - 1;
+      SettingStore.instance.schemaVersion.put(from);
+      SettingStore.instance.schemaMinReader.put(from);
+
+      await expectLater(
+        SchemaVersion.migrate(const [_Throws(from)]),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(SettingStore.instance.schemaMinReader.fetch(), 0);
     });
 
     test('records the oldest reader of what it leaves', () async {
