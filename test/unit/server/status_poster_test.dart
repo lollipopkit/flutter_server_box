@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status/conn.dart';
@@ -124,6 +125,39 @@ void main() {
     );
     expect(stored.sections[PosterSection.cpu]?.value, '--');
     expect(stored.sections[PosterSection.cpu]?.note, isNull);
+  });
+
+  test('a stored swap window outlives swap being off now', () {
+    // The fixture's swap is disabled; the window still has samples of one.
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        StatusHistorySample(timeMs: 1000, swap: 10),
+        StatusHistorySample(timeMs: 2000, swap: 20),
+      ]),
+      live: false,
+    );
+    final swap = stored.sections[PosterSection.swap]!;
+    expect(swap.value, '15.0%');
+    expect(swap.summary, startsWith(l10n.average));
+  });
+
+  test('a stored window reads battery from its own series', () {
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        StatusHistorySample(timeMs: 1000, battery: 90),
+        StatusHistorySample(timeMs: 2000, battery: 80),
+      ]),
+      live: false,
+    );
+    expect(stored.sections[PosterSection.battery]!.value, '85.0%');
+
+    // No stored window carries a GPU series — nothing stores one — and the
+    // machine's present is not what the range is of.
+    final without = StatusPoster.of(srv, const MetricWindow(), live: false);
+    expect(without.sections.containsKey(PosterSection.battery), isFalse);
+    expect(without.sections.containsKey(PosterSection.gpu), isFalse);
   });
 
   test('SMART on every disk unavailable is not a pass', () {

@@ -321,7 +321,8 @@ final class _State extends ConsumerState<ServerStatusSharePage> {
         // No history to draw: kept uncached, so the buttons stay off and
         // asking again asks the agent again.
         Toast.error(l10n.noData);
-        setState(() => _range = HistoryRange.live);
+        // A newer selection is the user's: only this one goes back.
+        if (_range == range) setState(() => _range = HistoryRange.live);
         return;
       }
       setState(() => _windows[range] = (samples: samples, at: to));

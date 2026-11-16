@@ -97,13 +97,13 @@ class StatusPoster {
       sections[PosterSection.cpu] = _cpu(srv, w, live);
       if (_mem(srv, w, live) case final b?) sections[PosterSection.mem] = b;
       if (_swap(srv, w, live) case final b?) sections[PosterSection.swap] = b;
-      if (_gpu(srv) case final b?) sections[PosterSection.gpu] = b;
+      if (_gpu(srv, w, live) case final b?) sections[PosterSection.gpu] = b;
       if (_disk(srv) case final b?) sections[PosterSection.disk] = b;
       if (_smart(ss.diskSmart) case final b?) sections[PosterSection.smart] = b;
       if (_temp(srv, w) case final b?) sections[PosterSection.temp] = b;
       if (_net(srv, w) case final b?) sections[PosterSection.net] = b;
       if (_sensors(srv) case final b?) sections[PosterSection.sensor] = b;
-      if (_battery(srv) case final b?) sections[PosterSection.battery] = b;
+      if (_battery(srv, w, live) case final b?) sections[PosterSection.battery] = b;
     }
     return StatusPoster._(
       name: srv.spi.name,
@@ -251,9 +251,11 @@ PosterBlock? _mem(ServerState srv, MetricWindow w, bool live) {
 }
 
 PosterBlock? _swap(ServerState srv, MetricWindow w, bool live) {
+  // A swap turned off since the window still happened: history, not the
+  // presence of one now, is what a stored range is of.
+  if (!live) return _stored(_avg(w.swap));
   final swap = srv.status.swap;
   if (swap.total <= 0) return null;
-  if (!live) return _stored(_avg(w.swap));
   final total = (swap.total * 1024).bytes2Str;
   final used = ((swap.total - swap.free) * 1024).bytes2Str;
   return PosterBlock(
@@ -264,22 +266,32 @@ PosterBlock? _swap(ServerState srv, MetricWindow w, bool live) {
   );
 }
 
-/// A stored window's share of a whole, as the window averaged it.
+/// A stored window's reading, as the window averaged it.
 ///
-/// The percentage only: the window does not record the capacity it was of,
-/// and bytes worked out from today's would name a figure it never held.
-/// Null when the window carries no series for it at all.
-PosterBlock? _stored(double? avg) {
+/// A percentage only: the window does not record the capacity it was of, and
+/// bytes worked out from today's would name a figure it never held. Null when
+/// the window carries no series for it at all.
+PosterBlock? _stored(double? avg, {double? peak}) {
   if (avg == null) return null;
   return PosterBlock(
     value: ReadingFmt.pct(avg),
     note: l10n.average,
+    aside: peak == null ? null : '${l10n.peak} ${ReadingFmt.pct(peak)}',
     percent: avg / 100,
-    summary: '${l10n.average} ${ReadingFmt.pct(avg)}',
+    summary: [
+      '${l10n.average} ${ReadingFmt.pct(avg)}',
+      if (peak != null) '${l10n.peak} ${ReadingFmt.pct(peak)}',
+    ].join(' · '),
   );
 }
 
-PosterBlock? _gpu(ServerState srv) {
+PosterBlock? _gpu(ServerState srv, MetricWindow w, bool live) {
+  // A stored window keeps the busiest card's load and nothing else of it.
+  if (!live) {
+    final avg = _avg(w.gpu);
+    if (avg == null) return null;
+    return _stored(avg, peak: _peak(w.gpu));
+  }
   final gpu = busiestGpu(srv.status);
   if (gpu == null) return null;
   final mem = gpu.memory;
@@ -425,7 +437,12 @@ PosterBlock? _sensors(ServerState srv) {
   );
 }
 
-PosterBlock? _battery(ServerState srv) {
+PosterBlock? _battery(ServerState srv, MetricWindow w, bool live) {
+  if (!live) {
+    final avg = _avg(w.battery);
+    if (avg == null) return null;
+    return _stored(avg, peak: _peak(w.battery));
+  }
   final battery = srv.status.batteries.firstOrNull;
   if (battery == null) return null;
   final percent = battery.percent?.toDouble();
