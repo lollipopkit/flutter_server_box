@@ -9,16 +9,16 @@
 //!
 //! So each device gets a row per *stretch*, not per sample: `start` to `end`
 //! and the value held throughout. A new stretch opens when the reading moves
-//! further than [`Change`] allows, when the device appears, or when the
+//! further than its table's threshold, when the device appears, or when the
 //! previous stretch has been open for [`MAX_SEGMENT`] — the last so a value
 //! that drifts slowly still splits into answerable chunks. A stretch younger
-//! than [`MIN_SEGMENT`] is extended regardless, because otherwise a busy
-//! device would open a new row at every sample and the table would be back to
-//! one row per sample with extra steps.
+//! than [`MIN_SEGMENT`] is extended and blended instead, because otherwise a
+//! busy device would open a new row at every sample and the table would be
+//! back to one row per sample with extra steps.
 //!
 //! Storage for a machine that does not change: one row per device per
-//! [`MAX_SEGMENT`], so four devices at the cap are ~2 880 rows a day shared
-//! across the detail tables — against 49 000 for one row per sample.
+//! [`MAX_SEGMENT`], so four devices at the cap are under a hundred rows a day
+//! across the detail tables — against ~49 000 for one row per sample.
 
 use std::collections::HashSet;
 

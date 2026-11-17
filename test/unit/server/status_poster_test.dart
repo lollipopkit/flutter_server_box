@@ -160,7 +160,7 @@ void main() {
     expect(without.sections.containsKey(PosterSection.gpu), isFalse);
   });
 
-  test('a stored window keeps no names, and no per-device readings', () {
+  test('a stored window without detail keeps no names, and no per-device readings', () {
     final stored = StatusPoster.of(
       srv,
       MetricWindow.of([
