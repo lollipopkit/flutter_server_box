@@ -2,6 +2,7 @@
 /// dialled when the first cannot be connected to.
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -148,16 +149,23 @@ void main() {
         Uri.parse(primary).port,
       );
       addTearDown(silent.close);
-      final held = <Socket>[];
-      silent.listen(held.add);
-      addTearDown(() {
-        for (final s in held) {
-          s.destroy();
-        }
+      // Completes when the probe closes the connection it opened: one left
+      // waiting on a handshake would stay open for as long as the port does.
+      final closedByClient = Completer<void>();
+      silent.listen((socket) {
+        socket.listen(
+          null,
+          onDone: () {
+            if (!closedByClient.isCompleted) closedByClient.complete();
+            socket.destroy();
+          },
+          onError: (_) => socket.destroy(),
+        );
       });
 
       await c.probePrimary();
       expect(c.agentUri.toString(), isNot(primary));
+      await closedByClient.future.timeout(const Duration(seconds: 2));
     });
   });
 

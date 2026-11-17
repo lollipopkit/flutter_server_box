@@ -240,25 +240,25 @@ class MonitorHttpClient {
     if (uri == null || uri.host.isEmpty) return;
     _probing = true;
     try {
-      final Future<Socket> connecting = uri.isScheme('https')
-          ? SecureSocket.connect(
-              uri.host,
-              uri.port,
-              timeout: _probeTimeout,
-              onBadCertificate: (cert) =>
-                  certPinAccepts(pin: monitor.certSha256, der: cert.der),
-            )
-          : Socket.connect(uri.host, uri.port, timeout: _probeTimeout);
-      final Socket socket;
+      // Held as the raw socket, so a handshake that never completes can be
+      // ended here rather than left open: the secure layer is put on this
+      // same object, and closing it is what aborts the handshake.
+      final raw = await RawSocket.connect(uri.host, uri.port, timeout: _probeTimeout);
+      _probeSocket = raw;
       try {
-        // The handshake as well as the connect: `timeout` above bounds only
-        // the second.
-        socket = await connecting.timeout(_probeTimeout);
-      } on TimeoutException {
-        unawaited(connecting.then((s) => s.destroy(), onError: (_) {}));
-        return;
+        if (uri.isScheme('https')) {
+          final secure = await RawSecureSocket.secure(
+            raw,
+            host: uri.host,
+            onBadCertificate: (cert) =>
+                certPinAccepts(pin: monitor.certSha256, der: cert.der),
+          ).timeout(_probeTimeout);
+          await secure.close();
+        }
+      } finally {
+        _probeSocket = null;
+        await raw.close();
       }
-      socket.destroy();
       if (_disposed || _route == 0) return;
       Loggers.app.info('Monitor reachable again at ${_addrAt(0)}');
       _route = 0;
@@ -269,6 +269,9 @@ class MonitorHttpClient {
       _probing = false;
     }
   }
+
+  /// The connection [probePrimary] has open, closed by [dispose].
+  RawSocket? _probeSocket;
 
   /// The certificate a handshake refused, for [_certErr]. Kept, not taken:
   /// the pin is fixed for this client's life (a changed credential is a new
@@ -1346,6 +1349,8 @@ class MonitorHttpClient {
     if (!_abandoned.isCompleted) _abandoned.complete();
     _dio?.close(force: true);
     _dio = null;
+    unawaited(_probeSocket?.close());
+    _probeSocket = null;
     _token = null;
     _loginFuture = null;
   }
