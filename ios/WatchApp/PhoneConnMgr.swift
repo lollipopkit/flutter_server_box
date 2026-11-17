@@ -142,7 +142,7 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
     /// Payload shape (`WatchSync.buildPayload` on the phone):
     ///
     ///     {"v": 3,
-    ///      "servers": [{"id", "name", "addr", "token", "expiresAt", "certSha256"}]}
+    ///      "servers": [{"id", "name", "addr", "fallbackAddr", "token", "expiresAt", "certSha256"}]}
     ///
     /// The pre-v2 `urls` list is no longer accepted: it named the agent's
     /// Go-compat endpoint, which the agent no longer serves, so honouring it
@@ -166,6 +166,9 @@ final class PhoneConnMgr: NSObject, ObservableObject, WCSessionDelegate {
                     id: id,
                     name: entry["name"] as? String ?? addr,
                     addr: addr,
+                    fallbackAddr: (entry["fallbackAddr"] as? String)
+                        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .flatMap { $0.isEmpty ? nil : $0 },
                     certSha256: entry["certSha256"] as? String,
                     allowInsecure: entry["allowInsecure"] as? Bool ?? false
                 )

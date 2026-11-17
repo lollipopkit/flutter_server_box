@@ -82,6 +82,9 @@ struct WatchServer: Codable, Identifiable, Hashable {
     let name: String
     /// Base address of the agent, no trailing slash.
     let addr: String
+    /// The same agent at another address, dialled when `addr` cannot be
+    /// connected to (`MonitorHttpCredential.fallbackAddr`).
+    let fallbackAddr: String?
     /// The certificate accepted for this agent in the app; see `certPinAccepts`.
     let certSha256: String?
     /// Whether this server was opted in to plaintext HTTP in the app.
@@ -95,12 +98,14 @@ struct WatchServer: Codable, Identifiable, Hashable {
         id: String,
         name: String,
         addr: String,
+        fallbackAddr: String? = nil,
         certSha256: String? = nil,
         allowInsecure: Bool = false
     ) {
         self.id = id
         self.name = name
         self.addr = addr
+        self.fallbackAddr = fallbackAddr
         self.certSha256 = certSha256
         self.allowInsecure = allowInsecure
     }
@@ -115,6 +120,7 @@ struct WatchServer: Codable, Identifiable, Hashable {
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         addr = try c.decode(String.self, forKey: .addr)
+        fallbackAddr = try c.decodeIfPresent(String.self, forKey: .fallbackAddr)
         certSha256 = try c.decodeIfPresent(String.self, forKey: .certSha256)
         allowInsecure = try c.decodeIfPresent(Bool.self, forKey: .allowInsecure) ?? false
     }

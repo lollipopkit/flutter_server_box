@@ -225,6 +225,10 @@ class Servers extends Table with SyncMeta {
   /// is.
   TextColumn get sshControlPath => text().nullable()();
 
+  /// [MonitorHttpCredential.fallbackAddr]. Last, for the reason
+  /// [diskCountsNetwork] is.
+  TextColumn get monitorFallbackAddr => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 

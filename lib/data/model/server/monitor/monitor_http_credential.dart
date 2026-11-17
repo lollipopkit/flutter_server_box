@@ -13,6 +13,11 @@ final class MonitorHttpCredential {
   /// e.g. `https://1.2.3.4:3770`
   final String addr;
 
+  /// The same agent at another address (a Tailscale or public one), tried
+  /// when [addr] cannot be connected to. [certSha256] and [allowInsecure]
+  /// apply to both: they describe the agent, not the route to it.
+  final String? fallbackAddr;
+
   final String? pwd;
 
   /// The account name an agent from before it had one account signs in with.
@@ -40,6 +45,7 @@ final class MonitorHttpCredential {
 
   const MonitorHttpCredential({
     required this.addr,
+    this.fallbackAddr,
     this.pwd,
     this.legacyUser,
     this.certSha256,
@@ -47,22 +53,10 @@ final class MonitorHttpCredential {
   });
 
   /// The same agent, signed in to as [user] — see [legacyUser].
-  MonitorHttpCredential withLegacyUser(String user) => MonitorHttpCredential(
-    addr: addr,
-    pwd: pwd,
-    legacyUser: user,
-    certSha256: certSha256,
-    allowInsecure: allowInsecure,
-  );
+  MonitorHttpCredential withLegacyUser(String user) => _copy(legacyUser: user);
 
   /// The same agent with another password — its account's, changed.
-  MonitorHttpCredential withPwd(String pwd) => MonitorHttpCredential(
-    addr: addr,
-    pwd: pwd,
-    legacyUser: legacyUser,
-    certSha256: certSha256,
-    allowInsecure: allowInsecure,
-  );
+  MonitorHttpCredential withPwd(String pwd) => _copy(pwd: pwd);
 
   factory MonitorHttpCredential.fromJson(Map<String, dynamic> json) =>
       _$MonitorHttpCredentialFromJson(json);
@@ -77,35 +71,60 @@ final class MonitorHttpCredential {
   /// can offer the switch instead of only naming the error. Read off the
   /// configuration rather than off the failure text, which is a localized
   /// sentence and not something to match against.
-  bool get needsInsecureOptIn {
-    if (allowInsecure) return false;
-    final uri = Uri.tryParse(addr.trim());
-    if (uri == null) return false;
-    return !isSecureRemoteEndpoint(uri);
+  bool get needsInsecureOptIn => insecureAddr != null;
+
+  /// The first of [addrs] refused for being plaintext, which is what
+  /// [needsInsecureOptIn] is about. Null once [allowInsecure] is on.
+  String? get insecureAddr {
+    if (allowInsecure) return null;
+    for (final a in addrs) {
+      final uri = Uri.tryParse(a.trim());
+      if (uri != null && !isSecureRemoteEndpoint(uri)) return a;
+    }
+    return null;
   }
 
+  /// The first of [addrs] on `https://`: the one [certSha256] is the
+  /// certificate of, and the one the editor reads a certificate from.
+  String? get tlsAddr {
+    for (final a in addrs) {
+      if (a.trim().toLowerCase().startsWith('https://')) return a;
+    }
+    return null;
+  }
+
+  /// Where to connect, in order: [addr], then [fallbackAddr] when set.
+  List<String> get addrs => [
+    addr,
+    if (fallbackAddr case final f? when f.trim().isNotEmpty) f,
+  ];
+
   /// The same connection with plaintext HTTP permitted.
-  MonitorHttpCredential allowingInsecure() => MonitorHttpCredential(
-    addr: addr,
-    pwd: pwd,
-    legacyUser: legacyUser,
-    certSha256: certSha256,
-    allowInsecure: true,
-  );
+  MonitorHttpCredential allowingInsecure() => _copy(allowInsecure: true);
 
   /// The same connection trusting the certificate [pin] names.
-  MonitorHttpCredential withCertSha256(String? pin) => MonitorHttpCredential(
+  MonitorHttpCredential withCertSha256(String? pin) =>
+      _copy(certSha256: () => pin);
+
+  MonitorHttpCredential _copy({
+    String? pwd,
+    String? legacyUser,
+    String? Function()? certSha256,
+    bool? allowInsecure,
+  }) => MonitorHttpCredential(
     addr: addr,
-    pwd: pwd,
-    legacyUser: legacyUser,
-    certSha256: pin,
-    allowInsecure: allowInsecure,
+    fallbackAddr: fallbackAddr,
+    pwd: pwd ?? this.pwd,
+    legacyUser: legacyUser ?? this.legacyUser,
+    certSha256: certSha256 == null ? this.certSha256 : certSha256(),
+    allowInsecure: allowInsecure ?? this.allowInsecure,
   );
 
   @override
   bool operator ==(Object other) {
     return other is MonitorHttpCredential &&
         other.addr == addr &&
+        other.fallbackAddr == fallbackAddr &&
         other.pwd == pwd &&
         other.legacyUser == legacyUser &&
         other.certSha256 == certSha256 &&
@@ -115,6 +134,7 @@ final class MonitorHttpCredential {
   @override
   int get hashCode => Object.hash(
     addr,
+    fallbackAddr,
     pwd,
     legacyUser,
     certSha256,

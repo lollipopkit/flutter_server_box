@@ -10,12 +10,14 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
@@ -136,12 +138,51 @@ object WidgetApi {
         return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
     }
 
-    private fun get(
+    /** Which address answered last, per server, tried first next time. */
+    private val lastGood = ConcurrentHashMap<String, String>()
+
+    /**
+     * [path] from the first of the server's addresses that can be connected
+     * to: [WidgetStore.WidgetServer.addr], then its fallback.
+     *
+     * Only a connection that never opened moves on. An answer, even a refusal,
+     * came from the agent, and a certificate it refused is the same one at
+     * every address.
+     */
+    internal fun get(
         server: WidgetStore.WidgetServer,
         path: String,
         token: String,
     ): String {
-        val base = server.addr.trimEnd('/')
+        val addrs = listOfNotNull(server.addr, server.fallbackAddr)
+            .map { it.trimEnd('/') }
+            .distinct()
+        val ordered = lastGood[server.id]
+            ?.takeIf { it in addrs }
+            ?.let { good -> listOf(good) + (addrs - good) }
+            ?: addrs
+        var unreachable: IOException? = null
+        for (base in ordered) {
+            try {
+                return getAt(server, base, path, token).also {
+                    lastGood[server.id] = base
+                }
+            } catch (e: UnreachableException) {
+                unreachable = e.cause as? IOException ?: e
+            }
+        }
+        throw unreachable ?: IOException("No address")
+    }
+
+    /** The connection never opened at an address. */
+    private class UnreachableException(cause: IOException) : IOException(cause)
+
+    private fun getAt(
+        server: WidgetStore.WidgetServer,
+        base: String,
+        path: String,
+        token: String,
+    ): String {
         val url = URL(base + path)
         if (!isSendable(server, url)) throw InsecureException()
 
@@ -165,6 +206,13 @@ object WidgetApi {
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("User-Agent", "ServerBox-Widget/2")
                 setRequestProperty("X-SBM-Protocol", SBM_PROTOCOL)
+            }
+            try {
+                connection.connect()
+            } catch (e: SSLException) {
+                throw e
+            } catch (e: IOException) {
+                throw UnreachableException(e)
             }
             val code = connection.responseCode
             if (code == 401 || code == 403) throw RejectedTokenException()

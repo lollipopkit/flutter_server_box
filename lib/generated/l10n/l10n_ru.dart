@@ -434,7 +434,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get extraArgs => 'Дополнительные аргументы';
 
   @override
-  String get fallbackSshDest => 'Резервное место назначения SSH';
+  String get fallbackAddrs => 'Запасные адреса';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2357,7 +2357,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'Запасной адрес, ProxyCommand, промежуточный сервер, передача файлов, путь на сервере';
+      'ProxyCommand, промежуточный сервер, передача файлов, путь на сервере';
 
   @override
   String get sshLegacyAlgorithms => 'Устаревшие алгоритмы';

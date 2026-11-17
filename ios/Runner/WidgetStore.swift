@@ -42,6 +42,9 @@ struct WidgetServer: Codable, Identifiable, Hashable {
     let name: String
     /// Base address of the agent, no trailing slash.
     let addr: String
+    /// The same agent at another address, dialled when `addr` cannot be
+    /// connected to (`MonitorHttpCredential.fallbackAddr`).
+    let fallbackAddr: String?
     /// The certificate accepted for this agent in the app; see `certPinAccepts`.
     let certSha256: String?
     /// Whether this server was opted in to plaintext HTTP in the app.

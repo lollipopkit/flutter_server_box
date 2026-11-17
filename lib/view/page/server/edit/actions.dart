@@ -256,7 +256,7 @@ extension _Actions on _ServerEditPageState {
   /// The same for the agent at the monitor URL; the pin is kept for that
   /// address only ([_monitorCertAddr]).
   Future<void> _onTapMonitorCert() async {
-    final addr = _monitorAddrCtrl.text.trim();
+    final addr = _monitorTlsAddr ?? _monitorAddrCtrl.text.trim();
     final uri = Uri.tryParse(addr);
     if (uri == null || uri.host.isEmpty || !uri.isScheme('https')) {
       Toast.error(libL10n.fail, body: l10n.monitorHttpsRequired);
@@ -753,6 +753,7 @@ extension _Actions on _ServerEditPageState {
         ? null
         : MonitorHttpCredential(
             addr: monitorAddr,
+            fallbackAddr: _monitorFallbackCtrl.text.selfNotEmptyOrNull,
             pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
             // Not edited here: kept for the same agent only.
             // TODO: remove with `MonitorHttpCredential.legacyUser`.
@@ -762,7 +763,7 @@ extension _Actions on _ServerEditPageState {
             // A pin names the certificate seen at one address: kept for that
             // address only, so another agent's first connection asks rather
             // than reporting a changed certificate.
-            certSha256: _monitorCertAddr?.trim() == monitorAddr.trim() ? _monitorCert.value : null,
+            certSha256: _monitorCertAddr?.trim() == _monitorTlsAddr ? _monitorCert.value : null,
             allowInsecure: _monitorAllowInsecure.value,
           );
 
@@ -1106,9 +1107,10 @@ extension _Utils on _ServerEditPageState {
     _preferMonitorHttp.value = dialled.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
+      _monitorFallbackCtrl.text = monitorHttp.fallbackAddr ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorCert.value = monitorHttp.certSha256;
-      _monitorCertAddr = monitorHttp.addr;
+      _monitorCertAddr = monitorHttp.tlsAddr;
       _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 

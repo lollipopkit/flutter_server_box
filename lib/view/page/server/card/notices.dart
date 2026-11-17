@@ -93,8 +93,13 @@ class ServerNotice {
     // The agent that is going to be dialled, not the one on file: with the
     // agent switched off, or the server being this device, nothing is sent to
     // that address and there is nothing to allow.
+    //
+    // Only a plaintext *primary* takes the page: nothing is dialled until it
+    // is allowed. A plaintext fallback is just not used without it, so the
+    // primary's own failure is what is said, with the fallback beside it.
     final monitor = srv.spi.monitorOn;
-    if (monitor != null && monitor.needsInsecureOptIn) {
+    final plain = monitor?.insecureAddr;
+    if (plain != null && plain == monitor!.addr) {
       return ServerNotice(
         kind: ServerNoticeKind.plainHttp,
         glyph: Icons.no_encryption_gmailerrorred_outlined,
@@ -103,7 +108,7 @@ class ServerNotice {
         // sending.
         title: l10n.plainHttpTitle,
         text: l10n.plainHttpTip,
-        mono: monitor.addr,
+        mono: plain,
         hint: l10n.monitorAllowInsecureHttpTip,
       );
     }
@@ -114,6 +119,7 @@ class ServerNotice {
         glyph: Icons.link_off,
         title: err.solution ?? libL10n.fail,
         mono: err.message ?? '',
+        hint: plain == null ? '' : '${l10n.plainHttpTitle}: $plain',
       );
     }
     // `connected` counts as busy: the SSH path sits there through system

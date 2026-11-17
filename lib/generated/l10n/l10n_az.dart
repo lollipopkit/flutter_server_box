@@ -434,7 +434,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get extraArgs => 'Əlavə arqumentlər';
 
   @override
-  String get fallbackSshDest => 'Ehtiyat SSH təyinatı';
+  String get fallbackAddrs => 'Ehtiyat ünvanlar';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2350,7 +2350,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'Ehtiyat ünvan, ProxyCommand, keçid serveri, fayl nəqli, uzaq yol';
+      'ProxyCommand, keçid serveri, fayl nəqli, uzaq yol';
 
   @override
   String get sshLegacyAlgorithms => 'Köhnə alqoritmlər';

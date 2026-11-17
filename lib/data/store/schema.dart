@@ -127,7 +127,8 @@ abstract final class SchemaVersion {
   /// v40: `server.ssh_identity_agent`
   /// v41: `server.ssh_forward_agent`
   /// v42: `server.ssh_control_path`
-  static const current = 42;
+  /// v43: `server.monitor_fallback_addr`
+  static const current = 43;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

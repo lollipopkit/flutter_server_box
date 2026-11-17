@@ -550,7 +550,6 @@ extension _Widgets on _ServerEditPageState {
           title: l10n.sshAdvanced,
           summary: Text(l10n.sshAdvancedTip),
           children: [
-            _buildAltUrl(),
             _buildProxyCommand(),
             _buildJumpServer(),
             if (controlMasterSupported) _buildControlPath(),
@@ -560,6 +559,7 @@ extension _Widgets on _ServerEditPageState {
             _buildSystemType(),
           ],
         ),
+        _buildFallbacks(),
         _buildOptionalTile(
           icon: Icons.image_outlined,
           title: l10n.appearanceAndPlace,
@@ -788,16 +788,52 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildAltUrl() {
-    return Input(
-      controller: _altUrlController,
-      type: TextInputType.url,
-      node: _alterUrlFocus,
-      onSubmitted: (_) => _focusScope.requestFocus(_proxyCommandFocus),
-      label: l10n.fallbackSshDest,
-      icon: MingCute.link_line,
-      hint: 'user@ip:port',
-      suggestion: false,
+  /// Where each enabled method is dialled when its address does not answer:
+  /// another route to the same machine, such as a Tailscale or public one.
+  Widget _buildFallbacks() {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_useSsh, _useMonitorHttp, _local]),
+      builder: (_, _) {
+        final ssh = _useSsh.value;
+        final monitor = _useMonitorHttp.value;
+        if (_local.value || (!ssh && !monitor)) return UIs.placeholder;
+        return _buildOptionalTile(
+          icon: MingCute.link_line,
+          title: l10n.fallbackAddrs,
+          summary: ListenableBuilder(
+            listenable: Listenable.merge([
+              _altUrlController,
+              _monitorFallbackCtrl,
+            ]),
+            builder: (_, _) => Text(
+              [
+                if (ssh) _altUrlController.text.trim(),
+                if (monitor) _monitorFallbackCtrl.text.trim(),
+              ].where((e) => e.isNotEmpty).join(' · '),
+            ),
+          ),
+          children: [
+            if (ssh)
+              Input(
+                controller: _altUrlController,
+                type: TextInputType.url,
+                icon: Icons.terminal,
+                label: 'SSH',
+                hint: 'user@ip:port',
+                suggestion: false,
+              ),
+            if (monitor)
+              Input(
+                controller: _monitorFallbackCtrl,
+                type: TextInputType.url,
+                icon: MingCute.web_line,
+                label: 'Monitor URL',
+                hint: 'https://100.64.0.1:3770',
+                suggestion: false,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1097,7 +1133,6 @@ extension _Widgets on _ServerEditPageState {
           controller: _usernameController,
           type: TextInputType.text,
           node: _usernameFocus,
-          onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
           label: libL10n.user,
           icon: Icons.account_box,
           hint: 'root',
@@ -1122,12 +1157,11 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildMonitorHttpFields() {
     const addr = 'https://127.0.0.1:3770';
     return ListenableBuilder(
-      listenable: _monitorAddrCtrl,
+      listenable: Listenable.merge([_monitorAddrCtrl, _monitorFallbackCtrl]),
       builder: (_, _) {
-        final plain = _monitorAddrCtrl.text
-            .trim()
-            .toLowerCase()
-            .startsWith('http://');
+        bool http(TextEditingController c) =>
+            c.text.trim().toLowerCase().startsWith('http://');
+        final plain = http(_monitorAddrCtrl);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1150,7 +1184,14 @@ extension _Widgets on _ServerEditPageState {
               onReveal: _revealStored(_monitorPwdCtrl),
               suggestion: false,
             ),
-            if (!plain) _buildMonitorCert() else _buildPlainHttpCallout(),
+            // Wherever either address is TLS — the pin is the agent's, and
+            // `_monitorTlsAddr` is the one of the two that is `https://`.
+            // Never with neither: there would be no certificate to review,
+            // and the pin of an earlier address to delete.
+            if (_monitorTlsAddr != null) _buildMonitorCert(),
+            // The fallback is the same agent, so permission for plaintext is
+            // asked whichever of the two is `http://`.
+            if (plain || http(_monitorFallbackCtrl)) _buildPlainHttpCallout(),
           ],
         );
       },
@@ -1439,7 +1480,7 @@ extension _Widgets on _ServerEditPageState {
     return _monitorCert.listenVal((stored) {
       // Rebuilt with the URL field (`_buildMonitorHttpFields`): a pin taken
       // at another address is not this one's.
-      final pinned = _monitorCertAddr?.trim() == _monitorAddrCtrl.text.trim() ? stored : null;
+      final pinned = _monitorCertAddr?.trim() == _monitorTlsAddr ? stored : null;
       final has = pinned != null && pinned.isNotEmpty;
       return ListTile(
         leading: Icon(has ? Icons.verified_user : MingCute.certificate_line),

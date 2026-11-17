@@ -25,12 +25,14 @@ void main() {
     required String id,
     required String name,
     String addr = addr,
+    String? fallbackAddr,
     String? certSha256,
     bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
+        fallbackAddr: fallbackAddr,
         pwd: 'secret',
         certSha256: certSha256,
         allowInsecure: allowInsecure,
@@ -101,6 +103,19 @@ void main() {
       );
 
       expect(entries(result).single['addr'], addr);
+    });
+
+    test('carries the fallback normalised, and no key without one', () {
+      final result = payload(
+        servers: [
+          monitorSpi(id: 'a', name: 'A', fallbackAddr: ' https://100.64.0.1:3770/ '),
+          monitorSpi(id: 'b', name: 'B'),
+        ],
+        tokens: {'a': tok('t'), 'b': tok('u')},
+      );
+
+      expect(entries(result).first['fallbackAddr'], 'https://100.64.0.1:3770');
+      expect(entries(result).last.containsKey('fallbackAddr'), isFalse);
     });
 
     test('is listed by name, which is how a picker is read', () {

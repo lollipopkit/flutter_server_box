@@ -1278,6 +1278,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _monitorFallbackAddrMeta =
+      const VerificationMeta('monitorFallbackAddr');
+  @override
+  late final GeneratedColumn<String> monitorFallbackAddr =
+      GeneratedColumn<String>(
+        'monitor_fallback_addr',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     updatedAt,
@@ -1322,6 +1333,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     sshIdentityAgent,
     sshForwardAgent,
     sshControlPath,
+    monitorFallbackAddr,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1645,6 +1657,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         ),
       );
     }
+    if (data.containsKey('monitor_fallback_addr')) {
+      context.handle(
+        _monitorFallbackAddrMeta,
+        monitorFallbackAddr.isAcceptableOrUnknown(
+          data['monitor_fallback_addr']!,
+          _monitorFallbackAddrMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1822,6 +1843,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}ssh_control_path'],
       ),
+      monitorFallbackAddr: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}monitor_fallback_addr'],
+      ),
     );
   }
 
@@ -1951,6 +1976,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// [SshCredential.controlPath]. Last, for the reason [diskCountsNetwork]
   /// is.
   final String? sshControlPath;
+
+  /// [MonitorHttpCredential.fallbackAddr]. Last, for the reason
+  /// [diskCountsNetwork] is.
+  final String? monitorFallbackAddr;
   const ServerRow({
     required this.updatedAt,
     required this.rev,
@@ -1994,6 +2023,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.sshIdentityAgent,
     required this.sshForwardAgent,
     this.sshControlPath,
+    this.monitorFallbackAddr,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2102,6 +2132,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     if (!nullToAbsent || sshControlPath != null) {
       map['ssh_control_path'] = Variable<String>(sshControlPath);
     }
+    if (!nullToAbsent || monitorFallbackAddr != null) {
+      map['monitor_fallback_addr'] = Variable<String>(monitorFallbackAddr);
+    }
     return map;
   }
 
@@ -2209,6 +2242,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshControlPath: sshControlPath == null && nullToAbsent
           ? const Value.absent()
           : Value(sshControlPath),
+      monitorFallbackAddr: monitorFallbackAddr == null && nullToAbsent
+          ? const Value.absent()
+          : Value(monitorFallbackAddr),
     );
   }
 
@@ -2268,6 +2304,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshIdentityAgent: serializer.fromJson<String?>(json['sshIdentityAgent']),
       sshForwardAgent: serializer.fromJson<bool>(json['sshForwardAgent']),
       sshControlPath: serializer.fromJson<String?>(json['sshControlPath']),
+      monitorFallbackAddr: serializer.fromJson<String?>(
+        json['monitorFallbackAddr'],
+      ),
     );
   }
   @override
@@ -2318,6 +2357,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'sshIdentityAgent': serializer.toJson<String?>(sshIdentityAgent),
       'sshForwardAgent': serializer.toJson<bool>(sshForwardAgent),
       'sshControlPath': serializer.toJson<String?>(sshControlPath),
+      'monitorFallbackAddr': serializer.toJson<String?>(monitorFallbackAddr),
     };
   }
 
@@ -2364,6 +2404,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> sshIdentityAgent = const Value.absent(),
     bool? sshForwardAgent,
     Value<String?> sshControlPath = const Value.absent(),
+    Value<String?> monitorFallbackAddr = const Value.absent(),
   }) => ServerRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
@@ -2426,6 +2467,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     sshControlPath: sshControlPath.present
         ? sshControlPath.value
         : this.sshControlPath,
+    monitorFallbackAddr: monitorFallbackAddr.present
+        ? monitorFallbackAddr.value
+        : this.monitorFallbackAddr,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -2515,6 +2559,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       sshControlPath: data.sshControlPath.present
           ? data.sshControlPath.value
           : this.sshControlPath,
+      monitorFallbackAddr: data.monitorFallbackAddr.present
+          ? data.monitorFallbackAddr.value
+          : this.monitorFallbackAddr,
     );
   }
 
@@ -2562,7 +2609,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('diskCountsNetwork: $diskCountsNetwork, ')
           ..write('sshIdentityAgent: $sshIdentityAgent, ')
           ..write('sshForwardAgent: $sshForwardAgent, ')
-          ..write('sshControlPath: $sshControlPath')
+          ..write('sshControlPath: $sshControlPath, ')
+          ..write('monitorFallbackAddr: $monitorFallbackAddr')
           ..write(')'))
         .toString();
   }
@@ -2611,6 +2659,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     sshIdentityAgent,
     sshForwardAgent,
     sshControlPath,
+    monitorFallbackAddr,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2657,7 +2706,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.diskCountsNetwork == this.diskCountsNetwork &&
           other.sshIdentityAgent == this.sshIdentityAgent &&
           other.sshForwardAgent == this.sshForwardAgent &&
-          other.sshControlPath == this.sshControlPath);
+          other.sshControlPath == this.sshControlPath &&
+          other.monitorFallbackAddr == this.monitorFallbackAddr);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -2703,6 +2753,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> sshIdentityAgent;
   final Value<bool> sshForwardAgent;
   final Value<String?> sshControlPath;
+  final Value<String?> monitorFallbackAddr;
   const ServersCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
@@ -2746,6 +2797,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshIdentityAgent = const Value.absent(),
     this.sshForwardAgent = const Value.absent(),
     this.sshControlPath = const Value.absent(),
+    this.monitorFallbackAddr = const Value.absent(),
   });
   ServersCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -2790,6 +2842,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshIdentityAgent = const Value.absent(),
     this.sshForwardAgent = const Value.absent(),
     this.sshControlPath = const Value.absent(),
+    this.monitorFallbackAddr = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
   static Insertable<ServerRow> custom({
@@ -2835,6 +2888,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? sshIdentityAgent,
     Expression<bool>? sshForwardAgent,
     Expression<String>? sshControlPath,
+    Expression<String>? monitorFallbackAddr,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2881,6 +2935,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (sshIdentityAgent != null) 'ssh_identity_agent': sshIdentityAgent,
       if (sshForwardAgent != null) 'ssh_forward_agent': sshForwardAgent,
       if (sshControlPath != null) 'ssh_control_path': sshControlPath,
+      if (monitorFallbackAddr != null)
+        'monitor_fallback_addr': monitorFallbackAddr,
     });
   }
 
@@ -2927,6 +2983,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? sshIdentityAgent,
     Value<bool>? sshForwardAgent,
     Value<String?>? sshControlPath,
+    Value<String?>? monitorFallbackAddr,
   }) {
     return ServersCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2972,6 +3029,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       sshIdentityAgent: sshIdentityAgent ?? this.sshIdentityAgent,
       sshForwardAgent: sshForwardAgent ?? this.sshForwardAgent,
       sshControlPath: sshControlPath ?? this.sshControlPath,
+      monitorFallbackAddr: monitorFallbackAddr ?? this.monitorFallbackAddr,
     );
   }
 
@@ -3108,6 +3166,11 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (sshControlPath.present) {
       map['ssh_control_path'] = Variable<String>(sshControlPath.value);
     }
+    if (monitorFallbackAddr.present) {
+      map['monitor_fallback_addr'] = Variable<String>(
+        monitorFallbackAddr.value,
+      );
+    }
     return map;
   }
 
@@ -3155,7 +3218,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('diskCountsNetwork: $diskCountsNetwork, ')
           ..write('sshIdentityAgent: $sshIdentityAgent, ')
           ..write('sshForwardAgent: $sshForwardAgent, ')
-          ..write('sshControlPath: $sshControlPath')
+          ..write('sshControlPath: $sshControlPath, ')
+          ..write('monitorFallbackAddr: $monitorFallbackAddr')
           ..write(')'))
         .toString();
   }
@@ -11035,6 +11099,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> sshIdentityAgent,
       Value<bool> sshForwardAgent,
       Value<String?> sshControlPath,
+      Value<String?> monitorFallbackAddr,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -11080,6 +11145,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> sshIdentityAgent,
       Value<bool> sshForwardAgent,
       Value<String?> sshControlPath,
+      Value<String?> monitorFallbackAddr,
     });
 
 final class $$ServersTableReferences
@@ -11598,6 +11664,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get sshControlPath => $composableBuilder(
     column: $table.sshControlPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get monitorFallbackAddr => $composableBuilder(
+    column: $table.monitorFallbackAddr,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12207,6 +12278,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get monitorFallbackAddr => $composableBuilder(
+    column: $table.monitorFallbackAddr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PrivateKeysTableOrderingComposer get sshKeyId {
     final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -12424,6 +12500,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get sshControlPath => $composableBuilder(
     column: $table.sshControlPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get monitorFallbackAddr => $composableBuilder(
+    column: $table.monitorFallbackAddr,
     builder: (column) => column,
   );
 
@@ -12915,6 +12996,7 @@ class $$ServersTableTableManager
                 Value<String?> sshIdentityAgent = const Value.absent(),
                 Value<bool> sshForwardAgent = const Value.absent(),
                 Value<String?> sshControlPath = const Value.absent(),
+                Value<String?> monitorFallbackAddr = const Value.absent(),
               }) => ServersCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12958,6 +13040,7 @@ class $$ServersTableTableManager
                 sshIdentityAgent: sshIdentityAgent,
                 sshForwardAgent: sshForwardAgent,
                 sshControlPath: sshControlPath,
+                monitorFallbackAddr: monitorFallbackAddr,
               ),
           createCompanionCallback:
               ({
@@ -13003,6 +13086,7 @@ class $$ServersTableTableManager
                 Value<String?> sshIdentityAgent = const Value.absent(),
                 Value<bool> sshForwardAgent = const Value.absent(),
                 Value<String?> sshControlPath = const Value.absent(),
+                Value<String?> monitorFallbackAddr = const Value.absent(),
               }) => ServersCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -13046,6 +13130,7 @@ class $$ServersTableTableManager
                 sshIdentityAgent: sshIdentityAgent,
                 sshForwardAgent: sshForwardAgent,
                 sshControlPath: sshControlPath,
+                monitorFallbackAddr: monitorFallbackAddr,
               ),
           withReferenceMapper: (p0) => p0
               .map(

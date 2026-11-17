@@ -392,6 +392,8 @@ final class WatchSync {
         'id': spi.id,
         'name': spi.name,
         'addr': monitor.addr.trim(),
+        if (monitor.fallbackAddr case final f? when f.trim().isNotEmpty)
+          'fallbackAddr': f.trim(),
         'token': token.token,
         // Read back by `_existingTokens` on the next push to decide whether
         // this one is close enough to expiry to replace. The watch app itself

@@ -98,10 +98,22 @@ final class WidgetMonitorClient: NSObject {
         return (reading, history)
     }
 
-    private var base: String {
-        let addr = server.addr.trimmingCharacters(in: .whitespacesAndNewlines)
-        return addr.hasSuffix("/") ? String(addr.dropLast()) : addr
+    /// The server's addresses, no trailing slash: `addr`, then its fallback.
+    private var bases: [String] {
+        var out: [String] = []
+        for raw in [server.addr, server.fallbackAddr ?? ""] {
+            let addr = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            let base = addr.hasSuffix("/") ? String(addr.dropLast()) : addr
+            if !base.isEmpty && !out.contains(base) { out.append(base) }
+        }
+        return out
     }
+
+    /// The address that last answered, per server id, tried first. Static:
+    /// a client is built per timeline refresh, and the extension's process
+    /// outlives several of them.
+    private static var answered: [String: String] = [:]
+    private static let answeredLock = NSLock()
 
     /// Whether this connection may carry a credential.
     ///
@@ -149,7 +161,44 @@ final class WidgetMonitorClient: NSObject {
         )
     }
 
+    /// [path] from the first of the server's addresses that can be connected
+    /// to. Only a connection that never opened moves on: an answer, even a
+    /// refusal, came from the agent, and a certificate refused at one address
+    /// is the same certificate at the other.
     private func get<T: Decodable>(_ path: String) async throws -> T {
+        var ordered = bases
+        Self.answeredLock.lock()
+        let last = Self.answered[server.id]
+        Self.answeredLock.unlock()
+        if let last, let i = ordered.firstIndex(of: last) {
+            ordered.insert(ordered.remove(at: i), at: 0)
+        }
+        var unreachable: Error?
+        for base in ordered {
+            do {
+                let value: T = try await get(path, at: base)
+                Self.answeredLock.lock()
+                Self.answered[server.id] = base
+                Self.answeredLock.unlock()
+                return value
+            } catch let error as URLError where Self.isUnreachable(error) {
+                unreachable = error
+            }
+        }
+        throw WidgetError.transport(unreachable?.localizedDescription ?? "")
+    }
+
+    private static func isUnreachable(_ error: URLError) -> Bool {
+        switch error.code {
+        case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed,
+             .timedOut, .networkConnectionLost, .notConnectedToInternet:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func get<T: Decodable>(_ path: String, at base: String) async throws -> T {
         guard let url = URL(string: base + path) else { throw WidgetError.badUrl }
         guard isSendable(url) else { throw WidgetError.insecure }
         guard let token = WidgetStore.token(for: server.id), !token.isEmpty else {
@@ -168,6 +217,8 @@ final class WidgetMonitorClient: NSObject {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: req)
+        } catch let error as URLError where Self.isUnreachable(error) {
+            throw error
         } catch {
             throw WidgetError.transport(error.localizedDescription)
         }

@@ -208,6 +208,8 @@ final class WidgetSync {
         'id': spi.id,
         'name': spi.name,
         'addr': normalizeAgentEndpoint(monitor.addr),
+        if (monitor.fallbackAddr case final f? when f.trim().isNotEmpty)
+          'fallbackAddr': normalizeAgentEndpoint(f),
         // Only a credential this side actually holds. A reused one lives in
         // the platform store and comes back as a placeholder
         // (`ScopedToken.held`); publishing that would write the word "held"

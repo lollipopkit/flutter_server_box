@@ -30,6 +30,7 @@ void main() {
     required String id,
     required String name,
     String addr = addr,
+    String? fallbackAddr,
     String? pwd = 'secret',
     String? certSha256,
     bool allowInsecure = false,
@@ -37,6 +38,7 @@ void main() {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
+        fallbackAddr: fallbackAddr,
         pwd: pwd,
         certSha256: certSha256,
         allowInsecure: allowInsecure,
@@ -111,6 +113,21 @@ void main() {
       final server = (result['servers'] as List).single as Map;
       expect(server.containsKey('user'), isFalse);
       expect(server.containsKey('pwd'), isFalse);
+    });
+
+    test('carries the fallback, and leaves the key out when there is none', () {
+      final result = payload(
+        selectedIds: ['a', 'b'],
+        servers: [
+          monitorSpi(id: 'a', name: 'Two', fallbackAddr: ' https://100.64.0.1:3770 '),
+          monitorSpi(id: 'b', name: 'One'),
+        ],
+        tokens: {'a': tok('t-a'), 'b': tok('t-b')},
+      );
+
+      final servers = (result['servers'] as List).cast<Map>();
+      expect(servers.first['fallbackAddr'], 'https://100.64.0.1:3770');
+      expect(servers.last.containsKey('fallbackAddr'), isFalse);
     });
 
     test('keeps the selection order, which is the order of the pages', () {

@@ -318,6 +318,7 @@ import UserNotifications
                     id: id,
                     name: entry["name"] as? String ?? addr,
                     addr: addr,
+                    fallbackAddr: (entry["fallbackAddr"] as? String).flatMap { $0.isEmpty ? nil : $0 },
                     certSha256: entry["certSha256"] as? String,
                     allowInsecure: entry["allowInsecure"] as? Bool ?? false,
                     // Kept from the stored entry when this push brought no

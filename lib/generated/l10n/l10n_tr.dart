@@ -432,7 +432,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get extraArgs => 'Ek argümanlar';
 
   @override
-  String get fallbackSshDest => 'Yedek SSH hedefi';
+  String get fallbackAddrs => 'Yedek adresler';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2336,7 +2336,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'Yedek hedef, ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol';
+      'ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol';
 
   @override
   String get sshLegacyAlgorithms => 'Eski algoritmalar';

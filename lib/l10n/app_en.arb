@@ -519,9 +519,9 @@
   "@extraArgs": {
     "description": "User-facing label or message for extra args."
   },
-  "fallbackSshDest": "Fallback SSH destination",
-  "@fallbackSshDest": {
-    "description": "User-facing label or message for fallback SSH dest."
+  "fallbackAddrs": "Fallback addresses",
+  "@fallbackAddrs": {
+    "description": "Title of the server editor group holding each connection method's fallback address."
   },
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
   "fileChangedOverwrite": "'{file}' changed on the server after it was opened. Overwrite it?",
@@ -3036,7 +3036,7 @@
   "@sshAdvanced": {
     "description": "User-facing label or message for SSH advanced."
   },
-  "sshAdvancedTip": "Fallback destination, ProxyCommand, jump server, file transport, remote path",
+  "sshAdvancedTip": "ProxyCommand, jump server, file transport, remote path",
   "@sshAdvancedTip": {
     "description": "Help text for the SSH advanced setting or action."
   },
