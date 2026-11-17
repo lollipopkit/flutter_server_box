@@ -1184,10 +1184,11 @@ extension _Widgets on _ServerEditPageState {
               onReveal: _revealStored(_monitorPwdCtrl),
               suggestion: false,
             ),
-            // Wherever either address is TLS: the pin is the agent's, read at
-            // whichever of the two is `https://` (`_monitorTlsAddr`).
-            if (!plain || !http(_monitorFallbackCtrl) && _monitorFallbackCtrl.text.trim().isNotEmpty)
-              _buildMonitorCert(),
+            // Wherever either address is TLS — the pin is the agent's, and
+            // `_monitorTlsAddr` is the one of the two that is `https://`.
+            // Never with neither: there would be no certificate to review,
+            // and the pin of an earlier address to delete.
+            if (_monitorTlsAddr != null) _buildMonitorCert(),
             // The fallback is the same agent, so permission for plaintext is
             // asked whichever of the two is `http://`.
             if (plain || http(_monitorFallbackCtrl)) _buildPlainHttpCallout(),
