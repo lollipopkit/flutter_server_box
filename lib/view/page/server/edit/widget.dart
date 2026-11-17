@@ -1184,7 +1184,10 @@ extension _Widgets on _ServerEditPageState {
               onReveal: _revealStored(_monitorPwdCtrl),
               suggestion: false,
             ),
-            if (!plain) _buildMonitorCert(),
+            // Wherever either address is TLS: the pin is the agent's, read at
+            // whichever of the two is `https://` (`_monitorTlsAddr`).
+            if (!plain || !http(_monitorFallbackCtrl) && _monitorFallbackCtrl.text.trim().isNotEmpty)
+              _buildMonitorCert(),
             // The fallback is the same agent, so permission for plaintext is
             // asked whichever of the two is `http://`.
             if (plain || http(_monitorFallbackCtrl)) _buildPlainHttpCallout(),
@@ -1476,7 +1479,7 @@ extension _Widgets on _ServerEditPageState {
     return _monitorCert.listenVal((stored) {
       // Rebuilt with the URL field (`_buildMonitorHttpFields`): a pin taken
       // at another address is not this one's.
-      final pinned = _monitorCertAddr?.trim() == _monitorAddrCtrl.text.trim() ? stored : null;
+      final pinned = _monitorCertAddr?.trim() == _monitorTlsAddr ? stored : null;
       final has = pinned != null && pinned.isNotEmpty;
       return ListTile(
         leading: Icon(has ? Icons.verified_user : MingCute.certificate_line),

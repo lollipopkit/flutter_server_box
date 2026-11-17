@@ -141,6 +141,12 @@ extension on _ServerDetailPageState {
             text: l10n.viewError,
             onTap: () => _showErrDetail(srv, err),
           ),
+        // A plaintext fallback, unused until allowed — see `ServerNotice.of`.
+        if (srv.spi.monitorOn?.insecureAddr != null)
+          Btn.text(
+            text: l10n.allowForThisServer,
+            onTap: () => _allowInsecure(srv),
+          ),
         edit,
       ],
       // Nothing to do about a machine that is still on its way.

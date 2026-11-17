@@ -220,22 +220,54 @@ class MonitorHttpClient {
     if (_route == 0 || _probing || _disposed) return;
     final now = DateTime.now();
     if (_probedAt case final at? when now.difference(at) < _probeEvery) return;
+    _probedAt = now;
+    unawaited(probePrimary());
+  }
+
+  /// [_probePrimary] now, whatever the interval says.
+  ///
+  /// An `https://` address counts as back only once a TLS handshake there
+  /// passes the same check requests make ([_httpClient]): a port that accepts
+  /// a connection and never completes a handshake — a captive portal, a
+  /// half-started proxy — would otherwise take every request back to an
+  /// address where each fails with a handshake error, which does not fail
+  /// over.
+  @visibleForTesting
+  Future<void> probePrimary() async {
+    final dio = _dio;
+    if (dio == null || _route == 0 || _probing || _disposed) return;
     final uri = Uri.tryParse(_addrAt(0));
     if (uri == null || uri.host.isEmpty) return;
     _probing = true;
-    _probedAt = now;
-    unawaited(
-      Socket.connect(uri.host, uri.port, timeout: _probeTimeout)
-          .then((socket) {
-            socket.destroy();
-            if (_disposed || _route == 0) return;
-            Loggers.app.info('Monitor reachable again at ${_addrAt(0)}');
-            _route = 0;
-            dio.options.baseUrl = _addr;
-          })
-          .catchError((_) {})
-          .whenComplete(() => _probing = false),
-    );
+    try {
+      final Future<Socket> connecting = uri.isScheme('https')
+          ? SecureSocket.connect(
+              uri.host,
+              uri.port,
+              timeout: _probeTimeout,
+              onBadCertificate: (cert) =>
+                  certPinAccepts(pin: monitor.certSha256, der: cert.der),
+            )
+          : Socket.connect(uri.host, uri.port, timeout: _probeTimeout);
+      final Socket socket;
+      try {
+        // The handshake as well as the connect: `timeout` above bounds only
+        // the second.
+        socket = await connecting.timeout(_probeTimeout);
+      } on TimeoutException {
+        unawaited(connecting.then((s) => s.destroy(), onError: (_) {}));
+        return;
+      }
+      socket.destroy();
+      if (_disposed || _route == 0) return;
+      Loggers.app.info('Monitor reachable again at ${_addrAt(0)}');
+      _route = 0;
+      dio.options.baseUrl = _addr;
+    } catch (_) {
+      // Still unreachable: stay where requests work.
+    } finally {
+      _probing = false;
+    }
   }
 
   /// The certificate a handshake refused, for [_certErr]. Kept, not taken:

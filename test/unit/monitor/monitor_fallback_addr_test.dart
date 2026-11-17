@@ -115,6 +115,52 @@ void main() {
     );
   });
 
+  group('back to the address', () {
+    /// A client on [primary]'s fallback after [primary] refused it.
+    Future<MonitorHttpClient> movedOff(String primary) async {
+      final (fallback, _) = await agent();
+      final c = client(primary, fallback: fallback);
+      await c.capabilities();
+      expect(c.agentUri.toString(), fallback);
+      return c;
+    }
+
+    test('once it can be connected to again', () async {
+      final primary = await closed();
+      final c = await movedOff(primary);
+      final port = Uri.parse(primary).port;
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
+      servers.add(server);
+      server.listen((req) => req.response.close());
+
+      await c.probePrimary();
+      expect(c.agentUri.toString(), primary);
+    });
+
+    // A port that takes the connection and never completes TLS: a captive
+    // portal, a proxy still starting. Requests there would fail with a
+    // handshake error, which does not fail over.
+    test('not while TLS there never completes', () async {
+      final primary = (await closed()).replaceFirst('http://', 'https://');
+      final c = await movedOff(primary);
+      final silent = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        Uri.parse(primary).port,
+      );
+      addTearDown(silent.close);
+      final held = <Socket>[];
+      silent.listen(held.add);
+      addTearDown(() {
+        for (final s in held) {
+          s.destroy();
+        }
+      });
+
+      await c.probePrimary();
+      expect(c.agentUri.toString(), isNot(primary));
+    });
+  });
+
   test('a plaintext fallback needs the same opt-in the address does', () {
     const https = MonitorHttpCredential(addr: 'https://a.example:3770');
     expect(https.needsInsecureOptIn, isFalse);

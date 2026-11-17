@@ -200,6 +200,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   /// The monitor URL [_monitorCert] was read at.
   String? _monitorCertAddr;
+
+  /// The address [_monitorCert] is the certificate of: the first of the URL
+  /// and its fallback on `https://`, as `MonitorHttpCredential.tlsAddr`.
+  String? get _monitorTlsAddr => MonitorHttpCredential(
+    addr: _monitorAddrCtrl.text,
+    fallbackAddr: _monitorFallbackCtrl.text,
+  ).tlsAddr?.trim();
   final _monitorAllowInsecure = ValueNotifier(false);
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP

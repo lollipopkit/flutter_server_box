@@ -15,6 +15,7 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/status/battery.dart';
 import 'package:server_box/data/model/server/status/disk_smart.dart';
 import 'package:server_box/data/model/server/status/gpu.dart';

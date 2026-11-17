@@ -84,6 +84,15 @@ final class MonitorHttpCredential {
     return null;
   }
 
+  /// The first of [addrs] on `https://`: the one [certSha256] is the
+  /// certificate of, and the one the editor reads a certificate from.
+  String? get tlsAddr {
+    for (final a in addrs) {
+      if (a.trim().toLowerCase().startsWith('https://')) return a;
+    }
+    return null;
+  }
+
   /// Where to connect, in order: [addr], then [fallbackAddr] when set.
   List<String> get addrs => [
     addr,
