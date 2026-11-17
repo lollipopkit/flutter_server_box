@@ -42,6 +42,10 @@ impl DataCleanupService {
     /// separately via their own retention.
     const SIZE_CAPPED_TABLES: &'static [&'static str] = &[
         "system_metrics",
+        "metrics_disk_usage",
+        "metrics_iface",
+        "metrics_gpu",
+        "metrics_temp",
         "network_totals",
         "component_metrics",
         "rule_executions",
@@ -213,8 +217,12 @@ impl DataCleanupService {
     }
 
     async fn trim_oldest(&self, table: &'static str, keep: i64) -> Result<u64> {
+        let order_col = match table {
+            "metrics_disk_usage" | "metrics_iface" | "metrics_gpu" | "metrics_temp" => "end",
+            _ => "timestamp",
+        };
         Ok(sqlx::query(sqlx::AssertSqlSafe(format!(
-            "DELETE FROM {table} WHERE rowid IN              (SELECT rowid FROM {table} ORDER BY timestamp LIMIT               (SELECT MIN(count(*) / 10 + 1, MAX(count(*) - {keep}, 0)) FROM {table}))"
+            "DELETE FROM {table} WHERE rowid IN              (SELECT rowid FROM {table} ORDER BY {order_col} LIMIT               (SELECT MIN(count(*) / 10 + 1, MAX(count(*) - {keep}, 0)) FROM {table}))"
         )))
         .execute(&self.pool)
         .await?
@@ -295,14 +303,37 @@ impl DataCleanupService {
 
         let deleted_count = result.rows_affected();
 
-        if deleted_count > 0 {
+        // The per-device tables behind each sample; see migration 044. Deleting
+        // `system_metrics` alone would leave them to grow without bound. Each
+        // row is a stretch, so it goes when the stretch ended before the
+        // cutoff rather than when it began.
+        let mut detail = 0u64;
+        for table in [
+            "metrics_disk_usage",
+            "metrics_iface",
+            "metrics_gpu",
+            "metrics_temp",
+        ] {
+            // `query`, not `query!`: the table name is a loop variable out of
+            // the list just above, which the macro cannot check at build time.
+            let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+                "DELETE FROM {table} WHERE end < ?"
+            )))
+            .bind(cutoff_date)
+            .execute(&self.pool)
+            .await?
+            .rows_affected();
+            detail += rows;
+        }
+
+        if deleted_count > 0 || detail > 0 {
             info!(
-                "Deleted {} old metrics records older than {} days",
-                deleted_count, self.config.metrics_days
+                "Deleted {} old metrics records and {} detail rows older than {} days",
+                deleted_count, detail, self.config.metrics_days
             );
         }
 
-        Ok(deleted_count)
+        Ok(deleted_count + detail)
     }
 
     async fn cleanup_old_alerts(&self) -> Result<u64> {
@@ -445,5 +476,69 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(remaining, MIN_AUDIT_ROWS);
+    }
+
+    #[tokio::test]
+    async fn size_cap_trims_detail_tables_by_end_column() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+        let t0 = Utc::now() - Duration::hours(2);
+        let t1 = Utc::now() - Duration::hours(1);
+        sqlx::query(
+            "INSERT INTO metrics_disk_usage (mount, start, end, used, total) VALUES ('/', ?1, ?1, 10, 100), ('/', ?2, ?2, 20, 100)",
+        )
+        .bind(t0)
+        .bind(t1)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO metrics_iface (name, start, end, rx_bytes_per_sec, tx_bytes_per_sec) VALUES ('eth0', ?1, ?1, 100, 100), ('eth0', ?2, ?2, 200, 200)",
+        )
+        .bind(t0)
+        .bind(t1)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO metrics_gpu (id, start, end, name, usage_percent, memory_used, memory_total) VALUES ('g0', ?1, ?1, 'GPU', 10, 100, 1000), ('g0', ?2, ?2, 'GPU', 20, 200, 1000)",
+        )
+        .bind(t0)
+        .bind(t1)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO metrics_temp (device, start, end, celsius) VALUES ('cpu', ?1, ?1, 40), ('cpu', ?2, ?2, 50)",
+        )
+        .bind(t0)
+        .bind(t1)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
+        for table in [
+            "metrics_disk_usage",
+            "metrics_iface",
+            "metrics_gpu",
+            "metrics_temp",
+        ] {
+            assert!(DataCleanupService::SIZE_CAPPED_TABLES.contains(&table));
+            let deleted = cleanup.trim_oldest(table, 0).await.unwrap();
+            assert_eq!(deleted, 1, "{table} should delete oldest row");
+        }
+
+        let (remaining_start,): (chrono::DateTime<Utc>,) =
+            sqlx::query_as("SELECT start FROM metrics_disk_usage")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(remaining_start, t1, "newer stretch stays");
     }
 }

@@ -388,10 +388,36 @@ export interface StatusResponse {
   timestamp: string;
 }
 
+export interface HistoryMount {
+  mount: string;
+  used: number;
+  total: number;
+}
+
+export interface HistoryIface {
+  name: string;
+  rx_bytes_per_sec: number;
+  tx_bytes_per_sec: number;
+}
+
+export interface HistoryGpu {
+  id: string;
+  name: string;
+  usage_percent?: number | null;
+  memory_used?: number | null;
+  memory_total?: number | null;
+}
+
+export interface HistoryTemp {
+  device: string;
+  celsius: number;
+}
+
 export interface HistoryPoint {
   timestamp: string;
   cpu: number;
   memory: number;
+  swap?: number | null;
   disk: number;
   net_rx_speed: number;
   net_tx_speed: number;
@@ -399,6 +425,10 @@ export interface HistoryPoint {
   diskio_read_speed: number;
   diskio_write_speed: number;
   battery_percent?: number;
+  mounts?: HistoryMount[];
+  ifaces?: HistoryIface[];
+  gpus?: HistoryGpu[];
+  temps?: HistoryTemp[];
 }
 
 export interface LoginRequest {

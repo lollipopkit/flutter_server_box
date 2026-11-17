@@ -389,20 +389,41 @@ Map<String, dynamic> _$MonitorSmartSummaryToJson(
   'power_cycle_count': instance.powerCycleCount,
 };
 
-MonitorHistoryPoint _$MonitorHistoryPointFromJson(Map<String, dynamic> json) =>
-    MonitorHistoryPoint(
-      timestamp: json['timestamp'] as String,
-      cpu: (json['cpu'] as num).toDouble(),
-      memory: (json['memory'] as num).toDouble(),
-      swap: (json['swap'] as num?)?.toDouble(),
-      disk: (json['disk'] as num).toDouble(),
-      netRxSpeed: (json['net_rx_speed'] as num).toDouble(),
-      netTxSpeed: (json['net_tx_speed'] as num).toDouble(),
-      temperature: (json['temperature'] as num?)?.toDouble(),
-      diskioReadSpeed: (json['diskio_read_speed'] as num).toDouble(),
-      diskioWriteSpeed: (json['diskio_write_speed'] as num).toDouble(),
-      batteryPercent: (json['battery_percent'] as num?)?.toDouble(),
-    );
+MonitorHistoryPoint _$MonitorHistoryPointFromJson(
+  Map<String, dynamic> json,
+) => MonitorHistoryPoint(
+  timestamp: json['timestamp'] as String,
+  cpu: (json['cpu'] as num).toDouble(),
+  memory: (json['memory'] as num).toDouble(),
+  swap: (json['swap'] as num?)?.toDouble(),
+  disk: (json['disk'] as num).toDouble(),
+  netRxSpeed: (json['net_rx_speed'] as num).toDouble(),
+  netTxSpeed: (json['net_tx_speed'] as num).toDouble(),
+  temperature: (json['temperature'] as num?)?.toDouble(),
+  diskioReadSpeed: (json['diskio_read_speed'] as num).toDouble(),
+  diskioWriteSpeed: (json['diskio_write_speed'] as num).toDouble(),
+  batteryPercent: (json['battery_percent'] as num?)?.toDouble(),
+  mounts:
+      (json['mounts'] as List<dynamic>?)
+          ?.map((e) => MonitorHistoryMount.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  ifaces:
+      (json['ifaces'] as List<dynamic>?)
+          ?.map((e) => MonitorHistoryIface.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  gpus:
+      (json['gpus'] as List<dynamic>?)
+          ?.map((e) => MonitorHistoryGpu.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  temps:
+      (json['temps'] as List<dynamic>?)
+          ?.map((e) => MonitorHistoryTemp.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+);
 
 Map<String, dynamic> _$MonitorHistoryPointToJson(
   MonitorHistoryPoint instance,
@@ -418,4 +439,65 @@ Map<String, dynamic> _$MonitorHistoryPointToJson(
   'diskio_read_speed': instance.diskioReadSpeed,
   'diskio_write_speed': instance.diskioWriteSpeed,
   'battery_percent': instance.batteryPercent,
+  'mounts': instance.mounts.map((e) => e.toJson()).toList(),
+  'ifaces': instance.ifaces.map((e) => e.toJson()).toList(),
+  'gpus': instance.gpus.map((e) => e.toJson()).toList(),
+  'temps': instance.temps.map((e) => e.toJson()).toList(),
 };
+
+MonitorHistoryMount _$MonitorHistoryMountFromJson(Map<String, dynamic> json) =>
+    MonitorHistoryMount(
+      mount: json['mount'] as String,
+      used: (json['used'] as num).toInt(),
+      total: (json['total'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$MonitorHistoryMountToJson(
+  MonitorHistoryMount instance,
+) => <String, dynamic>{
+  'mount': instance.mount,
+  'used': instance.used,
+  'total': instance.total,
+};
+
+MonitorHistoryIface _$MonitorHistoryIfaceFromJson(Map<String, dynamic> json) =>
+    MonitorHistoryIface(
+      name: json['name'] as String,
+      rxBytesPerSec: (json['rx_bytes_per_sec'] as num).toDouble(),
+      txBytesPerSec: (json['tx_bytes_per_sec'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$MonitorHistoryIfaceToJson(
+  MonitorHistoryIface instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'rx_bytes_per_sec': instance.rxBytesPerSec,
+  'tx_bytes_per_sec': instance.txBytesPerSec,
+};
+
+MonitorHistoryGpu _$MonitorHistoryGpuFromJson(Map<String, dynamic> json) =>
+    MonitorHistoryGpu(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      usagePercent: (json['usage_percent'] as num?)?.toDouble(),
+      memoryUsed: (json['memory_used'] as num?)?.toInt(),
+      memoryTotal: (json['memory_total'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$MonitorHistoryGpuToJson(MonitorHistoryGpu instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'usage_percent': instance.usagePercent,
+      'memory_used': instance.memoryUsed,
+      'memory_total': instance.memoryTotal,
+    };
+
+MonitorHistoryTemp _$MonitorHistoryTempFromJson(Map<String, dynamic> json) =>
+    MonitorHistoryTemp(
+      device: json['device'] as String,
+      celsius: (json['celsius'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$MonitorHistoryTempToJson(MonitorHistoryTemp instance) =>
+    <String, dynamic>{'device': instance.device, 'celsius': instance.celsius};

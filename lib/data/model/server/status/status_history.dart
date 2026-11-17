@@ -41,7 +41,7 @@ class StatusHistory {
   final gpu = Fifo<double?>(capacity: capacity);
 
   /// Celsius. The aggregate reading, kept for sources that only expose one
-  /// (and for [seed], since monitor's stored history has a single column).
+  /// (and for [seed] when reading an older Monitor without per-sensor detail).
   final temp = Fifo<double?>(capacity: capacity);
 
   /// Celsius per sensor, for hosts that expose several.
@@ -55,8 +55,8 @@ class StatusHistory {
   /// Bytes per second per block device and per interface, for the chart to
   /// draw a line each once a metric is being read in full.
   ///
-  /// Only ever live samples: nothing stores these, so a window asked of an
-  /// agent has the totals and nothing under them.
+  /// Disk I/O per device is live-only; per-interface network rates are also
+  /// populated from Monitor stored history (migration 044+).
   final _diskReads = _DeviceHistory();
   Map<String, List<double?>> get diskReadsByDevice => _diskReads.byDevice;
   final _diskWrites = _DeviceHistory();
@@ -189,8 +189,21 @@ class _DeviceHistory {
   };
 }
 
+/// Per-mount byte usage carried by a stored history bucket.
+typedef StoredMountSample = ({String mount, int used, int total});
+
+/// Per-GPU reading carried by a stored history bucket (memory in MiB).
+typedef StoredGpuSample = ({
+  String id,
+  String name,
+  double? usagePercent,
+  int? memoryUsed,
+  int? memoryTotal,
+});
+
 /// One point of a [StatusHistory]: a live refresh's, or a stored one handed
-/// to [StatusHistory.seed] (which has no GPU or per-device readings).
+/// to [StatusHistory.seed] (carrying per-device detail since migration 044,
+/// or aggregate-only from older agents/windows).
 class StatusHistorySample {
   final int timeMs;
   final double? cpu;
@@ -210,6 +223,8 @@ class StatusHistorySample {
   final Map<String, double>? diskWrites;
   final Map<String, double>? netRxs;
   final Map<String, double>? netTxs;
+  final List<StoredMountSample>? mounts;
+  final List<StoredGpuSample>? gpus;
 
   const StatusHistorySample({
     required this.timeMs,
@@ -230,5 +245,7 @@ class StatusHistorySample {
     this.diskWrites,
     this.netRxs,
     this.netTxs,
+    this.mounts,
+    this.gpus,
   });
 }

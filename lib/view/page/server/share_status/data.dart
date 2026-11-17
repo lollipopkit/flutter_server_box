@@ -6,6 +6,7 @@ import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status/disk.dart';
 import 'package:server_box/data/model/server/status/disk_smart.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -102,7 +103,9 @@ class StatusPoster {
       if (_smart(ss.diskSmart) case final b?) sections[PosterSection.smart] = b;
       if (_temp(srv, w, live) case final b?) sections[PosterSection.temp] = b;
       if (_net(srv, w, live) case final b?) sections[PosterSection.net] = b;
-      if (_sensors(srv, live) case final b?) sections[PosterSection.sensor] = b;
+      if (_sensors(srv, w, live) case final b?) {
+        sections[PosterSection.sensor] = b;
+      }
       if (_battery(srv, w, live) case final b?) sections[PosterSection.battery] = b;
     }
     return StatusPoster._(
@@ -292,8 +295,37 @@ PosterBlock? _stored(
 }
 
 PosterBlock? _gpu(ServerState srv, MetricWindow w, bool live) {
-  // A stored window keeps the busiest card's load and nothing else of it.
   if (!live) {
+    if (w.gpus.isNotEmpty) {
+      var best = w.gpus.first;
+      for (final g in w.gpus.skip(1)) {
+        if ((g.usagePercent ?? -1) > (best.usagePercent ?? -1)) best = g;
+      }
+      final avg = best.usagePercent ?? _avg(w.gpu);
+      // The named GPU's own peak: `w.gpu` is whichever was busiest at each
+      // point, which may be another one.
+      final peak = _peak(w.gpuUsagesByDevice[best.id] ?? const []);
+      final memText = best.memoryUsed != null && best.memoryTotal != null
+          ? '${best.memoryUsed} / ${best.memoryTotal} MiB'
+          : null;
+      final noteParts = [
+        if (avg != null) l10n.average,
+        if (memText != null) '${libL10n.memory} $memText',
+      ];
+      return PosterBlock(
+        title: best.name,
+        aside: peak == null ? null : '${l10n.peak} ${ReadingFmt.pct(peak)}',
+        value: ReadingFmt.pct(avg),
+        percent: avg == null ? null : avg / 100,
+        note: noteParts.isEmpty ? null : noteParts.join(' · '),
+        summary: [
+          best.name,
+          if (avg != null) '${l10n.average} ${ReadingFmt.pct(avg)}',
+          if (peak != null) '${l10n.peak} ${ReadingFmt.pct(peak)}',
+          if (memText != null) '${libL10n.memory} $memText',
+        ].join(' · '),
+      );
+    }
     final avg = _avg(w.gpu);
     if (avg == null) return null;
     return _stored(avg, peak: _peak(w.gpu));
@@ -322,9 +354,47 @@ PosterBlock? _gpu(ServerState srv, MetricWindow w, bool live) {
 /// The mounted filesystems, largest first: a list of every bind mount and
 /// snap loop device is not what a reader of a poster is after.
 PosterBlock? _disk(ServerState srv, MetricWindow w, bool live) {
-  // The agent keeps one usage for every mount together, and no name: the
-  // largest mounts are a fact of now, not of the range.
-  if (!live) return _stored(_avg(w.disk), peak: _peak(w.disk));
+  if (!live) {
+    final valid = [
+      for (final m in w.mounts)
+        if (m.mount.isNotEmpty &&
+            m.total > 0 &&
+            Disk(
+              path: m.mount,
+              mount: m.mount,
+              usedPercent: 0,
+              used: BigInt.zero,
+              size: BigInt.from(m.total ~/ 1024),
+              avail: BigInt.zero,
+            ).isStorage)
+          m,
+    ]..sort((a, b) => b.total.compareTo(a.total));
+    if (valid.isNotEmpty) {
+      final readAvg = _avg(w.diskRead);
+      final writeAvg = _avg(w.diskWrite);
+      final top = valid.take(4).toList();
+      final rows = [
+        for (final d in top)
+          (
+            name: d.mount,
+            value:
+                '${d.used.bytes2Str} / ${d.total.bytes2Str} · ${(d.used * 100 / d.total).round()}%',
+            percent: (d.used / d.total).clamp(0.0, 1.0),
+          ),
+      ];
+      return PosterBlock(
+        aside: readAvg == null && writeAvg == null
+            ? null
+            : '${l10n.read} ${ReadingFmt.rate(readAvg)} · ${l10n.write} ${ReadingFmt.rate(writeAvg)}',
+        value: '',
+        rows: rows,
+        summary: [
+          for (final d in top) '${d.mount} ${(d.used * 100 / d.total).round()}%',
+        ].join(', '),
+      );
+    }
+    return _stored(_avg(w.disk), peak: _peak(w.disk));
+  }
   final ss = srv.status;
   final mounted = <String, Disk>{};
   void walk(Iterable<Disk> disks) {
@@ -386,9 +456,31 @@ PosterBlock? _smart(List<DiskSmart> smarts) {
 }
 
 PosterBlock? _temp(ServerState srv, MetricWindow w, bool live) {
-  // One temperature is what a stored window holds — the hottest device's as
-  // it was sampled, without the device's name.
   if (!live) {
+    if (w.tempsByDevice.isNotEmpty) {
+      String? hottestName;
+      double? hottestAvg;
+      for (final MapEntry(:key, :value) in w.tempsByDevice.entries) {
+        final avg = _avg(value);
+        if (avg != null && (hottestAvg == null || avg > hottestAvg)) {
+          hottestName = key;
+          hottestAvg = avg;
+        }
+      }
+      if (hottestName != null && hottestAvg != null) {
+        final peak =
+            _peak(w.tempsByDevice[hottestName]!) ?? _peak(w.temp) ?? hottestAvg;
+        return PosterBlock(
+          value: ReadingFmt.temp(hottestAvg),
+          note: [
+            hottestName,
+            l10n.average,
+            '${l10n.peak} ${ReadingFmt.temp(peak)}',
+          ].join(' · '),
+          summary: '$hottestName ${l10n.average} ${ReadingFmt.temp(hottestAvg)}',
+        );
+      }
+    }
     return _stored(
       _avg(w.temp),
       peak: _peak(w.temp),
@@ -412,15 +504,21 @@ PosterBlock? _temp(ServerState srv, MetricWindow w, bool live) {
 
 PosterBlock? _net(ServerState srv, MetricWindow w, bool live) {
   final ns = srv.status.netSpeed;
-  if (ns.devices.isEmpty) return null;
+  if (live && ns.devices.isEmpty) return null;
+  if (!live &&
+      w.netRx.every((v) => v == null) &&
+      w.netTx.every((v) => v == null)) {
+    return null;
+  }
   final rx = cumulativeBytes(w.times, w.netRx).lastWhereOrNull((v) => v != null);
   final tx = cumulativeBytes(w.times, w.netTx).lastWhereOrNull((v) => v != null);
   final rxPeak = _peak(w.netRx);
   final txPeak = _peak(w.netTx);
-  final ifaces = ns.realIfaces;
+  final ifaces = live
+      ? ns.realIfaces
+      : _storedRealIfaces(w);
   return PosterBlock(
-    // Which interfaces the sum was of is not stored.
-    title: live && ifaces.length == 1 ? ifaces.first : null,
+    title: ifaces.length == 1 ? ifaces.first : null,
     value: '',
     pair: (
       a: (
@@ -442,10 +540,38 @@ PosterBlock? _net(ServerState srv, MetricWindow w, bool live) {
   );
 }
 
-PosterBlock? _sensors(ServerState srv, bool live) {
-  // Per-device temperatures are not stored, and the machine's present is not
-  // what a range is of.
-  if (!live) return null;
+List<String> _storedRealIfaces(MetricWindow w) {
+  final all = {
+    ...w.netRxByDevice.keys,
+    ...w.netTxByDevice.keys,
+  }.where((d) => !NetSpeed.isLoopback(d)).toList();
+  final real = all
+      .where((d) => NetSpeed.realIfacePrefixs.any((p) => d.startsWith(p)))
+      .toList();
+  return real.isNotEmpty ? real : all;
+}
+
+PosterBlock? _sensors(ServerState srv, MetricWindow w, bool live) {
+  if (!live) {
+    if (w.tempsByDevice.isEmpty) return null;
+    final entries = <({String name, double avg})>[];
+    for (final MapEntry(:key, :value) in w.tempsByDevice.entries) {
+      if (_avg(value) case final avg?) {
+        entries.add((name: key, avg: avg));
+      }
+    }
+    if (entries.isEmpty) return null;
+    entries.sort((a, b) => b.avg.compareTo(a.avg));
+    final shown = [
+      for (final e in entries.take(6))
+        (name: e.name, value: ReadingFmt.temp(e.avg), percent: null),
+    ];
+    return PosterBlock(
+      value: '',
+      rows: shown,
+      summary: shown.map((r) => '${r.name} ${r.value}').join(', '),
+    );
+  }
   final rows = [
     for (final s in srv.status.sensors)
       if (s.summary case final v? when v.isNotEmpty)

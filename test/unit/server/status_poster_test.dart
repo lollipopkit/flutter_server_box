@@ -160,7 +160,7 @@ void main() {
     expect(without.sections.containsKey(PosterSection.gpu), isFalse);
   });
 
-  test('a stored window keeps no names, and no per-device readings', () {
+  test('a stored window without detail keeps no names, and no per-device readings', () {
     final stored = StatusPoster.of(
       srv,
       MetricWindow.of([
@@ -174,6 +174,109 @@ void main() {
     expect(stored.sections[PosterSection.temp]!.value, '40°C');
     expect(stored.sections[PosterSection.net]!.title, isNull);
     expect(stored.sections.containsKey(PosterSection.sensor), isFalse);
+  });
+
+  test('a stored window with per-device detail shows mounts, GPU, sensors, and iface', () {
+    final stored = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        StatusHistorySample(
+          timeMs: 1000,
+          cpu: 20,
+          mem: 50,
+          disk: 50,
+          gpu: 60,
+          temp: 55,
+          netRx: 1000,
+          netTx: 2000,
+          temps: const {'coretemp': 50.0, 'nvme': 40.0},
+          netRxs: const {'eth0': 1000.0},
+          netTxs: const {'eth0': 2000.0},
+          mounts: const [
+            (mount: '/', used: 10 << 30, total: 20 << 30),
+            (mount: '/data', used: 100 << 30, total: 400 << 30),
+            (mount: '/snap/core/1', used: 50 << 20, total: 50 << 20),
+          ],
+          gpus: const [
+            (
+              id: 'nvidia:0',
+              name: 'RTX 4090',
+              usagePercent: 60.0,
+              memoryUsed: 4096,
+              memoryTotal: 24576,
+            ),
+          ],
+        ),
+        StatusHistorySample(
+          timeMs: 2000,
+          cpu: 30,
+          mem: 50,
+          disk: 50,
+          gpu: 80,
+          temp: 65,
+          netRx: 3000,
+          netTx: 4000,
+          temps: const {'coretemp': 60.0, 'nvme': 42.0},
+          netRxs: const {'eth0': 3000.0},
+          netTxs: const {'eth0': 4000.0},
+          mounts: const [
+            (mount: '/', used: 10 << 30, total: 20 << 30),
+            (mount: '/data', used: 100 << 30, total: 400 << 30),
+            (mount: '/snap/core/1', used: 50 << 20, total: 50 << 20),
+          ],
+          gpus: const [
+            (
+              id: 'nvidia:0',
+              name: 'RTX 4090',
+              usagePercent: 80.0,
+              memoryUsed: 8192,
+              memoryTotal: 24576,
+            ),
+          ],
+        ),
+      ]),
+      live: false,
+    );
+
+    final disk = stored.sections[PosterSection.disk]!;
+    expect(disk.rows.map((r) => r.name), ['/data', '/']);
+    expect(disk.rows.first.value, contains('25%'));
+
+    final gpu = stored.sections[PosterSection.gpu]!;
+    expect(gpu.title, 'RTX 4090');
+    expect(gpu.value, '70.0%');
+    expect(gpu.note, contains('6144 / 24576 MiB'));
+
+    final temp = stored.sections[PosterSection.temp]!;
+    expect(temp.value, '55°C');
+    expect(temp.note, contains('coretemp'));
+
+    final sensors = stored.sections[PosterSection.sensor]!;
+    expect(sensors.rows.map((r) => r.name), ['coretemp', 'nvme']);
+
+    expect(stored.sections[PosterSection.net]!.title, 'eth0');
+
+    // Non-CPU sensor hotter than CPU (`w.temp`) keeps its own sensor peak.
+    final hotterNvme = StatusPoster.of(
+      srv,
+      MetricWindow.of([
+        const StatusHistorySample(
+          timeMs: 1000,
+          temp: 40,
+          temps: {'coretemp': 40.0, 'nvme': 60.0},
+        ),
+        const StatusHistorySample(
+          timeMs: 2000,
+          temp: 42,
+          temps: {'coretemp': 42.0, 'nvme': 80.0},
+        ),
+      ]),
+      live: false,
+    );
+    final nvmeTemp = hotterNvme.sections[PosterSection.temp]!;
+    expect(nvmeTemp.value, '70°C');
+    expect(nvmeTemp.note, contains('nvme'));
+    expect(nvmeTemp.note, contains('80°C'));
   });
 
   test('SMART on every disk unavailable is not a pass', () {

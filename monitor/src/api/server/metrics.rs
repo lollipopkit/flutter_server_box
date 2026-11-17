@@ -6,8 +6,10 @@ use crate::{
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse},
     utils::error::Result,
 };
+use chrono::{DateTime, Utc};
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::sync::Arc;
 use super::*;
 
@@ -181,6 +183,50 @@ pub(super) struct HistoryPoint {
     diskio_read_speed: f64,
     diskio_write_speed: f64,
     battery_percent: Option<f64>,
+    /// Per-mount byte usage (`used` and `total`) overlapping the bucket
+    /// (migration 044). Absent for a window older than that migration, and for
+    /// points that fell in a bucket with no detail rows.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    mounts: Vec<HistoryMount>,
+    /// Per-interface rates (`rx_bytes_per_sec`, `tx_bytes_per_sec`) over
+    /// active stretches. Absent when every link was idle or before migration
+    /// 044.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    ifaces: Vec<HistoryIface>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    gpus: Vec<HistoryGpu>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    temps: Vec<HistoryTemp>,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryMount {
+    mount: String,
+    used: i64,
+    total: i64,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryIface {
+    name: String,
+    rx_bytes_per_sec: f64,
+    tx_bytes_per_sec: f64,
+}
+
+/// GPU usage and memory (in MiB) over a bucket.
+#[derive(Serialize)]
+pub(super) struct HistoryGpu {
+    id: String,
+    name: String,
+    usage_percent: Option<f64>,
+    memory_used: Option<i64>,
+    memory_total: Option<i64>,
+}
+
+#[derive(Serialize)]
+pub(super) struct HistoryTemp {
+    device: String,
+    celsius: f64,
 }
 
 /// Bucketed time series from system_metrics.
@@ -303,6 +349,7 @@ pub(super) async fn get_metrics_history(
     .await?;
 
     let mut points = Vec::with_capacity(rows.len());
+    let mut buckets = Vec::with_capacity(rows.len());
     // (bucket, rx, tx, diskio_read, diskio_write)
     let mut prev: Option<(i64, f64, f64, f64, f64)> = None;
     for row in rows {
@@ -324,6 +371,7 @@ pub(super) async fn get_metrics_history(
             _ => (0.0, 0.0, 0.0, 0.0),
         };
         prev = Some((bucket, rx, tx, dio_r, dio_w));
+        buckets.push(bucket);
         points.push(HistoryPoint {
             timestamp: row.get("ts"),
             cpu: row.try_get("cpu").unwrap_or(0.0),
@@ -336,8 +384,22 @@ pub(super) async fn get_metrics_history(
             diskio_read_speed,
             diskio_write_speed,
             battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
+            mounts: Vec::new(),
+            ifaces: Vec::new(),
+            gpus: Vec::new(),
+            temps: Vec::new(),
         });
     }
+
+    attach_history_detail(
+        &app_state.db,
+        bucket_secs,
+        cutoff,
+        until,
+        &buckets,
+        &mut points,
+    )
+    .await?;
 
     // A bucket boundary is an absolute multiple of `bucket_secs` while the
     // window's start is wherever "now minus N minutes" falls, so the first
@@ -350,6 +412,304 @@ pub(super) async fn get_metrics_history(
     }
 
     Ok(HttpResponse::Ok().json(&points))
+}
+
+/// Accumulates one or more stretches of the same device within a single bucket
+/// using overlap duration weights, falling back to an unweighted mean when all
+/// overlapping stretches are zero-length points.
+struct BucketMerge<T> {
+    list: Vec<(String, T)>,
+    by_key: HashMap<String, usize>,
+}
+
+impl<T> Default for BucketMerge<T> {
+    fn default() -> Self {
+        Self {
+            list: Vec::new(),
+            by_key: HashMap::new(),
+        }
+    }
+}
+
+impl<T> BucketMerge<T> {
+    fn entry_or_insert(&mut self, key: &str, init: impl FnOnce() -> T) -> &mut T {
+        if let Some(&idx) = self.by_key.get(key) {
+            &mut self.list[idx].1
+        } else {
+            let idx = self.list.len();
+            self.by_key.insert(key.to_string(), idx);
+            self.list.push((key.to_string(), init()));
+            &mut self.list[idx].1
+        }
+    }
+}
+
+#[derive(Default)]
+struct MetricAccum {
+    weighted: f64,
+    weight_ms: f64,
+    sum: f64,
+    count: usize,
+    first: f64,
+}
+
+impl MetricAccum {
+    fn add(&mut self, value: f64, overlap_ms: f64) {
+        if self.count == 0 {
+            self.first = value;
+        }
+        self.count += 1;
+        self.sum += value;
+        if overlap_ms > 0.0 {
+            self.weighted += value * overlap_ms;
+            self.weight_ms += overlap_ms;
+        }
+    }
+
+    fn finish(self) -> f64 {
+        if self.count <= 1 {
+            self.first
+        } else if self.weight_ms > 0.0 {
+            self.weighted / self.weight_ms
+        } else {
+            self.sum / self.count as f64
+        }
+    }
+}
+
+#[derive(Default)]
+struct MountAccum {
+    used: MetricAccum,
+    total: MetricAccum,
+}
+
+#[derive(Default)]
+struct IfaceAccum {
+    rx: MetricAccum,
+    tx: MetricAccum,
+}
+
+#[derive(Default)]
+struct GpuAccum {
+    name: String,
+    usage: MetricAccum,
+    has_usage: bool,
+    mem_used: MetricAccum,
+    has_mem_used: bool,
+    mem_total: Option<i64>,
+}
+
+/// The per-device stretches that overlap each bucket, attached to the point
+/// whose instant they cover.
+///
+/// A bucket that covers no stretch (everything before migration 044) keeps
+/// its vectors empty, which `skip_serializing_if` turns into a missing
+/// field: a client sees "this window has no mount detail", never an empty
+/// list it might read as "a machine with no mounts".
+///
+/// A stretch that spans several buckets appears in each of them with the
+/// value it held. When multiple stretches of the same device overlap one
+/// bucket, they are merged into a single duration-weighted entry per device so
+/// wide buckets remain bounded and each point lists each device at most once.
+async fn attach_history_detail(
+    db: &sqlx::SqlitePool,
+    bucket_secs: i64,
+    cutoff: DateTime<Utc>,
+    until: Option<DateTime<Utc>>,
+    buckets: &[i64],
+    points: &mut [HistoryPoint],
+) -> Result<()> {
+    use sqlx::Row;
+    if points.is_empty() {
+        return Ok(());
+    }
+    let upper = until.unwrap_or_else(Utc::now);
+
+    let bucket_of = |instant: DateTime<Utc>| instant.timestamp().div_euclid(bucket_secs);
+    let index: HashMap<i64, usize> = buckets.iter().enumerate().map(|(i, &b)| (b, i)).collect();
+
+    // One query a table: every stretch overlapping the window, which is the
+    // stretches that started before its end and ended after its start.
+    let mounts = sqlx::query(
+        "SELECT mount, start, end, used, total FROM metrics_disk_usage
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let ifaces = sqlx::query(
+        "SELECT name, start, end, rx_bytes_per_sec, tx_bytes_per_sec FROM metrics_iface
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let gpus = sqlx::query(
+        "SELECT id, name, start, end, usage_percent, memory_used, memory_total FROM metrics_gpu
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+    let temps = sqlx::query(
+        "SELECT device, start, end, celsius FROM metrics_temp
+         WHERE start <= ?1 AND end >= ?2 ORDER BY start",
+    )
+    .bind(upper)
+    .bind(cutoff)
+    .fetch_all(db)
+    .await?;
+
+    // Returns every `(point_index, overlap_ms)` covered by `[start, end]`.
+    // A contiguous previous stretch whose `end` sits exactly at a later bucket's
+    // start produces `overlap_ms = 0.0`, while the new stretch starting there
+    // carries positive overlap, preventing boundary spillover when merging.
+    let each_bucket = |start: DateTime<Utc>, end: DateTime<Utc>, f: &mut dyn FnMut(usize, f64)| {
+        let clamped_start = start.max(cutoff);
+        let clamped_end = end.min(upper);
+        let first = bucket_of(clamped_start);
+        let last = bucket_of(clamped_end);
+        for bucket in first..=last {
+            if let Some(&i) = index.get(&bucket) {
+                let b_start = DateTime::from_timestamp(bucket.saturating_mul(bucket_secs), 0)
+                    .unwrap_or(cutoff)
+                    .max(cutoff);
+                let b_end = DateTime::from_timestamp((bucket + 1).saturating_mul(bucket_secs), 0)
+                    .unwrap_or(upper)
+                    .min(upper);
+                let overlap_ms = (clamped_end.min(b_end) - clamped_start.max(b_start))
+                    .num_milliseconds()
+                    .max(0) as f64;
+                if start < end && overlap_ms <= 0.0 {
+                    continue;
+                }
+                // A single point-stretch `(start == end)` hitting a bucket with
+                // positive span still deserves inclusion when no other stretch
+                // replaces it; MetricAccum keeps `count == 1` exact and falls
+                // back to unweighted average when all weights are zero.
+                f(i, overlap_ms);
+            }
+        }
+    };
+
+    let mut mount_acc: Vec<BucketMerge<MountAccum>> = (0..points.len()).map(|_| BucketMerge::default()).collect();
+    for row in mounts {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let mount: String = row.get("mount");
+        let used: i64 = row.get("used");
+        let total: i64 = row.get("total");
+        each_bucket(start, end, &mut |i, overlap_ms| {
+            let acc = mount_acc[i].entry_or_insert(&mount, MountAccum::default);
+            // Same weights for both, so the merged pair is a ratio some
+            // stretch could have held.
+            acc.used.add(used as f64, overlap_ms);
+            acc.total.add(total as f64, overlap_ms);
+        });
+    }
+    for (i, merge) in mount_acc.into_iter().enumerate() {
+        points[i].mounts = merge
+            .list
+            .into_iter()
+            .map(|(mount, acc)| HistoryMount {
+                mount,
+                used: acc.used.finish().round() as i64,
+                total: acc.total.finish().round() as i64,
+            })
+            .collect();
+    }
+
+    let mut iface_acc: Vec<BucketMerge<IfaceAccum>> = (0..points.len()).map(|_| BucketMerge::default()).collect();
+    for row in ifaces {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let name: String = row.get("name");
+        let rx: f64 = row.get("rx_bytes_per_sec");
+        let tx: f64 = row.get("tx_bytes_per_sec");
+        each_bucket(start, end, &mut |i, overlap_ms| {
+            let acc = iface_acc[i].entry_or_insert(&name, IfaceAccum::default);
+            acc.rx.add(rx, overlap_ms);
+            acc.tx.add(tx, overlap_ms);
+        });
+    }
+    for (i, merge) in iface_acc.into_iter().enumerate() {
+        points[i].ifaces = merge
+            .list
+            .into_iter()
+            .map(|(name, acc)| HistoryIface {
+                name,
+                rx_bytes_per_sec: acc.rx.finish(),
+                tx_bytes_per_sec: acc.tx.finish(),
+            })
+            .collect();
+    }
+
+    let mut gpu_acc: Vec<BucketMerge<GpuAccum>> = (0..points.len()).map(|_| BucketMerge::default()).collect();
+    for row in gpus {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let id: String = row.get("id");
+        let name: String = row.get("name");
+        let usage: Option<f64> = row.get("usage_percent");
+        let mem_used: Option<i64> = row.get("memory_used");
+        let mem_total: Option<i64> = row.get("memory_total");
+        each_bucket(start, end, &mut |i, overlap_ms| {
+            let acc = gpu_acc[i].entry_or_insert(&id, GpuAccum::default);
+            acc.name = name.clone();
+            if let Some(u) = usage {
+                acc.has_usage = true;
+                acc.usage.add(u, overlap_ms);
+            }
+            if let Some(mu) = mem_used {
+                acc.has_mem_used = true;
+                acc.mem_used.add(mu as f64, overlap_ms);
+            }
+            if mem_total.is_some() {
+                acc.mem_total = mem_total;
+            }
+        });
+    }
+    for (i, merge) in gpu_acc.into_iter().enumerate() {
+        points[i].gpus = merge
+            .list
+            .into_iter()
+            .map(|(id, acc)| HistoryGpu {
+                id,
+                name: acc.name,
+                usage_percent: acc.has_usage.then(|| acc.usage.finish()),
+                memory_used: acc.has_mem_used.then(|| acc.mem_used.finish().round() as i64),
+                memory_total: acc.mem_total,
+            })
+            .collect();
+    }
+
+    let mut temp_acc: Vec<BucketMerge<MetricAccum>> = (0..points.len()).map(|_| BucketMerge::default()).collect();
+    for row in temps {
+        let start: DateTime<Utc> = row.get("start");
+        let end: DateTime<Utc> = row.get("end");
+        let device: String = row.get("device");
+        let celsius: f64 = row.get("celsius");
+        each_bucket(start, end, &mut |i, overlap_ms| {
+            temp_acc[i]
+                .entry_or_insert(&device, MetricAccum::default)
+                .add(celsius, overlap_ms);
+        });
+    }
+    for (i, merge) in temp_acc.into_iter().enumerate() {
+        points[i].temps = merge
+            .list
+            .into_iter()
+            .map(|(device, acc)| HistoryTemp {
+                device,
+                celsius: acc.finish(),
+            })
+            .collect();
+    }
+
+    Ok(())
 }
 
 pub(super) async fn get_velocity(

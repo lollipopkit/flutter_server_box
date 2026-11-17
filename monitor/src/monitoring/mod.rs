@@ -1,5 +1,6 @@
 pub mod custom_cmds;
 mod adapt;
+pub(crate) mod detail;
 mod metrics;
 mod script;
 #[path = "monitoring.rs"]

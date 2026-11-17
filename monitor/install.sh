@@ -196,6 +196,72 @@ detect_arch() {
     esac
 }
 
+# The tag to install into $tag, and why none was found into $why.
+#
+# Only monitor-v* tags; isolated from the app's v1.0.x releases. Not
+# /releases/latest, which is a single release for the whole repository and is
+# the app's — the agent is versioned separately and the workflow deliberately
+# does not claim that slot.
+#
+# The listing is newest-first, so the first monitor tag on it is the current
+# one. But it lists *every* release, and the app publishes far more often than
+# the agent: enough app releases between two monitor ones and the monitor
+# release falls off the first page, which reads as "no release exists" rather
+# than as "look further". So walk pages until one turns up.
+#
+# The API is unauthenticated: 60 requests an hour per address, 403 after. The
+# limit, a shared address and a network that cannot reach it all fail the same
+# way here, and reporting any of them as "no such release" sends people looking
+# for a release that is published — so the reason is kept and printed. The
+# feed is the second source: github.com serves it, it carries the newest
+# releases under the same tags and it is not limited, but it holds only the
+# last ten, fewer than one page of the API, so it is the fallback.
+resolve_tag() {
+    tag=""
+    why=""
+    page=1
+    while [ "$page" -le 10 ]; do
+        # Bounded: an address that drops the packets instead of refusing them
+        # leaves curl waiting, and an installer that hangs on its first request
+        # is no better than one that lies about why it failed.
+        code=$(curl -s --connect-timeout 10 --max-time 30 \
+            -o "$TMP_DIR/releases.json" -w '%{http_code}' \
+            "https://api.github.com/repos/${REPO}/releases?per_page=100&page=${page}")
+        if [ "$code" != "200" ]; then
+            case "$code" in
+                000) why="api.github.com could not be reached." ;;
+                403|429) why="The GitHub API refused: hourly request limit for this address." ;;
+                *) why="The GitHub API answered HTTP ${code}." ;;
+            esac
+            break
+        fi
+        tag=$(grep -o '"tag_name": *"monitor-v[^"]*"' "$TMP_DIR/releases.json" \
+            | head -n 1 | cut -d '"' -f 4)
+        if [ -n "$tag" ]; then
+            return
+        fi
+        # A short page is the last one, so there is nothing further to walk.
+        count=$(grep -c '"tag_name":' "$TMP_DIR/releases.json")
+        if [ "$count" -lt 100 ]; then
+            break
+        fi
+        page=$((page + 1))
+    done
+
+    feed=$(curl -fsSL --connect-timeout 10 --max-time 30 \
+        "https://github.com/${REPO}/releases.atom" 2>/dev/null)
+    tag=$(printf '%s' "$feed" \
+        | grep -o 'releases/tag/monitor-v[^"]*' | head -n 1 | sed 's|releases/tag/||')
+    if [ -n "$tag" ]; then
+        return
+    fi
+    if [ -n "$why" ]; then
+        why="$why Its release feed lists no monitor release either (it holds the last ten releases; an older one is not in it)."
+    else
+        why="No monitor-v* release is published."
+    fi
+}
+
 download() {
     # A package already on the machine, instead of one fetched from GitHub:
     # either the unpacked `server-box-monitor/` directory or the tarball. For
@@ -227,34 +293,12 @@ download() {
         exit 1
     fi
 
-    # Only monitor-v* tags; isolated from the app's v1.0.x releases. Not
-    # /releases/latest, which is a single release for the whole repository and
-    # is the app's — the agent is versioned separately and the workflow
-    # deliberately does not claim that slot.
-    #
-    # The listing is newest-first, so the first monitor tag on it is the
-    # current one. But it lists *every* release, and the app publishes far more
-    # often than the agent: enough app releases between two monitor ones and
-    # the monitor release falls off the first page, which reads as "no release
-    # exists" rather than as "look further". So walk pages until one turns up.
-    tag=""
-    page=1
-    while [ "$page" -le 10 ]; do
-        body=$(curl -s "https://api.github.com/repos/${REPO}/releases?per_page=100&page=${page}")
-        tag=$(printf '%s' "$body" \
-            | grep -o '"tag_name": *"monitor-v[^"]*"' | head -n 1 | cut -d '"' -f 4)
-        if [ -n "$tag" ]; then
-            break
-        fi
-        # A short page is the last one, so there is nothing further to walk.
-        count=$(printf '%s' "$body" | grep -c '"tag_name":')
-        if [ "$count" -lt 100 ]; then
-            break
-        fi
-        page=$((page + 1))
-    done
+    rm -rf "$TMP_DIR"
+    mkdir -p "$TMP_DIR"
+    resolve_tag
     if [ -z "$tag" ]; then
-        echo "Failed to find a monitor-v* release of ${REPO}"
+        echo "Failed to find a monitor-v* release of ${REPO}."
+        echo "  $why"
         exit 1
     fi
     ver=${tag#monitor-v}
@@ -263,8 +307,6 @@ download() {
     url="$base_url/$asset"
 
     echo "Downloading $url"
-    rm -rf "$TMP_DIR"
-    mkdir -p "$TMP_DIR"
     if ! curl -fsSL "$url" -o "$TMP_DIR/pkg.tar.gz"; then
         echo "Download failed"
         exit 1

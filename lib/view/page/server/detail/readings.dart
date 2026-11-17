@@ -15,13 +15,13 @@ extension on _ServerDetailPageState {
   }
 
   /// One line per device, or null where the aggregate is what there is: a
-  /// single device, or a window that came from a store that has only totals.
-  List<HistorySeries>? _deviceSeries(ServerState srv, ServerMetricKind kind) {
-    // These come from the rolling buffer, whose samples are the live window's.
-    // Drawn against any other window they would be plotted at instants they
-    // were not taken at.
-    if (_custom != null || _range != HistoryRange.live) return null;
-    final devices = MetricDevices.of(srv, kind);
+  /// single device, or a window/metric that carries only totals.
+  List<HistorySeries>? _deviceSeries(
+    ServerState srv,
+    MetricWindow window,
+    ServerMetricKind kind,
+  ) {
+    final devices = MetricDevices.of(srv, kind, window: window);
     if (devices == null) return null;
     final plotted = _plottedDevices(kind, devices);
     final series = [
@@ -70,7 +70,7 @@ extension on _ServerDetailPageState {
     final views = serverDetailMetrics(
       srv,
       window,
-      deviceSeries: (kind) => _deviceSeries(srv, kind),
+      deviceSeries: (kind) => _deviceSeries(srv, window, kind),
     );
     if (views.isEmpty) return UIs.placeholder;
     final staleAt = serverStaleSince(srv);
@@ -478,14 +478,11 @@ extension on _ServerDetailPageState {
       );
     }
 
-    final devices = MetricDevices.of(srv, m.kind);
+    final window = _window(srv);
+    final devices = MetricDevices.of(srv, m.kind, window: window);
     if (devices == null) return null;
-    // What the legend is showing, out of what the machine reports. Only the
-    // live window draws a line each, so anywhere else this is the count alone.
-    // "6 of 8" is about the lines on the chart, and those are drawn from the
-    // rolling buffer — so only the live window has any. Anywhere else the
-    // honest answer is how many devices the machine has.
-    final label = _custom == null && _range == HistoryRange.live
+    final hasSeries = _deviceSeries(srv, window, m.kind) != null;
+    final label = hasSeries
         ? l10n.devicesPlottedFmt(
             _plottedDevices(m.kind, devices).length,
             devices.names.length,
@@ -511,9 +508,11 @@ extension on _ServerDetailPageState {
           builder: (_, setSheetState) {
             // Re-read on every rebuild: a poll lands while the sheet is open,
             // and the readings under the names are what the choice is made on.
+            final currentSrv = ref.read(serverProvider(widget.args.spi.id));
             final devices = MetricDevices.of(
-              ref.read(serverProvider(widget.args.spi.id)),
+              currentSrv,
               kind,
+              window: _window(currentSrv),
             );
             if (devices == null) return UIs.placeholder;
             final plotted = _plottedDevices(kind, devices).toSet();

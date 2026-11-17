@@ -141,6 +141,15 @@ class MetricWindow {
     this.gpu = const [],
     this.temp = const [],
     this.battery = const [],
+    this.tempsByDevice = const {},
+    this.swapsByDevice = const {},
+    this.diskReadsByDevice = const {},
+    this.diskWritesByDevice = const {},
+    this.netRxByDevice = const {},
+    this.netTxByDevice = const {},
+    this.gpuUsagesByDevice = const {},
+    this.mounts = const [],
+    this.gpus = const [],
   });
 
   /// What this app has seen, which is every series it can measure.
@@ -157,12 +166,17 @@ class MetricWindow {
     gpu: h.gpu,
     temp: h.temp,
     battery: h.battery,
+    tempsByDevice: h.tempsByDevice,
+    swapsByDevice: h.swapsByDevice,
+    diskReadsByDevice: h.diskReadsByDevice,
+    diskWritesByDevice: h.diskWritesByDevice,
+    netRxByDevice: h.netRxByDevice,
+    netTxByDevice: h.netTxByDevice,
   );
 
-  /// What the agent stored. An agent too old to report a series leaves it
-  /// empty here however long the window is — see [DetailMetric.hasChart],
-  /// which is what the card asks before drawing. GPU load is empty for every
-  /// agent: nothing stores it, so the only window it has is the live one.
+  /// What the agent stored. An agent or older retention window without detail
+  /// rows leaves per-device maps and lists empty — see [DetailMetric.hasChart],
+  /// which is what the card asks before drawing.
   factory MetricWindow.of(List<StatusHistorySample> samples) => MetricWindow(
     times: [for (final s in samples) s.timeMs],
     cpu: [for (final s in samples) s.cpu],
@@ -173,8 +187,20 @@ class MetricWindow {
     diskWrite: [for (final s in samples) s.diskWrite],
     netRx: [for (final s in samples) s.netRx],
     netTx: [for (final s in samples) s.netTx],
+    gpu: [for (final s in samples) s.gpu],
     temp: [for (final s in samples) s.temp],
     battery: [for (final s in samples) s.battery],
+    tempsByDevice: _deviceSeriesOf(samples, (s) => s.temps),
+    netRxByDevice: _deviceSeriesOf(samples, (s) => s.netRxs),
+    netTxByDevice: _deviceSeriesOf(samples, (s) => s.netTxs),
+    gpuUsagesByDevice: _deviceSeriesOf(samples, (s) => switch (s.gpus) {
+      null => null,
+      final gpus => {
+        for (final g in gpus) g.id: ?g.usagePercent,
+      },
+    }),
+    mounts: _aggregateMounts(samples),
+    gpus: _aggregateGpus(samples),
   );
 
   /// When each sample was taken, index-aligned with every series.
@@ -191,6 +217,111 @@ class MetricWindow {
   final List<double?> gpu;
   final List<double?> temp;
   final List<double?> battery;
+  final Map<String, List<double?>> tempsByDevice;
+  final Map<String, List<double?>> swapsByDevice;
+  final Map<String, List<double?>> diskReadsByDevice;
+  final Map<String, List<double?>> diskWritesByDevice;
+  final Map<String, List<double?>> netRxByDevice;
+  final Map<String, List<double?>> netTxByDevice;
+
+  /// Each GPU's usage by id, from stored windows only.
+  final Map<String, List<double?>> gpuUsagesByDevice;
+  final List<StoredMountSample> mounts;
+  final List<StoredGpuSample> gpus;
+}
+
+Map<String, List<double?>> _deviceSeriesOf(
+  List<StatusHistorySample> samples,
+  Map<String, double>? Function(StatusHistorySample) extract,
+) {
+  final keys = <String>{};
+  for (final s in samples) {
+    if (extract(s) case final map?) keys.addAll(map.keys);
+  }
+  if (keys.isEmpty) return const {};
+  return {
+    for (final k in keys) k: [for (final s in samples) extract(s)?[k]],
+  };
+}
+
+List<StoredMountSample> _aggregateMounts(List<StatusHistorySample> samples) {
+  // Used and total averaged over the same observations, so a capacity that
+  // changed inside the window cannot pair one sample's usage with another's.
+  final acc = <String, ({double sumUsed, double sumTotal, int count})>{};
+  for (final s in samples) {
+    final mounts = s.mounts;
+    if (mounts == null) continue;
+    for (final m in mounts) {
+      if (m.mount.isEmpty || m.total <= 0) continue;
+      final prev = acc[m.mount];
+      acc[m.mount] = (
+        sumUsed: (prev?.sumUsed ?? 0) + m.used,
+        sumTotal: (prev?.sumTotal ?? 0) + m.total,
+        count: (prev?.count ?? 0) + 1,
+      );
+    }
+  }
+  return [
+    for (final MapEntry(key: mount, value: v) in acc.entries)
+      (
+        mount: mount,
+        used: (v.sumUsed / v.count).round(),
+        total: (v.sumTotal / v.count).round(),
+      ),
+  ];
+}
+
+List<StoredGpuSample> _aggregateGpus(List<StatusHistorySample> samples) {
+  final acc =
+      <
+        String,
+        ({
+          String name,
+          double sumUsage,
+          int usageCount,
+          int sumMemUsed,
+          int memCount,
+          int? memTotal,
+        })
+      >{};
+  for (final s in samples) {
+    final gpus = s.gpus;
+    if (gpus == null) continue;
+    for (final g in gpus) {
+      final prev = acc[g.id];
+      final u = g.usagePercent;
+      final mu = g.memoryUsed;
+      if (prev == null) {
+        acc[g.id] = (
+          name: g.name,
+          sumUsage: u ?? 0.0,
+          usageCount: u == null ? 0 : 1,
+          sumMemUsed: mu ?? 0,
+          memCount: mu == null ? 0 : 1,
+          memTotal: g.memoryTotal,
+        );
+      } else {
+        acc[g.id] = (
+          name: g.name.isEmpty ? prev.name : g.name,
+          sumUsage: prev.sumUsage + (u ?? 0.0),
+          usageCount: prev.usageCount + (u == null ? 0 : 1),
+          sumMemUsed: prev.sumMemUsed + (mu ?? 0),
+          memCount: prev.memCount + (mu == null ? 0 : 1),
+          memTotal: g.memoryTotal ?? prev.memTotal,
+        );
+      }
+    }
+  }
+  return [
+    for (final MapEntry(key: id, value: v) in acc.entries)
+      (
+        id: id,
+        name: v.name,
+        usagePercent: v.usageCount == 0 ? null : v.sumUsage / v.usageCount,
+        memoryUsed: v.memCount == 0 ? null : (v.sumMemUsed / v.memCount).round(),
+        memoryTotal: v.memTotal,
+      ),
+  ];
 }
 
 /// The status sections a metric's reading comes from, by the names both
