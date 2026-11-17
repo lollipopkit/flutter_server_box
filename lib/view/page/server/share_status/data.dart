@@ -302,7 +302,9 @@ PosterBlock? _gpu(ServerState srv, MetricWindow w, bool live) {
         if ((g.usagePercent ?? -1) > (best.usagePercent ?? -1)) best = g;
       }
       final avg = best.usagePercent ?? _avg(w.gpu);
-      final peak = _peak(w.gpu);
+      // The named GPU's own peak: `w.gpu` is whichever was busiest at each
+      // point, which may be another one.
+      final peak = _peak(w.gpuUsagesByDevice[best.id] ?? const []);
       final memText = best.memoryUsed != null && best.memoryTotal != null
           ? '${best.memoryUsed} / ${best.memoryTotal} MiB'
           : null;

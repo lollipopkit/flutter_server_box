@@ -300,6 +300,12 @@ pub(super) fn decide(
     if age >= MAX_SEGMENT {
         return Decision::Close;
     }
+    // A reading that appeared or disappeared is a new stretch, never a blend:
+    // blending a present value with an absent one would overwrite it with
+    // nothing.
+    if open.values.iter().zip(next_values).any(|(a, b)| a.is_nan() != b.is_nan()) {
+        return Decision::Close;
+    }
     let within = open.values.iter().zip(next_values).zip(thresholds).all(|((a, b), t)| {
         // Two missing readings are the same missing reading; NaN minus NaN
         // is NaN, which no comparison accepts.
@@ -384,22 +390,23 @@ async fn store_disk(
                             .execute(&mut **tx)
                             .await?;
                     }
-                    Decision::ExtendBlend => {
+                    // A capacity change is a new stretch: blending `used`
+                    // against a replaced `total` stores a pair no sample had.
+                    Decision::ExtendBlend if total == reading.total => {
                         let blended = blend_f64(start, end, at, used as f64, reading.used as f64)
                             .round() as i64;
                         sqlx::query(
-                            "UPDATE metrics_disk_usage SET end = ?, used = ?, total = ?
+                            "UPDATE metrics_disk_usage SET end = ?, used = ?
                              WHERE mount = ? AND start = ?",
                         )
                         .bind(at)
                         .bind(blended)
-                        .bind(reading.total)
                         .bind(mount)
                         .bind(start)
                         .execute(&mut **tx)
                         .await?;
                     }
-                    Decision::Close => {
+                    Decision::Close | Decision::ExtendBlend => {
                         if prev_at == Some(end) {
                             sqlx::query("UPDATE metrics_disk_usage SET end = ? WHERE mount = ? AND start = ?")
                                 .bind(at)
@@ -799,6 +806,13 @@ mod tests {
         let open = stretch(0, &[f64::NAN]);
         assert_eq!(decide(&open, &[f64::NAN], &[1.0], at(60), Some(open.end)), Decision::ExtendKeep);
         assert_eq!(decide(&open, &[0.0], &[1.0], at(60), Some(open.end)), Decision::Close);
+    }
+
+    #[test]
+    fn a_reading_appearing_or_disappearing_closes_even_a_young_stretch() {
+        let open = stretch(0, &[50.0, f64::NAN]);
+        assert_eq!(decide(&open, &[f64::NAN, f64::NAN], &[5.0, 1.0], at(14), Some(open.end)), Decision::Close);
+        assert_eq!(decide(&open, &[50.0, 10.0], &[5.0, 1.0], at(14), Some(open.end)), Decision::Close);
     }
 
     #[test]

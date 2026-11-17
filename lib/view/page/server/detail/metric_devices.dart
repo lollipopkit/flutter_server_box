@@ -229,10 +229,17 @@ MetricDevices? _net(
   }.where((d) => !NetSpeed.isLoopback(d)).toList()
     ..sort((a, b) => busy(b).compareTo(busy(a)));
   if (names.length < 2) return null;
-  final real = names.where((d) =>
+  // Only interfaces the window has samples for: one present now but idle
+  // throughout a stored window draws nothing.
+  bool recorded(String d) =>
+      (tx[d]?.any((v) => v != null) ?? false) ||
+      (rx[d]?.any((v) => v != null) ?? false);
+  final withData = names.where(recorded).toList();
+  final pool = withData.isNotEmpty ? withData : names;
+  final real = pool.where((d) =>
       ns.realIfaces.contains(d) ||
       NetSpeed.realIfacePrefixs.any((p) => d.startsWith(p)));
-  final defaults = (real.isNotEmpty ? real : names)
+  final defaults = (real.isNotEmpty ? real : pool)
       .take(kMaxDeviceLines)
       .toList();
   return MetricDevices(

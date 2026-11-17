@@ -147,6 +147,7 @@ class MetricWindow {
     this.diskWritesByDevice = const {},
     this.netRxByDevice = const {},
     this.netTxByDevice = const {},
+    this.gpuUsagesByDevice = const {},
     this.mounts = const [],
     this.gpus = const [],
   });
@@ -192,6 +193,12 @@ class MetricWindow {
     tempsByDevice: _deviceSeriesOf(samples, (s) => s.temps),
     netRxByDevice: _deviceSeriesOf(samples, (s) => s.netRxs),
     netTxByDevice: _deviceSeriesOf(samples, (s) => s.netTxs),
+    gpuUsagesByDevice: _deviceSeriesOf(samples, (s) => switch (s.gpus) {
+      null => null,
+      final gpus => {
+        for (final g in gpus) g.id: ?g.usagePercent,
+      },
+    }),
     mounts: _aggregateMounts(samples),
     gpus: _aggregateGpus(samples),
   );
@@ -216,6 +223,9 @@ class MetricWindow {
   final Map<String, List<double?>> diskWritesByDevice;
   final Map<String, List<double?>> netRxByDevice;
   final Map<String, List<double?>> netTxByDevice;
+
+  /// Each GPU's usage by id, from stored windows only.
+  final Map<String, List<double?>> gpuUsagesByDevice;
   final List<StoredMountSample> mounts;
   final List<StoredGpuSample> gpus;
 }
@@ -235,25 +245,29 @@ Map<String, List<double?>> _deviceSeriesOf(
 }
 
 List<StoredMountSample> _aggregateMounts(List<StatusHistorySample> samples) {
-  final acc = <String, ({double sumUsed, int count, int total})>{};
+  // Used and total averaged over the same observations, so a capacity that
+  // changed inside the window cannot pair one sample's usage with another's.
+  final acc = <String, ({double sumUsed, double sumTotal, int count})>{};
   for (final s in samples) {
     final mounts = s.mounts;
     if (mounts == null) continue;
     for (final m in mounts) {
       if (m.mount.isEmpty || m.total <= 0) continue;
       final prev = acc[m.mount];
-      acc[m.mount] = prev == null
-          ? (sumUsed: m.used.toDouble(), count: 1, total: m.total)
-          : (
-              sumUsed: prev.sumUsed + m.used.toDouble(),
-              count: prev.count + 1,
-              total: m.total,
-            );
+      acc[m.mount] = (
+        sumUsed: (prev?.sumUsed ?? 0) + m.used,
+        sumTotal: (prev?.sumTotal ?? 0) + m.total,
+        count: (prev?.count ?? 0) + 1,
+      );
     }
   }
   return [
     for (final MapEntry(key: mount, value: v) in acc.entries)
-      (mount: mount, used: (v.sumUsed / v.count).round(), total: v.total),
+      (
+        mount: mount,
+        used: (v.sumUsed / v.count).round(),
+        total: (v.sumTotal / v.count).round(),
+      ),
   ];
 }
 

@@ -480,7 +480,7 @@ impl MetricAccum {
 #[derive(Default)]
 struct MountAccum {
     used: MetricAccum,
-    latest_total: i64,
+    total: MetricAccum,
 }
 
 #[derive(Default)]
@@ -604,8 +604,10 @@ async fn attach_history_detail(
         let total: i64 = row.get("total");
         each_bucket(start, end, &mut |i, overlap_ms| {
             let acc = mount_acc[i].entry_or_insert(&mount, MountAccum::default);
+            // Same weights for both, so the merged pair is a ratio some
+            // stretch could have held.
             acc.used.add(used as f64, overlap_ms);
-            acc.latest_total = total;
+            acc.total.add(total as f64, overlap_ms);
         });
     }
     for (i, merge) in mount_acc.into_iter().enumerate() {
@@ -615,7 +617,7 @@ async fn attach_history_detail(
             .map(|(mount, acc)| HistoryMount {
                 mount,
                 used: acc.used.finish().round() as i64,
-                total: acc.latest_total,
+                total: acc.total.finish().round() as i64,
             })
             .collect();
     }
