@@ -105,8 +105,23 @@ class MonitorHttpClient {
   /// holding them (`MonitorLoginDevices.signingIn`).
   final _abandoned = Completer<void>();
 
-  String get _addr {
-    final addr = monitor.addr.trim();
+  /// Which of [MonitorHttpCredential.addrs] requests go to now. Moved by
+  /// [_failover] when one cannot be connected to, and back to the first by
+  /// [_probePrimary] once it can be again.
+  int _route = 0;
+
+  /// When [_probePrimary] last ran, and whether one is running.
+  DateTime? _probedAt;
+  bool _probing = false;
+  static const _probeEvery = Duration(minutes: 1);
+  static const _probeTimeout = Duration(seconds: 3);
+
+  String get _addr => _addrAt(_route);
+
+  /// [MonitorHttpCredential.addrs] at [i], without its trailing slash. Throws
+  /// for one this connection may not use in plaintext.
+  String _addrAt(int i) {
+    final addr = monitor.addrs[i].trim();
     final normalized = addr.endsWith('/')
         ? addr.substring(0, addr.length - 1)
         : addr;
@@ -138,8 +153,89 @@ class MonitorHttpClient {
           ..httpClientAdapter = IOHttpClientAdapter(
             createHttpClient: _httpClient,
           );
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      _probePrimary(dio);
+      handler.next(options);
+    }, onError: (e, handler) async {
+      try {
+        final retried = await _failover(dio, e);
+        if (retried == null) return handler.next(e);
+        handler.resolve(retried);
+      } on DioException catch (again) {
+        handler.next(again);
+      }
+    }));
     _dio = dio;
     return dio;
+  }
+
+  /// [e]'s request sent again to the next address, when [e] is one that
+  /// could not be connected to and another address is configured.
+  ///
+  /// Only a connection that never opened moves the route, which is what dio
+  /// reports as a connect timeout or a [SocketException] from opening it:
+  /// nothing was sent, so resending cannot run a command twice. An answer,
+  /// even an error, came from the agent; a connection closed before the
+  /// response (an [HttpException]) may have run the request; and a refused
+  /// certificate is the same certificate at every address. A request that
+  /// failed at an address another one already moved away from is resent to
+  /// where it went.
+  Future<Response<dynamic>?> _failover(Dio dio, DioException e) async {
+    final addrs = monitor.addrs;
+    if (addrs.length < 2 || _disposed) return null;
+    final neverOpened =
+        e.type == DioExceptionType.connectionTimeout ||
+        (e.type == DioExceptionType.connectionError &&
+            e.error is SocketException);
+    if (!neverOpened) return null;
+    // Every address tried once for this request: let the failure through.
+    final hops = e.requestOptions.extra[_failoverHops] as int? ?? 0;
+    if (hops >= addrs.length - 1) return null;
+    if (e.requestOptions.baseUrl == _addr) {
+      final next = (_route + 1) % addrs.length;
+      try {
+        _addrAt(next);
+      } on MonitorHttpErr {
+        return null;
+      }
+      Loggers.app.info('Monitor unreachable at $_addr, trying ${addrs[next]}');
+      _route = next;
+      dio.options.baseUrl = _addr;
+    }
+    return dio.fetch<dynamic>(
+      e.requestOptions.copyWith(
+        baseUrl: _addr,
+        extra: {...e.requestOptions.extra, _failoverHops: hops + 1},
+      ),
+    );
+  }
+
+  static const _failoverHops = 'sbm_failover_hops';
+
+  /// Moves back to [MonitorHttpCredential.addr] once a connection to it
+  /// opens again: a phone back on its LAN should not go on reaching the agent
+  /// the long way round. A TCP connect with a short timeout, at most once a
+  /// [_probeEvery] while requests are made, and never in a request's way.
+  void _probePrimary(Dio dio) {
+    if (_route == 0 || _probing || _disposed) return;
+    final now = DateTime.now();
+    if (_probedAt case final at? when now.difference(at) < _probeEvery) return;
+    final uri = Uri.tryParse(_addrAt(0));
+    if (uri == null || uri.host.isEmpty) return;
+    _probing = true;
+    _probedAt = now;
+    unawaited(
+      Socket.connect(uri.host, uri.port, timeout: _probeTimeout)
+          .then((socket) {
+            socket.destroy();
+            if (_disposed || _route == 0) return;
+            Loggers.app.info('Monitor reachable again at ${_addrAt(0)}');
+            _route = 0;
+            dio.options.baseUrl = _addr;
+          })
+          .catchError((_) {})
+          .whenComplete(() => _probing = false),
+    );
   }
 
   /// The certificate a handshake refused, for [_certErr]. Kept, not taken:

@@ -86,8 +86,18 @@ const controlPathColumn = ', "ssh_control_path" TEXT NULL';
 
 /// `server` as it was before v42, asserted to have been found.
 String serverDdlBeforeControlPath(String fresh) {
-  expect(fresh, contains(controlPathColumn));
-  return fresh.replaceFirst(controlPathColumn, '');
+  final before = serverDdlBeforeMonitorFallback(fresh);
+  expect(before, contains(controlPathColumn));
+  return before.replaceFirst(controlPathColumn, '');
+}
+
+/// The column m042 added: last, where `ADD COLUMN` puts it too.
+const monitorFallbackColumn = ', "monitor_fallback_addr" TEXT NULL';
+
+/// `server` as it was before v43, asserted to have been found.
+String serverDdlBeforeMonitorFallback(String fresh) {
+  expect(fresh, contains(monitorFallbackColumn));
+  return fresh.replaceFirst(monitorFallbackColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

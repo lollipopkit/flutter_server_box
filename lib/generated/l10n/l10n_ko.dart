@@ -419,7 +419,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get extraArgs => '추가 인수';
 
   @override
-  String get fallbackSshDest => '대체 SSH 대상';
+  String get fallbackAddrs => '대체 주소';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2222,7 +2222,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshAdvanced => 'SSH 고급';
 
   @override
-  String get sshAdvancedTip => '대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
+  String get sshAdvancedTip => 'ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
 
   @override
   String get sshLegacyAlgorithms => '레거시 알고리즘';

@@ -94,7 +94,7 @@ class ServerNotice {
     // agent switched off, or the server being this device, nothing is sent to
     // that address and there is nothing to allow.
     final monitor = srv.spi.monitorOn;
-    if (monitor != null && monitor.needsInsecureOptIn) {
+    if (monitor?.insecureAddr case final plain?) {
       return ServerNotice(
         kind: ServerNoticeKind.plainHttp,
         glyph: Icons.no_encryption_gmailerrorred_outlined,
@@ -103,7 +103,7 @@ class ServerNotice {
         // sending.
         title: l10n.plainHttpTitle,
         text: l10n.plainHttpTip,
-        mono: monitor.addr,
+        mono: plain,
         hint: l10n.monitorAllowInsecureHttpTip,
       );
     }

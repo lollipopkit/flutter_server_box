@@ -417,7 +417,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get extraArgs => '追加引数';
 
   @override
-  String get fallbackSshDest => 'フォールバックSSH宛先';
+  String get fallbackAddrs => '代替の接続先';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2219,7 +2219,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshAdvanced => 'SSH 詳細';
 
   @override
-  String get sshAdvancedTip => '代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス';
+  String get sshAdvancedTip => 'ProxyCommand、踏み台、ファイル転送、リモートのパス';
 
   @override
   String get sshLegacyAlgorithms => '古いアルゴリズム';

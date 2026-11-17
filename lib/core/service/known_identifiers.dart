@@ -30,6 +30,8 @@ abstract final class KnownIdentifiers {
       // Longest-first ordering in [substitute] keeps the two from colliding.
       _add(out, spi.monitorHttp?.addr, '<agent-$n>');
       _add(out, _hostOf(spi.monitorHttp?.addr), '<agent-$n>');
+      _add(out, spi.monitorHttp?.fallbackAddr, '<agent-$n>');
+      _add(out, _hostOf(spi.monitorHttp?.fallbackAddr), '<agent-$n>');
       _add(out, spi.bmc?.addr, '<bmc-$n>');
       _add(out, _hostOf(spi.bmc?.addr), '<bmc-$n>');
     }

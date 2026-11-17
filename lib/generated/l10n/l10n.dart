@@ -877,11 +877,11 @@ abstract class AppLocalizations {
   /// **'Extra arguments'**
   String get extraArgs;
 
-  /// User-facing label or message for fallback SSH dest.
+  /// Title of the server editor group holding each connection method's fallback address.
   ///
   /// In en, this message translates to:
-  /// **'Fallback SSH destination'**
-  String get fallbackSshDest;
+  /// **'Fallback addresses'**
+  String get fallbackAddrs;
 
   /// User-facing label or message for file too large.
   ///
@@ -4065,7 +4065,7 @@ abstract class AppLocalizations {
   /// Help text for the SSH advanced setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Fallback destination, ProxyCommand, jump server, file transport, remote path'**
+  /// **'ProxyCommand, jump server, file transport, remote path'**
   String get sshAdvancedTip;
 
   /// User-facing label or message for SSH legacy algorithms.

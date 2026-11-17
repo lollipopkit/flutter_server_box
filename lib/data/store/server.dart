@@ -189,6 +189,7 @@ class ServerStore extends EntityStore<Spi> {
           ? null
           : MonitorHttpCredential(
               addr: monitorAddr,
+              fallbackAddr: row['monitor_fallback_addr'] as String?,
               legacyUser: row['monitor_user'] as String?,
               pwd: row['monitor_pwd'] as String?,
               certSha256: row['monitor_cert_sha256'] as String?,
@@ -293,6 +294,7 @@ class ServerStore extends EntityStore<Spi> {
       'monitor_pwd',
       'monitor_cert_sha256',
       'monitor_allow_insecure',
+      'monitor_fallback_addr',
       'wol_mac',
       'wol_ip',
       'wol_pwd',
@@ -347,6 +349,7 @@ class ServerStore extends EntityStore<Spi> {
       monitor?.pwd,
       monitor?.certSha256,
       monitor == null ? null : (monitor.allowInsecure ? 1 : 0),
+      monitor?.fallbackAddr,
       item.wolCfg?.mac,
       item.wolCfg?.ip,
       item.wolCfg?.pwd,

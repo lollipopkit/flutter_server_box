@@ -434,7 +434,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get extraArgs => 'آرگومان‌های اضافی';
 
   @override
-  String get fallbackSshDest => 'مقصد جایگزین SSH';
+  String get fallbackAddrs => 'نشانی‌های پشتیبان';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2359,7 +2359,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'مقصد پشتیبان، ProxyCommand، سرور واسط (Jump)، انتقال فایل، مسیر راه دور';
+      'ProxyCommand، سرور واسط (Jump)، انتقال فایل، مسیر راه دور';
 
   @override
   String get sshLegacyAlgorithms => 'الگوریتم‌های قدیمی';

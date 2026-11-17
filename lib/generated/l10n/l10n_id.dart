@@ -434,7 +434,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get extraArgs => 'Args ekstra';
 
   @override
-  String get fallbackSshDest => 'Tujuan SSH mundur';
+  String get fallbackAddrs => 'Alamat cadangan';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2348,7 +2348,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'Tujuan cadangan, ProxyCommand, server lompat, transport berkas, jalur jarak jauh';
+      'ProxyCommand, server lompat, transport berkas, jalur jarak jauh';
 
   @override
   String get sshLegacyAlgorithms => 'Algoritma lama';

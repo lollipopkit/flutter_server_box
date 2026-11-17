@@ -144,6 +144,10 @@ List<FirewallAccess> _accessesFor(Spi spi, FirewallProbeResult probe) => [
   if (spi.sshOn case final ssh?)
     probe.ssh ?? FirewallAccess(via: FirewallAccessVia.ssh, port: ssh.port),
   if (spi.monitorOn case final monitor?)
-    if (Uri.tryParse(monitor.addr) case final uri? when uri.hasAuthority)
-      FirewallAccess(via: FirewallAccessVia.monitor, port: uri.port),
+    for (final port in {
+      for (final addr in monitor.addrs)
+        if (Uri.tryParse(addr.trim()) case final uri? when uri.hasAuthority)
+          uri.port,
+    })
+      FirewallAccess(via: FirewallAccessVia.monitor, port: port),
 ];

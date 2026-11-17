@@ -10,6 +10,7 @@ MonitorHttpCredential _$MonitorHttpCredentialFromJson(
   Map<String, dynamic> json,
 ) => MonitorHttpCredential(
   addr: json['addr'] as String,
+  fallbackAddr: json['fallbackAddr'] as String?,
   pwd: json['pwd'] as String?,
   legacyUser: json['user'] as String?,
   certSha256: json['certSha256'] as String?,
@@ -20,6 +21,7 @@ Map<String, dynamic> _$MonitorHttpCredentialToJson(
   MonitorHttpCredential instance,
 ) => <String, dynamic>{
   'addr': instance.addr,
+  'fallbackAddr': ?instance.fallbackAddr,
   'pwd': ?instance.pwd,
   'user': ?instance.legacyUser,
   'certSha256': ?instance.certSha256,

@@ -36,6 +36,7 @@ import 'package:server_box/data/store/migrations/m038_sync_all.dart';
 import 'package:server_box/data/store/migrations/m039_ssh_identity_agent.dart';
 import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
 import 'package:server_box/data/store/migrations/m041_ssh_control_path.dart';
+import 'package:server_box/data/store/migrations/m042_monitor_fallback_addr.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -94,6 +95,7 @@ const kSchemaMigrations = <SchemaMigration>[
   SshIdentityAgentMigration(),
   SshForwardAgentMigration(),
   SshControlPathMigration(),
+  MonitorFallbackAddrMigration(),
 ];
 
 /// The steps a restore runs on the settings it brought back, in schema order.

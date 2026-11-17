@@ -41,7 +41,7 @@ final class ServersNotifierProvider
   }
 }
 
-String _$serversNotifierHash() => r'18896990c6f8f00fdefe7f0e42a798802a00600e';
+String _$serversNotifierHash() => r'34620cc1b5e69a67a468836b2fb58a635e6b94f1';
 
 abstract class _$ServersNotifier extends $Notifier<ServersState> {
   ServersState build();

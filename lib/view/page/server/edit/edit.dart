@@ -130,6 +130,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// then. Otherwise saving keeps the stored one (see `_pveConfigToSave`).
   bool _pveCertForgot = false;
   final _monitorAddrCtrl = TextEditingController();
+  final _monitorFallbackCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
@@ -163,7 +164,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
-  final _alterUrlFocus = FocusNode();
   final _proxyCommandFocus = FocusNode();
   final _portFocus = FocusNode();
   final _usernameFocus = FocusNode();
@@ -298,7 +298,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
     _nameFocus.dispose();
     _ipFocus.dispose();
-    _alterUrlFocus.dispose();
     _proxyCommandFocus.dispose();
     _portFocus.dispose();
     _usernameFocus.dispose();
@@ -309,6 +308,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _pveUseToken.dispose();
     _pveCert.dispose();
     _monitorAddrCtrl.dispose();
+    _monitorFallbackCtrl.dispose();
     _monitorPwdCtrl.dispose();
 
     _keyIdx.dispose();

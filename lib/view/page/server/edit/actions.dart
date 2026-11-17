@@ -753,6 +753,7 @@ extension _Actions on _ServerEditPageState {
         ? null
         : MonitorHttpCredential(
             addr: monitorAddr,
+            fallbackAddr: _monitorFallbackCtrl.text.selfNotEmptyOrNull,
             pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
             // Not edited here: kept for the same agent only.
             // TODO: remove with `MonitorHttpCredential.legacyUser`.
@@ -1106,6 +1107,7 @@ extension _Utils on _ServerEditPageState {
     _preferMonitorHttp.value = dialled.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
+      _monitorFallbackCtrl.text = monitorHttp.fallbackAddr ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorCert.value = monitorHttp.certSha256;
       _monitorCertAddr = monitorHttp.addr;

@@ -407,7 +407,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get extraArgs => '额外参数';
 
   @override
-  String get fallbackSshDest => '备选 SSH 目标';
+  String get fallbackAddrs => '备用地址';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2174,7 +2174,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshAdvanced => 'SSH 高级';
 
   @override
-  String get sshAdvancedTip => '备用地址、ProxyCommand、跳板机、文件传输、远端路径';
+  String get sshAdvancedTip => 'ProxyCommand、跳板机、文件传输、远端路径';
 
   @override
   String get sshLegacyAlgorithms => '兼容旧版算法';
@@ -7326,7 +7326,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get extraArgs => '額外參數';
 
   @override
-  String get fallbackSshDest => '備選 SSH 目標';
+  String get fallbackAddrs => '備用位址';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -9091,7 +9091,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshAdvanced => 'SSH 進階';
 
   @override
-  String get sshAdvancedTip => '備用位址、ProxyCommand、跳板機、檔案傳輸、遠端路徑';
+  String get sshAdvancedTip => 'ProxyCommand、跳板機、檔案傳輸、遠端路徑';
 
   @override
   String get sshLegacyAlgorithms => '舊版演算法相容模式';

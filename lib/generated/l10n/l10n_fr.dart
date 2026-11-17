@@ -438,7 +438,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get extraArgs => 'Arguments supplémentaires';
 
   @override
-  String get fallbackSshDest => 'Destination SSH de secours';
+  String get fallbackAddrs => 'Adresses de secours';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
@@ -2377,7 +2377,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sshAdvancedTip =>
-      'Destination de repli, ProxyCommand, serveur de rebond, transfert de fichiers, chemin distant';
+      'ProxyCommand, serveur de rebond, transfert de fichiers, chemin distant';
 
   @override
   String get sshLegacyAlgorithms => 'Algorithmes obsolètes';
