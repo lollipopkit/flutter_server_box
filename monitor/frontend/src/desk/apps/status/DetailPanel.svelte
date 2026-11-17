@@ -18,6 +18,70 @@
   const labels = $derived(history.map((p) => p.timestamp))
   const chartOne = 'var(--color-accent)'
   const chartTwo = 'var(--hue-blue)'
+  const chartPalette = [
+    'var(--color-accent)',
+    'var(--hue-blue)',
+    'var(--hue-teal)',
+    'var(--hue-amber)',
+    'var(--hue-violet)',
+    'var(--hue-green)',
+  ]
+
+  const gpuSeries = $derived.by(() => {
+    const names = Object.create(null) as Record<string, string>
+    for (const g of m?.gpus ?? []) {
+      const id = g.id ?? g.name
+      if (id && !(id in names)) names[id] = g.name
+    }
+    for (const p of history) {
+      for (const g of p.gpus ?? []) {
+        if (!(g.id in names)) names[g.id] = g.name
+      }
+    }
+    const entries = Object.entries(names)
+    const nameCounts = Object.create(null) as Record<string, number>
+    for (const [, name] of entries) {
+      nameCounts[name] = (nameCounts[name] ?? 0) + 1
+    }
+    return entries
+      .map(([id, name], i) => ({
+        label: (nameCounts[name] ?? 0) > 1 ? `${name} · ${id}` : name,
+        color: chartPalette[i % chartPalette.length],
+        values: history.map((p) => p.gpus?.find((g) => g.id === id)?.usage_percent ?? null),
+      }))
+      .filter((s) => s.values.some((v) => v !== null))
+  })
+
+  const tempSeries = $derived.by(() => {
+    const byDevice = Object.create(null) as Record<string, number>
+    for (const p of history) {
+      for (const t of p.temps ?? []) {
+        byDevice[t.device] = t.celsius
+      }
+    }
+    const entries = Object.entries(byDevice)
+    if (entries.length > 0) {
+      const top = entries
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([device]) => device)
+      return top.map((device, i) => ({
+        label: device,
+        color: chartPalette[i % chartPalette.length],
+        values: history.map((p) => p.temps?.find((t) => t.device === device)?.celsius ?? null),
+      }))
+    }
+    if (history.some((p) => p.temperature != null)) {
+      return [
+        {
+          label: $LL.temperature(),
+          color: chartOne,
+          values: history.map((p) => p.temperature ?? null),
+        },
+      ]
+    }
+    return []
+  })
 
   // `adapt_cpu` resolves cumulative Linux ticks and one-shot BSD/Windows
   // counters into percentages. The first Linux sample has no baseline.
@@ -421,6 +485,9 @@
       </Card>
     {/if}
   {:else if kind === 'gpu'}
+    {#if gpuSeries.length > 0}
+      <LineChart {labels} series={gpuSeries} yMax={100} format={fmtPercent} />
+    {/if}
     {#each m?.gpus ?? [] as gpu (gpu.id ?? gpu.name)}
       <Card>
         <h3 class="mb-[9px] truncate text-[15px] font-semibold text-(--text-primary)">
@@ -497,6 +564,9 @@
       </Card>
     {/each}
   {:else if kind === 'sensors'}
+    {#if tempSeries.length > 0}
+      <LineChart {labels} series={tempSeries} format={(v) => `${v.toFixed(1)} °C`} />
+    {/if}
     {#each m?.sensors ?? [] as sensor, i (`${sensor.device}-${i}`)}
       <Card>
         <h3 class="mb-[9px] truncate text-[15px] font-semibold text-(--text-primary)">

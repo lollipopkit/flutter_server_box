@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/monitor/monitor_metrics.dart';
@@ -531,5 +533,70 @@ void main() {
     expect(gpu.clockSpeed, 750);
     expect(gpu.temperature, isNull);
     expect(gpu.memory, isNull);
+  });
+
+  group('MonitorHistoryPoint detail', () {
+    Map<String, Object?> basePoint() => {
+      'timestamp': '2026-11-16T00:00:00Z',
+      'cpu': 12.5,
+      'memory': 45.0,
+      'swap': 5.0,
+      'disk': 30.0,
+      'net_rx_speed': 1024.0,
+      'net_tx_speed': 512.0,
+      'temperature': 48.0,
+      'diskio_read_speed': 0.0,
+      'diskio_write_speed': 0.0,
+      'battery_percent': 88.0,
+    };
+
+    test('decodes and encodes per-device detail lists cleanly', () {
+      final point = MonitorHistoryPoint.fromJson({
+        ...basePoint(),
+        'mounts': const [
+          {'mount': '/', 'used': 1000, 'total': 4000},
+        ],
+        'ifaces': const [
+          {'name': 'eth0', 'rx_bytes_per_sec': 20000.0, 'tx_bytes_per_sec': 10000.0},
+        ],
+        'gpus': const [
+          {
+            'id': 'nvidia:0',
+            'name': 'RTX 4090',
+            'usage_percent': 55.0,
+            'memory_used': 4096,
+            'memory_total': 24576,
+          },
+        ],
+        'temps': const [
+          {'device': 'coretemp', 'celsius': 48.0},
+        ],
+      });
+
+      expect(point.mounts.single.mount, '/');
+      expect(point.mounts.single.used, 1000);
+      expect(point.ifaces.single.name, 'eth0');
+      expect(point.ifaces.single.rxBytesPerSec, 20000.0);
+      expect(point.gpus.single.name, 'RTX 4090');
+      expect(point.gpus.single.memoryUsed, 4096);
+      expect(point.temps.single.device, 'coretemp');
+
+      final encoded = jsonEncode(point.toJson());
+      final decoded = MonitorHistoryPoint.fromJson(
+        jsonDecode(encoded) as Map<String, dynamic>,
+      );
+      expect(decoded.mounts.single.total, 4000);
+      expect(decoded.ifaces.single.txBytesPerSec, 10000.0);
+      expect(decoded.gpus.single.usagePercent, 55.0);
+      expect(decoded.temps.single.celsius, 48.0);
+    });
+
+    test('decodes legacy points without per-device detail fields', () {
+      final point = MonitorHistoryPoint.fromJson(basePoint());
+      expect(point.mounts, isEmpty);
+      expect(point.ifaces, isEmpty);
+      expect(point.gpus, isEmpty);
+      expect(point.temps, isEmpty);
+    });
   });
 }

@@ -83,7 +83,7 @@ now. The App includes `minutes` in each request, so Monitor versions that predat
 
 Each point carries the aggregate and, since migration 044, the devices behind
 it: `mounts` (used and total bytes), `ifaces` (a rate, see below), `gpus`
-(usage and memory) and `temps` (every temperature sensor). A field is
+(usage and memory in MiB) and `temps` (every temperature sensor). A field is
 **absent** when that bucket holds no detail — every window older than
 migration 044, and any Monitor that predates it — never an empty list, which
 a client would read as "a machine with no mounts". A client that draws these
@@ -92,18 +92,18 @@ must treat a missing field as a gap, not as zeros.
 Detail is stored as **stretches, not samples**. `metrics_disk_usage`,
 `metrics_iface`, `metrics_gpu` and `metrics_temp` each hold one row per
 stretch of time over which a device's reading held: `start`, `end` and the
-value. A reading that does not move (a disk at 10 % all day) is one row, not
-one row per sample; a reading that moves past its table's threshold opens a
-new row. Stretches younger than 30 seconds are extended rather than cut, and
-no stretch runs longer than an hour even unchanged — so sustained load
-cannot flood the tables and a slowly drifting value still leaves points to
-draw.
+value. A reading that does not move (a disk at 10 % all day) is one row per
+hour (`MAX_SEGMENT`), not one row per sample; a reading that moves past its
+table's threshold opens a new row. Stretches younger than 30 seconds are
+extended and blended over elapsed time rather than cut, and no stretch runs
+longer than an hour even unchanged — so sustained load cannot flood the tables
+and a slowly drifting value still leaves points to draw.
 
 Thresholds: disk usage 1 percentage point (1% of the mount's total, over
-bytes), GPU usage 5 points and GPU memory 5% of its total, temperature 1 °C.
-An interface is recorded only while it moves at least 10 KB/s in either
-direction — an idle link is no detail, and most links are idle most of the
-time.
+bytes), interface rate 50% change in either direction, GPU usage 5 points and
+GPU memory 5% of its total, temperature 1 °C. An interface is recorded only
+while it moves at least 10 KB/s in either direction — an idle link is no
+detail, and most links are idle most of the time.
 
 A stretch is open only while it was extended at the previous sample: a
 device that disappears (a mount unmounted, an interface gone) closes its
@@ -114,9 +114,11 @@ stretch.
 
 In an answer, a stretch appears in **every bucket it overlaps**, with the
 value it held: a six-hour stretch is six points in a one-hour-bucket answer,
-not a spike at its start and a gap after. Interface figures are rates
-(`rx_bytes_per_sec`, `tx_bytes_per_sec`), so a client does not derive them
-again from counters it may only hold part of.
+not a spike at its start and a gap after. When multiple stretches of the same
+device overlap a single bucket, they are merged into one duration-weighted
+entry per device so every point lists each device at most once. Interface
+figures are rates (`rx_bytes_per_sec`, `tx_bytes_per_sec`), so a client does
+not derive them again from counters it may only hold part of.
 
 ## Access model
 

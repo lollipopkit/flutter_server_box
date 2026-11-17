@@ -469,10 +469,10 @@ class MonitorSmartSummary {
 }
 
 /// One bucket from `GET /api/v1/metrics/history?minutes=N`
-/// (monitor's `HistoryPoint`, `monitor/src/api/server.rs`). The aggregate is
-/// always there; the per-device lists are absent on windows the Monitor kept
+/// (monitor's `HistoryPoint`, `monitor/src/api/server/metrics.rs`). The aggregate
+/// is always there; the per-device lists are absent on windows the Monitor kept
 /// before it stored them, and on agents older than that.
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
 class MonitorHistoryPoint {
   final String timestamp;
   final double cpu;
@@ -533,6 +533,8 @@ class MonitorHistoryMount {
 
   factory MonitorHistoryMount.fromJson(Map<String, dynamic> json) =>
       _$MonitorHistoryMountFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorHistoryMountToJson(this);
 }
 
 /// An interface's rate over a stretch. The Monitor holds it as a rate, not a
@@ -552,6 +554,8 @@ class MonitorHistoryIface {
 
   factory MonitorHistoryIface.fromJson(Map<String, dynamic> json) =>
       _$MonitorHistoryIfaceFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorHistoryIfaceToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
@@ -572,6 +576,8 @@ class MonitorHistoryGpu {
 
   factory MonitorHistoryGpu.fromJson(Map<String, dynamic> json) =>
       _$MonitorHistoryGpuFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorHistoryGpuToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
@@ -583,4 +589,6 @@ class MonitorHistoryTemp {
 
   factory MonitorHistoryTemp.fromJson(Map<String, dynamic> json) =>
       _$MonitorHistoryTempFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorHistoryTempToJson(this);
 }

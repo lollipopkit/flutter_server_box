@@ -153,7 +153,8 @@ async fn a_stretch_appears_in_every_bucket_it_covers() {
     // Samples across the window, since the detail rows are attached to
     // points and a window with no samples has none.
     let now = Utc::now();
-    let at: Vec<_> = (0..12).map(|i| now - Duration::minutes(20 - i * 2)).collect();
+    let mut at: Vec<_> = (0..10).map(|i| now - Duration::minutes(19 - i * 2)).collect();
+    at.push(now - Duration::seconds(5));
     let state = state_with(&at).await;
     // One stretch: the disk sat at 40 % for the last half hour.
     sqlx::query(
@@ -194,29 +195,132 @@ async fn a_stretch_appears_in_every_bucket_it_covers() {
 
     let srv = test_server(state).await;
     let points = history(&srv, "minutes=20&max_points=4").await;
-    let with_mounts = points.iter().filter(|p| p.get("mounts").is_some()).count();
-    assert!(
-        with_mounts >= 2,
-        "a half-hour stretch reaches several 5-minute buckets, got {with_mounts}"
-    );
-    for p in &points {
-        if let Some(mounts) = p.get("mounts") {
-            assert_eq!(mounts[0]["mount"], "/data");
-            assert_eq!(mounts[0]["used"], 40);
-            assert_eq!(mounts[0]["total"], 100);
-        }
-        if let Some(gpus) = p.get("gpus") {
-            assert_eq!(gpus[0]["name"], "Test GPU");
-            assert_eq!(gpus[0]["usage_percent"], 25.0);
-        }
+    assert_eq!(points.len(), 4);
+    for (idx, p) in points.iter().enumerate() {
+        let mounts = p.get("mounts").and_then(|v| v.as_array()).unwrap_or_else(|| panic!("point {idx} missing mounts"));
+        assert_eq!(mounts.len(), 1);
+        assert_eq!(mounts[0]["mount"], "/data");
+        assert_eq!(mounts[0]["used"], 40);
+        assert_eq!(mounts[0]["total"], 100);
+
+        let gpus = p.get("gpus").and_then(|v| v.as_array()).unwrap_or_else(|| panic!("point {idx} missing gpus"));
+        assert_eq!(gpus.len(), 1);
+        assert_eq!(gpus[0]["id"], "card0");
+        assert_eq!(gpus[0]["name"], "Test GPU");
+        assert_eq!(gpus[0]["usage_percent"], 25.0);
+
+        let temps = p.get("temps").and_then(|v| v.as_array()).unwrap_or_else(|| panic!("point {idx} missing temps"));
+        assert_eq!(temps.len(), 1);
+        assert_eq!(temps[0]["device"], "coretemp");
+        assert_eq!(temps[0]["celsius"], 41.5);
     }
-    // The interface moved only in the last minute, so most buckets have no
-    // interface entry at all rather than one claiming zero traffic.
+    // The interface moved only in the last minute, so earlier buckets omit
+    // `ifaces` completely while the trailing bucket carries it once.
     let with_ifaces = points.iter().filter(|p| p.get("ifaces").is_some()).count();
     assert!(
-        with_ifaces < points.len(),
-        "an idle interface is no detail, got {with_ifaces} of {}",
+        with_ifaces >= 1 && with_ifaces < points.len(),
+        "an idle interface is absent in earlier buckets and present where active, got {with_ifaces} of {}",
         points.len()
+    );
+    let last_ifaces = points.last().unwrap()["ifaces"].as_array().unwrap();
+    assert_eq!(last_ifaces.len(), 1);
+    assert_eq!(last_ifaces[0]["name"], "eth0");
+}
+
+#[ntex::test]
+async fn multiple_stretches_in_one_bucket_merge_to_one_entry_per_device() {
+    // Anchor timestamps cleanly inside one 600s bucket [base, base + 600).
+    let base_secs = 1_700_000_000i64 - (1_700_000_000i64 % 600) + 600;
+    let base = DateTime::from_timestamp(base_secs, 0).unwrap();
+    let from = base;
+    let to = base + Duration::seconds(1200);
+    let state = state_with(&[
+        base + Duration::seconds(60),
+        base + Duration::seconds(700),
+    ])
+    .await;
+
+    // Two stretches inside the first bucket:
+    // - 0..=200s at 20%, 200..=600s at 80% -> duration-weighted 60%.
+    // The second stretch ends right at `base + 600`, which is the start of the
+    // second bucket (zero overlap there) while a third stretch covers 600..=1200 at 90%.
+    for (start, end, used) in [(0, 200, 20), (200, 600, 80), (600, 1200, 90)] {
+        sqlx::query(
+            "INSERT INTO metrics_disk_usage (mount, start, end, used, total) VALUES ('/data', ?1, ?2, ?3, 100)",
+        )
+        .bind(base + Duration::seconds(start))
+        .bind(base + Duration::seconds(end))
+        .bind(used)
+        .execute(&state.db)
+        .await
+        .unwrap();
+    }
+    sqlx::query(
+        "INSERT INTO metrics_iface (name, start, end, rx_bytes_per_sec, tx_bytes_per_sec)
+         VALUES ('eth_old', ?1, ?2, 9000.0, 9000.0), ('eth0', ?2, ?3, 1000.0, 2000.0), ('eth0', ?3, ?4, 4000.0, 8000.0)",
+    )
+    .bind(base - Duration::seconds(300))
+    .bind(base)
+    .bind(base + Duration::seconds(300))
+    .bind(base + Duration::seconds(600))
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO metrics_gpu (id, start, end, name, usage_percent, memory_used, memory_total)
+         VALUES ('card0', ?1, ?2, 'GPU', 20.0, 100, 1000), ('card0', ?2, ?3, 'GPU', 80.0, 700, 1000)",
+    )
+    .bind(base)
+    .bind(base + Duration::seconds(200))
+    .bind(base + Duration::seconds(600))
+    .execute(&state.db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO metrics_temp (device, start, end, celsius)
+         VALUES ('coretemp', ?1, ?2, 40.0), ('coretemp', ?2, ?3, 70.0)",
+    )
+    .bind(base)
+    .bind(base + Duration::seconds(200))
+    .bind(base + Duration::seconds(600))
+    .execute(&state.db)
+    .await
+    .unwrap();
+
+    let srv = test_server(state).await;
+    let points = history(
+        &srv,
+        &format!("from={}&to={}&max_points=2", from.timestamp(), to.timestamp()),
+    )
+    .await;
+    assert_eq!(points.len(), 2);
+
+    let b0 = &points[0];
+    let mounts0 = b0["mounts"].as_array().unwrap();
+    assert_eq!(mounts0.len(), 1);
+    assert_eq!(mounts0[0]["used"], 60);
+
+    let ifaces0 = b0["ifaces"].as_array().unwrap();
+    assert_eq!(ifaces0.len(), 1);
+    assert!((ifaces0[0]["rx_bytes_per_sec"].as_f64().unwrap() - 2500.0).abs() < 1e-6);
+
+    let gpus0 = b0["gpus"].as_array().unwrap();
+    assert_eq!(gpus0.len(), 1);
+    assert!((gpus0[0]["usage_percent"].as_f64().unwrap() - 60.0).abs() < 1e-6);
+    assert_eq!(gpus0[0]["memory_used"], 500);
+
+    let temps0 = b0["temps"].as_array().unwrap();
+    assert_eq!(temps0.len(), 1);
+    assert!((temps0[0]["celsius"].as_f64().unwrap() - 60.0).abs() < 1e-6);
+
+    // Second bucket must NOT pull in the 80% stretch that merely ended at its boundary.
+    let b1 = &points[1];
+    let mounts1 = b1["mounts"].as_array().unwrap();
+    assert_eq!(mounts1.len(), 1);
+    assert_eq!(mounts1[0]["used"], 90);
+    assert!(
+        b1.get("ifaces").is_none(),
+        "iface ending at bucket boundary does not leak into idle next bucket"
     );
 }
 

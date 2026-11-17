@@ -15,8 +15,7 @@
 -- machine was never sampled with.
 
 -- Every mount, not the largest few: a mount whose reading never moves is one
--- row for the whole retention window, which is cheaper than deciding which
--- few to keep.
+-- row per `MAX_SEGMENT` (1h), which is cheaper than deciding which few to keep.
 CREATE TABLE metrics_disk_usage (
     mount TEXT NOT NULL,
     start DATETIME NOT NULL,
@@ -40,6 +39,7 @@ CREATE TABLE metrics_iface (
 );
 CREATE INDEX idx_metrics_iface_end ON metrics_iface(end);
 
+-- Memory figures are normalized to MiB at write time.
 CREATE TABLE metrics_gpu (
     id TEXT NOT NULL,
     start DATETIME NOT NULL,

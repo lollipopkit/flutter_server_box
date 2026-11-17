@@ -439,10 +439,10 @@ Map<String, dynamic> _$MonitorHistoryPointToJson(
   'diskio_read_speed': instance.diskioReadSpeed,
   'diskio_write_speed': instance.diskioWriteSpeed,
   'battery_percent': instance.batteryPercent,
-  'mounts': instance.mounts,
-  'ifaces': instance.ifaces,
-  'gpus': instance.gpus,
-  'temps': instance.temps,
+  'mounts': instance.mounts.map((e) => e.toJson()).toList(),
+  'ifaces': instance.ifaces.map((e) => e.toJson()).toList(),
+  'gpus': instance.gpus.map((e) => e.toJson()).toList(),
+  'temps': instance.temps.map((e) => e.toJson()).toList(),
 };
 
 MonitorHistoryMount _$MonitorHistoryMountFromJson(Map<String, dynamic> json) =>

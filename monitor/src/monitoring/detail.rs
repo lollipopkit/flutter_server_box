@@ -20,6 +20,8 @@
 //! [`MAX_SEGMENT`], so four devices at the cap are ~2 880 rows a day shared
 //! across the detail tables — against 49 000 for one row per sample.
 
+use std::collections::HashSet;
+
 use chrono::{DateTime, Duration, Utc};
 use sqlx::SqlitePool;
 
@@ -44,8 +46,8 @@ const MAX_SEGMENT: Duration = Duration::hours(1);
 
 #[derive(Clone, Copy)]
 pub(super) struct DiskUsage {
-    pub(super) used: u64,
-    pub(super) total: u64,
+    pub(super) used: i64,
+    pub(super) total: i64,
 }
 
 impl DiskUsage {
@@ -77,8 +79,8 @@ impl GpuUsage {
     fn values(self) -> [f64; 3] {
         [
             self.usage.unwrap_or(f64::NAN),
-            self.mem_used.unwrap_or(-1) as f64,
-            self.mem_total.unwrap_or(-1) as f64,
+            self.mem_used.map(|v| v as f64).unwrap_or(f64::NAN),
+            self.mem_total.map(|v| v as f64).unwrap_or(f64::NAN),
         ]
     }
 }
@@ -91,6 +93,19 @@ pub(super) struct Temp {
 impl Temp {
     fn values(self) -> [f64; 1] {
         [self.celsius]
+    }
+}
+
+/// Normalizes a GPU memory value to MiB using the tool's unit label.
+fn to_mib(val: i64, unit: Option<&str>) -> Option<i64> {
+    if val < 0 {
+        return None;
+    }
+    match unit.map(str::trim) {
+        Some(u) if u.eq_ignore_ascii_case("B") => Some(val / (1024 * 1024)),
+        Some(u) if u.eq_ignore_ascii_case("KB") || u.eq_ignore_ascii_case("KiB") => Some(val / 1024),
+        Some(u) if u.eq_ignore_ascii_case("GB") || u.eq_ignore_ascii_case("GiB") => val.checked_mul(1024),
+        _ => Some(val),
     }
 }
 
@@ -129,6 +144,7 @@ pub(super) fn detail_of(
         .map(|p| (metrics.timestamp - p.timestamp).num_milliseconds() as f64 / 1000.0)
         .filter(|s| *s > 0.0);
 
+    let mut seen_ifaces = HashSet::new();
     let ifaces = match (elapsed, prev) {
         (Some(dt), Some(prev)) => metrics
             .ifaces
@@ -144,9 +160,15 @@ pub(super) fn detail_of(
                     rx: (i.rx_bytes - before.rx_bytes) as f64 / dt,
                     tx: (i.tx_bytes - before.tx_bytes) as f64 / dt,
                 };
+                if !rate.rx.is_finite() || !rate.tx.is_finite() {
+                    return None;
+                }
                 // An idle link is no detail: it is the absence of one, which
                 // is what makes 12 000 idle rows a day disappear.
                 if rate.rx < IFACE_FLOOR && rate.tx < IFACE_FLOOR {
+                    return None;
+                }
+                if !seen_ifaces.insert(i.name.as_str()) {
                     return None;
                 }
                 Some((i.name.clone(), rate))
@@ -155,81 +177,141 @@ pub(super) fn detail_of(
         _ => Vec::new(),
     };
 
+    let mut seen_mounts = HashSet::new();
+    let disk = metrics
+        .disk_details
+        .iter()
+        .filter_map(|d| {
+            if d.mount.is_empty() || d.total == 0 {
+                return None;
+            }
+            let total = i64::try_from(d.total).ok()?;
+            let used = i64::try_from(d.used).ok()?;
+            if total <= 0 || used < 0 || !seen_mounts.insert(d.mount.as_str()) {
+                return None;
+            }
+            Some((d.mount.clone(), DiskUsage { used, total }))
+        })
+        .collect();
+
+    let mut seen_gpus = HashSet::new();
+    let gpus = metrics
+        .gpus
+        .iter()
+        .filter_map(|g| {
+            if !seen_gpus.insert(g.id.as_str()) {
+                return None;
+            }
+            let unit = g.memory_unit.as_deref();
+            Some((
+                g.id.clone(),
+                GpuUsage {
+                    usage: g.usage_percent.map(f64::from).filter(|v| v.is_finite()),
+                    mem_used: g.memory_used.and_then(|v| to_mib(v, unit)),
+                    mem_total: g.memory_total.and_then(|v| to_mib(v, unit)),
+                },
+                g.name.clone(),
+            ))
+        })
+        .collect();
+
+    let mut seen_temps = HashSet::new();
+    let temps = metrics
+        .temps
+        .iter()
+        .filter_map(|t| {
+            if !t.value.is_finite() || !seen_temps.insert(t.device.as_str()) {
+                return None;
+            }
+            Some((t.device.clone(), Temp { celsius: t.value }))
+        })
+        .collect();
+
     DetailSample {
         prev_at: prev.map(|p| p.timestamp),
-        disk: metrics
-            .disk_details
-            .iter()
-            .filter(|d| !d.mount.is_empty() && d.total > 0)
-            .map(|d| {
-                (
-                    d.mount.clone(),
-                    DiskUsage {
-                        used: d.used,
-                        total: d.total,
-                    },
-                )
-            })
-            .collect(),
+        disk,
         ifaces,
-        gpus: metrics
-            .gpus
-            .iter()
-            .map(|g| {
-                (
-                    g.id.clone(),
-                    GpuUsage {
-                        usage: g.usage_percent.map(f64::from),
-                        mem_used: g.memory_used,
-                        mem_total: g.memory_total,
-                    },
-                    g.name.clone(),
-                )
-            })
-            .collect(),
-        temps: metrics
-            .temps
-            .iter()
-            .map(|t| (t.device.clone(), Temp { celsius: t.value }))
-            .collect(),
+        gpus,
+        temps,
     }
 }
 
-/// Whether `next` continues `open` or closes it.
-///
-/// Open means the stretch was extended at the previous sample — its `end` is
-/// [`DetailSample::prev_at`]. A device absent last cycle, a monitor just
-/// started, an interface whose last traffic was cycles ago: none of these is
-/// a continuation, however equal the readings look, and the stretch is left
-/// with the `end` it had.
-///
-/// A stretch that is open extends unless it has reached [`MAX_SEGMENT`], or
-/// the reading moved further than its column's threshold — one per column,
-/// in the same order as [`Stretch::values`] — before [`MIN_SEGMENT`] had
-/// passed. Young stretches extend regardless of the reading: a device under
-/// load moves every cycle, and cutting there is one row per sample again.
-pub(super) fn continues(
+/// How an existing stretch handles the next sample.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Decision {
+    /// Close the existing stretch (or leave it closed) and open a new one.
+    Close,
+    /// Reading stayed within threshold: extend `end` while keeping baseline values.
+    ExtendKeep,
+    /// Stretch is younger than [`MIN_SEGMENT`] and reading moved past threshold:
+    /// extend `end` and blend the reading over elapsed time.
+    ExtendBlend,
+}
+
+/// Duration-weighted blend of an existing stretch value and a new reading.
+fn blend_f64(open_start: DateTime<Utc>, open_end: DateTime<Utc>, at: DateTime<Utc>, old: f64, new: f64) -> f64 {
+    let prev_ms = (open_end - open_start).num_milliseconds().max(0) as f64;
+    let step_ms = (at - open_end).num_milliseconds().max(1) as f64;
+    if prev_ms == 0.0 {
+        (old + new) * 0.5
+    } else {
+        (old * prev_ms + new * step_ms) / (prev_ms + step_ms)
+    }
+}
+
+fn blend_opt_f64(
+    open_start: DateTime<Utc>,
+    open_end: DateTime<Utc>,
+    at: DateTime<Utc>,
+    old: Option<f64>,
+    new: Option<f64>,
+) -> Option<f64> {
+    match (old, new) {
+        (Some(a), Some(b)) => Some(blend_f64(open_start, open_end, at, a, b)),
+        (_, b) => b,
+    }
+}
+
+fn blend_opt_i64(
+    open_start: DateTime<Utc>,
+    open_end: DateTime<Utc>,
+    at: DateTime<Utc>,
+    old: Option<i64>,
+    new: Option<i64>,
+) -> Option<i64> {
+    match (old, new) {
+        (Some(a), Some(b)) => Some(blend_f64(open_start, open_end, at, a as f64, b as f64).round() as i64),
+        (_, b) => b,
+    }
+}
+
+/// Decides whether `next_values` continues `open` (keeping or blending) or closes it.
+pub(super) fn decide(
     open: &Stretch,
     next_values: &[f64],
     thresholds: &[f64],
     at: DateTime<Utc>,
     prev_at: Option<DateTime<Utc>>,
-) -> bool {
+) -> Decision {
     if prev_at != Some(open.end) {
-        return false;
+        return Decision::Close;
     }
     let age = at - open.start;
     if age >= MAX_SEGMENT {
-        return false;
+        return Decision::Close;
     }
-    if age < MIN_SEGMENT {
-        return true;
-    }
-    open.values.iter().zip(next_values).zip(thresholds).all(|((a, b), t)| {
+    let within = open.values.iter().zip(next_values).zip(thresholds).all(|((a, b), t)| {
         // Two missing readings are the same missing reading; NaN minus NaN
         // is NaN, which no comparison accepts.
         a.is_nan() && b.is_nan() || (a - b).abs() <= *t
-    })
+    });
+    if within {
+        Decision::ExtendKeep
+    } else if age < MIN_SEGMENT {
+        Decision::ExtendBlend
+    } else {
+        Decision::Close
+    }
 }
 
 /// The stretch of one device, as the database holds it.
@@ -283,8 +365,9 @@ async fn store_disk(
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, end, used, total))
-                if continues(
+            Some((start, end, _, _)) if at <= start || at <= end => continue,
+            Some((start, end, used, total)) => {
+                match decide(
                     // The threshold is 1 percentage point of usage, which
                     // over bytes is 1% of the total — not 1 byte.
                     &Stretch { start, end, values: vec![used as f64, total as f64] },
@@ -292,16 +375,54 @@ async fn store_disk(
                     &[total as f64 * 0.01, total as f64 * 0.01],
                     at,
                     prev_at,
-                ) =>
-            {
-                sqlx::query("UPDATE metrics_disk_usage SET end = ? WHERE mount = ? AND start = ?")
-                    .bind(at)
-                    .bind(mount)
-                    .bind(start)
-                    .execute(&mut **tx)
-                    .await?;
+                ) {
+                    Decision::ExtendKeep => {
+                        sqlx::query("UPDATE metrics_disk_usage SET end = ? WHERE mount = ? AND start = ?")
+                            .bind(at)
+                            .bind(mount)
+                            .bind(start)
+                            .execute(&mut **tx)
+                            .await?;
+                    }
+                    Decision::ExtendBlend => {
+                        let blended = blend_f64(start, end, at, used as f64, reading.used as f64)
+                            .round() as i64;
+                        sqlx::query(
+                            "UPDATE metrics_disk_usage SET end = ?, used = ?, total = ?
+                             WHERE mount = ? AND start = ?",
+                        )
+                        .bind(at)
+                        .bind(blended)
+                        .bind(reading.total)
+                        .bind(mount)
+                        .bind(start)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                    Decision::Close => {
+                        if prev_at == Some(end) {
+                            sqlx::query("UPDATE metrics_disk_usage SET end = ? WHERE mount = ? AND start = ?")
+                                .bind(at)
+                                .bind(mount)
+                                .bind(start)
+                                .execute(&mut **tx)
+                                .await?;
+                        }
+                        sqlx::query(
+                            "INSERT INTO metrics_disk_usage (mount, start, end, used, total)
+                             VALUES (?, ?, ?, ?, ?)",
+                        )
+                        .bind(mount)
+                        .bind(at)
+                        .bind(at)
+                        .bind(reading.used)
+                        .bind(reading.total)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                }
             }
-            _ => {
+            None => {
                 sqlx::query(
                     "INSERT INTO metrics_disk_usage (mount, start, end, used, total)
                      VALUES (?, ?, ?, ?, ?)",
@@ -309,8 +430,8 @@ async fn store_disk(
                 .bind(mount)
                 .bind(at)
                 .bind(at)
-                .bind(reading.used as i64)
-                .bind(reading.total as i64)
+                .bind(reading.used)
+                .bind(reading.total)
                 .execute(&mut **tx)
                 .await?;
             }
@@ -337,8 +458,9 @@ async fn store_ifaces(
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, end, rx, tx_))
-                if continues(
+            Some((start, end, _, _)) if at <= start || at <= end => continue,
+            Some((start, end, rx, tx_)) => {
+                match decide(
                     &Stretch { start, end, values: vec![rx, tx_] },
                     &reading.values(),
                     // Traffic varies by nature; a stretch is cut only when
@@ -349,22 +471,56 @@ async fn store_ifaces(
                     ],
                     at,
                     prev_at,
-                ) =>
-            {
-                sqlx::query("UPDATE metrics_iface SET end = ? WHERE name = ? AND start = ?")
-                    .bind(at)
-                    .bind(name)
-                    .bind(start)
-                    .execute(&mut **tx)
-                    .await?;
+                ) {
+                    Decision::ExtendKeep => {
+                        sqlx::query("UPDATE metrics_iface SET end = ? WHERE name = ? AND start = ?")
+                            .bind(at)
+                            .bind(name)
+                            .bind(start)
+                            .execute(&mut **tx)
+                            .await?;
+                    }
+                    Decision::ExtendBlend => {
+                        let blended_rx = blend_f64(start, end, at, rx, reading.rx);
+                        let blended_tx = blend_f64(start, end, at, tx_, reading.tx);
+                        sqlx::query(
+                            "UPDATE metrics_iface SET end = ?, rx_bytes_per_sec = ?, tx_bytes_per_sec = ?
+                             WHERE name = ? AND start = ?",
+                        )
+                        .bind(at)
+                        .bind(blended_rx)
+                        .bind(blended_tx)
+                        .bind(name)
+                        .bind(start)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                    Decision::Close => {
+                        let new_start = prev_at
+                            .filter(|p| *p < at && *p >= end && *p > start)
+                            .unwrap_or(at);
+                        sqlx::query(
+                            "INSERT INTO metrics_iface (name, start, end, rx_bytes_per_sec, tx_bytes_per_sec)
+                             VALUES (?, ?, ?, ?, ?)",
+                        )
+                        .bind(name)
+                        .bind(new_start)
+                        .bind(at)
+                        .bind(reading.rx)
+                        .bind(reading.tx)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                }
             }
-            _ => {
+            None => {
+                let new_start = prev_at.filter(|p| *p < at).unwrap_or(at);
                 sqlx::query(
                     "INSERT INTO metrics_iface (name, start, end, rx_bytes_per_sec, tx_bytes_per_sec)
                      VALUES (?, ?, ?, ?, ?)",
                 )
                 .bind(name)
-                .bind(at)
+                .bind(new_start)
                 .bind(at)
                 .bind(reading.rx)
                 .bind(reading.tx)
@@ -397,41 +553,79 @@ async fn store_gpus(
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, end, usage, mem_used, mem_total))
-                if continues(
+            Some((start, end, _, _, _)) if at <= start || at <= end => continue,
+            Some((start, end, usage, mem_used, mem_total)) => {
+                let mem_threshold = mem_total.or(reading.mem_total).unwrap_or(0).max(0) as f64 * 0.05;
+                match decide(
                     &Stretch {
                         start,
                         end,
                         values: vec![
                             usage.unwrap_or(f64::NAN),
-                            mem_used.unwrap_or(-1) as f64,
-                            mem_total.unwrap_or(-1) as f64,
+                            mem_used.map(|v| v as f64).unwrap_or(f64::NAN),
+                            mem_total.map(|v| v as f64).unwrap_or(f64::NAN),
                         ],
                     },
                     &reading.values(),
-                    // Usage by points, memory by a share of its total; a
-                    // total the driver does not report (the -1 sentinel)
-                    // compares as held only while it stays unreported.
-                    &[
-                        5.0,
-                        mem_total.unwrap_or(0).max(0) as f64 * 0.05 + 1.0,
-                        mem_total.unwrap_or(0).max(0) as f64 * 0.05 + 1.0,
-                    ],
+                    &[5.0, mem_threshold, mem_threshold],
                     at,
                     prev_at,
-                ) =>
-            {
-                // The name is not a reading: it follows the driver's label
-                // and is refreshed rather than held.
-                sqlx::query("UPDATE metrics_gpu SET end = ?, name = ? WHERE id = ? AND start = ?")
-                    .bind(at)
-                    .bind(name)
-                    .bind(id)
-                    .bind(start)
-                    .execute(&mut **tx)
-                    .await?;
+                ) {
+                    Decision::ExtendKeep => {
+                        // The name is not a reading: it follows the driver's label
+                        // and is refreshed rather than held.
+                        sqlx::query("UPDATE metrics_gpu SET end = ?, name = ? WHERE id = ? AND start = ?")
+                            .bind(at)
+                            .bind(name)
+                            .bind(id)
+                            .bind(start)
+                            .execute(&mut **tx)
+                            .await?;
+                    }
+                    Decision::ExtendBlend => {
+                        let blended_usage = blend_opt_f64(start, end, at, usage, reading.usage);
+                        let blended_mem_used = blend_opt_i64(start, end, at, mem_used, reading.mem_used);
+                        let blended_mem_total = reading.mem_total.or(mem_total);
+                        sqlx::query(
+                            "UPDATE metrics_gpu SET end = ?, name = ?, usage_percent = ?, memory_used = ?, memory_total = ?
+                             WHERE id = ? AND start = ?",
+                        )
+                        .bind(at)
+                        .bind(name)
+                        .bind(blended_usage)
+                        .bind(blended_mem_used)
+                        .bind(blended_mem_total)
+                        .bind(id)
+                        .bind(start)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                    Decision::Close => {
+                        if prev_at == Some(end) {
+                            sqlx::query("UPDATE metrics_gpu SET end = ? WHERE id = ? AND start = ?")
+                                .bind(at)
+                                .bind(id)
+                                .bind(start)
+                                .execute(&mut **tx)
+                                .await?;
+                        }
+                        sqlx::query(
+                            "INSERT INTO metrics_gpu (id, start, end, name, usage_percent, memory_used, memory_total)
+                             VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        )
+                        .bind(id)
+                        .bind(at)
+                        .bind(at)
+                        .bind(name)
+                        .bind(reading.usage)
+                        .bind(reading.mem_used)
+                        .bind(reading.mem_total)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                }
             }
-            _ => {
+            None => {
                 sqlx::query(
                     "INSERT INTO metrics_gpu (id, start, end, name, usage_percent, memory_used, memory_total)
                      VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -466,23 +660,57 @@ async fn store_temps(
         .fetch_optional(&mut **tx)
         .await?;
         match open {
-            Some((start, end, celsius))
-                if continues(
+            Some((start, end, _)) if at <= start || at <= end => continue,
+            Some((start, end, celsius)) => {
+                match decide(
                     &Stretch { start, end, values: vec![celsius] },
                     &reading.values(),
                     &[1.0],
                     at,
                     prev_at,
-                ) =>
-            {
-                sqlx::query("UPDATE metrics_temp SET end = ? WHERE device = ? AND start = ?")
-                    .bind(at)
-                    .bind(device)
-                    .bind(start)
-                    .execute(&mut **tx)
-                    .await?;
+                ) {
+                    Decision::ExtendKeep => {
+                        sqlx::query("UPDATE metrics_temp SET end = ? WHERE device = ? AND start = ?")
+                            .bind(at)
+                            .bind(device)
+                            .bind(start)
+                            .execute(&mut **tx)
+                            .await?;
+                    }
+                    Decision::ExtendBlend => {
+                        let blended = blend_f64(start, end, at, celsius, reading.celsius);
+                        sqlx::query(
+                            "UPDATE metrics_temp SET end = ?, celsius = ? WHERE device = ? AND start = ?",
+                        )
+                        .bind(at)
+                        .bind(blended)
+                        .bind(device)
+                        .bind(start)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                    Decision::Close => {
+                        if prev_at == Some(end) {
+                            sqlx::query("UPDATE metrics_temp SET end = ? WHERE device = ? AND start = ?")
+                                .bind(at)
+                                .bind(device)
+                                .bind(start)
+                                .execute(&mut **tx)
+                                .await?;
+                        }
+                        sqlx::query(
+                            "INSERT INTO metrics_temp (device, start, end, celsius) VALUES (?, ?, ?, ?)",
+                        )
+                        .bind(device)
+                        .bind(at)
+                        .bind(at)
+                        .bind(reading.celsius)
+                        .execute(&mut **tx)
+                        .await?;
+                    }
+                }
             }
-            _ => {
+            None => {
                 sqlx::query(
                     "INSERT INTO metrics_temp (device, start, end, celsius) VALUES (?, ?, ?, ?)",
                 )
@@ -521,13 +749,13 @@ mod tests {
     #[test]
     fn a_reading_inside_its_threshold_extends_the_stretch() {
         let open = stretch(0, &[10.0]);
-        assert!(continues(&open, &[10.4], &[1.0], at(60), Some(open.end)));
+        assert_eq!(decide(&open, &[10.4], &[1.0], at(60), Some(open.end)), Decision::ExtendKeep);
     }
 
     #[test]
     fn a_reading_past_its_threshold_opens_a_new_one() {
         let open = stretch(0, &[10.0]);
-        assert!(!continues(&open, &[12.0], &[1.0], at(60), Some(open.end)));
+        assert_eq!(decide(&open, &[12.0], &[1.0], at(60), Some(open.end)), Decision::Close);
     }
 
     #[test]
@@ -536,36 +764,170 @@ mod tests {
         // same, but its stretch ended when it was last seen: bolt the two
         // together and a remount claims its old reading through the gap.
         let open = stretch(0, &[10.0]);
-        assert!(!continues(&open, &[10.0], &[1.0], at(60), Some(at(50))));
-        assert!(!continues(&open, &[10.0], &[1.0], at(60), None));
+        assert_eq!(decide(&open, &[10.0], &[1.0], at(60), Some(at(50))), Decision::Close);
+        assert_eq!(decide(&open, &[10.0], &[1.0], at(60), None), Decision::Close);
     }
 
     #[test]
-    fn a_young_stretch_is_never_cut() {
-        // Far past the threshold, but only 7 seconds old: a device under load
-        // moves every cycle, and cutting here is one row per sample again.
+    fn a_young_stretch_is_blended_instead_of_cut() {
+        // Far past the threshold, but only 14 seconds old: a device under load
+        // moves every cycle, so extend and blend rather than cutting or freezing
+        // the initial reading.
         let open = stretch(0, &[10.0]);
-        assert!(continues(&open, &[90.0], &[1.0], at(7), Some(open.end)));
+        assert_eq!(decide(&open, &[90.0], &[1.0], at(14), Some(open.end)), Decision::ExtendBlend);
+        // Inside the threshold it stays ExtendKeep.
+        assert_eq!(decide(&open, &[10.5], &[1.0], at(14), Some(open.end)), Decision::ExtendKeep);
     }
 
     #[test]
     fn an_old_stretch_is_cut_even_without_a_change() {
         let open = stretch(0, &[10.0]);
-        assert!(!continues(&open, &[10.0], &[1.0], at(3600), Some(open.end)));
+        assert_eq!(decide(&open, &[10.0], &[1.0], at(3600), Some(open.end)), Decision::Close);
     }
 
     #[test]
     fn thresholds_are_per_column() {
         // Usage within 5 points, memory moved: the stretch opens again.
         let open = stretch(0, &[10.0, 100.0]);
-        assert!(!continues(&open, &[12.0, 500.0], &[5.0, 10.0], at(60), Some(open.end)));
+        assert_eq!(decide(&open, &[12.0, 500.0], &[5.0, 10.0], at(60), Some(open.end)), Decision::Close);
         // And the other way.
-        assert!(!continues(&open, &[90.0, 105.0], &[5.0, 10.0], at(60), Some(open.end)));
+        assert_eq!(decide(&open, &[90.0, 105.0], &[5.0, 10.0], at(60), Some(open.end)), Decision::Close);
     }
 
     #[test]
     fn nan_counts_as_the_same_missing_reading() {
         let open = stretch(0, &[f64::NAN]);
-        assert!(continues(&open, &[f64::NAN], &[1.0], at(60), Some(open.end)));
+        assert_eq!(decide(&open, &[f64::NAN], &[1.0], at(60), Some(open.end)), Decision::ExtendKeep);
+        assert_eq!(decide(&open, &[0.0], &[1.0], at(60), Some(open.end)), Decision::Close);
+    }
+
+    #[test]
+    fn detail_of_deduplicates_keys_filters_overflow_and_normalizes_gpu_units() {
+        use super::super::metrics::*;
+
+        let base = SystemMetrics {
+            timestamp: at(10),
+            extended_updated_at: at(10),
+            server_name: "host".into(),
+            cpu_usage: 0.0,
+            cpu_cores: Vec::new(),
+            memory: MemoryMetrics { total: 1, used: 0, free: 1, usage_percent: 0.0 },
+            swap: SwapMetrics { total: 0, used: 0, usage_percent: 0.0 },
+            swap_areas: Vec::new(),
+            disk: DiskMetrics { total: 1, used: 0, free: 1, usage_percent: 0.0 },
+            network: NetworkMetrics { rx_bytes: 0, tx_bytes: 0 },
+            temperature: None,
+            temps: vec![
+                TempReading { device: "core".into(), value: 40.0 },
+                TempReading { device: "core".into(), value: 55.0 },
+                TempReading { device: "bad".into(), value: f64::NAN },
+            ],
+            sys: None,
+            os_id: None,
+            os_id_like: Vec::new(),
+            cpu_brand: None,
+            gpus: vec![
+                GpuMetrics {
+                    id: "gpu0".into(),
+                    vendor: "amd".into(),
+                    name: "GPU A".into(),
+                    usage_percent: Some(20.0),
+                    temperature: None,
+                    power: None,
+                    memory_used: Some(2 * 1024 * 1024),
+                    memory_total: Some(1024 * 1024 * 1024),
+                    memory_unit: Some("B".into()),
+                    fan_speed: None,
+                    clock_speed: None,
+                    processes: Vec::new(),
+                },
+                GpuMetrics {
+                    id: "gpu0".into(),
+                    vendor: "amd".into(),
+                    name: "GPU A dup".into(),
+                    usage_percent: Some(90.0),
+                    temperature: None,
+                    power: None,
+                    memory_used: None,
+                    memory_total: None,
+                    memory_unit: None,
+                    fan_speed: None,
+                    clock_speed: None,
+                    processes: Vec::new(),
+                },
+                GpuMetrics {
+                    id: "gpu1".into(),
+                    vendor: "nvidia".into(),
+                    name: "GPU B".into(),
+                    usage_percent: Some(50.0),
+                    temperature: None,
+                    power: None,
+                    memory_used: Some(2),
+                    memory_total: Some(16),
+                    memory_unit: Some("GiB".into()),
+                    fan_speed: None,
+                    clock_speed: None,
+                    processes: Vec::new(),
+                },
+            ],
+            disk_details: vec![
+                DiskDetail {
+                    path: "/dev/sda1".into(),
+                    mount: "/".into(),
+                    fs_type: None,
+                    used: 100,
+                    total: 1000,
+                    usage_percent: 10.0,
+                },
+                DiskDetail {
+                    path: "overmount".into(),
+                    mount: "/".into(),
+                    fs_type: None,
+                    used: 200,
+                    total: 2000,
+                    usage_percent: 10.0,
+                },
+                DiskDetail {
+                    path: "fuse".into(),
+                    mount: "/mnt/huge".into(),
+                    fs_type: None,
+                    used: 10,
+                    total: u64::MAX,
+                    usage_percent: 0.0,
+                },
+            ],
+            block_devices: Vec::new(),
+            ifaces: vec![
+                IfaceMetrics { name: "eth0".into(), rx_bytes: 200_000, tx_bytes: 0 },
+                IfaceMetrics { name: "eth0".into(), rx_bytes: 999_999, tx_bytes: 0 },
+            ],
+            uptime: None,
+            conn: None,
+            diskio: Vec::new(),
+            diskio_rate: Vec::new(),
+            batteries: Vec::new(),
+            sensors: Vec::new(),
+            disk_smart: Vec::new(),
+            ips: Vec::new(),
+            custom_cmds: Vec::new(),
+            amd_cache: Vec::new(),
+        };
+        let mut prev = base.clone();
+        prev.timestamp = at(0);
+        prev.ifaces = vec![IfaceMetrics { name: "eth0".into(), rx_bytes: 0, tx_bytes: 0 }];
+
+        let sample = detail_of(&base, Some(&prev));
+        assert_eq!(sample.disk.len(), 1);
+        assert_eq!(sample.disk[0].0, "/");
+        assert_eq!(sample.disk[0].1.used, 100);
+        assert_eq!(sample.ifaces.len(), 1);
+        assert_eq!(sample.ifaces[0].0, "eth0");
+        assert_eq!(sample.temps.len(), 1);
+        assert_eq!(sample.temps[0].0, "core");
+        assert_eq!(sample.gpus.len(), 2);
+        assert_eq!(sample.gpus[0].1.mem_used, Some(2));
+        assert_eq!(sample.gpus[0].1.mem_total, Some(1024));
+        assert_eq!(sample.gpus[1].1.mem_used, Some(2048));
+        assert_eq!(sample.gpus[1].1.mem_total, Some(16384));
     }
 }

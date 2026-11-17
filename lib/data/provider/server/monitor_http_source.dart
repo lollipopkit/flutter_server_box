@@ -2,6 +2,7 @@ import 'package:server_box/core/monitor/exec.dart';
 import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics.dart';
 import 'package:server_box/data/model/server/monitor/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -89,10 +90,49 @@ class MonitorHttpDataSource implements ServerDataSource {
           netTx: p.netTxSpeed,
           diskRead: p.diskioReadSpeed,
           diskWrite: p.diskioWriteSpeed,
+          gpu: _busiestGpuUsage(p.gpus),
           temp: p.temperature,
           battery: p.batteryPercent,
+          temps: p.temps.isEmpty
+              ? null
+              : {for (final t in p.temps) t.device: t.celsius},
+          netRxs: p.ifaces.isEmpty
+              ? null
+              : {for (final i in p.ifaces) i.name: i.rxBytesPerSec},
+          netTxs: p.ifaces.isEmpty
+              ? null
+              : {for (final i in p.ifaces) i.name: i.txBytesPerSec},
+          mounts: p.mounts.isEmpty
+              ? null
+              : [
+                  for (final m in p.mounts)
+                    (mount: m.mount, used: m.used, total: m.total),
+                ],
+          gpus: p.gpus.isEmpty
+              ? null
+              : [
+                  for (final g in p.gpus)
+                    (
+                      id: g.id,
+                      name: g.name,
+                      usagePercent: g.usagePercent,
+                      memoryUsed: g.memoryUsed,
+                      memoryTotal: g.memoryTotal,
+                    ),
+                ],
         ),
     ];
+  }
+
+  static double? _busiestGpuUsage(List<MonitorHistoryGpu> gpus) {
+    double? top;
+    for (final g in gpus) {
+      final u = g.usagePercent;
+      if (u != null && (top == null || u > top)) {
+        top = u;
+      }
+    }
+    return top;
   }
 
   @override
