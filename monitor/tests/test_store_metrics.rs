@@ -299,7 +299,9 @@ async fn gpus_temps_and_disk_boundaries_store_cleanly() -> Result<()> {
     let (gpu_rows,): (i64,) = sqlx::query_as("SELECT count(*) FROM metrics_gpu")
         .fetch_one(&pool)
         .await?;
-    assert_eq!(gpu_rows, 2);
+    // Memory appearing (None -> Some) opens a stretch even inside MIN_SEGMENT,
+    // then MAX_SEGMENT cuts once more.
+    assert_eq!(gpu_rows, 3);
 
     let temp_rows: Vec<(chrono::DateTime<Utc>, chrono::DateTime<Utc>, f64)> =
         sqlx::query_as("SELECT start, end, celsius FROM metrics_temp ORDER BY start")
