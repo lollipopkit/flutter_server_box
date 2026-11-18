@@ -122,8 +122,24 @@ pub const LINUX: &[CommandSpec] = &[
     // unexpanded, so `cat` reports a file named `thermal_zone*`; that is not a
     // failure to read the temperature, it is a machine that has none, and the
     // page draws absence rather than an error.
-    CommandSpec { key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type 2>/dev/null" },
-    CommandSpec { key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null" },
+    //
+    // The hwmon half is where a CPU's own sensor lives on AMD (k10temp) and
+    // some Intel (coretemp) — machines that may expose nothing but a static
+    // `acpitz` zone (#1957). Both commands walk the same directories under
+    // the same content gate — a device whose name or temp reads empty or
+    // errors contributes no line to either stream, so the two stay
+    // line-aligned — and keep the same-named-device tradeoff the table
+    // always had: two drives both called `nvme` leave one reading. A machine
+    // with no hwmon leaves the glob unexpanded and the gate fails silently,
+    // like the zones above.
+    CommandSpec {
+        key: TEMP_TYPE,
+        cmd: "cat /sys/class/thermal/thermal_zone*/type 2>/dev/null; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$n\"; done",
+    },
+    CommandSpec {
+        key: TEMP_VAL,
+        cmd: "cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$t\"; done",
+    },
     // `/etc/hostname` first: in a container it can be the machine's own name
     // where the kernel's is the container's. OpenWrt, Gentoo's OpenRC and
     // Termux have no such file, so then the kernel's (`uname -n`, in BusyBox

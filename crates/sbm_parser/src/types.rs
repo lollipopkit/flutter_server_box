@@ -698,7 +698,7 @@ pub fn disk_total(disks: &[Disk], count_network: bool) -> DiskTotal {
 pub struct Temperatures(pub BTreeMap<String, f64>);
 
 /// CPU temperature device priority (Dart `_cpuTemp`)
-const CPU_TEMP_KEYS: [&str; 5] = ["x86_pkg_temp", "coretemp", "zenpower", "cpu_thermal", "soc"];
+const CPU_TEMP_KEYS: [&str; 6] = ["x86_pkg_temp", "coretemp", "k10temp", "zenpower", "cpu_thermal", "soc"];
 
 impl Temperatures {
     pub fn is_empty(&self) -> bool {
