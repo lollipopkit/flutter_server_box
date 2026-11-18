@@ -1630,6 +1630,9 @@ class AppLocalizationsAz extends AppLocalizations {
       'Agentin yerli olaraq, ServerBox tərəfindən quraşdırılmış Linux konteyneri daxilində işləməsinə icazə verir';
 
   @override
+  String get agentRedact => 'Göndərməzdən əvvəl sirləri gizlət';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Əvvəllər quraşdırılmış versiyanın məlumatları idxal edildi. Endirilmiş fayllar əvvəlki yerində, $path qovluğunda saxlanıldı.';
   }

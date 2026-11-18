@@ -608,6 +608,9 @@ impl AgentMode {
             key: Some(chat_key),
             credentials: Arc::new(config::AppCredentials { db: config::DbCredentials { db: self.db.clone(), sealer: self.sealer.clone() }, apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
+            // What reaches a model is whatever the server printed.
+            // TODO: a panel setting for it, as the app has.
+            redact: Some(fl_pi_llm::redact::Settings::conservative()),
             logger: Some(Arc::new(|level, message| match level {
                 "error" => tracing::error!("agent mode: {message}"),
                 "warn" => tracing::warn!("agent mode: {message}"),

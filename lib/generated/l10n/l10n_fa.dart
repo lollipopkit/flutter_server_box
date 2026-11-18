@@ -1628,6 +1628,9 @@ class AppLocalizationsFa extends AppLocalizations {
       'به Agent امکان می‌دهد به‌صورت محلی و محدود به کانتینر لینوکسی که ServerBox نصب کرده است کار کند';
 
   @override
+  String get agentRedact => 'پنهان‌سازی اسرار پیش از ارسال';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'داده‌های نسخه نصب‌شده قبلی وارد شد. فایل‌های دانلودشده در همان محل در $path باقی ماندند.';
   }

@@ -423,6 +423,7 @@
   "agentLocalExec": "このデバイスでコマンドを実行",
   "agentLocalExecTip": "ServerBox を実行しているマシンで Agent が作業できるようにします。コマンドは権限モードに従います",
   "agentLocalExecRootfsTip": "Agent をローカルで動かします。範囲は ServerBox が入れた Linux コンテナ内に限られます",
+  "agentRedact": "送信前に秘密情報を伏せる",
   "macDmgImportedPartly": "以前インストールされていたビルドのデータを取り込みました。ダウンロードしたファイルは {path} に残っています。",
   "bmcAccount": "アカウント",
   "bmcAccountUnset": "未選択 — タップして選択または作成",

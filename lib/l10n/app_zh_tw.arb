@@ -426,6 +426,7 @@
   "agentLocalExec": "在本機執行命令",
   "agentLocalExecTip": "允許 Agent 在目前裝置上執行本機指令，並受權限模式控制",
   "agentLocalExecRootfsTip": "讓 Agent 在本機執行，但只能操作 ServerBox 安裝的 Linux 容器。",
+  "agentRedact": "傳送前遮蔽機密",
   "macDmgImportedPartly": "已匯入先前安裝版本的資料。下載的檔案仍保留在 {path}。",
   "bmcAccount": "帳戶",
   "bmcAccountUnset": "未選擇，點選以選擇或新增",

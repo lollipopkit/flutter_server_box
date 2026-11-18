@@ -1621,6 +1621,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Agent’ın yerelde, ServerBox’ın kurduğu Linux konteynerinin içinde çalışmasına izin verir';
 
   @override
+  String get agentRedact => 'Göndermeden önce sırları gizle';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Daha önce yüklü sürümün verileri içe aktarıldı. İndirilen dosyalar $path konumunda kaldı.';
   }

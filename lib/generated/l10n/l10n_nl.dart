@@ -1635,6 +1635,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Laat de Agent lokaal werken, beperkt tot de Linux-container die ServerBox installeerde';
 
   @override
+  String get agentRedact => 'Geheimen verbergen voor verzenden';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in $path.';
   }

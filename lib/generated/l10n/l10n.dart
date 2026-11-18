@@ -2856,6 +2856,12 @@ abstract class AppLocalizations {
   /// **'Lets the Agent work locally, confined to the Linux container ServerBox installed'**
   String get agentLocalExecRootfsTip;
 
+  /// Setting: replace credentials in what the Agent sends a model.
+  ///
+  /// In en, this message translates to:
+  /// **'Redact secrets before sending'**
+  String get agentRedact;
+
   /// User-facing label or message for mac DMG imported partly.
   ///
   /// In en, this message translates to:

@@ -1650,6 +1650,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Deja que el Agent trabaje en local, limitado al contenedor Linux que instaló ServerBox';
 
   @override
+  String get agentRedact => 'Ocultar secretos antes de enviar';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Se importaron los datos de la versión instalada anteriormente. Los archivos descargados se quedaron en $path.';
   }
