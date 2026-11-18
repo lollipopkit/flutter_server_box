@@ -126,17 +126,20 @@ pub const LINUX: &[CommandSpec] = &[
     // The hwmon half is where a CPU's own sensor lives on AMD (k10temp) and
     // some Intel (coretemp) — machines that may expose nothing but a static
     // `acpitz` zone (#1957). Both commands walk the same directories under
-    // the same content gate — a device whose two files do not both read
-    // non-empty contributes no line to either stream, so the two stay
-    // line-aligned — and keep the same-named-device tradeoff the table always
-    // had: two drives both called `nvme` leave one reading.
+    // the same content gate — a device whose two readings do not both hold a
+    // non-whitespace character contributes no line to either stream, so the
+    // two stay line-aligned — and keep the same-named-device tradeoff the
+    // table always had: two drives both called `nvme` leave one reading.
+    // `case` rather than `[ -n ]` for the gate: `parse_temps` drops a blank
+    // line from one stream and not the other, and a file reading as
+    // whitespace alone must not become that.
     CommandSpec {
         key: TEMP_TYPE,
-        cmd: "for z in /sys/class/thermal/thermal_zone*; do n=$(cat \"$z/type\" 2>/dev/null) && t=$(cat \"$z/temp\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$n\"; done; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$n\"; done",
+        cmd: "for z in /sys/class/thermal/thermal_zone*; do n=$(cat \"$z/type\" 2>/dev/null) && t=$(cat \"$z/temp\" 2>/dev/null) && case \"$n\" in *[![:space:]]*) case \"$t\" in *[![:space:]]*) printf '%s\\n' \"$n\";; esac;; esac; done; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && case \"$n\" in *[![:space:]]*) case \"$t\" in *[![:space:]]*) printf '%s\\n' \"$n\";; esac;; esac; done",
     },
     CommandSpec {
         key: TEMP_VAL,
-        cmd: "for z in /sys/class/thermal/thermal_zone*; do n=$(cat \"$z/type\" 2>/dev/null) && t=$(cat \"$z/temp\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$t\"; done; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && [ -n \"$n\" ] && [ -n \"$t\" ] && printf '%s\\n' \"$t\"; done",
+        cmd: "for z in /sys/class/thermal/thermal_zone*; do n=$(cat \"$z/type\" 2>/dev/null) && t=$(cat \"$z/temp\" 2>/dev/null) && case \"$n\" in *[![:space:]]*) case \"$t\" in *[![:space:]]*) printf '%s\\n' \"$t\";; esac;; esac; done; for d in /sys/class/hwmon/hwmon*; do n=$(cat \"$d/name\" 2>/dev/null) && t=$(cat \"$d/temp1_input\" 2>/dev/null) && case \"$n\" in *[![:space:]]*) case \"$t\" in *[![:space:]]*) printf '%s\\n' \"$t\";; esac;; esac; done",
     },
     // `/etc/hostname` first: in a container it can be the machine's own name
     // where the kernel's is the container's. OpenWrt, Gentoo's OpenRC and
