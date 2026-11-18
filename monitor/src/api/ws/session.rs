@@ -592,6 +592,18 @@ mod tests {
     }
 
     #[test]
+    fn an_attachment_resumes_where_the_client_left_off() {
+        let store = SessionStore::new(4, Duration::from_secs(300));
+        let (_handle, session) = store.insert(session()).unwrap().unwrap();
+        session.publish(SessionOutput::Data(b"already rendered".to_vec()));
+        session.publish(SessionOutput::Data(b"and missed".to_vec()));
+
+        let seen = b"already rendered".len() as u64;
+        let (_, _, replay, _) = session.attach(seen, 1).unwrap();
+        assert_eq!(replay, Replay::Gap(b"and missed".to_vec()));
+    }
+
+    #[test]
     fn a_forged_secret_is_refused() {
         let store = SessionStore::new(4, Duration::from_secs(300));
         let (handle, _) = store.insert(session()).unwrap().unwrap();
