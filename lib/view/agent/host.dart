@@ -55,6 +55,28 @@ abstract final class LlmHost {
       Loggers.app.severe('The Agent runtime did not start', e, s);
       return;
     }
+    // Applied at once, not at the next launch: turning it on is what someone
+    // does after pasting a key in, and a restore or a sync changes the rules.
+    for (final p in [
+      Stores.setting.agentRedact,
+      Stores.setting.agentRedactOff,
+      Stores.setting.agentRedactAllow,
+      Stores.setting.agentRedactRules,
+    ]) {
+      p.listenable().addListener(() => Llm.setRedact(_redact()));
+    }
+    // What changed while the runtime was starting.
+    Llm.setRedact(_redact());
+    // Kinds and counts only, never a value.
+    Llm.rt.redactions.stream.listen((turn) {
+      Diag.crumb(
+        SbDiag.agent,
+        'redacted',
+        data: {
+          for (final MapEntry(:key, :value) in turn.entries) key: '$value',
+        },
+      );
+    });
     await LegacyAskAiMigration.run();
     try {
       await Skills.syncBuiltin(await builtinSkills());
@@ -73,26 +95,6 @@ abstract final class LlmHost {
     Stores.setting.agentLocalExec.listenable().addListener(
       Chats.reconfigureSoon,
     );
-    // Applied at once, not at the next launch: turning it on is what someone
-    // does after pasting a key in, and a restore or a sync changes the rules.
-    for (final p in [
-      Stores.setting.agentRedact,
-      Stores.setting.agentRedactOff,
-      Stores.setting.agentRedactAllow,
-      Stores.setting.agentRedactRules,
-    ]) {
-      p.listenable().addListener(() => Llm.setRedact(_redact()));
-    }
-    // Kinds and counts only, never a value.
-    Llm.rt.redactions.stream.listen((turn) {
-      Diag.crumb(
-        SbDiag.agent,
-        'redacted',
-        data: {
-          for (final MapEntry(:key, :value) in turn.entries) key: '$value',
-        },
-      );
-    });
     _holdWhileWorking();
   }
 
