@@ -1,0 +1,10 @@
+ServerBox es una herramienta para monitorizar y gestionar servidores Linux.
+
+Funciones principales:
+• Gráficas de estado de la CPU, los sensores, la GPU y más
+• Gestión de servidores con un terminal SSH y SFTP
+• Gestión de contenedores Docker, paquetes y procesos
+• Autenticación biométrica, notificaciones push, widgets de la pantalla de inicio y app para watchOS
+• Colores del sistema e interfaz en varios idiomas
+
+Agradecimiento especial a dartssh2 y xterm.dart.
