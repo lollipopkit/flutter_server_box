@@ -821,6 +821,10 @@ fn temps_parse_and_priority() {
     assert_eq!(temps.0.get("x86_pkg_temp"), Some(&55.0));
     // CPU device preferred (Dart `Temperatures.first`)
     assert_eq!(temps.first(), Some(55.0));
+
+    // An AMD CPU temp that exists only as a hwmon name (#1957)
+    let temps = linux::parse_temps("acpitz\nk10temp", "20000\n66125", 1000.0);
+    assert_eq!(temps.first(), Some(66.125));
 }
 
 // ---------- Windows:windows_parser.dart ----------

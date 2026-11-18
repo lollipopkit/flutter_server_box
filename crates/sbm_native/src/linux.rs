@@ -294,12 +294,51 @@ fn os_release_block() -> String {
     all
 }
 
-/// `/sys/class/thermal/thermal_zone*/{type,temp}`, sorted by zone directory
-/// name (matches shell glob order). Returns line-parallel (types, values)
-/// blocks as `linux::parse_temps` expects — one line always appended to both
-/// per zone, even on a read failure, so the two stay index-aligned.
+/// `/sys/class/thermal/thermal_zone*/{type,temp}` then
+/// `/sys/class/hwmon/hwmon*/{name,temp1_input}`, each sorted by directory
+/// name (matches shell glob order). The hwmon half is where a CPU's own
+/// sensor lives on AMD (k10temp) and some Intel (coretemp) — many of those
+/// machines expose a static `acpitz` zone and nothing else (#1957).
+/// Returns line-parallel (types, values) blocks as `linux::parse_temps`
+/// expects — a device without both of its readings is skipped whole, so
+/// neither stream gets a stray line.
 fn thermal_zones() -> (String, String) {
-    let mut zones: Vec<PathBuf> = fs::read_dir("/sys/class/thermal")
+    thermal_zones_under("/sys/class/thermal", "/sys/class/hwmon")
+}
+
+/// [`thermal_zones`] reading under [thermal] and [hwmon] instead, so a test
+/// can build them.
+fn thermal_zones_under(thermal: &str, hwmon: &str) -> (String, String) {
+    let mut pairs = Vec::new();
+    for zone in sorted_dirs(thermal, "thermal_zone") {
+        let ty = read(&zone.join("type").to_string_lossy()).trim().to_string();
+        let temp = read(&zone.join("temp").to_string_lossy()).trim().to_string();
+        if !ty.is_empty() && !temp.is_empty() {
+            pairs.push((ty, temp));
+        }
+    }
+    for hwmon in sorted_dirs(hwmon, "hwmon") {
+        let name = read(&hwmon.join("name").to_string_lossy()).trim().to_string();
+        let temp = read(&hwmon.join("temp1_input").to_string_lossy()).trim().to_string();
+        if !name.is_empty() && !temp.is_empty() {
+            pairs.push((name, temp));
+        }
+    }
+
+    let mut types = String::new();
+    let mut values = String::new();
+    for (ty, temp) in pairs {
+        types.push_str(&ty);
+        types.push('\n');
+        values.push_str(&temp);
+        values.push('\n');
+    }
+    (types, values)
+}
+
+/// [root]'s directories named [prefix]*, sorted by name, as a glob expands.
+fn sorted_dirs(root: &str, prefix: &str) -> Vec<PathBuf> {
+    let mut dirs: Vec<PathBuf> = fs::read_dir(root)
         .into_iter()
         .flatten()
         .flatten()
@@ -307,20 +346,11 @@ fn thermal_zones() -> (String, String) {
         .filter(|p| {
             p.file_name()
                 .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with("thermal_zone"))
+                .is_some_and(|n| n.starts_with(prefix))
         })
         .collect();
-    zones.sort();
-
-    let mut types = String::new();
-    let mut values = String::new();
-    for zone in &zones {
-        types.push_str(read(&zone.join("type").to_string_lossy()).trim());
-        types.push('\n');
-        values.push_str(read(&zone.join("temp").to_string_lossy()).trim());
-        values.push('\n');
-    }
-    (types, values)
+    dirs.sort();
+    dirs
 }
 
 /// `MemTotal` from `/proc/meminfo`, in bytes (the file reports kibibytes).
@@ -418,6 +448,65 @@ pub fn sample(block_devices: &str, device_tree: &[BlockDevice]) -> ServerStatus 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A throwaway directory tree with fake sysfs entries, removed on drop.
+    struct FakeSys(PathBuf);
+
+    impl FakeSys {
+        fn new(tag: &str) -> Self {
+            let root = std::env::temp_dir().join(format!(
+                "sbm_native_{}_{}_{tag}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            Self(root.clone())
+        }
+
+        /// A `name/type/temp` device under [family].
+        fn device(&self, family: &str, dir: &str, files: &[(&str, &str)]) -> &Self {
+            let d = self.0.join(family).join(dir);
+            std::fs::create_dir_all(&d).unwrap();
+            for (file, content) in files {
+                std::fs::write(d.join(file), content).unwrap();
+            }
+            self
+        }
+    }
+
+    impl Drop for FakeSys {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    // Zones come out whole; a device of either kind missing one of its two
+    // readings is skipped — what `parse_temps` needs to stay line-aligned
+    // (#1957).
+    #[test]
+    fn zones_and_hwmons_come_out_line_aligned() {
+        let sys = FakeSys::new("temps");
+        sys.device(
+            "thermal",
+            "thermal_zone1",
+            &[("type", "acpitz\n"), ("temp", "20000\n")],
+        )
+        .device(
+            "thermal",
+            "thermal_zone0",
+            &[("type", "x86_pkg_temp\n"), ("temp", "44000\n")],
+        )
+        .device("thermal", "thermal_zone2", &[("type", "nvme\n")]) // no temp
+        .device("hwmon", "hwmon9", &[("name", "k10temp\n"), ("temp1_input", "66125\n")])
+        .device("hwmon", "hwmon2", &[("name", "nvme\n")]); // no temp
+        let (types, values) =
+            thermal_zones_under(&sys.0.join("thermal").to_string_lossy(), &sys.0.join("hwmon").to_string_lossy());
+        // Sorted by directory name, zones before hwmons.
+        assert_eq!(types, "x86_pkg_temp\nacpitz\nk10temp\n");
+        assert_eq!(values, "44000\n20000\n66125\n");
+    }
 
     // Reads the real host's procfs — can't assert exact values (that's
     // sbm_parser's fixture-based job), only that the native path actually

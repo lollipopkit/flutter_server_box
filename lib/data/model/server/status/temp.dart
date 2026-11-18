@@ -44,4 +44,4 @@ class Temperatures {
 
 /// soc: mobile phone
 /// cpu_thermal / x86_pkg_temp / coretemp / zenpower: x86
-const _cpuTemp = ['x86_pkg_temp', 'coretemp', 'zenpower', 'cpu_thermal', 'soc'];
+const _cpuTemp = ['x86_pkg_temp', 'coretemp', 'k10temp', 'zenpower', 'cpu_thermal', 'soc'];
