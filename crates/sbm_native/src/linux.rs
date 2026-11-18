@@ -300,9 +300,8 @@ fn os_release_block() -> String {
 /// sensor lives on AMD (k10temp) and some Intel (coretemp) — many of those
 /// machines expose a static `acpitz` zone and nothing else (#1957).
 /// Returns line-parallel (types, values) blocks as `linux::parse_temps`
-/// expects — one line always appended to both per zone, even on a read
-/// failure, so the two stay index-aligned; a hwmon device without both a
-/// name and a temp is skipped whole, so neither stream gets a stray line.
+/// expects — a device without both of its readings is skipped whole, so
+/// neither stream gets a stray line.
 fn thermal_zones() -> (String, String) {
     thermal_zones_under("/sys/class/thermal", "/sys/class/hwmon")
 }
@@ -310,23 +309,26 @@ fn thermal_zones() -> (String, String) {
 /// [`thermal_zones`] reading under [thermal] and [hwmon] instead, so a test
 /// can build them.
 fn thermal_zones_under(thermal: &str, hwmon: &str) -> (String, String) {
-    let mut types = String::new();
-    let mut values = String::new();
-
+    let mut pairs = Vec::new();
     for zone in sorted_dirs(thermal, "thermal_zone") {
-        types.push_str(read(&zone.join("type").to_string_lossy()).trim());
-        types.push('\n');
-        values.push_str(read(&zone.join("temp").to_string_lossy()).trim());
-        values.push('\n');
+        let ty = read(&zone.join("type").to_string_lossy()).trim().to_string();
+        let temp = read(&zone.join("temp").to_string_lossy()).trim().to_string();
+        if !ty.is_empty() && !temp.is_empty() {
+            pairs.push((ty, temp));
+        }
     }
-
     for hwmon in sorted_dirs(hwmon, "hwmon") {
         let name = read(&hwmon.join("name").to_string_lossy()).trim().to_string();
         let temp = read(&hwmon.join("temp1_input").to_string_lossy()).trim().to_string();
-        if name.is_empty() || temp.is_empty() {
-            continue;
+        if !name.is_empty() && !temp.is_empty() {
+            pairs.push((name, temp));
         }
-        types.push_str(&name);
+    }
+
+    let mut types = String::new();
+    let mut values = String::new();
+    for (ty, temp) in pairs {
+        types.push_str(&ty);
         types.push('\n');
         values.push_str(&temp);
         values.push('\n');
@@ -480,9 +482,9 @@ mod tests {
         }
     }
 
-    // Zones come out whole; a hwmon without both a name and a temp is
-    // skipped in neither stream half — what `parse_temps` needs to stay
-    // line-aligned (#1957).
+    // Zones come out whole; a device of either kind missing one of its two
+    // readings is skipped — what `parse_temps` needs to stay line-aligned
+    // (#1957).
     #[test]
     fn zones_and_hwmons_come_out_line_aligned() {
         let sys = FakeSys::new("temps");
@@ -496,6 +498,7 @@ mod tests {
             "thermal_zone0",
             &[("type", "x86_pkg_temp\n"), ("temp", "44000\n")],
         )
+        .device("thermal", "thermal_zone2", &[("type", "nvme\n")]) // no temp
         .device("hwmon", "hwmon9", &[("name", "k10temp\n"), ("temp1_input", "66125\n")])
         .device("hwmon", "hwmon2", &[("name", "nvme\n")]); // no temp
         let (types, values) =
