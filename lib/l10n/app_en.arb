@@ -2039,6 +2039,10 @@
   "@agentLocalExecRootfsTip": {
     "description": "Help text for the agent local exec rootfs setting or action."
   },
+  "agentRedact": "Redact secrets before sending",
+  "@agentRedact": {
+    "description": "Setting: replace credentials in what the Agent sends a model."
+  },
   "macDmgImportedPartly": "Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.",
   "@macDmgImportedPartly": {
     "description": "User-facing label or message for mac DMG imported partly.",

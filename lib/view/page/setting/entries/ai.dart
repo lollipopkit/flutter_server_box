@@ -22,6 +22,7 @@ extension _AI on _AppSettingsPageState {
         // on nothing is worse than no switch.
         if (local != null && (!local.inRootfs || Rootfs.isAvailable))
           _buildAskAiLocalExec(l10n, local),
+        _buildAgentRedact(l10n),
       ]),
     ];
   }
@@ -82,6 +83,20 @@ extension _AI on _AppSettingsPageState {
         onTap: () => AgentPermissions.route.go(context, LocalPermissionsSource()),
       ),
       keywords: '${llmL10n.permDefaultMode} ${llmL10n.permModeAuto} ${llmL10n.permModeManual} ${llmL10n.permModeBypass}',
+    );
+  }
+
+  SettingsRow _buildAgentRedact(AppLocalizations l10n) {
+    final label = l10n.agentRedact;
+    // The switch is on the page, beside the rules it governs.
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.shield_outlined),
+        title: Text(label),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => AgentRedactPage.route.go(context),
+      ),
     );
   }
 

@@ -1531,6 +1531,9 @@ class AppLocalizationsKo extends AppLocalizations {
       'Agent를 로컬에서 동작하게 하며, 범위는 ServerBox가 설치한 Linux 컨테이너 안으로 제한됩니다';
 
   @override
+  String get agentRedact => '보내기 전에 비밀값 가리기';
+
+  @override
   String macDmgImportedPartly(String path) {
     return '이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 $path에 그대로 있습니다.';
   }

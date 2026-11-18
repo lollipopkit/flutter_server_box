@@ -1628,6 +1628,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Membiarkan Agent bekerja lokal, terbatas pada kontainer Linux yang dipasang ServerBox';
 
   @override
+  String get agentRedact => 'Samarkan rahasia sebelum dikirim';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di $path.';
   }

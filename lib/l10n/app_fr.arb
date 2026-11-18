@@ -423,6 +423,7 @@
   "agentLocalExec": "Exécuter des commandes sur cet appareil",
   "agentLocalExecTip": "Permet à l’Agent de travailler sur la machine qui exécute ServerBox. Ses commandes suivent le mode d’autorisation",
   "agentLocalExecRootfsTip": "Laisse l’Agent travailler en local, limité au conteneur Linux installé par ServerBox",
+  "agentRedact": "Masquer les secrets avant l’envoi",
   "macDmgImportedPartly": "Les données de la version précédemment installée ont été importées. Les fichiers téléchargés sont restés dans {path}.",
   "bmcAccount": "Compte",
   "bmcAccountUnset": "Aucun sélectionné — touche pour en choisir ou en créer un",

@@ -487,6 +487,45 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// model do to this machine, and a restore should not carry it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
 
+  /// Whether secrets in what the Agent sends a model are replaced first. On
+  /// by default: a server's output is full of credentials nobody meant to
+  /// paste, and the model is somebody else's endpoint.
+  late final agentRedact = propertyDefault('agentRedact', true);
+
+  /// Built-in redaction kinds switched off, by the name their placeholders
+  /// carry. Empty keeps every one.
+  late final agentRedactOff = propertyDefault<List<String>>(
+    'agentRedactOff',
+    const [],
+    fromObj: stringList,
+  );
+
+  /// Rules of the user's own, each `{pattern, group, name}`, as the
+  /// redaction layer takes them.
+  late final agentRedactRules = propertyDefault<List<Map<String, Object?>>>(
+    'agentRedactRules',
+    const [],
+    fromObj: (raw) => [
+      if (raw is List)
+        for (final r in raw)
+          if (r is Map) r.map((k, v) => MapEntry(k.toString(), v)),
+    ],
+  );
+
+  /// Values a rule never replaces, whatever it matches.
+  late final agentRedactAllow = propertyDefault<List<String>>(
+    'agentRedactAllow',
+    const [],
+    fromObj: stringList,
+  );
+
+  /// [raw]'s non-empty strings, whatever else it holds.
+  static List<String> stringList(Object? raw) => [
+    if (raw is List)
+      for (final v in raw)
+        if (v is String && v.isNotEmpty) v,
+  ];
+
   /// Settings that describe *this device* rather than a preference worth
   /// carrying to another one, so a backup neither exports nor restores them.
   ///

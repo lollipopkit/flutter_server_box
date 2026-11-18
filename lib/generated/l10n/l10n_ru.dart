@@ -1640,6 +1640,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Позволяет агенту работать локально, в пределах контейнера Linux, установленного ServerBox';
 
   @override
+  String get agentRedact => 'Скрывать секреты перед отправкой';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Данные ранее установленной сборки импортированы. Загруженные файлы остались в $path.';
   }

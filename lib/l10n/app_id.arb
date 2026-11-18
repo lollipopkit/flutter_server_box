@@ -423,6 +423,7 @@
   "agentLocalExec": "Jalankan perintah di perangkat ini",
   "agentLocalExecTip": "Mengizinkan Agent bekerja di mesin yang menjalankan ServerBox. Perintahnya mengikuti mode izin",
   "agentLocalExecRootfsTip": "Membiarkan Agent bekerja lokal, terbatas pada kontainer Linux yang dipasang ServerBox",
+  "agentRedact": "Samarkan rahasia sebelum dikirim",
   "macDmgImportedPartly": "Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di {path}.",
   "bmcAccount": "Akun",
   "bmcAccountUnset": "Belum dipilih — ketuk untuk memilih atau membuat",

@@ -235,6 +235,93 @@ void main() {
     expect(_keys.last, 'Bearer sk-gateway');
   });
 
+  // What the setting is for: a credential in a prompt is a credential on
+  // somebody else's endpoint. The key is the shape a vendor's token has, which
+  // is what the built-in rules recognise.
+  test('a secret in a prompt does not reach the endpoint', () async {
+    expect(Stores.setting.agentRedact.fetch(), isTrue, reason: 'on by default');
+    final id = Chats.create();
+    LlmStores.chat.put(LlmStores.chat.fetch(id)!.copyWith(model: const LlmModelRef(SystemProvider.id, 'echo')));
+    const token = 'ghp_abcdefghijklmnopqrstuvwxyz012345';
+    await Chats.send(id, 'my token is $token');
+
+    final sent = jsonEncode(seen.last);
+    expect(sent, isNot(contains(token)));
+    // The kind and number are readable; the nonce is random, so a
+    // placeholder cannot be guessed and asked to be restored.
+    expect(sent, contains('__SBM_GITHUB_TOKEN_1_'));
+
+    // And the conversation still shows what the user typed.
+    final chat = await Chats.open(id);
+    final said = chat.entries.value.firstWhere((e) => e.message?.role == 'user').message!;
+    expect(jsonEncode(said.json), contains(token));
+
+    // What is reported is the kind and the count, never the value.
+    expect(Llm.rt.redactionCounts, containsPair('github_token', greaterThan(0)));
+    expect(Llm.rt.redactionCounts.toString(), isNot(contains(token)));
+  });
+
+  // Turned off while a chat is open, without waiting for the next launch.
+  test('the redaction switch reaches the running engine', () async {
+    final id = Chats.create();
+    LlmStores.chat.put(LlmStores.chat.fetch(id)!.copyWith(model: const LlmModelRef(SystemProvider.id, 'echo')));
+    const token = 'ghp_abcdefghijklmnopqrstuvwxyz012345';
+
+    await Stores.setting.agentRedact.set(false);
+    addTearDown(() => Stores.setting.agentRedact.set(true));
+    await Chats.send(id, 'my token is $token');
+    expect(jsonEncode(seen.last), contains(token), reason: 'off sends it');
+
+    await Stores.setting.agentRedact.set(true);
+    await Chats.send(id, 'and $token');
+    final sent = jsonEncode(seen.last);
+    expect(sent, isNot(contains(token)), reason: 'on hides it again');
+  });
+
+  // A rule saved while the switch is off is stored, and nothing is hidden
+  // until it is on; one that does not compile is refused and stores nothing.
+  test('saving the rules leaves the switch where it is', () async {
+    final source = LocalRedactSource();
+    const token = 'ghp_abcdefghijklmnopqrstuvwxyz012345';
+    await Stores.setting.agentRedact.set(false);
+    addTearDown(() async {
+      await Stores.setting.agentRedact.set(true);
+      await Stores.setting.agentRedactRules.set(const []);
+    });
+    final mine = {'pattern': r'\bZZZ[0-9]{4}\b', 'name': 'mine'};
+    expect(await source.save(jsonEncode({'custom': [mine]})), isNull);
+
+    final id = Chats.create();
+    LlmStores.chat.put(LlmStores.chat.fetch(id)!.copyWith(model: const LlmModelRef(SystemProvider.id, 'echo')));
+    await Chats.send(id, 'my token is $token');
+    expect(jsonEncode(seen.last), contains(token), reason: 'still off');
+
+    final refused = await source.save(jsonEncode({
+      'custom': [mine, {'pattern': '(unclosed', 'name': 'bad'}],
+    }));
+    expect(refused, contains('bad'));
+    expect(Stores.setting.agentRedactRules.fetch(), [mine]);
+  });
+
+  // A rule that came in unchecked, by a restore or a sync, costs only itself.
+  test('a stored rule that does not compile leaves the rest in force', () async {
+    const token = 'ghp_abcdefghijklmnopqrstuvwxyz012345';
+    addTearDown(() async {
+      await Stores.setting.agentRedact.set(true);
+      await Stores.setting.agentRedactRules.set(const []);
+    });
+    await Stores.setting.agentRedact.set(false);
+    await Stores.setting.agentRedactRules.set([
+      {'pattern': '(unclosed', 'name': 'bad'},
+    ]);
+    await Stores.setting.agentRedact.set(true);
+
+    final id = Chats.create();
+    LlmStores.chat.put(LlmStores.chat.fetch(id)!.copyWith(model: const LlmModelRef(SystemProvider.id, 'echo')));
+    await Chats.send(id, 'my token is $token');
+    expect(jsonEncode(seen.last), isNot(contains(token)));
+  });
+
   test("the model's thinking is streamed, and kept with the reply", () async {
     final id = Chats.create();
     final chat = await Chats.open(id);

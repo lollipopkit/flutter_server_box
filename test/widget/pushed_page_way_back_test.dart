@@ -158,6 +158,7 @@ void main() {
 
   final pages = <String, void Function(BuildContext)>{
     'AgentProvidersPage': (c) => AgentProvidersPage.route.go(c),
+    'AgentRedactPage': (c) => AgentRedactPage.route.go(c),
     'AgentSkillsPage': (c) => AgentSkillsPage.route.go(c),
     'AgentToolsPage': (c) => AgentToolsPage.route.go(c),
     'BackupPage': (c) => BackupPage.route.go(c),

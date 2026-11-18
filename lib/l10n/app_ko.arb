@@ -423,6 +423,7 @@
   "agentLocalExec": "이 기기에서 명령 실행",
   "agentLocalExecTip": "ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다",
   "agentLocalExecRootfsTip": "Agent를 로컬에서 동작하게 하며, 범위는 ServerBox가 설치한 Linux 컨테이너 안으로 제한됩니다",
+  "agentRedact": "보내기 전에 비밀값 가리기",
   "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다.",
   "bmcAccount": "계정",
   "bmcAccountUnset": "선택되지 않음 — 탭하여 선택하거나 새로 만들기",

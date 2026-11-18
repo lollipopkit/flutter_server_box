@@ -1623,6 +1623,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lets the Agent work locally, confined to the Linux container ServerBox installed';
 
   @override
+  String get agentRedact => 'Redact secrets before sending';
+
+  @override
   String macDmgImportedPartly(String path) {
     return 'Imported the data of the previously installed build. Downloaded files were left where they were, in $path.';
   }

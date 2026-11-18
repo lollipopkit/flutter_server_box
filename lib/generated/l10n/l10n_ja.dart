@@ -1527,6 +1527,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'Agent をローカルで動かします。範囲は ServerBox が入れた Linux コンテナ内に限られます';
 
   @override
+  String get agentRedact => '送信前に秘密情報を伏せる';
+
+  @override
   String macDmgImportedPartly(String path) {
     return '以前インストールされていたビルドのデータを取り込みました。ダウンロードしたファイルは $path に残っています。';
   }

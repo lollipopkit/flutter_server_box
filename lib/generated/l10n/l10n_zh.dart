@@ -1493,6 +1493,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅允许 Agent 在 ServerBox 内置的本地 Linux 容器中执行命令。';
 
   @override
+  String get agentRedact => '发送前遮蔽机密';
+
+  @override
   String macDmgImportedPartly(String path) {
     return '已导入此前安装版本的数据。下载的文件仍保留在 $path。';
   }
@@ -8409,6 +8412,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get agentLocalExecRootfsTip =>
       '讓 Agent 在本機執行，但只能操作 ServerBox 安裝的 Linux 容器。';
+
+  @override
+  String get agentRedact => '傳送前遮蔽機密';
 
   @override
   String macDmgImportedPartly(String path) {

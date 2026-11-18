@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' as llm;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/agent/host.dart';
 
 /// The Agent's providers — their keys, models and the default one — as a page
 /// of its own: fl_pi_llm_ui draws the body, which it leaves to the app to put
@@ -39,6 +40,22 @@ class AgentToolsPage extends StatelessWidget {
       appBar: CustomAppBar(title: Text(context.l10n.agentTools)),
       body: const llm.ToolsPage(),
     );
+  }
+}
+
+/// What is replaced before anything leaves for a model — see
+/// [AgentProvidersPage].
+class AgentRedactPage extends StatelessWidget {
+  const AgentRedactPage({super.key});
+
+  static const route = AppRouteNoArg(
+    page: AgentRedactPage.new,
+    path: '/settings/agent/redact',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return llm.RedactPage(args: LocalRedactSource());
   }
 }
 
