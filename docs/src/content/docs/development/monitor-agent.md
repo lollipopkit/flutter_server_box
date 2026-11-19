@@ -177,6 +177,41 @@ Errors are `{"error": "<code>", "message": "..."}`:
 | `throttled` | 429 | Too many failed attempts |
 | `not_found` | 404 | An unknown `/api/v1/*` path |
 
+### API tokens and MCP
+
+An MCP client (Claude Code, Claude Desktop, any Streamable HTTP client) reads
+this machine through `POST /api/v1/mcp`, with a credential of its own rather
+than the password: an **API token**, `sbt_` and 64 hex, shown once at
+creation and stored as its SHA-256.
+
+| Endpoint | Body |
+|---|---|
+| `GET /api/v1/api-tokens` | Every token: `id`, `name`, `scopes`, `created_at`, `expires_at`, `last_used_at`, `last_used_ip` |
+| `POST /api/v1/api-tokens` | `name`, `password` (the account's, again), `scopes`, `days` (default 90, at most 3650). Answers the row and `token_value` — once |
+| `DELETE /api/v1/api-tokens/{id}` | `204`, or `404` when it is gone. Audited |
+
+Scopes are `read` (every tool that only reads), `exec` (running a command)
+and `machine` (acting on the machine). There is no scope for managing these
+tokens: a credential that could mint credentials would outlive its own
+revocation. A token requires TLS or a loopback caller as acting does — it
+lives for months, so a plaintext link would hand a sniffer one for longer
+than any session. A password change deletes every token, and the list records
+each token's last use (at most once a minute).
+
+`POST /api/v1/mcp` speaks Streamable HTTP in its stateless JSON shape: one
+JSON-RPC message per POST, answered with one `application/json` body, a
+notification by `202`. It sends no session id. The client must send
+`Accept: application/json` and `Content-Type: application/json`; a body over
+256 KiB is `413` before it is read; an `Origin` the Monitor was not told to
+allow is `403` (real MCP clients send none). The protocol header is not
+required, since an MCP client knows nothing of it; the protocol version is
+negotiated in `initialize`.
+
+`tools/list` answers only what the token's scopes allow, so a client cannot
+learn the name of a tool it may not run. Every tool answers the same body its
+HTTP route does. Every `tools/call` is an audit row (`mcp`), naming the tool
+and the token, never the arguments.
+
 ### Password change
 
 A password change signs out everything else. Panel tokens issued before it

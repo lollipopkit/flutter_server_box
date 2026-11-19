@@ -104,7 +104,7 @@ pub struct ProcessQuery {
 }
 
 #[derive(Serialize)]
-struct ProcessResponse {
+pub(crate) struct ProcessResponse {
     /// Whether the machine gave a table at all. `false` is a state of the
     /// machine, not a failure of the caller, so the page draws one screen
     /// either way.
@@ -160,6 +160,17 @@ pub async fn list(
     if let Err(refused) = machine::gate(&req, &state, "process list").await {
         return Ok(refused);
     }
+    Ok(HttpResponse::Ok().json(&table(&state, query.sort, query.ascending).await))
+}
+
+/// The table, in [sort] order. Shared by `/process` and the MCP tool, which
+/// is the same reading under the same rule — the transport rule is the
+/// caller's, asked before this runs.
+pub(crate) async fn table(
+    state: &AppState,
+    sort: Option<ProcSortMode>,
+    ascending: Option<bool>,
+) -> ProcessResponse {
     let system = system_type();
     let now = now_millis();
 
@@ -177,13 +188,13 @@ pub async fn list(
     if let Some((age, result)) = &stored
         && *age < REUSE_WINDOW.as_millis() as i64
     {
-        let (sort, ascending) = resolve_sort(result, query.sort, query.ascending);
-        return Ok(HttpResponse::Ok().json(&respond(
+        let (sort, ascending) = resolve_sort(result, sort, ascending);
+        return respond(
             &result.sorted_by(sort, Some(ascending)),
             system,
             Some(sort),
             Some(ascending),
-        )));
+        );
     }
 
     // What this reading's speeds are differenced against. An expired one is
@@ -202,35 +213,27 @@ pub async fn list(
         Ok(out) => out,
         Err(error) => {
             tracing::warn!("process: the table command failed: {error}");
-            return Ok(HttpResponse::Ok().json(&unavailable(
-                system,
-                ProcessReason::DidNotFinish,
-                Some(error.to_string()),
-            )));
+            return unavailable(system, ProcessReason::DidNotFinish, Some(error.to_string()));
         }
     };
     if out.timed_out {
-        return Ok(HttpResponse::Ok().json(&unavailable(system, ProcessReason::DidNotFinish, None)));
+        return unavailable(system, ProcessReason::DidNotFinish, None);
     }
     if out.truncated {
-        return Ok(HttpResponse::Ok().json(&unavailable(system, ProcessReason::TooLarge, None)));
+        return unavailable(system, ProcessReason::TooLarge, None);
     }
     if out.stdout.trim().is_empty() {
         // What the machine said is the whole answer: `ps` missing from a
         // minimal image prints to stderr, and "empty" alone would send the
         // reader looking at the wrong thing.
         let reason = out.stderr.trim();
-        return Ok(HttpResponse::Ok().json(&unavailable(
-            system,
-            ProcessReason::Empty,
-            (!reason.is_empty()).then(|| reason.to_owned()),
-        )));
+        return unavailable(system, ProcessReason::Empty, (!reason.is_empty()).then(|| reason.to_owned()));
     }
 
     // Parsed before it is ordered: which orders a table can answer depends
     // on the columns the machine printed.
     let parsed = PsResult::parse(&out.stdout, ProcSortMode::Cpu, Some(false), baseline, now_millis());
-    let (sort, ascending) = resolve_sort(&parsed, query.sort, query.ascending);
+    let (sort, ascending) = resolve_sort(&parsed, sort, ascending);
     let result = Arc::new(parsed.sorted_by(sort, Some(ascending)));
 
     let response = respond(&result, system, Some(sort), Some(ascending));
@@ -238,7 +241,7 @@ pub async fn list(
         sampled_at_millis: result.sampled_at_millis,
         result,
     });
-    Ok(HttpResponse::Ok().json(&response))
+    response
 }
 
 /// Which of what the caller asked for this table can answer.

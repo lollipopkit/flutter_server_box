@@ -101,6 +101,9 @@ pub const LEFT_OUT: &[&str] = &[
     "stack",
     "stack_mcp",
     "watch_tokens",
+    // Minted for a client against one machine, and ended by its password:
+    // a restore elsewhere mints its own, as it does a watch token.
+    "api_tokens",
     "login_device",
     "monitor_backup",
     "push_literal_pending",
@@ -573,6 +576,9 @@ async fn copy_in(conn: &mut SqliteConnection, sealer: &Sealer, blobs: usize) -> 
                 .execute(&mut *conn)
                 .await?;
             conn.execute("DELETE FROM main.watch_tokens").await?;
+            // An API token was minted with the password this restore
+            // replaces, as a backup's own was: neither outlives it (#1681).
+            conn.execute("DELETE FROM main.api_tokens").await?;
             conn.execute("DELETE FROM main.login_device").await?;
             conn.execute("DELETE FROM main.lkc_session").await?;
             id

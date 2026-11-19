@@ -1,5 +1,5 @@
 use crate::{
-    api::authz::{self, Reader},
+    api::authz::{self, Caller, Reader},
     api::cors::Cors,
     api::ws::{
         self,
@@ -80,7 +80,21 @@ pub fn configure_api(cfg: &mut web::ServiceConfig<Agent>) {
                     .route(web::post().to(issue_watch_token))
                     .route(web::delete().to(revoke_watch_token)),
             )
+            // The MCP clients' credentials (#1681): minted after the password
+            // is given again, listed with their use, revoked by id.
+            .service(
+                web::resource("/api-tokens")
+                    .route(web::get().to(crate::api::api_tokens::list))
+                    .route(web::post().to(crate::api::api_tokens::create)),
+            )
+            .service(
+                web::resource("/api-tokens/{id}")
+                    .route(web::delete().to(crate::api::api_tokens::revoke)),
+            )
             .route("/status", web::get().to(get_status))
+            // The MCP clients' way in (#1681): stateless JSON, one message
+            // per POST, behind an API token.
+            .route("/mcp", web::post().to(crate::api::mcp::post))
             .route("/metrics", web::get().to(get_metrics))
             .route("/capabilities", web::get().to(get_capabilities))
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
@@ -605,9 +619,24 @@ async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<
         Reader::Account(caller) => Some(caller),
         Reader::Watch => None,
     };
-    let platform = monitoring::system_type();
-    let capabilities = monitoring::effective_capabilities(platform);
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    let mut body = capabilities_view(&app_state, caller, secure).await;
+    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
+    if crate::api::compat_v1::applies(&req) {
+        crate::api::compat_v1::capabilities(&mut body);
+    }
+    Ok(HttpResponse::Ok().json(&body))
+}
+
+/// `/capabilities`' body — what this agent is and may be asked, for [caller]
+/// over a [secure] link. The MCP tool of the same name answers it unchanged,
+/// so a client and the panel are told the same thing.
+pub(crate) async fn capabilities_view(
+    app_state: &AppState,
+    caller: Option<&Caller>,
+    secure: bool,
+) -> serde_json::Value {
+    let platform = monitoring::system_type();
     // Indexed by timestamp, so this is a seek rather than a scan. Failure is
     // not fatal to the answer: a client that cannot learn the oldest sample
     // falls back to offering the fixed windows, which is what it did before
@@ -618,7 +647,7 @@ async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<
             .await
             .unwrap_or(None);
     let view = CapabilitiesView {
-        capabilities,
+        capabilities: monitoring::effective_capabilities(platform),
         platform,
         version: env!("CARGO_PKG_VERSION"),
         // The default is what the agent itself falls back to when the section
@@ -641,14 +670,9 @@ async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<
                 .collect(),
             None => Vec::new(),
         },
-        access: authz::access_view(caller, &app_state, secure),
+        access: authz::access_view(caller, app_state, secure),
     };
-    let mut body = serde_json::to_value(&view).unwrap_or_default();
-    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
-    if crate::api::compat_v1::applies(&req) {
-        crate::api::compat_v1::capabilities(&mut body);
-    }
-    Ok(HttpResponse::Ok().json(&body))
+    serde_json::to_value(&view).unwrap_or_default()
 }
 
 /// Exchanges the caller's JWT for a short-lived, single-use ticket that
@@ -802,7 +826,7 @@ mod tls_tests {
 
 // After the `require_*` macros, which the handlers there use.
 mod login;
-mod metrics;
+pub(crate) mod metrics;
 mod settings;
 mod state;
 

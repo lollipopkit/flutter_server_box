@@ -7,9 +7,11 @@
 //! shows as "update the app" rather than as a failed sign-in.
 //!
 //! Not checked: `/health`, which is where a client learns the numbers before
-//! anything else; preflights, which carry no custom header; and WebSocket
-//! upgrades, which a browser cannot add a header to — the `/ws-ticket` POST
-//! before each one is checked instead.
+//! anything else; `/mcp`, whose caller speaks MCP and knows nothing of this
+//! header (its credential is an API token, and the MCP protocol version is
+//! negotiated inside the body); preflights, which carry no custom header; and
+//! WebSocket upgrades, which a browser cannot add a header to — the
+//! `/ws-ticket` POST before each one is checked instead.
 
 use ntex::http::{Method, StatusCode, header};
 use ntex::service::{Ctx, Middleware, Service};
@@ -53,7 +55,12 @@ where
     ntex::forward_shutdown!(St, service);
 
     async fn call(&self, req: WebRequest<In>, ctx: Ctx<'_, Self, St>) -> Result<WebResponse, Self::Error> {
-        let exempt = req.method() == Method::OPTIONS || req.path().ends_with("/health") || is_ws_upgrade(&req);
+        let exempt = req.method() == Method::OPTIONS
+            || req.path().ends_with("/health")
+            // Exactly this route: `/agent/mcp` is the panel's own, and a
+            // ServerBox client is told its protocol there like anywhere else.
+            || req.path() == "/api/v1/mcp"
+            || is_ws_upgrade(&req);
         if !exempt {
             let named = req.headers().get(protocol::HEADER).map(|v| v.to_str().unwrap_or(""));
             let client = protocol::client_protocol(named);

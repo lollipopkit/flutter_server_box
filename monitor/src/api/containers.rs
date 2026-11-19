@@ -119,7 +119,7 @@ impl ContainerPart {
 }
 
 #[derive(Serialize)]
-struct ContainerListResponse {
+pub(crate) struct ContainerListResponse {
     /// Which of the four this answers. Echoed because a response is read
     /// beside a request that may have been made minutes ago, and the panel
     /// keeps one object per part.
@@ -234,6 +234,12 @@ pub async fn list(
         return Ok(HttpResponse::BadRequest().build());
     }
     Ok(HttpResponse::Ok().json(&read(part, id, exec).await))
+}
+
+/// One part of the machine's container state. Shared by `/containers` and the
+/// MCP tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn listing(state: &AppState, part: ContainerPart, id: Option<&str>) -> ContainerListResponse {
+    read(part, id, &state.remote_access.exec).await
 }
 
 #[derive(Debug, Deserialize)]

@@ -60,7 +60,7 @@ const SWEEP_BYTES: usize = 4 * 1024 * 1024;
 /// the other three are about one unit and need [`ServiceQuery::key`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-enum ServicePart {
+pub(crate) enum ServicePart {
     /// The units themselves.
     #[default]
     List,
@@ -85,7 +85,7 @@ impl ServicePart {
 const LOG_LINES: u32 = 50;
 
 #[derive(Serialize)]
-struct ServiceListResponse {
+pub(crate) struct ServiceListResponse {
     /// Which of the four this answers. Echoed because the panel keeps one
     /// object per part and a response is read beside a request that may have
     /// been made minutes ago.
@@ -194,7 +194,6 @@ pub async fn list(
     if let Err(refused) = machine::gate(&req, &state, "service list").await {
         return Ok(refused);
     }
-    let exec = &state.remote_access.exec;
     let part = query.part.unwrap_or_default();
     let key = query.key.as_deref();
     // A part that is about one unit and was not told which is a request that
@@ -203,33 +202,44 @@ pub async fn list(
     if part.needs_key() && key.is_none_or(str::is_empty) {
         return Ok(HttpResponse::BadRequest().build());
     }
+    Ok(HttpResponse::Ok().json(&listing(&state, part, key).await))
+}
+
+/// The units, or one unit's own files. Shared by `/services` and the MCP
+/// tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn listing(
+    state: &AppState,
+    part: ServicePart,
+    key: Option<&str>,
+) -> ServiceListResponse {
+    let exec = &state.remote_access.exec;
+    // The handler refuses a part that names a unit it was not given; a tool
+    // that answers it instead gives the empty listing.
+    if part.needs_key() && key.is_none_or(str::is_empty) {
+        return empty_response(part, &parse_probe(""), ServiceReason::NoSuchUnit, None);
+    }
 
     // Windows has no shell for these commands and no manager behind them —
     // asked before the detector, which would only fail for want of `sh` and
     // be reported as an unknown manager.
     if system_type() == SystemType::Windows {
-        return Ok(HttpResponse::Ok().json(&empty_response(
+        return empty_response(
             part,
             &parse_probe(""),
             ServiceReason::UnsupportedPlatform,
             None,
-        )));
+        );
     }
     let (probe, unreadable) = probe(exec).await;
     let Some(manager) = probe.manager_type else {
-        return Ok(HttpResponse::Ok().json(&empty_response(
-            part,
-            &probe,
-            ServiceReason::UnsupportedManager,
-            unreadable,
-        )));
+        return empty_response(part, &probe, ServiceReason::UnsupportedManager, unreadable);
     };
 
-    let listing = read_listing(manager, exec).await;
-    let mut response = base_response(part, &probe, manager, listing);
+    let read = read_listing(manager, exec).await;
+    let mut response = base_response(part, &probe, manager, read);
 
     if part == ServicePart::List {
-        return Ok(HttpResponse::Ok().json(&response));
+        return response;
     }
 
     // Resolved against the listing rather than rebuilt from the request: the
@@ -243,14 +253,9 @@ pub async fn list(
         .find(|unit| unit.key() == key)
         .cloned()
     else {
-        let mut missing = empty_response(
-            part,
-            &probe,
-            ServiceReason::NoSuchUnit,
-            Some(key.to_string()),
-        );
+        let mut missing = empty_response(part, &probe, ServiceReason::NoSuchUnit, Some(key.to_string()));
         missing.manager = response.manager;
-        return Ok(HttpResponse::Ok().json(&missing));
+        return missing;
     };
 
     match part {
@@ -270,7 +275,7 @@ pub async fn list(
         ServicePart::List => {}
     }
 
-    Ok(HttpResponse::Ok().json(&response))
+    response
 }
 
 /// Runs one action on one unit.

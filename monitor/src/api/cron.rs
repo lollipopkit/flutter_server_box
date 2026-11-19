@@ -47,7 +47,7 @@ use crate::monitoring::system_type;
 const MAX_LIST_BYTES: usize = 4 * 1024 * 1024;
 
 #[derive(Serialize)]
-struct CronListResponse {
+pub(crate) struct CronListResponse {
     /// Whether the crontab could be read at all. `false` is a state of the
     /// machine — no `crontab(1)`, a platform that has none — not a failure of
     /// the caller, so it is a field rather than a status code, and the panel
@@ -298,7 +298,7 @@ fn unavailable_from(failure: sbm_parser::cron::CronFailure) -> Unavailable {
 }
 
 /// The same read, as the response body both endpoints answer with.
-async fn read_crontab(exec: &Limits) -> CronListResponse {
+pub(crate) async fn read_crontab(exec: &Limits) -> CronListResponse {
     let catalog = match read_document(exec).await {
         Ok(catalog) => catalog,
         Err(unavailable) => return CronListResponse::unavailable(unavailable),
