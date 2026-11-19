@@ -162,6 +162,23 @@ android {
 
     buildTypes {
         release {
+            // A second installable copy under a package id of its own, for a
+            // phone where the upstream id is held by a build signed with
+            // another key: the package manager refuses that as an update and
+            // shows only "App not installed".
+            //
+            // Here, in the module's buildTypes, and not from a project-level
+            // afterEvaluate: AGP 9 reads the id when it creates the variant,
+            // and a suffix assigned after that is accepted and ignored.
+            //
+            // Unset (`SBX_APP_ID_SUFFIX=""`), the release keeps
+            // `tech.lolli.toolbox`.
+            def altAppIdSuffix = System.getenv('SBX_APP_ID_SUFFIX')?.trim()
+            if (altAppIdSuffix) {
+                applicationIdSuffix altAppIdSuffix
+                resValue 'string', 'app_name', 'ServerBox Arrows'
+            }
+
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
             } else if (allowDebugReleaseSigning) {
