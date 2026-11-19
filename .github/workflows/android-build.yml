@@ -7,10 +7,19 @@ name: Android APK (Fujitsu Arrows 801FJ)
 # build: `.github/actions/setup-flutter` pins the Flutter version, `.github/
 # actions/setup-android-sdk` pins the SDK/NDK/build-tools, and
 # `scripts/release/build-fdroid.sh` is the script the upstream release and
-# F-Droid both build with (it prunes dev-only plugins and builds proot for
-# arm64). What is different here is only how the result is signed and where it
-# goes: a key made for the run when no release key is configured, and a GitHub
-# Release with the APKs attached.
+# F-Droid both build with (dev-only plugins pruned, proot built for arm64).
+#
+# What is different here is only how the result is packaged, signed and
+# published, because an install that is refused says nothing about why:
+#
+#   * two package names -- `tech.lolli.toolbox` and, with `SBX_APP_ID_SUFFIX`,
+#     a second id that installs *beside* an existing ServerBox. A copy signed
+#     with a key this repository does not hold, or a versionCode already higher,
+#     is refused with a bare "App not installed"; a different id is not.
+#   * RSA-2048 for the per-run key rather than EC P-384: plain RSA is what every
+#     release-time APK verifier accepts, and a signature the device silently
+#     dislikes is indistinguishable from a broken file.
+#   * a universal debug APK, so an ABI mismatch cannot be the reason either.
 
 on:
   workflow_dispatch:
@@ -74,7 +83,6 @@ jobs:
           fi
 
           prefix="ServerBox_v1.0.${build}_arrows801fj"
-
           tag="${REQUESTED_TAG//[[:space:]]/}"
           if [ "$IS_TAG" = 'true' ]; then
             tag="$REF_NAME"
@@ -105,16 +113,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # `suffix` empty keeps the upstream package id; `.arrows` is the variant
+        # that installs beside an already-installed ServerBox.
         include:
           - abi: arm64
+            abi_dir: arm64-v8a
+            suffix: ""
             label: arm64-v8a
-            unsigned: app-arm64-v8a-release-unsigned.apk
           - abi: arm
+            abi_dir: armeabi-v7a
+            suffix: ""
             label: armeabi-v7a
-            unsigned: app-armeabi-v7a-release-unsigned.apk
-    env:
-      PREFIX: ${{ needs.metadata.outputs.prefix }}
-      BUILD_NUMBER: ${{ needs.metadata.outputs.build }}
+          - abi: arm64
+            abi_dir: arm64-v8a
+            suffix: .arrows
+            label: arrows-arm64-v8a
+          - abi: arm
+            abi_dir: armeabi-v7a
+            suffix: .arrows
+            label: arrows-armeabi-v7a
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -144,23 +161,40 @@ jobs:
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
 
-      # The native-assets hook installs this itself; doing it here makes a
-      # toolchain failure its own step rather than a line inside a build log.
       - name: Install the build hook's Rust toolchain
         working-directory: crates/sbm_ffi
         run: rustup toolchain install --profile minimal --no-self-update
 
-      # The same entry point the upstream release and F-Droid use: locked
-      # dependencies, dev-only plugins pruned, the plugin registrant made
-      # path-independent, proot built with the pinned NDK (arm64), and one
-      # unsigned split APK for the ABI asked for.
+      # The same entry point the upstream release and F-Droid use. Retried:
+      # proot's sources (talloc, proot and its submodules) are fetched over the
+      # network, and a mirror answering 504 is not a reason to lose a build --
+      # the first arm64 attempt failed exactly there. The last attempt's tail is
+      # emitted as annotations, which is the only failure detail visible without
+      # this account's logs.
       - name: Build the unsigned release APK (${{ matrix.abi }})
         shell: bash
-        run: scripts/release/build-fdroid.sh ${{ matrix.abi }}
+        env:
+          SBX_APP_ID_SUFFIX: ${{ matrix.suffix }}
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "::group::build attempt $attempt"
+            if scripts/release/build-fdroid.sh ${{ matrix.abi }} \
+                2>&1 | tee "$RUNNER_TEMP/build-$attempt.log"; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "::warning::build attempt $attempt failed"
+            rm -rf build/proot-android
+          done
+          while IFS= read -r line; do echo "::error::$line"; done \
+            < <(tail -n 25 "$RUNNER_TEMP/build-3.log")
+          exit 1
 
-      # An unsigned APK cannot be installed at all. Without a configured
-      # release key (repository secrets, see the release notes) the run makes
-      # its own key, which is enough to install and test.
+      # An unsigned APK cannot be installed at all. Without a configured release
+      # key (see the release notes) the run makes its own -- RSA-2048, which is
+      # the one key type every Android release verifier accepts.
       - name: Sign the APK
         shell: bash
         env:
@@ -168,7 +202,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.SBX_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.SBX_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.SBX_KEY_PASSWORD }}
-          UNSIGNED: build/app/outputs/apk/release/${{ matrix.unsigned }}
+          UNSIGNED: build/app/outputs/apk/release/app-${{ matrix.abi_dir }}-release-unsigned.apk
           OUT: build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
         run: |
           set -euo pipefail
@@ -189,14 +223,11 @@ jobs:
             key_pass="arrows801fj"
             keytool -genkeypair -keystore "$ks" -storetype PKCS12 \
               -storepass "$ks_pass" -keypass "$key_pass" \
-              -alias "$ks_alias" -keyalg EC -groupname secp384r1 \
+              -alias "$ks_alias" -keyalg RSA -keysize 2048 \
               -dname "CN=ServerBox Arrows 801FJ per-run test key" -validity 10000 >/dev/null
             signer="per-run test key (no release key configured)"
           fi
 
-          # v1 as well as v2/v3: v2 alone is what the platform reads from
-          # Android 7 on, and v1 costs three META-INF entries and removes the
-          # guesswork from anything that predates it.
           "$APKSIGNER" sign \
             --ks "$ks" \
             --ks-key-alias "$ks_alias" \
@@ -215,23 +246,18 @@ jobs:
             echo "### ${{ matrix.label }}"
             echo ""
             echo "- signed with: $signer"
-            echo "- sha256: `$(sha256sum "$OUT" | cut -d' ' -f1)`"
+            echo "- sha256: $(sha256sum "$OUT" | cut -d' ' -f1)"
             echo "- size: $(du -h "$OUT" | cut -f1)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # What makes this APK the one for this device: an API level the 801FJ's
-      # Android 9/10 has, the ABI it asked for, a real signature, and on arm64
-      # the two proot binaries the Linux distros run on. A missing proot still
-      # installs and runs -- the terminal tab's Linux userland is simply absent
-      # -- so nothing else would report it.
-      #
-      # In a script rather than here so it can be run against an APK by hand,
-      # which is how its two failure modes were found.
+      # The checks themselves live in scripts/release/verify-android-apk.sh so
+      # they can be run against an APK by hand, which is how their two failure
+      # modes were found.
       - name: Verify the APK
         shell: bash
         env:
           APK: build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
-        run: bash scripts/release/verify-android-apk.sh "$APK" ${{ matrix.label }}
+        run: bash scripts/release/verify-android-apk.sh "$APK" ${{ matrix.abi_dir }}
 
       - name: Upload the APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -279,10 +305,10 @@ jobs:
       - name: Fetch dependencies
         run: flutter pub get --enforce-lockfile
 
-      # Gradle signs this with the standard debug key, which is what `debug`
-      # means: a separate package (`tech.lolli.toolbox.debug`), installable
-      # beside the release build, JIT instead of AOT. One APK for every ABI, so
-      # it installs whatever the device is.
+      # Gradle signs this with the standard debug key, and `debug` already has
+      # its own application id (`tech.lolli.toolbox.debug`), so it installs
+      # beside anything. One APK for every ABI, so an ABI mismatch cannot be the
+      # reason it is refused either.
       - name: Build the debug APK
         shell: bash
         run: |
@@ -314,9 +340,8 @@ jobs:
           retention-days: 90
 
   # The suite this project ships, split the way its own CI splits it: by file,
-  # three shards, because `flutter test` compiles one file at a time and a
-  # single runner takes ~30 minutes to get through all of them. No device is
-  # involved; the end-to-end suites are excluded, as they are upstream.
+  # three shards, because `flutter test` compiles one file at a time. No device
+  # is involved; the end-to-end suites are excluded, as they are upstream.
   test:
     name: Flutter tests (${{ matrix.shard }}/3)
     needs: metadata
@@ -341,8 +366,6 @@ jobs:
       - name: Fetch dependencies
         run: flutter pub get
 
-      # `flutter test` builds sbm_ffi through the native-assets hook, and the
-      # FFI suites load that build from `build/native_assets`.
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
@@ -382,9 +405,11 @@ jobs:
         run: |
           set -euo pipefail
           ls -la
+          # The three that have to be there. An armv7 leg that failed is left
+          # out of the release rather than holding the whole thing back.
           for want in \
+            "${{ needs.metadata.outputs.prefix }}_arrows-arm64-v8a.apk" \
             "${{ needs.metadata.outputs.prefix }}_arm64-v8a.apk" \
-            "${{ needs.metadata.outputs.prefix }}_armeabi-v7a.apk" \
             "${{ needs.metadata.outputs.prefix }}_debug.apk"; do
             [ -s "$want" ] || { echo "::error::missing $want"; exit 1; }
           done
@@ -406,62 +431,62 @@ jobs:
             > Nenhum destes APKs foi testado num Arrows 801FJ fisico. O que esta
             > verificado foi verificado no GitHub Actions.
 
-            ServerBox **1.0.${{ needs.metadata.outputs.build }}**, compilado a partir
-            do fork `eduardo20042004/flutter_server_box` (fluxo de trabalho
-            `android-build.yml`).
+            ServerBox **1.0.${{ needs.metadata.outputs.build }}** compilado a partir
+            do fork `eduardo20042004/flutter_server_box` (execucao
+            [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})).
+
+            ### Porque e que uma versao nova "nao instala"
+
+            O Android so recusa uma instalacao por tres razoes, e nenhuma delas
+            tem a ver com a app funcionar ou nao:
+
+            1. **Assinatura diferente** da copia ja instalada
+               (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Uma versao do ServerBox
+               instalada a partir de outra fonte tem outra chave: o Android nao
+               sabe se o ficheiro e teu e recusa.
+            2. **versionCode maior ja instalado**
+               (`INSTALL_FAILED_VERSION_DOWNGRADE`).
+            3. **ABI errada** (`INSTALL_FAILED_NO_MATCHING_ABIS`): tentar o APK
+               arm64 num sistema de 32 bits, ou o contrario.
+
+            Em todos os casos o telefone mostra so "Aplicacao nao instalada".
 
             ### Qual ficheiro instalar
 
-            | Ficheiro | ABI | Linux (PRoot) |
-            | --- | --- | --- |
-            | `ServerBox_v1.0.${{ needs.metadata.outputs.build }}_arrows801fj_arm64-v8a.apk` | **arm64-v8a** | incluido |
-            | `ServerBox_v1.0.${{ needs.metadata.outputs.build }}_arrows801fj_armeabi-v7a.apk` | armeabi-v7a | nao existe |
-            | `ServerBox_v1.0.${{ needs.metadata.outputs.build }}_arrows801fj_debug.apk` | todas | incluido (arm64) |
+            | Ficheiro | O que e |
+            | --- | --- |
+            | `..._arrows-arm64-v8a.apk` | **Comeca por este.** Instala ao lado do ServerBox que ja tens, sem desinstalar nada e sem perder nada. Pacote proprio (`tech.lolli.toolbox.arrows`), arm64, com o motor Linux. |
+            | `..._arm64-v8a.apk` | O mesmo, com o pacote original `tech.lolli.toolbox`. So instala se desinstalares o ServerBox que ja tens (ou se a assinatura coincidir). |
+            | `..._arrows-armeabi-v7a.apk` | Versao de 32 bits. Instala, mas sem Linux (o PRoot so existe para arm64). |
+            | `..._debug.apk` | Pacote `.debug`, aceita todas as ABIs. Serve para testar; mais lenta. |
 
-            Comeca pelo **arm64-v8a**. O Snapdragon 450 e um SoC de 64 bits e o
-            PRoot so e compilado para aarch64: no APK `armeabi-v7a` a app instala
-            e funciona, mas o separador de Linux nao tem motor para arrancar.
+            ### Requisitos verificados nesta compilacao
 
-            ### Requisitos
-
-            - **Android minimo: 7.0 (API 24)**. Android 9 (API 28) e Android 10
-              (API 29) do 801FJ estao dentro do suportado.
-            - **ABIs:** arm64-v8a, armeabi-v7a.
-            - Espaco livre: ~200 MB para a app e o sistema Linux que instalares.
-
-            ### O que foi verificado nesta compilacao
-
-            O fluxo de trabalho falha se qualquer uma destas condicoes nao se
-            verificar: APK existente e nao vazio, `minSdkVersion` <= 28,
-            `targetSdkVersion` lido do manifesto, ABI presente no manifesto e
-            `libflutter.so` para essa ABI, `libproot.so` e `libproot-loader.so`
-            no arm64, e assinatura valida (`apksigner verify`). Os SHA-256 estao
-            no anexo `SHA256SUMS`.
+            O fluxo falha se algo disto nao se cumprir, em cada APK: nao vazio;
+            `minSdkVersion` <= 28 (Android 9 do 801FJ); `targetSdkVersion` presente;
+            ABI declarada e `libflutter.so` para ela; `libproot.so` e
+            `libproot-loader.so` no arm64; e `apksigner verify` sem erro.
+            Os SHA-256 estao em `SHA256SUMS`.
 
             ### Assinatura
 
-            Cada compilacao e assinada com uma chave criada para essa execucao,
-            a menos que o repositorio tenha a chave de release nos secrets
-            `SBX_KEYSTORE_BASE64`, `SBX_KEYSTORE_PASSWORD`, `SBX_KEY_ALIAS` e
-            `SBX_KEY_PASSWORD`. Consequencia pratica: instalacoes de execucoes
-            diferentes nao se substituem umas as outras. Para atualizar sem
-            perder dados, exporta as configuracoes na app antes de desinstalar a
-            versao antiga, ou configura a chave de release nos secrets.
+            Sem a chave de release nos secrets (`SBX_KEYSTORE_BASE64`,
+            `SBX_KEYSTORE_PASSWORD`, `SBX_KEY_ALIAS`, `SBX_KEY_PASSWORD`), cada
+            compilacao faz a sua chave RSA-2048. Duas compilacoes minhas nao se
+            substituem uma a outra; a variante `.arrows` existe para nao ser
+            preciso substituir nada.
 
             ### Instalar no 801FJ
 
-            1. Descarrega o APK `arm64-v8a` (ou o `debug` para testar).
-            2. Android 9/10: Definicoes > Aplicacoes > Acesso especial >
-               Instalar apps desconhecidas > escolhe o browser ou o gestor de
-               ficheiros que vais usar.
-            3. Se ja tens o ServerBox instalado de outra fonte, desinstala-o
-               primeiro: outra chave de assinatura faz o Android recusar a
-               instalacao com "App not installed".
-            4. Abre o ficheiro e instala. Se o Play Protect avisar, e esperado
-               num APK assinado com uma chave que ele nao conhece.
-            5. Para o terminal Linux: abre o separador de terminal, instala uma
-               distribuicao (Alpine e a mais leve para 3 GB de RAM) e confirma
-               que o PRoot arranca.
+            1. Descarrega o `..._arrows-arm64-v8a.apk`.
+            2. Definicoes > Aplicacoes > Acesso especial > Instalar apps
+               desconhecidas > autoriza o browser ou o gestor de ficheiros.
+            3. Abre o ficheiro e instala. Se o Play Protect perguntar, escolhe
+               instalar mesmo assim: a chave e nova, nao e um virus.
+            4. Teras duas entradas: o ServerBox antigo e o "ServerBox Arrows".
+               O novo e o que tem o terminal Linux.
+            5. Se o antigo der erro ao atualizar, e o caso 1 acima: usa a
+               variante `.arrows`, que nao toca no antigo.
 
   status:
     name: Build summary
@@ -490,7 +515,7 @@ jobs:
             echo "| --- | --- |"
             echo "| Release APKs | ${BUILD_RESULT} |"
             echo "| Debug APK | ${DEBUG_RESULT} |"
-            echo "| Tag | `${TAG}` |"
+            echo "| Tag | ${TAG} |"
             echo "| Published | ${IS_RELEASE} |"
             echo "| Run | ${RUN_URL} |"
           } >> "$GITHUB_STEP_SUMMARY"
