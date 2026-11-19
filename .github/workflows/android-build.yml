@@ -54,6 +54,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+
       # One place resolves the build number, the asset prefix and the tag, so
       # the jobs below cannot disagree about what they are publishing.
       - name: Resolve build number, prefix and tag
@@ -223,56 +224,14 @@ jobs:
       # the two proot binaries the Linux distros run on. A missing proot still
       # installs and runs -- the terminal tab's Linux userland is simply absent
       # -- so nothing else would report it.
+      #
+      # In a script rather than here so it can be run against an APK by hand,
+      # which is how its two failure modes were found.
       - name: Verify the APK
         shell: bash
         env:
           APK: build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
-          ABI: ${{ matrix.label }}
-        run: |
-          set -euo pipefail
-          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
-          aapt2="$ANDROID_HOME/build-tools/$build_tools/aapt2"
-
-          [ -s "$APK" ] || { echo "::error::the APK is missing or empty"; exit 1; }
-          "$aapt2" dump badging "$APK" > badging.txt
-          grep -m1 '^package:' badging.txt
-          grep -m1 "sdkVersion:" badging.txt
-          grep -m1 "targetSdkVersion:" badging.txt
-          grep -m1 "native-code:" badging.txt
-
-          min_sdk="$(sed -n -E "s/.*sdkVersion:'([0-9]+)'.*/\1/p" badging.txt | head -n 1)"
-          target_sdk="$(sed -n -E "s/.*targetSdkVersion:'([0-9]+)'.*/\1/p" badging.txt | head -n 1)"
-          [ -n "$min_sdk" ] || { echo "::error::no minSdkVersion in the manifest"; exit 1; }
-
-          # Android 9 is API 28, Android 10 is API 29. An APK whose floor is
-          # above 28 is refused by the device's package manager before anything
-          # else is considered.
-          if [ "$min_sdk" -gt 28 ]; then
-            echo "::error::minSdkVersion is $min_sdk; the 801FJ runs API 28/29"
-            exit 1
-          fi
-
-          if ! grep -m1 "native-code:" badging.txt | grep -q "'$ABI'"; then
-            echo "::error::the APK carries no $ABI code"
-            exit 1
-          fi
-
-          "$APKSIGNER" verify "$APK"
-          unzip -l "$APK" | grep -q "lib/$ABI/libflutter.so" ||
-            { echo "::error::no libflutter.so for $ABI"; exit 1; }
-
-          if [ "$ABI" = 'arm64-v8a' ]; then
-            unzip -l "$APK" | grep -q 'lib/arm64-v8a/libproot.so' ||
-              { echo "::error::proot is missing; the Linux userland would not exist"; exit 1; }
-            unzip -l "$APK" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
-              { echo "::error::proot's loader is missing; entering the rootfs would be refused"; exit 1; }
-          else
-            # proot is built for arm64 only (aarch64-linux-android). Saying so
-            # here is what keeps the release notes honest about armv7.
-            echo "::notice::armeabi-v7a has no proot by design; Linux distros need the arm64 APK"
-          fi
-
-          sha256sum "$APK" | tee "$APK.sha256"
+        run: bash scripts/release/verify-android-apk.sh "$APK" ${{ matrix.label }}
 
       - name: Upload the APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -337,27 +296,12 @@ jobs:
           APK: build/apk-final/${{ needs.metadata.outputs.prefix }}_debug.apk
         run: |
           set -euo pipefail
-          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
-          aapt2="$ANDROID_HOME/build-tools/$build_tools/aapt2"
-
           src="$(find build/app/outputs/flutter-apk -maxdepth 1 -name 'app-debug.apk' -print -quit)"
           [ -n "$src" ] || { echo "::error::app-debug.apk was not built"; exit 1; }
           mkdir -p "$(dirname "$APK")"
           cp "$src" "$APK"
-
-          "$aapt2" dump badging "$APK" > badging.txt
-          grep -m1 '^package:' badging.txt
-          grep -m1 "sdkVersion:" badging.txt
-          grep -m1 "targetSdkVersion:" badging.txt
-          grep -m1 "native-code:" badging.txt
-          min_sdk="$(sed -n -E "s/.*sdkVersion:'([0-9]+)'.*/\1/p" badging.txt | head -n 1)"
-          if [ "$min_sdk" -gt 28 ]; then
-            echo "::error::minSdkVersion is $min_sdk; the 801FJ runs API 28/29"
-            exit 1
-          fi
-
-          "$APKSIGNER" verify --print-certs "$APK" | head -n 3
-          sha256sum "$APK" | tee "$APK.sha256"
+          # `all`: one APK for every ABI, so there is no single one to require.
+          bash scripts/release/verify-android-apk.sh "$APK" all
 
       - name: Upload the debug APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
