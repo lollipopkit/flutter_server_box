@@ -173,4 +173,53 @@ void main() {
 
     expect(fallback(), findsOneWidget);
   });
+
+  testWidgets('non-square marks and fallback icons align ListTile titles', (
+    tester,
+  ) async {
+    // Regression for #1956: Debian's shipped SVG is taller than it is wide, so
+    // without a fixed square box `ListTile` gave its row a narrower leading
+    // width than fallback rows.
+    const size = 26.0;
+    const rows = <(String, Dist?)>[
+      ('ubuntu-row', Dist.ubuntu),
+      ('debian-row', Dist.debian),
+      ('alpine-row', Dist.alpine),
+      ('unknown-row', null),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView(
+            children: [
+              for (final (label, dist) in rows)
+                ListTile(
+                  leading: DistIconOf(dist, size: size),
+                  title: Text(label),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final iconSizes = tester
+        .widgetList<DistIconOf>(find.byType(DistIconOf))
+        .map((w) => tester.getSize(find.byWidget(w)))
+        .toList();
+    for (final iconSize in iconSizes) {
+      expect(iconSize, const Size.square(size));
+    }
+
+    final expectedLeft = tester.getTopLeft(find.text(rows.first.$1)).dx;
+    for (final (label, _) in rows.skip(1)) {
+      expect(
+        tester.getTopLeft(find.text(label)).dx,
+        expectedLeft,
+        reason: '$label title should align with ${rows.first.$1}',
+      );
+    }
+  });
 }

@@ -162,73 +162,71 @@ class DistIconOf extends StatelessWidget {
       dist: dist,
       dark: Theme.of(context).brightness == Brightness.dark,
     );
-    // No address: the mark shipped for this distribution, if there is one.
-    // Four have a logo whose licence permits redistribution — see
-    // `Dist.markAsset`. An address, once set, wins over all of them: somebody
-    // who chose a collection wants it used for every row, not four exceptions.
+    // Every branch sits inside one `size x size` box: non-square marks such as
+    // Debian's SVG otherwise shrink narrower than `size` under loose `ListTile`
+    // leading constraints and shift titles out of line with fallback rows.
+    final Widget child;
     if (url == null) {
       final asset = dist?.markAsset;
-      if (asset == null) return _fallback(context);
-      return SvgPicture.asset(
-        asset,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        colorFilter: _tint(context),
-        semanticsLabel: dist?.name,
-      );
-    }
-
-    return SizedBox.square(
-      dimension: size,
-      child: _isSvgUrl(url)
-          ? SvgPicture.network(
-              url,
+      child = asset == null
+          ? _fallback(context)
+          : SvgPicture.asset(
+              asset,
               width: size,
               height: size,
               fit: BoxFit.contain,
               colorFilter: _tint(context),
-              // Named for the reader that speaks the row aloud: the mark is
-              // the only thing on it that says which distribution.
               semanticsLabel: dist?.name,
-              // Blank while it loads rather than the outline: a fallback that
-              // appears and is replaced a moment later reads as a glitch, and
-              // most of these come from a cache and never draw this at all.
-              placeholderBuilder: (_) => SizedBox.square(dimension: size),
-              errorBuilder: (_, _, _) => _fallback(context),
-            )
-          : ExtendedImage.network(
-              url,
-              cache: true,
-              // Width only, for the reason spelled out in `_buildLogo`
-              // (`view/page/server/detail/view.dart`): both dimensions reach
-              // `ResizeImage`, whose default policy is `exact` — `BoxFit.fill`
-              // — so a wide mark would arrive squared off. The `fit` below
-              // places it instead.
-              cacheWidth:
-                  (size * MediaQuery.devicePixelRatioOf(context)).round(),
-              clearMemoryCacheWhenDispose: true,
-              width: size,
-              height: size,
-              fit: BoxFit.contain,
-              // Same tint. On a raster it works off the alpha channel, so a
-              // PNG with a solid background becomes a solid block — a thing to
-              // know when configuring an address, not something to correct
-              // for here.
-              color: _tintColor(context),
-              colorBlendMode: BlendMode.srcIn,
-              semanticLabel: dist?.name,
-              // Blank while it loads, the outline if it fails. A broken-image
-              // box on every row reads as the app being wrong; the outline
-              // reads as "not known", which is what a failed address means.
-              loadStateChanged: (state) => switch (state
-                  .extendedImageLoadState) {
-                LoadState.completed => null,
-                LoadState.failed => _fallback(context),
-                LoadState.loading => SizedBox.square(dimension: size),
-              },
-            ),
-    );
+            );
+    } else if (_isSvgUrl(url)) {
+      child = SvgPicture.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        colorFilter: _tint(context),
+        // Named for the reader that speaks the row aloud: the mark is
+        // the only thing on it that says which distribution.
+        semanticsLabel: dist?.name,
+        // Blank while it loads rather than the outline: a fallback that
+        // appears and is replaced a moment later reads as a glitch, and
+        // most of these come from a cache and never draw this at all.
+        placeholderBuilder: (_) => SizedBox.square(dimension: size),
+        errorBuilder: (_, _, _) => _fallback(context),
+      );
+    } else {
+      child = ExtendedImage.network(
+        url,
+        cache: true,
+        // Width only, for the reason spelled out in `_buildLogo`
+        // (`view/page/server/detail/view.dart`): both dimensions reach
+        // `ResizeImage`, whose default policy is `exact` — `BoxFit.fill`
+        // — so a wide mark would arrive squared off. The `fit` below
+        // places it instead.
+        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+        clearMemoryCacheWhenDispose: true,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        // Same tint. On a raster it works off the alpha channel, so a
+        // PNG with a solid background becomes a solid block — a thing to
+        // know when configuring an address, not something to correct
+        // for here.
+        color: _tintColor(context),
+        colorBlendMode: BlendMode.srcIn,
+        semanticLabel: dist?.name,
+        // Blank while it loads, the outline if it fails. A broken-image
+        // box on every row reads as the app being wrong; the outline
+        // reads as "not known", which is what a failed address means.
+        loadStateChanged: (state) => switch (state.extendedImageLoadState) {
+          LoadState.completed => null,
+          LoadState.failed => _fallback(context),
+          LoadState.loading => SizedBox.square(dimension: size),
+        },
+      );
+    }
+
+    return SizedBox.square(dimension: size, child: child);
   }
 }
 
