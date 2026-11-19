@@ -22,6 +22,21 @@ subprojects { subproject ->
         buildType.applicationIdSuffix = ".debug"
         buildTypes.debug.resValue 'string', 'app_name', 'SrvBxD'
       }
+      // A release meant to install *beside* an existing ServerBox instead of
+      // over it. The package manager refuses a differently-signed upgrade
+      // (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) and a lower versionCode
+      // (`INSTALL_FAILED_VERSION_DOWNGRADE`), and both reach the user as a bare
+      // "App not installed": a package id of its own sidesteps both, which is
+      // why the Arrows 801FJ build asks for one.
+      //
+      // Unset, the release keeps `tech.lolli.toolbox`.
+      def altAppIdSuffix = System.getenv('SBX_APP_ID_SUFFIX')?.trim()
+      if (altAppIdSuffix) {
+        android.buildTypes.matching { it.name == 'release' }.all { buildType ->
+          buildType.applicationIdSuffix = altAppIdSuffix
+          buildTypes.release.resValue 'string', 'app_name', 'ServerBox Arrows'
+        }
+      }
     }
   }
 }
