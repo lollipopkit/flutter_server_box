@@ -1,0 +1,521 @@
+name: Android APK (Fujitsu Arrows 801FJ)
+
+# Builds installable Android APKs from this fork for the Fujitsu Arrows U 801FJ
+# (Snapdragon 450, Android 9/10, arm64-v8a with an armeabi-v7a fallback).
+#
+# It reuses the project's own build inputs instead of inventing a second way to
+# build: `.github/actions/setup-flutter` pins the Flutter version, `.github/
+# actions/setup-android-sdk` pins the SDK/NDK/build-tools, and
+# `scripts/release/build-fdroid.sh` is the script the upstream release and
+# F-Droid both build with (dev-only plugins pruned, proot built for arm64).
+#
+# What is different here is only how the result is packaged, signed and
+# published, because an install that is refused says nothing about why:
+#
+#   * two package names -- `tech.lolli.toolbox` and, with `SBX_APP_ID_SUFFIX`,
+#     a second id that installs *beside* an existing ServerBox. A copy signed
+#     with a key this repository does not hold, or a versionCode already higher,
+#     is refused with a bare "App not installed"; a different id is not.
+#   * RSA-2048 for the per-run key rather than EC P-384: plain RSA is what every
+#     release-time APK verifier accepts, and a signature the device silently
+#     dislikes is indistinguishable from a broken file.
+#   * a universal debug APK, so an ABI mismatch cannot be the reason either.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Create a GitHub Release with the APKs built by this run"
+        required: false
+        type: boolean
+        default: false
+      tag:
+        description: "Release tag (empty: arrows-801fj-v1.0.<build>)"
+        required: false
+        type: string
+        default: ""
+  push:
+    branches:
+      - arrows801fj
+    tags:
+      - "arrows-801fj-v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-arrows801fj-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    name: Version and asset names
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      build: ${{ steps.m.outputs.build }}
+      prefix: ${{ steps.m.outputs.prefix }}
+      tag: ${{ steps.m.outputs.tag }}
+      isRelease: ${{ steps.m.outputs.isRelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      # One place resolves the build number, the asset prefix and the tag, so
+      # the jobs below cannot disagree about what they are publishing.
+      - name: Resolve build number, prefix and tag
+        id: m
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+          WANTS_RELEASE: ${{ inputs.release }}
+          IS_TAG: ${{ github.ref_type == 'tag' }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          if [ -z "$build" ]; then
+            echo "::error::BuildData.build not found in lib/data/res/build_data.dart"
+            exit 1
+          fi
+
+          prefix="ServerBox_v1.0.${build}_arrows801fj"
+          tag="${REQUESTED_TAG//[[:space:]]/}"
+          if [ "$IS_TAG" = 'true' ]; then
+            tag="$REF_NAME"
+          fi
+          if [ -z "$tag" ]; then
+            tag="arrows-801fj-v1.0.${build}"
+          fi
+
+          # A tag push always publishes; a manual dispatch only when asked.
+          release=false
+          if [ "$WANTS_RELEASE" = 'true' ] || [ "$IS_TAG" = 'true' ]; then
+            release=true
+          fi
+
+          {
+            echo "build=$build"
+            echo "prefix=$prefix"
+            echo "tag=$tag"
+            echo "isRelease=$release"
+          } >> "$GITHUB_OUTPUT"
+          echo "build $build, tag $tag, release $release"
+
+  build:
+    name: Release APK (${{ matrix.label }})
+    needs: metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # `suffix` empty keeps the upstream package id; `.arrows` is the variant
+        # that installs beside an already-installed ServerBox.
+        include:
+          - abi: arm64
+            abi_dir: arm64-v8a
+            suffix: ""
+            label: arm64-v8a
+          - abi: arm
+            abi_dir: armeabi-v7a
+            suffix: ""
+            label: armeabi-v7a
+          - abi: arm64
+            abi_dir: arm64-v8a
+            suffix: .arrows
+            label: arrows-arm64-v8a
+          - abi: arm
+            abi_dir: armeabi-v7a
+            suffix: .arrows
+            label: arrows-armeabi-v7a
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install Flutter
+        uses: ./.github/actions/setup-flutter
+
+      # AGP 9.4 / Gradle 9.8 / Kotlin 2.3, the combination this project's CI
+      # builds with. JDK 17 is the floor AGP 9 accepts; 21 is what upstream
+      # verified the build on, so a release is not the place to find out whether
+      # 17 differs.
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: "zulu"
+          java-version: "21"
+
+      - name: Install the pinned Android SDK and NDK
+        uses: ./.github/actions/setup-android-sdk
+
+      - name: Fix the Android build epoch
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+
+      - name: Install the build hook's Rust toolchain
+        working-directory: crates/sbm_ffi
+        run: rustup toolchain install --profile minimal --no-self-update
+
+      # The same entry point the upstream release and F-Droid use. Retried:
+      # proot's sources (talloc, proot and its submodules) are fetched over the
+      # network, and a mirror answering 504 is not a reason to lose a build --
+      # the first arm64 attempt failed exactly there. The last attempt's tail is
+      # emitted as annotations, which is the only failure detail visible without
+      # this account's logs.
+      - name: Build the unsigned release APK (${{ matrix.abi }})
+        shell: bash
+        env:
+          SBX_APP_ID_SUFFIX: ${{ matrix.suffix }}
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "::group::build attempt $attempt"
+            if scripts/release/build-fdroid.sh ${{ matrix.abi }} \
+                2>&1 | tee "$RUNNER_TEMP/build-$attempt.log"; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "::warning::build attempt $attempt failed"
+            rm -rf build/proot-android
+          done
+          while IFS= read -r line; do echo "::error::$line"; done \
+            < <(tail -n 25 "$RUNNER_TEMP/build-3.log")
+          exit 1
+
+      # An unsigned APK cannot be installed at all. Without a configured release
+      # key (see the release notes) the run makes its own -- RSA-2048, which is
+      # the one key type every Android release verifier accepts.
+      - name: Sign the APK
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.SBX_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SBX_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SBX_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SBX_KEY_PASSWORD }}
+          UNSIGNED: build/app/outputs/apk/release/app-${{ matrix.abi_dir }}-release-unsigned.apk
+          OUT: build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
+        run: |
+          set -euo pipefail
+          [ -s "$UNSIGNED" ] || { echo "::error::$UNSIGNED was not built"; exit 1; }
+          mkdir -p "$(dirname "$OUT")"
+
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            ks="$RUNNER_TEMP/release-keystore"
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$ks"
+            ks_pass="${KEYSTORE_PASSWORD:?SBX_KEYSTORE_PASSWORD is missing}"
+            ks_alias="${KEY_ALIAS:?SBX_KEY_ALIAS is missing}"
+            key_pass="${KEY_PASSWORD:-$ks_pass}"
+            signer="release keystore from repository secrets"
+          else
+            ks="$RUNNER_TEMP/arrows801fj-per-run.p12"
+            ks_pass="arrows801fj"
+            ks_alias="arrows801fj"
+            key_pass="arrows801fj"
+            keytool -genkeypair -keystore "$ks" -storetype PKCS12 \
+              -storepass "$ks_pass" -keypass "$key_pass" \
+              -alias "$ks_alias" -keyalg RSA -keysize 2048 \
+              -dname "CN=ServerBox Arrows 801FJ per-run test key" -validity 10000 >/dev/null
+            signer="per-run test key (no release key configured)"
+          fi
+
+          "$APKSIGNER" sign \
+            --ks "$ks" \
+            --ks-key-alias "$ks_alias" \
+            --ks-pass "pass:$ks_pass" \
+            --key-pass "pass:$key_pass" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --v4-signing-enabled false \
+            --out "$OUT" \
+            "$UNSIGNED"
+          rm -f "$UNSIGNED"
+
+          "$APKSIGNER" verify --verbose --print-certs "$OUT"
+          {
+            echo "### ${{ matrix.label }}"
+            echo ""
+            echo "- signed with: $signer"
+            echo "- sha256: $(sha256sum "$OUT" | cut -d' ' -f1)"
+            echo "- size: $(du -h "$OUT" | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The checks themselves live in scripts/release/verify-android-apk.sh so
+      # they can be run against an APK by hand, which is how their two failure
+      # modes were found.
+      - name: Verify the APK
+        shell: bash
+        env:
+          APK: build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
+        run: bash scripts/release/verify-android-apk.sh "$APK" ${{ matrix.abi_dir }}
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ${{ needs.metadata.outputs.prefix }}-android-${{ matrix.label }}
+          path: |
+            build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk
+            build/apk-final/${{ needs.metadata.outputs.prefix }}_${{ matrix.label }}.apk.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+  debug:
+    name: Debug APK (all ABIs)
+    needs: metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PREFIX: ${{ needs.metadata.outputs.prefix }}
+      BUILD_NUMBER: ${{ needs.metadata.outputs.build }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install Flutter
+        uses: ./.github/actions/setup-flutter
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: "zulu"
+          java-version: "21"
+
+      - name: Install the pinned Android SDK and NDK
+        uses: ./.github/actions/setup-android-sdk
+
+      - name: Install the build hook's Rust toolchain
+        working-directory: crates/sbm_ffi
+        run: rustup toolchain install --profile minimal --no-self-update
+
+      - name: Fetch dependencies
+        run: flutter pub get --enforce-lockfile
+
+      # Gradle signs this with the standard debug key, and `debug` already has
+      # its own application id (`tech.lolli.toolbox.debug`), so it installs
+      # beside anything. One APK for every ABI, so an ABI mismatch cannot be the
+      # reason it is refused either.
+      - name: Build the debug APK
+        shell: bash
+        run: |
+          flutter build apk --debug \
+            --build-number="${BUILD_NUMBER}" \
+            --build-name="1.0.${BUILD_NUMBER}"
+
+      - name: Collect and verify the debug APK
+        shell: bash
+        env:
+          APK: build/apk-final/${{ needs.metadata.outputs.prefix }}_debug.apk
+        run: |
+          set -euo pipefail
+          src="$(find build/app/outputs/flutter-apk -maxdepth 1 -name 'app-debug.apk' -print -quit)"
+          [ -n "$src" ] || { echo "::error::app-debug.apk was not built"; exit 1; }
+          mkdir -p "$(dirname "$APK")"
+          cp "$src" "$APK"
+          # `all`: one APK for every ABI, so there is no single one to require.
+          bash scripts/release/verify-android-apk.sh "$APK" all
+
+      - name: Upload the debug APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ${{ needs.metadata.outputs.prefix }}-android-debug
+          path: |
+            build/apk-final/${{ needs.metadata.outputs.prefix }}_debug.apk
+            build/apk-final/${{ needs.metadata.outputs.prefix }}_debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+  # The suite this project ships, split the way its own CI splits it: by file,
+  # three shards, because `flutter test` compiles one file at a time. No device
+  # is involved; the end-to-end suites are excluded, as they are upstream.
+  test:
+    name: Flutter tests (${{ matrix.shard }}/3)
+    needs: metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install Flutter
+        uses: ./.github/actions/setup-flutter
+
+      - name: Fetch dependencies
+        run: flutter pub get
+
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+
+      - name: Run the tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files -- 'test/*_test.dart' \
+            ':!test/e2e/*' ':!test/*_e2e_test.dart' | sort \
+            | awk -v n=3 -v i=${{ matrix.shard }} '(NR - 1) % n == i')
+          echo "${#files[@]} test files in this shard"
+          flutter test "${files[@]}"
+
+  publish:
+    name: Publish the release
+    needs:
+      - metadata
+      - build
+      - debug
+    if: needs.metadata.outputs.isRelease == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Collect the APKs
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: ${{ needs.metadata.outputs.prefix }}-android-*
+          path: assets
+          merge-multiple: true
+
+      - name: Checksums and completeness
+        shell: bash
+        working-directory: assets
+        run: |
+          set -euo pipefail
+          ls -la
+          # The three that have to be there. An armv7 leg that failed is left
+          # out of the release rather than holding the whole thing back.
+          for want in \
+            "${{ needs.metadata.outputs.prefix }}_arrows-arm64-v8a.apk" \
+            "${{ needs.metadata.outputs.prefix }}_arm64-v8a.apk" \
+            "${{ needs.metadata.outputs.prefix }}_debug.apk"; do
+            [ -s "$want" ] || { echo "::error::missing $want"; exit 1; }
+          done
+          files=(*.apk)
+          sha256sum -- "${files[@]}" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create the release
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
+        with:
+          tag_name: ${{ needs.metadata.outputs.tag }}
+          name: ServerBox 1.0.${{ needs.metadata.outputs.build }} for Fujitsu Arrows 801FJ
+          draft: false
+          fail_on_unmatched_files: true
+          files: |
+            assets/*.apk
+            assets/SHA256SUMS
+          body: |
+            > Nenhum destes APKs foi testado num Arrows 801FJ fisico. O que esta
+            > verificado foi verificado no GitHub Actions.
+
+            ServerBox **1.0.${{ needs.metadata.outputs.build }}** compilado a partir
+            do fork `eduardo20042004/flutter_server_box` (execucao
+            [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})).
+
+            ### Porque e que uma versao nova "nao instala"
+
+            O Android so recusa uma instalacao por tres razoes, e nenhuma delas
+            tem a ver com a app funcionar ou nao:
+
+            1. **Assinatura diferente** da copia ja instalada
+               (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Uma versao do ServerBox
+               instalada a partir de outra fonte tem outra chave: o Android nao
+               sabe se o ficheiro e teu e recusa.
+            2. **versionCode maior ja instalado**
+               (`INSTALL_FAILED_VERSION_DOWNGRADE`).
+            3. **ABI errada** (`INSTALL_FAILED_NO_MATCHING_ABIS`): tentar o APK
+               arm64 num sistema de 32 bits, ou o contrario.
+
+            Em todos os casos o telefone mostra so "Aplicacao nao instalada".
+
+            ### Qual ficheiro instalar
+
+            | Ficheiro | O que e |
+            | --- | --- |
+            | `..._arrows-arm64-v8a.apk` | **Comeca por este.** Instala ao lado do ServerBox que ja tens, sem desinstalar nada e sem perder nada. Pacote proprio (`tech.lolli.toolbox.arrows`), arm64, com o motor Linux. |
+            | `..._arm64-v8a.apk` | O mesmo, com o pacote original `tech.lolli.toolbox`. So instala se desinstalares o ServerBox que ja tens (ou se a assinatura coincidir). |
+            | `..._arrows-armeabi-v7a.apk` | Versao de 32 bits. Instala, mas sem Linux (o PRoot so existe para arm64). |
+            | `..._debug.apk` | Pacote `.debug`, aceita todas as ABIs. Serve para testar; mais lenta. |
+
+            ### Requisitos verificados nesta compilacao
+
+            O fluxo falha se algo disto nao se cumprir, em cada APK: nao vazio;
+            `minSdkVersion` <= 28 (Android 9 do 801FJ); `targetSdkVersion` presente;
+            ABI declarada e `libflutter.so` para ela; `libproot.so` e
+            `libproot-loader.so` no arm64; e `apksigner verify` sem erro.
+            Os SHA-256 estao em `SHA256SUMS`.
+
+            ### Assinatura
+
+            Sem a chave de release nos secrets (`SBX_KEYSTORE_BASE64`,
+            `SBX_KEYSTORE_PASSWORD`, `SBX_KEY_ALIAS`, `SBX_KEY_PASSWORD`), cada
+            compilacao faz a sua chave RSA-2048. Duas compilacoes minhas nao se
+            substituem uma a outra; a variante `.arrows` existe para nao ser
+            preciso substituir nada.
+
+            ### Instalar no 801FJ
+
+            1. Descarrega o `..._arrows-arm64-v8a.apk`.
+            2. Definicoes > Aplicacoes > Acesso especial > Instalar apps
+               desconhecidas > autoriza o browser ou o gestor de ficheiros.
+            3. Abre o ficheiro e instala. Se o Play Protect perguntar, escolhe
+               instalar mesmo assim: a chave e nova, nao e um virus.
+            4. Teras duas entradas: o ServerBox antigo e o "ServerBox Arrows".
+               O novo e o que tem o terminal Linux.
+            5. Se o antigo der erro ao atualizar, e o caso 1 acima: usa a
+               variante `.arrows`, que nao toca no antigo.
+
+  status:
+    name: Build summary
+    needs:
+      - metadata
+      - build
+      - debug
+    if: always() && needs.metadata.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Write the summary
+        shell: bash
+        env:
+          BUILD: ${{ needs.metadata.outputs.build }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+          IS_RELEASE: ${{ needs.metadata.outputs.isRelease }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEBUG_RESULT: ${{ needs.debug.result }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "## ServerBox ${BUILD} - Arrows 801FJ"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Release APKs | ${BUILD_RESULT} |"
+            echo "| Debug APK | ${DEBUG_RESULT} |"
+            echo "| Tag | ${TAG} |"
+            echo "| Published | ${IS_RELEASE} |"
+            echo "| Run | ${RUN_URL} |"
+          } >> "$GITHUB_STEP_SUMMARY"
