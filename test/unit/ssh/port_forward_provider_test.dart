@@ -328,8 +328,13 @@ void main() {
     Future<void> run(Future<void> Function() body) => IOOverrides.runZoned(
       body,
       serverSocketBind: (_, _, {int backlog = 0, bool v6Only = false, bool shared = false}) async {
-        binds++;
-        return listener;
+        if (++binds == 1) return listener;
+        // Outside the override zone, so the bind is real.
+        final rebound = await Zone.root.run(
+          () => ServerSocket.bind(InternetAddress.loopbackIPv4, socket.port),
+        );
+        addTearDown(rebound.close);
+        return rebound;
       },
     );
     const timeout = Duration(seconds: 2);
@@ -345,6 +350,9 @@ void main() {
     allowClose.complete();
     await Future.wait([stop, restart]).timeout(timeout);
     expect(binds, 2);
+    final forward = notifier.state.activeForwards[config.id];
+    expect(forward?.error, isNull);
+    expect(forward?.isActive, isTrue);
   });
 
   for (final type in [PortForwardType.local, PortForwardType.dynamic]) {
