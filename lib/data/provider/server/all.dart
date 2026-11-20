@@ -371,18 +371,19 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting == null) return;
-    // Keep the watch from minting while local cleanup still needs the row.
+    // Keep both surfaces from minting while local cleanup still needs the row.
     unawaited(WatchSync.instance.revokeServer(deleting));
+    final finishWidgetDeletion = WidgetSync.instance.beginServerDeletion(deleting);
     final List<String> newOrder;
     try {
       await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
       ref.read(workspacesProvider.notifier).removeServer(id);
-      unawaited(WidgetSync.instance.revokeServer(deleting));
       await _clearServerData(id);
       newOrder = List<String>.from(state.serverOrder)..remove(id);
       Stores.setting.serverOrder.put(newOrder);
       Stores.server.deleteById(id);
     } finally {
+      finishWidgetDeletion();
       WatchSync.instance.finishServerDeletion(id);
     }
     final newServers = Map<String, Spi>.from(state.servers);

@@ -6,14 +6,20 @@
 /// contract twice — a change asserted here is a change both have to make.
 library;
 
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
+import '../../helpers/test_db.dart';
 
 void main() {
   const addr = 'https://10.0.0.1:3770';
@@ -49,6 +55,55 @@ void main() {
 
   List<Map> entries(Map<String, dynamic> p) =>
       (p['servers'] as List).cast<Map>();
+
+  test('deletion blocks stale snapshot mints and revokes an in-flight mint',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    final first = monitorSpi(id: 'a', name: 'A');
+    final second = monitorSpi(id: 'b', name: 'B');
+    Stores.server.put(first);
+    Stores.server.put(second);
+
+    final mintStarted = Completer<void>();
+    final mint = Completer<ScopedToken>();
+    final issued = <String>[];
+    final revoked = <(String, String)>[];
+    final published = <Map<String, dynamic>>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (spi, _) {
+        issued.add(spi.id);
+        if (spi.id != first.id) return Future.value(tok('unexpected'));
+        mintStarted.complete();
+        return mint.future;
+      },
+      revokeToken: (spi, monitor) async => revoked.add((spi.id, monitor.addr)),
+      writePayload: (json) async =>
+          published.add(jsonDecode(json) as Map<String, dynamic>),
+    );
+    addTearDown(sync.dispose);
+
+    final push = sync.push();
+    await mintStarted.future.timeout(const Duration(seconds: 2));
+    final finishFirst = sync.beginServerDeletion(first);
+    final finishSecond = sync.beginServerDeletion(second);
+    expect(revoked, [('a', addr), ('b', addr)]);
+    mint.complete(tok('issued-before-delete'));
+    await push.timeout(const Duration(seconds: 2));
+
+    expect(issued, ['a']);
+    expect(revoked, [('a', addr), ('b', addr), ('a', addr)]);
+    expect(entries(published.single), isEmpty);
+
+    Stores.server.deleteById(first.id);
+    Stores.server.deleteById(second.id);
+    finishFirst();
+    finishSecond();
+  });
 
   group('what a widget is told about a server', () {
     test('is everything it needs and no login', () {
