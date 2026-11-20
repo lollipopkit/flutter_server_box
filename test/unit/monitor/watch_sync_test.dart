@@ -915,16 +915,18 @@ void main() {
         );
         expect(issueCalls, 1);
 
-        // Watch asks for data while A's slot is mid-mint: must not start a
-        // second mint.
-        final reply = await sync
-            .handleWatchMessage({'action': 'requestData'})
-            .timeout(const Duration(seconds: 2));
-        expect(payloadServers(reply).map((e) => e['id']), ['b']);
-        expect(payloadServers(reply).single['token'], 'tok-b-reused');
+        // Watch asks for data while A's slot is mid-mint: the reply waits for
+        // that mint and does not start a second one.
+        final replying = sync.handleWatchMessage({'action': 'requestData'});
+        await Future<void>.delayed(Duration.zero);
         expect(issueCalls, 1);
 
         releaseIssueA.complete();
+        final reply = await replying.timeout(const Duration(seconds: 2));
+        expect(
+          {for (final e in payloadServers(reply)) e['id']: e['token']},
+          {'a': 'tok-a-1', 'b': 'tok-b-reused'},
+        );
         final delivered = await deliveredA.future.timeout(
           const Duration(seconds: 2),
         );
@@ -986,5 +988,93 @@ void main() {
         sync.finishServerDeletion(doomed.id);
       },
     );
+
+    test('a reply to the watch stops waiting for a mint that never ends',
+        () async {
+      Stores.server.put(monitorSpi(id: 'a', name: 'Alpha'));
+      Stores.server.put(
+        monitorSpi(id: 'b', name: 'Beta', addr: 'https://10.0.0.2:3770'),
+      );
+      final sync = WatchSync.forTest(
+        now: () => now,
+        readContext: () async => null,
+        writeContext: (_) async {},
+        issueToken: (spi, endpoint) async {
+          if (spi.id == 'a') return Completer<ScopedToken>().future;
+          return tok('tok-b', endpoint: endpoint);
+        },
+        revokeToken: (_, _) async {},
+        mintWait: const Duration(milliseconds: 50),
+      );
+      addTearDown(sync.dispose);
+
+      final reply = await sync
+          .handleWatchMessage({'action': 'requestData'})
+          .timeout(const Duration(seconds: 1));
+      expect(payloadServers(reply).map((e) => e['id']), ['b']);
+    });
+
+    test('a revoke queued behind slow work past its deadline is still sent',
+        () async {
+      final atA = monitorSpi(id: 'a', name: 'Alpha');
+      final atB = monitorSpi(
+        id: 'a',
+        name: 'Alpha',
+        addr: 'https://10.0.0.2:3770',
+      );
+      Stores.server.put(
+        monitorSpi(id: 'a', name: 'Alpha', addr: 'https://10.0.0.3:3770'),
+      );
+      var currentTime = now;
+      final releaseFirst = Completer<void>();
+      final revoked = <String>[];
+      final secondSent = Completer<void>();
+      final sync = WatchSync.forTest(
+        now: () => currentTime,
+        readContext: () async => null,
+        writeContext: (_) async {},
+        issueToken: (_, endpoint) async => tok('new', endpoint: endpoint),
+        revokeToken: (spi, _) async {
+          revoked.add(spi.monitor!.addr);
+          if (revoked.length == 1) await releaseFirst.future;
+          if (revoked.length == 2) secondSent.complete();
+        },
+        revokeCredentialTtl: const Duration(seconds: 5),
+      );
+      addTearDown(sync.dispose);
+
+      sync.revokeEditedServer(atA);
+      await Future<void>.delayed(Duration.zero);
+      sync.revokeEditedServer(atB);
+      currentTime = now.add(const Duration(seconds: 10));
+      releaseFirst.complete();
+      await secondSent.future.timeout(const Duration(seconds: 1));
+
+      expect(revoked, [atA.monitor!.addr, atB.monitor!.addr]);
+    });
+
+    test('a deleted server leaves no slot behind once its revoke is done',
+        () async {
+      final doomed = monitorSpi(id: 'a', name: 'Alpha');
+      Stores.server.put(doomed);
+      final revoked = Completer<void>();
+      final sync = WatchSync.forTest(
+        now: () => now,
+        readContext: () async => null,
+        writeContext: (_) async {},
+        issueToken: (_, endpoint) async => tok('new', endpoint: endpoint),
+        revokeToken: (_, _) async => revoked.complete(),
+      );
+      addTearDown(sync.dispose);
+
+      await sync.revokeServer(doomed);
+      await revoked.future.timeout(const Duration(seconds: 1));
+      Stores.server.deleteById(doomed.id);
+      sync.finishServerDeletion(doomed.id);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(sync.hasSlotFor(doomed.id), isFalse);
+    });
   });
 }

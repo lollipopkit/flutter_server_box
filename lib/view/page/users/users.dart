@@ -69,6 +69,7 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   bool _groupSystemExpanded = true;
   final _ops = PendingOps();
   bool _refreshQueued = false;
+  Future<void>? _refreshing;
   bool get _busy => _ops.isBusy;
   bool _unsupported = false;
   String? _failure;
@@ -1091,7 +1092,8 @@ extension on _UsersPageState {
       return;
     }
 
-    await _ops.run('refresh', () async {
+    late final Future<void> refreshing;
+    refreshing = _ops.run('refresh', () async {
       _rebuild(() {
         _unsupported = false;
         _failure = null;
@@ -1106,13 +1108,31 @@ extension on _UsersPageState {
         if (mounted) _rebuild(() => _failure = '$e');
       }
     });
+    _refreshing = refreshing;
+    await refreshing;
+    if (identical(_refreshing, refreshing)) _refreshing = null;
     if (mounted && _refreshQueued) {
       _refreshQueued = false;
       unawaited(_refresh());
     }
   }
 
-  Future<bool> _editUser([SystemUser? user]) async {
+  /// The catalog once every refresh running or queued has finished, so a
+  /// change is never planned against the list a previous change made stale.
+  Future<UserCatalog?> _settledCatalog() async {
+    for (var r = _refreshing; r != null; r = _refreshing) {
+      await r;
+    }
+    return mounted ? _catalog : null;
+  }
+
+  Future<bool> _editUser([SystemUser? stale]) async {
+    final catalog = await _settledCatalog();
+    if (catalog == null) return false;
+    final user = stale == null
+        ? null
+        : catalog.users.firstWhereOrNull((u) => u.name == stale.name);
+    if (stale != null && user == null) return false;
     final draft = await _showEditor(user);
     if (draft == null || !mounted) return false;
     final script = user == null
@@ -1123,7 +1143,11 @@ extension on _UsersPageState {
     return true;
   }
 
-  Future<bool> _deleteUser(SystemUser user) async {
+  Future<bool> _deleteUser(SystemUser stale) async {
+    final user = (await _settledCatalog())?.users.firstWhereOrNull(
+      (u) => u.name == stale.name,
+    );
+    if (user == null || !mounted) return false;
     var removeHome = false;
     final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
@@ -1165,9 +1189,13 @@ extension on _UsersPageState {
     );
   }
 
-  Future<bool> _editGroup([SystemGroup? group]) async {
-    final catalog = _catalog;
+  Future<bool> _editGroup([SystemGroup? stale]) async {
+    final catalog = await _settledCatalog();
     if (catalog == null) return false;
+    final group = stale == null
+        ? null
+        : catalog.groups.firstWhereOrNull((g) => g.name == stale.name);
+    if (stale != null && group == null) return false;
     final draft = await _showGroupEditor(group);
     if (draft == null || !mounted) return false;
     final script = group == null
@@ -1178,7 +1206,11 @@ extension on _UsersPageState {
     return true;
   }
 
-  Future<bool> _deleteGroup(SystemGroup group) async {
+  Future<bool> _deleteGroup(SystemGroup stale) async {
+    final group = (await _settledCatalog())?.groups.firstWhereOrNull(
+      (g) => g.name == stale.name,
+    );
+    if (group == null || !mounted) return false;
     final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),

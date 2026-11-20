@@ -32,7 +32,8 @@ final class WatchSync {
       _revokeToken = null,
       _now = DateTime.now,
       _revokeRetryDelay = _defaultRevokeRetryDelay,
-      _revokeCredentialTtl = _defaultRevokeCredentialTtl;
+      _revokeCredentialTtl = _defaultRevokeCredentialTtl,
+      _mintWait = _defaultMintWait;
 
   @visibleForTesting
   WatchSync.forTest({
@@ -43,6 +44,7 @@ final class WatchSync {
     DateTime Function()? now,
     Duration revokeRetryDelay = Duration.zero,
     Duration revokeCredentialTtl = _defaultRevokeCredentialTtl,
+    Duration mintWait = _defaultMintWait,
   }) : _enabled = true,
        _readContext = readContext,
        _writeContext = writeContext,
@@ -50,7 +52,8 @@ final class WatchSync {
        _revokeToken = revokeToken,
        _now = now ?? DateTime.now,
        _revokeRetryDelay = revokeRetryDelay,
-       _revokeCredentialTtl = revokeCredentialTtl;
+       _revokeCredentialTtl = revokeCredentialTtl,
+       _mintWait = mintWait;
 
   static final instance = WatchSync._();
 
@@ -62,6 +65,7 @@ final class WatchSync {
   final DateTime Function() _now;
   final Duration _revokeRetryDelay;
   final Duration _revokeCredentialTtl;
+  final Duration _mintWait;
 
   bool get _isEnabled => _enabled ?? isIOS;
 
@@ -78,6 +82,10 @@ final class WatchSync {
   static const _maxRevokeRetries = 2;
   static const _defaultRevokeRetryDelay = Duration(seconds: 3);
   static const _defaultRevokeCredentialTtl = Duration(seconds: 30);
+
+  /// How long a reply to the watch waits for tokens still being minted, so a
+  /// fresh watch does not start from an empty list.
+  static const _defaultMintWait = Duration(seconds: 5);
 
   /// One instance for the whole app: [MethodChannel.setMethodCallHandler] keeps
   /// a single handler, so a second `WatchConnectivity` would silently take the
@@ -200,15 +208,48 @@ final class WatchSync {
   /// Reads only tokens currently active in per-server slots so a slow or
   /// offline monitor never blocks publishing the remaining servers. Any
   /// selected server without a ready token is reconciled in the background and
-  /// triggers a follow-up [push] once minted.
-  Future<Map<String, dynamic>> buildPayload() async {
-    final revision = nextRevision();
+  /// triggers a follow-up [push] once minted. [waitForMints] bounds a wait for
+  /// those mints before the snapshot is taken.
+  Future<Map<String, dynamic>> buildPayload({Duration? waitForMints}) async {
     await _seedFromContextOnce();
 
+    if (waitForMints != null) {
+      final missing = <_ServerTokenSlot>[];
+      _readyTokens(syncedServerIds(), missing: missing);
+      // A revoke ahead of the mint may take its whole retry window.
+      final running = [
+        for (final slot in missing)
+          if (slot.phase == _SlotPhase.minting) ?slot.running,
+      ];
+      if (running.isNotEmpty) {
+        await Future.wait(running).timeout(
+          waitForMints,
+          onTimeout: () => const [],
+        );
+      }
+    }
+
+    final revision = nextRevision();
     final selectedIds = syncedServerIds();
+    return payloadFrom(
+      selectedIds: selectedIds,
+      lookup: Stores.server.fetchOneRaw,
+      // The wait above already reconciled; again would retry a mint still
+      // running as soon as it fails.
+      tokens: _readyTokens(selectedIds, reconcile: waitForMints == null),
+      stamp: revision,
+    );
+  }
+
+  /// The active token of each of [selectedIds]; every other one is added to
+  /// [missing] and, with [reconcile], reconciled in the background.
+  Map<String, ScopedToken> _readyTokens(
+    List<String> selectedIds, {
+    List<_ServerTokenSlot>? missing,
+    bool reconcile = true,
+  }) {
     final now = _now();
     final tokens = <String, ScopedToken>{};
-
     for (final id in selectedIds) {
       if (_slots[id]?.deleting ?? false) continue;
       final spi = Stores.server.fetchOneRaw(id);
@@ -223,17 +264,11 @@ final class WatchSync {
           case final tok?) {
         tokens[id] = tok;
       } else {
-        // Reconcile in the background without blocking this payload.
-        _reconcileSlot(slot);
+        if (reconcile) _reconcileSlot(slot);
+        missing?.add(slot);
       }
     }
-
-    return payloadFrom(
-      selectedIds: selectedIds,
-      lookup: Stores.server.fetchOneRaw,
-      tokens: tokens,
-      stamp: revision,
-    );
+    return tokens;
   }
 
   /// Seeds untouched slots once from the last delivered watch context so valid
@@ -319,9 +354,15 @@ final class WatchSync {
     }
     slot.running = _runSlot(slot).whenComplete(() {
       slot.running = null;
-      if (!_disposed && slot.dirty && slot.retryTimer == null) {
+      if (_disposed || slot.retryTimer != null) return;
+      if (slot.dirty) {
         slot.dirty = false;
         _reconcileSlot(slot);
+      } else if (slot.isSettled &&
+          identical(_slots[slot.id], slot) &&
+          Stores.server.fetchOneRaw(slot.id) == null) {
+        // Deleted or renamed away, with nothing left to revoke.
+        _slots.remove(slot.id);
       }
     });
   }
@@ -438,7 +479,9 @@ final class WatchSync {
   /// timer was scheduled and the loop should yield until it fires.
   Future<bool> _stepRevoke(_ServerTokenSlot slot) async {
     final request = slot.pendingRevokes.first;
-    if (!_now().isBefore(request.deadline)) {
+    // A request queued behind slow work is still sent once: only a retry
+    // expires.
+    if (request.attempts > 0 && !_now().isBefore(request.deadline)) {
       slot.pendingRevokes.removeAt(0);
       return false;
     }
@@ -694,10 +737,14 @@ final class WatchSync {
   bool hasPendingRevokeFor(String serverId) =>
       _slots[serverId]?.hasPendingRevoke ?? false;
 
+  /// Whether [serverId] still has a token slot.
+  @visibleForTesting
+  bool hasSlotFor(String serverId) => _slots.containsKey(serverId);
+
   Future<Map<String, dynamic>> _onWatchAsked(Map<String, dynamic> msg) async {
     if (msg['action'] != 'requestData') return const {};
 
-    final payload = await buildPayload();
+    final payload = await buildPayload(waitForMints: _mintWait);
     if (_writeContext case final writeContext?) {
       unawaited(writeContext(payload));
     } else if (_wc case final wc?) {
@@ -811,6 +858,10 @@ final class _ServerTokenSlot {
   var dirty = false;
 
   bool get hasPendingRevoke => pendingRevokes.isNotEmpty;
+
+  /// Holds nothing that outlives the server record.
+  bool get isSettled =>
+      !hasPendingRevoke && !deleting && activeToken == null && running == null;
 
   ScopedToken? usableToken({
     required Object key,

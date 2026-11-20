@@ -61,6 +61,7 @@ String? portForwardUnavailable(ServerState server, {required bool listen}) {
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _ForwardEntry> _forwards = {};
   final Map<String, CancelScope> _scopes = {};
+  final Map<String, ({CancelScope scope, Future<void> future})> _starts = {};
   final Set<Future<void>> _localTeardowns = {};
   final Map<String, Future<void>> _remoteReclaims = {};
   final Map<String, Object> _stops = {};
@@ -110,7 +111,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   void _trackRemoteReclaim(String id, CancelScope scope) {
     final pending = _remoteReclaims[id];
-    final remoteDone = scope.remoteDone.catchError((_) {});
+    // Bounded each: a reply that never comes (a half-open SSH session) must
+    // not hold every later restart of this forward.
+    final remoteDone = scope.remoteDone
+        .catchError((_) {})
+        .timeout(_remoteReclaimWait, onTimeout: () {});
     late final Future<void> reclaim;
     reclaim = Future.wait<void>([?pending, remoteDone]).then<void>((_) {
       if (identical(_remoteReclaims[id], reclaim)) _remoteReclaims.remove(id);
@@ -153,6 +158,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     _scopes.clear();
     _forwards.clear();
     _remoteReclaims.clear();
+    _starts.clear();
     _stops.clear();
     for (final scope in scopes) {
       unawaited(scope.cancel(waitRemote: false));
@@ -234,13 +240,23 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<void> startForward(String id) {
     if (_disposed || _clearing) return Future.value();
+    // A second tap while starting joins that start instead of restarting it.
+    if (_starts[id] case final start?
+        when _isCurrent(id, start.scope)) {
+      return start.future;
+    }
     _stops.remove(id);
     // Register a fresh scope synchronously before the first await so `stop` or
     // `clear` can immediately cancel this start and supersede any prior scope.
     final prior = _scopes[id];
     final scope = CancelScope();
     _scopes[id] = scope;
-    return _startForward(id, scope, prior: prior);
+    late final Future<void> future;
+    future = _startForward(id, scope, prior: prior).whenComplete(() {
+      if (identical(_starts[id]?.future, future)) _starts.remove(id);
+    });
+    _starts[id] = (scope: scope, future: future);
+    return future;
   }
 
   Future<void> _startForward(

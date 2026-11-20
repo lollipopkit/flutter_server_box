@@ -493,14 +493,13 @@ class ServersNotifier extends _$ServersNotifier {
       } else {
         Stores.server.update(old, newSpi);
       }
-      // The watch slot serializes revocation with minting. Both surfaces
-      // revoke in the background using the old credential snapshot.
-      unawaited(
-        revokeScopedTokensLeftBehind(
-          old,
-          newSpi,
-          queueWatchRevoke: WatchSync.instance.revokeEditedServer,
-        ),
+      // Both surfaces revoke in the background with the old credential
+      // snapshot, ahead of their next mint for this server.
+      revokeScopedTokensLeftBehind(
+        old,
+        newSpi,
+        queueWatchRevoke: WatchSync.instance.revokeEditedServer,
+        queueWidgetRevoke: WidgetSync.instance.revokeEditedServer,
       );
 
       final newServers = Map<String, Spi>.from(state.servers);

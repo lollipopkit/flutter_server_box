@@ -105,6 +105,67 @@ void main() {
     finishSecond();
   });
 
+  test('an edit\'s revoke at the old address lands before the new mint',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    const moved = 'https://mon.example.com:3770';
+    final old = monitorSpi(id: 'a', name: 'A');
+    Stores.server.put(monitorSpi(id: 'a', name: 'A', addr: moved));
+
+    final revoke = Completer<void>();
+    final issued = Completer<void>();
+    final events = <String>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (_, endpoint) async {
+        events.add('issue $endpoint');
+        issued.complete();
+        return ScopedToken(token: 't', endpoint: endpoint, expiresAt: 1800000000);
+      },
+      revokeToken: (_, monitor) async {
+        events.add('revoke ${monitor.addr}');
+        await revoke.future;
+        events.add('revoked');
+      },
+      writePayload: (_) async {},
+    );
+    addTearDown(sync.dispose);
+
+    sync.revokeEditedServer(old);
+    // Another server's publish does not wait on this revoke.
+    await sync.push().timeout(const Duration(seconds: 2));
+    expect(events, ['revoke $addr']);
+
+    revoke.complete();
+    await issued.future.timeout(const Duration(seconds: 2));
+    expect(events, ['revoke $addr', 'revoked', 'issue $moved']);
+  });
+
+  test('a rename hands back the tokens scoped to the old id', () {
+    final queued = <String>[];
+    final old = monitorSpi(id: 's1', name: 'S');
+    revokeScopedTokensLeftBehind(
+      old,
+      monitorSpi(id: 's2', name: 'S'),
+      queueWatchRevoke: (spi) => queued.add('watch ${spi.id}'),
+      queueWidgetRevoke: (spi) => queued.add('widget ${spi.id}'),
+    );
+    expect(queued, ['watch s1', 'widget s1']);
+
+    queued.clear();
+    revokeScopedTokensLeftBehind(
+      old,
+      monitorSpi(id: 's1', name: 'Renamed'),
+      queueWatchRevoke: (spi) => queued.add('watch ${spi.id}'),
+      queueWidgetRevoke: (spi) => queued.add('widget ${spi.id}'),
+    );
+    expect(queued, isEmpty);
+  });
+
   group('what a widget is told about a server', () {
     test('is everything it needs and no login', () {
       final result = payload(
@@ -293,18 +354,6 @@ void main() {
         WidgetSync.widgetClientId('abc'),
         isNot(WatchSync.watchClientId('abc')),
       );
-    });
-
-    test('and both are in the list revocation walks', () {
-      // `revokeScopedTokensLeftBehind` hands an agent back every credential
-      // this app minted there, and it is the only chance to do so — after the
-      // edit the login that would authenticate the call is gone. A client id
-      // missing from that list is a token nobody can ever revoke.
-      final ids = scopedClientIdsFor('abc');
-
-      expect(ids, contains(WidgetSync.widgetClientId('abc')));
-      expect(ids, contains(WatchSync.watchClientId('abc')));
-      expect(ids, hasLength(2));
     });
   });
 }

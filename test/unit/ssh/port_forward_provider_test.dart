@@ -88,6 +88,37 @@ void main() {
     expect(provider.state.activeForwards[config.id]?.error, isNotNull);
   });
 
+  test('a second start while starting joins it', () async {
+    final client = _PendingRemoteSshClient();
+    final (config, provider) = await sshRemoteProvider(client);
+    const timeout = Duration(seconds: 1);
+    final first = provider.startForward(config.id);
+    await client.setupStarted.future.timeout(timeout);
+    final second = provider.startForward(config.id);
+    expect(identical(first, second), isTrue);
+
+    client.setup.complete(_FakeRemoteForward(client));
+    await second.timeout(timeout);
+    expect(client.requests, 1);
+    expect(provider.state.activeForwards[config.id]?.isActive, isTrue);
+  });
+
+  test('a cancel reply that never comes holds a restart for one window only',
+      () async {
+    final client = _PendingRemoteSshClient();
+    final (config, provider) = await sshRemoteProvider(client);
+    const timeout = Duration(seconds: 1);
+    final start = provider.startForward(config.id);
+    client.setup.complete(_FakeRemoteForward(client));
+    await start.timeout(timeout);
+    await provider.stopForward(config.id).timeout(timeout);
+    await client.cancelStarted.future.timeout(timeout);
+
+    await Future<void>.delayed(const Duration(milliseconds: 2100));
+    await provider.startForward(config.id).timeout(timeout);
+    expect(client.requests, 2);
+  });
+
   test('a slow stop preserves the error of a newer failed start', () async {
     final client = _PendingRemoteSshClient();
     final (config, provider) = await sshRemoteProvider(client);

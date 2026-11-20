@@ -66,6 +66,10 @@ final class WidgetSync {
   final Future<void> Function(Spi, MonitorHttpCredential)? _revokeToken;
   final Future<void> Function(String)? _writePayload;
   final _deletions = <String, Future<void>>{};
+  final _edits = <String, Future<void>>{};
+
+  /// The endpoint an edit's revoke covered, so the backstop leaves it alone.
+  final _editedFrom = <String, String>{};
   final _deletedDuringPush = <String>{};
   final _invalidatedTokens = <String>{};
 
@@ -108,6 +112,10 @@ final class WidgetSync {
       if (!_canPublish(spi) || tokens.containsKey(spi.id)) continue;
       final monitor = spi.monitorOn;
       if (monitor == null) continue;
+      // An edit's revoke at the old address may reach the same agent, and
+      // would revoke a replacement minted before it lands. It pushes again
+      // once it has.
+      if (_edits.containsKey(spi.id)) continue;
       final endpoint = normalizeAgentEndpoint(monitor.addr);
       // A backstop, not the real revocation: `revokeScopedTokensLeftBehind`
       // runs at the edit, while the old *login* is still known, and this only
@@ -116,7 +124,9 @@ final class WidgetSync {
       // sync, where nothing local ever held the old credential. Failing is
       // expected and must not stop the replacement being issued.
       final previous = held[spi.id];
-      if (previous != null && previous.endpoint != endpoint) {
+      if (previous != null &&
+          previous.endpoint != endpoint &&
+          previous.endpoint != _editedFrom[spi.id]) {
         await _revokeServer(
           spi,
           MonitorHttpCredential(
@@ -140,9 +150,11 @@ final class WidgetSync {
         // temporary failure.
         Loggers.app.warning('Issue widget token for ${spi.id}', e, s);
       } finally {
-        if (!_canPublish(spi)) {
-          // The POST may reach the agent after deletion's DELETE, even when
-          // its response is lost. Revoke before a later push can mint again.
+        // The POST may reach the agent after deletion's or an edit's DELETE,
+        // even when its response is lost. Revoke with the credential it was
+        // minted with, before a later push can mint again.
+        if (!_canPublish(spi) || _movedSince(spi, endpoint)) {
+          tokens.remove(spi.id);
           await _revokeServer(spi, monitor);
         }
       }
@@ -154,13 +166,21 @@ final class WidgetSync {
         jsonEncode(payloadFrom(servers: published, tokens: tokens)),
       );
       final publishedIds = published.map((spi) => spi.id).toSet();
-      _invalidatedTokens.removeWhere(
-        (id) => !_deletedDuringPush.contains(id) &&
-            (!publishedIds.contains(id) || tokens[id]?.opaque == false),
-      );
+      bool settled(String id) =>
+          !_deletedDuringPush.contains(id) &&
+          !_edits.containsKey(id) &&
+          (!publishedIds.contains(id) || tokens[id]?.opaque == false);
+      _invalidatedTokens.removeWhere(settled);
+      _editedFrom.removeWhere((id, _) => settled(id));
     } catch (e, s) {
       Loggers.app.warning('Publish widget servers', e, s);
     }
+  }
+
+  bool _movedSince(Spi spi, String endpoint) {
+    if (_edits.containsKey(spi.id)) return true;
+    final latest = Stores.server.fetchOneRaw(spi.id)?.monitorOn;
+    return latest == null || normalizeAgentEndpoint(latest.addr) != endpoint;
   }
 
   Future<ScopedToken> _issueAt(
@@ -281,6 +301,27 @@ final class WidgetSync {
   void _schedulePush() {
     _pushDebouncer?.cancel();
     _pushDebouncer = Timer(_pushDebounce, () => unawaited(push()));
+  }
+
+  /// Revokes the token [old] holds at the address an edit moved away from,
+  /// ahead of the next mint for the server.
+  void revokeEditedServer(Spi old) {
+    if (!_supported) return;
+    final monitor = old.monitor;
+    if (monitor == null) return;
+    final id = old.id;
+    _invalidatedTokens.add(id);
+    _editedFrom[id] = normalizeAgentEndpoint(monitor.addr);
+    late final Future<void> revoke;
+    revoke = Future.wait<void>([
+      ?_edits[id],
+      _revokeServer(old, monitor),
+    ]).then<void>((_) {
+      if (!identical(_edits[id], revoke)) return;
+      _edits.remove(id);
+      if (Stores.server.fetchOneRaw(id)?.monitorOn != null) unawaited(push());
+    });
+    _edits[id] = revoke;
   }
 
   /// Guards current and future pushes and starts revocation in the background.

@@ -85,7 +85,7 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
-  # The shell on this device: pty, proot on Android, fl_userland (iul) on iOS. Shared
+  # The shell on this device: pty, proot on Android, iul on iOS. Shared
   # with LLMBox; its native code is built by its own hook.
   fl_tty:
     path: packages/fl_tty

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 
@@ -40,6 +41,7 @@ class MonitorRemoteListener {
   late final int port;
 
   /// Whether this side has closed the listener locally.
+  @visibleForTesting
   bool get isClosed => _closed;
 
   /// Completes when the listener has stopped, including peer closure or timeout.

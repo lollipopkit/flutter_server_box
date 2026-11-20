@@ -1,6 +1,4 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
@@ -132,14 +130,6 @@ Map<String, ScopedToken> reusableScopedTokens({
   return reusable;
 }
 
-/// Every `client_id` this app mints a scoped token under.
-///
-/// The watch and widget have independently revocable client IDs.
-List<String> scopedClientIdsFor(String serverId) => [
-  'watch:$serverId',
-  'widget:$serverId',
-];
-
 /// Hands back the credentials an agent the server is *moving away from* still
 /// holds.
 ///
@@ -150,38 +140,33 @@ List<String> scopedClientIdsFor(String serverId) => [
 /// only ever stop *handing out* a credential; the agent-side row stays valid
 /// for up to ninety days.
 ///
-/// Two ways a server moves away from its agent, and both leave a live token
+/// Three ways a server moves away from its token, and each leaves a live one
 /// behind:
 ///
 /// - its monitor configuration is removed outright;
-/// - its address changes, so the new token is minted somewhere else.
+/// - its address changes, so the new token is minted somewhere else;
+/// - it is renamed, so the new token is scoped to another `client_id`.
 ///
-/// The watch queues its revoke alongside any in-flight mint. The widget
-/// attempts its revoke with the old credentials. Neither delays saving the
-/// edit if the agent is offline.
-Future<void> revokeScopedTokensLeftBehind(
+/// Each surface queues the revoke ahead of its next mint for the server, so
+/// an old address reaching the same agent cannot revoke the replacement.
+/// Neither delays saving the edit if the agent is offline.
+void revokeScopedTokensLeftBehind(
   Spi old,
   Spi next, {
   required void Function(Spi) queueWatchRevoke,
-}) async {
+  required void Function(Spi) queueWidgetRevoke,
+}) {
   final previous = old.monitor;
   if (previous == null) return;
 
   final current = next.monitor;
   final movedOn =
+      old.id != next.id ||
       current == null ||
       normalizeAgentEndpoint(current.addr) !=
           normalizeAgentEndpoint(previous.addr);
   if (!movedOn) return;
 
   queueWatchRevoke(old);
-  final clientId = 'widget:${old.id}';
-  final client = MonitorHttpClient(previous);
-  try {
-    await client.revokeWatchToken(clientId);
-  } catch (e, s) {
-    Loggers.app.warning('Revoke $clientId at ${previous.addr}', e, s);
-  } finally {
-    client.dispose();
-  }
+  queueWidgetRevoke(old);
 }

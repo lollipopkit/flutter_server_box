@@ -12,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 /// Figures measured on a Mac are not the numbers a phone gives, and a phone is
 /// where this ships — so the suite runs here, in the app, on the device.
 ///
-/// The script and the prebuilt binary are fl_userland's own and are passed in
+/// The script and the prebuilt binary are iul's own and are passed in
 /// rather than vendored, so there is one copy of each:
 ///
 ///     scripts/ios-bench-defines.sh > /tmp/bench.json
@@ -45,7 +45,7 @@ void main() {
   // The manifest too: what each system is and where to get it.
   setUpAll(Rootfs.prepare);
 
-  testWidgets('the guest runs fl_userland\'s benchmark', (_) async {
+  testWidgets('the guest runs iul\'s benchmark', (_) async {
     if (!IulExec.isSupported) {
       markTestSkipped('this build carries no engine (fl_tty `iul: false`)');
       return;
@@ -89,8 +89,8 @@ void main() {
     );
     debugPrint('IULCLOCK ${clock.stdout.trim().replaceAll("\n", " ")}');
 
-    // Written to the guest and run from there, the way fl_userland's host runner
-    // does it, so what is measured is the script as fl_userland ships it. `run`
+    // Written to the guest and run from there, the way iul's host runner
+    // does it, so what is measured is the script as iul ships it. `run`
     // would take it directly now — it writes anything past 4 KB to a file
     // itself, since the session's command line is one 4096-byte block — but a
     // benchmark should not also be measuring that.
