@@ -113,29 +113,44 @@ void main() {
     }
   });
 
-  test('clear closes a forward that finishes starting during deletion', () async {
+  Future<void> checkLocalClear(PortForwardType type, {required bool stopFirst}) async {
     await openTestDb();
     final store = PortForwardStore();
     getIt.registerSingleton<PortForwardStore>(store);
+    final allowBind = Completer<void>();
+    final allowClose = Completer<void>();
+    final bindStarted = Completer<void>();
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
     const serverId = 'server-id';
     SqliteDb.instance.execute(
       "INSERT INTO server (id, name, ssh_ip) VALUES ('$serverId', 'server', '127.0.0.1');",
     );
-    final port = await _freeLoopbackPort();
+    final serverSocket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = serverSocket.port;
+    final listener = _GatedLocalListener(serverSocket, allowClose.future);
+    addTearDown(() async {
+      if (!allowBind.isCompleted) allowBind.complete();
+      if (!allowClose.isCompleted) allowClose.complete();
+      await serverSocket.close();
+    });
     final config = PortForwardConfig(
       id: 'forward-id',
       serverId: serverId,
       name: 'test',
-      type: PortForwardType.local,
+      type: type,
       localHost: InternetAddress.loopbackIPv4.address,
       localPort: port,
-      remoteHost: '127.0.0.1',
-      remotePort: 22,
+      remoteHost: type == PortForwardType.local ? '127.0.0.1' : null,
+      remotePort: type == PortForwardType.local ? 22 : null,
     );
     store.put(config);
 
     final socket = IdleSshSocket();
     final client = SSHClient(socket, username: 'test');
+    addTearDown(client.close);
     final serverState = ServerState(
       spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1'),
       status: InitStatus.status,
@@ -148,32 +163,54 @@ void main() {
         ).overrideWith(() => _FixedServerNotifier(serverState)),
       ],
     );
-    try {
-      final notifier = container.read(portForwardProvider(serverId).notifier);
-
-      final start = notifier.startForward(config.id);
-      await _waitUntilPortIsBound(port);
-      final clear = notifier.clear();
-      await Future.wait([start, clear]).timeout(const Duration(seconds: 5));
-
-      expect(notifier.state.configs, isEmpty);
-      expect(notifier.state.activeForwards, isEmpty);
-      expect(store.fetchForServer(serverId), isEmpty);
-
-      // A startup that overlaps cleanup cannot leave its listener behind.
-      final rebound = await ServerSocket.bind(
-        InternetAddress.loopbackIPv4,
-        port,
-      );
-      await rebound.close();
-    } finally {
-      container.dispose();
-      client.close();
-      socket.destroy();
-      await getIt.reset();
-      await closeTestDb();
+    addTearDown(container.dispose);
+    final notifier = container.read(portForwardProvider(serverId).notifier);
+    final start = IOOverrides.runZoned(
+      () => notifier.startForward(config.id),
+      serverSocketBind: (_, _, {int backlog = 0, bool v6Only = false, bool shared = false}) async {
+        bindStarted.complete();
+        await allowBind.future;
+        return listener;
+      },
+    );
+    const timeout = Duration(seconds: 3);
+    await bindStarted.future.timeout(timeout);
+    Future<void>? stop;
+    if (stopFirst) {
+      allowBind.complete();
+      await start.timeout(timeout);
+      expect(notifier.state.activeForwards[config.id]?.isActive, isTrue);
+      stop = notifier.stopForward(config.id);
+      await listener.closeStarted.future.timeout(timeout);
     }
-  });
+
+    var cleared = false;
+    final clear = notifier.clear().then((_) => cleared = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(cleared, isFalse);
+
+    if (!stopFirst) {
+      allowBind.complete();
+      await listener.closeStarted.future.timeout(timeout);
+      expect(cleared, isFalse);
+    }
+    allowClose.complete();
+    await clear.timeout(timeout);
+
+    final rebound = await ServerSocket.bind(InternetAddress.loopbackIPv4, port);
+    addTearDown(rebound.close);
+    await Future.wait([start, ?stop]).timeout(timeout);
+    expect(notifier.state.configs, isEmpty);
+    expect(notifier.state.activeForwards, isEmpty);
+    expect(store.fetchForServer(serverId), isEmpty);
+  }
+
+  for (final type in [PortForwardType.local, PortForwardType.dynamic]) {
+    test('clear waits for a pending ${type.name} bind and listener close',
+        () => checkLocalClear(type, stopFirst: false));
+    test('clear waits for a ${type.name} listener already closing in stop',
+        () => checkLocalClear(type, stopFirst: true));
+  }
 
   for (final peerEnds in [false, true]) {
     test(
@@ -310,6 +347,12 @@ void main() {
           final lease = MonitorClientLease(spi.monitor!);
           final originalClient = lease.client;
           lease.release();
+          final stillHeld = MonitorClientLease(spi.monitor!);
+          try {
+            expect(stillHeld.client, same(originalClient));
+          } finally {
+            stillHeld.release();
+          }
           final ended = Completer<void>();
           final sub = container.listen(portForwardProvider(serverId), (_, next) {
             if (next.activeForwards[config.id]?.isActive == false &&
@@ -410,8 +453,18 @@ void main() {
   test(
     'MonitorRemoteListener close(waitRemote: false) does not stall on an active bridge whose channel close hangs',
     () async {
-      final incoming = StreamController<dynamic>.broadcast();
       final remoteControlClose = Completer<void>();
+      final channelCloseStall = Completer<void>();
+      void releaseCloseGates() {
+        if (!channelCloseStall.isCompleted) channelCloseStall.complete();
+        if (!remoteControlClose.isCompleted) remoteControlClose.complete();
+      }
+
+      final incoming = StreamController<dynamic>.broadcast();
+      addTearDown(() async {
+        releaseCloseGates();
+        await incoming.close();
+      });
       final controlSocket = _FakeControlWebSocket(
         incoming,
         remoteControlClose.future,
@@ -421,25 +474,38 @@ void main() {
         InternetAddress.loopbackIPv4,
         0,
       );
+      addTearDown(() async {
+        releaseCloseGates();
+        await localServer.close();
+      });
       final peerClosed = Completer<void>();
-      final peerAccepted = Completer<void>();
-      unawaited(
-        localServer.first.then((peer) {
-          if (!peerAccepted.isCompleted) peerAccepted.complete();
-          peer.listen(
-            (_) {},
-            onDone: () {
-              if (!peerClosed.isCompleted) peerClosed.complete();
-            },
-            onError: (_) {
-              if (!peerClosed.isCompleted) peerClosed.complete();
-            },
-          );
-        }),
-      );
+      final peerAccepted = Completer<Socket>();
+      final accepting = localServer.listen((peer) {
+        addTearDown(() {
+          releaseCloseGates();
+          peer.destroy();
+        });
+        peerAccepted.complete(peer);
+        peer.listen(
+          (_) {},
+          onDone: () {
+            if (!peerClosed.isCompleted) peerClosed.complete();
+          },
+          onError: (_) {
+            if (!peerClosed.isCompleted) peerClosed.complete();
+          },
+        );
+      });
+      addTearDown(() {
+        releaseCloseGates();
+        return accepting.cancel();
+      });
 
-      final channelCloseStall = Completer<void>();
       final channel = _FakeTunnelChannel(channelCloseStall.future);
+      addTearDown(() async {
+        releaseCloseGates();
+        await channel.dispose();
+      });
       final localConnected = Completer<void>();
 
       final startFuture = MonitorRemoteListener.start(
@@ -452,9 +518,17 @@ void main() {
             InternetAddress.loopbackIPv4,
             localServer.port,
           );
+          addTearDown(() {
+            releaseCloseGates();
+            s.destroy();
+          });
           if (!localConnected.isCompleted) localConnected.complete();
           return s;
         },
+        onCreated: (created) => addTearDown(() async {
+          releaseCloseGates();
+          await created.close(waitRemote: false);
+        }),
       );
 
       incoming.add(jsonEncode({'type': 'ready', 'port': 9090}));
@@ -476,13 +550,8 @@ void main() {
       expect(controlSocket.closeCalled, isTrue);
       expect(channel.closeCalled, isTrue);
       await peerClosed.future.timeout(const Duration(seconds: 2));
-
-      channelCloseStall.complete();
-      remoteControlClose.complete();
-      await incoming.close();
-      await listener.done.timeout(const Duration(seconds: 1));
-      await channel.dispose();
-      await localServer.close();
+      expect(channelCloseStall.isCompleted, isFalse);
+      expect(remoteControlClose.isCompleted, isFalse);
     },
   );
 
@@ -641,31 +710,38 @@ void _reasons() {
   });
 }
 
-/// Waits for the forward to listen on [port], which is what says it reached
-/// its bind stage.
-///
-/// Asked by connecting, never by binding the port here: a probe that bound it
-/// held it for an instant every 10 ms, and a forward binding in that instant
-/// failed with the address in use — so on a loaded CI runner it never bound
-/// at all, and this reported "did not reach its local bind stage" after the
-/// whole deadline. The connection it makes is closed at once; the forward's
-/// dial for it is left to `clear`, which is what the test is about.
-Future<void> _waitUntilPortIsBound(int port) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 10));
-  while (DateTime.now().isBefore(deadline)) {
-    try {
-      final socket = await Socket.connect(
-        InternetAddress.loopbackIPv4,
-        port,
-        timeout: const Duration(seconds: 1),
-      );
-      socket.destroy();
-      return;
-    } on SocketException {
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
+class _GatedLocalListener extends Stream<Socket> implements ServerSocket {
+  _GatedLocalListener(this._socket, this._allowClose);
+
+  final ServerSocket _socket;
+  final Future<void> _allowClose;
+  final closeStarted = Completer<void>();
+
+  @override
+  InternetAddress get address => _socket.address;
+
+  @override
+  int get port => _socket.port;
+
+  @override
+  Future<ServerSocket> close() async {
+    closeStarted.complete();
+    await _allowClose;
+    return _socket.close();
   }
-  fail('Port forward did not reach its local bind stage');
+
+  @override
+  StreamSubscription<Socket> listen(
+    void Function(Socket)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) => _socket.listen(
+    onData,
+    onError: onError,
+    onDone: onDone,
+    cancelOnError: cancelOnError,
+  );
 }
 
 Future<int> _freeLoopbackPort() async {

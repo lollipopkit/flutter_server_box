@@ -61,6 +61,7 @@ String? portForwardUnavailable(ServerState server, {required bool listen}) {
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _ForwardEntry> _forwards = {};
   final Map<String, CancelScope> _scopes = {};
+  final Set<Future<void>> _localTeardowns = {};
   final Map<String, Future<void>> _remoteReclaims = {};
   final Map<String, Object> _stops = {};
   Future<void>? _clearFuture;
@@ -90,13 +91,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
           active.remove(key);
           final scope = _scopes.remove(key);
           if (scope != null) {
-            // Start cancel first so `scope.remoteDone` is initialized before
-            // `_trackRemoteReclaim` captures it.
-            final cancel = scope.cancel(waitRemote: false);
-            _trackRemoteReclaim(key, scope);
-            unawaited(cancel);
+            unawaited(_cancelScope(key, scope));
           } else {
-            unawaited(value.close(waitRemote: false).catchError((_) {}));
+            unawaited(_trackLocalTeardown(value.close(waitRemote: false)));
           }
         }
         state = state.copyWith(activeForwards: active);
@@ -121,14 +118,23 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     _remoteReclaims[id] = reclaim;
   }
 
-  Future<void> _cancelScope(String id, CancelScope scope) async {
+  Future<void> _trackLocalTeardown(Future<void> close) {
+    late final Future<void> tracked;
+    tracked = close.catchError((_) {}).whenComplete(() {
+      _localTeardowns.remove(tracked);
+    });
+    _localTeardowns.add(tracked);
+    return tracked;
+  }
+
+  Future<void> _cancelScope(String id, CancelScope scope) {
     _forwards.remove(id);
     // Invoke `cancel` first (synchronously initializes `remoteDone`), register
     // the reclaim immediately so an overlapping `startForward` sees it, then
     // await local teardown.
     final cancel = scope.cancel(waitRemote: false);
     _trackRemoteReclaim(id, scope);
-    await cancel;
+    return _trackLocalTeardown(cancel);
   }
 
   /// Connects the shell if it isn't already, then returns the client.
@@ -181,6 +187,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       // close immediately while remote close handshakes finish in the
       // background.
       await Future.wait([
+        ..._localTeardowns,
         for (final MapEntry(:key, :value) in entries) _cancelScope(key, value),
       ]);
       if (!ref.mounted) return;
@@ -284,11 +291,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         return;
       }
       _forwards[config.id] = entry;
-      // Bind entry teardown to this scope so `stopForward` / `clear` /
-      // `dispose` only need to cancel the scope.
-      scope.onLocalDispose(() => entry.close(waitRemote: false));
-      if (config.type != PortForwardType.remote) {
-        scope.onRemoteDispose(() => entry.close(waitRemote: true));
+      if (config.type == PortForwardType.remote) {
+        scope.onLocalDispose(() => entry.close(waitRemote: false));
       }
       // A forward can end from the far side — the agent stopping its listener,
       // its grant taken away — and is no longer active once it has.
@@ -367,30 +371,26 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     // Each connection is dialled as it arrives, as a remote desktop's is —
     // see [ServerTcpDialer].
     final dialer = _dialer(server);
-    final SshLocalTunnel tunnel;
-    try {
-      tunnel = await SshLocalTunnel.bindWithDialer(
+    final entry = await _bindTunnel(
+      scope: scope,
+      dialer: dialer,
+      viaSsh: !_viaAgent(server),
+      bind: () => SshLocalTunnel.bindWithDialer(
         bindHost: config.localHost ?? 'localhost',
         bindPort: config.localPort,
         // Nothing to end with: the dialer reconnects per connection, and a
         // dropped SSH session stops the forwards it carried (see [build]).
         sshDone: Completer<void>().future,
         dialer: () => dialer.open(config.remoteHost!, config.remotePort!),
-      );
-    } catch (_) {
-      dialer.close();
-      rethrow;
-    }
-    if (scope.isCanceled) {
-      await tunnel.close(waitRemote: false).catchError((_) {});
-      dialer.close();
-      return null;
-    }
+      ),
+    );
+    if (entry == null || scope.isCanceled) return null;
+    final tunnel = entry.tunnel;
     Loggers.app.info(
       'Local port forward started: ${tunnel.address.address}:${tunnel.port} '
       '-> ${config.remoteHost}:${config.remotePort}',
     );
-    return _TunnelForwardEntry(tunnel, dialer, viaSsh: !_viaAgent(server));
+    return entry;
   }
 
   Future<_ForwardEntry?> _startRemoteForward(
@@ -509,28 +509,52 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     await _ensureCarried(server, listen: false);
     if (scope.isCanceled) return null;
     final dialer = _dialer(server);
-    final SshLocalTunnel tunnel;
-    try {
-      tunnel = await SshLocalTunnel.bindSocks(
+    final entry = await _bindTunnel(
+      scope: scope,
+      dialer: dialer,
+      viaSsh: !_viaAgent(server),
+      bind: () => SshLocalTunnel.bindSocks(
         bindHost: config.localHost ?? 'localhost',
         bindPort: config.localPort,
         sshDone: Completer<void>().future,
         dial: dialer.open,
-      );
-    } catch (_) {
-      dialer.close();
-      rethrow;
-    }
-    if (scope.isCanceled) {
-      await tunnel.close(waitRemote: false).catchError((_) {});
-      dialer.close();
-      return null;
-    }
+      ),
+    );
+    if (entry == null || scope.isCanceled) return null;
+    final tunnel = entry.tunnel;
     Loggers.app.info(
       'Dynamic port forward (SOCKS5) started: '
       '${tunnel.address.address}:${tunnel.port}',
     );
-    return _TunnelForwardEntry(tunnel, dialer, viaSsh: !_viaAgent(server));
+    return entry;
+  }
+
+  Future<_TunnelForwardEntry?> _bindTunnel({
+    required CancelScope scope,
+    required ServerTcpDialer dialer,
+    required bool viaSsh,
+    required Future<SshLocalTunnel> Function() bind,
+  }) async {
+    // Register only the bind and its handoff, after SSH setup has finished.
+    // If canceled during bind, its listener must close before this settles.
+    final bound = Completer<void>();
+    scope.onLocalDispose(() => bound.future);
+    try {
+      final tunnel = await bind();
+      final entry = _TunnelForwardEntry(tunnel, dialer, viaSsh: viaSsh);
+      if (scope.isCanceled) {
+        await entry.close(waitRemote: false).catchError((_) {});
+        return null;
+      }
+      scope.onLocalDispose(() => entry.close(waitRemote: false));
+      scope.onRemoteDispose(() => entry.close(waitRemote: true));
+      return entry;
+    } catch (_) {
+      dialer.close();
+      rethrow;
+    } finally {
+      bound.complete();
+    }
   }
 
   Future<void> stopForward(String id) async {
@@ -543,7 +567,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     } else {
       final entry = _forwards.remove(id);
       if (entry != null) {
-        await entry.close(waitRemote: false).catchError((_) {});
+        await _trackLocalTeardown(entry.close(waitRemote: false));
         Loggers.app.info('Port forward stopped: $id');
       }
     }
