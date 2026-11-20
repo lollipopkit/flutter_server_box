@@ -111,8 +111,10 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       !_disposed && !_clearing && !scope.isCanceled && identical(_scopes[id], scope);
 
   void _trackRemoteReclaim(String id, CancelScope scope) {
+    final pending = _remoteReclaims[id];
+    final remoteDone = scope.remoteDone.catchError((_) {});
     late final Future<void> reclaim;
-    reclaim = scope.remoteDone.catchError((_) {}).whenComplete(() {
+    reclaim = Future.wait<void>([?pending, remoteDone]).then<void>((_) {
       if (identical(_remoteReclaims[id], reclaim)) _remoteReclaims.remove(id);
     });
     _remoteReclaims[id] = reclaim;

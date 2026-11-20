@@ -210,8 +210,9 @@ final class WatchSync {
     final tokens = <String, ScopedToken>{};
 
     for (final id in selectedIds) {
+      if (_slots[id]?.deleting ?? false) continue;
       final spi = Stores.server.fetchOneRaw(id);
-      final monitor = spi?.monitor;
+      final monitor = spi?.monitorOn;
       if (spi == null || monitor == null) continue;
 
       final slot = _slot(id);
@@ -278,22 +279,39 @@ final class WatchSync {
       _slots.putIfAbsent(id, () => _ServerTokenSlot(id));
 
   /// Schedules a per-server revoke using a pre-change [Spi] snapshot.
-  void _scheduleRevoke(Spi spi, {String? endpoint}) {
+  void _scheduleRevoke(Spi spi, {bool useActiveEndpoint = true}) {
     if (_disposed) return;
     final slot = _slot(spi.id);
-    final revokeEndpoint = endpoint ?? slot.activeToken?.endpoint;
-    slot.requestRevoke(
-      spi: spi,
-      endpoint: revokeEndpoint,
-      deadline: _now().add(_revokeCredentialTtl),
-    );
+    final endpoint = useActiveEndpoint ? slot.activeToken?.endpoint : null;
+    _queueRevoke(slot, spi, endpoint);
     _reconcileSlot(slot);
+  }
+
+  /// Revokes the old endpoint's token after a server edit is saved.
+  void revokeEditedServer(Spi spi) {
+    _scheduleRevoke(spi, useActiveEndpoint: false);
+  }
+
+  void _queueRevoke(
+    _ServerTokenSlot slot,
+    Spi spi,
+    String? endpoint, {
+    bool reusePending = false,
+  }) {
+    final now = _now();
+    slot.requestRevoke(
+      _PendingRevoke(
+        spi: spi,
+        endpoint: endpoint,
+        deadline: now.add(_revokeCredentialTtl),
+      ),
+      reusePendingAt: reusePending ? now : null,
+    );
   }
 
   void _reconcileSlot(_ServerTokenSlot slot) {
     if (_disposed) return;
-    // Do not bypass an active revoke retry backoff timer; a new
-    // `requestRevoke` cancels the timer explicitly before reconciling.
+    // Only a replacement for the request being retried cancels its backoff.
     if (slot.retryTimer != null) return;
     if (slot.running != null) {
       slot.dirty = true;
@@ -320,8 +338,7 @@ final class WatchSync {
         continue;
       }
 
-      // When no watch is paired, stop once pending revocations have settled.
-      if (!_paired) {
+      if (!_isEnabled || !_paired || slot.deleting) {
         slot.clearActive();
         slot.phase = _SlotPhase.idle;
         return;
@@ -329,7 +346,7 @@ final class WatchSync {
 
       // 2. Check desired state from the store.
       final spi = Stores.server.fetchOneRaw(slot.id);
-      final monitor = spi?.monitor;
+      final monitor = spi?.monitorOn;
       final excluded = Stores.setting.watchExcludedServerIds
           .fetch()
           .contains(slot.id);
@@ -351,15 +368,17 @@ final class WatchSync {
 
       // Endpoint moved: backstop-revoke the old endpoint if we knew it.
       final previousEndpoint = slot.activeToken?.endpoint;
+      slot.clearActive();
       if (previousEndpoint != null && previousEndpoint != endpoint) {
         try {
           await _revokeServer(spi, endpoint: previousEndpoint);
         } catch (e, s) {
           Loggers.app.info('Backstop revoke at $previousEndpoint', e, s);
         }
+        // The server or its queued revokes may have changed during DELETE.
+        continue;
       }
 
-      slot.clearActive();
       slot.phase = _SlotPhase.minting;
       final genBeforeMint = slot.revokeGen;
       final minted = await _mintToken(spi, endpoint);
@@ -368,6 +387,9 @@ final class WatchSync {
 
       // If a revoke arrived while minting, loop immediately to execute it.
       if (slot.hasPendingRevoke || slot.revokeGen != genBeforeMint) {
+        if (minted != null) {
+          _queueRevoke(slot, spi, endpoint, reusePending: true);
+        }
         continue;
       }
 
@@ -378,18 +400,18 @@ final class WatchSync {
 
       // Re-check latest selection and credentials before activating.
       final latestSpi = Stores.server.fetchOneRaw(slot.id);
-      final latestMonitor = latestSpi?.monitor;
+      final latestMonitor = latestSpi?.monitorOn;
       final latestExcluded = Stores.setting.watchExcludedServerIds
           .fetch()
           .contains(slot.id);
-      if (latestSpi == null || latestMonitor == null || latestExcluded) {
+      if (latestSpi == null ||
+          latestMonitor == null ||
+          latestExcluded ||
+          slot.deleting ||
+          !_paired) {
         // Excluded/deleted right as mint completed: revoke the just-minted
         // token using the credentials we just used.
-        slot.requestRevoke(
-          spi: spi,
-          endpoint: endpoint,
-          deadline: _now().add(_revokeCredentialTtl),
-        );
+        _queueRevoke(slot, spi, endpoint);
         continue;
       }
       final latestEndpoint = normalizeAgentEndpoint(latestMonitor.addr);
@@ -397,15 +419,15 @@ final class WatchSync {
         // If the endpoint moved mid-mint, revoke the token just minted at the
         // old endpoint before minting for the new one.
         if (latestEndpoint != endpoint) {
-          slot.requestRevoke(
-            spi: spi,
-            endpoint: endpoint,
-            deadline: _now().add(_revokeCredentialTtl),
-          );
+          _queueRevoke(slot, spi, endpoint);
         }
         continue;
       }
 
+      if (!minted.servesEndpoint(endpoint, _now())) {
+        slot.phase = _SlotPhase.idle;
+        return;
+      }
       slot.activate(token: minted, key: key);
       unawaited(push());
       return;
@@ -415,45 +437,34 @@ final class WatchSync {
   /// Executes one revoke attempt for [slot]. Returns `true` if a bounded retry
   /// timer was scheduled and the loop should yield until it fires.
   Future<bool> _stepRevoke(_ServerTokenSlot slot) async {
-    final spi = slot.pendingRevokeSpi;
-    if (spi == null) return false;
+    final request = slot.pendingRevokes.first;
+    if (!_now().isBefore(request.deadline)) {
+      slot.pendingRevokes.removeAt(0);
+      return false;
+    }
 
-    slot.retryTimer?.cancel();
-    slot.retryTimer = null;
     slot.clearActive();
     slot.phase = _SlotPhase.revoking;
 
-    final endpoint = slot.pendingRevokeEndpoint;
     var succeeded = false;
     try {
-      await _revokeServer(spi, endpoint: endpoint);
+      await _revokeServer(request.spi, endpoint: request.endpoint);
       succeeded = true;
     } catch (e, s) {
       Loggers.app.warning('Could not revoke watch token for ${slot.id}', e, s);
     }
 
-    if (_disposed) return false;
+    if (_disposed || !identical(slot.pendingRevokes.first, request)) return false;
 
-    if (succeeded) {
-      slot.clearPendingRevoke();
-      slot.phase = _SlotPhase.idle;
-      // Publish updated state only while a watch is paired (avoids re-entering
-      // `_revokeSelectedServers` in a loop when unpaired).
-      if (_paired) unawaited(push());
-      return false;
-    }
-
-    // Failed: decide whether to retry within attempt limit and credential TTL.
     final now = _now();
-    final deadline = slot.revokeDeadline;
     final canRetry =
-        slot.revokeAttempts < _maxRevokeRetries &&
-        deadline != null &&
-        now.isBefore(deadline);
+        !succeeded &&
+        request.attempts < _maxRevokeRetries &&
+        now.isBefore(request.deadline);
     if (canRetry) {
-      slot.revokeAttempts++;
+      request.attempts++;
       slot.phase = _SlotPhase.idle;
-      final remaining = deadline.difference(now);
+      final remaining = request.deadline.difference(now);
       final delay = _revokeRetryDelay < remaining
           ? _revokeRetryDelay
           : remaining;
@@ -464,11 +475,10 @@ final class WatchSync {
       return true;
     }
 
-    // Exhausted retries or credential retention TTL: drop the old Spi snapshot
-    // immediately so old credentials are never retained indefinitely in memory.
-    slot.clearPendingRevoke();
+    slot.pendingRevokes.removeAt(0);
     slot.phase = _SlotPhase.idle;
-    if (_paired) unawaited(push());
+    // Publishing while unpaired would schedule another revoke.
+    if (_isEnabled && _paired) unawaited(push());
     return false;
   }
 
@@ -574,13 +584,25 @@ final class WatchSync {
   /// Uses the pre-deletion [spi] snapshot inside the server's slot so the
   /// revoke runs asynchronously without blocking deletion UI.
   Future<void> revokeServer(Spi spi) async {
-    final excluded = Stores.setting.watchExcludedServerIds.fetch();
-    if (excluded.contains(spi.id)) {
-      Stores.setting.watchExcludedServerIds.put(
-        excluded.where((id) => id != spi.id).toList(),
-      );
-    }
+    if (_disposed) return;
+    _slot(spi.id).deleting = true;
     _scheduleRevoke(spi);
+  }
+
+  /// Releases the selection guard after the store deletion settles.
+  void finishServerDeletion(String id) {
+    final slot = _slots[id];
+    if (slot == null) return;
+    if (Stores.server.fetchOneRaw(id) == null) {
+      final excluded = Stores.setting.watchExcludedServerIds.fetch();
+      if (excluded.contains(id)) {
+        Stores.setting.watchExcludedServerIds.put(
+          excluded.where((excludedId) => excludedId != id).toList(),
+        );
+      }
+    }
+    slot.deleting = false;
+    _reconcileSlot(slot);
   }
 
   /// Hands every credential back, because there is no watch to use them.
@@ -600,7 +622,9 @@ final class WatchSync {
     final monitor = spi.monitor;
     if (monitor == null) return;
     final revocationEndpoint = endpoint?.trim();
-    final credential = revocationEndpoint == null || revocationEndpoint.isEmpty
+    final credential = revocationEndpoint == null ||
+            revocationEndpoint.isEmpty ||
+            revocationEndpoint == normalizeAgentEndpoint(monitor.addr)
         ? monitor
         : MonitorHttpCredential(
             addr: revocationEndpoint,
@@ -611,7 +635,7 @@ final class WatchSync {
           );
     final client = MonitorHttpClient(credential);
     try {
-      await client.revokeWatchToken('watch:${spi.id}');
+      await client.revokeWatchToken(watchClientId(spi.id));
     } catch (e, s) {
       Loggers.app.warning('Failed to revoke watch token for ${spi.id}', e, s);
       rethrow;
@@ -747,6 +771,28 @@ final class WatchSync {
 
 enum _SlotPhase { idle, minting, active, revoking }
 
+final class _PendingRevoke {
+  _PendingRevoke({
+    required this.spi,
+    required this.endpoint,
+    required this.deadline,
+  });
+
+  final Spi spi;
+  final String? endpoint;
+  final DateTime deadline;
+  int attempts = 0;
+
+  Object get key {
+    final monitor = spi.monitor;
+    final primary = normalizeAgentEndpoint(monitor?.addr ?? '');
+    return (
+      WatchSync._issueKey(spi, endpoint ?? primary),
+      endpoint == null || endpoint == primary ? monitor?.fallbackAddr : null,
+    );
+  }
+}
+
 /// Per-server token lifecycle state machine.
 final class _ServerTokenSlot {
   _ServerTokenSlot(this.id);
@@ -757,16 +803,14 @@ final class _ServerTokenSlot {
   Object? activeKey;
 
   int revokeGen = 0;
-  Spi? pendingRevokeSpi;
-  String? pendingRevokeEndpoint;
-  int revokeAttempts = 0;
-  DateTime? revokeDeadline;
+  final pendingRevokes = <_PendingRevoke>[];
   Timer? retryTimer;
+  var deleting = false;
 
   Future<void>? running;
   var dirty = false;
 
-  bool get hasPendingRevoke => pendingRevokeSpi != null;
+  bool get hasPendingRevoke => pendingRevokes.isNotEmpty;
 
   ScopedToken? usableToken({
     required Object key,
@@ -797,33 +841,32 @@ final class _ServerTokenSlot {
     activeKey = null;
   }
 
-  void requestRevoke({
-    required Spi spi,
-    required String? endpoint,
-    required DateTime deadline,
-  }) {
+  void requestRevoke(_PendingRevoke request, {DateTime? reusePendingAt}) {
+    final key = request.key;
+    final index = pendingRevokes.indexWhere((pending) => pending.key == key);
+    if (reusePendingAt != null &&
+        index >= 0 &&
+        reusePendingAt.isBefore(pendingRevokes[index].deadline)) {
+      return;
+    }
     revokeGen++;
     clearActive();
-    retryTimer?.cancel();
-    retryTimer = null;
-    pendingRevokeSpi = spi;
-    pendingRevokeEndpoint = endpoint;
-    revokeAttempts = 0;
-    revokeDeadline = deadline;
-  }
-
-  void clearPendingRevoke() {
-    retryTimer?.cancel();
-    retryTimer = null;
-    pendingRevokeSpi = null;
-    pendingRevokeEndpoint = null;
-    revokeAttempts = 0;
-    revokeDeadline = null;
+    if (index < 0) {
+      pendingRevokes.add(request);
+    } else {
+      pendingRevokes[index] = request;
+      if (index == 0) {
+        retryTimer?.cancel();
+        retryTimer = null;
+      }
+    }
   }
 
   void dispose() {
     clearActive();
-    clearPendingRevoke();
+    retryTimer?.cancel();
+    retryTimer = null;
+    pendingRevokes.clear();
     phase = _SlotPhase.idle;
     dirty = false;
   }

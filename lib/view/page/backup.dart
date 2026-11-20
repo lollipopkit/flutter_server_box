@@ -203,6 +203,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     String? emptyMessage,
   }) async {
     final currentPwd = await SecureStoreProps.bakPwd.read();
+    if (!context.mounted) return false;
     final controller = TextEditingController(text: currentPwd ?? '');
     final node = FocusNode();
     final result = await context.showSheet<bool>(
@@ -277,27 +278,29 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !context.mounted) return;
-    // Only with the account's key open here: a new one is put beside it.
-    final unlocked = await lkcOps.run('rotate-unlock', () async {
+    await lkcOps.run('rotate-key', () async {
+      // Keep the operation registered through password save so it can finish
+      // if the page is disposed after the password is confirmed.
       try {
         await lkcLog.key();
-        return true;
       } on SyncPasswordMismatch catch (e) {
         Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
-        return false;
+        return;
       } catch (e, s) {
         if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
-        return false;
+        return;
       }
-    });
-    if (unlocked != true) return;
-    if (!context.mounted || !await _onTapSetBakPwd(context)) return;
-    await lkcOps.run('rotate-key', () async {
+      if (!context.mounted || !await _onTapSetBakPwd(context)) return;
       try {
         await lkcLog.rotateKey();
         Toast.show(libL10n.success);
       } catch (e, s) {
-        if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
+        if (mounted) {
+          _showLkcErr(e, s, l10n.syncKeyRotate);
+        } else {
+          Loggers.app.warning('Failed to rotate the LK Cloud sync key', e, s);
+          Toast.show(l10n.syncKeyRotate, body: libL10n.fail);
+        }
       }
     });
   }

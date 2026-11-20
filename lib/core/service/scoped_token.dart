@@ -134,8 +134,7 @@ Map<String, ScopedToken> reusableScopedTokens({
 
 /// Every `client_id` this app mints a scoped token under.
 ///
-/// One list, because the thing that has to revoke them does not care which
-/// surface each belongs to — it is undoing all of them at one agent.
+/// The watch and widget have independently revocable client IDs.
 List<String> scopedClientIdsFor(String serverId) => [
   'watch:$serverId',
   'widget:$serverId',
@@ -157,11 +156,14 @@ List<String> scopedClientIdsFor(String serverId) => [
 /// - its monitor configuration is removed outright;
 /// - its address changes, so the new token is minted somewhere else.
 ///
-/// Best effort and never rethrows. A server must stay editable while its agent
-/// is offline, and once the record is written there is no retry target — the
-/// token may outlive it remotely, which is worse than nothing but far better
-/// than an edit that cannot be saved.
-Future<void> revokeScopedTokensLeftBehind(Spi old, Spi next) async {
+/// The watch queues its revoke alongside any in-flight mint. The widget
+/// attempts its revoke with the old credentials. Neither delays saving the
+/// edit if the agent is offline.
+Future<void> revokeScopedTokensLeftBehind(
+  Spi old,
+  Spi next, {
+  required void Function(Spi) queueWatchRevoke,
+}) async {
   final previous = old.monitor;
   if (previous == null) return;
 
@@ -172,15 +174,13 @@ Future<void> revokeScopedTokensLeftBehind(Spi old, Spi next) async {
           normalizeAgentEndpoint(previous.addr);
   if (!movedOn) return;
 
+  queueWatchRevoke(old);
+  final clientId = 'widget:${old.id}';
   final client = MonitorHttpClient(previous);
   try {
-    for (final clientId in scopedClientIdsFor(old.id)) {
-      try {
-        await client.revokeWatchToken(clientId);
-      } catch (e, s) {
-        Loggers.app.warning('Revoke $clientId at ${previous.addr}', e, s);
-      }
-    }
+    await client.revokeWatchToken(clientId);
+  } catch (e, s) {
+    Loggers.app.warning('Revoke $clientId at ${previous.addr}', e, s);
   } finally {
     client.dispose();
   }
