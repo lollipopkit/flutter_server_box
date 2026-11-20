@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/listener.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
@@ -26,6 +27,92 @@ import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
 void main() {
+  Future<(PortForwardConfig, PortForwardNotifier)> sshRemoteProvider(
+    SSHClient client,
+  ) async {
+    await openTestDb();
+    final store = PortForwardStore();
+    getIt.registerSingleton(store);
+    final spi = spiFixture(name: 'SSH', id: 'ssh', ip: '127.0.0.1');
+    SqliteDb.instance.execute(
+      "INSERT INTO server (id, name, ssh_ip) VALUES ('ssh', 'SSH', '127.0.0.1');",
+    );
+    const config = PortForwardConfig(
+      id: 'remote',
+      serverId: 'ssh',
+      name: 'remote',
+      type: PortForwardType.remote,
+      localPort: 8080,
+      remoteHost: '127.0.0.1',
+      remotePort: 9090,
+    );
+    store.put(config);
+    final server = _FixedServerNotifier(
+      ServerState(spi: spi, status: InitStatus.status, client: client),
+    );
+    final container = ProviderContainer(
+      overrides: [serverProvider(spi.id).overrideWith(() => server)],
+    );
+    addTearDown(() async {
+      container.dispose();
+      await getIt.reset();
+      await closeTestDb();
+    });
+
+    return (config, container.read(portForwardProvider(spi.id).notifier));
+  }
+
+  test('remote restart waits for a canceled SSH setup and its cancel reply',
+      () async {
+    final client = _PendingRemoteSshClient();
+    final (config, provider) = await sshRemoteProvider(client);
+    const timeout = Duration(seconds: 1);
+    final start = provider.startForward(config.id);
+    await client.setupStarted.future.timeout(timeout);
+    await provider.stopForward(config.id).timeout(timeout);
+    final restart = provider.startForward(config.id);
+    await Future<void>.delayed(Duration.zero);
+    expect(client.requests, 1);
+
+    final listener = _FakeRemoteForward(client);
+    client.setup.complete(listener);
+    await client.cancelStarted.future.timeout(timeout);
+    await start.timeout(timeout);
+    expect(client.requests, 1);
+    expect(listener.closed, isFalse);
+
+    client.cancelReply.complete(true);
+    await restart.timeout(timeout);
+    expect(client.requests, 2);
+    expect(listener.closed, isTrue);
+    expect(provider.state.activeForwards[config.id]?.error, isNotNull);
+  });
+
+  test('a slow stop preserves the error of a newer failed start', () async {
+    final client = _PendingRemoteSshClient();
+    final (config, provider) = await sshRemoteProvider(client);
+    final localClose = Completer<void>();
+    final listener = _FakeRemoteForward(client, onCancel: () => localClose.future);
+    final start = provider.startForward(config.id);
+    client.setup.complete(listener);
+    await start.timeout(const Duration(seconds: 1));
+    expect(provider.state.activeForwards[config.id]?.isActive, isTrue);
+
+    final stop = provider.stopForward(config.id);
+    try {
+      await client.cancelStarted.future.timeout(const Duration(seconds: 1));
+      client.cancelReply.complete(true);
+      await provider.startForward(config.id).timeout(const Duration(seconds: 4));
+      final error = provider.state.activeForwards[config.id]?.error;
+      expect(error, isNotNull);
+      localClose.complete();
+      await stop.timeout(const Duration(seconds: 1));
+      expect(provider.state.activeForwards[config.id]?.error, error);
+    } finally {
+      if (!localClose.isCompleted) localClose.complete();
+    }
+  });
+
   test('clear closes a forward that finishes starting during deletion', () async {
     await openTestDb();
     final store = PortForwardStore();
@@ -88,9 +175,12 @@ void main() {
     }
   });
 
-  test(
-    'clear cancels a Monitor remote listener stuck between listen and ready',
-    () async {
+  for (final peerEnds in [false, true]) {
+    test(
+      peerEnds
+          ? 'a Monitor remote listener releases its lease when the peer ends'
+          : 'clear cancels a Monitor remote listener stuck between listen and ready',
+      () async {
       await initRustLibForTest();
       await openTestDb();
       final store = PortForwardStore();
@@ -150,6 +240,9 @@ void main() {
                 if (event is String) {
                   final msg = jsonDecode(event) as Map<String, dynamic>;
                   if (msg['type'] == 'listen' && !listenReceived.isCompleted) {
+                    if (peerEnds) {
+                      ws.add(jsonEncode({'type': 'ready', 'port': 9090}));
+                    }
                     listenReceived.complete();
                   }
                 }
@@ -202,7 +295,6 @@ void main() {
       HttpOverrides.global = null;
       try {
         final notifier = container.read(portForwardProvider(serverId).notifier);
-        // Start without awaiting: it will stall waiting for `ready`.
         final start = notifier.startForward(config.id);
         await listenReceived.future.timeout(
           const Duration(seconds: 5),
@@ -210,6 +302,37 @@ void main() {
             'listen not received; error=${notifier.state.activeForwards[config.id]?.error}',
           ),
         );
+
+        if (peerEnds) {
+          const timeout = Duration(seconds: 2);
+          await start.timeout(timeout);
+          expect(notifier.state.activeForwards[config.id]?.isActive, isTrue);
+          final lease = MonitorClientLease(spi.monitor!);
+          final originalClient = lease.client;
+          lease.release();
+          final ended = Completer<void>();
+          final sub = container.listen(portForwardProvider(serverId), (_, next) {
+            if (next.activeForwards[config.id]?.isActive == false &&
+                !ended.isCompleted) {
+              ended.complete();
+            }
+          });
+          try {
+            await serverWs!.close().timeout(timeout);
+            await ended.future.timeout(timeout);
+            final replacement = MonitorClientLease(spi.monitor!);
+            try {
+              expect(replacement.client, isNot(same(originalClient)));
+              expect(notifier.state.configs, [config]);
+              expect(acceptRequests, 0);
+            } finally {
+              replacement.release();
+            }
+          } finally {
+            sub.close();
+          }
+          return;
+        }
 
         // Only await `clear()`, never `start`.
         await notifier.clear().timeout(const Duration(seconds: 2));
@@ -229,8 +352,9 @@ void main() {
         await getIt.reset();
         await closeTestDb();
       }
-    },
-  );
+      },
+    );
+  }
 
   test(
     'MonitorRemoteListener local close rejects late ready and incoming even if remote close stalls',
@@ -570,6 +694,52 @@ class _FixedServerNotifier extends ServerNotifier {
     shellDials++;
     if (_serverState.client case final client?) return Future.value(client);
     return Future.error(const SocketException('sshd is down'));
+  }
+}
+
+class _PendingRemoteSshClient implements SSHClient {
+  final setup = Completer<SSHRemoteForward?>();
+  final setupStarted = Completer<void>();
+  final cancelStarted = Completer<void>();
+  final cancelReply = Completer<bool>();
+  var requests = 0;
+
+  @override
+  Future<SSHRemoteForward?> forwardRemote({
+    String? host,
+    int? port,
+    SSHRemoteConnectionFilter? filter,
+  }) {
+    if (++requests != 1) return Future.value();
+    setupStarted.complete();
+    return setup.future;
+  }
+
+  @override
+  Future<bool> cancelForwardRemote(SSHRemoteForward forward) {
+    cancelStarted.complete();
+    return cancelReply.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeRemoteForward extends SSHRemoteForward {
+  _FakeRemoteForward(SSHClient client, {Future<void> Function()? onCancel})
+    : _incoming = StreamController<SSHForwardChannel>(onCancel: onCancel),
+      super(client, '127.0.0.1', 9090, null);
+
+  final StreamController<SSHForwardChannel> _incoming;
+  var closed = false;
+
+  @override
+  Stream<SSHForwardChannel> get connections => _incoming.stream;
+
+  @override
+  void close() {
+    closed = true;
+    unawaited(_incoming.close());
   }
 }
 
