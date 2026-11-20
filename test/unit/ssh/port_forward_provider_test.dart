@@ -103,6 +103,7 @@ void main() {
       final listenReceived = Completer<void>();
       final socketClosed = Completer<void>();
       var acceptRequests = 0;
+      WebSocket? serverWs;
 
       final fakeMonitor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       unawaited(
@@ -143,6 +144,7 @@ void main() {
               req,
               protocolSelector: (protocols) => protocols.first,
             );
+            serverWs = ws;
             ws.listen(
               (event) {
                 if (event is String) {
@@ -222,6 +224,7 @@ void main() {
       } finally {
         HttpOverrides.global = savedHttpOverrides;
         container.dispose();
+        await serverWs?.close().catchError((_) {});
         await fakeMonitor.close(force: true);
         await getIt.reset();
         await closeTestDb();
@@ -275,8 +278,8 @@ void main() {
       expect(connectLocalCount, 0);
 
       remoteCloseStall.complete();
-      await created.done.timeout(const Duration(seconds: 1));
       await incoming.close();
+      await created.done.timeout(const Duration(seconds: 1));
     },
   );
 
@@ -352,9 +355,9 @@ void main() {
 
       channelCloseStall.complete();
       remoteControlClose.complete();
+      await incoming.close();
       await listener.done.timeout(const Duration(seconds: 1));
       await channel.dispose();
-      await incoming.close();
       await localServer.close();
     },
   );

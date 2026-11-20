@@ -17,6 +17,7 @@ import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
+import 'package:server_box/core/utils/pending_ops.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
@@ -60,7 +61,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     with AutomaticKeepAliveClientMixin {
   /// A restore from or a backup to the remote (WebDAV, iCloud) running.
   final remoteLoading = false.vn;
-  final lkcLoading = false.vn;
+  final lkcOps = PendingOps();
+  ValueListenable<bool> get lkcLoading => lkcOps.loading;
 
   /// A sync started here running.
   final _syncing = false.vn;
@@ -90,7 +92,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   @override
   void dispose() {
     remoteLoading.dispose();
-    lkcLoading.dispose();
+    lkcOps.dispose();
     _syncing.dispose();
     _webdavEdited.dispose();
     super.dispose();
@@ -276,27 +278,28 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
     if (ok != true || !context.mounted) return;
     // Only with the account's key open here: a new one is put beside it.
-    lkcLoading.value = true;
-    try {
-      await lkcLog.key();
-    } on SyncPasswordMismatch catch (e) {
-      return Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
-    } catch (e, s) {
-      if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
-      return;
-    } finally {
-      if (mounted) lkcLoading.value = false;
-    }
+    final unlocked = await lkcOps.run('rotate-unlock', () async {
+      try {
+        await lkcLog.key();
+        return true;
+      } on SyncPasswordMismatch catch (e) {
+        Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
+        return false;
+      } catch (e, s) {
+        if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
+        return false;
+      }
+    });
+    if (unlocked != true) return;
     if (!context.mounted || !await _onTapSetBakPwd(context)) return;
-    lkcLoading.value = true;
-    try {
-      await lkcLog.rotateKey();
-      Toast.show(libL10n.success);
-    } catch (e, s) {
-      if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
-    } finally {
-      if (mounted) lkcLoading.value = false;
-    }
+    await lkcOps.run('rotate-key', () async {
+      try {
+        await lkcLog.rotateKey();
+        Toast.show(libL10n.success);
+      } catch (e, s) {
+        if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
+      }
+    });
   }
 
   void _showLkcErr(Object e, StackTrace s, String operation) {
@@ -509,55 +512,55 @@ extension on _BackupPageState {
   /// The synced backup as it is, or one of the versions LK Cloud kept of it.
   Future<void> _onTapLkcRestore(BuildContext context) async {
     if (!Lkc.client.signedIn) return Toast.show(libL10n.lkcNotSignedIn);
-    lkcLoading.value = true;
-    Directory? dir;
-    try {
-      // First: nothing of the account is listed while the password here does
-      // not open its key.
-      final SyncKeyHandle key;
+    await lkcOps.run('restore', () async {
+      Directory? dir;
       try {
-        key = await lkcLog.key(create: false);
-      } on SyncKeyNotHere {
-        return Toast.show(l10n.dirEmpty);
+        // First: nothing of the account is listed while the password here does
+        // not open its key.
+        final SyncKeyHandle key;
+        try {
+          key = await lkcLog.key(create: false);
+        } on SyncKeyNotHere {
+          return Toast.show(l10n.dirEmpty);
+        }
+        dir = await Directory.systemTemp.createTemp('sb-lkc-restore-');
+        final sync = await Lkc.client.sync(Lkc.app);
+        final name = Miscs.bakFileName;
+        final current = (await sync.list()).where((f) => f.name == name);
+        final versions = await sync.versions(name: name);
+        final items = [
+          for (final f in current) (f.etag, f.updatedAt, true),
+          for (final v in versions) (v.etag, v.writtenAt, false),
+        ];
+        if (items.isEmpty) return Toast.show(l10n.dirEmpty);
+        if (!context.mounted) return;
+
+        String when(String at) =>
+            DateTime.tryParse(at)?.toLocal().ymdhms() ?? at;
+        final picked = await context.showPickSingleSheet(
+          title: libL10n.restore,
+          items: items,
+          display: (e) => e.$3 ? '${when(e.$2)} ✓' : when(e.$2),
+        );
+        if (picked == null) return;
+
+        final path = '${dir.path}/$name';
+        final fetched = picked.$3
+            ? await sync.download(name: name, to: path)
+            : await sync.downloadVersion(name: name, etag: picked.$1, to: path);
+        if (fetched.missing) return Toast.show(l10n.dirEmpty);
+        final bytes = await key.open(sealed: await File(path).readAsBytes());
+        if (context.mounted) await BackupService.restoreData(context, bytes);
+      } on SyncPasswordMismatch catch (e) {
+        // Said as the card above says it: no error to report.
+        Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
+      } catch (e, s) {
+        if (context.mounted) _showLkcErr(e, s, libL10n.restore);
+        Loggers.app.warning('Restore LK Cloud backup failed', e, s);
+      } finally {
+        await dir?.delete(recursive: true);
       }
-      dir = await Directory.systemTemp.createTemp('sb-lkc-restore-');
-      final sync = await Lkc.client.sync(Lkc.app);
-      final name = Miscs.bakFileName;
-      final current = (await sync.list()).where((f) => f.name == name);
-      final versions = await sync.versions(name: name);
-      final items = [
-        for (final f in current) (f.etag, f.updatedAt, true),
-        for (final v in versions) (v.etag, v.writtenAt, false),
-      ];
-      if (items.isEmpty) return Toast.show(l10n.dirEmpty);
-      if (!context.mounted) return;
-
-      String when(String at) =>
-          DateTime.tryParse(at)?.toLocal().ymdhms() ?? at;
-      final picked = await context.showPickSingleSheet(
-        title: libL10n.restore,
-        items: items,
-        display: (e) => e.$3 ? '${when(e.$2)} ✓' : when(e.$2),
-      );
-      if (picked == null) return;
-
-      final path = '${dir.path}/$name';
-      final fetched = picked.$3
-          ? await sync.download(name: name, to: path)
-          : await sync.downloadVersion(name: name, etag: picked.$1, to: path);
-      if (fetched.missing) return Toast.show(l10n.dirEmpty);
-      final bytes = await key.open(sealed: await File(path).readAsBytes());
-      if (context.mounted) await BackupService.restoreData(context, bytes);
-    } on SyncPasswordMismatch catch (e) {
-      // Said as the card above says it: no error to report.
-      Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
-    } catch (e, s) {
-      if (context.mounted) _showLkcErr(e, s, libL10n.restore);
-      Loggers.app.warning('Restore LK Cloud backup failed', e, s);
-    } finally {
-      await dir?.delete(recursive: true);
-      if (mounted) lkcLoading.value = false;
-    }
+    });
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {

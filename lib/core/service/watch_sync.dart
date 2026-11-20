@@ -18,35 +18,21 @@ import 'package:watch_connectivity/watch_connectivity.dart';
 /// agents by itself; all it needs from here is *which* servers to show and how
 /// to authenticate.
 ///
-/// Which servers is not a list anyone maintains: it is every server with a
-/// `monitor` agent, minus [SettingStore.watchExcludedServerIds]. Adding a
-/// server in the app puts it on the watch, and the exclusion list exists for
-/// the one thing that genuinely needs a decision — syncing a server mints a
-/// credential and puts it on a second device, and that is worth being able to
-/// refuse. The list is backed up and synced like everything else; the WCSession
-/// application context is only the transport.
-///
-/// Both WatchConnectivity paths are used, on purpose and in this order:
-///
-/// - [WatchConnectivity.updateApplicationContext] first. It is the only path
-///   that reaches a watch app which is not running, it survives reboots, and
-///   it is what the watch reads at launch. It is also the state the watch pulls
-///   when it re-asks, so it must never lag behind what the user last chose.
-/// - [WatchConnectivity.sendMessage] second, and best-effort. It only reaches a
-///   watch that is awake right now, and it fails outright against a watch app
-///   old enough to lack the reply-carrying receive callback — so it is an
-///   optimisation for immediacy, never the thing carrying the state.
-///
-/// This app also answers the watch's own `requestData` message
-/// ([messageResponder]), which is how a freshly installed watch app configures
-/// itself without the user having to visit the iOS settings page.
+/// Each server owns an independent [_ServerTokenSlot] state machine that
+/// serialises revoke and mint operations for that server without blocking
+/// unrelated servers. [buildPayload] reads only tokens currently active in
+/// slots and triggers background reconciliation for missing ones, so an
+/// offline monitor never stalls publishing the rest of the list.
 final class WatchSync {
   WatchSync._()
     : _enabled = null,
       _readContext = null,
       _writeContext = null,
       _issueToken = null,
-      _revokeToken = null;
+      _revokeToken = null,
+      _now = DateTime.now,
+      _revokeRetryDelay = _defaultRevokeRetryDelay,
+      _revokeCredentialTtl = _defaultRevokeCredentialTtl;
 
   @visibleForTesting
   WatchSync.forTest({
@@ -54,11 +40,17 @@ final class WatchSync {
     required Future<void> Function(Map<String, dynamic> payload) writeContext,
     required Future<ScopedToken> Function(Spi spi, String endpoint) issueToken,
     required Future<void> Function(Spi spi, String? endpoint) revokeToken,
+    DateTime Function()? now,
+    Duration revokeRetryDelay = Duration.zero,
+    Duration revokeCredentialTtl = _defaultRevokeCredentialTtl,
   }) : _enabled = true,
        _readContext = readContext,
        _writeContext = writeContext,
        _issueToken = issueToken,
-       _revokeToken = revokeToken;
+       _revokeToken = revokeToken,
+       _now = now ?? DateTime.now,
+       _revokeRetryDelay = revokeRetryDelay,
+       _revokeCredentialTtl = revokeCredentialTtl;
 
   static final instance = WatchSync._();
 
@@ -67,6 +59,9 @@ final class WatchSync {
   final Future<void> Function(Map<String, dynamic> payload)? _writeContext;
   final Future<ScopedToken> Function(Spi spi, String endpoint)? _issueToken;
   final Future<void> Function(Spi spi, String? endpoint)? _revokeToken;
+  final DateTime Function() _now;
+  final Duration _revokeRetryDelay;
+  final Duration _revokeCredentialTtl;
 
   bool get _isEnabled => _enabled ?? isIOS;
 
@@ -78,6 +73,12 @@ final class WatchSync {
   /// Coalesces the burst of box events one server edit produces.
   static const _pushDebounce = Duration(milliseconds: 500);
 
+  /// Bounded retries and retention window for a pre-deletion / pre-change
+  /// [Spi] snapshot held in memory solely to revoke its old watch token.
+  static const _maxRevokeRetries = 2;
+  static const _defaultRevokeRetryDelay = Duration(seconds: 3);
+  static const _defaultRevokeCredentialTtl = Duration(seconds: 30);
+
   /// One instance for the whole app: [MethodChannel.setMethodCallHandler] keeps
   /// a single handler, so a second `WatchConnectivity` would silently take the
   /// callbacks over — including the responder the watch depends on.
@@ -88,22 +89,21 @@ final class WatchSync {
   Timer? _pushDebouncer;
   late final _pushes = Coalesced(_pushOnce);
 
-  /// Per-server in-flight revoke and issue futures so revoke/issue for the same
-  /// server stay ordered without blocking unrelated servers behind a slow one.
-  final Map<String, Future<void>> _revoking = {};
-  final Map<String, _InFlightIssue> _issuing = {};
+  /// Per-server token state machines.
+  final Map<String, _ServerTokenSlot> _slots = {};
 
-  /// Servers whose previous token is being or has been revoked and must not be
-  /// reused from a stale watch application context.
-  final Set<String> _mustReissue = {};
-
-  /// Specific token values already sent for revocation per server, so even an
-  /// out-of-order stale context read never republishes a revoked token.
-  final Map<String, Set<String>> _revokedTokens = {};
+  /// Lazily seeded once from the existing watch application context.
+  Future<void>? _contextSeed;
 
   /// Completes once [_wc] is either connected or known to be unavailable, so
   /// callers racing app startup wait rather than silently doing nothing.
   Future<void>? _ready;
+
+  /// Whether the phone currently has a paired watch. When false, slots only
+  /// drain pending revocations and never mint new tokens or re-trigger pushes.
+  var _paired = true;
+
+  var _disposed = false;
 
   /// Whether a watch is paired with this phone.
   ///
@@ -124,14 +124,15 @@ final class WatchSync {
 
   /// Rebuilds the payload and hands it to the watch.
   Future<void> push() {
-    if (!_isEnabled) return Future.value();
+    if (!_isEnabled || _disposed) return Future.value();
     return _pushes();
   }
 
   Future<void> _pushOnce() async {
+    if (_disposed) return;
     if (_writeContext case final writeContext?) {
       final payload = await buildPayload();
-      await writeContext(payload);
+      if (!_disposed) await writeContext(payload);
       return;
     }
 
@@ -151,12 +152,14 @@ final class WatchSync {
       Loggers.app.warning('Watch paired check failed', e, s);
       return;
     }
+    _paired = paired;
     if (!paired) {
       await _revokeSelectedServers();
       return;
     }
 
     final payload = await buildPayload();
+    if (_disposed) return;
 
     Diag.crumb(SbDiag.sync, 'watch push');
     try {
@@ -192,84 +195,38 @@ final class WatchSync {
 
   static int _revision = 0;
 
-  /// What the watch app is told to display.
+  /// What the watch app is told to display right now.
+  ///
+  /// Reads only tokens currently active in per-server slots so a slow or
+  /// offline monitor never blocks publishing the remaining servers. Any
+  /// selected server without a ready token is reconciled in the background and
+  /// triggers a follow-up [push] once minted.
   Future<Map<String, dynamic>> buildPayload() async {
-    // Taken with the snapshot rather than with the result. Issuing tokens is a
-    // network round trip per server, so two builds overlap easily — and stamped
-    // at the end, the slower one finished last carrying the *newer* number
-    // while holding the *older* selection, which is exactly backwards.
     final revision = nextRevision();
+    await _seedFromContextOnce();
+
     final selectedIds = syncedServerIds();
-    final existingTokens = await _existingTokens();
-    final invalidatedIds = <String>{
-      ..._revoking.keys,
-      ..._mustReissue,
-      for (final entry in existingTokens.entries)
-        if (_revokedTokens[entry.key]?.contains(entry.value.token) == true)
-          entry.key,
-    };
-    final tokens = reusableScopedTokens(
-      serverIds: selectedIds,
-      lookup: Stores.server.fetchOneRaw,
-      existing: existingTokens,
-      now: DateTime.now(),
-      invalidatedIds: invalidatedIds,
-    );
+    final now = _now();
+    final tokens = <String, ScopedToken>{};
+
     for (final id in selectedIds) {
       final spi = Stores.server.fetchOneRaw(id);
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
-      if (tokens.containsKey(id)) continue;
-      // A revoke is still in flight for this server, or the user excluded it
-      // while an earlier server was being issued: skip rather than minting a
-      // token that would be left dangling on the Monitor or race the revoke.
-      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
-        continue;
-      }
-      final existing = existingTokens[id];
+
+      final slot = _slot(id);
       final endpoint = normalizeAgentEndpoint(monitor.addr);
-      // Only when the *address* moved. An expiry that crept up is renewed by
-      // issuing again — the agent's `ON CONFLICT DO UPDATE` replaces the row
-      // in place — and revoking first would leave the watch with nothing for
-      // as long as the second request takes, or forever if it fails.
-      //
-      // A backstop, not the real revocation: `revokeScopedTokensLeftBehind`
-      // runs at the edit, while the old *login* is still known, and this only
-      // has the new one to try the old address with. So a failure here is
-      // expected and must not take the payload with it — it used to throw out
-      // of the whole build, and since the store event that started it had
-      // already been consumed, nothing was delivered and nothing retried. The
-      // watch kept whatever it had until the next unrelated edit.
-      if (existing != null &&
-          existing.endpoint != endpoint &&
-          !invalidatedIds.contains(id)) {
-        try {
-          await _revokeServer(spi, endpoint: existing.endpoint);
-        } catch (e, s) {
-          Loggers.app.info('Backstop revoke at ${existing.endpoint}', e, s);
-        }
+      final key = _issueKey(spi, endpoint);
+
+      if (slot.usableToken(key: key, endpoint: endpoint, now: now)
+          case final tok?) {
+        tokens[id] = tok;
+      } else {
+        // Reconcile in the background without blocking this payload.
+        _reconcileSlot(slot);
       }
-      final issued = await _issueForServer(spi, endpoint);
-      if (issued == null) continue;
-      // If the user excluded this server while the token was being minted, do
-      // not publish it; the queued revoke will clean it up after `_issuing`.
-      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
-        continue;
-      }
-      _mustReissue.remove(id);
-      tokens[id] = issued;
     }
-    // Re-filter against the latest selection and revoke state so a server
-    // excluded while an earlier server was being issued never ships a stale
-    // reused token.
-    final currentSelected = syncedServerIds().toSet();
-    tokens.removeWhere(
-      (id, tok) =>
-          !currentSelected.contains(id) ||
-          _revoking.containsKey(id) ||
-          _mustReissue.contains(id) ||
-          _revokedTokens[id]?.contains(tok.token) == true,
-    );
+
     return payloadFrom(
       selectedIds: selectedIds,
       lookup: Stores.server.fetchOneRaw,
@@ -278,80 +235,272 @@ final class WatchSync {
     );
   }
 
-  /// Shares one in-flight mint per `(server, endpoint, credential)` so a
-  /// concurrent `push()` and `requestData` do not issue back-to-back tokens
-  /// that overwrite each other's hash on the Monitor.
-  Future<ScopedToken?> _issueForServer(Spi spi, String endpoint) async {
-    final id = spi.id;
-    final key = _issueKey(spi, endpoint);
+  /// Seeds untouched slots once from the last delivered watch context so valid
+  /// existing tokens are reused without an extra mint after restart.
+  Future<void> _seedFromContextOnce() {
+    return _contextSeed ??= _seedFromContext();
+  }
 
-    while (true) {
-      final existing = _issuing[id];
-      if (existing != null) {
-        if (existing.key == key) return await existing.future;
-        await existing.future;
+  Future<void> _seedFromContext() async {
+    final existingTokens = await _existingTokens();
+    if (_disposed || existingTokens.isEmpty) return;
+
+    final selectedIds = syncedServerIds();
+    final invalidatedIds = <String>{
+      for (final entry in _slots.entries)
+        if (entry.value.revokeGen > 0 || entry.value.hasPendingRevoke)
+          entry.key,
+    };
+    final reusable = reusableScopedTokens(
+      serverIds: selectedIds,
+      lookup: Stores.server.fetchOneRaw,
+      existing: existingTokens,
+      now: _now(),
+      invalidatedIds: invalidatedIds,
+    );
+    for (final entry in reusable.entries) {
+      final spi = Stores.server.fetchOneRaw(entry.key);
+      final monitor = spi?.monitor;
+      if (spi == null || monitor == null) continue;
+      final slot = _slot(entry.key);
+      // Do not overwrite a slot that has already started revoking or minting.
+      if (slot.revokeGen > 0 ||
+          slot.hasPendingRevoke ||
+          slot.phase != _SlotPhase.idle) {
         continue;
       }
-
-      // Re-check right before issuing, including after waiting for a prior
-      // issue with different credentials to settle.
-      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
-        return null;
-      }
-
-      final completer = Completer<ScopedToken?>();
-      final inFlight = _InFlightIssue(key: key, future: completer.future);
-      _issuing[id] = inFlight;
-
-      ScopedToken? result;
-      try {
-        if (_issueToken case final issueToken?) {
-          result = await issueToken(spi, endpoint);
-        } else {
-          final monitor = spi.monitor;
-          if (monitor != null) {
-            final client = MonitorHttpClient(monitor);
-            try {
-              final issued = await client.issueWatchToken(watchClientId(spi.id));
-              result = ScopedToken(
-                token: issued.token,
-                endpoint: endpoint,
-                expiresAt: issued.expiresAt,
-              );
-            } finally {
-              client.dispose();
-            }
-          }
-        }
-      } catch (e, s) {
-        Loggers.app.warning(
-          'Failed to issue read-only watch token for $id',
-          e,
-          s,
-        );
-      } finally {
-        if (!completer.isCompleted) completer.complete(result);
-        if (identical(_issuing[id], inFlight)) _issuing.remove(id);
-      }
-      return result;
+      final endpoint = normalizeAgentEndpoint(monitor.addr);
+      slot.seed(token: entry.value, key: _issueKey(spi, endpoint));
     }
   }
 
-  static Object _issueKey(Spi spi, String endpoint) {
-    final m = spi.monitor;
-    return (endpoint, m?.pwd, m?.legacyUser, m?.certSha256, m?.allowInsecure);
+  _ServerTokenSlot _slot(String id) =>
+      _slots.putIfAbsent(id, () => _ServerTokenSlot(id));
+
+  /// Schedules a per-server revoke using a pre-change [Spi] snapshot.
+  void _scheduleRevoke(Spi spi, {String? endpoint}) {
+    if (_disposed) return;
+    final slot = _slot(spi.id);
+    final revokeEndpoint = endpoint ?? slot.activeToken?.endpoint;
+    slot.requestRevoke(
+      spi: spi,
+      endpoint: revokeEndpoint,
+      deadline: _now().add(_revokeCredentialTtl),
+    );
+    _reconcileSlot(slot);
+  }
+
+  void _reconcileSlot(_ServerTokenSlot slot) {
+    if (_disposed) return;
+    // Do not bypass an active revoke retry backoff timer; a new
+    // `requestRevoke` cancels the timer explicitly before reconciling.
+    if (slot.retryTimer != null) return;
+    if (slot.running != null) {
+      slot.dirty = true;
+      return;
+    }
+    slot.running = _runSlot(slot).whenComplete(() {
+      slot.running = null;
+      if (!_disposed && slot.dirty && slot.retryTimer == null) {
+        slot.dirty = false;
+        _reconcileSlot(slot);
+      }
+    });
+  }
+
+  Future<void> _runSlot(_ServerTokenSlot slot) async {
+    while (!_disposed) {
+      slot.dirty = false;
+
+      // 1. Revoke always runs before any mint for the same server.
+      if (slot.hasPendingRevoke) {
+        final shouldRetryLater = await _stepRevoke(slot);
+        if (shouldRetryLater) return;
+        // Loop again to check if the server was re-included meanwhile.
+        continue;
+      }
+
+      // When no watch is paired, stop once pending revocations have settled.
+      if (!_paired) {
+        slot.clearActive();
+        slot.phase = _SlotPhase.idle;
+        return;
+      }
+
+      // 2. Check desired state from the store.
+      final spi = Stores.server.fetchOneRaw(slot.id);
+      final monitor = spi?.monitor;
+      final excluded = Stores.setting.watchExcludedServerIds
+          .fetch()
+          .contains(slot.id);
+
+      if (spi == null || monitor == null || excluded) {
+        slot.clearActive();
+        slot.phase = _SlotPhase.idle;
+        return;
+      }
+
+      final endpoint = normalizeAgentEndpoint(monitor.addr);
+      final key = _issueKey(spi, endpoint);
+
+      // Already active with matching credentials and valid expiry.
+      if (slot.usableToken(key: key, endpoint: endpoint, now: _now()) != null) {
+        slot.phase = _SlotPhase.active;
+        return;
+      }
+
+      // Endpoint moved: backstop-revoke the old endpoint if we knew it.
+      final previousEndpoint = slot.activeToken?.endpoint;
+      if (previousEndpoint != null && previousEndpoint != endpoint) {
+        try {
+          await _revokeServer(spi, endpoint: previousEndpoint);
+        } catch (e, s) {
+          Loggers.app.info('Backstop revoke at $previousEndpoint', e, s);
+        }
+      }
+
+      slot.clearActive();
+      slot.phase = _SlotPhase.minting;
+      final genBeforeMint = slot.revokeGen;
+      final minted = await _mintToken(spi, endpoint);
+
+      if (_disposed) return;
+
+      // If a revoke arrived while minting, loop immediately to execute it.
+      if (slot.hasPendingRevoke || slot.revokeGen != genBeforeMint) {
+        continue;
+      }
+
+      if (minted == null) {
+        slot.phase = _SlotPhase.idle;
+        return;
+      }
+
+      // Re-check latest selection and credentials before activating.
+      final latestSpi = Stores.server.fetchOneRaw(slot.id);
+      final latestMonitor = latestSpi?.monitor;
+      final latestExcluded = Stores.setting.watchExcludedServerIds
+          .fetch()
+          .contains(slot.id);
+      if (latestSpi == null || latestMonitor == null || latestExcluded) {
+        // Excluded/deleted right as mint completed: revoke the just-minted
+        // token using the credentials we just used.
+        slot.requestRevoke(
+          spi: spi,
+          endpoint: endpoint,
+          deadline: _now().add(_revokeCredentialTtl),
+        );
+        continue;
+      }
+      final latestEndpoint = normalizeAgentEndpoint(latestMonitor.addr);
+      if (_issueKey(latestSpi, latestEndpoint) != key) {
+        // If the endpoint moved mid-mint, revoke the token just minted at the
+        // old endpoint before minting for the new one.
+        if (latestEndpoint != endpoint) {
+          slot.requestRevoke(
+            spi: spi,
+            endpoint: endpoint,
+            deadline: _now().add(_revokeCredentialTtl),
+          );
+        }
+        continue;
+      }
+
+      slot.activate(token: minted, key: key);
+      unawaited(push());
+      return;
+    }
+  }
+
+  /// Executes one revoke attempt for [slot]. Returns `true` if a bounded retry
+  /// timer was scheduled and the loop should yield until it fires.
+  Future<bool> _stepRevoke(_ServerTokenSlot slot) async {
+    final spi = slot.pendingRevokeSpi;
+    if (spi == null) return false;
+
+    slot.retryTimer?.cancel();
+    slot.retryTimer = null;
+    slot.clearActive();
+    slot.phase = _SlotPhase.revoking;
+
+    final endpoint = slot.pendingRevokeEndpoint;
+    var succeeded = false;
+    try {
+      await _revokeServer(spi, endpoint: endpoint);
+      succeeded = true;
+    } catch (e, s) {
+      Loggers.app.warning('Could not revoke watch token for ${slot.id}', e, s);
+    }
+
+    if (_disposed) return false;
+
+    if (succeeded) {
+      slot.clearPendingRevoke();
+      slot.phase = _SlotPhase.idle;
+      // Publish updated state only while a watch is paired (avoids re-entering
+      // `_revokeSelectedServers` in a loop when unpaired).
+      if (_paired) unawaited(push());
+      return false;
+    }
+
+    // Failed: decide whether to retry within attempt limit and credential TTL.
+    final now = _now();
+    final deadline = slot.revokeDeadline;
+    final canRetry =
+        slot.revokeAttempts < _maxRevokeRetries &&
+        deadline != null &&
+        now.isBefore(deadline);
+    if (canRetry) {
+      slot.revokeAttempts++;
+      slot.phase = _SlotPhase.idle;
+      final remaining = deadline.difference(now);
+      final delay = _revokeRetryDelay < remaining
+          ? _revokeRetryDelay
+          : remaining;
+      slot.retryTimer = Timer(delay, () {
+        slot.retryTimer = null;
+        if (!_disposed) _reconcileSlot(slot);
+      });
+      return true;
+    }
+
+    // Exhausted retries or credential retention TTL: drop the old Spi snapshot
+    // immediately so old credentials are never retained indefinitely in memory.
+    slot.clearPendingRevoke();
+    slot.phase = _SlotPhase.idle;
+    if (_paired) unawaited(push());
+    return false;
+  }
+
+  Future<ScopedToken?> _mintToken(Spi spi, String endpoint) async {
+    try {
+      if (_issueToken case final issueToken?) {
+        return await issueToken(spi, endpoint);
+      }
+      final monitor = spi.monitor;
+      if (monitor == null) return null;
+      final client = MonitorHttpClient(monitor);
+      try {
+        final issued = await client.issueWatchToken(watchClientId(spi.id));
+        return ScopedToken(
+          token: issued.token,
+          endpoint: endpoint,
+          expiresAt: issued.expiresAt,
+        );
+      } finally {
+        client.dispose();
+      }
+    } catch (e, s) {
+      Loggers.app.warning(
+        'Failed to issue read-only watch token for ${spi.id}',
+        e,
+        s,
+      );
+      return null;
+    }
   }
 
   /// Every server the watch is meant to show, in a stable order.
-  ///
-  /// Everything with a `monitor` agent, minus what the user held back. There
-  /// is no opt-in step: a server added in the app is on the watch by the next
-  /// push, which is what makes this automatic rather than a second list to
-  /// maintain.
-  ///
-  /// Ordered by name because the watch pages through this list and the order
-  /// has to be one someone can predict — store order is the order servers
-  /// happened to be added, which on a watch face reads as no order at all.
   static List<String> syncedServerIds() {
     final excluded = Stores.setting.watchExcludedServerIds.fetch().toSet();
     final servers =
@@ -364,21 +513,10 @@ final class WatchSync {
   }
 
   /// The agent-side `client_id` a watch token is scoped to.
-  ///
-  /// Distinct from the widgets' — see `WidgetSync.widgetClientId` — so that
-  /// revoking one device does not take the other's credential with it. The
-  /// agent keys `watch_tokens` by `(subject, client_id)`, which is what makes
-  /// the two independent. Both appear in `scopedClientIdsFor`, which is what
-  /// revokes them together when a server leaves its agent behind.
   static String watchClientId(String serverId) => 'watch:$serverId';
 
   /// The tokens the watch is currently holding, read back out of the context
   /// this app last delivered.
-  ///
-  /// The context is the only place they are kept: a scoped token is derived
-  /// state — it can always be minted again — so storing it beside the server
-  /// record would be one more copy of a credential to protect, back up and
-  /// forget to revoke.
   Future<Map<String, ScopedToken>> _existingTokens() async {
     try {
       final raw = _readContext != null
@@ -394,10 +532,6 @@ final class WatchSync {
             entry['id'] as String: ScopedToken(
               token: entry['token'] as String,
               endpoint: normalizeAgentEndpoint(entry['addr'] as String),
-              // Absent on a context written before this app kept the
-              // deadline, which `ScopedToken` reads as due for renewal —
-              // so an install carrying one of those gets a known expiry on
-              // its next push rather than a silent 401 up to 90 days later.
               expiresAt: switch (entry['expiresAt']) {
                 final num v => v.toInt(),
                 _ => 0,
@@ -412,10 +546,8 @@ final class WatchSync {
 
   /// Holds [next] back from the watch, and syncs everything else.
   ///
-  /// A server moving *into* the exclusion list has its credential revoked
-  /// right away rather than left to lapse. Holding a server back has to mean
-  /// the watch can no longer read it — a token that stays valid for another 90
-  /// days would make this a change to what is displayed and nothing more.
+  /// Persists the selection immediately and reconciles per-server revocations
+  /// and mints in the background.
   Future<void> updateExclusions(List<String> next) async {
     final previously = Stores.setting.watchExcludedServerIds.fetch().toSet();
     final nowExcluded = next.toSet();
@@ -423,94 +555,40 @@ final class WatchSync {
       for (final id in nowExcluded.where((id) => !previously.contains(id)))
         ?Stores.server.fetchOneRaw(id),
     ];
-    // Persisted before any network call: revoking against an offline monitor
-    // costs a ten-second timeout per server, and the user's choice must take
-    // effect locally right away rather than waiting behind unreachable agents.
+    final newlyIncluded = previously.where((id) => !nowExcluded.contains(id));
+
     Stores.setting.watchExcludedServerIds.put(next);
+
     for (final spi in toRevoke) {
-      _enqueueRevoke(spi);
+      _scheduleRevoke(spi);
+    }
+    for (final id in newlyIncluded) {
+      _reconcileSlot(_slot(id));
     }
     // Deliver the updated list for all non-revoking servers immediately.
     unawaited(push());
   }
 
-  /// Schedules a per-server revoke so a slow agent never stalls unrelated
-  /// servers, while blocking token reuse and concurrent issue for [spi.id]
-  /// until the revoke settles.
-  void _enqueueRevoke(Spi spi) {
-    final id = spi.id;
-    _mustReissue.add(id);
-    final prevRevoke = _revoking[id];
-    late final Future<void> op;
-    op = () async {
-      try {
-        if (prevRevoke != null) await prevRevoke;
-        final inFlightIssue = _issuing[id];
-        if (inFlightIssue != null) await inFlightIssue.future;
-        final existingTokens = await _existingTokens();
-        final held = existingTokens[id];
-        if (held != null && !held.isEmpty) {
-          _revokedTokens.putIfAbsent(id, () => <String>{}).add(held.token);
-        }
-        try {
-          await _revokeServer(spi, endpoint: held?.endpoint);
-        } catch (e, s) {
-          Loggers.app.warning('Could not revoke watch token for $id', e, s);
-        }
-      } finally {
-        if (identical(_revoking[id], op)) unawaited(_revoking.remove(id));
-        // If the server was re-included while revoking, this push now mints a
-        // fresh token; if it stayed excluded, `syncedServerIds()` omits it so
-        // nothing is re-issued.
-        unawaited(push());
-      }
-    }();
-    _revoking[id] = op;
-  }
-
   /// Hands this server's credential back, ahead of the record being deleted.
   ///
-  /// Deliberately does **not** push. The caller runs this while the server is
-  /// still in the store — it has to, since revoking needs the credential — and
-  /// a push here would rebuild the list from a store that still contains it,
-  /// mint a *replacement* token for a server about to be deleted, and deliver
-  /// it to the watch. Publishing is the caller's job, after the delete.
+  /// Uses the pre-deletion [spi] snapshot inside the server's slot so the
+  /// revoke runs asynchronously without blocking deletion UI.
   Future<void> revokeServer(Spi spi) async {
-    final existingTokens = await _existingTokens();
-    try {
-      await _revokeServer(spi, endpoint: existingTokens[spi.id]?.endpoint);
-    } catch (e, s) {
-      // The local server must remain removable while its monitor is offline.
-      // The token may outlive it remotely, but retaining local credentials is
-      // worse and there is no retry target once the user has deleted it.
-      Loggers.app.warning('Could not revoke watch token for ${spi.id}', e, s);
-    }
-    // A deleted server must not leave its id sitting in the exclusion list.
-    // Ids are generated, so a stale one is only clutter today — but it becomes
-    // a trap the moment one is reused by a restore, which would arrive already
-    // held back for a reason nobody can see.
     final excluded = Stores.setting.watchExcludedServerIds.fetch();
     if (excluded.contains(spi.id)) {
       Stores.setting.watchExcludedServerIds.put(
         excluded.where((id) => id != spi.id).toList(),
       );
     }
+    _scheduleRevoke(spi);
   }
 
   /// Hands every credential back, because there is no watch to use them.
-  ///
-  /// Per server and best effort: one unreachable agent must not stop the rest
-  /// being revoked, and must not abort the `_pushOnce` that called this.
   Future<void> _revokeSelectedServers() async {
-    final existingTokens = await _existingTokens();
     for (final id in syncedServerIds()) {
       final spi = Stores.server.fetchOneRaw(id);
       if (spi == null) continue;
-      try {
-        await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
-      } catch (e, s) {
-        Loggers.app.warning('Could not revoke watch token for $id', e, s);
-      }
+      _scheduleRevoke(spi);
     }
   }
 
@@ -544,14 +622,7 @@ final class WatchSync {
 
   /// The payload as a pure function of the selection, so the shape the watch
   /// depends on can be tested without a store behind it.
-  ///
-  /// `servers` carries scoped read-only tokens, and is the only shape the
-  /// watch is offered. The pre-v2 `urls` list is gone: it named the agent's
-  /// Go-compat endpoint, which the agent no longer serves, so emitting it
-  /// would only give an un-updated watch something that fails slightly later.
   @visibleForTesting
-  /// [stamp] orders this against the other payloads in flight, and is passed in
-  /// rather than read here so that this stays a pure function.
   static Map<String, dynamic> payloadFrom({
     required List<String> selectedIds,
     required Spi? Function(String id) lookup,
@@ -561,8 +632,6 @@ final class WatchSync {
     final servers = <Map<String, dynamic>>[];
     for (final id in selectedIds) {
       final spi = lookup(id);
-      // A server can be deleted, or lose its monitor config, after being
-      // picked; sending it would give the watch an entry it can never load.
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
       final token = tokens[id];
@@ -575,30 +644,14 @@ final class WatchSync {
         if (monitor.fallbackAddr case final f? when f.trim().isNotEmpty)
           'fallbackAddr': f.trim(),
         'token': token.token,
-        // Read back by `_existingTokens` on the next push to decide whether
-        // this one is close enough to expiry to replace. The watch app itself
-        // ignores the key — it finds out a token has expired by being told
-        // 401, which it cannot do anything about; renewing is this side's job.
         'expiresAt': token.expiresAt,
-        // The certificate this app accepted for a self-signed agent; the
-        // watch checks it where the system does not trust the certificate.
         'certSha256': ?monitor.certSha256,
-        // The watch refuses to send the token over plaintext without it, the
-        // way this app and the home widget do. Not a storage decision made
-        // here: the answer travels so the check can be made where the request
-        // is.
         'allowInsecure': monitor.allowInsecure,
       });
     }
 
     return {
       'v': _payloadVersion,
-      // When this was built, so the watch can tell a stale delivery from a
-      // fresh one. WatchConnectivity orders nothing between a queued userInfo,
-      // the application context and a reply to `requestData`, so a payload that
-      // had been sitting in the queue could land last and undo a newer
-      // selection. A watch that predates this ignores the key, and a payload
-      // without it is applied as before.
       'ts': stamp,
       'servers': servers,
     };
@@ -611,12 +664,16 @@ final class WatchSync {
     Map<String, dynamic> msg,
   ) => _onWatchAsked(msg);
 
+  /// Whether [serverId] still retains a pre-change credential snapshot for a
+  /// pending revoke retry.
+  @visibleForTesting
+  bool hasPendingRevokeFor(String serverId) =>
+      _slots[serverId]?.hasPendingRevoke ?? false;
+
   Future<Map<String, dynamic>> _onWatchAsked(Map<String, dynamic> msg) async {
     if (msg['action'] != 'requestData') return const {};
 
     final payload = await buildPayload();
-    // The watch is holding whatever it just got; the stored context has to say
-    // the same thing, or the next launch would hand it something older.
     if (_writeContext case final writeContext?) {
       unawaited(writeContext(payload));
     } else if (_wc case final wc?) {
@@ -630,6 +687,11 @@ final class WatchSync {
     return payload;
   }
 
+  static Object _issueKey(Spi spi, String endpoint) {
+    final m = spi.monitor;
+    return (endpoint, m?.pwd, m?.legacyUser, m?.certSha256, m?.allowInsecure);
+  }
+
   /// Never calls [push] itself — [push] awaits this, and doing both ways round
   /// would deadlock.
   Future<void> _setupOnce() {
@@ -637,8 +699,6 @@ final class WatchSync {
     if (existing != null) return existing;
     final setup = _setup();
     _ready = setup;
-    // Do not cache a failed setup forever: a transient platform-channel error
-    // would otherwise disable watch sync for the rest of the session.
     setup.catchError((Object _, StackTrace _) {
       if (identical(_ready, setup)) _ready = null;
     });
@@ -657,8 +717,6 @@ final class WatchSync {
     _activationSub = wc.activationStream.listen((event) {
       if (event['isActivated'] == true) unawaited(push());
     });
-    // A server's monitor address or login can change without the watch
-    // selection changing, and issuing again also rotates the scoped token.
     _serverStoreSub = Stores.server.watch().listen((_) => _schedulePush());
   }
 
@@ -668,13 +726,15 @@ final class WatchSync {
   }
 
   void dispose() {
+    _disposed = true;
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
     _pushes.cancelPending();
-    _revoking.clear();
-    _issuing.clear();
-    _mustReissue.clear();
-    _revokedTokens.clear();
+    for (final slot in _slots.values) {
+      slot.dispose();
+    }
+    _slots.clear();
+    _contextSeed = null;
     unawaited(_activationSub?.cancel());
     _activationSub = null;
     unawaited(_serverStoreSub?.cancel());
@@ -685,9 +745,86 @@ final class WatchSync {
   }
 }
 
-final class _InFlightIssue {
-  const _InFlightIssue({required this.key, required this.future});
+enum _SlotPhase { idle, minting, active, revoking }
 
-  final Object key;
-  final Future<ScopedToken?> future;
+/// Per-server token lifecycle state machine.
+final class _ServerTokenSlot {
+  _ServerTokenSlot(this.id);
+
+  final String id;
+  _SlotPhase phase = _SlotPhase.idle;
+  ScopedToken? activeToken;
+  Object? activeKey;
+
+  int revokeGen = 0;
+  Spi? pendingRevokeSpi;
+  String? pendingRevokeEndpoint;
+  int revokeAttempts = 0;
+  DateTime? revokeDeadline;
+  Timer? retryTimer;
+
+  Future<void>? running;
+  var dirty = false;
+
+  bool get hasPendingRevoke => pendingRevokeSpi != null;
+
+  ScopedToken? usableToken({
+    required Object key,
+    required String endpoint,
+    required DateTime now,
+  }) {
+    if (hasPendingRevoke || phase == _SlotPhase.revoking) return null;
+    final token = activeToken;
+    if (token == null || activeKey != key) return null;
+    if (!token.servesEndpoint(endpoint, now)) return null;
+    return token;
+  }
+
+  void seed({required ScopedToken token, required Object key}) {
+    activeToken = token;
+    activeKey = key;
+    phase = _SlotPhase.active;
+  }
+
+  void activate({required ScopedToken token, required Object key}) {
+    activeToken = token;
+    activeKey = key;
+    phase = _SlotPhase.active;
+  }
+
+  void clearActive() {
+    activeToken = null;
+    activeKey = null;
+  }
+
+  void requestRevoke({
+    required Spi spi,
+    required String? endpoint,
+    required DateTime deadline,
+  }) {
+    revokeGen++;
+    clearActive();
+    retryTimer?.cancel();
+    retryTimer = null;
+    pendingRevokeSpi = spi;
+    pendingRevokeEndpoint = endpoint;
+    revokeAttempts = 0;
+    revokeDeadline = deadline;
+  }
+
+  void clearPendingRevoke() {
+    retryTimer?.cancel();
+    retryTimer = null;
+    pendingRevokeSpi = null;
+    pendingRevokeEndpoint = null;
+    revokeAttempts = 0;
+    revokeDeadline = null;
+  }
+
+  void dispose() {
+    clearActive();
+    clearPendingRevoke();
+    phase = _SlotPhase.idle;
+    dirty = false;
+  }
 }

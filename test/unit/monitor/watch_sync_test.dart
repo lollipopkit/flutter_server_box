@@ -606,8 +606,7 @@ void main() {
     );
 
     test(
-      'a server excluded and revoked while an earlier server is being issued '
-      'is not issued when the loop reaches it',
+      'an offline monitor minting slowly does not block publishing other servers',
       () async {
         final serverA = monitorSpi(
           id: 'a',
@@ -629,20 +628,25 @@ void main() {
 
         final issueAStarted = Completer<void>();
         final releaseIssueA = Completer<void>();
-        final revokeBCompleted = Completer<void>();
-        var issuedForB = 0;
+        final deliveredB = Completer<Map<String, dynamic>>();
+        final deliveredBoth = Completer<Map<String, dynamic>>();
 
         final sync = WatchSync.forTest(
           readContext: () async => context,
           writeContext: (payload) async {
             context = payload;
+            final ids = payloadServers(payload).map((e) => e['id']).toSet();
+            if (ids.contains('b') && !deliveredB.isCompleted) {
+              deliveredB.complete(payload);
+            }
+            if (ids.containsAll({'a', 'b'}) && !deliveredBoth.isCompleted) {
+              deliveredBoth.complete(payload);
+            }
           },
           issueToken: (spi, endpoint) async {
             if (spi.id == 'a') {
               if (!issueAStarted.isCompleted) issueAStarted.complete();
               await releaseIssueA.future;
-            } else if (spi.id == 'b') {
-              issuedForB++;
             }
             return ScopedToken(
               token: 'tok-${spi.id}-new',
@@ -650,37 +654,30 @@ void main() {
               expiresAt: futureExpiry,
             );
           },
-          revokeToken: (spi, endpoint) async {
-            if (spi.id == 'b' && !revokeBCompleted.isCompleted) {
-              revokeBCompleted.complete();
-            }
-          },
+          revokeToken: (_, _) async {},
         );
         addTearDown(sync.dispose);
 
-        // Start a build that has both A and B in its initial `selectedIds`.
-        final buildFuture = sync.buildPayload();
+        await sync.push().timeout(const Duration(seconds: 2));
         await issueAStarted.future.timeout(const Duration(seconds: 2));
 
-        // While A is blocked issuing, exclude B and let B's revoke finish so
-        // `_revoking['b']` is already cleared before the loop moves to B.
-        await sync.updateExclusions(['b']);
-        await revokeBCompleted.future.timeout(const Duration(seconds: 2));
-
-        // Release A and let the original build finish.
-        releaseIssueA.complete();
-        final payload = await buildFuture.timeout(const Duration(seconds: 2));
-
-        expect(issuedForB, 0);
-        expect(
-          payloadServers(payload).map((e) => e['id']).toList(),
-          ['a'],
+        // B is minted and delivered while A is still stuck.
+        final payloadWithB = await deliveredB.future.timeout(
+          const Duration(seconds: 2),
         );
+        expect(payloadServers(payloadWithB).map((e) => e['id']), ['b']);
+
+        // Once A finishes, a follow-up push delivers both.
+        releaseIssueA.complete();
+        final finalPayload = await deliveredBoth.future.timeout(
+          const Duration(seconds: 2),
+        );
+        expect(payloadServers(finalPayload).map((e) => e['id']), ['a', 'b']);
       },
     );
 
     test(
-      'concurrent push and requestData share one in-flight issue per server',
+      'concurrent push and requestData share one in-flight slot mint per server',
       () async {
         final serverA = monitorSpi(
           id: 'a',
@@ -696,12 +693,17 @@ void main() {
 
         final issueAStarted = Completer<void>();
         final releaseIssueA = Completer<void>();
+        final deliveredA = Completer<Map<String, dynamic>>();
         var issueCalls = 0;
 
         final sync = WatchSync.forTest(
           readContext: () async => context,
           writeContext: (payload) async {
             context = payload;
+            if (payloadServers(payload).any((e) => e['id'] == 'a') &&
+                !deliveredA.isCompleted) {
+              deliveredA.complete(payload);
+            }
           },
           issueToken: (spi, endpoint) async {
             issueCalls++;
@@ -717,26 +719,68 @@ void main() {
         );
         addTearDown(sync.dispose);
 
-        final pushFuture = sync.push();
+        await sync.push().timeout(const Duration(seconds: 2));
         await issueAStarted.future.timeout(const Duration(seconds: 2));
 
-        // Watch asks for data while `push()` is mid-issue for the same server.
-        final askFuture = sync.handleWatchMessage({'action': 'requestData'});
-        await Future<void>.delayed(Duration.zero);
+        // Watch asks for data while A's slot is mid-mint: must not start a
+        // second mint.
+        await sync
+            .handleWatchMessage({'action': 'requestData'})
+            .timeout(const Duration(seconds: 2));
 
         releaseIssueA.complete();
-        await pushFuture.timeout(const Duration(seconds: 2));
-        final askPayload = await askFuture.timeout(const Duration(seconds: 2));
+        final delivered = await deliveredA.future.timeout(
+          const Duration(seconds: 2),
+        );
 
         expect(issueCalls, 1);
-        expect(
-          payloadServers(askPayload).single['token'],
-          'tok-a-1',
+        expect(payloadServers(delivered).single['token'], 'tok-a-1');
+      },
+    );
+
+    test(
+      'failed revoke retries bounded times then drops the pre-deletion Spi '
+      'snapshot so old credentials are not retained indefinitely',
+      () async {
+        final doomed = monitorSpi(
+          id: 'doomed',
+          name: 'Doomed',
+          addr: 'https://10.0.0.9:3770',
+          pwd: 'old-password',
         );
-        expect(
-          payloadServers(context!).single['token'],
-          'tok-a-1',
+        Stores.server.put(doomed);
+
+        var attempts = 0;
+        final doneRetrying = Completer<void>();
+        final seenPwds = <String?>[];
+
+        final sync = WatchSync.forTest(
+          readContext: () async => null,
+          writeContext: (_) async {},
+          issueToken: (_, _) async => throw StateError('must not mint'),
+          revokeToken: (spi, _) async {
+            attempts++;
+            seenPwds.add(spi.monitor?.pwd);
+            if (attempts == 3 && !doneRetrying.isCompleted) {
+              doneRetrying.complete();
+            }
+            throw StateError('monitor unreachable');
+          },
+          revokeRetryDelay: Duration.zero,
         );
+        addTearDown(sync.dispose);
+
+        // Revoke with pre-deletion Spi snapshot, then delete from store.
+        await sync.revokeServer(doomed);
+        Stores.server.deleteById(doomed.id);
+
+        // Initial attempt + 2 retries = 3 total attempts, all using old Spi.
+        await doneRetrying.future.timeout(const Duration(seconds: 2));
+        await Future<void>.delayed(Duration.zero);
+
+        expect(attempts, 3);
+        expect(seenPwds, ['old-password', 'old-password', 'old-password']);
+        expect(sync.hasPendingRevokeFor(doomed.id), isFalse);
       },
     );
   });

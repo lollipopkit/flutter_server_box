@@ -342,25 +342,15 @@ class SshLocalTunnel {
     unawaited(close());
   }
 
-  Future<void> close() {
-    final existing = _closing;
-    if (existing != null) return existing;
-    late final Future<void> closing;
-    closing = _close().whenComplete(() {
-      if (!_done.isCompleted) _done.complete();
-    });
-    _closing = closing;
-    return closing;
-  }
-
-  Future<void> _close() async {
+  Future<void> close({bool waitRemote = true}) async {
     _closed = true;
     for (final stopped in _openingStops.toList()) {
       if (!stopped.isCompleted) {
         stopped.completeError(StateError('Tunnel closed'));
       }
     }
-    await _stopListening();
+    final localStop = _localClose ??= _stopListening();
+    await localStop;
 
     for (final socket in _pendingSockets.toList()) {
       socket.destroy();
@@ -370,11 +360,29 @@ class SshLocalTunnel {
     final connections = _connections.toList();
     _connections.clear();
     for (final connection in connections) {
-      await connection.close();
+      // `connection.close` destroys the local socket synchronously before any
+      // remote channel close await.
+      final f = connection.close(waitRemote: true).catchError((_) {});
+      _closingConnections.add(f);
+      unawaited(f.whenComplete(() => _closingConnections.remove(f)));
     }
-    await Future.wait(
-      _bridges.toList().map((bridge) => bridge.catchError((_) {})),
-    );
+
+    final remote = _closing ??= _finishRemoteClose();
+    if (waitRemote) await remote;
+  }
+
+  Future<void>? _localClose;
+  final Set<Future<void>> _closingConnections = {};
+
+  Future<void> _finishRemoteClose() async {
+    try {
+      await Future.wait([
+        ..._closingConnections,
+        ..._bridges.map((bridge) => bridge.catchError((_) {})),
+      ]);
+    } finally {
+      if (!_done.isCompleted) _done.complete();
+    }
   }
 }
 

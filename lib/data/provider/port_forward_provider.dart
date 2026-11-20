@@ -10,6 +10,7 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/listener.dart';
 import 'package:server_box/core/monitor/tunnel.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
+import 'package:server_box/core/utils/cancel_scope.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
@@ -59,21 +60,15 @@ String? portForwardUnavailable(ServerState server, {required bool listen}) {
 @Riverpod(keepAlive: true)
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _ForwardEntry> _forwards = {};
-  final Set<String> _inFlight = {};
-  final Map<String, _PendingStart> _pendingStarts = {};
+  final Map<String, CancelScope> _scopes = {};
+  final Map<String, Future<void>> _remoteReclaims = {};
   Future<void>? _clearFuture;
-  var _generation = 0;
   var _clearing = false;
 
   /// Set once, by [dispose], and never unset.
-  ///
-  /// Kept apart from [_clearing] because the two have different lifetimes and
-  /// used to share a field: `delServer` awaits `clear()`, which awaits every
-  /// entry closing, and the notifier can be torn down inside that window. The
-  /// `finally` that ends a clear then wiped the flag `dispose` had just set,
-  /// and a later `startForward` walked through the guard onto a disposed
-  /// notifier and threw reading `state`.
   var _disposed = false;
+
+  static const _remoteReclaimWait = Duration(seconds: 2);
 
   @override
   PortForwardState build(String serverId) {
@@ -86,14 +81,22 @@ class PortForwardNotifier extends _$PortForwardNotifier {
             .where((e) => e.value.viaSsh)
             .toList();
         if (dropped.isEmpty) return;
-        _generation++;
         final active = Map<String, PortForwardStatus>.from(
           state.activeForwards,
         );
         for (final MapEntry(:key, :value) in dropped) {
           _forwards.remove(key);
           active.remove(key);
-          value.close().catchError((_) {});
+          final scope = _scopes.remove(key);
+          if (scope != null) {
+            // Start cancel first so `scope.remoteDone` is initialized before
+            // `_trackRemoteReclaim` captures it.
+            final cancel = scope.cancel(waitRemote: false);
+            _trackRemoteReclaim(key, scope);
+            unawaited(cancel);
+          } else {
+            unawaited(value.close(waitRemote: false).catchError((_) {}));
+          }
         }
         state = state.copyWith(activeForwards: active);
       }
@@ -103,6 +106,27 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   String get _serverId => state.serverId;
+
+  bool _isCurrent(String id, CancelScope scope) =>
+      !_disposed && !_clearing && !scope.isCanceled && identical(_scopes[id], scope);
+
+  void _trackRemoteReclaim(String id, CancelScope scope) {
+    late final Future<void> reclaim;
+    reclaim = scope.remoteDone.catchError((_) {}).whenComplete(() {
+      if (identical(_remoteReclaims[id], reclaim)) _remoteReclaims.remove(id);
+    });
+    _remoteReclaims[id] = reclaim;
+  }
+
+  Future<void> _cancelScope(String id, CancelScope scope) async {
+    _forwards.remove(id);
+    // Invoke `cancel` first (synchronously initializes `remoteDone`), register
+    // the reclaim immediately so an overlapping `startForward` sees it, then
+    // await local teardown.
+    final cancel = scope.cancel(waitRemote: false);
+    _trackRemoteReclaim(id, scope);
+    await cancel;
+  }
 
   /// Connects the shell if it isn't already, then returns the client.
   ///
@@ -116,16 +140,12 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     // Permanent, and not [_clearing]: a clear running underneath ends with a
     // `finally` that puts that flag back.
     _disposed = true;
-    _generation++;
-    final pending = _pendingStarts.values.toList();
-    _pendingStarts.clear();
-    for (final op in pending) {
-      unawaited(op.cancel());
-    }
-    final forwards = _forwards.values.toList();
+    final scopes = _scopes.values.toList();
+    _scopes.clear();
     _forwards.clear();
-    for (final entry in forwards) {
-      unawaited(entry.close(waitRemote: false).catchError((_) {}));
+    _remoteReclaims.clear();
+    for (final scope in scopes) {
+      unawaited(scope.cancel(waitRemote: false));
     }
   }
 
@@ -148,19 +168,15 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<void> _clear() async {
     _clearing = true;
-    _generation++;
-    final pending = _pendingStarts.values.toList();
-    _pendingStarts.clear();
-    final forwards = _forwards.values.toList();
+    final entries = _scopes.entries.toList();
+    _scopes.clear();
     _forwards.clear();
     try {
-      // Cancel every registered start right away (e.g. a Monitor control
-      // socket waiting for `ready`) and tear down live listeners locally
-      // without waiting for remote close handshakes or stalled dials.
+      // Cancel every registered scope right away: local listeners and sockets
+      // close immediately while remote close handshakes finish in the
+      // background.
       await Future.wait([
-        for (final op in pending) op.cancel(),
-        for (final entry in forwards)
-          entry.close(waitRemote: false).catchError((_) {}),
+        for (final MapEntry(:key, :value) in entries) _cancelScope(key, value),
       ]);
       if (!ref.mounted) return;
       Stores.portForward.clearServer(_serverId);
@@ -205,27 +221,29 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> startForward(String id) {
-    if (_disposed || _clearing || !_inFlight.add(id)) return Future.value();
-    final generation = _generation;
-    // Registered synchronously before the first await so `clear()` or
-    // `dispose()` can immediately mark it canceled and claim any resource it
-    // opens before returning.
-    final pending = _PendingStart();
-    _pendingStarts[id] = pending;
-    return _startForward(id, generation, pending).whenComplete(() {
-      _inFlight.remove(id);
-      if (identical(_pendingStarts[id], pending)) _pendingStarts.remove(id);
-    });
+    if (_disposed || _clearing) return Future.value();
+    // Register a fresh scope synchronously before the first await so `stop` or
+    // `clear` can immediately cancel this start and supersede any prior scope.
+    final prior = _scopes[id];
+    final scope = CancelScope();
+    _scopes[id] = scope;
+    return _startForward(id, scope, prior: prior);
   }
 
   Future<void> _startForward(
     String id,
-    int generation,
-    _PendingStart pending,
-  ) async {
+    CancelScope scope, {
+    CancelScope? prior,
+  }) async {
+    if (prior != null) {
+      await _cancelScope(id, prior);
+      if (!_isCurrent(id, scope)) return;
+    }
+
     final config = state.configs.firstWhereOrNull((c) => c.id == id);
     if (config == null) {
       Loggers.app.warning('Port forward config not found: $id');
+      if (identical(_scopes[id], scope)) _scopes.remove(id);
       return;
     }
 
@@ -234,35 +252,42 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     // the other two wearing the same name.
     Diag.crumb(SbDiag.forward, 'start', data: {'type': config.type.name});
 
-    final existing = _forwards[id];
-    if (existing != null) {
-      _forwards.remove(id);
-      await existing.close().catchError((_) {});
-    }
-    if (pending.canceled || _disposed || _clearing || generation != _generation) {
-      return;
+    // For an immediate restart of the same remote port, give the previous
+    // remote listener a bounded window to release the port on the server,
+    // aborting immediately if this new start is itself canceled.
+    if (config.type == PortForwardType.remote) {
+      final reclaim = _remoteReclaims[id];
+      if (reclaim != null) {
+        await Future.any([reclaim, scope.onCanceled]).timeout(
+          _remoteReclaimWait,
+          onTimeout: () {},
+        );
+        if (!_isCurrent(id, scope)) return;
+      }
     }
 
     try {
       final entry = switch (config.type) {
-        PortForwardType.local => await _startLocalForward(config, pending),
-        PortForwardType.remote => await _startRemoteForward(config, pending),
-        PortForwardType.dynamic => await _startDynamicForward(config, pending),
+        PortForwardType.local => await _startLocalForward(config, scope),
+        PortForwardType.remote => await _startRemoteForward(config, scope),
+        PortForwardType.dynamic => await _startDynamicForward(config, scope),
       };
       if (entry == null) return;
-      if (pending.canceled ||
-          _disposed ||
-          _clearing ||
-          generation != _generation) {
+      if (!_isCurrent(id, scope)) {
         await entry.close(waitRemote: false).catchError((_) {});
         return;
       }
       _forwards[config.id] = entry;
+      // Bind entry teardown to this scope so `stopForward` / `clear` /
+      // `dispose` only need to cancel the scope.
+      scope.onLocalDispose(() => entry.close(waitRemote: false));
+      scope.onRemoteDispose(() => entry.close(waitRemote: true));
       // A forward can end from the far side — the agent stopping its listener,
       // its grant taken away — and is no longer active once it has.
       unawaited(
         entry.ended.then((_) {
-          if (_disposed || !identical(_forwards[config.id], entry)) return;
+          if (!_isCurrent(config.id, scope)) return;
+          _scopes.remove(config.id);
           _forwards.remove(config.id);
           _updateStatus(
             config.id,
@@ -276,12 +301,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       );
       Diag.crumb(SbDiag.forward, 'start ok', data: {'type': config.type.name});
     } catch (e) {
-      if (pending.canceled ||
-          _disposed ||
-          _clearing ||
-          generation != _generation) {
-        return;
-      }
+      if (!_isCurrent(id, scope)) return;
+      _scopes.remove(id);
       // A local forward binds a port on this device and a remote one asks the
       // server to, which fails for reasons the other cannot have — an address
       // already in use here, against a sshd that refuses to listen.
@@ -324,14 +345,14 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<_ForwardEntry?> _startLocalForward(
     PortForwardConfig config,
-    _PendingStart pending,
+    CancelScope scope,
   ) async {
     if (config.remoteHost == null || config.remotePort == null) {
       throw StateError('A local forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
     await _ensureCarried(server, listen: false);
-    if (pending.canceled) return null;
+    if (scope.isCanceled) return null;
     // Each connection is dialled as it arrives, as a remote desktop's is —
     // see [ServerTcpDialer].
     final dialer = _dialer(server);
@@ -349,8 +370,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       dialer.close();
       rethrow;
     }
-    if (pending.canceled) {
-      await tunnel.close().catchError((_) {});
+    if (scope.isCanceled) {
+      await tunnel.close(waitRemote: false).catchError((_) {});
       dialer.close();
       return null;
     }
@@ -363,20 +384,20 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<_ForwardEntry?> _startRemoteForward(
     PortForwardConfig config,
-    _PendingStart pending,
+    CancelScope scope,
   ) async {
     if (config.remoteHost == null || config.remotePort == null) {
       throw StateError('A remote forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
     await _ensureCarried(server, listen: true);
-    if (pending.canceled) return null;
+    if (scope.isCanceled) return null;
     final localHost = config.localHost ?? 'localhost';
     if (_viaAgent(server)) {
-      return _startAgentRemoteForward(server, config, localHost, pending);
+      return _startAgentRemoteForward(server, config, localHost, scope);
     }
     final client = await _connectedClient();
-    if (pending.canceled) return null;
+    if (scope.isCanceled) return null;
     final forward = await client.forwardRemote(
       host: config.remoteHost!,
       port: config.remotePort!,
@@ -384,10 +405,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     if (forward == null) {
       throw PortForwardUnavailable(l10n.sshTcpForwardingProhibited);
     }
-    if (pending.canceled) {
-      try {
-        await Future.microtask(() => forward.close());
-      } catch (_) {}
+    if (scope.isCanceled) {
+      unawaited(Future.microtask(() => forward.close()).catchError((_) {}));
       return null;
     }
     Loggers.app.info(
@@ -408,7 +427,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     ServerState server,
     PortForwardConfig config,
     String localHost,
-    _PendingStart pending,
+    CancelScope scope,
   ) async {
     final monitor = server.spi.monitorOn;
     if (monitor == null) {
@@ -418,7 +437,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     final client = lease.client;
     try {
       final socket = await client.openListen();
-      if (pending.canceled) {
+      if (scope.isCanceled) {
         unawaited(socket.close().catchError((_) {}));
         lease.release();
         return null;
@@ -433,11 +452,14 @@ class PortForwardNotifier extends _$PortForwardNotifier {
           config.localPort,
           timeout: ServerTcpDialer.openTimeout,
         ),
-        // Registered synchronously before `listen` is sent so `clear()` closes
-        // the control socket right away instead of waiting for `ready`.
-        onCreated: (l) => pending.onCancel(() => l.close(waitRemote: false)),
+        // Registered synchronously before `listen` is sent so `stop` / `clear`
+        // closes locally right away and tracks remote reclamation separately.
+        onCreated: (l) {
+          scope.onLocalDispose(() => l.close(waitRemote: false));
+          scope.onRemoteDispose(() => l.close(waitRemote: true));
+        },
       );
-      if (pending.canceled) {
+      if (scope.isCanceled) {
         await listener.close(waitRemote: false).catchError((_) {});
         lease.release();
         return null;
@@ -457,11 +479,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   /// as a local forward's is — see [SshLocalTunnel.bindSocks].
   Future<_ForwardEntry?> _startDynamicForward(
     PortForwardConfig config,
-    _PendingStart pending,
+    CancelScope scope,
   ) async {
     final server = ref.read(serverProvider(_serverId));
     await _ensureCarried(server, listen: false);
-    if (pending.canceled) return null;
+    if (scope.isCanceled) return null;
     final dialer = _dialer(server);
     final SshLocalTunnel tunnel;
     try {
@@ -475,8 +497,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       dialer.close();
       rethrow;
     }
-    if (pending.canceled) {
-      await tunnel.close().catchError((_) {});
+    if (scope.isCanceled) {
+      await tunnel.close(waitRemote: false).catchError((_) {});
       dialer.close();
       return null;
     }
@@ -488,21 +510,21 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> stopForward(String id) async {
-    if (!_inFlight.add(id)) return;
-    try {
-      final entry = _forwards[id];
+    final scope = _scopes.remove(id);
+    if (scope != null) {
+      await _cancelScope(id, scope);
+      Loggers.app.info('Port forward stopped: $id');
+    } else {
+      final entry = _forwards.remove(id);
       if (entry != null) {
-        await entry.close().catchError((_) {});
-        _forwards.remove(id);
+        await entry.close(waitRemote: false).catchError((_) {});
         Loggers.app.info('Port forward stopped: $id');
       }
-      // `close` is awaited, and `dispose` can run underneath it. Every other
-      // path here already checks; this one wrote to a disposed notifier.
-      if (_disposed) return;
-      _updateStatus(id, PortForwardStatus(id: id, isActive: false));
-    } finally {
-      _inFlight.remove(id);
     }
+    // Do not restore an inactive entry if `dispose`/`clear` ran or a newer
+    // `startForward` already took ownership of `id`.
+    if (_disposed || _clearing || _scopes.containsKey(id)) return;
+    _updateStatus(id, PortForwardStatus(id: id, isActive: false));
   }
 
   Future<void> toggleForward(String id) async {
@@ -535,33 +557,6 @@ abstract class _ForwardEntry {
   Future<void> get ended => Completer<void>().future;
 }
 
-/// Cancellation token for one in-flight `startForward` call.
-final class _PendingStart {
-  var _canceled = false;
-  final _onCancel = <Future<void> Function()>[];
-
-  bool get canceled => _canceled;
-
-  /// Registers [cleanup] to run if this start is canceled; runs immediately if
-  /// cancellation has already occurred.
-  void onCancel(Future<void> Function() cleanup) {
-    if (_canceled) {
-      unawaited(cleanup().catchError((_) {}));
-      return;
-    }
-    _onCancel.add(cleanup);
-  }
-
-  Future<void> cancel() async {
-    if (_canceled) return;
-    _canceled = true;
-    final cleanups = _onCancel.toList();
-    _onCancel.clear();
-    if (cleanups.isEmpty) return;
-    await Future.wait(cleanups.map((fn) => fn().catchError((_) {})));
-  }
-}
-
 /// A local listener whose connections are dialled from the server: a local
 /// forward to one address, or a dynamic one to whatever each names.
 class _TunnelForwardEntry extends _ForwardEntry {
@@ -575,7 +570,7 @@ class _TunnelForwardEntry extends _ForwardEntry {
 
   @override
   Future<void> close({bool waitRemote = true}) async {
-    await tunnel.close();
+    await tunnel.close(waitRemote: waitRemote);
     dialer.close();
   }
 }
@@ -610,6 +605,7 @@ class _RemoteForwardEntry extends _ForwardEntry {
   final int remotePort;
   final List<_ActiveConnection> _connections = [];
   StreamSubscription<SSHForwardChannel>? _subscription;
+  var _closed = false;
 
   _RemoteForwardEntry({
     required this.forward,
@@ -619,8 +615,17 @@ class _RemoteForwardEntry extends _ForwardEntry {
 
   void start() {
     _subscription = forward.connections.listen((channel) async {
+      if (_closed) {
+        unawaited(channel.close().catchError((_) {}));
+        return;
+      }
       try {
         final socket = await Socket.connect(remoteHost, remotePort);
+        if (_closed) {
+          socket.destroy();
+          unawaited(channel.close().catchError((_) {}));
+          return;
+        }
         final conn = _ActiveConnection(socket: socket, forward: channel);
         _connections.add(conn);
         final pipe1 = channel.stream
@@ -646,6 +651,7 @@ class _RemoteForwardEntry extends _ForwardEntry {
 
   @override
   Future<void> close({bool waitRemote = true}) async {
+    _closed = true;
     await _subscription?.cancel();
     final connections = _connections.toList();
     for (final conn in connections) {

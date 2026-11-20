@@ -29,6 +29,7 @@ class MonitorRemoteListener {
 
   final _ready = Completer<int>();
   final _done = Completer<void>();
+  final _peerEnded = Completer<void>();
   final Set<SshTunnelBridge> _bridges = {};
   final Set<Future<void>> _closingBridges = {};
   StreamSubscription<dynamic>? _sub;
@@ -41,7 +42,7 @@ class MonitorRemoteListener {
   /// Whether this side has closed the listener locally.
   bool get isClosed => _closed;
 
-  /// Completes when the listener has stopped, including remote close or timeout.
+  /// Completes when the listener has stopped, including peer closure or timeout.
   Future<void> get done => _done.future;
 
   /// Asks the agent on [socket] — `MonitorHttpClient.openListen` — to listen
@@ -67,22 +68,26 @@ class MonitorRemoteListener {
       listener._onFrame,
       onError: (Object e, StackTrace s) {
         Loggers.app.warning('Monitor listener socket error', e, s);
+        listener._markPeerEnded();
         unawaited(listener.close());
       },
-      onDone: () => unawaited(listener.close()),
+      onDone: () {
+        listener._markPeerEnded();
+        unawaited(listener.close());
+      },
       cancelOnError: true,
     );
-    onCreated?.call(listener);
-    if (listener._closed) {
-      // `close()` completed `_ready` with an error before anyone awaited it.
-      listener._ready.future.ignore();
-      throw const MonitorHttpErr(
-        type: MonitorHttpErrType.net,
-        message: 'The Monitor listener was canceled before starting',
-      );
-    }
-    socket.add(jsonEncode({'type': 'listen', 'host': bindHost, 'port': bindPort}));
     try {
+      onCreated?.call(listener);
+      if (listener._closed) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.net,
+          message: 'The Monitor listener was canceled before starting',
+        );
+      }
+      socket.add(
+        jsonEncode({'type': 'listen', 'host': bindHost, 'port': bindPort}),
+      );
       listener.port = await listener._ready.future.timeout(
         timeout,
         onTimeout: () => throw const MonitorHttpErr(
@@ -91,10 +96,17 @@ class MonitorRemoteListener {
         ),
       );
     } catch (_) {
+      // Ensure any error completed on `_ready` before it was awaited does not
+      // surface as an unhandled async error.
+      listener._ready.future.ignore();
       await listener.close(waitRemote: false);
       rethrow;
     }
     return listener;
+  }
+
+  void _markPeerEnded() {
+    if (!_peerEnded.isCompleted) _peerEnded.complete();
   }
 
   void _onFrame(dynamic event) {
@@ -183,12 +195,10 @@ class MonitorRemoteListener {
           ),
         );
       }
-      final sub = _sub;
-      _sub = null;
-      if (sub != null) unawaited(sub.cancel().catchError((_) {}));
     }
 
-    // Start closing the control socket immediately, then tear down bridges.
+    // Keep the receive subscription attached until the peer terminates or the
+    // close handshake times out; `_onFrame` discards frames while `_closed`.
     final remoteSocketClose = _remoteClose ??= _closeControlSocket();
 
     final bridges = _bridges.toList();
@@ -213,11 +223,20 @@ class MonitorRemoteListener {
 
   Future<void> _closeControlSocket() async {
     try {
-      await _socket
-          .close()
-          .timeout(const Duration(seconds: 5), onTimeout: () => null)
-          .catchError((_) {});
+      unawaited(
+        _socket
+            .close()
+            .timeout(const Duration(seconds: 5), onTimeout: () => null)
+            .catchError((_) {}),
+      );
+      await _peerEnded.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {},
+      );
     } finally {
+      final sub = _sub;
+      _sub = null;
+      if (sub != null) unawaited(sub.cancel().catchError((_) {}));
       if (!_done.isCompleted) _done.complete();
     }
   }

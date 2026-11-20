@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/pending_ops.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/admin/user_manager.dart';
@@ -66,21 +67,27 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   String _query = '';
   bool _systemExpanded = true;
   bool _groupSystemExpanded = true;
-  bool _refreshing = false;
+  final _ops = PendingOps();
   bool _refreshQueued = false;
-  bool _mutating = false;
-  bool get _busy => _refreshing || _mutating;
+  bool get _busy => _ops.isBusy;
   bool _unsupported = false;
   String? _failure;
+
+  void _onOpsChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _ops.loading.addListener(_onOpsChanged);
     Future.microtask(_refresh);
   }
 
   @override
   void dispose() {
+    _ops.loading.removeListener(_onOpsChanged);
+    _ops.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -1070,7 +1077,7 @@ final class _GroupSectionSpec {
 extension on _UsersPageState {
   Future<void> _refresh() async {
     if (!mounted) return;
-    if (_refreshing) {
+    if (_ops.isRunning('refresh')) {
       _refreshQueued = true;
       return;
     }
@@ -1084,26 +1091,24 @@ extension on _UsersPageState {
       return;
     }
 
-    _rebuild(() {
-      _refreshing = true;
-      _unsupported = false;
-      _failure = null;
-    });
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      final catalog = await UserManager.list(exec);
-      if (!mounted) return;
-      _rebuild(() => _catalog = catalog);
-    } catch (e, s) {
-      Loggers.app.warning('List users for ${widget.args.spi.id}', e, s);
-      if (mounted) _rebuild(() => _failure = '$e');
-    } finally {
-      if (mounted) {
-        final rerun = _refreshQueued;
-        _refreshQueued = false;
-        _rebuild(() => _refreshing = false);
-        if (rerun) unawaited(_refresh());
+    await _ops.run('refresh', () async {
+      _rebuild(() {
+        _unsupported = false;
+        _failure = null;
+      });
+      try {
+        final exec = await ref.read(_provider.notifier).ensureExec();
+        final catalog = await UserManager.list(exec);
+        if (!mounted) return;
+        _rebuild(() => _catalog = catalog);
+      } catch (e, s) {
+        Loggers.app.warning('List users for ${widget.args.spi.id}', e, s);
+        if (mounted) _rebuild(() => _failure = '$e');
       }
+    });
+    if (mounted && _refreshQueued) {
+      _refreshQueued = false;
+      unawaited(_refresh());
     }
   }
 
@@ -1187,42 +1192,41 @@ extension on _UsersPageState {
   }
 
   Future<bool> _runMutation(String script) async {
-    if (_mutating) return false;
-    _rebuild(() => _mutating = true);
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      final isRoot =
-          widget.args.spi.isRoot || _catalog?.currentUser == 'root';
-      if (!mounted) return false;
-      final result = await SudoPassword.retry(
-        context,
-        widget.args.spi.id,
-        label: widget.args.spi.ssh?.user ?? _catalog?.currentUser,
-        attempt: (password) => PrivilegedExec.run(
-          exec,
-          script,
-          isRoot: password == null && isRoot,
-          password: password,
-        ),
-        rejected: (r) => r.sudoRejected,
-      );
-      if (result == null) return false;
-      if (!result.succeeded) {
-        if (mounted) {
-          final detail = result.combined.trim();
-          Toast.error(libL10n.fail, body: detail.isEmpty ? null : detail);
+    final result = await _ops.run<bool>('mutate', () async {
+      try {
+        final exec = await ref.read(_provider.notifier).ensureExec();
+        final isRoot =
+            widget.args.spi.isRoot || _catalog?.currentUser == 'root';
+        if (!mounted) return false;
+        final res = await SudoPassword.retry(
+          context,
+          widget.args.spi.id,
+          label: widget.args.spi.ssh?.user ?? _catalog?.currentUser,
+          attempt: (password) => PrivilegedExec.run(
+            exec,
+            script,
+            isRoot: password == null && isRoot,
+            password: password,
+          ),
+          rejected: (r) => r.sudoRejected,
+        );
+        if (res == null) return false;
+        if (!res.succeeded) {
+          if (mounted) {
+            final detail = res.combined.trim();
+            Toast.error(libL10n.fail, body: detail.isEmpty ? null : detail);
+          }
+          return false;
         }
+        if (mounted) Toast.success(libL10n.success);
+        return true;
+      } catch (e, s) {
+        Loggers.app.warning('Change user on ${widget.args.spi.id}', e, s);
+        if (mounted) Toast.error('$e');
         return false;
       }
-      if (mounted) Toast.success(libL10n.success);
-      return true;
-    } catch (e, s) {
-      Loggers.app.warning('Change user on ${widget.args.spi.id}', e, s);
-      if (mounted) Toast.error('$e');
-      return false;
-    } finally {
-      if (mounted) _rebuild(() => _mutating = false);
-    }
+    });
+    return result == true;
   }
 }
 

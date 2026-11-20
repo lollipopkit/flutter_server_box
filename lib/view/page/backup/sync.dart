@@ -473,28 +473,28 @@ extension _SyncActions on _BackupPageState {
           unawaited(LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)));
           return false;
         }
-        lkcLoading.value = true;
-        try {
-          final storage = LkcSyncPrefs.storage;
-          // A checkpoint left from an earlier time on would skip the write
-          // this needs to see.
-          await BakSyncer.forgetCheckpoint();
-          final before = storage.writtenTag(Miscs.bakFileName);
-          await bakSync.sync(rs: storage, throttleMilli: 0);
-          // A cycle that could not read the remote returns without writing,
-          // and says so only in the log.
-          final after = storage.writtenTag(Miscs.bakFileName);
-          if (after == null || after == before) {
-            if (_syncWent()) Toast.show(libL10n.fail);
+        final ok = await lkcOps.run('enable-sync', () async {
+          try {
+            final storage = LkcSyncPrefs.storage;
+            // A checkpoint left from an earlier time on would skip the write
+            // this needs to see.
+            await BakSyncer.forgetCheckpoint();
+            final before = storage.writtenTag(Miscs.bakFileName);
+            await bakSync.sync(rs: storage, throttleMilli: 0);
+            // A cycle that could not read the remote returns without writing,
+            // and says so only in the log.
+            final after = storage.writtenTag(Miscs.bakFileName);
+            if (after == null || after == before) {
+              if (_syncWent()) Toast.show(libL10n.fail);
+              return false;
+            }
+            return true;
+          } catch (e, s) {
+            if (mounted) _showLkcErr(e, s, libL10n.sync);
             return false;
           }
-          return true;
-        } catch (e, s) {
-          if (mounted) _showLkcErr(e, s, libL10n.sync);
-          return false;
-        } finally {
-          if (mounted) lkcLoading.value = false;
-        }
+        });
+        return ok == true;
     }
   }
 
