@@ -410,8 +410,11 @@ class ServersNotifier extends _$ServersNotifier {
     await _clearSudoPasswordOverrideBestEffort(id);
 
     // Now that the row is gone, so the rebuilt lists cannot contain it.
-    await WatchSync.instance.push();
-    await WidgetSync.instance.push();
+    // Not waited for: on iOS/Android `push` talks to remaining monitor agents
+    // and WatchConnectivity, which can stall for tens of seconds and leave the
+    // edit page open after the confirmation sheet closes.
+    unawaited(WatchSync.instance.push());
+    unawaited(WidgetSync.instance.push());
 
     // Deselect if the deleted server was selected, and invalidate its provider
     // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.

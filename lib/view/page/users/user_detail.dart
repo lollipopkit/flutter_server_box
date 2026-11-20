@@ -51,6 +51,7 @@ final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
 
   UserDetail? _detail;
   var _loading = true;
+  var _busy = false;
 
   SystemUser get _user => widget.args.user;
 
@@ -69,27 +70,34 @@ final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
       appBar: CustomAppBar(
         title: TwoLineText(up: _user.name, down: widget.args.spi.name),
         actions: [
-          Btn.icon(
-            text: libL10n.edit,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            onTap: () => _run(widget.args.onEdit),
-          ),
-          if (UserManager.userDeletable(_user, current: widget.args.catalog.currentUser))
-            ContextMenuButton(
-              tooltip: libL10n.more,
-              actions: () => [
-                ContextMenuAction(
-                  text: libL10n.delete,
-                  icon: Icons.delete_outline,
-                  destructive: true,
-                  onTap: () => _run(widget.args.onDelete),
-                ),
-              ],
-              child: const Padding(
-                padding: EdgeInsets.all(7),
-                child: Icon(Icons.more_vert, size: 18),
-              ),
+          if (_busy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: SizedLoading.small,
+            )
+          else ...[
+            Btn.icon(
+              text: libL10n.edit,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              onTap: () => _run(widget.args.onEdit),
             ),
+            if (UserManager.userDeletable(_user, current: widget.args.catalog.currentUser))
+              ContextMenuButton(
+                tooltip: libL10n.more,
+                actions: () => [
+                  ContextMenuAction(
+                    text: libL10n.delete,
+                    icon: Icons.delete_outline,
+                    destructive: true,
+                    onTap: () => _run(widget.args.onDelete),
+                  ),
+                ],
+                child: const Padding(
+                  padding: EdgeInsets.all(7),
+                  child: Icon(Icons.more_vert, size: 18),
+                ),
+              ),
+          ],
         ],
       ),
       body: ListView(
@@ -273,8 +281,18 @@ extension on _UserDetailPageState {
   }
 
   Future<void> _run(Future<bool> Function(SystemUser user) action) async {
-    final changed = await action(_user);
-    if (changed && mounted) context.pop();
+    if (_busy) return;
+    _rebuild(() => _busy = true);
+    var popped = false;
+    try {
+      final changed = await action(_user);
+      if (changed && mounted) {
+        popped = true;
+        context.pop();
+      }
+    } finally {
+      if (!popped && mounted) _rebuild(() => _busy = false);
+    }
   }
 
   /// Types `su - <name>` rather than running it: the shell that opens is the

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -64,7 +66,10 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   String _query = '';
   bool _systemExpanded = true;
   bool _groupSystemExpanded = true;
-  bool _busy = false;
+  bool _refreshing = false;
+  bool _refreshQueued = false;
+  bool _mutating = false;
+  bool get _busy => _refreshing || _mutating;
   bool _unsupported = false;
   String? _failure;
 
@@ -1064,7 +1069,11 @@ final class _GroupSectionSpec {
 
 extension on _UsersPageState {
   Future<void> _refresh() async {
-    if (!mounted || _busy) return;
+    if (!mounted) return;
+    if (_refreshing) {
+      _refreshQueued = true;
+      return;
+    }
     final system = ref.read(_provider).status.system;
     if (system != SystemType.linux) {
       _rebuild(() {
@@ -1076,7 +1085,7 @@ extension on _UsersPageState {
     }
 
     _rebuild(() {
-      _busy = true;
+      _refreshing = true;
       _unsupported = false;
       _failure = null;
     });
@@ -1089,7 +1098,12 @@ extension on _UsersPageState {
       Loggers.app.warning('List users for ${widget.args.spi.id}', e, s);
       if (mounted) _rebuild(() => _failure = '$e');
     } finally {
-      if (mounted) _rebuild(() => _busy = false);
+      if (mounted) {
+        final rerun = _refreshQueued;
+        _refreshQueued = false;
+        _rebuild(() => _refreshing = false);
+        if (rerun) unawaited(_refresh());
+      }
     }
   }
 
@@ -1100,7 +1114,7 @@ extension on _UsersPageState {
         ? UserManager.createScript(draft)
         : UserManager.editScript(user, draft);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
@@ -1129,7 +1143,7 @@ extension on _UsersPageState {
     if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteScript(user, removeHome: removeHome);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
@@ -1155,7 +1169,7 @@ extension on _UsersPageState {
         ? UserManager.createGroupScript(draft, catalog)
         : UserManager.editGroupScript(group, draft, catalog);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
@@ -1168,13 +1182,13 @@ extension on _UsersPageState {
     if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteGroupScript(group);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
   Future<bool> _runMutation(String script) async {
-    if (_busy) return false;
-    _rebuild(() => _busy = true);
+    if (_mutating) return false;
+    _rebuild(() => _mutating = true);
     try {
       final exec = await ref.read(_provider.notifier).ensureExec();
       final isRoot =
@@ -1207,7 +1221,7 @@ extension on _UsersPageState {
       if (mounted) Toast.error('$e');
       return false;
     } finally {
-      if (mounted) _rebuild(() => _busy = false);
+      if (mounted) _rebuild(() => _mutating = false);
     }
   }
 }

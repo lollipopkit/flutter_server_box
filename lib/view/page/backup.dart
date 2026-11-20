@@ -276,6 +276,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
     if (ok != true || !context.mounted) return;
     // Only with the account's key open here: a new one is put beside it.
+    lkcLoading.value = true;
     try {
       await lkcLog.key();
     } on SyncPasswordMismatch catch (e) {
@@ -283,6 +284,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     } catch (e, s) {
       if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
       return;
+    } finally {
+      if (mounted) lkcLoading.value = false;
     }
     if (!context.mounted || !await _onTapSetBakPwd(context)) return;
     lkcLoading.value = true;

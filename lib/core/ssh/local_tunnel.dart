@@ -406,16 +406,24 @@ class SshTunnelBridge {
   /// tunnel has read its access token off the front.
   final Stream<List<int>> _incoming;
   bool _closed = false;
+  Future<void>? _remoteClose;
 
   Future<void> pipe() => Future.wait([
     channel.stream.pipe(socket).catchError((_) => close()),
     _incoming.pipe(channel.sink).catchError((_) => close()),
   ]);
 
-  Future<void> close() async {
-    if (_closed) return;
-    _closed = true;
-    socket.destroy();
-    await channel.close().catchError((_) {});
+  /// Tears down this bridge.
+  ///
+  /// The local [socket] is destroyed synchronously and [channel.close] is
+  /// initiated immediately. When [waitRemote] is false, this returns without
+  /// waiting for the remote channel close handshake.
+  Future<void> close({bool waitRemote = true}) async {
+    if (!_closed) {
+      _closed = true;
+      socket.destroy();
+    }
+    final remote = _remoteClose ??= channel.close().catchError((_) {});
+    if (waitRemote) await remote;
   }
 }

@@ -1,10 +1,17 @@
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
+import '../../helpers/test_db.dart';
 
 /// The watch app parses this payload (`PhoneConnMgr.parse`) and has no way to
 /// ask for a correction, so its shape is the contract between two processes on
@@ -377,5 +384,360 @@ void main() {
     test('names the server, so one can be revoked without the others', () {
       expect(WatchSync.watchClientId('abc'), 'watch:abc');
     });
+  });
+
+  group('per-server revoke/issue coordination', () {
+    setUp(() async {
+      await openTestDb();
+      getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+      getIt.registerSingleton<ServerStore>(ServerStore());
+    });
+
+    tearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+
+    List<Map<String, dynamic>> payloadServers(Map<String, dynamic> p) =>
+        ((p['servers'] as List?) ?? const []).cast<Map<String, dynamic>>();
+
+    test(
+      're-including a server while its revoke is in flight never reuses the '
+      'old token, issues only after revoke settles, and does not block others',
+      () async {
+        final serverA = monitorSpi(
+          id: 'a',
+          name: 'Alpha',
+          addr: 'https://10.0.0.1:3770',
+        );
+        final serverB = monitorSpi(
+          id: 'b',
+          name: 'Beta',
+          addr: 'https://10.0.0.2:3770',
+        );
+        Stores.server.put(serverA);
+        Stores.server.put(serverB);
+
+        final futureExpiry =
+            DateTime.now().add(const Duration(days: 60)).millisecondsSinceEpoch ~/
+            1000;
+        Map<String, dynamic>? context = {
+          'v': 3,
+          'rev': 1,
+          'servers': [
+            {
+              'id': 'a',
+              'name': 'Alpha',
+              'addr': 'https://10.0.0.1:3770',
+              'token': 'tok-a-old',
+              'expiresAt': futureExpiry,
+            },
+            {
+              'id': 'b',
+              'name': 'Beta',
+              'addr': 'https://10.0.0.2:3770',
+              'token': 'tok-b-old',
+              'expiresAt': futureExpiry,
+            },
+          ],
+        };
+
+        final events = <String>[];
+        final revokeAStarted = Completer<void>();
+        final releaseRevokeA = Completer<void>();
+        final deliveredNewA = Completer<Map<String, dynamic>>();
+        final deliveredPayloads = <Map<String, dynamic>>[];
+        var issuedForA = 0;
+
+        final sync = WatchSync.forTest(
+          readContext: () async => context,
+          writeContext: (payload) async {
+            context = payload;
+            deliveredPayloads.add(payload);
+            final aRow = payloadServers(payload)
+                .where((e) => e['id'] == 'a')
+                .firstOrNull;
+            if (aRow?['token'] == 'tok-a-new' && !deliveredNewA.isCompleted) {
+              deliveredNewA.complete(payload);
+            }
+          },
+          issueToken: (spi, endpoint) async {
+            events.add('issue:${spi.id}');
+            if (spi.id == 'a') issuedForA++;
+            return ScopedToken(
+              token: 'tok-${spi.id}-new',
+              endpoint: endpoint,
+              expiresAt: futureExpiry,
+            );
+          },
+          revokeToken: (spi, endpoint) async {
+            events.add('revoke-start:${spi.id}');
+            if (spi.id == 'a') {
+              if (!revokeAStarted.isCompleted) revokeAStarted.complete();
+              await releaseRevokeA.future;
+            }
+            events.add('revoke-done:${spi.id}');
+          },
+        );
+        addTearDown(sync.dispose);
+
+        // 1. Exclude A: persisted immediately, revoke starts in background.
+        await sync.updateExclusions(['a']);
+        expect(Stores.setting.watchExcludedServerIds.fetch(), ['a']);
+        await revokeAStarted.future.timeout(const Duration(seconds: 2));
+
+        // 2. Re-include A while its revoke is still suspended.
+        await sync.updateExclusions([]);
+        expect(Stores.setting.watchExcludedServerIds.fetch(), isEmpty);
+
+        // 3. Trigger both normal push and watch `requestData` while A's revoke
+        // is still in flight.
+        await sync.push().timeout(const Duration(seconds: 2));
+        final onAsk = await sync
+            .handleWatchMessage({'action': 'requestData'})
+            .timeout(const Duration(seconds: 2));
+
+        // Old token for A must never be republished, A must not be issued yet,
+        // and B must continue to be delivered without waiting on A.
+        for (final p in [...deliveredPayloads, onAsk]) {
+          final rows = payloadServers(p);
+          expect(
+            rows.where((e) => e['token'] == 'tok-a-old'),
+            isEmpty,
+            reason: 'revoking/revoked token must not be reused from context',
+          );
+          expect(
+            rows.where((e) => e['id'] == 'b').single['token'],
+            'tok-b-old',
+          );
+        }
+        expect(issuedForA, 0);
+
+        // 4. Release A's revoke: follow-up push now mints and delivers tok-a-new.
+        releaseRevokeA.complete();
+        final finalPayload = await deliveredNewA.future.timeout(
+          const Duration(seconds: 2),
+        );
+
+        expect(issuedForA, 1);
+        expect(
+          events.indexOf('revoke-done:a'),
+          lessThan(events.indexOf('issue:a')),
+        );
+        final finalA = payloadServers(finalPayload)
+            .where((e) => e['id'] == 'a')
+            .single;
+        expect(finalA['token'], 'tok-a-new');
+        expect(
+          finalPayload['ts'] as int,
+          greaterThan(onAsk['ts'] as int),
+        );
+      },
+    );
+
+    test(
+      'a server that remains excluded is never re-issued after revoke finishes',
+      () async {
+        final serverA = monitorSpi(
+          id: 'a',
+          name: 'Alpha',
+          addr: 'https://10.0.0.1:3770',
+        );
+        Stores.server.put(serverA);
+
+        final futureExpiry =
+            DateTime.now().add(const Duration(days: 60)).millisecondsSinceEpoch ~/
+            1000;
+        Map<String, dynamic>? context = {
+          'v': 3,
+          'rev': 1,
+          'servers': [
+            {
+              'id': 'a',
+              'name': 'Alpha',
+              'addr': 'https://10.0.0.1:3770',
+              'token': 'tok-a-old',
+              'expiresAt': futureExpiry,
+            },
+          ],
+        };
+
+        final revokeAStarted = Completer<void>();
+        final releaseRevokeA = Completer<void>();
+        final postRevokeWrite = Completer<Map<String, dynamic>>();
+        var revoked = false;
+        var issuedForA = 0;
+
+        final sync = WatchSync.forTest(
+          readContext: () async => context,
+          writeContext: (payload) async {
+            context = payload;
+            if (revoked && !postRevokeWrite.isCompleted) {
+              postRevokeWrite.complete(payload);
+            }
+          },
+          issueToken: (spi, endpoint) async {
+            if (spi.id == 'a') issuedForA++;
+            return ScopedToken(
+              token: 'tok-a-unexpected',
+              endpoint: endpoint,
+              expiresAt: futureExpiry,
+            );
+          },
+          revokeToken: (spi, endpoint) async {
+            if (!revokeAStarted.isCompleted) revokeAStarted.complete();
+            await releaseRevokeA.future;
+            revoked = true;
+          },
+        );
+        addTearDown(sync.dispose);
+
+        await sync.updateExclusions(['a']);
+        await revokeAStarted.future.timeout(const Duration(seconds: 2));
+
+        releaseRevokeA.complete();
+        final delivered = await postRevokeWrite.future.timeout(
+          const Duration(seconds: 2),
+        );
+
+        expect(issuedForA, 0);
+        expect(payloadServers(delivered), isEmpty);
+      },
+    );
+
+    test(
+      'a server excluded and revoked while an earlier server is being issued '
+      'is not issued when the loop reaches it',
+      () async {
+        final serverA = monitorSpi(
+          id: 'a',
+          name: 'Alpha',
+          addr: 'https://10.0.0.1:3770',
+        );
+        final serverB = monitorSpi(
+          id: 'b',
+          name: 'Beta',
+          addr: 'https://10.0.0.2:3770',
+        );
+        Stores.server.put(serverA);
+        Stores.server.put(serverB);
+
+        final futureExpiry =
+            DateTime.now().add(const Duration(days: 60)).millisecondsSinceEpoch ~/
+            1000;
+        Map<String, dynamic>? context;
+
+        final issueAStarted = Completer<void>();
+        final releaseIssueA = Completer<void>();
+        final revokeBCompleted = Completer<void>();
+        var issuedForB = 0;
+
+        final sync = WatchSync.forTest(
+          readContext: () async => context,
+          writeContext: (payload) async {
+            context = payload;
+          },
+          issueToken: (spi, endpoint) async {
+            if (spi.id == 'a') {
+              if (!issueAStarted.isCompleted) issueAStarted.complete();
+              await releaseIssueA.future;
+            } else if (spi.id == 'b') {
+              issuedForB++;
+            }
+            return ScopedToken(
+              token: 'tok-${spi.id}-new',
+              endpoint: endpoint,
+              expiresAt: futureExpiry,
+            );
+          },
+          revokeToken: (spi, endpoint) async {
+            if (spi.id == 'b' && !revokeBCompleted.isCompleted) {
+              revokeBCompleted.complete();
+            }
+          },
+        );
+        addTearDown(sync.dispose);
+
+        // Start a build that has both A and B in its initial `selectedIds`.
+        final buildFuture = sync.buildPayload();
+        await issueAStarted.future.timeout(const Duration(seconds: 2));
+
+        // While A is blocked issuing, exclude B and let B's revoke finish so
+        // `_revoking['b']` is already cleared before the loop moves to B.
+        await sync.updateExclusions(['b']);
+        await revokeBCompleted.future.timeout(const Duration(seconds: 2));
+
+        // Release A and let the original build finish.
+        releaseIssueA.complete();
+        final payload = await buildFuture.timeout(const Duration(seconds: 2));
+
+        expect(issuedForB, 0);
+        expect(
+          payloadServers(payload).map((e) => e['id']).toList(),
+          ['a'],
+        );
+      },
+    );
+
+    test(
+      'concurrent push and requestData share one in-flight issue per server',
+      () async {
+        final serverA = monitorSpi(
+          id: 'a',
+          name: 'Alpha',
+          addr: 'https://10.0.0.1:3770',
+        );
+        Stores.server.put(serverA);
+
+        final futureExpiry =
+            DateTime.now().add(const Duration(days: 60)).millisecondsSinceEpoch ~/
+            1000;
+        Map<String, dynamic>? context;
+
+        final issueAStarted = Completer<void>();
+        final releaseIssueA = Completer<void>();
+        var issueCalls = 0;
+
+        final sync = WatchSync.forTest(
+          readContext: () async => context,
+          writeContext: (payload) async {
+            context = payload;
+          },
+          issueToken: (spi, endpoint) async {
+            issueCalls++;
+            if (!issueAStarted.isCompleted) issueAStarted.complete();
+            await releaseIssueA.future;
+            return ScopedToken(
+              token: 'tok-a-$issueCalls',
+              endpoint: endpoint,
+              expiresAt: futureExpiry,
+            );
+          },
+          revokeToken: (_, _) async {},
+        );
+        addTearDown(sync.dispose);
+
+        final pushFuture = sync.push();
+        await issueAStarted.future.timeout(const Duration(seconds: 2));
+
+        // Watch asks for data while `push()` is mid-issue for the same server.
+        final askFuture = sync.handleWatchMessage({'action': 'requestData'});
+        await Future<void>.delayed(Duration.zero);
+
+        releaseIssueA.complete();
+        await pushFuture.timeout(const Duration(seconds: 2));
+        final askPayload = await askFuture.timeout(const Duration(seconds: 2));
+
+        expect(issueCalls, 1);
+        expect(
+          payloadServers(askPayload).single['token'],
+          'tok-a-1',
+        );
+        expect(
+          payloadServers(context!).single['token'],
+          'tok-a-1',
+        );
+      },
+    );
   });
 }

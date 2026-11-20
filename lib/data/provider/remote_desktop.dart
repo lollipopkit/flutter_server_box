@@ -457,9 +457,15 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     _keepAlive.unregister(id, owner: _keepAliveOwner);
     entry.closed = true;
     entry.generation++;
-    await _disposeEntry(entry);
     state = state.remove(id);
     _syncVisibility();
+    // Dispose in the background: a dead tunnel can stall up to its close
+    // timeout and should not hold back a profile or server deletion UI.
+    unawaited(
+      _disposeEntry(entry).catchError((Object e, StackTrace s) {
+        Loggers.app.warning('Dispose remote desktop session $id', e, s);
+      }),
+    );
   }
 
   Future<void> closeForProfile(String profileId) => close(profileId);

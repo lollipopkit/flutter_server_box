@@ -41,9 +41,34 @@ import 'package:watch_connectivity/watch_connectivity.dart';
 /// ([messageResponder]), which is how a freshly installed watch app configures
 /// itself without the user having to visit the iOS settings page.
 final class WatchSync {
-  WatchSync._();
+  WatchSync._()
+    : _enabled = null,
+      _readContext = null,
+      _writeContext = null,
+      _issueToken = null,
+      _revokeToken = null;
+
+  @visibleForTesting
+  WatchSync.forTest({
+    required Future<Map<String, dynamic>?> Function() readContext,
+    required Future<void> Function(Map<String, dynamic> payload) writeContext,
+    required Future<ScopedToken> Function(Spi spi, String endpoint) issueToken,
+    required Future<void> Function(Spi spi, String? endpoint) revokeToken,
+  }) : _enabled = true,
+       _readContext = readContext,
+       _writeContext = writeContext,
+       _issueToken = issueToken,
+       _revokeToken = revokeToken;
 
   static final instance = WatchSync._();
+
+  final bool? _enabled;
+  final Future<Map<String, dynamic>?> Function()? _readContext;
+  final Future<void> Function(Map<String, dynamic> payload)? _writeContext;
+  final Future<ScopedToken> Function(Spi spi, String endpoint)? _issueToken;
+  final Future<void> Function(Spi spi, String? endpoint)? _revokeToken;
+
+  bool get _isEnabled => _enabled ?? isIOS;
 
   /// Bumped when the payload shape changes in a way an older watch app cannot
   /// read. The watch ignores keys it does not know, so additive changes do not
@@ -63,6 +88,19 @@ final class WatchSync {
   Timer? _pushDebouncer;
   late final _pushes = Coalesced(_pushOnce);
 
+  /// Per-server in-flight revoke and issue futures so revoke/issue for the same
+  /// server stay ordered without blocking unrelated servers behind a slow one.
+  final Map<String, Future<void>> _revoking = {};
+  final Map<String, _InFlightIssue> _issuing = {};
+
+  /// Servers whose previous token is being or has been revoked and must not be
+  /// reused from a stale watch application context.
+  final Set<String> _mustReissue = {};
+
+  /// Specific token values already sent for revocation per server, so even an
+  /// out-of-order stale context read never republishes a revoked token.
+  final Map<String, Set<String>> _revokedTokens = {};
+
   /// Completes once [_wc] is either connected or known to be unavailable, so
   /// callers racing app startup wait rather than silently doing nothing.
   Future<void>? _ready;
@@ -72,30 +110,48 @@ final class WatchSync {
   /// Only affects delivery: the selection lives in this app's store, so it
   /// stays editable and is pushed whenever a watch does appear.
   Future<bool> get isWatchPaired async {
-    if (!isIOS) return false;
+    if (!_isEnabled) return false;
+    if (_writeContext != null) return true;
     await _setupOnce();
     return await _wc?.isPaired ?? false;
   }
 
   Future<void> init() async {
-    if (!isIOS) return;
+    if (!_isEnabled) return;
     await _setupOnce();
     await push();
   }
 
   /// Rebuilds the payload and hands it to the watch.
   Future<void> push() {
-    if (!isIOS) return Future.value();
+    if (!_isEnabled) return Future.value();
     return _pushes();
   }
 
-
   Future<void> _pushOnce() async {
-    await _setupOnce();
+    if (_writeContext case final writeContext?) {
+      final payload = await buildPayload();
+      await writeContext(payload);
+      return;
+    }
+
+    try {
+      await _setupOnce();
+    } catch (e, s) {
+      Loggers.app.warning('Watch sync setup failed', e, s);
+      return;
+    }
 
     final wc = _wc;
     if (wc == null) return;
-    if (!await wc.isPaired) {
+    final bool paired;
+    try {
+      paired = await wc.isPaired;
+    } catch (e, s) {
+      Loggers.app.warning('Watch paired check failed', e, s);
+      return;
+    }
+    if (!paired) {
       await _revokeSelectedServers();
       return;
     }
@@ -145,17 +201,31 @@ final class WatchSync {
     final revision = nextRevision();
     final selectedIds = syncedServerIds();
     final existingTokens = await _existingTokens();
+    final invalidatedIds = <String>{
+      ..._revoking.keys,
+      ..._mustReissue,
+      for (final entry in existingTokens.entries)
+        if (_revokedTokens[entry.key]?.contains(entry.value.token) == true)
+          entry.key,
+    };
     final tokens = reusableScopedTokens(
       serverIds: selectedIds,
       lookup: Stores.server.fetchOneRaw,
       existing: existingTokens,
       now: DateTime.now(),
+      invalidatedIds: invalidatedIds,
     );
     for (final id in selectedIds) {
       final spi = Stores.server.fetchOneRaw(id);
       final monitor = spi?.monitor;
       if (spi == null || monitor == null) continue;
       if (tokens.containsKey(id)) continue;
+      // A revoke is still in flight for this server, or the user excluded it
+      // while an earlier server was being issued: skip rather than minting a
+      // token that would be left dangling on the Monitor or race the revoke.
+      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
+        continue;
+      }
       final existing = existingTokens[id];
       final endpoint = normalizeAgentEndpoint(monitor.addr);
       // Only when the *address* moved. An expiry that crept up is renewed by
@@ -170,33 +240,106 @@ final class WatchSync {
       // of the whole build, and since the store event that started it had
       // already been consumed, nothing was delivered and nothing retried. The
       // watch kept whatever it had until the next unrelated edit.
-      if (existing != null && existing.endpoint != endpoint) {
+      if (existing != null &&
+          existing.endpoint != endpoint &&
+          !invalidatedIds.contains(id)) {
         try {
           await _revokeServer(spi, endpoint: existing.endpoint);
         } catch (e, s) {
           Loggers.app.info('Backstop revoke at ${existing.endpoint}', e, s);
         }
       }
-      final client = MonitorHttpClient(monitor);
-      try {
-        final issued = await client.issueWatchToken(watchClientId(spi.id));
-        tokens[id] = ScopedToken(
-          token: issued.token,
-          endpoint: endpoint,
-          expiresAt: issued.expiresAt,
-        );
-      } catch (e, s) {
-        Loggers.app.warning('Failed to issue read-only watch token for $id', e, s);
-      } finally {
-        client.dispose();
+      final issued = await _issueForServer(spi, endpoint);
+      if (issued == null) continue;
+      // If the user excluded this server while the token was being minted, do
+      // not publish it; the queued revoke will clean it up after `_issuing`.
+      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
+        continue;
       }
+      _mustReissue.remove(id);
+      tokens[id] = issued;
     }
+    // Re-filter against the latest selection and revoke state so a server
+    // excluded while an earlier server was being issued never ships a stale
+    // reused token.
+    final currentSelected = syncedServerIds().toSet();
+    tokens.removeWhere(
+      (id, tok) =>
+          !currentSelected.contains(id) ||
+          _revoking.containsKey(id) ||
+          _mustReissue.contains(id) ||
+          _revokedTokens[id]?.contains(tok.token) == true,
+    );
     return payloadFrom(
       selectedIds: selectedIds,
       lookup: Stores.server.fetchOneRaw,
       tokens: tokens,
       stamp: revision,
     );
+  }
+
+  /// Shares one in-flight mint per `(server, endpoint, credential)` so a
+  /// concurrent `push()` and `requestData` do not issue back-to-back tokens
+  /// that overwrite each other's hash on the Monitor.
+  Future<ScopedToken?> _issueForServer(Spi spi, String endpoint) async {
+    final id = spi.id;
+    final key = _issueKey(spi, endpoint);
+
+    while (true) {
+      final existing = _issuing[id];
+      if (existing != null) {
+        if (existing.key == key) return await existing.future;
+        await existing.future;
+        continue;
+      }
+
+      // Re-check right before issuing, including after waiting for a prior
+      // issue with different credentials to settle.
+      if (_revoking.containsKey(id) || !syncedServerIds().contains(id)) {
+        return null;
+      }
+
+      final completer = Completer<ScopedToken?>();
+      final inFlight = _InFlightIssue(key: key, future: completer.future);
+      _issuing[id] = inFlight;
+
+      ScopedToken? result;
+      try {
+        if (_issueToken case final issueToken?) {
+          result = await issueToken(spi, endpoint);
+        } else {
+          final monitor = spi.monitor;
+          if (monitor != null) {
+            final client = MonitorHttpClient(monitor);
+            try {
+              final issued = await client.issueWatchToken(watchClientId(spi.id));
+              result = ScopedToken(
+                token: issued.token,
+                endpoint: endpoint,
+                expiresAt: issued.expiresAt,
+              );
+            } finally {
+              client.dispose();
+            }
+          }
+        }
+      } catch (e, s) {
+        Loggers.app.warning(
+          'Failed to issue read-only watch token for $id',
+          e,
+          s,
+        );
+      } finally {
+        if (!completer.isCompleted) completer.complete(result);
+        if (identical(_issuing[id], inFlight)) _issuing.remove(id);
+      }
+      return result;
+    }
+  }
+
+  static Object _issueKey(Spi spi, String endpoint) {
+    final m = spi.monitor;
+    return (endpoint, m?.pwd, m?.legacyUser, m?.certSha256, m?.allowInsecure);
   }
 
   /// Every server the watch is meant to show, in a stable order.
@@ -238,7 +381,9 @@ final class WatchSync {
   /// forget to revoke.
   Future<Map<String, ScopedToken>> _existingTokens() async {
     try {
-      final raw = await _wc?.applicationContext;
+      final raw = _readContext != null
+          ? await _readContext()
+          : await _wc?.applicationContext;
       final servers = raw?['servers'];
       if (servers is! List) return {};
       return {
@@ -274,22 +419,53 @@ final class WatchSync {
   Future<void> updateExclusions(List<String> next) async {
     final previously = Stores.setting.watchExcludedServerIds.fetch().toSet();
     final nowExcluded = next.toSet();
-    final existingTokens = await _existingTokens();
-    for (final id in nowExcluded.where((id) => !previously.contains(id))) {
-      final spi = Stores.server.fetchOneRaw(id);
-      if (spi == null) continue;
-      // Best effort, per server. `_revokeServer` rethrows, and one agent that
-      // is merely offline used to take the whole call with it — the choice was
-      // never stored and the watch was never told, so a user holding three
-      // servers back kept all three because one of them was unreachable.
-      try {
-        await _revokeServer(spi, endpoint: existingTokens[id]?.endpoint);
-      } catch (e, s) {
-        Loggers.app.warning('Could not revoke watch token for $id', e, s);
-      }
-    }
+    final toRevoke = <Spi>[
+      for (final id in nowExcluded.where((id) => !previously.contains(id)))
+        ?Stores.server.fetchOneRaw(id),
+    ];
+    // Persisted before any network call: revoking against an offline monitor
+    // costs a ten-second timeout per server, and the user's choice must take
+    // effect locally right away rather than waiting behind unreachable agents.
     Stores.setting.watchExcludedServerIds.put(next);
-    await push();
+    for (final spi in toRevoke) {
+      _enqueueRevoke(spi);
+    }
+    // Deliver the updated list for all non-revoking servers immediately.
+    unawaited(push());
+  }
+
+  /// Schedules a per-server revoke so a slow agent never stalls unrelated
+  /// servers, while blocking token reuse and concurrent issue for [spi.id]
+  /// until the revoke settles.
+  void _enqueueRevoke(Spi spi) {
+    final id = spi.id;
+    _mustReissue.add(id);
+    final prevRevoke = _revoking[id];
+    late final Future<void> op;
+    op = () async {
+      try {
+        if (prevRevoke != null) await prevRevoke;
+        final inFlightIssue = _issuing[id];
+        if (inFlightIssue != null) await inFlightIssue.future;
+        final existingTokens = await _existingTokens();
+        final held = existingTokens[id];
+        if (held != null && !held.isEmpty) {
+          _revokedTokens.putIfAbsent(id, () => <String>{}).add(held.token);
+        }
+        try {
+          await _revokeServer(spi, endpoint: held?.endpoint);
+        } catch (e, s) {
+          Loggers.app.warning('Could not revoke watch token for $id', e, s);
+        }
+      } finally {
+        if (identical(_revoking[id], op)) unawaited(_revoking.remove(id));
+        // If the server was re-included while revoking, this push now mints a
+        // fresh token; if it stayed excluded, `syncedServerIds()` omits it so
+        // nothing is re-issued.
+        unawaited(push());
+      }
+    }();
+    _revoking[id] = op;
   }
 
   /// Hands this server's credential back, ahead of the record being deleted.
@@ -339,6 +515,10 @@ final class WatchSync {
   }
 
   Future<void> _revokeServer(Spi spi, {String? endpoint}) async {
+    if (_revokeToken case final revokeToken?) {
+      await revokeToken(spi, endpoint);
+      return;
+    }
     final monitor = spi.monitor;
     if (monitor == null) return;
     final revocationEndpoint = endpoint?.trim();
@@ -426,14 +606,20 @@ final class WatchSync {
 
   /// The watch asking for the current configuration, e.g. right after being
   /// installed or restored.
+  @visibleForTesting
+  Future<Map<String, dynamic>> handleWatchMessage(
+    Map<String, dynamic> msg,
+  ) => _onWatchAsked(msg);
+
   Future<Map<String, dynamic>> _onWatchAsked(Map<String, dynamic> msg) async {
     if (msg['action'] != 'requestData') return const {};
 
     final payload = await buildPayload();
     // The watch is holding whatever it just got; the stored context has to say
     // the same thing, or the next launch would hand it something older.
-    final wc = _wc;
-    if (wc != null) {
+    if (_writeContext case final writeContext?) {
+      unawaited(writeContext(payload));
+    } else if (_wc case final wc?) {
       unawaited(
         wc.updateApplicationContext(payload).catchError(
           (Object e, StackTrace s) =>
@@ -446,7 +632,18 @@ final class WatchSync {
 
   /// Never calls [push] itself — [push] awaits this, and doing both ways round
   /// would deadlock.
-  Future<void> _setupOnce() => _ready ??= _setup();
+  Future<void> _setupOnce() {
+    final existing = _ready;
+    if (existing != null) return existing;
+    final setup = _setup();
+    _ready = setup;
+    // Do not cache a failed setup forever: a transient platform-channel error
+    // would otherwise disable watch sync for the rest of the session.
+    setup.catchError((Object _, StackTrace _) {
+      if (identical(_ready, setup)) _ready = null;
+    });
+    return setup;
+  }
 
   Future<void> _setup() async {
     final wc = WatchConnectivity();
@@ -474,6 +671,10 @@ final class WatchSync {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
     _pushes.cancelPending();
+    _revoking.clear();
+    _issuing.clear();
+    _mustReissue.clear();
+    _revokedTokens.clear();
     unawaited(_activationSub?.cancel());
     _activationSub = null;
     unawaited(_serverStoreSub?.cancel());
@@ -482,4 +683,11 @@ final class WatchSync {
     _wc = null;
     _ready = null;
   }
+}
+
+final class _InFlightIssue {
+  const _InFlightIssue({required this.key, required this.future});
+
+  final Object key;
+  final Future<ScopedToken?> future;
 }

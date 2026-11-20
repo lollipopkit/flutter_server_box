@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -6,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/monitor/listener.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -17,6 +21,7 @@ import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/idle_ssh_socket.dart';
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
@@ -82,6 +87,277 @@ void main() {
       await closeTestDb();
     }
   });
+
+  test(
+    'clear cancels a Monitor remote listener stuck between listen and ready',
+    () async {
+      await initRustLibForTest();
+      await openTestDb();
+      final store = PortForwardStore();
+      getIt.registerSingleton<PortForwardStore>(store);
+      const serverId = 'monitor-server-id';
+      SqliteDb.instance.execute(
+        "INSERT INTO server (id, name, ssh_ip) VALUES ('$serverId', 'mon', '127.0.0.1');",
+      );
+
+      final listenReceived = Completer<void>();
+      final socketClosed = Completer<void>();
+      var acceptRequests = 0;
+
+      final fakeMonitor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      unawaited(
+        fakeMonitor.forEach((req) async {
+          final path = req.uri.path;
+          if (path == '/api/v1/health') {
+            req.response
+              ..statusCode = HttpStatus.ok
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode({'protocol': 99, 'min_client_protocol': 1}));
+            await req.response.close();
+            return;
+          }
+          if (path == '/api/v1/login') {
+            req.response
+              ..statusCode = HttpStatus.ok
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode({'token': 'fake-jwt', 'expires_at': 9999999999}));
+            await req.response.close();
+            return;
+          }
+          if (path == '/api/v1/ws-ticket') {
+            req.response
+              ..statusCode = HttpStatus.ok
+              ..headers.contentType = ContentType.json
+              ..write(jsonEncode({'ticket': 'fake-ticket'}));
+            await req.response.close();
+            return;
+          }
+          if (path == '/api/v1/stream/ws') {
+            acceptRequests++;
+            req.response.statusCode = HttpStatus.gone;
+            await req.response.close();
+            return;
+          }
+          if (path == '/api/v1/listen/ws') {
+            final ws = await WebSocketTransformer.upgrade(
+              req,
+              protocolSelector: (protocols) => protocols.first,
+            );
+            ws.listen(
+              (event) {
+                if (event is String) {
+                  final msg = jsonDecode(event) as Map<String, dynamic>;
+                  if (msg['type'] == 'listen' && !listenReceived.isCompleted) {
+                    listenReceived.complete();
+                  }
+                }
+              },
+              onDone: () {
+                if (!socketClosed.isCompleted) socketClosed.complete();
+              },
+            );
+            return;
+          }
+          req.response.statusCode = HttpStatus.notFound;
+          await req.response.close();
+        }),
+      );
+
+      final config = PortForwardConfig(
+        id: 'agent-remote-id',
+        serverId: serverId,
+        name: 'remote-via-monitor',
+        type: PortForwardType.remote,
+        localHost: InternetAddress.loopbackIPv4.address,
+        localPort: 8080,
+        remoteHost: '127.0.0.1',
+        remotePort: 9090,
+      );
+      store.put(config);
+
+      final spi = spiFixture(name: 'mon', id: serverId, ip: '127.0.0.1').copyWith(
+        monitorHttp: MonitorHttpCredential(
+          addr: 'http://127.0.0.1:${fakeMonitor.port}',
+          pwd: 'secret',
+          allowInsecure: true,
+        ),
+        preferredTransport: ServerTransport.monitorHttp,
+      );
+      final serverState = ServerState(
+        spi: spi,
+        status: InitStatus.status,
+        agentAccess: MonitorAccess.granted,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          serverProvider(
+            serverId,
+          ).overrideWith(() => _FixedServerNotifier(serverState)),
+        ],
+      );
+
+      final savedHttpOverrides = HttpOverrides.current;
+      HttpOverrides.global = null;
+      try {
+        final notifier = container.read(portForwardProvider(serverId).notifier);
+        // Start without awaiting: it will stall waiting for `ready`.
+        final start = notifier.startForward(config.id);
+        await listenReceived.future.timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => fail(
+            'listen not received; error=${notifier.state.activeForwards[config.id]?.error}',
+          ),
+        );
+
+        // Only await `clear()`, never `start`.
+        await notifier.clear().timeout(const Duration(seconds: 2));
+        await socketClosed.future.timeout(const Duration(seconds: 2));
+        // `start` settles cleanly once its listener is canceled.
+        await start.timeout(const Duration(seconds: 2));
+
+        expect(notifier.state.configs, isEmpty);
+        expect(notifier.state.activeForwards, isEmpty);
+        expect(store.fetchForServer(serverId), isEmpty);
+        expect(acceptRequests, 0);
+      } finally {
+        HttpOverrides.global = savedHttpOverrides;
+        container.dispose();
+        await fakeMonitor.close(force: true);
+        await getIt.reset();
+        await closeTestDb();
+      }
+    },
+  );
+
+  test(
+    'MonitorRemoteListener local close rejects late ready and incoming even if remote close stalls',
+    () async {
+      final incoming = StreamController<dynamic>();
+      final remoteCloseStall = Completer<void>();
+      final socket = _FakeControlWebSocket(incoming, remoteCloseStall.future);
+
+      var claimCount = 0;
+      var connectLocalCount = 0;
+      late MonitorRemoteListener created;
+
+      final startFuture = MonitorRemoteListener.start(
+        socket: socket,
+        bindHost: '127.0.0.1',
+        bindPort: 9090,
+        claim: (_) async {
+          claimCount++;
+          throw StateError('must not claim after local close');
+        },
+        connectLocal: () async {
+          connectLocalCount++;
+          throw StateError('must not dial local after local close');
+        },
+        onCreated: (listener) => created = listener,
+      );
+
+      // `listen` frame was sent, `ready` has not arrived.
+      expect(socket.sent.length, 1);
+      expect(jsonDecode(socket.sent.single as String)['type'], 'listen');
+
+      // Local close returns immediately without waiting for stalled remote close.
+      await created.close(waitRemote: false).timeout(const Duration(seconds: 1));
+      expect(created.isClosed, isTrue);
+      expect(socket.closeCalled, isTrue);
+
+      await expectLater(startFuture, throwsA(anything));
+
+      // Late `ready` and `incoming` frames must be ignored completely.
+      incoming.add(jsonEncode({'type': 'ready', 'port': 9090}));
+      incoming.add(jsonEncode({'type': 'incoming', 'id': 'late-conn'}));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(claimCount, 0);
+      expect(connectLocalCount, 0);
+
+      remoteCloseStall.complete();
+      await created.done.timeout(const Duration(seconds: 1));
+      await incoming.close();
+    },
+  );
+
+  test(
+    'MonitorRemoteListener close(waitRemote: false) does not stall on an active bridge whose channel close hangs',
+    () async {
+      final incoming = StreamController<dynamic>.broadcast();
+      final remoteControlClose = Completer<void>();
+      final controlSocket = _FakeControlWebSocket(
+        incoming,
+        remoteControlClose.future,
+      );
+
+      final localServer = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      final peerClosed = Completer<void>();
+      final peerAccepted = Completer<void>();
+      unawaited(
+        localServer.first.then((peer) {
+          if (!peerAccepted.isCompleted) peerAccepted.complete();
+          peer.listen(
+            (_) {},
+            onDone: () {
+              if (!peerClosed.isCompleted) peerClosed.complete();
+            },
+            onError: (_) {
+              if (!peerClosed.isCompleted) peerClosed.complete();
+            },
+          );
+        }),
+      );
+
+      final channelCloseStall = Completer<void>();
+      final channel = _FakeTunnelChannel(channelCloseStall.future);
+      final localConnected = Completer<void>();
+
+      final startFuture = MonitorRemoteListener.start(
+        socket: controlSocket,
+        bindHost: '127.0.0.1',
+        bindPort: 9090,
+        claim: (_) async => channel,
+        connectLocal: () async {
+          final s = await Socket.connect(
+            InternetAddress.loopbackIPv4,
+            localServer.port,
+          );
+          if (!localConnected.isCompleted) localConnected.complete();
+          return s;
+        },
+      );
+
+      incoming.add(jsonEncode({'type': 'ready', 'port': 9090}));
+      final listener = await startFuture.timeout(const Duration(seconds: 2));
+
+      // Establish an active bridge on this listener.
+      incoming.add(jsonEncode({'type': 'incoming', 'id': 'active-conn'}));
+      await Future.wait([
+        localConnected.future,
+        peerAccepted.future,
+      ]).timeout(const Duration(seconds: 2));
+      // Allow `_carry` to register the bridge into `_bridges`.
+      await Future<void>.delayed(Duration.zero);
+
+      // Must return immediately even though both control socket and bridge
+      // channel remote closes are stalled.
+      await listener.close(waitRemote: false).timeout(const Duration(seconds: 1));
+      expect(listener.isClosed, isTrue);
+      expect(controlSocket.closeCalled, isTrue);
+      expect(channel.closeCalled, isTrue);
+      await peerClosed.future.timeout(const Duration(seconds: 2));
+
+      channelCloseStall.complete();
+      remoteControlClose.complete();
+      await listener.done.timeout(const Duration(seconds: 1));
+      await channel.dispose();
+      await incoming.close();
+      await localServer.close();
+    },
+  );
 
   _reasons();
 
@@ -291,5 +567,68 @@ class _FixedServerNotifier extends ServerNotifier {
     shellDials++;
     if (_serverState.client case final client?) return Future.value(client);
     return Future.error(const SocketException('sshd is down'));
+  }
+}
+
+/// Minimal [WebSocket] stub that delivers frames from [_incoming] and stalls
+/// [close] on [_closeGate] to model a blackholed network link.
+class _FakeControlWebSocket extends Stream<dynamic> implements WebSocket {
+  _FakeControlWebSocket(this._incoming, this._closeGate);
+
+  final StreamController<dynamic> _incoming;
+  final Future<void> _closeGate;
+  final List<dynamic> sent = [];
+  var closeCalled = false;
+
+  @override
+  void add(dynamic data) => sent.add(data);
+
+  @override
+  Future<dynamic> close([int? code, String? reason]) {
+    closeCalled = true;
+    return _closeGate;
+  }
+
+  @override
+  StreamSubscription<dynamic> listen(
+    void Function(dynamic event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) => _incoming.stream.listen(
+    onData,
+    onError: onError,
+    onDone: onDone,
+    cancelOnError: cancelOnError,
+  );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Minimal [SshTunnelChannel] stub whose [close] stalls on [_closeGate].
+class _FakeTunnelChannel implements SshTunnelChannel {
+  _FakeTunnelChannel(this._closeGate);
+
+  final Future<void> _closeGate;
+  final _in = StreamController<Uint8List>.broadcast();
+  final _out = StreamController<List<int>>.broadcast();
+  var closeCalled = false;
+
+  @override
+  Stream<Uint8List> get stream => _in.stream;
+
+  @override
+  StreamSink<List<int>> get sink => _out.sink;
+
+  @override
+  Future<void> close() {
+    closeCalled = true;
+    return _closeGate;
+  }
+
+  Future<void> dispose() async {
+    await _in.close();
+    await _out.close();
   }
 }

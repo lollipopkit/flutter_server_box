@@ -119,9 +119,11 @@ Map<String, ScopedToken> reusableScopedTokens({
   required Spi? Function(String id) lookup,
   required Map<String, ScopedToken> existing,
   required DateTime now,
+  Set<String> invalidatedIds = const {},
 }) {
   final reusable = <String, ScopedToken>{};
   for (final id in serverIds) {
+    if (invalidatedIds.contains(id)) continue;
     final monitor = lookup(id)?.monitor;
     final held = existing[id];
     if (monitor == null || held == null) continue;
