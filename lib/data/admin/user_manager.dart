@@ -134,7 +134,14 @@ abstract final class UserManager {
 
   /// Whether [deleteGroupScript] would build a command for [group].
   static bool groupDeletable(SystemGroup group) =>
-      ffi.groupsDeleteRefusal(group: group) == null;
+      groupDeleteRefusal(group) == null;
+
+  /// Why [deleteGroupScript] would refuse [group], or null.
+  static String? groupDeleteRefusal(SystemGroup group) =>
+      switch (ffi.groupsDeleteRefusal(group: group)) {
+        final e? => message(e),
+        null => null,
+      };
 
   static String deleteGroupScript(SystemGroup group) => _command(
     () => ffi.groupsDeleteCommand(group: group),

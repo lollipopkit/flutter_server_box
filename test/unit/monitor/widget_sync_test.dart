@@ -145,6 +145,54 @@ void main() {
     expect(events, ['revoke $addr', 'revoked', 'issue $moved']);
   });
 
+  test('a token minted before an edit to its server is not published',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    final a = monitorSpi(id: 'a', name: 'A');
+    Stores.server.put(a);
+    Stores.server.put(
+      monitorSpi(id: 'b', name: 'B', addr: 'https://10.0.0.2:3770'),
+    );
+
+    final bStarted = Completer<void>();
+    final releaseB = Completer<void>();
+    final published = <Map<String, dynamic>>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (spi, endpoint) async {
+        if (spi.id == 'b') {
+          bStarted.complete();
+          await releaseB.future;
+        }
+        return ScopedToken(
+          token: 'tok-${spi.id}',
+          endpoint: endpoint,
+          expiresAt: 1800000000,
+        );
+      },
+      revokeToken: (_, _) async {},
+      writePayload: (json) async =>
+          published.add(jsonDecode(json) as Map<String, dynamic>),
+    );
+    addTearDown(sync.dispose);
+
+    final push = sync.push();
+    await bStarted.future.timeout(const Duration(seconds: 2));
+    // A's token is minted; the edit and its revoke land before the publish.
+    sync.revokeEditedServer(a);
+    await Future<void>.delayed(Duration.zero);
+    releaseB.complete();
+    await push.timeout(const Duration(seconds: 2));
+
+    final first = {for (final e in entries(published.first)) e['id']: e};
+    expect(first['a']!.containsKey('token'), isFalse);
+    expect(first['b']!['token'], 'tok-b');
+  });
+
   test('a rename hands back the tokens scoped to the old id', () {
     final queued = <String>[];
     final old = monitorSpi(id: 's1', name: 'S');

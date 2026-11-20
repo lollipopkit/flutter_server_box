@@ -1211,6 +1211,11 @@ extension on _UsersPageState {
       (g) => g.name == stale.name,
     );
     if (group == null || !mounted) return false;
+    // The refreshed list may have made it an account's primary group.
+    if (UserManager.groupDeleteRefusal(group) case final refusal?) {
+      Toast.error(refusal);
+      return false;
+    }
     final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),

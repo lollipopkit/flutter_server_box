@@ -62,7 +62,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _ForwardEntry> _forwards = {};
   final Map<String, CancelScope> _scopes = {};
   final Map<String, ({CancelScope scope, Future<void> future})> _starts = {};
-  final Set<Future<void>> _localTeardowns = {};
+  final Map<String, Set<Future<void>>> _localTeardowns = {};
+
+  /// The SSH session a start connected through, so losing it cancels a start
+  /// not yet in [_forwards].
+  final _sshOwners = Expando<SSHClient>();
   final Map<String, Future<void>> _remoteReclaims = {};
   final Map<String, Object> _stops = {};
   Future<void>? _clearFuture;
@@ -83,10 +87,22 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         final dropped = _forwards.entries
             .where((e) => e.value.viaSsh)
             .toList();
-        if (dropped.isEmpty) return;
+        final pending = _scopes.entries
+            .where(
+              (e) =>
+                  !_forwards.containsKey(e.key) &&
+                  identical(_sshOwners[e.value], prev?.client),
+            )
+            .toList();
+        if (dropped.isEmpty && pending.isEmpty) return;
         final active = Map<String, PortForwardStatus>.from(
           state.activeForwards,
         );
+        for (final MapEntry(:key, :value) in pending) {
+          _scopes.remove(key);
+          active.remove(key);
+          unawaited(_cancelScope(key, value));
+        }
         for (final MapEntry(:key, :value) in dropped) {
           _forwards.remove(key);
           active.remove(key);
@@ -94,7 +110,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
           if (scope != null) {
             unawaited(_cancelScope(key, scope));
           } else {
-            unawaited(_trackLocalTeardown(value.close(waitRemote: false)));
+            unawaited(
+              _trackLocalTeardown(key, value.close(waitRemote: false)),
+            );
           }
         }
         state = state.copyWith(activeForwards: active);
@@ -123,12 +141,15 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     _remoteReclaims[id] = reclaim;
   }
 
-  Future<void> _trackLocalTeardown(Future<void> close) {
+  Future<void> _trackLocalTeardown(String id, Future<void> close) {
     late final Future<void> tracked;
     tracked = close.catchError((_) {}).whenComplete(() {
-      _localTeardowns.remove(tracked);
+      final pending = _localTeardowns[id];
+      if (pending == null) return;
+      pending.remove(tracked);
+      if (pending.isEmpty) _localTeardowns.remove(id);
     });
-    _localTeardowns.add(tracked);
+    _localTeardowns.putIfAbsent(id, () => {}).add(tracked);
     return tracked;
   }
 
@@ -139,7 +160,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     // await local teardown.
     final cancel = scope.cancel(waitRemote: false);
     _trackRemoteReclaim(id, scope);
-    return _trackLocalTeardown(cancel);
+    return _trackLocalTeardown(id, cancel);
   }
 
   /// Connects the shell if it isn't already, then returns the client.
@@ -193,7 +214,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       // close immediately while remote close handshakes finish in the
       // background.
       await Future.wait([
-        ..._localTeardowns,
+        for (final pending in _localTeardowns.values) ...pending,
         for (final MapEntry(:key, :value) in entries) _cancelScope(key, value),
       ]);
       if (!ref.mounted) return;
@@ -281,6 +302,14 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     // the other two wearing the same name.
     Diag.crumb(SbDiag.forward, 'start', data: {'type': config.type.name});
 
+    // A stopped local or SOCKS listener still closing holds its port.
+    if (config.type != PortForwardType.remote) {
+      if (_localTeardowns[id] case final pending? when pending.isNotEmpty) {
+        await Future.wait(pending.toList());
+        if (!_isCurrent(id, scope)) return;
+      }
+    }
+
     // For an immediate restart of the same remote port, give the previous
     // remote listener a bounded window to release the port on the server,
     // aborting immediately if this new start is itself canceled.
@@ -357,12 +386,15 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   /// listener: what the leading transport can do, and an SSH session where SSH
   /// leads.
   Future<void> _ensureCarried(
-    ServerState server, {
+    ServerState server,
+    CancelScope scope, {
     required bool listen,
   }) async {
     final reason = portForwardUnavailable(server, listen: listen);
     if (reason != null) throw PortForwardUnavailable(reason);
-    if (server.spi.transport == ServerTransport.ssh) await _connectedClient();
+    if (server.spi.transport == ServerTransport.ssh) {
+      _sshOwners[scope] = await _connectedClient();
+    }
   }
 
   /// Dials per connection, over the agent alone where it leads — see
@@ -382,7 +414,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       throw StateError('A local forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
-    await _ensureCarried(server, listen: false);
+    await _ensureCarried(server, scope, listen: false);
     if (scope.isCanceled) return null;
     // Each connection is dialled as it arrives, as a remote desktop's is —
     // see [ServerTcpDialer].
@@ -417,7 +449,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       throw StateError('A remote forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
-    await _ensureCarried(server, listen: true);
+    await _ensureCarried(server, scope, listen: true);
     if (scope.isCanceled) return null;
     final localHost = config.localHost ?? 'localhost';
     if (_viaAgent(server)) {
@@ -425,6 +457,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
     final client = await _connectedClient();
     if (scope.isCanceled) return null;
+    _sshOwners[scope] = client;
     final setup = client.forwardRemote(
       host: config.remoteHost!,
       port: config.remotePort!,
@@ -522,7 +555,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     CancelScope scope,
   ) async {
     final server = ref.read(serverProvider(_serverId));
-    await _ensureCarried(server, listen: false);
+    await _ensureCarried(server, scope, listen: false);
     if (scope.isCanceled) return null;
     final dialer = _dialer(server);
     final entry = await _bindTunnel(
@@ -583,7 +616,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     } else {
       final entry = _forwards.remove(id);
       if (entry != null) {
-        await _trackLocalTeardown(entry.close(waitRemote: false));
+        await _trackLocalTeardown(id, entry.close(waitRemote: false));
         Loggers.app.info('Port forward stopped: $id');
       }
     }

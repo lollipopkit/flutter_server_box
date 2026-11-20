@@ -114,8 +114,11 @@ void main() {
     await provider.stopForward(config.id).timeout(timeout);
     await client.cancelStarted.future.timeout(timeout);
 
-    await Future<void>.delayed(const Duration(milliseconds: 2100));
-    await provider.startForward(config.id).timeout(timeout);
+    // The cancel reply never comes.
+    final restart = provider.startForward(config.id);
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    expect(client.requests, 1);
+    await restart.timeout(timeout);
     expect(client.requests, 2);
   });
 
@@ -235,6 +238,114 @@ void main() {
     expect(notifier.state.activeForwards, isEmpty);
     expect(store.fetchForServer(serverId), isEmpty);
   }
+
+  Future<
+    ({
+      PortForwardConfig config,
+      PortForwardNotifier notifier,
+      _FixedServerNotifier server,
+      ServerSocket socket,
+    })
+  >
+  sshLocalForward() async {
+    await openTestDb();
+    final store = PortForwardStore();
+    getIt.registerSingleton<PortForwardStore>(store);
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    const serverId = 'server-id';
+    SqliteDb.instance.execute(
+      "INSERT INTO server (id, name, ssh_ip) VALUES ('$serverId', 'server', '127.0.0.1');",
+    );
+    final serverSocket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(serverSocket.close);
+    final config = PortForwardConfig(
+      id: 'forward-id',
+      serverId: serverId,
+      name: 'test',
+      type: PortForwardType.local,
+      localHost: InternetAddress.loopbackIPv4.address,
+      localPort: serverSocket.port,
+      remoteHost: '127.0.0.1',
+      remotePort: 22,
+    );
+    store.put(config);
+    final socket = IdleSshSocket();
+    final client = SSHClient(socket, username: 'test');
+    addTearDown(client.close);
+    final server = _FixedServerNotifier(
+      ServerState(
+        spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1'),
+        status: InitStatus.status,
+        client: client,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [serverProvider(serverId).overrideWith(() => server)],
+    );
+    addTearDown(container.dispose);
+    return (
+      config: config,
+      notifier: container.read(portForwardProvider(serverId).notifier),
+      server: server,
+      socket: serverSocket,
+    );
+  }
+
+  test('losing SSH cancels a forward still binding through it', () async {
+    final (:config, :notifier, :server, :socket) = await sshLocalForward();
+    final allowBind = Completer<void>();
+    final bindStarted = Completer<void>();
+    final listener = _GatedLocalListener(socket, Future.value());
+    final start = IOOverrides.runZoned(
+      () => notifier.startForward(config.id),
+      serverSocketBind: (_, _, {int backlog = 0, bool v6Only = false, bool shared = false}) async {
+        bindStarted.complete();
+        await allowBind.future;
+        return listener;
+      },
+    );
+    const timeout = Duration(seconds: 2);
+    await bindStarted.future.timeout(timeout);
+    server.dropSession();
+    allowBind.complete();
+    await start.timeout(timeout);
+
+    await listener.closeStarted.future.timeout(timeout);
+    expect(notifier.state.activeForwards[config.id]?.isActive, isNot(isTrue));
+  });
+
+  test('a restart waits for the stopped listener to close', () async {
+    final (:config, :notifier, server: _, :socket) = await sshLocalForward();
+    final allowClose = Completer<void>();
+    addTearDown(() {
+      if (!allowClose.isCompleted) allowClose.complete();
+    });
+    final listener = _GatedLocalListener(socket, allowClose.future);
+    var binds = 0;
+    Future<void> run(Future<void> Function() body) => IOOverrides.runZoned(
+      body,
+      serverSocketBind: (_, _, {int backlog = 0, bool v6Only = false, bool shared = false}) async {
+        binds++;
+        return listener;
+      },
+    );
+    const timeout = Duration(seconds: 2);
+    await run(() => notifier.startForward(config.id)).timeout(timeout);
+    expect(notifier.state.activeForwards[config.id]?.isActive, isTrue);
+
+    final stop = notifier.stopForward(config.id);
+    await listener.closeStarted.future.timeout(timeout);
+    final restart = run(() => notifier.startForward(config.id));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(binds, 1);
+
+    allowClose.complete();
+    await Future.wait([stop, restart]).timeout(timeout);
+    expect(binds, 2);
+  });
 
   for (final type in [PortForwardType.local, PortForwardType.dynamic]) {
     test('clear waits for a pending ${type.name} bind and listener close',
@@ -756,7 +867,7 @@ class _GatedLocalListener extends Stream<Socket> implements ServerSocket {
 
   @override
   Future<ServerSocket> close() async {
-    closeStarted.complete();
+    if (!closeStarted.isCompleted) closeStarted.complete();
     await _allowClose;
     return _socket.close();
   }

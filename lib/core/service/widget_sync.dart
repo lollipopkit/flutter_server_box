@@ -70,6 +70,9 @@ final class WidgetSync {
 
   /// The endpoint an edit's revoke covered, so the backstop leaves it alone.
   final _editedFrom = <String, String>{};
+
+  /// Bumped by each edit, so a token minted before one is not published.
+  final _editGens = <String, int>{};
   final _deletedDuringPush = <String>{};
   final _invalidatedTokens = <String>{};
 
@@ -98,6 +101,7 @@ final class WidgetSync {
 
   Future<void> _pushOnce() async {
     _deletedDuringPush.clear();
+    final mintedAt = <String, int>{};
     final servers = monitorServers();
     final held = await _heldTokens();
     final tokens = reusableScopedTokens(
@@ -140,8 +144,10 @@ final class WidgetSync {
         if (!_canPublish(spi)) continue;
       }
       try {
+        final gen = _editGens[spi.id] ?? 0;
         final issued = await _issueAt(spi, monitor, endpoint);
         tokens[spi.id] = issued;
+        mintedAt[spi.id] = gen;
       } catch (e, s) {
         // Not fatal, and deliberately not a reason to drop the server from
         // the list: the widget still has a name and an address to show, and
@@ -160,6 +166,13 @@ final class WidgetSync {
       }
     }
 
+    // Edited after its mint: the edit's revoke covers it, and its own push
+    // mints the replacement.
+    final stale = {
+      for (final MapEntry(:key, :value) in mintedAt.entries)
+        if ((_editGens[key] ?? 0) != value) key,
+    };
+    stale.forEach(tokens.remove);
     final published = servers.where(_canPublish).toList();
     try {
       await (_writePayload ?? MethodChans.publishWidgetServers)(
@@ -169,6 +182,7 @@ final class WidgetSync {
       bool settled(String id) =>
           !_deletedDuringPush.contains(id) &&
           !_edits.containsKey(id) &&
+          !stale.contains(id) &&
           (!publishedIds.contains(id) || tokens[id]?.opaque == false);
       _invalidatedTokens.removeWhere(settled);
       _editedFrom.removeWhere((id, _) => settled(id));
@@ -310,6 +324,7 @@ final class WidgetSync {
     final monitor = old.monitor;
     if (monitor == null) return;
     final id = old.id;
+    _editGens.update(id, (gen) => gen + 1, ifAbsent: () => 1);
     _invalidatedTokens.add(id);
     _editedFrom[id] = normalizeAgentEndpoint(monitor.addr);
     late final Future<void> revoke;
