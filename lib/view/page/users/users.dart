@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/pending_ops.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/admin/user_manager.dart';
@@ -64,18 +67,28 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   String _query = '';
   bool _systemExpanded = true;
   bool _groupSystemExpanded = true;
-  bool _busy = false;
+  final _ops = PendingOps();
+  bool _refreshQueued = false;
+  Future<void>? _refreshing;
+  bool get _busy => _ops.isBusy;
   bool _unsupported = false;
   String? _failure;
+
+  void _onOpsChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _ops.loading.addListener(_onOpsChanged);
     Future.microtask(_refresh);
   }
 
   @override
   void dispose() {
+    _ops.loading.removeListener(_onOpsChanged);
+    _ops.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -1064,7 +1077,11 @@ final class _GroupSectionSpec {
 
 extension on _UsersPageState {
   Future<void> _refresh() async {
-    if (!mounted || _busy) return;
+    if (!mounted) return;
+    if (_ops.isRunning('refresh')) {
+      _refreshQueued = true;
+      return;
+    }
     final system = ref.read(_provider).status.system;
     if (system != SystemType.linux) {
       _rebuild(() {
@@ -1075,36 +1092,62 @@ extension on _UsersPageState {
       return;
     }
 
-    _rebuild(() {
-      _busy = true;
-      _unsupported = false;
-      _failure = null;
+    late final Future<void> refreshing;
+    refreshing = _ops.run('refresh', () async {
+      _rebuild(() {
+        _unsupported = false;
+        _failure = null;
+      });
+      try {
+        final exec = await ref.read(_provider.notifier).ensureExec();
+        final catalog = await UserManager.list(exec);
+        if (!mounted) return;
+        _rebuild(() => _catalog = catalog);
+      } catch (e, s) {
+        Loggers.app.warning('List users for ${widget.args.spi.id}', e, s);
+        if (mounted) _rebuild(() => _failure = '$e');
+      }
     });
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      final catalog = await UserManager.list(exec);
-      if (!mounted) return;
-      _rebuild(() => _catalog = catalog);
-    } catch (e, s) {
-      Loggers.app.warning('List users for ${widget.args.spi.id}', e, s);
-      if (mounted) _rebuild(() => _failure = '$e');
-    } finally {
-      if (mounted) _rebuild(() => _busy = false);
+    _refreshing = refreshing;
+    await refreshing;
+    if (identical(_refreshing, refreshing)) _refreshing = null;
+    if (mounted && _refreshQueued) {
+      _refreshQueued = false;
+      unawaited(_refresh());
     }
   }
 
-  Future<bool> _editUser([SystemUser? user]) async {
+  /// The catalog once every refresh running or queued has finished, so a
+  /// change is never planned against the list a previous change made stale.
+  Future<UserCatalog?> _settledCatalog() async {
+    for (var r = _refreshing; r != null; r = _refreshing) {
+      await r;
+    }
+    return mounted ? _catalog : null;
+  }
+
+  Future<bool> _editUser([SystemUser? stale]) async {
+    final catalog = await _settledCatalog();
+    if (catalog == null) return false;
+    final user = stale == null
+        ? null
+        : catalog.users.firstWhereOrNull((u) => u.name == stale.name);
+    if (stale != null && user == null) return false;
     final draft = await _showEditor(user);
     if (draft == null || !mounted) return false;
     final script = user == null
         ? UserManager.createScript(draft)
         : UserManager.editScript(user, draft);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
-  Future<bool> _deleteUser(SystemUser user) async {
+  Future<bool> _deleteUser(SystemUser stale) async {
+    final user = (await _settledCatalog())?.users.firstWhereOrNull(
+      (u) => u.name == stale.name,
+    );
+    if (user == null || !mounted) return false;
     var removeHome = false;
     final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
@@ -1129,7 +1172,7 @@ extension on _UsersPageState {
     if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteScript(user, removeHome: removeHome);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
@@ -1146,20 +1189,33 @@ extension on _UsersPageState {
     );
   }
 
-  Future<bool> _editGroup([SystemGroup? group]) async {
-    final catalog = _catalog;
+  Future<bool> _editGroup([SystemGroup? stale]) async {
+    final catalog = await _settledCatalog();
     if (catalog == null) return false;
+    final group = stale == null
+        ? null
+        : catalog.groups.firstWhereOrNull((g) => g.name == stale.name);
+    if (stale != null && group == null) return false;
     final draft = await _showGroupEditor(group);
     if (draft == null || !mounted) return false;
     final script = group == null
         ? UserManager.createGroupScript(draft, catalog)
         : UserManager.editGroupScript(group, draft, catalog);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
-  Future<bool> _deleteGroup(SystemGroup group) async {
+  Future<bool> _deleteGroup(SystemGroup stale) async {
+    final group = (await _settledCatalog())?.groups.firstWhereOrNull(
+      (g) => g.name == stale.name,
+    );
+    if (group == null || !mounted) return false;
+    // The refreshed list may have made it an account's primary group.
+    if (UserManager.groupDeleteRefusal(group) case final refusal?) {
+      Toast.error(refusal);
+      return false;
+    }
     final confirmed = await context.showSheet<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),
@@ -1168,47 +1224,46 @@ extension on _UsersPageState {
     if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteGroupScript(group);
     if (!await _runMutation(script)) return false;
-    await _refresh();
+    unawaited(_refresh());
     return true;
   }
 
   Future<bool> _runMutation(String script) async {
-    if (_busy) return false;
-    _rebuild(() => _busy = true);
-    try {
-      final exec = await ref.read(_provider.notifier).ensureExec();
-      final isRoot =
-          widget.args.spi.isRoot || _catalog?.currentUser == 'root';
-      if (!mounted) return false;
-      final result = await SudoPassword.retry(
-        context,
-        widget.args.spi.id,
-        label: widget.args.spi.ssh?.user ?? _catalog?.currentUser,
-        attempt: (password) => PrivilegedExec.run(
-          exec,
-          script,
-          isRoot: password == null && isRoot,
-          password: password,
-        ),
-        rejected: (r) => r.sudoRejected,
-      );
-      if (result == null) return false;
-      if (!result.succeeded) {
-        if (mounted) {
-          final detail = result.combined.trim();
-          Toast.error(libL10n.fail, body: detail.isEmpty ? null : detail);
+    final result = await _ops.run<bool>('mutate', () async {
+      try {
+        final exec = await ref.read(_provider.notifier).ensureExec();
+        final isRoot =
+            widget.args.spi.isRoot || _catalog?.currentUser == 'root';
+        if (!mounted) return false;
+        final res = await SudoPassword.retry(
+          context,
+          widget.args.spi.id,
+          label: widget.args.spi.ssh?.user ?? _catalog?.currentUser,
+          attempt: (password) => PrivilegedExec.run(
+            exec,
+            script,
+            isRoot: password == null && isRoot,
+            password: password,
+          ),
+          rejected: (r) => r.sudoRejected,
+        );
+        if (res == null) return false;
+        if (!res.succeeded) {
+          if (mounted) {
+            final detail = res.combined.trim();
+            Toast.error(libL10n.fail, body: detail.isEmpty ? null : detail);
+          }
+          return false;
         }
+        if (mounted) Toast.success(libL10n.success);
+        return true;
+      } catch (e, s) {
+        Loggers.app.warning('Change user on ${widget.args.spi.id}', e, s);
+        if (mounted) Toast.error('$e');
         return false;
       }
-      if (mounted) Toast.success(libL10n.success);
-      return true;
-    } catch (e, s) {
-      Loggers.app.warning('Change user on ${widget.args.spi.id}', e, s);
-      if (mounted) Toast.error('$e');
-      return false;
-    } finally {
-      if (mounted) _rebuild(() => _busy = false);
-    }
+    });
+    return result == true;
   }
 }
 

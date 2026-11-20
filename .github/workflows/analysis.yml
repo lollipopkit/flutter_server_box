@@ -469,7 +469,7 @@ jobs:
       - name: Linux files extension tests
         run: ios/LinuxFiles/Tests/run.sh
 
-      # fl_userland builds in Cargo for both Apple and Linux targets, and
+      # iul builds in Cargo for both Apple and Linux targets, and
       # llvm-tools provides llvm-ar and llvm-nm for the static library.
       - name: Install the engine's build tools
         run: |

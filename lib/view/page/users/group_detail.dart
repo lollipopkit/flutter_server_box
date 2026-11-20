@@ -43,6 +43,8 @@ final class GroupDetailPage extends ConsumerStatefulWidget {
 }
 
 final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
+  var _busy = false;
+
   SystemGroup get _group => widget.args.group;
 
   @override
@@ -52,28 +54,35 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
       appBar: CustomAppBar(
         title: TwoLineText(up: _group.name, down: widget.args.spi.name),
         actions: [
-          if (_group.local)
-            Btn.icon(
-              text: libL10n.edit,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              onTap: () => _run(widget.args.onEdit),
-            ),
-          if (UserManager.groupDeletable(_group))
-            ContextMenuButton(
-              tooltip: libL10n.more,
-              actions: () => [
-                ContextMenuAction(
-                  text: libL10n.delete,
-                  icon: Icons.delete_outline,
-                  destructive: true,
-                  onTap: () => _run(widget.args.onDelete),
-                ),
-              ],
-              child: const Padding(
-                padding: EdgeInsets.all(7),
-                child: Icon(Icons.more_vert, size: 18),
+          if (_busy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: SizedLoading.small,
+            )
+          else ...[
+            if (_group.local)
+              Btn.icon(
+                text: libL10n.edit,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                onTap: () => _run(widget.args.onEdit),
               ),
-            ),
+            if (UserManager.groupDeletable(_group))
+              ContextMenuButton(
+                tooltip: libL10n.more,
+                actions: () => [
+                  ContextMenuAction(
+                    text: libL10n.delete,
+                    icon: Icons.delete_outline,
+                    destructive: true,
+                    onTap: () => _run(widget.args.onDelete),
+                  ),
+                ],
+                child: const Padding(
+                  padding: EdgeInsets.all(7),
+                  child: Icon(Icons.more_vert, size: 18),
+                ),
+              ),
+          ],
         ],
       ),
       body: ListView(
@@ -162,7 +171,17 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
   }
 
   Future<void> _run(Future<bool> Function(SystemGroup group) action) async {
-    final changed = await action(_group);
-    if (changed && mounted) context.pop();
+    if (_busy) return;
+    setState(() => _busy = true);
+    var popped = false;
+    try {
+      final changed = await action(_group);
+      if (changed && mounted) {
+        popped = true;
+        context.pop();
+      }
+    } finally {
+      if (!popped && mounted) setState(() => _busy = false);
+    }
   }
 }

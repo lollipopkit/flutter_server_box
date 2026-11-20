@@ -35,6 +35,14 @@ runs:
       working-directory: crates/sbm_ffi
       run: rustup toolchain install --profile minimal --no-self-update
 
+    # Key on the fl_tty gitlink recorded by the parent repo rather than fl_tty's
+    # internal directory layout, so submodule reorganizations (e.g. third_party/)
+    # cannot silently drop hook inputs from the cache key.
+    - name: Resolve fl_tty revision
+      id: fl-tty
+      shell: bash
+      run: echo "sha=$(git rev-parse HEAD:packages/fl_tty)" >> "$GITHUB_OUTPUT"
+
     # A partial match is safe to restore: hooks_runner re-runs a hook whose
     # inputs changed, and cargo then rebuilds only what its fingerprints say is
     # stale.
@@ -43,7 +51,7 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: .dart_tool/hooks_runner
-        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**', 'packages/fl_tty/src/**', 'packages/fl_tty/iul/**', 'packages/fl_tty/hook/**', 'packages/fl_tty/scripts/**', 'packages/fl_tty/third_party/fl_userland/**') }}
+        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ steps.fl-tty.outputs.sha }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**') }}
         restore-keys: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-
 
     # A key that already exists is a warning, not a failure, so an exact hit
@@ -53,4 +61,4 @@ runs:
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: .dart_tool/hooks_runner
-        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**', 'packages/fl_tty/src/**', 'packages/fl_tty/iul/**', 'packages/fl_tty/hook/**', 'packages/fl_tty/scripts/**', 'packages/fl_tty/third_party/fl_userland/**') }}
+        key: hooks-${{ runner.os }}-${{ runner.arch }}${{ inputs.key-suffix }}-${{ steps.fl-tty.outputs.sha }}-${{ hashFiles('pubspec.lock', 'Cargo.lock', 'crates/**', 'hook/**') }}

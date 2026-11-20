@@ -371,32 +371,28 @@ class ServersNotifier extends _$ServersNotifier {
   Future<void> _delServer(String id) async {
     final deleting = state.servers[id];
     if (deleting == null) return;
-    await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
-    ref.read(workspacesProvider.notifier).removeServer(id);
-    // Started here, because revoking is an authenticated call to the agent
-    // and the credential is on the record. Neither publishes — see
-    // `revokeServer`: a rebuild from a store that still holds this server
-    // would mint a replacement token for the one being deleted.
-    //
-    // Not waited for, for the reason the edit path does not either: an agent
-    // that has gone away costs ten seconds per call to establish that, and a
-    // delete that hangs on it is a delete that looks ignored. `deleting` is a
-    // value already in hand, so the request carries the old credential
-    // whatever the store does next, and a rebuild after the row is gone has
-    // nothing to mint for.
+    // Keep both surfaces from minting while local cleanup still needs the row.
     unawaited(WatchSync.instance.revokeServer(deleting));
-    unawaited(WidgetSync.instance.revokeServer(deleting));
-    await _clearServerData(id);
+    final finishWidgetDeletion = WidgetSync.instance.beginServerDeletion(deleting);
+    final List<String> newOrder;
+    try {
+      await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
+      ref.read(workspacesProvider.notifier).removeServer(id);
+      await _clearServerData(id);
+      newOrder = List<String>.from(state.serverOrder)..remove(id);
+      Stores.setting.serverOrder.put(newOrder);
+      Stores.server.deleteById(id);
+    } finally {
+      finishWidgetDeletion();
+      WatchSync.instance.finishServerDeletion(id);
+    }
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
 
-    final newOrder = List<String>.from(state.serverOrder)..remove(id);
     final newTags = _calculateTags(newServers);
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(id);
 
-    Stores.setting.serverOrder.put(newOrder);
-    Stores.server.deleteById(id);
     // The row goes with the server — the foreign key cascades — but the whole
     // map this store keeps in memory does not, so a list drawn afterwards read
     // a mark for a server that no longer exists.
@@ -410,8 +406,11 @@ class ServersNotifier extends _$ServersNotifier {
     await _clearSudoPasswordOverrideBestEffort(id);
 
     // Now that the row is gone, so the rebuilt lists cannot contain it.
-    await WatchSync.instance.push();
-    await WidgetSync.instance.push();
+    // Not waited for: on iOS/Android `push` talks to remaining monitor agents
+    // and WatchConnectivity, which can stall for tens of seconds and leave the
+    // edit page open after the confirmation sheet closes.
+    unawaited(WatchSync.instance.push());
+    unawaited(WidgetSync.instance.push());
 
     // Deselect if the deleted server was selected, and invalidate its provider
     // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.
@@ -494,6 +493,14 @@ class ServersNotifier extends _$ServersNotifier {
       } else {
         Stores.server.update(old, newSpi);
       }
+      // Both surfaces revoke in the background with the old credential
+      // snapshot, ahead of their next mint for this server.
+      revokeScopedTokensLeftBehind(
+        old,
+        newSpi,
+        queueWatchRevoke: WatchSync.instance.revokeEditedServer,
+        queueWidgetRevoke: WidgetSync.instance.revokeEditedServer,
+      );
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -548,27 +555,6 @@ class ServersNotifier extends _$ServersNotifier {
         // typed this session is not.
         SudoPassword.forget(old.id);
       }
-
-      // While the *old* credential is still known. A scoped token is revoked
-      // by an authenticated call to the agent that issued it, so this is the
-      // last moment anything can: after this the old address and login are
-      // gone, and a rebuild of the token set can only stop handing the
-      // credential out, never take it back.
-      //
-      // Started here and not waited for. The old address is the one being
-      // moved away from, and the commonest reason to move away from an
-      // address is that it stopped answering — so this is a request that
-      // routinely runs into `MonitorHttpClient`'s ten-second connect timeout,
-      // twice, on the one code path between the Save button and the editor
-      // closing. `_mutate` serialises every mutation, so a second tap queued
-      // behind the first instead of doing anything: the save appeared to be
-      // ignored for as long as the old agent took to not answer.
-      //
-      // Nothing below depends on the result, `old` is a value this closure
-      // holds rather than something re-read from the store, and the call
-      // already swallows its own failures — see its own doc comment for why
-      // a token that outlives the edit is the accepted worst case.
-      unawaited(revokeScopedTokensLeftBehind(old, newSpi));
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {

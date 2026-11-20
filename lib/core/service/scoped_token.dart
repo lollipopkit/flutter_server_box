@@ -1,6 +1,4 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
@@ -119,9 +117,11 @@ Map<String, ScopedToken> reusableScopedTokens({
   required Spi? Function(String id) lookup,
   required Map<String, ScopedToken> existing,
   required DateTime now,
+  Set<String> invalidatedIds = const {},
 }) {
   final reusable = <String, ScopedToken>{};
   for (final id in serverIds) {
+    if (invalidatedIds.contains(id)) continue;
     final monitor = lookup(id)?.monitor;
     final held = existing[id];
     if (monitor == null || held == null) continue;
@@ -129,15 +129,6 @@ Map<String, ScopedToken> reusableScopedTokens({
   }
   return reusable;
 }
-
-/// Every `client_id` this app mints a scoped token under.
-///
-/// One list, because the thing that has to revoke them does not care which
-/// surface each belongs to — it is undoing all of them at one agent.
-List<String> scopedClientIdsFor(String serverId) => [
-  'watch:$serverId',
-  'widget:$serverId',
-];
 
 /// Hands back the credentials an agent the server is *moving away from* still
 /// holds.
@@ -149,37 +140,33 @@ List<String> scopedClientIdsFor(String serverId) => [
 /// only ever stop *handing out* a credential; the agent-side row stays valid
 /// for up to ninety days.
 ///
-/// Two ways a server moves away from its agent, and both leave a live token
+/// Three ways a server moves away from its token, and each leaves a live one
 /// behind:
 ///
 /// - its monitor configuration is removed outright;
-/// - its address changes, so the new token is minted somewhere else.
+/// - its address changes, so the new token is minted somewhere else;
+/// - it is renamed, so the new token is scoped to another `client_id`.
 ///
-/// Best effort and never rethrows. A server must stay editable while its agent
-/// is offline, and once the record is written there is no retry target — the
-/// token may outlive it remotely, which is worse than nothing but far better
-/// than an edit that cannot be saved.
-Future<void> revokeScopedTokensLeftBehind(Spi old, Spi next) async {
+/// Each surface queues the revoke ahead of its next mint for the server, so
+/// an old address reaching the same agent cannot revoke the replacement.
+/// Neither delays saving the edit if the agent is offline.
+void revokeScopedTokensLeftBehind(
+  Spi old,
+  Spi next, {
+  required void Function(Spi) queueWatchRevoke,
+  required void Function(Spi) queueWidgetRevoke,
+}) {
   final previous = old.monitor;
   if (previous == null) return;
 
   final current = next.monitor;
   final movedOn =
+      old.id != next.id ||
       current == null ||
       normalizeAgentEndpoint(current.addr) !=
           normalizeAgentEndpoint(previous.addr);
   if (!movedOn) return;
 
-  final client = MonitorHttpClient(previous);
-  try {
-    for (final clientId in scopedClientIdsFor(old.id)) {
-      try {
-        await client.revokeWatchToken(clientId);
-      } catch (e, s) {
-        Loggers.app.warning('Revoke $clientId at ${previous.addr}', e, s);
-      }
-    }
-  } finally {
-    client.dispose();
-  }
+  queueWatchRevoke(old);
+  queueWidgetRevoke(old);
 }

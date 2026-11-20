@@ -37,7 +37,16 @@ import 'package:server_box/data/store/stores.dart';
 /// carries and scoped to its own `client_id` so revoking one surface leaves
 /// the other alone.
 final class WidgetSync {
-  WidgetSync._();
+  WidgetSync._() : _issueToken = null, _revokeToken = null, _writePayload = null;
+
+  @visibleForTesting
+  WidgetSync.forTest({
+    required Future<ScopedToken> Function(Spi, String) issueToken,
+    required Future<void> Function(Spi, MonitorHttpCredential) revokeToken,
+    required Future<void> Function(String) writePayload,
+  }) : _issueToken = issueToken,
+       _revokeToken = revokeToken,
+       _writePayload = writePayload;
 
   static final instance = WidgetSync._();
 
@@ -53,7 +62,26 @@ final class WidgetSync {
   Timer? _pushDebouncer;
   late final _pushes = Coalesced(_pushOnce);
 
-  bool get _supported => isIOS || isAndroid;
+  final Future<ScopedToken> Function(Spi, String)? _issueToken;
+  final Future<void> Function(Spi, MonitorHttpCredential)? _revokeToken;
+  final Future<void> Function(String)? _writePayload;
+  final _deletions = <String, Future<void>>{};
+  final _edits = <String, Future<void>>{};
+
+  /// The endpoint an edit's revoke covered, so the backstop leaves it alone.
+  final _editedFrom = <String, String>{};
+
+  /// Bumped by each edit, so a token minted before one is not published.
+  final _editGens = <String, int>{};
+  final _deletedDuringPush = <String>{};
+  final _invalidatedTokens = <String>{};
+
+  bool get _supported => _issueToken != null || isIOS || isAndroid;
+
+  bool _canPublish(Spi spi) =>
+      !_deletions.containsKey(spi.id) &&
+      !_deletedDuringPush.contains(spi.id) &&
+      Stores.server.fetchOneRaw(spi.id)?.monitorOn != null;
 
   Future<void> init() async {
     if (!_supported) return;
@@ -71,8 +99,9 @@ final class WidgetSync {
     return _pushes();
   }
 
-
   Future<void> _pushOnce() async {
+    _deletedDuringPush.clear();
+    final mintedAt = <String, int>{};
     final servers = monitorServers();
     final held = await _heldTokens();
     final tokens = reusableScopedTokens(
@@ -80,14 +109,18 @@ final class WidgetSync {
       lookup: Stores.server.fetchOneRaw,
       existing: held,
       now: DateTime.now(),
+      invalidatedIds: _invalidatedTokens,
     );
 
     for (final spi in servers) {
-      if (tokens.containsKey(spi.id)) continue;
-      final monitor = spi.monitor;
+      if (!_canPublish(spi) || tokens.containsKey(spi.id)) continue;
+      final monitor = spi.monitorOn;
       if (monitor == null) continue;
+      // An edit's revoke at the old address may reach the same agent, and
+      // would revoke a replacement minted before it lands. It pushes again
+      // once it has.
+      if (_edits.containsKey(spi.id)) continue;
       final endpoint = normalizeAgentEndpoint(monitor.addr);
-      final client = MonitorHttpClient(monitor);
       // A backstop, not the real revocation: `revokeScopedTokensLeftBehind`
       // runs at the edit, while the old *login* is still known, and this only
       // has the new one to try the old address with. It covers the address
@@ -95,28 +128,26 @@ final class WidgetSync {
       // sync, where nothing local ever held the old credential. Failing is
       // expected and must not stop the replacement being issued.
       final previous = held[spi.id];
-      if (previous != null && previous.endpoint != endpoint) {
-        try {
-          await MonitorHttpClient(
-            MonitorHttpCredential(
-              addr: previous.endpoint,
-              pwd: monitor.pwd,
-              legacyUser: monitor.legacyUser,
-              certSha256: monitor.certSha256,
-              allowInsecure: monitor.allowInsecure,
-            ),
-          ).revokeWatchToken(widgetClientId(spi.id));
-        } catch (e, s) {
-          Loggers.app.info('Backstop revoke at ${previous.endpoint}', e, s);
-        }
+      if (previous != null &&
+          previous.endpoint != endpoint &&
+          previous.endpoint != _editedFrom[spi.id]) {
+        await _revokeServer(
+          spi,
+          MonitorHttpCredential(
+            addr: previous.endpoint,
+            pwd: monitor.pwd,
+            legacyUser: monitor.legacyUser,
+            certSha256: monitor.certSha256,
+            allowInsecure: monitor.allowInsecure,
+          ),
+        );
+        if (!_canPublish(spi)) continue;
       }
       try {
-        final issued = await client.issueWatchToken(widgetClientId(spi.id));
-        tokens[spi.id] = ScopedToken(
-          token: issued.token,
-          endpoint: endpoint,
-          expiresAt: issued.expiresAt,
-        );
+        final gen = _editGens[spi.id] ?? 0;
+        final issued = await _issueAt(spi, monitor, endpoint);
+        tokens[spi.id] = issued;
+        mintedAt[spi.id] = gen;
       } catch (e, s) {
         // Not fatal, and deliberately not a reason to drop the server from
         // the list: the widget still has a name and an address to show, and
@@ -125,16 +156,63 @@ final class WidgetSync {
         // temporary failure.
         Loggers.app.warning('Issue widget token for ${spi.id}', e, s);
       } finally {
-        client.dispose();
+        // The POST may reach the agent after deletion's or an edit's DELETE,
+        // even when its response is lost. Revoke with the credential it was
+        // minted with, before a later push can mint again.
+        if (!_canPublish(spi) || _movedSince(spi, endpoint)) {
+          tokens.remove(spi.id);
+          await _revokeServer(spi, monitor);
+        }
       }
     }
 
+    // Edited after its mint: the edit's revoke covers it, and its own push
+    // mints the replacement.
+    final stale = {
+      for (final MapEntry(:key, :value) in mintedAt.entries)
+        if ((_editGens[key] ?? 0) != value) key,
+    };
+    stale.forEach(tokens.remove);
+    final published = servers.where(_canPublish).toList();
     try {
-      await MethodChans.publishWidgetServers(
-        jsonEncode(payloadFrom(servers: servers, tokens: tokens)),
+      await (_writePayload ?? MethodChans.publishWidgetServers)(
+        jsonEncode(payloadFrom(servers: published, tokens: tokens)),
       );
+      final publishedIds = published.map((spi) => spi.id).toSet();
+      bool settled(String id) =>
+          !_deletedDuringPush.contains(id) &&
+          !_edits.containsKey(id) &&
+          !stale.contains(id) &&
+          (!publishedIds.contains(id) || tokens[id]?.opaque == false);
+      _invalidatedTokens.removeWhere(settled);
+      _editedFrom.removeWhere((id, _) => settled(id));
     } catch (e, s) {
       Loggers.app.warning('Publish widget servers', e, s);
+    }
+  }
+
+  bool _movedSince(Spi spi, String endpoint) {
+    if (_edits.containsKey(spi.id)) return true;
+    final latest = Stores.server.fetchOneRaw(spi.id)?.monitorOn;
+    return latest == null || normalizeAgentEndpoint(latest.addr) != endpoint;
+  }
+
+  Future<ScopedToken> _issueAt(
+    Spi spi,
+    MonitorHttpCredential monitor,
+    String endpoint,
+  ) async {
+    if (_issueToken case final issue?) return issue(spi, endpoint);
+    final client = MonitorHttpClient(monitor);
+    try {
+      final issued = await client.issueWatchToken(widgetClientId(spi.id));
+      return ScopedToken(
+        token: issued.token,
+        endpoint: endpoint,
+        expiresAt: issued.expiresAt,
+      );
+    } finally {
+      client.dispose();
     }
   }
 
@@ -239,32 +317,65 @@ final class WidgetSync {
     _pushDebouncer = Timer(_pushDebounce, () => unawaited(push()));
   }
 
-  /// Drops a deleted server's credential rather than leaving it on the device
-  /// and valid at the agent.
-  ///
-  /// Best effort, like the watch's: a server has to stay deletable while its
-  /// agent is offline, and once the record is gone there is nothing left to
-  /// retry against.
-  /// Hands this server's credential back, ahead of the record being deleted.
-  ///
-  /// Deliberately does **not** publish. The caller runs this while the server
-  /// is still in the store — it has to, since revoking needs the credential —
-  /// and a push here would rebuild the list from a store that still contains
-  /// it, mint a *replacement* token for a server about to be deleted, and hand
-  /// it to the widget. Publishing is the caller's job, after the delete.
-  Future<void> revokeServer(Spi spi) async {
+  /// Revokes the token [old] holds at the address an edit moved away from,
+  /// ahead of the next mint for the server.
+  void revokeEditedServer(Spi old) {
     if (!_supported) return;
-    final monitor = spi.monitor;
+    final monitor = old.monitor;
     if (monitor == null) return;
-    final client = MonitorHttpClient(monitor);
+    final id = old.id;
+    _editGens.update(id, (gen) => gen + 1, ifAbsent: () => 1);
+    _invalidatedTokens.add(id);
+    _editedFrom[id] = normalizeAgentEndpoint(monitor.addr);
+    late final Future<void> revoke;
+    revoke = Future.wait<void>([
+      ?_edits[id],
+      _revokeServer(old, monitor),
+    ]).then<void>((_) {
+      if (!identical(_edits[id], revoke)) return;
+      _edits.remove(id);
+      if (Stores.server.fetchOneRaw(id)?.monitorOn != null) unawaited(push());
+    });
+    _edits[id] = revoke;
+  }
+
+  /// Guards current and future pushes and starts revocation in the background.
+  /// Call the returned function once local deletion settles.
+  void Function() beginServerDeletion(Spi spi) {
+    if (!_supported) return () {};
+    final id = spi.id;
+    _deletedDuringPush.add(id);
+    _invalidatedTokens.add(id);
+    final monitor = spi.monitor;
+    final revoke = Future.wait<void>([
+      ?_deletions[id],
+      if (monitor != null) _revokeServer(spi, monitor),
+    ]).then<void>((_) {});
+    _deletions[id] = revoke;
+    return () {
+      unawaited(revoke.then((_) {
+        if (!identical(_deletions[id], revoke)) return;
+        _deletions.remove(id);
+        if (Stores.server.fetchOneRaw(id)?.monitorOn != null) unawaited(push());
+      }));
+    };
+  }
+
+  Future<void> _revokeServer(Spi spi, MonitorHttpCredential monitor) async {
+    MonitorHttpClient? client;
     try {
+      if (_revokeToken case final revoke?) {
+        await revoke(spi, monitor);
+        return;
+      }
+      client = MonitorHttpClient(monitor);
       await client.revokeWatchToken(widgetClientId(spi.id));
     } catch (e, s) {
       // The local server must remain deletable while its agent is offline,
       // and once the record is gone there is no retry target.
       Loggers.app.warning('Revoke widget token for ${spi.id}', e, s);
     } finally {
-      client.dispose();
+      client?.dispose();
     }
   }
 

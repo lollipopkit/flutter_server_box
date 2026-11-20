@@ -6,14 +6,20 @@
 /// contract twice — a change asserted here is a change both have to make.
 library;
 
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
+import '../../helpers/test_db.dart';
 
 void main() {
   const addr = 'https://10.0.0.1:3770';
@@ -49,6 +55,164 @@ void main() {
 
   List<Map> entries(Map<String, dynamic> p) =>
       (p['servers'] as List).cast<Map>();
+
+  test('deletion blocks stale snapshot mints and revokes an in-flight mint',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    final first = monitorSpi(id: 'a', name: 'A');
+    final second = monitorSpi(id: 'b', name: 'B');
+    Stores.server.put(first);
+    Stores.server.put(second);
+
+    final mintStarted = Completer<void>();
+    final mint = Completer<ScopedToken>();
+    final issued = <String>[];
+    final revoked = <(String, String)>[];
+    final published = <Map<String, dynamic>>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (spi, _) {
+        issued.add(spi.id);
+        if (spi.id != first.id) return Future.value(tok('unexpected'));
+        mintStarted.complete();
+        return mint.future;
+      },
+      revokeToken: (spi, monitor) async => revoked.add((spi.id, monitor.addr)),
+      writePayload: (json) async =>
+          published.add(jsonDecode(json) as Map<String, dynamic>),
+    );
+    addTearDown(sync.dispose);
+
+    final push = sync.push();
+    await mintStarted.future.timeout(const Duration(seconds: 2));
+    final finishFirst = sync.beginServerDeletion(first);
+    final finishSecond = sync.beginServerDeletion(second);
+    expect(revoked, [('a', addr), ('b', addr)]);
+    mint.complete(tok('issued-before-delete'));
+    await push.timeout(const Duration(seconds: 2));
+
+    expect(issued, ['a']);
+    expect(revoked, [('a', addr), ('b', addr), ('a', addr)]);
+    expect(entries(published.single), isEmpty);
+
+    Stores.server.deleteById(first.id);
+    Stores.server.deleteById(second.id);
+    finishFirst();
+    finishSecond();
+  });
+
+  test('an edit\'s revoke at the old address lands before the new mint',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    const moved = 'https://mon.example.com:3770';
+    final old = monitorSpi(id: 'a', name: 'A');
+    Stores.server.put(monitorSpi(id: 'a', name: 'A', addr: moved));
+
+    final revoke = Completer<void>();
+    final issued = Completer<void>();
+    final events = <String>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (_, endpoint) async {
+        events.add('issue $endpoint');
+        issued.complete();
+        return ScopedToken(token: 't', endpoint: endpoint, expiresAt: 1800000000);
+      },
+      revokeToken: (_, monitor) async {
+        events.add('revoke ${monitor.addr}');
+        await revoke.future;
+        events.add('revoked');
+      },
+      writePayload: (_) async {},
+    );
+    addTearDown(sync.dispose);
+
+    sync.revokeEditedServer(old);
+    // Another server's publish does not wait on this revoke.
+    await sync.push().timeout(const Duration(seconds: 2));
+    expect(events, ['revoke $addr']);
+
+    revoke.complete();
+    await issued.future.timeout(const Duration(seconds: 2));
+    expect(events, ['revoke $addr', 'revoked', 'issue $moved']);
+  });
+
+  test('a token minted before an edit to its server is not published',
+      () async {
+    await openTestDb();
+    getIt.registerSingleton(ServerStore());
+    addTearDown(() async {
+      await getIt.reset();
+      await closeTestDb();
+    });
+    final a = monitorSpi(id: 'a', name: 'A');
+    Stores.server.put(a);
+    Stores.server.put(
+      monitorSpi(id: 'b', name: 'B', addr: 'https://10.0.0.2:3770'),
+    );
+
+    final bStarted = Completer<void>();
+    final releaseB = Completer<void>();
+    final published = <Map<String, dynamic>>[];
+    final sync = WidgetSync.forTest(
+      issueToken: (spi, endpoint) async {
+        if (spi.id == 'b') {
+          bStarted.complete();
+          await releaseB.future;
+        }
+        return ScopedToken(
+          token: 'tok-${spi.id}',
+          endpoint: endpoint,
+          expiresAt: 1800000000,
+        );
+      },
+      revokeToken: (_, _) async {},
+      writePayload: (json) async =>
+          published.add(jsonDecode(json) as Map<String, dynamic>),
+    );
+    addTearDown(sync.dispose);
+
+    final push = sync.push();
+    await bStarted.future.timeout(const Duration(seconds: 2));
+    // A's token is minted; the edit and its revoke land before the publish.
+    sync.revokeEditedServer(a);
+    await Future<void>.delayed(Duration.zero);
+    releaseB.complete();
+    await push.timeout(const Duration(seconds: 2));
+
+    final first = {for (final e in entries(published.first)) e['id']: e};
+    expect(first['a']!.containsKey('token'), isFalse);
+    expect(first['b']!['token'], 'tok-b');
+  });
+
+  test('a rename hands back the tokens scoped to the old id', () {
+    final queued = <String>[];
+    final old = monitorSpi(id: 's1', name: 'S');
+    revokeScopedTokensLeftBehind(
+      old,
+      monitorSpi(id: 's2', name: 'S'),
+      queueWatchRevoke: (spi) => queued.add('watch ${spi.id}'),
+      queueWidgetRevoke: (spi) => queued.add('widget ${spi.id}'),
+    );
+    expect(queued, ['watch s1', 'widget s1']);
+
+    queued.clear();
+    revokeScopedTokensLeftBehind(
+      old,
+      monitorSpi(id: 's1', name: 'Renamed'),
+      queueWatchRevoke: (spi) => queued.add('watch ${spi.id}'),
+      queueWidgetRevoke: (spi) => queued.add('widget ${spi.id}'),
+    );
+    expect(queued, isEmpty);
+  });
 
   group('what a widget is told about a server', () {
     test('is everything it needs and no login', () {
@@ -238,18 +402,6 @@ void main() {
         WidgetSync.widgetClientId('abc'),
         isNot(WatchSync.watchClientId('abc')),
       );
-    });
-
-    test('and both are in the list revocation walks', () {
-      // `revokeScopedTokensLeftBehind` hands an agent back every credential
-      // this app minted there, and it is the only chance to do so — after the
-      // edit the login that would authenticate the call is gone. A client id
-      // missing from that list is a token nobody can ever revoke.
-      final ids = scopedClientIdsFor('abc');
-
-      expect(ids, contains(WidgetSync.widgetClientId('abc')));
-      expect(ids, contains(WatchSync.watchClientId('abc')));
-      expect(ids, hasLength(2));
     });
   });
 }
