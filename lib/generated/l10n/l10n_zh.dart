@@ -6923,6 +6923,98 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get average => '平均';
+
+  @override
+  String get monitorMcpAccess => 'MCP 访问';
+
+  @override
+  String get monitorMcpEndpoint => '端点';
+
+  @override
+  String get monitorMcpGlobalPolicy => '全局权限';
+
+  @override
+  String get monitorMcpTokens => 'Token';
+
+  @override
+  String get monitorMcpNewToken => '新建 token';
+
+  @override
+  String get monitorMcpDays => '天数';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => '撤销';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '撤销 $name？';
+  }
+
+  @override
+  String get monitorMcpLastUsed => '最后使用';
+
+  @override
+  String get monitorMcpNeverUsed => '从未使用';
+
+  @override
+  String get monitorMcpExpires => '到期';
+
+  @override
+  String get monitorMcpExpired => '已过期';
+
+  @override
+  String get monitorMcpNoTokens => '暂无 token';
+
+  @override
+  String get monitorMcpAllScopes => '全部权限';
+
+  @override
+  String get monitorMcpAllowlist => '仅白名单';
+
+  @override
+  String get monitorMcpScopeRead => '状态读取';
+
+  @override
+  String get monitorMcpScopeFsRead => '读取文件';
+
+  @override
+  String get monitorMcpScopeFsWrite => '写入文件';
+
+  @override
+  String get monitorMcpScopeExec => '运行命令';
+
+  @override
+  String get monitorMcpScopeProcess => '进程管理';
+
+  @override
+  String get monitorMcpScopeService => '服务管理';
+
+  @override
+  String get monitorMcpScopeContainer => '容器管理';
+
+  @override
+  String get monitorMcpScopeCron => '计划任务';
+
+  @override
+  String get monitorMcpScopeVirt => '虚拟化';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web 应用';
+
+  @override
+  String get monitorMcpScopePower => '电源控制';
+
+  @override
+  String get monitorMcpNameRequired => '请输入名称。';
+
+  @override
+  String get monitorMcpScopesRequired => '至少选择一项权限。';
+
+  @override
+  String get monitorMcpPasswordRequired => '请输入密码。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13848,4 +13940,96 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get average => '平均';
+
+  @override
+  String get monitorMcpAccess => 'MCP 存取';
+
+  @override
+  String get monitorMcpEndpoint => '端點';
+
+  @override
+  String get monitorMcpGlobalPolicy => '全域權限';
+
+  @override
+  String get monitorMcpTokens => 'Token';
+
+  @override
+  String get monitorMcpNewToken => '新增 token';
+
+  @override
+  String get monitorMcpDays => '天數';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => '撤銷';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '撤銷 $name？';
+  }
+
+  @override
+  String get monitorMcpLastUsed => '最後使用';
+
+  @override
+  String get monitorMcpNeverUsed => '從未使用';
+
+  @override
+  String get monitorMcpExpires => '到期';
+
+  @override
+  String get monitorMcpExpired => '已過期';
+
+  @override
+  String get monitorMcpNoTokens => '尚無 token';
+
+  @override
+  String get monitorMcpAllScopes => '全部權限';
+
+  @override
+  String get monitorMcpAllowlist => '僅白名單';
+
+  @override
+  String get monitorMcpScopeRead => '狀態讀取';
+
+  @override
+  String get monitorMcpScopeFsRead => '讀取檔案';
+
+  @override
+  String get monitorMcpScopeFsWrite => '寫入檔案';
+
+  @override
+  String get monitorMcpScopeExec => '執行命令';
+
+  @override
+  String get monitorMcpScopeProcess => '行程管理';
+
+  @override
+  String get monitorMcpScopeService => '服務管理';
+
+  @override
+  String get monitorMcpScopeContainer => '容器管理';
+
+  @override
+  String get monitorMcpScopeCron => '排程任務';
+
+  @override
+  String get monitorMcpScopeVirt => '虛擬化';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web 應用';
+
+  @override
+  String get monitorMcpScopePower => '電源控制';
+
+  @override
+  String get monitorMcpNameRequired => '請輸入名稱。';
+
+  @override
+  String get monitorMcpScopesRequired => '至少選擇一項權限。';
+
+  @override
+  String get monitorMcpPasswordRequired => '請輸入密碼。';
 }

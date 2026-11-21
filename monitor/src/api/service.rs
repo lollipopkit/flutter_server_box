@@ -290,10 +290,33 @@ pub async fn act(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match perform(&state, request, gated.remote_ip).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(ServiceRefused::Unsupported) => Ok(HttpResponse::BadRequest().build()),
+        Err(ServiceRefused::NoSuchUnit) => Ok(HttpResponse::NotFound().build()),
+    }
+}
+
+/// Why a service action did not run, as the route reports it.
+pub(crate) enum ServiceRefused {
+    /// Windows, or no manager this build talks to.
+    Unsupported,
+    /// A key the current listing does not have.
+    NoSuchUnit,
+}
+
+/// Runs one action on one unit, recording it as the route does. Shared with
+/// the MCP tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn perform(
+    state: &AppState,
+    request: ServiceActRequest,
+    remote_ip: Option<String>,
+) -> Result<ServiceActResponse, ServiceRefused> {
+    let what = format!("service {} {}", request.action.as_str(), request.key);
     let exec = &state.remote_access.exec;
     let record = |action, outcome, detail: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .remote_ip(gated.remote_ip.clone())
+            .remote_ip(remote_ip.clone())
             .detail(match detail {
                 Some(detail) => format!("{what}: {detail}"),
                 None => what.clone(),
@@ -302,12 +325,12 @@ pub async fn act(
 
     if system_type() == SystemType::Windows {
         record(Action::Denied, Outcome::Denied, Some("unsupported platform")).record(&state.db).await;
-        return Ok(HttpResponse::BadRequest().build());
+        return Err(ServiceRefused::Unsupported);
     }
     let (probe, _) = probe(exec).await;
     let Some(manager) = probe.manager_type else {
         record(Action::Denied, Outcome::Denied, Some("unsupported manager")).record(&state.db).await;
-        return Ok(HttpResponse::BadRequest().build());
+        return Err(ServiceRefused::Unsupported);
     };
 
     // Resolved against a listing read now, so a unit the machine no longer
@@ -321,7 +344,7 @@ pub async fn act(
         Some(unit) => unit,
         None => {
             record(Action::Denied, Outcome::Denied, Some("no such unit")).record(&state.db).await;
-            return Ok(HttpResponse::NotFound().build());
+            return Err(ServiceRefused::NoSuchUnit);
         }
     };
 
@@ -349,29 +372,23 @@ pub async fn act(
         Ok(out) => (out.stdout, out.stderr, out.exit_code),
         Err(e) => (String::new(), e.to_string(), None),
     };
-    Ok(HttpResponse::Ok().json(&ServiceActResponse {
-        succeeded,
-        sudo_rejected,
-        exit_code,
-        stdout,
-        stderr,
-    }))
+    Ok(ServiceActResponse { succeeded, sudo_rejected, exit_code, stdout, stderr })
 }
 
 /// One action on one unit, named by the key its listing gave it.
 #[derive(Debug, Deserialize)]
 pub struct ServiceActRequest {
     /// [`ServiceUnit::key`] — the scope and the unit's full name.
-    key: String,
-    action: ServiceAction,
+    pub(crate) key: String,
+    pub(crate) action: ServiceAction,
     /// The `sudo` password, when the caller has one. Its own field so it never
     /// reaches a command line: see `api::machine::as_root`.
     #[serde(default)]
-    password: Option<String>,
+    pub(crate) password: Option<String>,
 }
 
 #[derive(Serialize)]
-struct ServiceActResponse {
+pub(crate) struct ServiceActResponse {
     /// Whether the manager's command exited zero. What the machine said about
     /// it is in `stderr`, and it is the only thing that distinguishes one
     /// failure from another.

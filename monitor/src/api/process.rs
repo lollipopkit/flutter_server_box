@@ -315,22 +315,22 @@ fn signals(system: SystemType) -> Vec<ProcSignal> {
 /// What the page sends to stop one process.
 #[derive(Deserialize)]
 pub struct KillRequest {
-    pid: i64,
+    pub(crate) pid: i64,
     /// The identity the listing reported for that PID, checked against the
     /// process's own start time before the signal is sent — see
     /// [`sbm_parser::proc::kill_command`]. A number the kernel has since handed
     /// to something else is refused rather than signalled.
     #[serde(default)]
-    start_id: Option<String>,
-    signal: ProcSignal,
+    pub(crate) start_id: Option<String>,
+    pub(crate) signal: ProcSignal,
     /// For `sudo -S`, when the process belongs to another account. Never
     /// logged, and never written into a command line.
     #[serde(default)]
-    password: Option<String>,
+    pub(crate) password: Option<String>,
 }
 
 #[derive(Serialize)]
-struct KillResponse {
+pub(crate) struct KillResponse {
     /// What happened, told apart from a non-zero exit because the caller's
     /// next move differs for each: `denied` is a process this account does not
     /// own, `target_changed` is a table that has moved on.
@@ -359,10 +359,31 @@ pub async fn kill(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match stop(&state, request, gated.remote_ip).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(StopRefused::Unsafe) => Ok(HttpResponse::BadRequest().build()),
+    }
+}
+
+/// Why a process was not signalled.
+pub(crate) enum StopRefused {
+    /// No way to check the PID before signalling it: a platform without the
+    /// script, or a row the machine did not give a start identity for.
+    Unsafe,
+}
+
+/// Signals one process, recording it as the route does. Shared with the MCP
+/// tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn stop(
+    state: &AppState,
+    request: KillRequest,
+    remote_ip: Option<String>,
+) -> Result<KillResponse, StopRefused> {
+    let what = format!("process stop {} {}", request.signal.name(), request.pid);
     let system = system_type();
     let record = |action, outcome, detail: Option<&str>| {
         let mut event = Event::new(Kind::Machine, action, outcome)
-            .remote_ip(gated.remote_ip.clone());
+            .remote_ip(remote_ip.clone());
         event = event.detail(match detail {
             Some(detail) => format!("{what}: {detail}"),
             None => what.clone(),
@@ -378,7 +399,7 @@ pub async fn kill(
         record(Action::Denied, Outcome::Denied, Some("no way to stop this process safely"))
             .record(&state.db)
             .await;
-        return Ok(HttpResponse::BadRequest().build());
+        return Err(StopRefused::Unsafe);
     };
 
     // Recorded before it runs, as power is: what was asked of the machine is
@@ -420,13 +441,7 @@ pub async fn kill(
         Ok(out) => (out.stdout, out.stderr, out.exit_code),
         Err(e) => (String::new(), e.to_string(), None),
     };
-    Ok(HttpResponse::Ok().json(&KillResponse {
-        outcome,
-        exit_code,
-        stdout,
-        stderr,
-        sudo_rejected,
-    }))
+    Ok(KillResponse { outcome, exit_code, stdout, stderr, sudo_rejected })
 }
 
 /// What the machine answered, where it answered at all.

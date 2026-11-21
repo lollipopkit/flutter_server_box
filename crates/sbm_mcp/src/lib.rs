@@ -8,23 +8,15 @@
 //! what credential checked first — is the host's; this crate never opens a
 //! socket. `rmcp` is used for its model types (`Tool`, results, protocol
 //! versions) so the wire stays what the spec says, and nothing else of it.
-//!
-//! A JSON-RPC envelope is four fields; this dispatches it over `Value`
-//! rather than through rmcp's session machinery, which is what a sessionless
-//! server wants anyway.
 
+use async_trait::async_trait;
 use rmcp::model::{ContentBlock, Implementation, InitializeResult, ListToolsResult, ProtocolVersion, ServerCapabilities};
 /// The protocol's own types, re-exported: a host answers in them.
 pub use rmcp::model::{CallToolResult, Tool};
-use async_trait::async_trait;
 use serde::Serialize;
 use serde_json::{Value, json};
 
 /// What the host serves: its tools, and what calling one does.
-///
-/// `call` answers the client whatever happened — the protocol carries a
-/// tool's own failure in the result (`isError`), so an error the model can
-/// read is an answer, not a transport failure.
 #[async_trait]
 pub trait Host: Send + Sync {
     /// The server, as `initialize` names it: (name, version).
@@ -40,36 +32,48 @@ pub trait Host: Send + Sync {
 pub enum Answer {
     /// A JSON-RPC message, as the body of a 200.
     Json(Value),
-    /// A notification: nothing to answer, the transport says 202.
+    /// A notification or client response: nothing to answer, the transport says 202.
     Accepted,
 }
 
-/// Turns one JSON-RPC message into one answer. Unknown methods and tools are
-/// the protocol's own errors, in the protocol's own words; a body that is
-/// not JSON-RPC at all is the transport's to refuse before this.
+/// Whether `MCP-Protocol-Version` names a protocol version this server speaks.
+pub fn speaks_version(v: &str) -> bool {
+    matches!(v, "2026-07-28" | "2025-11-25" | "2025-06-18" | "2025-03-26")
+}
+
+/// Turns one JSON-RPC message into one answer.
 pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
     let Some(request) = body.as_object() else {
-        // A batch was removed from the protocol; an array is not one
-        // request, and answering it as a notification would tell the client
-        // its request was received.
         return Answer::Json(error(&Value::Null, INVALID_REQUEST, "a request must be an object"));
     };
     if request.get("jsonrpc").and_then(Value::as_str) != Some("2.0") {
         return Answer::Json(error(&Value::Null, INVALID_REQUEST, "jsonrpc must be 2.0"));
     }
+    // Streamable HTTP: a JSON-RPC response sent by the client (carries `result`
+    // or `error` and no `method`) is acknowledged with 202 Accepted.
+    if !request.contains_key("method") && (request.contains_key("result") || request.contains_key("error")) {
+        return Answer::Accepted;
+    }
+    let Some(method) = request.get("method").and_then(Value::as_str).filter(|m| !m.is_empty()) else {
+        let bad_id = request
+            .get("id")
+            .filter(|id| id.is_string() || id.is_number())
+            .unwrap_or(&Value::Null);
+        return Answer::Json(error(bad_id, INVALID_REQUEST, "method must be a non-empty string"));
+    };
     let Some(id) = request.get("id") else {
-        // A notification. Nothing here carries state between requests, so
-        // there is nothing to be notified of.
+        // A notification has no `id`.
         return Answer::Accepted;
     };
-    let method = request.get("method").and_then(Value::as_str).unwrap_or("");
+    // MCP requires `RequestId` to be a string or number (`null` is forbidden).
+    if !(id.is_string() || id.is_number()) {
+        return Answer::Json(error(&Value::Null, INVALID_REQUEST, "id must be a string or number"));
+    }
     let params = request.get("params").cloned().unwrap_or(Value::Null);
     let reply = match method {
         "initialize" => {
             let client = params.get("protocolVersion").and_then(Value::as_str);
             let (name, version) = host.server_info();
-            // The client's version when this speaks it, else the latest:
-            // what a client cannot speak it must not be told we do.
             let result = InitializeResult::new(
                 ServerCapabilities::builder().enable_tools().build(),
             )
@@ -96,15 +100,13 @@ pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
 }
 
 fn negotiate(client: Option<&str>) -> ProtocolVersion {
-    // The versions this speaks, newest first: what `initialize` accepts.
-    const SPOKEN: [ProtocolVersion; 3] = [
+    const SPOKEN: [ProtocolVersion; 4] = [
         ProtocolVersion::V_2026_07_28,
         ProtocolVersion::V_2025_11_25,
         ProtocolVersion::V_2025_06_18,
+        ProtocolVersion::V_2025_03_26,
     ];
     match client {
-        // The client's, when this speaks it: a version the client cannot
-        // speak it must not be told we do.
         Some(v) => SPOKEN.iter().find(|sp| sp.as_str() == v).cloned().unwrap_or(ProtocolVersion::LATEST),
         None => ProtocolVersion::LATEST,
     }
@@ -122,33 +124,29 @@ fn to_value(result: &impl Serialize) -> Value {
     serde_json::to_value(result).unwrap_or_else(|_| json!({}))
 }
 
-/// JSON-RPC's method codes, the ones this answers with.
 const INVALID_REQUEST: i64 = -32600;
 const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 
-/// A tool, with its JSON-schema object naming the arguments it takes.
-///
-/// `Tool::new` takes a `Map` rather than a `Value`, and every tool here
-/// describes its arguments as one; this is the one place that conversion is
-/// written.
 pub fn tool(name: &'static str, description: &'static str, schema: Value) -> Tool {
     Tool::new(name, description, schema.as_object().cloned().unwrap_or_default())
 }
 
-/// A tool's text answer, as a host returns it.
+fn plain_result(mut result: CallToolResult) -> CallToolResult {
+    result.result_type = None;
+    result
+}
+
 pub fn text(content: impl Into<String>) -> CallToolResult {
-    CallToolResult::success(vec![ContentBlock::text(content.into())])
+    plain_result(CallToolResult::success(vec![ContentBlock::text(content.into())]))
 }
 
-/// A tool's failure, in the protocol's own way: an answer the model can read.
 pub fn tool_error(message: impl Into<String>) -> CallToolResult {
-    CallToolResult::error(vec![ContentBlock::text(message.into())])
+    plain_result(CallToolResult::error(vec![ContentBlock::text(message.into())]))
 }
 
-/// A tool's JSON answer.
 pub fn structured(value: Value) -> CallToolResult {
-    CallToolResult::structured(value)
+    plain_result(CallToolResult::structured(value))
 }
 
 #[cfg(test)]
@@ -192,6 +190,7 @@ mod tests {
     #[tokio::test]
     async fn a_version_the_client_speaks_is_answered_with_it() {
         for (asked, answered) in [
+            ("2025-03-26", "2025-03-26"),
             ("2025-06-18", "2025-06-18"),
             ("2025-11-25", "2025-11-25"),
             ("1999-01-01", ProtocolVersion::LATEST.as_str()),
@@ -205,6 +204,8 @@ mod tests {
             assert_eq!(reply["result"]["serverInfo"]["name"], "test");
             assert!(reply["result"]["capabilities"]["tools"].is_object());
         }
+        assert!(speaks_version("2025-06-18"));
+        assert!(!speaks_version("1999-01-01"));
     }
 
     #[tokio::test]
@@ -219,6 +220,7 @@ mod tests {
         .await;
         assert_eq!(called["result"]["content"][0]["text"], "hi");
         assert_eq!(called["result"]["isError"], false);
+        assert!(called["result"].get("resultType").is_none());
     }
 
     #[tokio::test]
@@ -227,6 +229,10 @@ mod tests {
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "nope" }), METHOD_NOT_FOUND),
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "nope" } }), INVALID_PARAMS),
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call" }), INVALID_PARAMS),
+            (json!({ "jsonrpc": "2.0", "id": 1 }), INVALID_REQUEST),
+            (json!({ "jsonrpc": "2.0", "id": 1, "method": 42 }), INVALID_REQUEST),
+            (json!({ "jsonrpc": "2.0", "id": null, "method": "ping" }), INVALID_REQUEST),
+            (json!({ "jsonrpc": "2.0", "id": [1], "method": "ping" }), INVALID_REQUEST),
             (json!({ "id": 1, "method": "ping" }), INVALID_REQUEST),
             (json!([{ "jsonrpc": "2.0", "id": 1, "method": "ping" }]), INVALID_REQUEST),
             (json!("ping"), INVALID_REQUEST),
@@ -238,10 +244,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_notification_is_accepted_without_an_answer() {
+    async fn notifications_and_client_responses_are_accepted() {
         for body in [
             json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }),
             json!({ "jsonrpc": "2.0", "method": "ping" }),
+            json!({ "jsonrpc": "2.0", "id": 1, "result": {} }),
+            json!({ "jsonrpc": "2.0", "id": 1, "error": { "code": -32600, "message": "x" } }),
         ] {
             assert!(matches!(serve(&TestHost, &body).await, Answer::Accepted), "{body}");
         }

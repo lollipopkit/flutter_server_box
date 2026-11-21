@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/view/page/agent/permissions.dart';
+import 'package:server_box/view/page/server/monitor_settings/api_tokens.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/password.dart';
 import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
@@ -106,6 +107,9 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
 
   /// Whether the agent offers Agent mode to this account.
   bool _agentMode = false;
+
+  /// Whether the agent offers MCP access (`/api-tokens*`, `/mcp`).
+  bool _mcp = false;
 
   final _intervalCtrl = TextEditingController();
   final _extendedCtrl = TextEditingController();
@@ -298,6 +302,16 @@ extension on _MonitorSettingsViewState {
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: _changeOwnPassword,
         ).cardx,
+        if (_mcp)
+          ListTile(
+            leading: const Icon(Icons.hub_outlined),
+            title: Text(l10n.monitorMcpAccess),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () => MonitorApiTokensPage.route.go(
+              context,
+              MonitorApiTokensArgs(widget.monitor),
+            ),
+          ).cardx,
       ],
     );
   }
@@ -542,6 +556,7 @@ extension on _MonitorSettingsViewState {
       final access = caps.access;
       if (!mounted || generation != _loadGeneration) return;
       _agentMode = caps.features.contains(MonitorFeature.agentMode);
+      _mcp = caps.features.contains(MonitorFeature.mcp);
       if (!access.ok) {
         setState(() => _refused = true);
         _syncController();

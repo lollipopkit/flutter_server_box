@@ -10565,6 +10565,150 @@ type RootTranslation = {
 	 * B​a​c​k​u​p​s​ ​a​r​e​ ​t​u​r​n​e​d​ ​o​f​f​.​ ​T​u​r​n​ ​o​n​ ​B​a​c​k​ ​u​p​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​f​i​r​s​t​.
 	 */
 	monitorBackupErrDisabled: string
+	/**
+	 * M​C​P​ ​a​c​c​e​s​s
+	 */
+	mcpAccess: string
+	/**
+	 * E​n​d​p​o​i​n​t
+	 */
+	mcpEndpoint: string
+	/**
+	 * G​l​o​b​a​l​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	mcpGlobalPolicy: string
+	/**
+	 * T​o​k​e​n​s
+	 */
+	mcpTokens: string
+	/**
+	 * N​e​w​ ​t​o​k​e​n
+	 */
+	mcpNewToken: string
+	/**
+	 * N​a​m​e
+	 */
+	mcpTokenName: string
+	/**
+	 * D​a​y​s
+	 */
+	mcpDays: string
+	/**
+	 * C​r​e​a​t​e​ ​t​o​k​e​n
+	 */
+	mcpCreate: string
+	/**
+	 * T​o​k​e​n
+	 */
+	mcpTokenCreated: string
+	/**
+	 * C​o​p​i​e​d
+	 */
+	mcpCopied: string
+	/**
+	 * C​o​p​y
+	 */
+	mcpCopy: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​s
+	 */
+	mcpEdit: string
+	/**
+	 * R​e​v​o​k​e
+	 */
+	mcpRevoke: string
+	/**
+	 * C​o​n​f​i​r​m
+	 */
+	mcpConfirmRevoke: string
+	/**
+	 * L​a​s​t​ ​u​s​e​d
+	 */
+	mcpLastUsed: string
+	/**
+	 * N​e​v​e​r​ ​u​s​e​d
+	 */
+	mcpNeverUsed: string
+	/**
+	 * E​x​p​i​r​e​s
+	 */
+	mcpExpires: string
+	/**
+	 * E​x​p​i​r​e​d
+	 */
+	mcpExpired: string
+	/**
+	 * L​o​a​d​i​n​g
+	 */
+	mcpLoading: string
+	/**
+	 * N​o​ ​t​o​k​e​n​s
+	 */
+	mcpNoTokens: string
+	/**
+	 * A​l​l​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	mcpAllScopes: string
+	/**
+	 * C​o​m​m​a​n​d​ ​p​o​l​i​c​y
+	 */
+	mcpCommandMode: string
+	/**
+	 * A​l​l​o​w​ ​a​l​l
+	 */
+	mcpModeAllowAll: string
+	/**
+	 * A​l​l​o​w​l​i​s​t
+	 */
+	mcpModeAllowlist: string
+	/**
+	 * R​e​a​d​i​n​g​s
+	 */
+	mcpScopeRead: string
+	/**
+	 * R​e​a​d​ ​f​i​l​e​s
+	 */
+	mcpScopeFsRead: string
+	/**
+	 * W​r​i​t​e​ ​f​i​l​e​s
+	 */
+	mcpScopeFsWrite: string
+	/**
+	 * R​u​n​ ​c​o​m​m​a​n​d​s
+	 */
+	mcpScopeExec: string
+	/**
+	 * P​r​o​c​e​s​s​e​s
+	 */
+	mcpScopeProcess: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	mcpScopeService: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	mcpScopeContainer: string
+	/**
+	 * C​r​o​n
+	 */
+	mcpScopeCron: string
+	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+	 */
+	mcpScopeVirt: string
+	/**
+	 * W​e​b​ ​a​p​p​s
+	 */
+	mcpScopeStacks: string
+	/**
+	 * P​o​w​e​r
+	 */
+	mcpScopePower: string
+	/**
+	 * D​o​n​e
+	 */
+	mcpOk: string
 }
 
 export type TranslationFunctions = {
@@ -20736,6 +20880,150 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Backups are turned off. Turn on Back up automatically first.
 	 */
 	monitorBackupErrDisabled: () => LocalizedString
+	/**
+	 * MCP access
+	 */
+	mcpAccess: () => LocalizedString
+	/**
+	 * Endpoint
+	 */
+	mcpEndpoint: () => LocalizedString
+	/**
+	 * Global permissions
+	 */
+	mcpGlobalPolicy: () => LocalizedString
+	/**
+	 * Tokens
+	 */
+	mcpTokens: () => LocalizedString
+	/**
+	 * New token
+	 */
+	mcpNewToken: () => LocalizedString
+	/**
+	 * Name
+	 */
+	mcpTokenName: () => LocalizedString
+	/**
+	 * Days
+	 */
+	mcpDays: () => LocalizedString
+	/**
+	 * Create token
+	 */
+	mcpCreate: () => LocalizedString
+	/**
+	 * Token
+	 */
+	mcpTokenCreated: () => LocalizedString
+	/**
+	 * Copied
+	 */
+	mcpCopied: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	mcpCopy: () => LocalizedString
+	/**
+	 * Permissions
+	 */
+	mcpEdit: () => LocalizedString
+	/**
+	 * Revoke
+	 */
+	mcpRevoke: () => LocalizedString
+	/**
+	 * Confirm
+	 */
+	mcpConfirmRevoke: () => LocalizedString
+	/**
+	 * Last used
+	 */
+	mcpLastUsed: () => LocalizedString
+	/**
+	 * Never used
+	 */
+	mcpNeverUsed: () => LocalizedString
+	/**
+	 * Expires
+	 */
+	mcpExpires: () => LocalizedString
+	/**
+	 * Expired
+	 */
+	mcpExpired: () => LocalizedString
+	/**
+	 * Loading
+	 */
+	mcpLoading: () => LocalizedString
+	/**
+	 * No tokens
+	 */
+	mcpNoTokens: () => LocalizedString
+	/**
+	 * All permissions
+	 */
+	mcpAllScopes: () => LocalizedString
+	/**
+	 * Command policy
+	 */
+	mcpCommandMode: () => LocalizedString
+	/**
+	 * Allow all
+	 */
+	mcpModeAllowAll: () => LocalizedString
+	/**
+	 * Allowlist
+	 */
+	mcpModeAllowlist: () => LocalizedString
+	/**
+	 * Readings
+	 */
+	mcpScopeRead: () => LocalizedString
+	/**
+	 * Read files
+	 */
+	mcpScopeFsRead: () => LocalizedString
+	/**
+	 * Write files
+	 */
+	mcpScopeFsWrite: () => LocalizedString
+	/**
+	 * Run commands
+	 */
+	mcpScopeExec: () => LocalizedString
+	/**
+	 * Processes
+	 */
+	mcpScopeProcess: () => LocalizedString
+	/**
+	 * Services
+	 */
+	mcpScopeService: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	mcpScopeContainer: () => LocalizedString
+	/**
+	 * Cron
+	 */
+	mcpScopeCron: () => LocalizedString
+	/**
+	 * Virtualization
+	 */
+	mcpScopeVirt: () => LocalizedString
+	/**
+	 * Web apps
+	 */
+	mcpScopeStacks: () => LocalizedString
+	/**
+	 * Power
+	 */
+	mcpScopePower: () => LocalizedString
+	/**
+	 * Done
+	 */
+	mcpOk: () => LocalizedString
 }
 
 export type Formatters = {}

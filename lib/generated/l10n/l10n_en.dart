@@ -7329,4 +7329,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get average => 'average';
+
+  @override
+  String get monitorMcpAccess => 'MCP access';
+
+  @override
+  String get monitorMcpEndpoint => 'Endpoint';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Global permissions';
+
+  @override
+  String get monitorMcpTokens => 'Tokens';
+
+  @override
+  String get monitorMcpNewToken => 'New token';
+
+  @override
+  String get monitorMcpDays => 'Days';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => 'Revoke';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return 'Revoke $name?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Last used';
+
+  @override
+  String get monitorMcpNeverUsed => 'Never used';
+
+  @override
+  String get monitorMcpExpires => 'Expires';
+
+  @override
+  String get monitorMcpExpired => 'Expired';
+
+  @override
+  String get monitorMcpNoTokens => 'No tokens';
+
+  @override
+  String get monitorMcpAllScopes => 'All permissions';
+
+  @override
+  String get monitorMcpAllowlist => 'Allowlist';
+
+  @override
+  String get monitorMcpScopeRead => 'Readings';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Read files';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Write files';
+
+  @override
+  String get monitorMcpScopeExec => 'Run commands';
+
+  @override
+  String get monitorMcpScopeProcess => 'Processes';
+
+  @override
+  String get monitorMcpScopeService => 'Services';
+
+  @override
+  String get monitorMcpScopeContainer => 'Containers';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualization';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web apps';
+
+  @override
+  String get monitorMcpScopePower => 'Power';
+
+  @override
+  String get monitorMcpNameRequired => 'Enter a name.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Choose at least one permission.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Enter the password.';
 }

@@ -80,21 +80,32 @@ pub fn configure_api(cfg: &mut web::ServiceConfig<Agent>) {
                     .route(web::post().to(issue_watch_token))
                     .route(web::delete().to(revoke_watch_token)),
             )
-            // The MCP clients' credentials (#1681): minted after the password
-            // is given again, listed with their use, revoked by id.
+            // The MCP clients' credentials and global policy (#1681): minted
+            // after the password is given again, listed with their use, edited
+            // or revoked by id.
             .service(
                 web::resource("/api-tokens")
                     .route(web::get().to(crate::api::api_tokens::list))
                     .route(web::post().to(crate::api::api_tokens::create)),
             )
             .service(
+                web::resource("/api-tokens/policy")
+                    .route(web::get().to(crate::api::api_tokens::get_policy))
+                    .route(web::put().to(crate::api::api_tokens::put_policy)),
+            )
+            .service(
                 web::resource("/api-tokens/{id}")
+                    .route(web::put().to(crate::api::api_tokens::update))
                     .route(web::delete().to(crate::api::api_tokens::revoke)),
             )
             .route("/status", web::get().to(get_status))
             // The MCP clients' way in (#1681): stateless JSON, one message
-            // per POST, behind an API token.
-            .route("/mcp", web::post().to(crate::api::mcp::post))
+            // per POST, behind an API token; GET/DELETE answer 405 per spec.
+            .service(
+                web::resource("/mcp")
+                    .route(web::post().to(crate::api::mcp::post))
+                    .default_service(web::to(crate::api::mcp::method_not_allowed)),
+            )
             .route("/metrics", web::get().to(get_metrics))
             .route("/capabilities", web::get().to(get_capabilities))
             .route("/ws-ticket", web::post().to(issue_ws_ticket))

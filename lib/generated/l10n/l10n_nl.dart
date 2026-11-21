@@ -7391,4 +7391,96 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get average => 'gemiddelde';
+
+  @override
+  String get monitorMcpAccess => 'MCP-toegang';
+
+  @override
+  String get monitorMcpEndpoint => 'Eindpunt';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Globale rechten';
+
+  @override
+  String get monitorMcpTokens => 'Tokens';
+
+  @override
+  String get monitorMcpNewToken => 'Nieuw token';
+
+  @override
+  String get monitorMcpDays => 'Dagen';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => 'Intrekken';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name intrekken?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Laatst gebruikt';
+
+  @override
+  String get monitorMcpNeverUsed => 'Nooit gebruikt';
+
+  @override
+  String get monitorMcpExpires => 'Verloopt';
+
+  @override
+  String get monitorMcpExpired => 'Verlopen';
+
+  @override
+  String get monitorMcpNoTokens => 'Geen tokens';
+
+  @override
+  String get monitorMcpAllScopes => 'Alle rechten';
+
+  @override
+  String get monitorMcpAllowlist => 'Toestemmingslijst';
+
+  @override
+  String get monitorMcpScopeRead => 'Metingen';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Bestanden lezen';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Bestanden schrijven';
+
+  @override
+  String get monitorMcpScopeExec => 'Opdrachten uitvoeren';
+
+  @override
+  String get monitorMcpScopeProcess => 'Processen';
+
+  @override
+  String get monitorMcpScopeService => 'Services';
+
+  @override
+  String get monitorMcpScopeContainer => 'Containers';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualisatie';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web-apps';
+
+  @override
+  String get monitorMcpScopePower => 'Stroom';
+
+  @override
+  String get monitorMcpNameRequired => 'Voer een naam in.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Kies minstens één recht.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Voer het wachtwoord in.';
 }

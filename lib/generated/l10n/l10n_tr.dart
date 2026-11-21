@@ -7308,4 +7308,96 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get average => 'ortalama';
+
+  @override
+  String get monitorMcpAccess => 'MCP erişimi';
+
+  @override
+  String get monitorMcpEndpoint => 'Uç nokta';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Genel izinler';
+
+  @override
+  String get monitorMcpTokens => 'Jetonlar';
+
+  @override
+  String get monitorMcpNewToken => 'Yeni jeton';
+
+  @override
+  String get monitorMcpDays => 'Gün';
+
+  @override
+  String get monitorMcpCreated => 'Jeton';
+
+  @override
+  String get monitorMcpRevoke => 'İptal et';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name iptal edilsin mi?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Son kullanım';
+
+  @override
+  String get monitorMcpNeverUsed => 'Hiç kullanılmadı';
+
+  @override
+  String get monitorMcpExpires => 'Bitiş';
+
+  @override
+  String get monitorMcpExpired => 'Süresi doldu';
+
+  @override
+  String get monitorMcpNoTokens => 'Jeton yok';
+
+  @override
+  String get monitorMcpAllScopes => 'Tüm izinler';
+
+  @override
+  String get monitorMcpAllowlist => 'İzin listesi';
+
+  @override
+  String get monitorMcpScopeRead => 'Okumalar';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Dosya okuma';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Dosya yazma';
+
+  @override
+  String get monitorMcpScopeExec => 'Komut çalıştırma';
+
+  @override
+  String get monitorMcpScopeProcess => 'Süreçler';
+
+  @override
+  String get monitorMcpScopeService => 'Hizmetler';
+
+  @override
+  String get monitorMcpScopeContainer => 'Konteynerler';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Sanallaştırma';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web uygulamaları';
+
+  @override
+  String get monitorMcpScopePower => 'Güç';
+
+  @override
+  String get monitorMcpNameRequired => 'Ad girin.';
+
+  @override
+  String get monitorMcpScopesRequired => 'En az bir izin seçin.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Parolayı girin.';
 }

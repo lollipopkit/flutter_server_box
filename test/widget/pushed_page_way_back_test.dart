@@ -55,6 +55,7 @@ import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/monitor_settings/api_tokens.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
@@ -243,6 +244,12 @@ void main() {
       MonitorSettingsArgs(
         monitor: MonitorHttpCredential(addr: 'http://127.0.0.1:9', pwd: 'p'),
         subtitle: 'web',
+      ),
+    ),
+    'MonitorApiTokensPage': (c) => MonitorApiTokensPage.route.go(
+      c,
+      const MonitorApiTokensArgs(
+        MonitorHttpCredential(addr: 'http://127.0.0.1:9', pwd: 'p'),
       ),
     ),
     'PortForwardPage': (c) {

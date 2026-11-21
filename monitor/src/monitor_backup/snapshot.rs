@@ -59,6 +59,7 @@ pub const KEPT: &[Kept] = &[
     kept("agent_provider"),
     kept("agent_credential"),
     kept("agent_permissions"),
+    Kept { table: "mcp_policy", volatile: &["updated_at"] },
     kept("agent_mcp_server"),
     Kept { table: "mcp_oauth", volatile: &["access_token", "refresh_token", "expires_at", "updated_at"] },
     kept("container_backup_settings"),

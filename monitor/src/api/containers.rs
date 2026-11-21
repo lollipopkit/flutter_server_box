@@ -230,16 +230,29 @@ pub async fn list(
     // A part that is about one container and was not told which is a request
     // that cannot be answered, not one to guess a default for. Refused before
     // the runtime is run, so a malformed request costs nothing on the machine.
-    if part.needs_id() && id.is_none_or(str::is_empty) {
-        return Ok(HttpResponse::BadRequest().build());
+    if part.needs_id() {
+        let Some(id) = id else {
+            return Ok(HttpResponse::BadRequest().build());
+        };
+        if sbm_parser::container::validate_identifier(id).is_err() {
+            return Ok(HttpResponse::BadRequest().build());
+        }
     }
     Ok(HttpResponse::Ok().json(&read(part, id, exec).await))
 }
 
 /// One part of the machine's container state. Shared by `/containers` and the
 /// MCP tool; the transport rule is the caller's, asked before this runs.
-pub(crate) async fn listing(state: &AppState, part: ContainerPart, id: Option<&str>) -> ContainerListResponse {
-    read(part, id, &state.remote_access.exec).await
+pub(crate) async fn listing(
+    state: &AppState,
+    part: ContainerPart,
+    id: Option<&str>,
+) -> Result<ContainerListResponse, ContainerActionError> {
+    if part.needs_id() {
+        let id = id.ok_or(ContainerActionError::Empty)?;
+        sbm_parser::container::validate_identifier(id)?;
+    }
+    Ok(read(part, id, &state.remote_access.exec).await)
 }
 
 #[derive(Debug, Deserialize)]
@@ -262,28 +275,48 @@ pub async fn act(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match apply(&state, action, gated.remote_ip.clone()).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(issue) => Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalid_input", "issue": issue }))),
+    }
+}
+
+/// Performs one container action and answers the refreshed listing, recording
+/// it as the route does. Shared with the MCP tool; the transport rule is the
+/// caller's, asked before this runs.
+pub(crate) async fn apply(
+    state: &AppState,
+    action: ContainerAction,
+    remote_ip: Option<String>,
+) -> Result<serde_json::Value, ContainerActionError> {
+    let what = format!("containers {}", action_subject(&action));
     // Refused before the runtime is probed, let alone run: a value that could
     // never be answered — an empty reference, one the runtime would read as an
     // option, arguments that do not parse — costs the machine nothing.
     if let Err(issue) = action.validate() {
-        return Ok(refuse(&state, &gated, &what, issue).await);
+        Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
+            .remote_ip(remote_ip)
+            .detail(format!("{what}: {}", issue.code()))
+            .record(&state.db)
+            .await;
+        return Err(issue);
     }
     let exec = &state.remote_access.exec;
     let Some(runtime) = detect_runtime(exec).await else {
         let part = refresh_part(&action);
-        return Ok(HttpResponse::Ok().json(&read(part, None, exec).await));
+        return Ok(serde_json::to_value(read(part, None, exec).await).unwrap_or_default());
     };
     let command = match action.exec(runtime) {
         Ok(command) => command,
         // Unreachable after `validate`, kept so a command is never built from a
         // value this build refused.
-        Err(issue) => return Ok(refuse(&state, &gated, &what, issue).await),
+        Err(issue) => return Err(issue),
     };
 
     // Recorded before it runs; the subject is the account, the detail the
     // action and the container it named — never a command line.
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .remote_ip(gated.remote_ip.clone())
+        .remote_ip(remote_ip.clone())
         .detail(&what)
         .record(&state.db)
         .await;
@@ -301,7 +334,7 @@ pub async fn act(
     };
     if let Some(why) = failed {
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .remote_ip(gated.remote_ip)
+            .remote_ip(remote_ip)
             .detail(format!("{what}: {why}"))
             .record(&state.db)
             .await;
@@ -323,23 +356,7 @@ pub async fn act(
             sbm_parser::container::user_facing_output(&output.stderr, &output.stdout).into(),
         );
     }
-    Ok(HttpResponse::Ok().json(&response))
-}
-
-/// Refuses a value before anything runs, and records the refusal like any
-/// other denied machine request.
-async fn refuse(
-    state: &AppState,
-    gated: &machine::Gated,
-    what: &str,
-    issue: ContainerActionError,
-) -> HttpResponse {
-    Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
-        .remote_ip(gated.remote_ip.clone())
-        .detail(format!("{what}: {}", issue.code()))
-        .record(&state.db)
-        .await;
-    HttpResponse::BadRequest().json(&json!({ "error": "invalid_input", "issue": issue }))
+    Ok(response)
 }
 
 /// Which listing a change leaves stale, so the answer carries the part the

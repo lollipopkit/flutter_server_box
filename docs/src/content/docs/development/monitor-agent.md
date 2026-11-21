@@ -179,38 +179,78 @@ Errors are `{"error": "<code>", "message": "..."}`:
 
 ### API tokens and MCP
 
-An MCP client (Claude Code, Claude Desktop, any Streamable HTTP client) reads
-this machine through `POST /api/v1/mcp`, with a credential of its own rather
-than the password: an **API token**, `sbt_` and 64 hex, shown once at
-creation and stored as its SHA-256.
+An MCP client (Claude Code, Claude Desktop, any Streamable HTTP client)
+controls this machine through `POST /api/v1/mcp` with an **API token** (`sbt_`
++ 64 hex), shown once at creation and stored as its BLAKE3 hash.
 
 | Endpoint | Body |
 |---|---|
-| `GET /api/v1/api-tokens` | Every token: `id`, `name`, `scopes`, `created_at`, `expires_at`, `last_used_at`, `last_used_ip` |
-| `POST /api/v1/api-tokens` | `name`, `password` (the account's, again), `scopes`, `days` (default 90, at most 3650). Answers the row and `token_value` — once |
-| `DELETE /api/v1/api-tokens/{id}` | `204`, or `404` when it is gone. Audited |
+| `GET /api/v1/api-tokens` | Every token: `id`, `name`, `scopes`, `commands`, `created_at`, `expires_at`, `expired`, `last_used_at`, `last_used_ip` |
+| `POST /api/v1/api-tokens` | `name`, `password` (re-authenticated), optional `scopes` (default: all), optional `commands` (default: `allow_all`), optional `days` (default 90, max 3650). Answers the row and `token_value` — once |
+| `PUT /api/v1/api-tokens/{id}` | Updates `name`, `scopes`, and `commands`. Audited |
+| `DELETE /api/v1/api-tokens/{id}` | `204`, or `404` when gone. Audited |
+| `GET /api/v1/api-tokens/policy` | Global MCP ceiling (`scopes`, `commands`, `config_scopes`) |
+| `PUT /api/v1/api-tokens/policy` | Updates global `scopes` and `commands`, live without restart. Audited |
 
-Scopes are `read` (every tool that only reads), `exec` (running a command)
-and `machine` (acting on the machine). There is no scope for managing these
-tokens: a credential that could mint credentials would outlive its own
-revocation. A token requires TLS or a loopback caller as acting does — it
-lives for months, so a plaintext link would hand a sniffer one for longer
-than any session. A password change deletes every token, and the list records
-each token's last use (at most once a minute).
+Permissions default open — all 11 scopes enabled and `allow_all` commands — and
+can be narrowed at three intersected layers: `config.toml` (`[mcp]`), the
+UI-managed global policy (`mcp_policy`), and each token's own permissions.
+There is no scope for managing tokens or the account itself. A token requires
+TLS or a loopback caller as acting does; a password change deletes every token,
+and the list records each token's last use (at most once a minute).
 
 `POST /api/v1/mcp` speaks Streamable HTTP in its stateless JSON shape: one
 JSON-RPC message per POST, answered with one `application/json` body, a
-notification by `202`. It sends no session id. The client must send
-`Accept: application/json` and `Content-Type: application/json`; a body over
-256 KiB is `413` before it is read; an `Origin` the Monitor was not told to
-allow is `403` (real MCP clients send none). The protocol header is not
-required, since an MCP client knows nothing of it; the protocol version is
-negotiated in `initialize`.
+notification by `202`, and `405` (`Allow: POST`) for `GET` or `DELETE`. The
+client must send `Accept: application/json` and `Content-Type: application/json`;
+a body over 4 MiB is `413` before it is read; an `Origin` not in
+`cors_allowed_origins` (or same-origin) is `403`. The protocol header is not
+required; the MCP protocol version is negotiated in `initialize`.
 
-`tools/list` answers only what the token's scopes allow, so a client cannot
-learn the name of a tool it may not run. Every tool answers the same body its
-HTTP route does. Every `tools/call` is an audit row (`mcp`), naming the tool
-and the token, never the arguments.
+`tools/list` answers only what the effective scopes allow. Every `tools/call`
+is an audit row (`mcp`), naming the tool and the token; arguments are not
+recorded, except that `run_command` records the first line of the command
+before running it, as `POST /exec` does, and `fs_*` tools record `fs` audit
+rows.
+
+| Scope | Tools |
+|---|---|
+| `read` | `machine_status`, `machine_metrics`, `machine_capabilities`, `processes`, `services`, `containers`, `cron`, `tmux`, `firewall`, `storage`, `virt`, `stacks`, `system_users` |
+| `fs_read` | `fs_roots`, `fs_list`, `fs_stat`, `fs_read` |
+| `fs_write` | `fs_write`, `fs_mkdir`, `fs_rename`, `fs_chmod`, `fs_remove` |
+| `exec` | `run_command` |
+| `process` | `kill_process` |
+| `service` | `service_action` |
+| `container` | `container_action` |
+| `cron` | `cron_edit` |
+| `virt` | `virt_power` |
+| `stacks` | `stack_action` |
+| `power` | `power` |
+
+#### Command rules and `config.toml` ceiling
+
+Both the global policy (`/api/v1/api-tokens/policy`) and individual tokens
+carry `commands: { mode: "allow_all" | "allowlist", allow: [...], deny: [...] }`
+using the same pattern matcher as Agent mode (`fl_pi_llm::permissions::rules`).
+By default (`allow_all`), any command runs unless a `deny` rule matches any
+part of it; in `allowlist` mode, `allow` must cover every part of the command.
+An optional `[mcp]` section in `config.toml` sets a hard operator ceiling on
+top:
+
+```toml
+[mcp]
+disabled_scopes = []
+allow_power = true
+
+[mcp.commands]
+mode = "allow_all"
+allow = []
+deny = ["rm -rf /"]
+```
+
+A `sudo` password has no way in through MCP: an action that needs root answers
+`sudo_rejected`, for the operator to do from the panel or with passwordless
+`sudo`.
 
 ### Password change
 

@@ -81,6 +81,8 @@ pub const FEATURES: &[&str] = &[
     "live",
     // The LK Cloud account the agent is signed in to (`/lkc*`, `api::lkc`).
     "lkc",
+    // API tokens and the MCP endpoint (`/api-tokens`, `/mcp`, `api::mcp`).
+    "mcp",
 ];
 
 /// [`FEATURES`], as `/capabilities` lists them: `lkc` only while it is on

@@ -517,7 +517,11 @@ pub enum ContainerAction {
     Restart { id: String },
     /// Without `force` this refuses to remove a running container, which is
     /// what the runtime does and what the user is being asked about.
-    Remove { id: String, force: bool },
+    Remove {
+        id: String,
+        #[serde(default)]
+        force: bool,
+    },
     PruneContainers,
     PruneVolumes,
     /// Remove one image by id or reference. Forced, as [`image_remove_command`]
@@ -527,10 +531,15 @@ pub enum ContainerAction {
     /// Pull an image by reference (`repository:tag`).
     PullImage { reference: String },
     /// Remove dangling images, or every image nothing uses.
-    PruneImages { all_unused: bool },
+    PruneImages {
+        #[serde(default)]
+        all_unused: bool,
+    },
     /// `system prune`, with the optional scopes.
     PruneSystem {
+        #[serde(default)]
         all_unused_images: bool,
+        #[serde(default)]
         include_volumes: bool,
     },
     /// Start a container from an image.
@@ -540,7 +549,9 @@ pub enum ContainerAction {
     /// never reaches the remote shell as syntax.
     Run {
         image: String,
+        #[serde(default)]
         name: String,
+        #[serde(default)]
         args: String,
     },
 }

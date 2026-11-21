@@ -100,6 +100,7 @@ pub enum CronEdit {
         line_index: Option<usize>,
         schedule: String,
         command: String,
+        #[serde(default = "default_enabled")]
         enabled: bool,
     },
     Remove {
@@ -109,6 +110,10 @@ pub enum CronEdit {
         line_index: usize,
         enabled: bool,
     },
+}
+
+fn default_enabled() -> bool {
+    true
 }
 
 impl CronEdit {
@@ -164,6 +169,20 @@ pub async fn edit(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match apply_edit(&state, edit, gated.remote_ip).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(error) => Ok(HttpResponse::BadRequest().json(&ErrorResponse { error })),
+    }
+}
+
+/// Validates and applies one crontab edit, recording it as the route does.
+/// Shared with the MCP tool; the transport rule is the caller's.
+pub(crate) async fn apply_edit(
+    state: &AppState,
+    edit: CronEdit,
+    remote_ip: Option<String>,
+) -> std::result::Result<CronListResponse, String> {
+    let what = format!("cron {}", edit.subject());
     let exec = &state.remote_access.exec;
 
     // Before the machine is touched at all: what a client sent is the
@@ -174,18 +193,14 @@ pub async fn edit(
     } = &edit
         && let Some(validation) = sbm_parser::cron::validate(schedule, command)
     {
-        return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
-            error: validation.to_string(),
-        }));
+        return Err(validation.to_string());
     }
 
     // Read before writing, so the edit lands on the file as it is now rather
     // than on a listing the client took minutes ago.
     let catalog = match read_document(exec).await {
         Ok(catalog) => catalog,
-        Err(unavailable) => {
-            return Ok(HttpResponse::Ok().json(&CronListResponse::unavailable(unavailable)));
-        }
+        Err(unavailable) => return Ok(CronListResponse::unavailable(unavailable)),
     };
     let applied = match &edit {
         CronEdit::Upsert {
@@ -205,30 +220,26 @@ pub async fn edit(
         Ok(document) => document,
         // An index that no longer names a job: the listing moved under the
         // client. Refused rather than applied to whatever is there now.
-        Err(validation) => {
-            return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
-                error: validation.to_string(),
-            }));
-        }
+        Err(validation) => return Err(validation.to_string()),
     };
 
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .remote_ip(gated.remote_ip.clone())
+        .remote_ip(remote_ip.clone())
         .detail(&what)
         .record(&state.db)
         .await;
     if let Err(unavailable) = write_document(&document.render(), exec).await {
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .remote_ip(gated.remote_ip)
+            .remote_ip(remote_ip)
             .detail(format!("{what}: write failed ({:?})", unavailable.kind))
             .record(&state.db)
             .await;
-        return Ok(HttpResponse::Ok().json(&CronListResponse::unavailable(unavailable)));
+        return Ok(CronListResponse::unavailable(unavailable));
     }
 
     // Re-read rather than reusing `document`: only the machine can say it took
     // what was written, and both endpoints keep one shape.
-    Ok(HttpResponse::Ok().json(&read_crontab(exec).await))
+    Ok(read_crontab(exec).await)
 }
 
 /// Why the crontab cannot be read or written, in a form the panel can phrase
