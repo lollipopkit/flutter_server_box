@@ -7034,4 +7034,96 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get average => '平均';
+
+  @override
+  String get monitorMcpAccess => 'MCP アクセス';
+
+  @override
+  String get monitorMcpEndpoint => 'エンドポイント';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'グローバル権限';
+
+  @override
+  String get monitorMcpTokens => 'トークン';
+
+  @override
+  String get monitorMcpNewToken => '新しいトークン';
+
+  @override
+  String get monitorMcpDays => '日数';
+
+  @override
+  String get monitorMcpCreated => 'トークン';
+
+  @override
+  String get monitorMcpRevoke => '失効';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name を失効させますか？';
+  }
+
+  @override
+  String get monitorMcpLastUsed => '最終使用';
+
+  @override
+  String get monitorMcpNeverUsed => '未使用';
+
+  @override
+  String get monitorMcpExpires => '有効期限';
+
+  @override
+  String get monitorMcpExpired => '期限切れ';
+
+  @override
+  String get monitorMcpNoTokens => 'トークンなし';
+
+  @override
+  String get monitorMcpAllScopes => 'すべての権限';
+
+  @override
+  String get monitorMcpAllowlist => '許可リスト';
+
+  @override
+  String get monitorMcpScopeRead => '読み取り';
+
+  @override
+  String get monitorMcpScopeFsRead => 'ファイル読み取り';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'ファイル書き込み';
+
+  @override
+  String get monitorMcpScopeExec => 'コマンド実行';
+
+  @override
+  String get monitorMcpScopeProcess => 'プロセス';
+
+  @override
+  String get monitorMcpScopeService => 'サービス';
+
+  @override
+  String get monitorMcpScopeContainer => 'コンテナ';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => '仮想化';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web アプリ';
+
+  @override
+  String get monitorMcpScopePower => '電源';
+
+  @override
+  String get monitorMcpNameRequired => '名前を入力してください。';
+
+  @override
+  String get monitorMcpScopesRequired => '少なくとも 1 つの権限を選択してください。';
+
+  @override
+  String get monitorMcpPasswordRequired => 'パスワードを入力してください。';
 }

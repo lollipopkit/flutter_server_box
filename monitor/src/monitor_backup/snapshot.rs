@@ -59,6 +59,7 @@ pub const KEPT: &[Kept] = &[
     kept("agent_provider"),
     kept("agent_credential"),
     kept("agent_permissions"),
+    Kept { table: "mcp_policy", volatile: &["updated_at"] },
     kept("agent_mcp_server"),
     Kept { table: "mcp_oauth", volatile: &["access_token", "refresh_token", "expires_at", "updated_at"] },
     kept("container_backup_settings"),
@@ -101,6 +102,9 @@ pub const LEFT_OUT: &[&str] = &[
     "stack",
     "stack_mcp",
     "watch_tokens",
+    // Minted for a client against one machine, and ended by its password:
+    // a restore elsewhere mints its own, as it does a watch token.
+    "api_tokens",
     "login_device",
     "monitor_backup",
     "push_literal_pending",
@@ -573,6 +577,9 @@ async fn copy_in(conn: &mut SqliteConnection, sealer: &Sealer, blobs: usize) -> 
                 .execute(&mut *conn)
                 .await?;
             conn.execute("DELETE FROM main.watch_tokens").await?;
+            // An API token was minted with the password this restore
+            // replaces, as a backup's own was: neither outlives it (#1681).
+            conn.execute("DELETE FROM main.api_tokens").await?;
             conn.execute("DELETE FROM main.login_device").await?;
             conn.execute("DELETE FROM main.lkc_session").await?;
             id

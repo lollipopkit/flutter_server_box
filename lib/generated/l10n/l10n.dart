@@ -12490,6 +12490,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'average'**
   String get average;
+
+  /// No description provided for @monitorMcpAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP access'**
+  String get monitorMcpAccess;
+
+  /// No description provided for @monitorMcpEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint'**
+  String get monitorMcpEndpoint;
+
+  /// No description provided for @monitorMcpGlobalPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Global permissions'**
+  String get monitorMcpGlobalPolicy;
+
+  /// No description provided for @monitorMcpTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get monitorMcpTokens;
+
+  /// No description provided for @monitorMcpNewToken.
+  ///
+  /// In en, this message translates to:
+  /// **'New token'**
+  String get monitorMcpNewToken;
+
+  /// No description provided for @monitorMcpDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get monitorMcpDays;
+
+  /// No description provided for @monitorMcpCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Token'**
+  String get monitorMcpCreated;
+
+  /// No description provided for @monitorMcpRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get monitorMcpRevoke;
+
+  /// No description provided for @monitorMcpRevokeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke {name}?'**
+  String monitorMcpRevokeHint(String name);
+
+  /// No description provided for @monitorMcpLastUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last used'**
+  String get monitorMcpLastUsed;
+
+  /// No description provided for @monitorMcpNeverUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Never used'**
+  String get monitorMcpNeverUsed;
+
+  /// No description provided for @monitorMcpExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get monitorMcpExpires;
+
+  /// No description provided for @monitorMcpExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get monitorMcpExpired;
+
+  /// No description provided for @monitorMcpNoTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'No tokens'**
+  String get monitorMcpNoTokens;
+
+  /// No description provided for @monitorMcpAllScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'All permissions'**
+  String get monitorMcpAllScopes;
+
+  /// No description provided for @monitorMcpAllowlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowlist'**
+  String get monitorMcpAllowlist;
+
+  /// No description provided for @monitorMcpScopeRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings'**
+  String get monitorMcpScopeRead;
+
+  /// No description provided for @monitorMcpScopeFsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read files'**
+  String get monitorMcpScopeFsRead;
+
+  /// No description provided for @monitorMcpScopeFsWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write files'**
+  String get monitorMcpScopeFsWrite;
+
+  /// No description provided for @monitorMcpScopeExec.
+  ///
+  /// In en, this message translates to:
+  /// **'Run commands'**
+  String get monitorMcpScopeExec;
+
+  /// No description provided for @monitorMcpScopeProcess.
+  ///
+  /// In en, this message translates to:
+  /// **'Processes'**
+  String get monitorMcpScopeProcess;
+
+  /// No description provided for @monitorMcpScopeService.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get monitorMcpScopeService;
+
+  /// No description provided for @monitorMcpScopeContainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Containers'**
+  String get monitorMcpScopeContainer;
+
+  /// No description provided for @monitorMcpScopeCron.
+  ///
+  /// In en, this message translates to:
+  /// **'Cron'**
+  String get monitorMcpScopeCron;
+
+  /// No description provided for @monitorMcpScopeVirt.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtualization'**
+  String get monitorMcpScopeVirt;
+
+  /// No description provided for @monitorMcpScopeStacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Web apps'**
+  String get monitorMcpScopeStacks;
+
+  /// No description provided for @monitorMcpScopePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Power'**
+  String get monitorMcpScopePower;
+
+  /// No description provided for @monitorMcpNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name.'**
+  String get monitorMcpNameRequired;
+
+  /// No description provided for @monitorMcpScopesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose at least one permission.'**
+  String get monitorMcpScopesRequired;
+
+  /// No description provided for @monitorMcpPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the password.'**
+  String get monitorMcpPasswordRequired;
 }
 
 class _AppLocalizationsDelegate

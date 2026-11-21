@@ -104,7 +104,7 @@ pub struct ProcessQuery {
 }
 
 #[derive(Serialize)]
-struct ProcessResponse {
+pub(crate) struct ProcessResponse {
     /// Whether the machine gave a table at all. `false` is a state of the
     /// machine, not a failure of the caller, so the page draws one screen
     /// either way.
@@ -160,6 +160,17 @@ pub async fn list(
     if let Err(refused) = machine::gate(&req, &state, "process list").await {
         return Ok(refused);
     }
+    Ok(HttpResponse::Ok().json(&table(&state, query.sort, query.ascending).await))
+}
+
+/// The table, in [sort] order. Shared by `/process` and the MCP tool, which
+/// is the same reading under the same rule — the transport rule is the
+/// caller's, asked before this runs.
+pub(crate) async fn table(
+    state: &AppState,
+    sort: Option<ProcSortMode>,
+    ascending: Option<bool>,
+) -> ProcessResponse {
     let system = system_type();
     let now = now_millis();
 
@@ -177,13 +188,13 @@ pub async fn list(
     if let Some((age, result)) = &stored
         && *age < REUSE_WINDOW.as_millis() as i64
     {
-        let (sort, ascending) = resolve_sort(result, query.sort, query.ascending);
-        return Ok(HttpResponse::Ok().json(&respond(
+        let (sort, ascending) = resolve_sort(result, sort, ascending);
+        return respond(
             &result.sorted_by(sort, Some(ascending)),
             system,
             Some(sort),
             Some(ascending),
-        )));
+        );
     }
 
     // What this reading's speeds are differenced against. An expired one is
@@ -202,35 +213,27 @@ pub async fn list(
         Ok(out) => out,
         Err(error) => {
             tracing::warn!("process: the table command failed: {error}");
-            return Ok(HttpResponse::Ok().json(&unavailable(
-                system,
-                ProcessReason::DidNotFinish,
-                Some(error.to_string()),
-            )));
+            return unavailable(system, ProcessReason::DidNotFinish, Some(error.to_string()));
         }
     };
     if out.timed_out {
-        return Ok(HttpResponse::Ok().json(&unavailable(system, ProcessReason::DidNotFinish, None)));
+        return unavailable(system, ProcessReason::DidNotFinish, None);
     }
     if out.truncated {
-        return Ok(HttpResponse::Ok().json(&unavailable(system, ProcessReason::TooLarge, None)));
+        return unavailable(system, ProcessReason::TooLarge, None);
     }
     if out.stdout.trim().is_empty() {
         // What the machine said is the whole answer: `ps` missing from a
         // minimal image prints to stderr, and "empty" alone would send the
         // reader looking at the wrong thing.
         let reason = out.stderr.trim();
-        return Ok(HttpResponse::Ok().json(&unavailable(
-            system,
-            ProcessReason::Empty,
-            (!reason.is_empty()).then(|| reason.to_owned()),
-        )));
+        return unavailable(system, ProcessReason::Empty, (!reason.is_empty()).then(|| reason.to_owned()));
     }
 
     // Parsed before it is ordered: which orders a table can answer depends
     // on the columns the machine printed.
     let parsed = PsResult::parse(&out.stdout, ProcSortMode::Cpu, Some(false), baseline, now_millis());
-    let (sort, ascending) = resolve_sort(&parsed, query.sort, query.ascending);
+    let (sort, ascending) = resolve_sort(&parsed, sort, ascending);
     let result = Arc::new(parsed.sorted_by(sort, Some(ascending)));
 
     let response = respond(&result, system, Some(sort), Some(ascending));
@@ -238,7 +241,7 @@ pub async fn list(
         sampled_at_millis: result.sampled_at_millis,
         result,
     });
-    Ok(HttpResponse::Ok().json(&response))
+    response
 }
 
 /// Which of what the caller asked for this table can answer.
@@ -312,22 +315,22 @@ fn signals(system: SystemType) -> Vec<ProcSignal> {
 /// What the page sends to stop one process.
 #[derive(Deserialize)]
 pub struct KillRequest {
-    pid: i64,
+    pub(crate) pid: i64,
     /// The identity the listing reported for that PID, checked against the
     /// process's own start time before the signal is sent — see
     /// [`sbm_parser::proc::kill_command`]. A number the kernel has since handed
     /// to something else is refused rather than signalled.
     #[serde(default)]
-    start_id: Option<String>,
-    signal: ProcSignal,
+    pub(crate) start_id: Option<String>,
+    pub(crate) signal: ProcSignal,
     /// For `sudo -S`, when the process belongs to another account. Never
     /// logged, and never written into a command line.
     #[serde(default)]
-    password: Option<String>,
+    pub(crate) password: Option<String>,
 }
 
 #[derive(Serialize)]
-struct KillResponse {
+pub(crate) struct KillResponse {
     /// What happened, told apart from a non-zero exit because the caller's
     /// next move differs for each: `denied` is a process this account does not
     /// own, `target_changed` is a table that has moved on.
@@ -356,10 +359,31 @@ pub async fn kill(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match stop(&state, request, gated.remote_ip).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(StopRefused::Unsafe) => Ok(HttpResponse::BadRequest().build()),
+    }
+}
+
+/// Why a process was not signalled.
+pub(crate) enum StopRefused {
+    /// No way to check the PID before signalling it: a platform without the
+    /// script, or a row the machine did not give a start identity for.
+    Unsafe,
+}
+
+/// Signals one process, recording it as the route does. Shared with the MCP
+/// tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn stop(
+    state: &AppState,
+    request: KillRequest,
+    remote_ip: Option<String>,
+) -> Result<KillResponse, StopRefused> {
+    let what = format!("process stop {} {}", request.signal.name(), request.pid);
     let system = system_type();
     let record = |action, outcome, detail: Option<&str>| {
         let mut event = Event::new(Kind::Machine, action, outcome)
-            .remote_ip(gated.remote_ip.clone());
+            .remote_ip(remote_ip.clone());
         event = event.detail(match detail {
             Some(detail) => format!("{what}: {detail}"),
             None => what.clone(),
@@ -375,7 +399,7 @@ pub async fn kill(
         record(Action::Denied, Outcome::Denied, Some("no way to stop this process safely"))
             .record(&state.db)
             .await;
-        return Ok(HttpResponse::BadRequest().build());
+        return Err(StopRefused::Unsafe);
     };
 
     // Recorded before it runs, as power is: what was asked of the machine is
@@ -417,13 +441,7 @@ pub async fn kill(
         Ok(out) => (out.stdout, out.stderr, out.exit_code),
         Err(e) => (String::new(), e.to_string(), None),
     };
-    Ok(HttpResponse::Ok().json(&KillResponse {
-        outcome,
-        exit_code,
-        stdout,
-        stderr,
-        sudo_rejected,
-    }))
+    Ok(KillResponse { outcome, exit_code, stdout, stderr, sudo_rejected })
 }
 
 /// What the machine answered, where it answered at all.

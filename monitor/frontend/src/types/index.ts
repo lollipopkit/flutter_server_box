@@ -210,6 +210,8 @@ export type MachineFeature =
   /// Web apps deployed with Docker Compose behind the agent's proxy
   /// (`/stacks*`).
   | 'stacks'
+  /// API tokens and the MCP endpoint (`/api-tokens`, `/mcp`).
+  | 'mcp'
   | 'inference'
   | 'agent_tools'
   | 'proxy'

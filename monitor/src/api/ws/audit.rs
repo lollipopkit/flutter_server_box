@@ -70,6 +70,10 @@ pub enum Kind {
     /// is the account; the detail the verb and the app — never a setting's
     /// value or a secret.
     Stack,
+    /// A tool an MCP client ran through `POST /mcp` (#1681). The subject is
+    /// the credential kind (an API token); the detail is the tool's name —
+    /// never its arguments, which are a caller's to keep to itself.
+    Mcp,
     /// A sign-in with the password, let in or refused. The detail says
     /// whether the device was one that signed in before (`device known`) —
     /// never the password or the device token.
@@ -78,7 +82,7 @@ pub enum Kind {
 
 impl Kind {
     /// Every kind, as `GET /audit?kind=` takes them.
-    pub const ALL: [Kind; 14] = [
+    pub const ALL: [Kind; 15] = [
         Kind::Ticket,
         Kind::Terminal,
         Kind::Exec,
@@ -93,6 +97,7 @@ impl Kind {
         Kind::Agent,
         Kind::Stack,
         Kind::Login,
+        Kind::Mcp,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -111,6 +116,7 @@ impl Kind {
             Kind::Agent => "agent",
             Kind::Stack => "stack",
             Kind::Login => "login",
+            Kind::Mcp => "mcp",
         }
     }
 }

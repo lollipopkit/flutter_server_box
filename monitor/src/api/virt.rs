@@ -138,10 +138,10 @@ struct LoadResponse {
 
 #[derive(Deserialize)]
 pub struct PowerRequest {
-    guest: String,
-    action: PowerAction,
+    pub(crate) guest: String,
+    pub(crate) action: PowerAction,
     #[serde(default)]
-    password: Option<String>,
+    pub(crate) password: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -267,6 +267,17 @@ pub async fn load(
         return Ok(refused);
     }
     let password = body.and_then(|b| b.into_inner().password).filter(|p| !p.is_empty());
+    match load_view(&state, password.as_deref()).await {
+        Ok(answer) => Ok(HttpResponse::Ok().json(&answer)),
+        Err(e) => Ok(super::respond::internal(&e)),
+    }
+}
+
+/// `/virt`'s host and guests view, shared with the MCP tool.
+pub(crate) async fn load_view(
+    state: &AppState,
+    password: Option<&str>,
+) -> crate::utils::error::Result<serde_json::Value> {
     let mut answer = LoadResponse {
         host: None,
         supported: unix(),
@@ -275,21 +286,20 @@ pub async fn load(
         view: None,
         error: None,
     };
-    match pve_client(&state).await {
-        Ok(Some(client)) => {
+    match pve_client(state).await? {
+        Some(client) => {
             answer.host = Some(HostKind::Pve);
             answer.pve_configured = true;
             match client.load().await {
                 Ok(view) => answer.view = Some(view),
                 Err(e) => answer.error = Some(e),
             }
-            return Ok(HttpResponse::Ok().json(&answer));
+            return Ok(serde_json::to_value(&answer).unwrap_or_default());
         }
-        Ok(None) => {}
-        Err(e) => return Ok(super::respond::internal(&e)),
+        None => {}
     }
     if !answer.supported {
-        return Ok(HttpResponse::Ok().json(&answer));
+        return Ok(serde_json::to_value(&answer).unwrap_or_default());
     }
     // Which manager runs here. A libvirt that refuses this account is still
     // libvirt: the refusal is what sudo is asked about next.
@@ -297,7 +307,7 @@ pub async fn load(
         Ok(out) => libvirt::parse_probe(&combined(&out)),
         Err(e) => {
             answer.error = Some(VirtError::msg(ErrorKind::Unreachable, e.to_string()));
-            return Ok(HttpResponse::Ok().json(&answer));
+            return Ok(serde_json::to_value(&answer).unwrap_or_default());
         }
     };
     let libvirt_here = match probe {
@@ -308,25 +318,25 @@ pub async fn load(
             if pve {
                 // Not a host until the operator says how to reach its API.
                 answer.host = Some(HostKind::Pve);
-                return Ok(HttpResponse::Ok().json(&answer));
+                return Ok(serde_json::to_value(&answer).unwrap_or_default());
             }
             found
         }
         Err(libvirt::VirtError::PermissionDenied { .. }) => true,
         Err(e) => {
             answer.error = Some(lv::error_of(&e, false));
-            return Ok(HttpResponse::Ok().json(&answer));
+            return Ok(serde_json::to_value(&answer).unwrap_or_default());
         }
     };
     if !libvirt_here {
-        return Ok(HttpResponse::Ok().json(&answer));
+        return Ok(serde_json::to_value(&answer).unwrap_or_default());
     }
     answer.host = Some(HostKind::Libvirt);
-    match libvirt_view(&state, password.as_deref()).await {
+    match libvirt_view(state, password).await {
         Ok(view) => answer.view = Some(view),
         Err(e) => answer.error = Some(e),
     }
-    Ok(HttpResponse::Ok().json(&answer))
+    Ok(serde_json::to_value(&answer).unwrap_or_default())
 }
 
 pub async fn power(
@@ -341,9 +351,24 @@ pub async fn power(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match power_guest(&state, request, gated.remote_ip).await {
+        Ok(resp) => Ok(HttpResponse::Ok().json(&resp)),
+        Err(e) => Ok(super::respond::internal(&e)),
+    }
+}
+
+/// Runs one guest power action, recording it as the route does. Shared with
+/// the MCP tool.
+pub(crate) async fn power_guest(
+    state: &AppState,
+    request: PowerRequest,
+    remote_ip: Option<String>,
+) -> crate::utils::error::Result<PowerResponse> {
+    let action = serde_json::to_value(request.action).ok().and_then(|v| v.as_str().map(str::to_owned));
+    let what = format!("virt {} {}", action.as_deref().unwrap_or("?"), request.guest);
     let record = |action, outcome, why: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .remote_ip(gated.remote_ip.clone())
+            .remote_ip(remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{what}: {why}"),
                 None => what.clone(),
@@ -353,16 +378,15 @@ pub async fn power(
     // whatever happens next.
     record(Action::Open, Outcome::Ok, None).record(&state.db).await;
     let password = request.password.as_deref().filter(|p| !p.is_empty());
-    let result = match pve_client(&state).await {
-        Ok(Some(client)) => pve_power(&client, &request.guest, request.action).await,
-        Ok(None) if unix() => libvirt_power(&state, &request.guest, request.action, password).await,
-        Ok(None) => Err(VirtError::new(ErrorKind::Unsupported)),
-        Err(e) => return Ok(super::respond::internal(&e)),
+    let result = match pve_client(state).await? {
+        Some(client) => pve_power(&client, &request.guest, request.action).await,
+        None if unix() => libvirt_power(state, &request.guest, request.action, password).await,
+        None => Err(VirtError::new(ErrorKind::Unsupported)),
     };
     if let Err(e) = &result {
         record(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&state.db).await;
     }
-    Ok(HttpResponse::Ok().json(&PowerResponse { error: result.err() }))
+    Ok(PowerResponse { error: result.err() })
 }
 
 /// Where a guest lives: the PVE session, or libvirt on this machine.

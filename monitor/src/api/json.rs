@@ -94,7 +94,7 @@ impl<St, L: Limit<St>> FromRequest<St> for Body<L> {
 
 /// The body, refused as `Overflow` past [limit]: by its declared length
 /// before reading, or as it arrives.
-async fn collect(req: &HttpRequest, payload: &mut Payload, limit: usize) -> Result<BytesMut, PayloadError> {
+pub(crate) async fn collect(req: &HttpRequest, payload: &mut Payload, limit: usize) -> Result<BytesMut, PayloadError> {
     let length = match req.headers().get(header::CONTENT_LENGTH) {
         None => None,
         Some(value) => Some(

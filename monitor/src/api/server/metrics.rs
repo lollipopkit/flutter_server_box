@@ -14,7 +14,7 @@ use std::sync::Arc;
 use super::*;
 
 #[derive(Serialize)]
-pub(super) struct StatusResponse {
+pub(crate) struct StatusResponse {
     name: String,
     cpu: String,
     memory: String,
@@ -34,35 +34,39 @@ pub(super) async fn get_status(
     let metrics = app_state.current_metrics.read().await;
 
     if let Some(ref metrics) = *metrics {
-        let response = StatusResponse {
-            name: metrics.server_name.clone(),
-            cpu: format!("{:.1}%", metrics.cpu_usage),
-            memory: format!(
-                "{:.1}% ({} / {})",
-                metrics.memory.usage_percent,
-                format_bytes(metrics.memory.used),
-                format_bytes(metrics.memory.total)
-            ),
-            disk: format!(
-                "{:.1}% ({} / {})",
-                metrics.disk.usage_percent,
-                format_bytes(metrics.disk.used),
-                format_bytes(metrics.disk.total)
-            ),
-            network: format!(
-                "RX: {} / TX: {}",
-                format_bytes(metrics.network.rx_bytes),
-                format_bytes(metrics.network.tx_bytes)
-            ),
-            temperature: metrics.temperature.map(|t| format!("{:.1}°C", t)),
-            timestamp: metrics.timestamp.to_rfc3339(),
-        };
-
-        Ok(HttpResponse::Ok().json(&response))
+        Ok(HttpResponse::Ok().json(&status_view(metrics)))
     } else {
         Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
             error: "Metrics not available yet".to_string(),
         }))
+    }
+}
+
+/// `/status`' body: one machine's readings, as a line shows them. What the
+/// MCP tool of the same name answers, so the two never drift.
+pub(crate) fn status_view(metrics: &SystemMetrics) -> StatusResponse {
+    StatusResponse {
+        name: metrics.server_name.clone(),
+        cpu: format!("{:.1}%", metrics.cpu_usage),
+        memory: format!(
+            "{:.1}% ({} / {})",
+            metrics.memory.usage_percent,
+            format_bytes(metrics.memory.used),
+            format_bytes(metrics.memory.total)
+        ),
+        disk: format!(
+            "{:.1}% ({} / {})",
+            metrics.disk.usage_percent,
+            format_bytes(metrics.disk.used),
+            format_bytes(metrics.disk.total)
+        ),
+        network: format!(
+            "RX: {} / TX: {}",
+            format_bytes(metrics.network.rx_bytes),
+            format_bytes(metrics.network.tx_bytes)
+        ),
+        temperature: metrics.temperature.map(|t| format!("{:.1}°C", t)),
+        timestamp: metrics.timestamp.to_rfc3339(),
     }
 }
 
@@ -87,7 +91,7 @@ pub(super) async fn get_metrics(
 
 /// Keep the established numeric fields for existing clients, while exposing
 /// exact decimal forms for browser clients that cannot represent every u64.
-pub(super) fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
+pub(crate) fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
     let mut value = serde_json::to_value(metrics)?;
     add_exact_counters(
         &mut value,
@@ -797,7 +801,7 @@ pub(super) async fn get_velocity_history(
 /// polls while open (`/metrics`, `/status`), not every authenticated
 /// request — a one-off `/capabilities`/`/settings` fetch shouldn't count as
 /// "someone's actively watching."
-pub(super) async fn touch_viewer_heartbeat(app_state: &AppState) {
+pub(crate) async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 

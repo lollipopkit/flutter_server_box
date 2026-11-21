@@ -77,7 +77,7 @@ pub struct ReadRequest {
 
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
-enum Reason {
+pub(crate) enum Reason {
     UnsupportedPlatform,
     NoneInstalled,
     /// The read failed; `reason` holds what the machine said.
@@ -86,7 +86,7 @@ enum Reason {
 
 /// One firewall as the panel draws it.
 #[derive(Serialize, Default)]
-struct ReadResponse {
+pub(crate) struct ReadResponse {
     available: bool,
     reason_kind: Option<Reason>,
     reason: Option<String>,
@@ -138,9 +138,24 @@ pub async fn read(
         return Ok(refused);
     }
     let request = body.into_inner();
-    let (accesses, proxied) = accesses(&req, &state);
+    Ok(HttpResponse::Ok().json(
+        &read_view(&state, req.peer_addr(), request.kind, request.password.as_deref()).await,
+    ))
+}
+
+/// The firewall as `/firewall` reports it, read as if the request came from
+/// [peer]. Shared with the MCP tool, which has no way to carry a `sudo`
+/// password: one that is needed comes back as `sudo_required`, not as a
+/// failed tool. The transport rule is the caller's, asked before this runs.
+pub(crate) async fn read_view(
+    state: &AppState,
+    peer: Option<std::net::SocketAddr>,
+    kind: Option<Which>,
+    password: Option<&str>,
+) -> ReadResponse {
+    let (accesses, proxied) = accesses(peer, state);
     let mut response = ReadResponse { proxied, ..Default::default() };
-    match load(&state.remote_access.exec, request.kind, request.password.as_deref()).await {
+    match load(&state.remote_access.exec, kind, password).await {
         Err(Loaded::Unsupported) => response.reason_kind = Some(Reason::UnsupportedPlatform),
         Err(Loaded::NoneInstalled(probe)) => {
             response.reason_kind = Some(Reason::NoneInstalled);
@@ -189,7 +204,7 @@ pub async fn read(
             }
         }
     }
-    Ok(HttpResponse::Ok().json(&response))
+    response
 }
 
 /// A change, as the panel names it.
@@ -268,7 +283,7 @@ pub async fn plan(
     if let Err(refused) = machine::gate(&req, &state, &what).await {
         return Ok(refused);
     }
-    let (accesses, _) = accesses(&req, &state);
+    let (accesses, _) = accesses(req.peer_addr(), &state);
     match planned(&state.remote_access.exec, &request.change, request.password.as_deref(), &accesses).await {
         Ok((plan, _)) => {
             let id = plan_id(&plan);
@@ -313,7 +328,7 @@ pub async fn act(
             })
     };
     let exec = &state.remote_access.exec;
-    let (accesses, _) = accesses(&req, &state);
+    let (accesses, _) = accesses(req.peer_addr(), &state);
     let password = request.password.as_deref();
     let (plan, root) = match planned(exec, &request.change, password, &accesses).await {
         Ok(planned) => planned,
@@ -357,9 +372,11 @@ pub async fn act(
 /// connection to this agent, unless it comes through a proxy here, and the
 /// machine's SSH port. Neither knows the interface it arrives on, nor SSH who
 /// connects from where.
-fn accesses(req: &HttpRequest, state: &AppState) -> (Vec<FirewallAccess>, bool) {
+fn accesses(
+    peer: Option<std::net::SocketAddr>,
+    state: &AppState,
+) -> (Vec<FirewallAccess>, bool) {
     let mut out = Vec::new();
-    let peer = req.peer_addr();
     let proxied = peer.is_some_and(|p| p.ip().is_loopback());
     if !proxied {
         out.push(FirewallAccess {

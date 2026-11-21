@@ -35,6 +35,12 @@ pub async fn list(
     if let Err(refused) = machine::gate(&req, &state, "tmux list").await {
         return Ok(refused);
     }
+    Ok(HttpResponse::Ok().json(&sessions(&state).await))
+}
+
+/// The sessions, as `/tmux` answers them; shared with the MCP tool. The
+/// transport rule is the caller's, asked before this runs.
+pub(crate) async fn sessions(state: &AppState) -> serde_json::Value {
     let exec = &state.remote_access.exec;
 
     // Found through the agent's own command, never named by the client: a
@@ -48,11 +54,11 @@ pub async fn list(
         }
     };
     let Some(bin) = bin else {
-        return Ok(HttpResponse::Ok().json(&json!({
+        return json!({
             "available": false,
             "sessions": [],
             "error": null,
-        })));
+        });
     };
 
     let (sessions, error) =
@@ -70,11 +76,11 @@ pub async fn list(
                 (Vec::new(), Some(e.to_string()))
             }
         };
-    Ok(HttpResponse::Ok().json(&json!({
+    json!({
         "available": true,
         "sessions": sessions,
         "error": error,
-    })))
+    })
 }
 
 /// The listing, or `None` when it failed; no server running is no sessions.

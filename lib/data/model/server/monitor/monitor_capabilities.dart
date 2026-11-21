@@ -88,4 +88,5 @@ abstract final class MonitorFeature {
   static const alerts = 'alerts';
   static const update = 'update';
   static const agentMode = 'agent_mode';
+  static const mcp = 'mcp';
 }

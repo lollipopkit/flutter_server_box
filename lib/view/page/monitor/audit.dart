@@ -233,6 +233,7 @@ String auditKindLabel(String kind) => switch (kind) {
   'push' => l10n.monitorAuditPush,
   'admin' => l10n.monitorAuditAdmin,
   'backup' => libL10n.backup,
+  'mcp' => 'MCP',
   _ => kind,
 };
 
