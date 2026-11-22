@@ -286,17 +286,14 @@ pub(crate) async fn load_view(
         view: None,
         error: None,
     };
-    match pve_client(state).await? {
-        Some(client) => {
-            answer.host = Some(HostKind::Pve);
-            answer.pve_configured = true;
-            match client.load().await {
-                Ok(view) => answer.view = Some(view),
-                Err(e) => answer.error = Some(e),
-            }
-            return Ok(serde_json::to_value(&answer).unwrap_or_default());
+    if let Some(client) = pve_client(state).await? {
+        answer.host = Some(HostKind::Pve);
+        answer.pve_configured = true;
+        match client.load().await {
+            Ok(view) => answer.view = Some(view),
+            Err(e) => answer.error = Some(e),
         }
-        None => {}
+        return Ok(serde_json::to_value(&answer).unwrap_or_default());
     }
     if !answer.supported {
         return Ok(serde_json::to_value(&answer).unwrap_or_default());

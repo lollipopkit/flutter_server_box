@@ -20,7 +20,7 @@
   } from '../../../lib/api'
   import { DATE_TIME, fmtDate } from '../../../lib/format'
   import { useScope } from '../../../lib/scope.svelte'
-  import { servers } from '../../../lib/servers.svelte'
+  import { servers, type ServerEntry } from '../../../lib/servers.svelte'
   import ReauthDialog from '../../../components/ReauthDialog.svelte'
   import SettingsPage from './SettingsPage.svelte'
 
@@ -135,6 +135,7 @@
   let newAllow = $state('')
   let newDeny = $state('')
   let asking = $state(false)
+  let mintTarget = $state<ServerEntry | undefined>(undefined)
   let created = $state<CreatedApiToken | null>(null)
   let tokenCopied = $state(false)
 
@@ -163,11 +164,12 @@
       loading = false
       return
     }
+    const entry = servers.current
     const serverId = servers.currentId
     loading = true
     error = null
     try {
-      const [loadedTokens, loadedPolicy] = await Promise.all([api.listApiTokens(), api.getMcpPolicy()])
+      const [loadedTokens, loadedPolicy] = await Promise.all([api.listApiTokens(entry), api.getMcpPolicy(entry)])
       if (scope.stale(serverId)) return
       tokens = loadedTokens
       fillPolicy(loadedPolicy)
@@ -182,6 +184,12 @@
   $effect(() => {
     void servers.currentId
     void servers.authenticated
+    tokens = []
+    policy = null
+    asking = false
+    mintTarget = undefined
+    savingPolicy = false
+    savingToken = false
     created = null
     editingId = null
     confirmingRevokeId = null
@@ -190,15 +198,19 @@
 
   async function savePolicy() {
     if (savingPolicy) return
+    const entry = servers.current
     const serverId = servers.currentId
     savingPolicy = true
     savedPolicy = false
     error = null
     try {
-      const updated = await api.saveMcpPolicy({
-        scopes: globalScopes,
-        commands: { mode: globalMode, allow: lines(globalAllow), deny: lines(globalDeny) },
-      })
+      const updated = await api.saveMcpPolicy(
+        {
+          scopes: globalScopes,
+          commands: { mode: globalMode, allow: lines(globalAllow), deny: lines(globalDeny) },
+        },
+        entry,
+      )
       if (scope.stale(serverId)) return
       fillPolicy(updated)
       savedPolicy = true
@@ -212,15 +224,25 @@
     }
   }
 
+  function openMint() {
+    mintTarget = servers.current ? { ...servers.current } : undefined
+    asking = true
+  }
+
   async function mint(password: string) {
-    const serverId = servers.currentId
-    const res = await api.createApiToken({
-      name: name.trim(),
-      password,
-      scopes: newScopes,
-      commands: { mode: newMode, allow: lines(newAllow), deny: lines(newDeny) },
-      days,
-    })
+    const entry = mintTarget
+    const serverId = entry?.id ?? servers.currentId
+    if (!entry || scope.stale(serverId)) return
+    const res = await api.createApiToken(
+      {
+        name: name.trim(),
+        password,
+        scopes: newScopes,
+        commands: { mode: newMode, allow: lines(newAllow), deny: lines(newDeny) },
+        days,
+      },
+      entry,
+    )
     if (scope.stale(serverId)) return
     created = res
     tokenCopied = false
@@ -231,6 +253,7 @@
     newDeny = ''
     newPermsOpen = false
     asking = false
+    mintTarget = undefined
     await load()
   }
 
@@ -249,15 +272,20 @@
 
   async function saveToken(id: number) {
     if (savingToken || !editName.trim() || editScopes.length === 0) return
+    const entry = servers.current
     const serverId = servers.currentId
     savingToken = true
     error = null
     try {
-      await api.updateApiToken(id, {
-        name: editName.trim(),
-        scopes: editScopes,
-        commands: { mode: editMode, allow: lines(editAllow), deny: lines(editDeny) },
-      })
+      await api.updateApiToken(
+        id,
+        {
+          name: editName.trim(),
+          scopes: editScopes,
+          commands: { mode: editMode, allow: lines(editAllow), deny: lines(editDeny) },
+        },
+        entry,
+      )
       if (scope.stale(serverId)) return
       editingId = null
       await load()
@@ -270,11 +298,12 @@
   }
 
   async function revoke(token: ApiToken) {
+    const entry = servers.current
     const serverId = servers.currentId
     error = null
     confirmingRevokeId = null
     try {
-      await api.revokeApiToken(token.id)
+      await api.revokeApiToken(token.id, entry)
       if (scope.stale(serverId)) return
       if (editingId === token.id) editingId = null
       await load()
@@ -285,8 +314,9 @@
   }
 
   async function copyEndpoint() {
+    if (!navigator.clipboard?.writeText) return
     try {
-      await navigator.clipboard?.writeText(endpointUrl)
+      await navigator.clipboard.writeText(endpointUrl)
       endpointCopied = true
       if (endpointCopiedTimer) clearTimeout(endpointCopiedTimer)
       endpointCopiedTimer = setTimeout(() => (endpointCopied = false), 1500)
@@ -296,9 +326,9 @@
   }
 
   async function copyCreated() {
-    if (!created) return
+    if (!created || !navigator.clipboard?.writeText) return
     try {
-      await navigator.clipboard?.writeText(created.token_value)
+      await navigator.clipboard.writeText(created.token_value)
       tokenCopied = true
     } catch {
       // Clipboard unavailable over insecure origin.
@@ -455,7 +485,7 @@
             size="sm"
             variant="primary"
             disabled={!name.trim() || newScopes.length === 0 || !daysValid}
-            onclick={() => (asking = true)}>{$LL.mcpCreate()}</Button>
+            onclick={openMint}>{$LL.mcpCreate()}</Button>
         </div>
       </Row>
       {#if newPermsOpen}
@@ -495,7 +525,10 @@
       open={asking}
       message={$LL.mcpCreate()}
       onconfirm={mint}
-      onclose={() => (asking = false)}
+      onclose={() => {
+        asking = false
+        mintTarget = undefined
+      }}
     />
   {/if}
 </SettingsPage>

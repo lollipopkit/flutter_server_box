@@ -216,11 +216,17 @@ async fn a_default_token_gets_full_control_and_runs_commands_out_of_the_box() {
         .post(rpc(
             2,
             "tools/call",
-            json!({ "name": "run_command", "arguments": { "command": "printf 'ok:%s' $((1 + 1))" } }),
+            json!({ "name": "run_command", "arguments": { "command": "echo ok:1&& echo ok:2" } }),
         ))
         .await;
     assert_eq!(ran["result"]["isError"], false, "{ran}");
-    assert_eq!(ran["result"]["structuredContent"]["stdout"], "ok:2");
+    let lines: Vec<&str> = ran["result"]["structuredContent"]["stdout"]
+        .as_str()
+        .unwrap()
+        .lines()
+        .map(str::trim)
+        .collect();
+    assert_eq!(lines, vec!["ok:1", "ok:2"]);
 }
 
 #[ntex::test]

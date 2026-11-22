@@ -10,6 +10,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -22,9 +23,13 @@ import '../helpers/ssh_e2e.dart';
 Future<(int status, Map<String, dynamic> body)> _mcpPost(
   String url,
   String bearer,
-  Map<String, dynamic> rpc,
-) async {
+  Map<String, dynamic> rpc, {
+  String? pin,
+}) async {
   final http = HttpClient();
+  if (pin != null) {
+    http.badCertificateCallback = (cert, _, _) => sha256.convert(cert.der).toString() == pin;
+  }
   try {
     final req = await http.postUrl(Uri.parse(url));
     req.headers
@@ -52,11 +57,12 @@ Future<void> main() async {
     return;
   }
 
+  final pin = await e2eAgentCertSha256(addr);
   final client = MonitorHttpClient(
     MonitorHttpCredential(
       addr: addr,
       pwd: pwd,
-      certSha256: await e2eAgentCertSha256(addr),
+      certSha256: pin,
       allowInsecure: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_INSECURE') == '1',
     ),
   );
@@ -85,15 +91,20 @@ Future<void> main() async {
       expect(minted.token.scopes, containsAll(MonitorApiToken.allScopes));
       expect(minted.token.lastUsedAt, isNull);
 
-      final (status, callRes) = await _mcpPost(client.mcpEndpointUrl, minted.value, {
-        'jsonrpc': '2.0',
-        'id': 1,
-        'method': 'tools/call',
-        'params': {
-          'name': 'run_command',
-          'arguments': {'command': 'echo flutter-e2e-ok'},
+      final (status, callRes) = await _mcpPost(
+        client.mcpEndpointUrl,
+        minted.value,
+        {
+          'jsonrpc': '2.0',
+          'id': 1,
+          'method': 'tools/call',
+          'params': {
+            'name': 'run_command',
+            'arguments': {'command': 'echo flutter-e2e-ok'},
+          },
         },
-      });
+        pin: pin,
+      );
       expect(status, 200);
       final result = (callRes['result'] as Map).cast<String, dynamic>();
       expect(result['isError'], isNot(true));
@@ -113,15 +124,20 @@ Future<void> main() async {
       expect(updated.name, '$runTag-ro');
       expect(updated.scopes, [MonitorApiToken.scopeRead]);
 
-      final (_, deniedExec) = await _mcpPost(client.mcpEndpointUrl, minted.value, {
-        'jsonrpc': '2.0',
-        'id': 2,
-        'method': 'tools/call',
-        'params': {
-          'name': 'run_command',
-          'arguments': {'command': 'echo blocked'},
+      final (_, deniedExec) = await _mcpPost(
+        client.mcpEndpointUrl,
+        minted.value,
+        {
+          'jsonrpc': '2.0',
+          'id': 2,
+          'method': 'tools/call',
+          'params': {
+            'name': 'run_command',
+            'arguments': {'command': 'echo blocked'},
+          },
         },
-      });
+        pin: pin,
+      );
       expect((deniedExec['error'] as Map)['code'], -32602);
 
       // Save and restore global policy via Flutter client.
@@ -147,11 +163,16 @@ Future<void> main() async {
       createdId = null;
       expect((await client.apiTokens()).where((t) => t.id == revokedId), isEmpty);
 
-      final (revokedStatus, _) = await _mcpPost(client.mcpEndpointUrl, minted.value, {
-        'jsonrpc': '2.0',
-        'id': 3,
-        'method': 'ping',
-      });
+      final (revokedStatus, _) = await _mcpPost(
+        client.mcpEndpointUrl,
+        minted.value,
+        {
+          'jsonrpc': '2.0',
+          'id': 3,
+          'method': 'ping',
+        },
+        pin: pin,
+      );
       expect(revokedStatus, 401);
 
       final audit = await client.audit(kind: 'mcp', limit: 10);
@@ -161,9 +182,12 @@ Future<void> main() async {
         isTrue,
       );
     } finally {
-      await client.saveMcpPolicy(scopes: origPolicy.scopes, commands: origPolicy.commands);
-      if (createdId != null) {
-        await client.revokeApiToken(createdId);
+      try {
+        await client.saveMcpPolicy(scopes: origPolicy.scopes, commands: origPolicy.commands);
+      } finally {
+        if (createdId != null) {
+          await client.revokeApiToken(createdId);
+        }
       }
     }
   });

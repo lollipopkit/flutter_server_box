@@ -50,6 +50,11 @@ final class _MonitorApiTokensPageState extends State<MonitorApiTokensPage> {
     if (widget.args.monitor == oldWidget.args.monitor) return;
     _client.dispose();
     _client = MonitorHttpClient(widget.args.monitor);
+    setState(() {
+      _tokens = null;
+      _policy = null;
+      _error = null;
+    });
     _load();
   }
 
@@ -167,56 +172,70 @@ extension on _MonitorApiTokensPageState {
   }
 
   Future<void> _editGlobalPolicy(MonitorMcpPolicy current) async {
+    final client = _client;
     final edited = await _askPolicy(context, current);
-    if (edited == null || !mounted) return;
+    if (edited == null || !mounted || !identical(client, _client)) return;
     try {
-      final saved = await _client.saveMcpPolicy(
+      final saved = await client.saveMcpPolicy(
         scopes: edited.scopes,
         commands: edited.commands,
       );
-      if (!mounted) return;
+      if (!mounted || !identical(client, _client)) return;
       setState(() => _policy = saved);
       Toast.show(libL10n.saved);
     } catch (e) {
+      if (!mounted || !identical(client, _client)) return;
       Toast.show(monitorTokenErrText(e));
     }
   }
 
   Future<void> _create() async {
-    final secret = await _askAndMintToken(context, _client);
-    if (secret == null || !mounted) return;
+    final client = _client;
+    final secret = await _askAndMintToken(
+      context,
+      client,
+      isActive: () => mounted && identical(client, _client),
+    );
+    if (secret == null || !mounted || !identical(client, _client)) return;
     await _showToken(context, secret);
+    if (!mounted || !identical(client, _client)) return;
     await _load();
   }
 
   Future<void> _editToken(MonitorApiToken token) async {
+    final client = _client;
     final edited = await _askEditToken(context, token);
-    if (edited == null || !mounted) return;
+    if (edited == null || !mounted || !identical(client, _client)) return;
     try {
-      await _client.updateApiToken(
+      await client.updateApiToken(
         token.id,
         name: edited.name,
         scopes: edited.scopes,
         commands: edited.commands,
       );
+      if (!mounted || !identical(client, _client)) return;
       await _load();
       Toast.show(libL10n.saved);
     } catch (e) {
+      if (!mounted || !identical(client, _client)) return;
       Toast.show(monitorTokenErrText(e));
     }
   }
 
   Future<void> _revoke(MonitorApiToken token) async {
+    final client = _client;
     final ok = await context.showSheet<bool>(
       title: l10n.monitorMcpRevoke,
       child: Text(l10n.monitorMcpRevokeHint(token.name)),
       actions: Btnx.cancelOk,
     );
-    if (ok != true) return;
+    if (ok != true || !mounted || !identical(client, _client)) return;
     try {
-      await _client.revokeApiToken(token.id);
+      await client.revokeApiToken(token.id);
+      if (!mounted || !identical(client, _client)) return;
       await _load();
     } catch (e) {
+      if (!mounted || !identical(client, _client)) return;
       Toast.show(monitorTokenErrText(e));
     }
   }
@@ -426,8 +445,9 @@ Future<_EditedPolicy?> _askPolicy(
 
 Future<String?> _askAndMintToken(
   BuildContext context,
-  MonitorHttpClient client,
-) async {
+  MonitorHttpClient client, {
+  required bool Function() isActive,
+}) async {
   final nameCtrl = TextEditingController();
   final daysCtrl = TextEditingController(text: '90');
   final passwordCtrl = TextEditingController();
@@ -436,11 +456,14 @@ Future<String?> _askAndMintToken(
   final scopes = {...MonitorApiToken.allScopes};
   var mode = MonitorMcpCommandPolicy.modeAllowAll;
   var submitting = false;
+  BuildContext? sheetContext;
 
   return context.showSheet<String>(
     title: l10n.monitorMcpNewToken,
     child: StatefulBuilder(
-      builder: (context, setSheet) => DisposeWith(
+      builder: (innerContext, setSheet) {
+        sheetContext = innerContext;
+        return DisposeWith(
         notifiers: [nameCtrl, daysCtrl, passwordCtrl, denyCtrl, allowCtrl],
         child: SingleChildScrollView(
           child: Column(
@@ -478,13 +501,14 @@ Future<String?> _askAndMintToken(
             ],
           ),
         ),
-      ),
+      );
+      },
     ),
     actions: [
       Btn.cancel(),
       Btn.ok(
         onTap: () async {
-          if (submitting) return;
+          if (submitting || !isActive()) return;
           final trimmed = nameCtrl.text.trim();
           final life = int.tryParse(daysCtrl.text.trim());
           if (trimmed.isEmpty) {
@@ -516,11 +540,14 @@ Future<String?> _askAndMintToken(
               ),
               days: life,
             );
-            if (context.mounted) {
-              context.popSheet(created.value);
+            final ctx = sheetContext;
+            if (ctx != null && ctx.mounted) {
+              ctx.popSheet(created.value);
             }
           } catch (e) {
-            Toast.show(monitorTokenErrText(e));
+            if (sheetContext?.mounted == true) {
+              Toast.show(monitorTokenErrText(e));
+            }
           } finally {
             submitting = false;
           }

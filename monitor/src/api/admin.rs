@@ -49,12 +49,13 @@ pub(crate) async fn audit(req: &HttpRequest, state: &AppState, action: Action, d
         .await;
 }
 
-/// Checks [password] against [caller]'s own, through the login throttle.
-pub(crate) async fn reauth(
+/// Checks [password] against [caller]'s own, through the login throttle,
+/// returning the account's `password_changed_ms` version that matched.
+pub(crate) async fn reauth_since(
     req: &HttpRequest,
     state: &AppState,
     password: Option<&str>,
-) -> std::result::Result<(), HttpResponse> {
+) -> std::result::Result<i64, HttpResponse> {
     let attempt = match state
         .login_throttle
         .begin(req.peer_addr().map(|a| a.ip()), crate::api::ratelimit::Who::SignedIn)
@@ -73,8 +74,9 @@ pub(crate) async fn reauth(
             return Err(response);
         }
     };
-    let hash = match accounts::owner(&state.db).await {
-        Ok(owner) => owner.map(|o| o.password_hash),
+    let (hash, since) = match accounts::owner(&state.db).await {
+        Ok(Some(owner)) => (Some(owner.password_hash), Some(owner.since)),
+        Ok(None) => (None, None),
         Err(e) => {
             state.login_throttle.cancel(attempt);
             tracing::warn!("Could not read the password hash: {e}");
@@ -96,9 +98,9 @@ pub(crate) async fn reauth(
             ));
         }
     };
-    if matched {
+    if let (true, Some(since)) = (matched, since) {
         state.login_throttle.record_success(attempt);
-        Ok(())
+        Ok(since)
     } else {
         state.login_throttle.record_failure(attempt);
         Err(error(
@@ -107,6 +109,15 @@ pub(crate) async fn reauth(
             "current_password is missing or wrong",
         ))
     }
+}
+
+/// Checks [password] against [caller]'s own, through the login throttle.
+pub(crate) async fn reauth(
+    req: &HttpRequest,
+    state: &AppState,
+    password: Option<&str>,
+) -> std::result::Result<(), HttpResponse> {
+    reauth_since(req, state, password).await.map(|_| ())
 }
 
 async fn hash(password: &str) -> std::result::Result<String, HttpResponse> {

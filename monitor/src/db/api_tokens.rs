@@ -86,7 +86,7 @@ impl Scope {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         Self::ALL.iter().copied().find(|sc| sc.as_str() == s)
     }
 }
@@ -234,7 +234,7 @@ pub fn parse_scopes(raw: &str) -> Vec<Scope> {
     }
     let mut out = Vec::new();
     for part in trimmed.split(',') {
-        if let Some(s) = Scope::from_str(part.trim())
+        if let Some(s) = Scope::parse(part.trim())
             && !out.contains(&s)
         {
             out.push(s);
@@ -275,7 +275,7 @@ pub async fn load_policy(pool: &SqlitePool) -> Result<McpPolicy> {
     .await?;
     Ok(match row {
         Some((disabled, mode, allow, deny)) => {
-            let off: Vec<Scope> = disabled.split(',').filter_map(|s| Scope::from_str(s.trim())).collect();
+            let off: Vec<Scope> = disabled.split(',').filter_map(|s| Scope::parse(s.trim())).collect();
             let scopes = Scope::ALL
                 .iter()
                 .copied()
@@ -315,7 +315,38 @@ pub async fn store_policy(pool: &SqlitePool, policy: &McpPolicy) -> Result<()> {
     Ok(())
 }
 
-/// Stores a token's hash and its per-token policy.
+/// Stores a token's hash and its per-token policy, gated on the account's
+/// `password_changed_ms` still matching [password_changed_ms] so a password
+/// change committing concurrently cannot leave a newly minted token behind.
+pub async fn create_for_password_version(
+    pool: &SqlitePool,
+    password_changed_ms: i64,
+    name: &str,
+    token_hash: &str,
+    scopes: &[Scope],
+    commands: &CommandPolicy,
+    expires_at: &str,
+) -> Result<Option<i64>> {
+    let done = sqlx::query(
+        "INSERT INTO api_tokens (name, token_hash, scopes, command_mode, command_allow, command_deny, expires_at) \
+         SELECT ?, ?, ?, ?, ?, ?, ? \
+         FROM (SELECT password_changed_ms FROM users ORDER BY id LIMIT 1) \
+         WHERE password_changed_ms = ?",
+    )
+    .bind(name)
+    .bind(token_hash)
+    .bind(scopes_value(scopes))
+    .bind(commands.mode.as_str())
+    .bind(serde_json::to_string(&commands.allow).expect("vec serializes"))
+    .bind(serde_json::to_string(&commands.deny).expect("vec serializes"))
+    .bind(expires_at)
+    .bind(password_changed_ms)
+    .execute(pool)
+    .await?;
+    Ok((done.rows_affected() == 1).then(|| done.last_insert_rowid()))
+}
+
+#[cfg(test)]
 pub async fn create(
     pool: &SqlitePool,
     name: &str,
@@ -363,7 +394,26 @@ pub async fn update(
     Ok(done.rows_affected() == 1)
 }
 
-/// The token a hash stands for, if it exists and has not expired.
+/// The token a hash stands for and the account snapshot (`id`,
+/// `password_changed_ms`) read in the same SQLite statement, so a concurrent
+/// password change cannot delete the token row between reading the token and
+/// reading the account.
+pub async fn find_with_owner(pool: &SqlitePool, token_hash: &str) -> Result<Option<(Token, i64, i64)>> {
+    let row = sqlx::query(
+        "SELECT id, name, scopes, command_mode, command_allow, command_deny, \
+                created_at, expires_at, (expires_at <= CURRENT_TIMESTAMP) AS expired, \
+                last_used_at, last_used_ip, owner_id, owner_since \
+         FROM api_tokens \
+         CROSS JOIN (SELECT id AS owner_id, password_changed_ms AS owner_since FROM users ORDER BY id LIMIT 1) \
+         WHERE token_hash = ? AND expires_at > CURRENT_TIMESTAMP",
+    )
+    .bind(token_hash)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.as_ref().map(|r| (row_token(r), r.get("owner_id"), r.get("owner_since"))))
+}
+
+#[cfg(test)]
 pub async fn find(pool: &SqlitePool, token_hash: &str) -> Result<Option<Token>> {
     let row = sqlx::query(select_token!("WHERE token_hash = ? AND expires_at > CURRENT_TIMESTAMP"))
         .bind(token_hash)

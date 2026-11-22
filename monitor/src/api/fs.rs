@@ -741,32 +741,50 @@ pub(crate) mod mcp_ops {
     const DEFAULT_READ_MAX: usize = 256 * 1024;
     const HARD_READ_MAX: usize = 4 * 1024 * 1024;
 
-    pub(crate) async fn roots(state: &AppState, remote_ip: Option<String>) -> Value {
+    async fn blocking<T, F>(f: F) -> std::result::Result<T, String>
+    where
+        T: Send + 'static,
+        F: FnOnce() -> std::result::Result<T, String> + Send + 'static,
+    {
+        tokio::task::spawn_blocking(f)
+            .await
+            .map_err(|e| format!("task join failed: {e}"))?
+    }
+
+    pub(crate) async fn roots(state: &Arc<AppState>, remote_ip: Option<String>) -> Value {
         record_fs(state, remote_ip, "roots", "").await;
-        let home = std::env::var_os("HOME")
-            .or_else(|| std::env::var_os("USERPROFILE"))
-            .and_then(|home| std::fs::canonicalize(home).ok())
-            .filter(|home| !state.remote_access.fs.roots.hides(home));
-        let roots: Vec<String> = home
-            .iter()
-            .chain(state.remote_access.fs.roots.as_slice())
-            .map(|p| exposed_path(p))
-            .collect();
+        let st = state.clone();
+        let roots = tokio::task::spawn_blocking(move || {
+            let home = std::env::var_os("HOME")
+                .or_else(|| std::env::var_os("USERPROFILE"))
+                .and_then(|home| std::fs::canonicalize(home).ok())
+                .filter(|home| !st.remote_access.fs.roots.hides(home));
+            home.iter()
+                .chain(st.remote_access.fs.roots.as_slice())
+                .map(|p| exposed_path(p))
+                .collect::<Vec<String>>()
+        })
+        .await
+        .unwrap_or_default();
         json!({ "roots": roots })
     }
 
     pub(crate) async fn list(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "list", raw_path).await;
-        let dir = state
-            .remote_access
-            .fs
-            .roots
-            .resolve_existing(raw_path)
-            .map_err(|e| e.to_string())?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let dir = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
         let mut reader = tokio::fs::read_dir(&dir).await.map_err(|e| e.to_string())?;
         let roots = &state.remote_access.fs.roots;
         let mut entries = Vec::new();
@@ -782,42 +800,57 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn stat(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "stat", raw_path).await;
-        let path = state
-            .remote_access
-            .fs
-            .roots
-            .resolve_existing(raw_path)
-            .map_err(|e| match e {
-                FsDenied::OutsideRoots => "not found".to_string(),
-                other => other.to_string(),
-            })?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| match e {
+                    FsDenied::OutsideRoots => "not found".to_string(),
+                    other => other.to_string(),
+                })
+        })
+        .await?;
         Ok(serde_json::to_value(view_of(&path).await).unwrap_or(Value::Null))
     }
 
     pub(crate) async fn read(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         offset: u64,
         max_bytes: Option<usize>,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "read", raw_path).await;
-        let path = state
-            .remote_access
-            .fs
-            .roots
-            .resolve_existing(raw_path)
-            .map_err(|e| e.to_string())?;
-        let meta = tokio::fs::metadata(&path).await.map_err(|e| e.to_string())?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
+        let pre_meta = tokio::fs::metadata(&path).await.map_err(|e| e.to_string())?;
+        if !pre_meta.is_file() {
+            return Err("not a regular file".into());
+        }
+        let mut file = tokio::fs::File::open(&path).await.map_err(|e| e.to_string())?;
+        let meta = file.metadata().await.map_err(|e| e.to_string())?;
+        if !meta.is_file() {
+            return Err("not a regular file".into());
+        }
         let total_bytes = meta.len();
         let version = version_of(&meta);
         let cap = max_bytes.unwrap_or(DEFAULT_READ_MAX).min(HARD_READ_MAX);
-        let mut file = tokio::fs::File::open(&path).await.map_err(|e| e.to_string())?;
         if offset > 0 {
             file.seek(std::io::SeekFrom::Start(offset))
                 .await
@@ -837,7 +870,11 @@ pub(crate) mod mcp_ops {
                 let len = text.len();
                 (text, "utf8", len)
             }
-            Err(err) if truncated && err.utf8_error().error_len().is_none() => {
+            Err(err)
+                if truncated
+                    && err.utf8_error().error_len().is_none()
+                    && err.utf8_error().valid_up_to() > 0 =>
+            {
                 // Cut inside a trailing multi-byte UTF-8 sequence: step back to
                 // the character boundary so a text file stays UTF-8.
                 let valid = err.utf8_error().valid_up_to();
@@ -864,7 +901,7 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn write(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         bytes: &[u8],
         if_version: Option<&str>,
@@ -875,19 +912,22 @@ pub(crate) mod mcp_ops {
         if bytes.len() as u64 > limit {
             return Err(format!("file exceeds the {limit} byte limit"));
         }
-        let path = state
-            .remote_access
-            .fs
-            .roots
-            .resolve_new(raw_path)
-            .map_err(|e| e.to_string())?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_new(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
         let staging = staging_path(&path);
-        let mut file = tokio::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&staging)
-            .await
-            .map_err(|e| e.to_string())?;
+        let mut opts = tokio::fs::OpenOptions::new();
+        opts.write(true).create_new(true);
+        #[cfg(unix)]
+        opts.mode(0o600);
+        let mut file = opts.open(&staging).await.map_err(|e| e.to_string())?;
         let mut staged = Staged::new(staging.clone());
         file.write_all(bytes).await.map_err(|e| e.to_string())?;
         file.flush().await.map_err(|e| e.to_string())?;
@@ -913,17 +953,21 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn mkdir(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "mkdir", raw_path).await;
-        let path = state
-            .remote_access
-            .fs
-            .roots
-            .resolve_new(raw_path)
-            .map_err(|e| e.to_string())?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_new(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
         tokio::fs::create_dir_all(&path)
             .await
             .map_err(|e| e.to_string())?;
@@ -931,18 +975,24 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn remove(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         recursive: bool,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "remove", raw_path).await;
-        let roots = &state.remote_access.fs.roots;
-        let path = roots.resolve_entry(raw_path).map_err(|e| e.to_string())?;
-        roots.check_mutable(&path).map_err(|e| e.to_string())?;
-        if roots.as_slice().iter().any(|root| root == &path) {
-            return Err(FsDenied::OutsideRoots.to_string());
-        }
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let path = roots.resolve_entry(&raw).map_err(|e| e.to_string())?;
+            roots.check_mutable(&path).map_err(|e| e.to_string())?;
+            if roots.as_slice().iter().any(|root| root == &path) {
+                return Err(FsDenied::OutsideRoots.to_string());
+            }
+            Ok(path)
+        })
+        .await?;
         let _replacing = REPLACE.lock().await;
         let meta = tokio::fs::symlink_metadata(&path)
             .await
@@ -961,21 +1011,28 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn rename(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_from: &str,
         raw_to: &str,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "rename", raw_from).await;
-        let roots = &state.remote_access.fs.roots;
-        let from = roots.resolve_entry(raw_from).map_err(|e| e.to_string())?;
-        let to = roots.resolve_new(raw_to).map_err(|e| e.to_string())?;
-        for end in [&from, &to] {
-            roots.check_mutable(end).map_err(|e| e.to_string())?;
-        }
-        if roots.as_slice().iter().any(|root| root == &from) {
-            return Err(FsDenied::OutsideRoots.to_string());
-        }
+        let st = state.clone();
+        let rf = raw_from.to_owned();
+        let rt = raw_to.to_owned();
+        let (from, to) = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let from = roots.resolve_entry(&rf).map_err(|e| e.to_string())?;
+            let to = roots.resolve_new(&rt).map_err(|e| e.to_string())?;
+            for end in [&from, &to] {
+                roots.check_mutable(end).map_err(|e| e.to_string())?;
+            }
+            if roots.as_slice().iter().any(|root| root == &from) {
+                return Err(FsDenied::OutsideRoots.to_string());
+            }
+            Ok((from, to))
+        })
+        .await?;
         let _replacing = REPLACE.lock().await;
         tokio::fs::rename(&from, &to)
             .await
@@ -984,15 +1041,21 @@ pub(crate) mod mcp_ops {
     }
 
     pub(crate) async fn chmod(
-        state: &AppState,
+        state: &Arc<AppState>,
         raw_path: &str,
         mode: u32,
         remote_ip: Option<String>,
     ) -> std::result::Result<Value, String> {
         record_fs(state, remote_ip, "chmod", raw_path).await;
-        let roots = &state.remote_access.fs.roots;
-        let path = roots.resolve_existing(raw_path).map_err(|e| e.to_string())?;
-        roots.check_mutable(&path).map_err(|e| e.to_string())?;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let path = roots.resolve_existing(&raw).map_err(|e| e.to_string())?;
+            roots.check_mutable(&path).map_err(|e| e.to_string())?;
+            Ok(path)
+        })
+        .await?;
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;

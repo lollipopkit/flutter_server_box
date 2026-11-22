@@ -158,9 +158,9 @@ pub async fn token_caller(req: &HttpRequest, state: &AppState) -> Result<TokenCa
         return Err(unauthorized());
     }
     let hash = crate::db::api_tokens::hash(token);
-    match crate::db::api_tokens::find(&state.db, &hash).await {
-        Ok(Some(found)) => {
-            let caller = caller(state).await.ok_or_else(unauthorized)?;
+    match crate::db::api_tokens::find_with_owner(&state.db, &hash).await {
+        Ok(Some((found, owner_id, owner_since))) => {
+            let caller = Caller { id: owner_id, since: owner_since };
             let remote_ip = req.peer_addr().map(|a| a.ip().to_string());
             crate::db::api_tokens::record_use(&state.db, found.id, remote_ip.as_deref())
                 .await

@@ -508,7 +508,7 @@ impl Config {
         }
         if let Some(mcp) = self.mcp.as_ref() {
             for scope in &mcp.disabled_scopes {
-                if crate::db::api_tokens::Scope::from_str(scope).is_none() {
+                if crate::db::api_tokens::Scope::parse(scope).is_none() {
                     anyhow::bail!("mcp.disabled_scopes: unknown scope {scope:?}");
                 }
             }

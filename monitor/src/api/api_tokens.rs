@@ -105,7 +105,7 @@ struct CreatedView<'a> {
 fn parse_checked_scopes(asked: &[String], allow_empty: bool) -> Result<Vec<Scope>> {
     let mut scopes = Vec::new();
     for item in asked {
-        let Some(scope) = Scope::from_str(item) else {
+        let Some(scope) = Scope::parse(item) else {
             return Err(MonitorError::Parse(format!("unknown scope: {item}")));
         };
         if !scopes.contains(&scope) {
@@ -139,7 +139,7 @@ pub async fn create(
     body: web::types::Json<CreateRequest>,
 ) -> Result<HttpResponse> {
     require!(authz::acting_caller(&req, &state).await);
-    require!(admin::reauth(&req, &state, Some(body.password.as_str())).await);
+    let since = require!(admin::reauth_since(&req, &state, Some(body.password.as_str())).await);
     let name = check_name(&body.name)?;
     let scopes = match &body.scopes {
         Some(asked) => parse_checked_scopes(asked, false)?,
@@ -154,16 +154,30 @@ pub async fn create(
     let expires_at = (chrono::Utc::now() + chrono::Duration::days(days as i64))
         .format("%Y-%m-%d %H:%M:%S")
         .to_string();
-    let id = api_tokens::create(
+    let Some(id) = api_tokens::create_for_password_version(
         &state.db,
+        since,
         name,
         &api_tokens::hash(&token),
         &scopes,
         &body.commands,
         &expires_at,
     )
-    .await?;
-    let row = api_tokens::get(&state.db, id).await?.expect("just created");
+    .await?
+    else {
+        return Ok(authz::error(
+            StatusCode::FORBIDDEN,
+            "reauth",
+            "password changed; sign in again",
+        ));
+    };
+    let Some(row) = api_tokens::get(&state.db, id).await? else {
+        return Ok(authz::error(
+            StatusCode::FORBIDDEN,
+            "reauth",
+            "password changed; sign in again",
+        ));
+    };
     admin::audit(
         &req,
         &state,
@@ -195,7 +209,9 @@ pub async fn update(
     if !updated {
         return Ok(error(StatusCode::NOT_FOUND, "not_found"));
     }
-    let row = api_tokens::get(&state.db, id).await?.expect("just updated");
+    let Some(row) = api_tokens::get(&state.db, id).await? else {
+        return Ok(error(StatusCode::NOT_FOUND, "not_found"));
+    };
     admin::audit(
         &req,
         &state,

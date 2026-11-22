@@ -619,7 +619,12 @@ impl Host for TokenHost {
                 let Some(path) = arguments.get("path").and_then(Value::as_str) else {
                     return tool_error("path is required");
                 };
-                let Some(mode) = arguments.get("mode").and_then(Value::as_u64).and_then(|m| u32::try_from(m).ok()) else {
+                let Some(mode) = arguments
+                    .get("mode")
+                    .and_then(Value::as_u64)
+                    .filter(|&m| m <= 0o7777)
+                    .map(|m| m as u32)
+                else {
                     return tool_error("mode is required (integer 0..=4095)");
                 };
                 match fs::mcp_ops::chmod(state, path, mode, self.remote_ip.clone()).await {
@@ -667,7 +672,11 @@ impl TokenHost {
             },
             other => return tool_error(format!("unsupported encoding `{other}` (expected utf8 or base64)")),
         };
-        let if_version = arguments.get("if_version").and_then(Value::as_str);
+        let if_version = match arguments.get("if_version") {
+            None | Some(Value::Null) => None,
+            Some(Value::String(s)) => Some(s.as_str()),
+            Some(_) => return tool_error("if_version must be a string"),
+        };
         match fs::mcp_ops::write(&self.state, path, &bytes, if_version, self.remote_ip.clone()).await {
             Ok(v) => structured(v),
             Err(e) => tool_error(e),
@@ -680,6 +689,10 @@ impl TokenHost {
         };
         if command.trim().is_empty() {
             return tool_error("command must not be empty");
+        }
+        let max_req = self.state.remote_access.exec.max_request_bytes;
+        if command.len() > max_req {
+            return tool_error(format!("command exceeds the {max_req} byte limit"));
         }
         for (layer, policy) in [
             ("config.toml [mcp.commands]", &self.config_commands),
@@ -931,6 +944,28 @@ pub async fn post(
         Err(_) => return error(StatusCode::BAD_REQUEST, "bad_request"),
     };
 
+    let is_call = message.get("method").and_then(Value::as_str) == Some("tools/call");
+    let tool_name = message
+        .get("params")
+        .and_then(|p| p.get("name"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+
+    // `[remote_access.exec] max_request_bytes` bounds command payloads across
+    // every entry point; only `fs_write` uses the larger 4 MiB body envelope.
+    if is_call && tool_name == "run_command" && body.len() > state.remote_access.exec.max_request_bytes {
+        return error(StatusCode::PAYLOAD_TOO_LARGE, "too_large");
+    }
+
+    // Re-verify the account's password generation after reading the body so a
+    // password change committed during upload revokes the token before dispatch.
+    if !authz::caller(&state)
+        .await
+        .is_some_and(|current| current.since == caller.caller.since)
+    {
+        return authz::unauthorized();
+    }
+
     let global_policy = match api_tokens::load_policy(&state.db).await {
         Ok(policy) => policy,
         Err(e) => {
@@ -963,13 +998,6 @@ pub async fn post(
     };
 
     let answer = sbm_mcp::serve(&host, &message).await;
-
-    let is_call = message.get("method").and_then(Value::as_str) == Some("tools/call");
-    let tool_name = message
-        .get("params")
-        .and_then(|p| p.get("name"))
-        .and_then(Value::as_str)
-        .unwrap_or("");
 
     match answer {
         Answer::Json(value) => {

@@ -1216,15 +1216,18 @@ export const api = {
     ),
   /// API tokens and global MCP policy (#1681). The token secret is answered
   /// once, by `createApiToken`, and never listed again.
-  listApiTokens: () => request<ApiToken[]>('/api-tokens', {}),
-  createApiToken: (body: {
-    name: string
-    password: string
-    scopes?: ApiTokenScope[]
-    commands?: McpCommandPolicy
-    days?: number
-  }) =>
-    request<CreatedApiToken>('/api-tokens', {
+  listApiTokens: (entry = servers.current) => requestFor<ApiToken[]>(entry, '/api-tokens', {}),
+  createApiToken: (
+    body: {
+      name: string
+      password: string
+      scopes?: ApiTokenScope[]
+      commands?: McpCommandPolicy
+      days?: number
+    },
+    entry = servers.current,
+  ) =>
+    requestFor<CreatedApiToken>(entry, '/api-tokens', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -1235,16 +1238,20 @@ export const api = {
       scopes: ApiTokenScope[]
       commands: McpCommandPolicy
     },
+    entry = servers.current,
   ) =>
-    request<ApiToken>(`/api-tokens/${id}`, {
+    requestFor<ApiToken>(entry, `/api-tokens/${id}`, {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-  revokeApiToken: (id: number) =>
-    request<void>(`/api-tokens/${id}`, { method: 'DELETE' }),
-  getMcpPolicy: () => request<McpPolicy>('/api-tokens/policy', {}),
-  saveMcpPolicy: (body: { scopes: ApiTokenScope[]; commands: McpCommandPolicy }) =>
-    request<McpPolicy>('/api-tokens/policy', {
+  revokeApiToken: (id: number, entry = servers.current) =>
+    requestFor<void>(entry, `/api-tokens/${id}`, { method: 'DELETE' }),
+  getMcpPolicy: (entry = servers.current) => requestFor<McpPolicy>(entry, '/api-tokens/policy', {}),
+  saveMcpPolicy: (
+    body: { scopes: ApiTokenScope[]; commands: McpCommandPolicy },
+    entry = servers.current,
+  ) =>
+    requestFor<McpPolicy>(entry, '/api-tokens/policy', {
       method: 'PUT',
       body: JSON.stringify(body),
     }),

@@ -258,7 +258,9 @@
   {:else if current === 'server'}
     <ServerSection />
   {:else if current === 'mcp'}
-    <McpSection />
+    {#key servers.currentId}
+      <McpSection />
+    {/key}
   {:else if current === 'backup'}
     <MonitorBackupSection />
   {:else if current === 'agent' && agentPermissions}

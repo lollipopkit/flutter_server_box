@@ -38,7 +38,7 @@ pub enum Answer {
 
 /// Whether `MCP-Protocol-Version` names a protocol version this server speaks.
 pub fn speaks_version(v: &str) -> bool {
-    matches!(v, "2026-07-28" | "2025-11-25" | "2025-06-18" | "2025-03-26")
+    matches!(v, "2025-11-25" | "2025-06-18")
 }
 
 /// Turns one JSON-RPC message into one answer.
@@ -49,10 +49,16 @@ pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
     if request.get("jsonrpc").and_then(Value::as_str) != Some("2.0") {
         return Answer::Json(error(&Value::Null, INVALID_REQUEST, "jsonrpc must be 2.0"));
     }
-    // Streamable HTTP: a JSON-RPC response sent by the client (carries `result`
-    // or `error` and no `method`) is acknowledged with 202 Accepted.
+    // Streamable HTTP: a JSON-RPC response sent by the client (no `method`,
+    // valid `id`, and exactly one of `result` or `error`) is acknowledged with
+    // 202 Accepted.
     if !request.contains_key("method") && (request.contains_key("result") || request.contains_key("error")) {
-        return Answer::Accepted;
+        let valid_id = request.get("id").is_some_and(|id| id.is_string() || id.is_number());
+        let exactly_one = request.contains_key("result") ^ request.contains_key("error");
+        if valid_id && exactly_one {
+            return Answer::Accepted;
+        }
+        return Answer::Json(error(&Value::Null, INVALID_REQUEST, "malformed JSON-RPC response"));
     }
     let Some(method) = request.get("method").and_then(Value::as_str).filter(|m| !m.is_empty()) else {
         let bad_id = request
@@ -88,7 +94,11 @@ pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
         }
         "tools/call" => match params.get("name").and_then(Value::as_str) {
             Some(name) if host.tools().iter().any(|t| t.name == name) => {
-                let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
+                let arguments = match params.get("arguments") {
+                    None => json!({}),
+                    Some(v) if v.is_object() => v.clone(),
+                    Some(_) => return Answer::Json(error(id, INVALID_PARAMS, "arguments must be an object")),
+                };
                 let result = host.call(name, arguments).await;
                 answer(id, to_value(&result))
             }
@@ -100,15 +110,17 @@ pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
 }
 
 fn negotiate(client: Option<&str>) -> ProtocolVersion {
-    const SPOKEN: [ProtocolVersion; 4] = [
-        ProtocolVersion::V_2026_07_28,
+    const SPOKEN: [ProtocolVersion; 2] = [
         ProtocolVersion::V_2025_11_25,
         ProtocolVersion::V_2025_06_18,
-        ProtocolVersion::V_2025_03_26,
     ];
     match client {
-        Some(v) => SPOKEN.iter().find(|sp| sp.as_str() == v).cloned().unwrap_or(ProtocolVersion::LATEST),
-        None => ProtocolVersion::LATEST,
+        Some(v) => SPOKEN
+            .iter()
+            .find(|sp| sp.as_str() == v)
+            .cloned()
+            .unwrap_or(ProtocolVersion::V_2025_11_25),
+        None => ProtocolVersion::V_2025_11_25,
     }
 }
 
@@ -190,10 +202,11 @@ mod tests {
     #[tokio::test]
     async fn a_version_the_client_speaks_is_answered_with_it() {
         for (asked, answered) in [
-            ("2025-03-26", "2025-03-26"),
             ("2025-06-18", "2025-06-18"),
             ("2025-11-25", "2025-11-25"),
-            ("1999-01-01", ProtocolVersion::LATEST.as_str()),
+            ("2025-03-26", "2025-11-25"),
+            ("2026-07-28", "2025-11-25"),
+            ("1999-01-01", "2025-11-25"),
         ] {
             let reply = answer(json!({
                 "jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -205,6 +218,9 @@ mod tests {
             assert!(reply["result"]["capabilities"]["tools"].is_object());
         }
         assert!(speaks_version("2025-06-18"));
+        assert!(speaks_version("2025-11-25"));
+        assert!(!speaks_version("2025-03-26"));
+        assert!(!speaks_version("2026-07-28"));
         assert!(!speaks_version("1999-01-01"));
     }
 
@@ -228,8 +244,12 @@ mod tests {
         for (body, code) in [
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "nope" }), METHOD_NOT_FOUND),
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "nope" } }), INVALID_PARAMS),
+            (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "echo", "arguments": "not-an-object" } }), INVALID_PARAMS),
+            (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "echo", "arguments": null } }), INVALID_PARAMS),
             (json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call" }), INVALID_PARAMS),
             (json!({ "jsonrpc": "2.0", "id": 1 }), INVALID_REQUEST),
+            (json!({ "jsonrpc": "2.0", "result": {} }), INVALID_REQUEST),
+            (json!({ "jsonrpc": "2.0", "id": 1, "result": {}, "error": { "code": -1, "message": "both" } }), INVALID_REQUEST),
             (json!({ "jsonrpc": "2.0", "id": 1, "method": 42 }), INVALID_REQUEST),
             (json!({ "jsonrpc": "2.0", "id": null, "method": "ping" }), INVALID_REQUEST),
             (json!({ "jsonrpc": "2.0", "id": [1], "method": "ping" }), INVALID_REQUEST),

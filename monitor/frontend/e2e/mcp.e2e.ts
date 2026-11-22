@@ -414,28 +414,32 @@ test('Settings → MCP access mints, restricts and revokes a live MCP token', as
     await settingsWin.getByRole('button', { name: 'Close' }).click()
     await expect(settingsWin).toHaveCount(0)
   } finally {
-    await request.put('/api/v1/api-tokens/policy', {
-      headers: adminHeaders,
-      data: { scopes: origPolicy.scopes, commands: origPolicy.commands },
-    })
-    const tokensRes = await request.get('/api/v1/api-tokens', { headers: adminHeaders })
-    if (tokensRes.ok()) {
-      const list = (await tokensRes.json()) as Array<{ id: number; name: string }>
-      for (const item of list) {
-        if (item.name.startsWith('mcp-e2e-')) {
-          await request.delete(`/api/v1/api-tokens/${item.id}`, { headers: adminHeaders })
+    try {
+      if (scratchDir && mintedToken) {
+        const rm = await callTool(request, mintedToken, 'fs_remove', { path: scratchDir, recursive: true })
+        expect(rm.isError, rm.content[0]?.text).toBeFalsy()
+      }
+    } finally {
+      await request.put('/api/v1/api-tokens/policy', {
+        headers: adminHeaders,
+        data: { scopes: origPolicy.scopes, commands: origPolicy.commands },
+      })
+      const tokensRes = await request.get('/api/v1/api-tokens', { headers: adminHeaders })
+      if (tokensRes.ok()) {
+        const list = (await tokensRes.json()) as Array<{ id: number; name: string }>
+        for (const item of list) {
+          if (item.name === tokenName) {
+            await request.delete(`/api/v1/api-tokens/${item.id}`, { headers: adminHeaders })
+          }
         }
       }
-    }
-    if (scratchDir && mintedToken) {
-      await callTool(request, mintedToken, 'fs_remove', { path: scratchDir, recursive: true }).catch(() => {})
-    }
-    const liveRes = await request.get('/api/v1/live', { headers: adminHeaders })
-    if (liveRes.ok()) {
-      const live = (await liveRes.json()) as { devices: Array<{ id: string; label: string }> }
-      for (const d of live.devices) {
-        if (d.label === `mcp-e2e-${runId}` || d.label.includes('HeadlessChrome')) {
-          await request.delete(`/api/v1/live/${d.id}`, { headers: adminHeaders })
+      const liveRes = await request.get('/api/v1/live', { headers: adminHeaders })
+      if (liveRes.ok()) {
+        const live = (await liveRes.json()) as { devices: Array<{ id: string; label: string }> }
+        for (const d of live.devices) {
+          if (d.label === `mcp-e2e-${runId}` || d.label.includes('HeadlessChrome')) {
+            await request.delete(`/api/v1/live/${d.id}`, { headers: adminHeaders })
+          }
         }
       }
     }

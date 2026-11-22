@@ -284,7 +284,7 @@ extension on _MonitorSettingsViewState {
           leading: const Icon(Icons.rule),
           title: Text(llmL10n.permTitle),
           trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () => AgentPermissions.route.go(context, MonitorPermissionsSource(widget.monitor)),
+          onTap: () => AgentPermissions.route.go(context, MonitorPermissionsSource(_client.monitor)),
         ).cardx,
       ],
     );
@@ -309,7 +309,7 @@ extension on _MonitorSettingsViewState {
             trailing: const Icon(Icons.keyboard_arrow_right),
             onTap: () => MonitorApiTokensPage.route.go(
               context,
-              MonitorApiTokensArgs(widget.monitor),
+              MonitorApiTokensArgs(_client.monitor),
             ),
           ).cardx,
       ],
