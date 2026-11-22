@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "Pilih setidaknya satu izin.",
   "monitorMcpPasswordRequired": "Masukkan kata sandi.",
   "appMcpServer": "Server MCP",
+  "appMcpServerTip": "Izinkan agen eksternal mengendalikan konten ServerBox melalui MCP.",
   "appMcpClient": "Alat dan klien MCP",
   "appMcpAddress": "IPv4:port / [IPv6]:port",
   "appMcpRegistry": "Registri token MCP tidak valid.",

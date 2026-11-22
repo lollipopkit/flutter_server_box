@@ -1773,6 +1773,7 @@
   "monitorMcpScopesRequired": "حداقل یک مجوز انتخاب کنید.",
   "monitorMcpPasswordRequired": "گذرواژه را وارد کنید.",
   "appMcpServer": "سرور MCP",
+  "appMcpServerTip": "به عامل‌های خارجی اجازه دهید محتوای ServerBox را از طریق MCP کنترل کنند.",
   "appMcpClient": "ابزارها و کلاینت MCP",
   "appMcpAddress": "IPv4:درگاه / [IPv6]:درگاه",
   "appMcpRegistry": "فهرست توکن‌های MCP نامعتبر است.",

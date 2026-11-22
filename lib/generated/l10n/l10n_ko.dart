@@ -7132,6 +7132,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appMcpServer => 'MCP 서버';
 
   @override
+  String get appMcpServerTip => '외부 에이전트가 MCP를 통해 ServerBox의 콘텐츠를 제어할 수 있습니다.';
+
+  @override
   String get appMcpClient => '도구 및 MCP 클라이언트';
 
   @override

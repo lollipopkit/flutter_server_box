@@ -7423,6 +7423,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get appMcpServer => 'Server MCP';
 
   @override
+  String get appMcpServerTip =>
+      'Izinkan agen eksternal mengendalikan konten ServerBox melalui MCP.';
+
+  @override
   String get appMcpClient => 'Alat dan klien MCP';
 
   @override

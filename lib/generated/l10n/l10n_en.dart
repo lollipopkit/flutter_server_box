@@ -7426,6 +7426,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appMcpServer => 'MCP Server';
 
   @override
+  String get appMcpServerTip =>
+      'Let external agents control ServerBox content through MCP.';
+
+  @override
   String get appMcpClient => 'Tools & MCP client';
 
   @override

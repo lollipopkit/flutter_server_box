@@ -12677,6 +12677,12 @@ abstract class AppLocalizations {
   /// **'MCP Server'**
   String get appMcpServer;
 
+  /// No description provided for @appMcpServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Let external agents control ServerBox content through MCP.'**
+  String get appMcpServerTip;
+
   /// No description provided for @appMcpClient.
   ///
   /// In en, this message translates to:

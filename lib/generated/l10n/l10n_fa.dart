@@ -7470,6 +7470,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appMcpServer => 'سرور MCP';
 
   @override
+  String get appMcpServerTip =>
+      'به عامل‌های خارجی اجازه دهید محتوای ServerBox را از طریق MCP کنترل کنند.';
+
+  @override
   String get appMcpClient => 'ابزارها و کلاینت MCP';
 
   @override

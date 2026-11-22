@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "Ən azı bir icazə seçin.",
   "monitorMcpPasswordRequired": "Parolu daxil edin.",
   "appMcpServer": "MCP serveri",
+  "appMcpServerTip": "Xarici agentlərə MCP vasitəsilə ServerBox məzmununu idarə etməyə imkan verin.",
   "appMcpClient": "Alətlər və MCP klienti",
   "appMcpAddress": "IPv4:port / [IPv6]:port",
   "appMcpRegistry": "MCP token reyestri yanlışdır.",

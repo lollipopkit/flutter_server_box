@@ -7411,6 +7411,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get appMcpServer => 'MCP serveri';
 
   @override
+  String get appMcpServerTip =>
+      'Xarici agentlərə MCP vasitəsilə ServerBox məzmununu idarə etməyə imkan verin.';
+
+  @override
   String get appMcpClient => 'Alətlər və MCP klienti';
 
   @override

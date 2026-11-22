@@ -190,6 +190,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Tools & MCP client'), findsOneWidget);
+    expect(find.text(app_locale.l10n.appMcpServerTip), findsOneWidget);
     await tester.tap(find.text('MCP Server'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "En az bir izin seçin.",
   "monitorMcpPasswordRequired": "Parolayı girin.",
   "appMcpServer": "MCP sunucusu",
+  "appMcpServerTip": "Harici ajanların MCP üzerinden ServerBox içeriğini yönetmesine izin verin.",
   "appMcpClient": "Araçlar ve MCP istemcisi",
   "appMcpAddress": "IPv4:bağlantı noktası / [IPv6]:bağlantı noktası",
   "appMcpRegistry": "MCP belirteç kaydı geçersiz.",

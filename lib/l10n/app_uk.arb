@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "Виберіть принаймні одне право.",
   "monitorMcpPasswordRequired": "Введіть пароль.",
   "appMcpServer": "Сервер MCP",
+  "appMcpServerTip": "Дозвольте зовнішнім агентам керувати вмістом ServerBox через MCP.",
   "appMcpClient": "Інструменти та клієнт MCP",
   "appMcpAddress": "IPv4:порт / [IPv6]:порт",
   "appMcpRegistry": "Некоректний реєстр токенів MCP.",

@@ -16,10 +16,11 @@ extension _AI on _AppSettingsPageState {
           () => ListTile(
             leading: const Icon(Icons.dns_outlined),
             title: Text(SettingsSection.mcp.title),
+            subtitle: Text(l10n.appMcpServerTip, style: UIs.textGrey),
             trailing: const Icon(Icons.keyboard_arrow_right),
             onTap: () => SettingsSectionPage.route.go(context, SettingsSection.mcp),
           ),
-          keywords: 'MCP token HTTP',
+          keywords: '${l10n.appMcpServerTip} MCP token HTTP',
         ),
         _buildAgentSkills(l10n),
       ]),

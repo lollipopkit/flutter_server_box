@@ -7405,6 +7405,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appMcpServer => 'MCP sunucusu';
 
   @override
+  String get appMcpServerTip =>
+      'Harici ajanların MCP üzerinden ServerBox içeriğini yönetmesine izin verin.';
+
+  @override
   String get appMcpClient => 'Araçlar ve MCP istemcisi';
 
   @override

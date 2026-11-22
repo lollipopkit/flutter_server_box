@@ -7020,6 +7020,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appMcpServer => 'MCP 服务器';
 
   @override
+  String get appMcpServerTip => '通过 MCP 将 ServerBox 的内容交给外部 agent 控制';
+
+  @override
   String get appMcpClient => '工具与 MCP 客户端';
 
   @override
@@ -14188,6 +14191,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get appMcpServer => 'MCP 伺服器';
+
+  @override
+  String get appMcpServerTip => '透過 MCP 將 ServerBox 的內容交由外部代理程式控制';
 
   @override
   String get appMcpClient => '工具與 MCP 用戶端';

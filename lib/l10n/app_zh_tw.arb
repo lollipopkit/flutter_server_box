@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "至少選擇一項權限。",
   "monitorMcpPasswordRequired": "請輸入密碼。",
   "appMcpServer": "MCP 伺服器",
+  "appMcpServerTip": "透過 MCP 將 ServerBox 的內容交由外部代理程式控制",
   "appMcpClient": "工具與 MCP 用戶端",
   "appMcpAddress": "IPv4:連接埠 / [IPv6]:連接埠",
   "appMcpRegistry": "MCP 權杖設定檔格式無效。",

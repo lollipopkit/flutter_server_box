@@ -7497,6 +7497,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get appMcpServer => 'Server MCP';
 
   @override
+  String get appMcpServerTip =>
+      'Consenti agli agenti esterni di controllare i contenuti di ServerBox tramite MCP.';
+
+  @override
   String get appMcpClient => 'Strumenti e client MCP';
 
   @override

@@ -9429,6 +9429,7 @@
   "monitorMcpScopesRequired": "Choose at least one permission.",
   "monitorMcpPasswordRequired": "Enter the password.",
   "appMcpServer": "MCP Server",
+  "appMcpServerTip": "Let external agents control ServerBox content through MCP.",
   "appMcpClient": "Tools & MCP client",
   "appMcpAddress": "IPv4:port / [IPv6]:port",
   "appMcpRegistry": "Invalid MCP token registry.",

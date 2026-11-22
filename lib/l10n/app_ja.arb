@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "少なくとも 1 つの権限を選択してください。",
   "monitorMcpPasswordRequired": "パスワードを入力してください。",
   "appMcpServer": "MCP サーバー",
+  "appMcpServerTip": "外部エージェントが MCP 経由で ServerBox の内容を操作できます。",
   "appMcpClient": "ツールと MCP クライアント",
   "appMcpAddress": "IPv4:ポート / [IPv6]:ポート",
   "appMcpRegistry": "MCP トークンの設定ファイルが無効です。",

@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "至少选择一项权限。",
   "monitorMcpPasswordRequired": "请输入密码。",
   "appMcpServer": "MCP 服务器",
+  "appMcpServerTip": "通过 MCP 将 ServerBox 的内容交给外部 agent 控制",
   "appMcpClient": "工具与 MCP 客户端",
   "appMcpAddress": "IPv4:端口 / [IPv6]:端口",
   "appMcpRegistry": "MCP token 配置文件格式无效。",

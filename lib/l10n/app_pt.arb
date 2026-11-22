@@ -2090,6 +2090,7 @@
   "monitorMcpScopesRequired": "Escolha pelo menos uma permissão.",
   "monitorMcpPasswordRequired": "Digite a senha.",
   "appMcpServer": "Servidor MCP",
+  "appMcpServerTip": "Permita que agentes externos controlem o conteúdo do ServerBox via MCP.",
   "appMcpClient": "Ferramentas e cliente MCP",
   "appMcpAddress": "IPv4:porta / [IPv6]:porta",
   "appMcpRegistry": "Registro de tokens MCP inválido.",
