@@ -1,6 +1,9 @@
 //! The MCP server core, shared by every ServerBox host that serves one: the
-//! monitor behind `/api/v1/mcp` (#1681), the app behind its own embedded
-//! server later.
+//! monitor behind `/api/v1/mcp` (#1681) and the app behind its own listener.
+//!
+//! [`serve`] is the protocol; [`http`] the transport's checks; [`token`] and
+//! [`access`] the credential and what it may do; [`catalog`] the tools;
+//! [`machine`] what a machine reached through a shell answers.
 //!
 //! **Stateless by design** (`stateful_mode: false`): every request names
 //! everything it needs, the protocol carries no session, and [`serve`] turns
@@ -8,6 +11,12 @@
 //! what credential checked first — is the host's; this crate never opens a
 //! socket. `rmcp` is used for its model types (`Tool`, results, protocol
 //! versions) so the wire stays what the spec says, and nothing else of it.
+
+pub mod access;
+pub mod catalog;
+pub mod http;
+pub mod machine;
+pub mod token;
 
 use async_trait::async_trait;
 use rmcp::model::{ContentBlock, Implementation, InitializeResult, ListToolsResult, ProtocolVersion, ServerCapabilities};

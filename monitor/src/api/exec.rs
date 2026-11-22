@@ -116,22 +116,7 @@ pub async fn exec(
     }
 }
 
-/// The first line, capped — an audit row records which command ran, not a
-/// script's entire body.
-///
-/// Reads the command rather than the input it was given, so nothing a caller
-/// sends as a credential is ever quoted here.
-pub(crate) fn first_line(cmd: &str) -> String {
-    let line = cmd.lines().next().unwrap_or("").trim();
-    if line.len() <= 200 {
-        return line.to_string();
-    }
-    let mut end = 200;
-    while !line.is_char_boundary(end) {
-        end -= 1;
-    }
-    format!("{}…", &line[..end])
-}
+pub(crate) use sbm_mcp::machine::first_line;
 
 /// Runs [cmd] in a shell under [limits]. Also what the machine-management
 /// endpoints (`api::machine`) run their commands through, so a command they

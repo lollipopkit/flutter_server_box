@@ -2075,9 +2075,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentProvidersTip => 'Ключі API, моделі та модель для нового чату';
 
   @override
-  String get agentTools => 'Інструменти';
-
-  @override
   String get agentToolsTip =>
       'Що може використовувати Agent, і його сервери MCP';
 
@@ -7472,10 +7469,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get appMcpServer => 'Сервер MCP';
 
   @override
-  String get appMcpServerTip =>
-      'Дозвольте зовнішнім агентам керувати вмістом ServerBox через MCP.';
-
-  @override
   String get appMcpClient => 'Інструменти та клієнт MCP';
 
   @override
@@ -7483,9 +7476,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get appMcpRegistry => 'Некоректний реєстр токенів MCP.';
-
-  @override
-  String get appMcpDigest => 'Некоректний хеш токена.';
 
   @override
   String get appMcpName => 'Введіть назву токена.';
@@ -7497,145 +7487,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get appMcpProtect => 'Не вдалося захистити файл токенів.';
 
   @override
-  String get appMcpChanged => 'Файл токенів змінився. Спробуйте ще раз.';
-
-  @override
   String get appMcpListenBusy => 'Стан сервера MCP змінюється.';
 
   @override
   String get appMcpInvalidAddress =>
       'Введіть IP-адресу й порт, наприклад 0.0.0.0:49762 або [::]:49762.';
-
-  @override
-  String get appMcpStatus => 'Отримати час роботи й навантаження.';
-
-  @override
-  String get appMcpMemory => 'Отримати статистику пам’яті.';
-
-  @override
-  String get appMcpCpu => 'Прочитати лічильники CPU або навантаження.';
-
-  @override
-  String get appMcpNetwork => 'Прочитати лічильники трафіку інтерфейсів.';
-
-  @override
-  String get appMcpDisk => 'Прочитати лічильники дискового введення-виведення.';
-
-  @override
-  String get appMcpImages => 'Вивести ID, теги й розміри образів Docker.';
-
-  @override
-  String get appMcpStorage =>
-      'Вивести змонтовані файлові системи та їхню місткість.';
-
-  @override
-  String get appMcpProcesses => 'Вивести PID та назви виконуваних файлів.';
-
-  @override
-  String get appMcpServices => 'Вивести системні служби.';
-
-  @override
-  String get appMcpContainers =>
-      'Вивести запущені й зупинені контейнери Docker.';
-
-  @override
-  String get appMcpTmux => 'Вивести сеанси tmux.';
-
-  @override
-  String get appMcpList => 'Вивести доступні вузли й збережені команди.';
-
-  @override
-  String get appMcpCapabilities =>
-      'Вивести способи підключення й доступні перевірки вузла.';
-
-  @override
-  String get appMcpPreferences =>
-      'Прочитати доступні для зміни налаштування ServerBox.';
-
-  @override
-  String get appMcpSet =>
-      'Змінити налаштування ServerBox відповідно до його JSON-схеми.';
-
-  @override
-  String get appMcpShortcut =>
-      'Призначити сполучення клавіш. Порожній рядок скасовує прив’язку.';
-
-  @override
-  String get appMcpContainerLogs =>
-      'Прочитати останні 100 рядків журналу контейнера.';
-
-  @override
-  String get appMcpContainerStats =>
-      'Отримати поточне споживання ресурсів контейнером.';
-
-  @override
-  String get appMcpContainerAction =>
-      'Запустити, зупинити або перезапустити контейнер за ID Docker.';
-
-  @override
-  String get appMcpServiceLogs =>
-      'Прочитати останні 100 записів журналу служби systemd.';
-
-  @override
-  String get appMcpServiceAction =>
-      'Запустити, зупинити або перезапустити службу systemd.';
-
-  @override
-  String get appMcpProcessDetail =>
-      'Отримати використання CPU й пам’яті процесом.';
-
-  @override
-  String get appMcpImageRemove => 'Видалити образ Docker за повним ID.';
-
-  @override
-  String get appMcpImageInspect =>
-      'Отримати розмір і архітектуру образу Docker.';
-
-  @override
-  String get appMcpRun => 'Виконати збережену команду на вузлі.';
-
-  @override
-  String get appMcpRequest => 'Некоректний запит.';
-
-  @override
-  String get appMcpParams => 'Некоректні параметри.';
-
-  @override
-  String get appMcpMethod => 'Невідомий метод.';
-
-  @override
-  String get appMcpTool => 'Невідомий інструмент або некоректні аргументи.';
-
-  @override
-  String get appMcpHost => 'Невідомий вузол.';
-
-  @override
-  String get appMcpSystemd => 'Потрібен Linux із systemd.';
-
-  @override
-  String get appMcpPreset => 'Невідома команда або непідтримувана перевірка.';
-
-  @override
-  String get appMcpLocalUnavailable => 'Локальне виконання недоступне.';
-
-  @override
-  String get appMcpCommandFailed =>
-      'Команда завершилася помилкою, перевищила час очікування або ліміт виводу.';
-
-  @override
-  String get appMcpHostChanged => 'Конфігурація вузла змінилася.';
-
-  @override
-  String get appMcpOutput => 'Перевищено ліміт виводу команди.';
-
-  @override
-  String get appMcpTransport => 'Непідтримуваний спосіб підключення.';
-
-  @override
-  String get appMcpFirst => 'Спочатку підключіться до цього вузла у ServerBox.';
-
-  @override
-  String appMcpMonitor(String reason) {
-    return 'Помилка запиту до Monitor ($reason).';
-  }
 }

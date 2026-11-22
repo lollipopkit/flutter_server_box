@@ -494,7 +494,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
       {'enabled': bool enabled, 'path': String path, 'listen': String listen} =>
         (enabled: enabled, path: path, listen: listen),
       // TODO(migration): remove after builds with loopback-only MCP settings retire.
-      {'enabled': bool enabled, 'path': String path} =>
+      {'enabled': bool enabled, 'path': String path} when !raw.containsKey('listen') =>
         (enabled: enabled, path: path, listen: '127.0.0.1:49762'),
       _ => null,
     },

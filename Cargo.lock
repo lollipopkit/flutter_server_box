@@ -1914,6 +1914,7 @@ name = "fl_pi_llm"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "fl_pi_rules",
  "getrandom 0.4.3",
  "regex",
  "reqwest 0.13.5",
@@ -1924,6 +1925,14 @@ dependencies = [
  "sqlite3mc-src",
  "tokio",
  "yaml-rust2",
+]
+
+[[package]]
+name = "fl_pi_rules"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
 ]
 
 [[package]]
@@ -5361,6 +5370,7 @@ version = "0.1.0"
 dependencies = [
  "aes",
  "aes-gcm",
+ "async-trait",
  "bcrypt-pbkdf",
  "blake3",
  "cbc",
@@ -5376,6 +5386,7 @@ dependencies = [
  "p256",
  "p384",
  "p521",
+ "sbm_mcp",
  "sbm_parser",
  "sbm_redfish",
  "sbm_virt",
@@ -5395,7 +5406,12 @@ name = "sbm_mcp"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "blake3",
+ "fl_pi_rules",
+ "futures",
+ "getrandom 0.4.3",
  "rmcp",
+ "sbm_parser",
  "serde",
  "serde_json",
  "tokio",

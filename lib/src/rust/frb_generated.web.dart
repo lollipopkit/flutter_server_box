@@ -11,6 +11,7 @@ import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/agent_pipe.dart';
+import 'package:server_box/src/rust/api/app_mcp.dart';
 import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
@@ -98,6 +99,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_SshMacPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshMac;
+
+  @protected
+  AnyhowException dco_decode_AnyhowException(dynamic raw);
 
   @protected
   AgentPipe
@@ -241,6 +245,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_Char(dynamic raw);
 
   @protected
+  FutureOr<String?> Function(String, String)
+  dco_decode_DartFn_Inputs_String_String_Output_opt_String_AnyhowException(
+    dynamic raw,
+  );
+
+  @protected
+  FutureOr<AppMcpRan> Function(AppMcpRun)
+  dco_decode_DartFn_Inputs_app_mcp_run_Output_app_mcp_ran_AnyhowException(
+    dynamic raw,
+  );
+
+  @protected
+  Object dco_decode_DartOpaque(dynamic raw);
+
+  @protected
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
 
   @protected
@@ -328,6 +347,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AmdSmiItem dco_decode_amd_smi_item(dynamic raw);
 
   @protected
+  AppMcpAuth dco_decode_app_mcp_auth(dynamic raw);
+
+  @protected
+  AppMcpCall dco_decode_app_mcp_call(dynamic raw);
+
+  @protected
+  AppMcpFailure dco_decode_app_mcp_failure(dynamic raw);
+
+  @protected
+  AppMcpHost dco_decode_app_mcp_host(dynamic raw);
+
+  @protected
+  AppMcpMinted dco_decode_app_mcp_minted(dynamic raw);
+
+  @protected
+  AppMcpRan dco_decode_app_mcp_ran(dynamic raw);
+
+  @protected
+  AppMcpRegistry dco_decode_app_mcp_registry(dynamic raw);
+
+  @protected
+  AppMcpRequest dco_decode_app_mcp_request(dynamic raw);
+
+  @protected
+  AppMcpResponse dco_decode_app_mcp_response(dynamic raw);
+
+  @protected
+  AppMcpRun dco_decode_app_mcp_run(dynamic raw);
+
+  @protected
+  AppMcpToken dco_decode_app_mcp_token(dynamic raw);
+
+  @protected
   Backup dco_decode_backup(dynamic raw);
 
   @protected
@@ -383,6 +435,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BootRequest dco_decode_boot_request(dynamic raw);
+
+  @protected
+  AppMcpCall dco_decode_box_autoadd_app_mcp_call(dynamic raw);
+
+  @protected
+  AppMcpFailure dco_decode_box_autoadd_app_mcp_failure(dynamic raw);
+
+  @protected
+  AppMcpRequest dco_decode_box_autoadd_app_mcp_request(dynamic raw);
 
   @protected
   Backup dco_decode_box_autoadd_backup(dynamic raw);
@@ -1056,6 +1117,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 dco_decode_i_64(dynamic raw);
 
   @protected
+  PlatformInt64 dco_decode_isize(dynamic raw);
+
+  @protected
   LibvirtPoolRef dco_decode_libvirt_pool_ref(dynamic raw);
 
   @protected
@@ -1066,6 +1130,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<AmdSmiItem> dco_decode_list_amd_smi_item(dynamic raw);
+
+  @protected
+  List<AppMcpHost> dco_decode_list_app_mcp_host(dynamic raw);
+
+  @protected
+  List<AppMcpToken> dco_decode_list_app_mcp_token(dynamic raw);
 
   @protected
   List<Backup> dco_decode_list_backup(dynamic raw);
@@ -1499,6 +1569,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  AppMcpCall? dco_decode_opt_box_autoadd_app_mcp_call(dynamic raw);
+
+  @protected
+  AppMcpFailure? dco_decode_opt_box_autoadd_app_mcp_failure(dynamic raw);
 
   @protected
   BackupIssue? dco_decode_opt_box_autoadd_backup_issue(dynamic raw);
@@ -2351,6 +2427,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   X25519KeyPair dco_decode_x_25519_key_pair(dynamic raw);
 
   @protected
+  AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+
+  @protected
   AgentPipe
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAgentPipe(
     SseDeserializer deserializer,
@@ -2492,6 +2571,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_Char(SseDeserializer deserializer);
 
   @protected
+  Object sse_decode_DartOpaque(SseDeserializer deserializer);
+
+  @protected
   Map<String, String> sse_decode_Map_String_String_None(
     SseDeserializer deserializer,
   );
@@ -2583,6 +2665,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AmdSmiItem sse_decode_amd_smi_item(SseDeserializer deserializer);
 
   @protected
+  AppMcpAuth sse_decode_app_mcp_auth(SseDeserializer deserializer);
+
+  @protected
+  AppMcpCall sse_decode_app_mcp_call(SseDeserializer deserializer);
+
+  @protected
+  AppMcpFailure sse_decode_app_mcp_failure(SseDeserializer deserializer);
+
+  @protected
+  AppMcpHost sse_decode_app_mcp_host(SseDeserializer deserializer);
+
+  @protected
+  AppMcpMinted sse_decode_app_mcp_minted(SseDeserializer deserializer);
+
+  @protected
+  AppMcpRan sse_decode_app_mcp_ran(SseDeserializer deserializer);
+
+  @protected
+  AppMcpRegistry sse_decode_app_mcp_registry(SseDeserializer deserializer);
+
+  @protected
+  AppMcpRequest sse_decode_app_mcp_request(SseDeserializer deserializer);
+
+  @protected
+  AppMcpResponse sse_decode_app_mcp_response(SseDeserializer deserializer);
+
+  @protected
+  AppMcpRun sse_decode_app_mcp_run(SseDeserializer deserializer);
+
+  @protected
+  AppMcpToken sse_decode_app_mcp_token(SseDeserializer deserializer);
+
+  @protected
   Backup sse_decode_backup(SseDeserializer deserializer);
 
   @protected
@@ -2638,6 +2753,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BootRequest sse_decode_boot_request(SseDeserializer deserializer);
+
+  @protected
+  AppMcpCall sse_decode_box_autoadd_app_mcp_call(SseDeserializer deserializer);
+
+  @protected
+  AppMcpFailure sse_decode_box_autoadd_app_mcp_failure(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  AppMcpRequest sse_decode_box_autoadd_app_mcp_request(
+    SseDeserializer deserializer,
+  );
 
   @protected
   Backup sse_decode_box_autoadd_backup(SseDeserializer deserializer);
@@ -3455,6 +3583,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
 
   @protected
+  PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
+
+  @protected
   LibvirtPoolRef sse_decode_libvirt_pool_ref(SseDeserializer deserializer);
 
   @protected
@@ -3465,6 +3596,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<AmdSmiItem> sse_decode_list_amd_smi_item(SseDeserializer deserializer);
+
+  @protected
+  List<AppMcpHost> sse_decode_list_app_mcp_host(SseDeserializer deserializer);
+
+  @protected
+  List<AppMcpToken> sse_decode_list_app_mcp_token(SseDeserializer deserializer);
 
   @protected
   List<Backup> sse_decode_list_backup(SseDeserializer deserializer);
@@ -3988,6 +4125,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  AppMcpCall? sse_decode_opt_box_autoadd_app_mcp_call(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  AppMcpFailure? sse_decode_opt_box_autoadd_app_mcp_failure(
+    SseDeserializer deserializer,
+  );
 
   @protected
   BackupIssue? sse_decode_opt_box_autoadd_backup_issue(
@@ -4966,6 +5113,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   X25519KeyPair sse_decode_x_25519_key_pair(SseDeserializer deserializer);
 
   @protected
+  void sse_encode_AnyhowException(
+    AnyhowException self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAgentPipe(
     AgentPipe self,
@@ -5130,6 +5283,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_Char(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_DartFn_Inputs_String_String_Output_opt_String_AnyhowException(
+    FutureOr<String?> Function(String, String) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_DartFn_Inputs_app_mcp_run_Output_app_mcp_ran_AnyhowException(
+    FutureOr<AppMcpRan> Function(AppMcpRun) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_DartOpaque(Object self, SseSerializer serializer);
+
+  @protected
   void sse_encode_Map_String_String_None(
     Map<String, String> self,
     SseSerializer serializer,
@@ -5237,6 +5405,45 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_amd_smi_item(AmdSmiItem self, SseSerializer serializer);
 
   @protected
+  void sse_encode_app_mcp_auth(AppMcpAuth self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_call(AppMcpCall self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_failure(AppMcpFailure self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_host(AppMcpHost self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_minted(AppMcpMinted self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_ran(AppMcpRan self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_registry(
+    AppMcpRegistry self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_app_mcp_request(AppMcpRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_response(
+    AppMcpResponse self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_app_mcp_run(AppMcpRun self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_app_mcp_token(AppMcpToken self, SseSerializer serializer);
+
+  @protected
   void sse_encode_backup(Backup self, SseSerializer serializer);
 
   @protected
@@ -5292,6 +5499,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_boot_request(BootRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_app_mcp_call(
+    AppMcpCall self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_app_mcp_failure(
+    AppMcpFailure self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_app_mcp_request(
+    AppMcpRequest self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_backup(Backup self, SseSerializer serializer);
@@ -6335,6 +6560,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
   void sse_encode_libvirt_pool_ref(
     LibvirtPoolRef self,
     SseSerializer serializer,
@@ -6349,6 +6577,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_amd_smi_item(
     List<AmdSmiItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_app_mcp_host(
+    List<AppMcpHost> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_app_mcp_token(
+    List<AppMcpToken> self,
     SseSerializer serializer,
   );
 
@@ -7029,6 +7269,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_app_mcp_call(
+    AppMcpCall? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_app_mcp_failure(
+    AppMcpFailure? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_backup_issue(

@@ -163,7 +163,7 @@ mixin _ServerCore on _$ServerNotifier {
     return client;
   }
   void _setFailedState(ServerStatus status, {bool closeClient = false});
-  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial});
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial, bool unattended = false});
 }
 
 @Riverpod(keepAlive: true)
@@ -685,12 +685,15 @@ class ServerNotifier extends _$ServerNotifier
   /// alternative is a page reporting an empty list on a server that has plenty
   /// of processes. [onSshDial] as for [ensureExec].
   @override
-  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial}) async {
+  ///
+  /// [unattended]: connecting asks the person nothing, as
+  /// [ensureUnattendedExec].
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial, bool unattended = false}) async {
     // Before the connect: a server edited or reconnected while it is pending
     // must not have this one's script written for it.
     final gen = _operationGeneration;
     final origSpi = state.spi;
-    final exec = await ensureExec(onSshDial: onSshDial);
+    final exec = unattended ? await ensureUnattendedExec() : await ensureExec(onSshDial: onSshDial);
     if (_scriptWritten) return exec;
 
     final spi = state.spi;
@@ -810,7 +813,11 @@ class ServerNotifier extends _$ServerNotifier
         Loggers.app.info('Discarded superseded shell connect for ${spi.name}');
         rethrow;
       }
-      if (unattended?.needsUser == true) throw SshInteractionRequired();
+      // A question only the person can answer is not a failed attempt: the
+      // limiter would otherwise lock them out of their own server.
+      if (e is SshInteractionRequired || unattended?.needsUser == true) {
+        throw SshInteractionRequired();
+      }
       TryLimiter.inc(_shellTryId);
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);
       rethrow;

@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' show Paths;
-import 'package:fl_tty/fl_tty.dart' show ExecResult, LocalExec, Rootfs;
+import 'package:fl_tty/fl_tty.dart' show LocalExec;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -16,48 +15,46 @@ import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/monitor/exec.dart';
 import 'package:server_box/core/service/app_mcp_settings.dart';
 import 'package:server_box/core/service/app_mcp_tokens.dart';
-import 'package:server_box/core/service/app_mcp_tools.dart';
-import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/core/ssh/noninteractive.dart';
-import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/app_mcp.dart' as ffi;
 
 const appMcpPort = 49762;
-final appMcpToolNames = List<String>.unmodifiable([
-  'list',
-  'machine_capabilities',
-  ...AppMcpInspection.values.map((tool) => tool.name),
-  'app_settings',
-  'app_setting_set',
-  'container_logs',
-  'container_stats',
-  'container_action',
-  'service_action',
-  'service_logs',
-  'process_detail',
-  'image_inspect',
-  'image_remove',
-  'run_command',
-]);
+
+/// `sbm_ffi::api::app_mcp::APP_MCP_MAX_BODY`.
+const _maxBody = 64 * 1024;
+
+/// What a command may print and how long it may take: the floor under
+/// [ffi.AppMcpRun]'s `room`.
+const _minOutput = 256 * 1024;
+const _commandTimeout = Duration(seconds: 30);
+
+final _log = Logger('AppMcp');
 
 // A single listener for both desktop launch and the settings page.
 final appMcpListener = ValueNotifier<HttpServer?>(null);
 File? _selectedRegistry;
+
+/// Resolved when read, never stored: on iOS the app's container moves on
+/// update, and a saved absolute path would name the old one.
+File get _defaultRegistry => File('${Paths.doc}/app-mcp.json');
+
+/// The registry path as configured: empty for the default.
+String get _configuredRegistry =>
+    _selectedRegistry?.path ??
+    Stores.setting.appMcp.get()?.path ??
+    Platform.environment['SERVERBOX_MCP_POLICY'] ??
+    '';
+
 File get appMcpRegistryFile {
-  final configured =
-      Stores.setting.appMcp.get()?.path ??
-      Platform.environment['SERVERBOX_MCP_POLICY'];
-  return _selectedRegistry ??
-      File(
-        configured == null || configured.isEmpty
-            ? '${Paths.doc}/app-mcp-policy.json'
-            : configured,
-      );
+  final configured = _configuredRegistry;
+  return configured.isEmpty ? _defaultRegistry : File(configured);
 }
 
 const defaultAppMcpListen = '127.0.0.1:$appMcpPort';
@@ -76,17 +73,25 @@ Uri appMcpEndpoint(String listen) {
   if (address == null || port == null || port < 1 || port > 65535) {
     throw FormatException(l10n.appMcpInvalidAddress);
   }
-  return Uri(scheme: 'http', host: address.address, port: port, path: '/mcp');
+  return Uri(
+    scheme: address.isLoopback ? 'http' : 'https',
+    host: address.address,
+    port: port,
+    path: '/mcp',
+  );
 }
 
-/// Addresses the OS can bind on individual interfaces, including VPN interfaces.
+/// Addresses a client on another machine can reach, including VPN
+/// interfaces: not loopback, and not an IPv6 link-local one, whose scope id
+/// no URL can carry.
 Future<List<({String interfaceName, InternetAddress address})>>
 appMcpInterfaces() async {
   final interfaces = await NetworkInterface.list();
   return [
     for (final interface in interfaces)
       for (final address in interface.addresses)
-        (interfaceName: interface.name, address: address),
+        if (!address.isLoopback && !address.isLinkLocal)
+          (interfaceName: interface.name, address: address),
   ];
 }
 
@@ -96,7 +101,7 @@ String appMcpListenAt(InternetAddress address, int port) =>
     : '${address.address}:$port';
 
 Uri appMcpListenerEndpoint(HttpServer listener) => Uri(
-  scheme: 'http',
+  scheme: listener.address.isLoopback ? 'http' : 'https',
   host: listener.address.address,
   port: listener.port,
   path: '/mcp',
@@ -117,13 +122,15 @@ Future<void> configureAppMcp(
     final endpointText = (listen ?? appMcpListen).trim();
     final endpoint = appMcpEndpoint(endpointText);
     final registry = file ?? appMcpRegistryFile;
+    // Empty: the default, wherever the documents folder is then.
+    final storedPath = file?.path ?? _configuredRegistry;
     final previous = appMcpListener.value;
     final previousRegistry = _selectedRegistry ?? registry;
     void save() {
       if (remember) {
         Stores.setting.appMcp.putSync((
           enabled: enabled,
-          path: registry.path,
+          path: storedPath,
           listen: endpointText,
         ));
       }
@@ -144,8 +151,17 @@ Future<void> configureAppMcp(
       save();
       return;
     }
-    // Wildcard and interface-specific binds can overlap on the same port.
-    if (previous != null) {
+    final overlap =
+        previousEndpoint != null &&
+        previousEndpoint.port == endpoint.port &&
+        (previousEndpoint.host == endpoint.host ||
+            previousEndpoint.host == '::' ||
+            endpoint.host == '::' ||
+            (!previousEndpoint.host.contains(':') &&
+                !endpoint.host.contains(':') &&
+                (previousEndpoint.host == '0.0.0.0' ||
+                    endpoint.host == '0.0.0.0')));
+    if (overlap && previous != null) {
       await previous.close(force: true);
       appMcpListener.value = null;
     }
@@ -160,7 +176,7 @@ Future<void> configureAppMcp(
       save();
     } catch (_) {
       await replacement?.close(force: true);
-      if (previousEndpoint != null) {
+      if (overlap) {
         appMcpListener.value = await bindAppMcp(
           previousRegistry,
           container,
@@ -170,7 +186,8 @@ Future<void> configureAppMcp(
       }
       rethrow;
     }
-    _selectedRegistry = registry;
+    if (!overlap) await previous?.close(force: true);
+    _selectedRegistry = storedPath.isEmpty ? null : registry;
     appMcpListener.value = replacement;
   } finally {
     _changingListener = false;
@@ -186,9 +203,7 @@ Future<void> startAppMcp(ProviderContainer container) async {
     }
     await configureAppMcp(container, enabled: true, remember: false);
   } catch (_) {
-    Logger(
-      'AppMcp',
-    ).warning('Could not start the configured App MCP listener.');
+    _log.warning('Could not start the configured App MCP listener.');
   }
 }
 
@@ -198,492 +213,312 @@ Future<HttpServer> bindAppMcp(
   String address = '127.0.0.1',
   int port = appMcpPort,
 }) async {
-  final server = await HttpServer.bind(InternetAddress(address), port);
-  server.listen((request) => _handle(request, registryFile, container));
+  final ip = InternetAddress(address);
+  final HttpServer server;
+  if (ip.isLoopback) {
+    server = await HttpServer.bind(ip, port);
+  } else {
+    final tls = SecurityContext();
+    if (Platform.isIOS) {
+      // iOS reads PKCS#12 only; each call takes its own half of the bundle.
+      tls.useCertificateChain('${registryFile.path}.p12');
+      tls.usePrivateKey('${registryFile.path}.p12');
+    } else {
+      tls.useCertificateChain('${registryFile.path}.crt');
+      tls.usePrivateKey('${registryFile.path}.key');
+    }
+    server = await HttpServer.bindSecure(ip, port, tls);
+  }
+  server.listen(
+    (request) => _handle(request, registryFile, container),
+    onError: (Object error) =>
+        _log.warning('Listener connection failed: ${error.runtimeType}'),
+  );
   return server;
 }
-
-String _digest(String value) => sha256.convert(utf8.encode(value)).toString();
 
 Future<void> _handle(
   HttpRequest request,
   File registryFile,
   ProviderContainer container,
 ) async {
-  Future<void> reject(int status) async {
-    request.response.statusCode = status;
-    await request.response.close();
+  var readingBody = false;
+  Future<void> answer(int status, [String? body]) async {
+    final response = request.response;
+    response.statusCode = status;
+    if (status >= 400) response.persistentConnection = false;
+    if (body == null) {
+      response.contentLength = 0;
+    } else {
+      response.headers.contentType = ContentType.json;
+      response.write(body);
+    }
+    // HttpResponse otherwise drains an unconsumed upload before sending headers.
+    final unread = readingBody ? null : (request.listen(null)..pause());
+    try {
+      await response.close();
+    } finally {
+      await unread?.cancel();
+    }
   }
 
   try {
-    if (request.uri.path != '/mcp') return await reject(404);
-    if (request.method != 'POST') return await reject(405);
-    if (request.headers['origin'] != null) return await reject(403);
-    final auth = request.headers.value(HttpHeaders.authorizationHeader);
-    if (auth == null || !auth.startsWith('Bearer ') || auth.length <= 7) {
-      return await reject(401);
+    if (request.uri.path != '/mcp') return await answer(404);
+    if (request.method != 'POST') {
+      request.response.headers.set(HttpHeaders.allowHeader, 'POST');
+      return await answer(405);
     }
-    final body = BytesBuilder(copy: false);
-    await for (final chunk in request.timeout(const Duration(seconds: 15))) {
-      if (body.length + chunk.length > 65536) return await reject(413);
-      body.add(chunk);
-    }
-    final dynamic message;
-    try {
-      message = jsonDecode(utf8.decode(body.takeBytes()));
-    } on FormatException {
-      return await reject(400);
-    }
-    // Read after the body so edits and revocations take effect before dispatch.
-    final registry = await loadMcpRegistry(registryFile);
-    final tokenId = _digest(auth.substring(7));
-    if (!registry.tokens.containsKey(tokenId)) return await reject(401);
-    final commands = registry.commands;
-    final exec = LocalExec.forThisDevice();
-    final local = exec != null && (!exec.inRootfs || Rootfs.isReady);
-    final hosts = {
-      for (final spi in container.read(serversProvider).servers.values)
-        if (spi.sshOn != null || spi.monitorOn != null) _digest(spi.id): spi,
-    };
-    final id = message is Map ? message['id'] : null;
-    Map<String, dynamic> error(int code, String description) => {
-      'error': {'code': code, 'message': description},
-    };
-    final Map<String, dynamic> reply;
-    if (message is! Map ||
-        message['jsonrpc'] != '2.0' ||
-        (message.containsKey('id') && id is! int && id is! String)) {
-      reply = error(-32600, l10n.appMcpRequest);
-    } else if (message['method'] is! String) {
-      if (id != null &&
-          (message.containsKey('result') != message.containsKey('error'))) {
-        return await reject(202);
-      }
-      reply = error(-32600, l10n.appMcpRequest);
-    } else if (id == null) {
-      return await reject(202);
-    } else {
-      final params = message['params'];
-      final version = request.headers.value('mcp-protocol-version');
-      if (version != null && !_versions.contains(version)) {
-        return await reject(400);
-      }
-      reply = switch (message['method']) {
-        'initialize' => {
-          'result': {
-            'protocolVersion':
-                params is Map && _versions.contains(params['protocolVersion'])
-                ? params['protocolVersion']
-                : _versions.first,
-            'capabilities': {'tools': {}},
-            'serverInfo': {'name': 'ServerBox', 'version': '1'},
-          },
-        },
-        'ping' => {'result': {}},
-        'tools/list' => {
-          'result': {
-            'tools': [
-              _tool('list', l10n.appMcpList, []),
-              _tool('machine_capabilities', l10n.appMcpCapabilities, ['host']),
-              _tool('app_settings', l10n.appMcpPreferences, []),
-              mcpPreferenceTool(container),
-              for (final name in [
-                'container_logs',
-                'container_stats',
-                'container_action',
-              ])
-                _tool(
-                  name,
-                  switch (name) {
-                    'container_logs' => l10n.appMcpContainerLogs,
-                    'container_stats' => l10n.appMcpContainerStats,
-                    _ => l10n.appMcpContainerAction,
-                  },
-                  ['host', 'id', if (name == 'container_action') 'action'],
-                  types: {
-                    'id': {'type': 'string', 'pattern': _containerId.pattern},
-                    if (name == 'container_action')
-                      'action': {'type': 'string', 'enum': _lifecycleActions},
-                  },
-                ),
-              for (final name in ['service_logs', 'service_action'])
-                _tool(
-                  name,
-                  name == 'service_logs'
-                      ? l10n.appMcpServiceLogs
-                      : l10n.appMcpServiceAction,
-                  ['host', 'key', if (name == 'service_action') 'action'],
-                  types: {
-                    'key': {'type': 'string', 'pattern': _serviceUnit.pattern},
-                    if (name == 'service_action')
-                      'action': {'type': 'string', 'enum': _lifecycleActions},
-                  },
-                ),
-              _tool(
-                'process_detail',
-                l10n.appMcpProcessDetail,
-                ['host', 'pid'],
-                types: {
-                  'pid': {
-                    'type': 'integer',
-                    'minimum': 1,
-                    'maximum': 4294967295,
-                  },
-                },
-              ),
-              for (final name in ['image_inspect', 'image_remove'])
-                _tool(
-                  name,
-                  name == 'image_remove'
-                      ? l10n.appMcpImageRemove
-                      : l10n.appMcpImageInspect,
-                  ['host', 'id'],
-                  types: {
-                    'id': {'type': 'string', 'pattern': _imageId.pattern},
-                  },
-                ),
-              for (final probe in AppMcpInspection.values)
-                _tool(probe.name, probe.description, ['host']),
-              if (commands.isNotEmpty)
-                _tool('run_command', l10n.appMcpRun, ['host', 'preset']),
-            ],
-          },
-        },
-        'tools/call' when params is Map => await _call(
-          container,
-          hosts,
-          commands,
-          local,
-          params,
-          tokenId,
-        ),
-        'tools/call' => error(-32602, l10n.appMcpParams),
-        _ => error(-32601, l10n.appMcpMethod),
-      };
-    }
-    request.response.headers.contentType = ContentType.json;
-    request.response.write(
-      jsonEncode({
-        'jsonrpc': '2.0',
-        'id': id is int || id is String ? id : null,
-        ...reply,
-      }),
+    // A page in a browser is never a client of this listener.
+    if (request.headers['origin'] != null) return await answer(403);
+    final authorization = request.headers.value(
+      HttpHeaders.authorizationHeader,
     );
-    await request.response.close();
+    switch (ffi.appMcpAuthorized(
+      text: await readMcpRegistryText(registryFile),
+      authorization: authorization,
+    )) {
+      case ffi.AppMcpAuth.authorized:
+        break;
+      case ffi.AppMcpAuth.unauthorized:
+        return await answer(401);
+      // A registry with a typo is no token's fault.
+      case ffi.AppMcpAuth.unreadable:
+        return await answer(503);
+    }
+
+    final body = BytesBuilder(copy: false);
+    readingBody = true;
+    final chunks = StreamIterator(request);
+    final elapsed = Stopwatch()..start();
+    const deadline = Duration(seconds: 15);
+    try {
+      while (true) {
+        final remaining = deadline - elapsed.elapsed;
+        if (remaining <= Duration.zero) throw TimeoutException('body');
+        if (!await chunks.moveNext().timeout(remaining)) break;
+        final chunk = chunks.current;
+        if (body.length + chunk.length > _maxBody) return await answer(413);
+        body.add(chunk);
+      }
+    } on TimeoutException {
+      return await answer(408);
+    } finally {
+      await chunks.cancel();
+    }
+
+    // Read after the body so edits and revocations take effect before dispatch.
+    final response = await ffi.appMcpServe(
+      request: ffi.AppMcpRequest(
+        registry: await readMcpRegistryText(registryFile),
+        authorization: authorization,
+        protocolVersion: request.headers.value('mcp-protocol-version'),
+        accept: request.headers[HttpHeaders.acceptHeader] ?? const [],
+        contentType: request.headers.value(HttpHeaders.contentTypeHeader),
+        body: body.takeBytes(),
+        hosts: _hosts(container),
+        settingsSchema: jsonEncode(mcpPreferenceSchema(container)),
+      ),
+      run: (run) => _run(container, run),
+      settings: (name, arguments) => _settings(container, name, arguments),
+    );
+    if (response.call case final call?) {
+      // Opaque identifiers only: arguments and output can hold credentials.
+      _log.info('${call.tool} token=${call.token} host=${call.host ?? '-'}');
+    }
+    await answer(response.status, response.body);
   } catch (_) {
     try {
-      await reject(503);
+      await answer(503);
     } catch (_) {
       // The client may have disconnected while a command was running.
     }
   }
 }
 
-const _lifecycleActions = ['start', 'stop', 'restart'];
-final _serviceUnit = RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9_.@:-]{0,246}\.service$');
-final _imageId = RegExp(r'^sha256:[0-9a-f]{64}$');
-final _containerId = RegExp(r'^(?:[0-9a-f]{12}|[0-9a-f]{64})$');
+List<ffi.AppMcpHost> _hosts(ProviderContainer container) => [
+  if (LocalDevice.isOffered)
+    ffi.AppMcpHost(
+      id: LocalDevice.id,
+      name: l10n.thisDevice,
+      online: true,
+      transports: const ['local'],
+      system: LocalServer.systemType.ffi,
+    ),
+  for (final spi in container.read(serversProvider).servers.values)
+    // A server with every way there turned off is not one to reach, and this
+    // device only with the person's consent, however it is configured.
+    if (spi.local ? LocalDevice.isOffered : spi.sshOn != null || spi.monitorOn != null)
+      _host(spi, container.read(serverProvider(spi.id))),
+];
 
-const _versions = ['2025-11-25', '2025-06-18'];
+ffi.AppMcpHost _host(Spi spi, ServerState state) => ffi.AppMcpHost(
+  id: spi.id,
+  name: spi.name,
+  online:
+      state.client?.isClosed == false ||
+      (spi.monitorOn != null && !(state.conn < ServerConn.connected)),
+  transports: [
+    if (spi.local) 'local',
+    if (spi.sshOn != null) 'ssh',
+    if (spi.monitorOn != null) 'monitor',
+  ],
+  // Only what a reading has said: before one, the default would be a guess.
+  system: (spi.customSystemType ??
+          (state.conn == ServerConn.finished ? state.status.system : null))
+      ?.ffi,
+);
 
-Map<String, Object?> _tool(
-  String name,
-  String description,
-  List<String> keys, {
-  Map<String, Object> types = const {},
-}) => {
-  'name': name,
-  'description': description,
-  'inputSchema': {
-    'type': 'object',
-    'properties': {
-      for (final key in keys) key: types[key] ?? {'type': 'string'},
-    },
-    'required': keys,
-    'additionalProperties': false,
-  },
-};
+ffi.AppMcpRan _failed(ffi.AppMcpFailure failure) => ffi.AppMcpRan(
+  stdout: '',
+  stderr: '',
+  truncated: false,
+  timedOut: false,
+  failure: failure,
+);
 
-Future<Map<String, dynamic>> _call(
+Future<ffi.AppMcpRan> _run(
   ProviderContainer container,
-  Map<String, Spi> hosts,
-  Map<String, String> commands,
-  bool local,
-  Map params,
-  String tokenId,
+  ffi.AppMcpRun run,
 ) async {
-  final args = params['arguments'] ?? {};
-  Map<String, dynamic> result(Object value, {bool failed = false}) => {
-    'result': {
-      'content': [
-        {'type': 'text', 'text': value is String ? value : jsonEncode(value)},
-      ],
-      if (failed) 'isError': true,
-    },
+  final host = switch (run) {
+    ffi.AppMcpRun_Command(:final host) || ffi.AppMcpRun_Script(:final host) =>
+      host,
   };
-  final name = params['name'];
-  final invalid = {
-    'error': {'code': -32602, 'message': l10n.appMcpTool},
+  final room = switch (run) {
+    ffi.AppMcpRun_Command(:final room) || ffi.AppMcpRun_Script(:final room) =>
+      room.toInt(),
   };
-  if (!appMcpToolNames.contains(name) ||
-      (name == 'run_command' && commands.isEmpty)) {
-    return invalid;
-  }
-  if (name == 'app_settings' || name == 'app_setting_set') {
-    final settings = mcpPreferences(container);
-    if (args is! Map) return invalid;
-    if (name == 'app_settings') {
-      if (args.isNotEmpty) return invalid;
-      return result({for (final e in settings.entries) e.key: e.value.read()});
-    }
-    final prop = settings[args['key']];
-    final value = args['value'];
-    if (args.length != 2 || prop == null || !prop.write(value)) return invalid;
-    return result({args['key'] as String: prop.read()});
-  }
-  if (name == 'list' && args is Map && args.isEmpty) {
-    return result({
-      'hosts': [
-        if (local)
-          {'id': LocalDevice.id, 'name': l10n.thisDevice, 'online': true},
-        for (final entry in hosts.entries)
-          {
-            'id': entry.key,
-            'name': entry.value.name,
-            'online': _online(container.read(serverProvider(entry.value.id))),
-          },
-      ],
-      'commands': commands.keys.toList(),
-    });
-  }
-  final preset = name == 'run_command';
-  final containerTool =
-      name == 'container_action' ||
-      name == 'container_logs' ||
-      name == 'container_stats';
-  final serviceTool = name == 'service_action' || name == 'service_logs';
-  final imageTool = name == 'image_inspect' || name == 'image_remove';
-  final fields = name == 'container_action' || name == 'service_action'
-      ? 3
-      : preset ||
-            containerTool ||
-            serviceTool ||
-            imageTool ||
-            name == 'process_detail'
-      ? 2
-      : 1;
-  if (args is! Map ||
-      args['host'] is! String ||
-      args.length != fields ||
-      (preset && args['preset'] is! String) ||
-      name == 'list') {
-    return invalid;
-  }
-  final spi = hosts[args['host']];
-  final isLocal = local && args['host'] == LocalDevice.id;
-  if (!isLocal && spi == null) return result(l10n.appMcpHost, failed: true);
-  final state = spi == null ? null : container.read(serverProvider(spi.id));
-  final system = isLocal
-      ? LocalServer.systemType
-      : spi!.customSystemType ?? state!.status.system;
-  final inspections = {
-    for (final probe in AppMcpInspection.values)
-      if (probe.command(system) != null) probe.name: probe.command(system)!,
-  };
-  if (name == 'machine_capabilities') {
-    return result({
-      'platform': system.name,
-      'transports': [
-        if (isLocal) 'local',
-        if (spi?.sshOn != null) 'ssh',
-        if (spi?.monitorOn != null) 'monitor',
-      ],
-      'inspections': inspections.keys.toList(),
-    });
-  }
-  String? command;
-  if (name == 'process_detail') {
-    final pid = args['pid'];
-    if (pid is! int || pid < 1 || pid > 4294967295) return invalid;
-    command = system == SystemType.windows
-        ? 'powershell -NoProfile -Command "Get-Process -Id $pid | Select-Object Id,ProcessName,CPU,WorkingSet64"'
-        : 'ps -p $pid -o pid,comm,%cpu,%mem';
-  } else if (imageTool) {
-    final id = args['id'];
-    if (id is! String || _imageId.stringMatch(id) != id) return invalid;
-    command = name == 'image_remove'
-        ? 'docker image rm $id'
-        : 'docker image inspect --format "{{.Size}} {{.Architecture}}" $id';
-  } else if (serviceTool) {
-    final key = args['key'];
-    final action = args['action'];
-    if (key is! String ||
-        _serviceUnit.stringMatch(key) != key ||
-        (name == 'service_action' && !_lifecycleActions.contains(action))) {
-      return invalid;
-    }
-    if (system != SystemType.linux) {
-      return result(l10n.appMcpSystemd, failed: true);
-    }
-    command = name == 'service_action'
-        ? 'systemctl --no-ask-password $action -- $key'
-        : 'journalctl --no-pager -n 100 --unit=$key';
-  } else if (containerTool) {
-    final id = args['id'];
-    final action = args['action'];
-    if (id is! String ||
-        _containerId.stringMatch(id) != id ||
-        (name == 'container_action' && !_lifecycleActions.contains(action))) {
-      return invalid;
-    }
-    command = switch (name) {
-      'container_action' => 'docker $action $id',
-      'container_logs' => 'docker logs --tail 100 $id',
-      _ => 'docker stats --no-stream $id',
-    };
-  } else {
-    command = preset ? commands[args['preset']] : inspections[name];
-  }
-  if (command == null) {
-    return result(l10n.appMcpPreset, failed: true);
-  }
-  Map<String, dynamic> executionResult(Map<String, Object?> output) => result(
-    output,
-    failed:
-        (!preset && output['exitCode'] != 0) ||
-        output['timedOut'] == true ||
-        output['truncated'] == true,
-  );
-  if (isLocal) {
-    final exec = LocalExec.forThisDevice();
-    if (exec == null) {
-      return result(l10n.appMcpLocalUnavailable, failed: true);
-    }
-    try {
-      Logger(
-        'AppMcp',
-      ).info('$name token=${tokenId.substring(0, 12)} host=local');
-      return executionResult(await _executeLocal(exec, command));
-    } catch (_) {
-      return result(l10n.appMcpCommandFailed, failed: true);
-    }
-  }
-  if (spi == null || state?.spi != spi) {
-    return result(l10n.appMcpHostChanged, failed: true);
-  }
-  final notifier = container.read(serverProvider(spi.id).notifier);
   try {
-    final exec = await notifier.ensureUnattendedExec();
-    if (!notifier.isExecCurrent(exec, spi)) {
-      return result(l10n.appMcpHostChanged, failed: true);
-    }
-    // Only record opaque identifiers. Preset bodies and output can contain credentials.
-    Logger('AppMcp').info(
-      '$name token=${tokenId.substring(0, 12)} host=${_digest(spi.id).substring(0, 12)}',
-    );
-    if (exec is SshExec) {
-      return executionResult(await _execute(exec.client, command));
-    }
-    if (exec is MonitorExec) {
-      final output = await exec.client.exec(command);
-      if (utf8.encode(output.stdout).length +
-              utf8.encode(output.stderr).length >
-          256 * 1024) {
-        return result(l10n.appMcpOutput, failed: true);
+    if (host == LocalDevice.id) {
+      final exec = LocalExec.forThisDevice();
+      if (exec == null || !LocalDevice.isOffered) {
+        return _failed(ffi.AppMcpFailure.unavailable);
       }
-      return executionResult({
-        'stdout': output.stdout,
-        'stderr': output.stderr,
-        'exitCode': output.exitCode,
-        if (output.timedOut) 'timedOut': true,
-        if (output.truncated) 'truncated': true,
-      });
+      return switch (run) {
+        ffi.AppMcpRun_Command(:final script, :final entry, :final stdin) =>
+          await _bounded(exec, script, entry: entry, stdin: stdin, room: room),
+        // No status script is kept for this device.
+        ffi.AppMcpRun_Script() => _failed(ffi.AppMcpFailure.unavailable),
+      };
     }
-    return result(l10n.appMcpTransport, failed: true);
-  } on MonitorHttpErr catch (e) {
-    return result(l10n.appMcpMonitor(e.type.name), failed: true);
+
+    final spi = container.read(serversProvider).servers[host];
+    if (spi == null) return _failed(ffi.AppMcpFailure.hostChanged);
+    if (spi.local && !LocalDevice.isOffered) {
+      return _failed(ffi.AppMcpFailure.unavailable);
+    }
+    final notifier = container.read(serverProvider(spi.id).notifier);
+    final exec = run is ffi.AppMcpRun_Script
+        ? await notifier.ensureScriptExec(unattended: true)
+        : await notifier.ensureUnattendedExec();
+    if (!notifier.isExecCurrent(exec, spi)) {
+      return _failed(ffi.AppMcpFailure.hostChanged);
+    }
+    return switch (run) {
+      ffi.AppMcpRun_Command(:final script, :final entry, :final stdin) =>
+        await _bounded(exec, script, entry: entry, stdin: stdin, room: room),
+      ffi.AppMcpRun_Script(:final func) => await _bounded(
+        exec,
+        func.exec(
+          spi.id,
+          systemType:
+              spi.customSystemType ??
+              container.read(serverProvider(spi.id)).status.system,
+          customDir: spi.custom?.scriptDir,
+        ),
+        room: room,
+      ),
+    };
   } on SshInteractionRequired {
-    return result(l10n.appMcpFirst, failed: true);
+    return _failed(ffi.AppMcpFailure.needsUser);
   } catch (_) {
-    return result(l10n.appMcpCommandFailed, failed: true);
+    return _failed(ffi.AppMcpFailure.unavailable);
   }
 }
 
-Future<Map<String, Object?>> _executeLocal(
-  LocalExec exec,
-  String command,
-) async {
+/// [script] on [exec], stopped at [_commandTimeout] or once it has printed
+/// more than [room] (at least [_minOutput]) bytes; what it printed until then
+/// is kept.
+Future<ffi.AppMcpRan> _bounded(
+  CommandExec exec,
+  String script, {
+  String? entry,
+  String? stdin,
+  required int room,
+}) async {
+  final cap = max(room, _minOutput);
   final cancel = Completer<void>();
-  void stop() {
+  final stdout = StringBuffer();
+  final stderr = StringBuffer();
+  var timedOut = false;
+  var truncated = false;
+  var kept = 0;
+  void keep(StringBuffer into, String chunk) {
+    if (truncated) return;
+    final bytes = utf8.encode(chunk);
+    if (kept + bytes.length <= cap) {
+      kept += bytes.length;
+      into.write(chunk);
+      return;
+    }
+    into.write(utf8.decode(bytes.sublist(0, cap - kept), allowMalformed: true));
+    kept = cap;
+    truncated = true;
     if (!cancel.isCompleted) cancel.complete();
   }
 
-  var remaining = 256 * 1024;
-  void countOutput(String chunk) {
-    remaining -= utf8.encode(chunk).length;
-    if (remaining < 0) stop();
-  }
-
-  final timer = Timer(const Duration(seconds: 30), stop);
+  final timer = Timer(_commandTimeout, () {
+    if (cancel.isCompleted) return;
+    timedOut = true;
+    cancel.complete();
+  });
   try {
-    final out = await Future.any<ExecResult>([
+    // Not every transport can stop a command: the answer does not wait for it.
+    final result = await Future.any<ExecResult?>([
       exec.run(
-        command,
+        script,
+        entry: entry,
+        stdin: stdin,
+        onStdout: (chunk) => keep(stdout, chunk),
+        onStderr: (chunk) => keep(stderr, chunk),
         cancel: cancel.future,
-        onStdout: countOutput,
-        onStderr: countOutput,
       ),
-      cancel.future.then((_) => throw StateError('Execution limit reached')),
+      cancel.future.then((_) => null),
     ]);
-    if (cancel.isCompleted) throw StateError('Execution limit reached');
-    return {
-      'stdout': out.stdout,
-      'stderr': out.stderr,
-      'exitCode': out.exitCode,
-    };
+    final stopped = result == null || timedOut || truncated;
+    return ffi.AppMcpRan(
+      stdout: stopped ? stdout.toString() : result.stdout,
+      stderr: stopped ? stderr.toString() : result.stderr,
+      exitCode: stopped ? null : result.exitCode,
+      truncated: truncated || (result?.outputIncomplete ?? false),
+      timedOut:
+          timedOut || (result is MonitorExecResult && result.timedOut),
+    );
+  } catch (_) {
+    return _failed(ffi.AppMcpFailure.failed);
   } finally {
     timer.cancel();
   }
 }
 
-bool _online(ServerState state) =>
-    state.client?.isClosed == false ||
-    (state.spi.monitorOn != null && !(state.conn < ServerConn.connected));
-
-Future<Map<String, Object?>> _execute(SSHClient client, String command) async {
-  final opening = client.execute(command);
-  final session = await opening.timeout(
-    const Duration(seconds: 15),
-    onTimeout: () {
-      unawaited(
-        opening.then<void>(
-          (lateSession) => lateSession.close(),
-          onError: (_, _) {},
-        ),
-      );
-      throw TimeoutException('SSH channel open');
-    },
-  );
-  var remaining = 256 * 1024;
-  Future<String> collect(Stream<Uint8List> stream) async {
-    final bytes = BytesBuilder(copy: false);
-    await for (final chunk in stream) {
-      remaining -= chunk.length;
-      if (remaining < 0) throw StateError('Output limit');
-      bytes.add(chunk);
-    }
-    return utf8.decode(bytes.takeBytes(), allowMalformed: true);
+Future<String?> _settings(
+  ProviderContainer container,
+  String name,
+  String arguments,
+) async {
+  final args = jsonDecode(arguments);
+  if (args is! Map) return null;
+  final preferences = mcpPreferences(container);
+  if (name == 'app_settings') {
+    if (args.isNotEmpty) return null;
+    return jsonEncode({
+      for (final e in preferences.entries) e.key: e.value.read(),
+    });
   }
-
-  try {
-    unawaited(session.stdin.close());
-    final output = await Future.wait<Object?>([
-      collect(session.stdout),
-      collect(session.stderr),
-      session.waitForExit(),
-    ], eagerError: true).timeout(const Duration(seconds: 30));
-    return {'stdout': output[0], 'stderr': output[1], 'exitCode': output[2]};
-  } finally {
-    session.close();
+  final key = args['key'];
+  final pref = preferences[key];
+  if (args.length != 2 || pref == null || !pref.write(args['value'])) {
+    return null;
   }
+  return jsonEncode({key as String: pref.read()});
 }

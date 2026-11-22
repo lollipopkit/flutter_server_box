@@ -2067,9 +2067,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Kunci API, model, dan model untuk obrolan baru';
 
   @override
-  String get agentTools => 'Alat';
-
-  @override
   String get agentToolsTip =>
       'Apa yang boleh dipakai Agent, dan server MCP-nya';
 
@@ -7423,10 +7420,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get appMcpServer => 'Server MCP';
 
   @override
-  String get appMcpServerTip =>
-      'Izinkan agen eksternal mengendalikan konten ServerBox melalui MCP.';
-
-  @override
   String get appMcpClient => 'Alat dan klien MCP';
 
   @override
@@ -7434,9 +7427,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get appMcpRegistry => 'Registri token MCP tidak valid.';
-
-  @override
-  String get appMcpDigest => 'Hash token tidak valid.';
 
   @override
   String get appMcpName => 'Masukkan nama token.';
@@ -7448,143 +7438,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get appMcpProtect => 'Registri token tidak dapat dilindungi.';
 
   @override
-  String get appMcpChanged => 'Registri token berubah. Coba lagi.';
-
-  @override
   String get appMcpListenBusy => 'Status server MCP sedang berubah.';
 
   @override
   String get appMcpInvalidAddress =>
       'Masukkan alamat IP dan port, misalnya 0.0.0.0:49762 atau [::]:49762.';
-
-  @override
-  String get appMcpStatus => 'Baca waktu aktif dan beban sistem.';
-
-  @override
-  String get appMcpMemory => 'Baca statistik memori.';
-
-  @override
-  String get appMcpCpu => 'Baca penghitung CPU atau beban sistem.';
-
-  @override
-  String get appMcpNetwork => 'Baca penghitung lalu lintas antarmuka.';
-
-  @override
-  String get appMcpDisk => 'Baca penghitung I/O disk.';
-
-  @override
-  String get appMcpImages => 'Tampilkan ID, tag, dan ukuran image Docker.';
-
-  @override
-  String get appMcpStorage =>
-      'Tampilkan sistem berkas terpasang dan kapasitasnya.';
-
-  @override
-  String get appMcpProcesses => 'Tampilkan ID proses dan nama berkas eksekusi.';
-
-  @override
-  String get appMcpServices => 'Tampilkan layanan sistem.';
-
-  @override
-  String get appMcpContainers =>
-      'Tampilkan kontainer Docker yang berjalan dan berhenti.';
-
-  @override
-  String get appMcpTmux => 'Tampilkan sesi tmux.';
-
-  @override
-  String get appMcpList => 'Tampilkan host yang tersedia dan preset perintah.';
-
-  @override
-  String get appMcpCapabilities =>
-      'Tampilkan transportasi dan pemeriksaan yang didukung host.';
-
-  @override
-  String get appMcpPreferences =>
-      'Baca preferensi ServerBox yang dapat diubah.';
-
-  @override
-  String get appMcpSet => 'Ubah preferensi ServerBox sesuai skema JSON-nya.';
-
-  @override
-  String get appMcpShortcut =>
-      'Atur satu pintasan. String kosong menghapus ikatannya.';
-
-  @override
-  String get appMcpContainerLogs => 'Baca 100 baris terakhir log kontainer.';
-
-  @override
-  String get appMcpContainerStats =>
-      'Baca penggunaan sumber daya kontainer saat ini.';
-
-  @override
-  String get appMcpContainerAction =>
-      'Mulai, hentikan, atau mulai ulang kontainer berdasarkan ID Docker.';
-
-  @override
-  String get appMcpServiceLogs =>
-      'Baca 100 entri jurnal terakhir layanan systemd.';
-
-  @override
-  String get appMcpServiceAction =>
-      'Mulai, hentikan, atau mulai ulang layanan systemd.';
-
-  @override
-  String get appMcpProcessDetail =>
-      'Baca penggunaan CPU dan memori satu proses.';
-
-  @override
-  String get appMcpImageRemove => 'Hapus image Docker berdasarkan ID lengkap.';
-
-  @override
-  String get appMcpImageInspect => 'Baca ukuran dan arsitektur image Docker.';
-
-  @override
-  String get appMcpRun => 'Jalankan preset perintah pada host.';
-
-  @override
-  String get appMcpRequest => 'Permintaan tidak valid.';
-
-  @override
-  String get appMcpParams => 'Parameter tidak valid.';
-
-  @override
-  String get appMcpMethod => 'Metode tidak dikenal.';
-
-  @override
-  String get appMcpTool => 'Alat tidak dikenal atau argumen tidak valid.';
-
-  @override
-  String get appMcpHost => 'Host tidak dikenal.';
-
-  @override
-  String get appMcpSystemd => 'Memerlukan systemd di Linux.';
-
-  @override
-  String get appMcpPreset =>
-      'Preset tidak dikenal atau pemeriksaan tidak didukung.';
-
-  @override
-  String get appMcpLocalUnavailable => 'Eksekusi lokal tidak tersedia.';
-
-  @override
-  String get appMcpCommandFailed =>
-      'Perintah gagal, kehabisan waktu, atau melebihi batas keluaran.';
-
-  @override
-  String get appMcpHostChanged => 'Konfigurasi host berubah.';
-
-  @override
-  String get appMcpOutput => 'Keluaran perintah melebihi batas.';
-
-  @override
-  String get appMcpTransport => 'Metode koneksi tidak didukung.';
-
-  @override
-  String get appMcpFirst => 'Hubungkan dahulu ke host ini di ServerBox.';
-
-  @override
-  String appMcpMonitor(String reason) {
-    return 'Permintaan Monitor gagal ($reason).';
-  }
 }

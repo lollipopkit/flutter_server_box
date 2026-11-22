@@ -189,9 +189,8 @@ void main() {
     await tester.tap(menuEntry);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Tools & MCP client'), findsOneWidget);
-    expect(find.text(app_locale.l10n.appMcpServerTip), findsOneWidget);
-    await tester.tap(find.text('MCP Server'));
+    expect(find.text(app_locale.l10n.appMcpClient), findsOneWidget);
+    await tester.tap(find.text(app_locale.l10n.appMcpServer));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     final labels = app_locale.l10n;

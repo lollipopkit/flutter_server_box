@@ -2060,9 +2060,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'API keys, models, and the model a new chat uses';
 
   @override
-  String get agentTools => 'Tools';
-
-  @override
   String get agentToolsTip => 'What the Agent may use, and its MCP servers';
 
   @override
@@ -7426,10 +7423,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appMcpServer => 'MCP Server';
 
   @override
-  String get appMcpServerTip =>
-      'Let external agents control ServerBox content through MCP.';
-
-  @override
   String get appMcpClient => 'Tools & MCP client';
 
   @override
@@ -7437,9 +7430,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appMcpRegistry => 'Invalid MCP token registry.';
-
-  @override
-  String get appMcpDigest => 'Invalid token digest.';
 
   @override
   String get appMcpName => 'Enter a token name.';
@@ -7451,137 +7441,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appMcpProtect => 'Could not protect the token registry.';
 
   @override
-  String get appMcpChanged => 'The token registry changed. Please retry.';
-
-  @override
   String get appMcpListenBusy => 'The MCP server is changing state.';
 
   @override
   String get appMcpInvalidAddress =>
       'Enter an IP address and port, e.g. 0.0.0.0:49762 or [::]:49762.';
-
-  @override
-  String get appMcpStatus => 'Read uptime and load.';
-
-  @override
-  String get appMcpMemory => 'Read memory statistics.';
-
-  @override
-  String get appMcpCpu => 'Read CPU counters or load.';
-
-  @override
-  String get appMcpNetwork => 'Read interface traffic counters.';
-
-  @override
-  String get appMcpDisk => 'Read disk I/O counters.';
-
-  @override
-  String get appMcpImages => 'List Docker image IDs, tags and sizes.';
-
-  @override
-  String get appMcpStorage => 'List mounted filesystems and capacity.';
-
-  @override
-  String get appMcpProcesses => 'List process IDs and executable names.';
-
-  @override
-  String get appMcpServices => 'List system services.';
-
-  @override
-  String get appMcpContainers => 'List running and stopped Docker containers.';
-
-  @override
-  String get appMcpTmux => 'List tmux sessions.';
-
-  @override
-  String get appMcpList => 'List available hosts and named presets.';
-
-  @override
-  String get appMcpCapabilities =>
-      'List host transports and supported inspections.';
-
-  @override
-  String get appMcpPreferences => 'Read editable ServerBox preferences.';
-
-  @override
-  String get appMcpSet => 'Set a ServerBox preference using its JSON schema.';
-
-  @override
-  String get appMcpShortcut =>
-      'Set one shortcut. An empty chord removes the binding.';
-
-  @override
-  String get appMcpContainerLogs => 'Read the last 100 container log lines.';
-
-  @override
-  String get appMcpContainerStats =>
-      'Read a snapshot of container resource usage.';
-
-  @override
-  String get appMcpContainerAction =>
-      'Start, stop or restart a container by Docker ID.';
-
-  @override
-  String get appMcpServiceLogs =>
-      'Read the last 100 journal entries for a systemd service.';
-
-  @override
-  String get appMcpServiceAction => 'Start, stop or restart a systemd service.';
-
-  @override
-  String get appMcpProcessDetail => 'Read CPU and memory use for one process.';
-
-  @override
-  String get appMcpImageRemove => 'Remove a Docker image by its full ID.';
-
-  @override
-  String get appMcpImageInspect => 'Read Docker image size and architecture.';
-
-  @override
-  String get appMcpRun => 'Run a named command preset on a host.';
-
-  @override
-  String get appMcpRequest => 'Invalid request.';
-
-  @override
-  String get appMcpParams => 'Invalid parameters.';
-
-  @override
-  String get appMcpMethod => 'Unknown method.';
-
-  @override
-  String get appMcpTool => 'Unknown tool or invalid arguments.';
-
-  @override
-  String get appMcpHost => 'Unknown host.';
-
-  @override
-  String get appMcpSystemd => 'Requires systemd on Linux.';
-
-  @override
-  String get appMcpPreset => 'Unknown preset or unsupported inspection.';
-
-  @override
-  String get appMcpLocalUnavailable => 'Local execution is unavailable.';
-
-  @override
-  String get appMcpCommandFailed =>
-      'The command failed, timed out or exceeded the output limit.';
-
-  @override
-  String get appMcpHostChanged => 'The host configuration changed.';
-
-  @override
-  String get appMcpOutput => 'Command output exceeded the limit.';
-
-  @override
-  String get appMcpTransport => 'Unsupported transport.';
-
-  @override
-  String get appMcpFirst => 'Connect to this host in ServerBox first.';
-
-  @override
-  String appMcpMonitor(String reason) {
-    return 'Monitor request failed ($reason).';
-  }
 }

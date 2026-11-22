@@ -199,6 +199,11 @@ There is no scope for managing tokens or the account itself. A token requires
 TLS or a loopback caller as acting does; a password change deletes every token,
 and the list records each token's last use (at most once a minute).
 
+The protocol, the token format, the scopes, the tool catalog and the tools any
+machine reached through a shell answers (processes, services, containers,
+tmux, `run_command` and the actions) are `crates/sbm_mcp`, shared with the
+app's own MCP server.
+
 `POST /api/v1/mcp` speaks Streamable HTTP in its stateless JSON shape: one
 JSON-RPC message per POST, answered with one `application/json` body, a
 notification by `202`, and `405` (`Allow: POST`) for `GET` or `DELETE`. The

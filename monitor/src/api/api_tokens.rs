@@ -30,7 +30,7 @@ pub struct CreateRequest {
     pub name: String,
     /// The account's password again — minting a long-lived credential costs it.
     pub password: String,
-    /// Out of `Scope::ALL`; defaults to every scope when absent.
+    /// Out of `Scope::MONITOR`; defaults to every scope when absent.
     #[serde(default)]
     pub scopes: Option<Vec<String>>,
     /// Per-token command policy; defaults to `allow_all` with no rules.
@@ -105,7 +105,7 @@ struct CreatedView<'a> {
 fn parse_checked_scopes(asked: &[String], allow_empty: bool) -> Result<Vec<Scope>> {
     let mut scopes = Vec::new();
     for item in asked {
-        let Some(scope) = Scope::parse(item) else {
+        let Some(scope) = Scope::parse(Scope::MONITOR, item) else {
             return Err(MonitorError::Parse(format!("unknown scope: {item}")));
         };
         if !scopes.contains(&scope) {
@@ -143,14 +143,14 @@ pub async fn create(
     let name = check_name(&body.name)?;
     let scopes = match &body.scopes {
         Some(asked) => parse_checked_scopes(asked, false)?,
-        None => Scope::ALL.to_vec(),
+        None => Scope::MONITOR.to_vec(),
     };
     body.commands.validate().map_err(MonitorError::Parse)?;
     let days = body.days.unwrap_or(DEFAULT_DAYS);
     if days == 0 || days > 3650 {
         return Err(MonitorError::Parse("days must be 1..=3650".into()));
     }
-    let token = format!("{}{}", api_tokens::PREFIX, crate::utils::secrets::random_hex(32)?);
+    let token = sbm_mcp::token::mint().map_err(|e| anyhow::anyhow!(e))?;
     let expires_at = (chrono::Utc::now() + chrono::Duration::days(days as i64))
         .format("%Y-%m-%d %H:%M:%S")
         .to_string();

@@ -16,11 +16,10 @@ extension _AI on _AppSettingsPageState {
           () => ListTile(
             leading: const Icon(Icons.dns_outlined),
             title: Text(SettingsSection.mcp.title),
-            subtitle: Text(l10n.appMcpServerTip, style: UIs.textGrey),
             trailing: const Icon(Icons.keyboard_arrow_right),
             onTap: () => SettingsSectionPage.route.go(context, SettingsSection.mcp),
           ),
-          keywords: '${l10n.appMcpServerTip} MCP token HTTP',
+          keywords: 'MCP server token HTTP',
         ),
         _buildAgentSkills(l10n),
       ]),
@@ -91,11 +90,9 @@ extension _AI on _AppSettingsPageState {
         leading: const Icon(Icons.rule),
         title: Text(label),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () =>
-            AgentPermissions.route.go(context, LocalPermissionsSource()),
+        onTap: () => AgentPermissions.route.go(context, LocalPermissionsSource()),
       ),
-      keywords:
-          '${llmL10n.permDefaultMode} ${llmL10n.permModeAuto} ${llmL10n.permModeManual} ${llmL10n.permModeBypass}',
+      keywords: '${llmL10n.permDefaultMode} ${llmL10n.permModeAuto} ${llmL10n.permModeManual} ${llmL10n.permModeBypass}',
     );
   }
 

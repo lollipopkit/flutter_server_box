@@ -1,103 +1,92 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
-import 'package:crypto/crypto.dart';
+import 'package:logging/logging.dart';
 import 'package:server_box/core/extension/context/locale.dart' show l10n;
+import 'package:server_box/src/rust/api/app_mcp.dart' as ffi;
 
-typedef McpRegistry = ({
-  Map<String, String> tokens,
-  Map<String, String> commands,
-});
+export 'package:server_box/src/rust/api/app_mcp.dart'
+    show AppMcpRegistry, AppMcpToken, appMcpScopes;
 
-McpRegistry readMcpRegistry(String text) {
-  final dynamic root;
+/// The registry as it is on disk; empty when there is none yet.
+///
+/// Its format and every check on it are `sbm_ffi::api::app_mcp`'s. The file
+/// may be edited in any editor: it is read again on every request.
+Future<String> readMcpRegistryText(File file) async =>
+    await file.exists() ? await file.readAsString() : '';
+
+Future<ffi.AppMcpRegistry> loadMcpRegistry(File file) async {
   try {
-    root = jsonDecode(text);
-  } on FormatException {
-    throw FormatException(l10n.appMcpRegistry);
+    return ffi.appMcpRegistry(text: await readMcpRegistryText(file));
+  } on String catch (detail) {
+    throw FormatException('${l10n.appMcpRegistry}: $detail');
   }
-  // TODO(migration): remove pre-release policy recognition after the preview.
-  // Scoped credentials must be reissued before they can access all tools.
-  if (root is Map &&
-      root.isNotEmpty &&
-      root.keys.every(
-        (k) => k == 'defaults' || RegExp(r'^[0-9a-f]{64}$').hasMatch(k),
-      )) {
-    return (tokens: {}, commands: {});
-  }
-  if (root is! Map || root.keys.any((k) => k != 'tokens' && k != 'commands')) {
-    throw FormatException(l10n.appMcpRegistry);
-  }
-  Map<String, String> entries(String key) {
-    final value = root[key] ?? {};
-    if (value is! Map || value.values.any((v) => v is! String)) {
-      throw FormatException(l10n.appMcpRegistry);
-    }
-    return Map<String, String>.from(value);
-  }
-
-  final tokens = entries('tokens');
-  if (tokens.keys.any((id) => !RegExp(r'^[0-9a-f]{64}$').hasMatch(id))) {
-    throw FormatException(l10n.appMcpDigest);
-  }
-  return (tokens: tokens, commands: entries('commands'));
 }
 
-bool _editingTokens = false;
-
-Future<McpRegistry> loadMcpRegistry(File file) async =>
-    readMcpRegistry(await file.exists() ? await file.readAsString() : '{}');
-
-Future<String> createMcpToken(File file, String label) async {
-  if (label.trim().isEmpty) {
-    throw FormatException(l10n.appMcpName);
-  }
-  final random = Random.secure();
-  final token =
-      'sbt_${base64Url.encode(List.generate(32, (_) => random.nextInt(256))).replaceAll('=', '')}';
-  final digest = sha256.convert(utf8.encode(token)).toString();
-  await _editTokens(file, (tokens) => tokens[digest] = label.trim());
+/// A new token named [name] holding [scopes] (null: every scope), shown once.
+Future<String> createMcpToken(
+  File file,
+  String name, {
+  List<String>? scopes,
+}) async {
+  if (name.trim().isEmpty) throw FormatException(l10n.appMcpName);
+  late String token;
+  await _edit(file, (text) {
+    final minted = ffi.appMcpMint(
+      text: text,
+      name: name,
+      scopes: scopes,
+      nowMillis: DateTime.now().millisecondsSinceEpoch,
+    );
+    token = minted.token;
+    return minted.registry;
+  });
   return token;
 }
 
 Future<void> revokeMcpToken(File file, String id) =>
-    _editTokens(file, (tokens) => tokens.remove(id));
+    _edit(file, (text) => ffi.appMcpRevoke(text: text, id: id));
 
-Future<void> _editTokens(
-  File file,
-  void Function(Map<String, String>) edit,
-) async {
-  if (_editingTokens) {
-    throw StateError(l10n.appMcpBusy);
-  }
-  _editingTokens = true;
+bool _editing = false;
+
+/// Writes what [change] makes of the registry, under a lock another app
+/// instance honours, through a file only this account can read.
+Future<void> _edit(File file, String Function(String text) change) async {
+  if (_editing) throw StateError(l10n.appMcpBusy);
+  _editing = true;
+  RandomAccessFile? lock;
   try {
-    final original = await file.exists() ? await file.readAsString() : null;
-    final registry = readMcpRegistry(original ?? '{}');
-    edit(registry.tokens);
-    final staging = await file.parent.createTemp('mcp-tokens-');
+    await file.parent.create(recursive: true);
+    lock = await File('${file.path}.lock').open(mode: FileMode.append);
+    await lock.lock(FileLock.blockingExclusive);
+    final String next;
     try {
-      final pending = File('${staging.path}/tokens.json');
-      await pending.writeAsString(
-        jsonEncode({'tokens': registry.tokens, 'commands': registry.commands}),
-        flush: true,
-      );
+      next = change(await readMcpRegistryText(file));
+    } on String catch (detail) {
+      throw FormatException('${l10n.appMcpRegistry}: $detail');
+    }
+    final staging = await file.parent.createTemp('mcp-registry-');
+    try {
+      final pending = File('${staging.path}/registry.json');
+      await pending.writeAsString(next, flush: true);
       if (Platform.isMacOS || Platform.isLinux) {
         final chmod = await Process.run('/bin/chmod', ['600', pending.path]);
-        if (chmod.exitCode != 0) {
-          throw StateError(l10n.appMcpProtect);
-        }
-      }
-      final current = await file.exists() ? await file.readAsString() : null;
-      if (current != original) {
-        throw StateError(l10n.appMcpChanged);
+        if (chmod.exitCode != 0) throw StateError(l10n.appMcpProtect);
       }
       await pending.rename(file.path);
     } finally {
-      await staging.delete(recursive: true);
+      try {
+        await staging.delete(recursive: true);
+      } on FileSystemException {
+        Logger('AppMcp').warning('Could not remove registry staging directory.');
+      }
     }
   } finally {
-    _editingTokens = false;
+    try {
+      await lock?.close();
+    } on FileSystemException {
+      Logger('AppMcp').warning('Could not close the registry lock.');
+    } finally {
+      _editing = false;
+    }
   }
 }

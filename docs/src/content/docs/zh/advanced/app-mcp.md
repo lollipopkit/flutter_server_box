@@ -1,48 +1,61 @@
 ---
 title: App MCP
-description: 通过 MCP client 访问本机、SSH 和 Monitor 主机，运行已保存的命令并修改 App 设置
+description: 通过 MCP client 访问 ServerBox 管理的所有服务器，工具和 token 模型与 Monitor 一致
 ---
 
-打开 **设置 → AI → MCP 服务器**，点 **新建 token**，输入名称并保存随后显示的 token。启用服务后，MCP client 即可使用该 token 作为 Bearer 凭据连接到 `http://127.0.0.1:49762/mcp`。所有 token 都可以使用相同的工具和主机。要撤销某个 token，点它旁边的删除按钮，下一次请求起生效。
+App 提供的 MCP server 与 [Monitor](/zh/development/monitor-agent/#api-tokens-and-mcp) 是同一套实现，覆盖 App 能连接的每台服务器：工具、返回结构、token 格式和 scope 都相同。针对某台服务器的工具都带 `host` 参数，取值为 `list` 返回的 id。
 
-点 **监听** 可以调整地址和端口。选 **全部** 使用通配地址，选 **局域网** 可以指定 Wi-Fi、以太网或 Tailscale 等 VPN 接口上的一个 IP，选 **本机** 使用 loopback 地址。这些预设会保留当前端口。局域网预设保存的是选中的 IP，网络重新分配地址后需要重新选择。**自定义** 支持直接输入地址和端口，例如 `[::]:49762`。从其他设备连接时，请填写运行 ServerBox 的设备地址，例如 `http://192.168.1.20:49762/mcp`。监听服务使用 HTTP，远程连接请使用可信网络或 TLS 隧道。
+## 设置
 
-使用 stdio 的 client 可以运行 `python3 /absolute/path/to/scripts/app-mcp-stdio.py`，通过环境变量 `SERVERBOX_MCP_TOKEN` 传入 token。如果目标地址与默认的 `127.0.0.1:49762` 不同，通过 `SERVERBOX_MCP_HOST` 和 `SERVERBOX_MCP_PORT` 指定。桌面自动化场景下，如果 App 尚未保存监听设置，可以用 `SERVERBOX_MCP_POLICY` 指定本机的配置文件。文件保存 token 摘要、名称和所有 client 共享的命令预设。例如：
+打开 **设置 → AI → MCP Server**。选择 **新建 token**，填写名称并选择 scope，然后保存显示的 token：它只显示一次。打开开关后，以 Bearer 凭据连接 `http://127.0.0.1:49762/mcp`。删除 token 即撤销，下一次请求就会被拒绝。
+
+选择 **监听** 可修改地址和端口。**全部** 监听通配地址，**局域网** 监听 Wi-Fi、以太网或 Tailscale 等 VPN 接口上的某个 IP，**本机** 监听回环地址。局域网会保存所选 IP；网络分配了新地址时需要重新选择。**自定义** 接受 `[::]:49762` 这样的地址和端口。
+
+回环地址使用 HTTP。局域网和通配监听要求 TLS：把 PEM 证书链和私钥放在注册表旁边，文件名在注册表文件名后加 `.crt` 和 `.key`（默认为 `app-mcp.json.crt` 和 `app-mcp.json.key`）。iOS 上需要把两者放进同一个无密码的 PKCS#12 文件，后缀为 `.p12`。请限制私钥的访问权限，并使用证书中的域名或 IP 连接。也可以只监听回环地址，通过经过认证的 SSH 隧道访问。
+
+stdio client 可运行 `python3 /absolute/path/to/scripts/app-mcp-stdio.py`，并在 `SERVERBOX_MCP_TOKEN` 中提供 token。目标不是 `127.0.0.1:49762` 时，设置 `SERVERBOX_MCP_HOST` 和 `SERVERBOX_MCP_PORT`。bridge 会校验远程 HTTPS 证书；使用私有 CA 时，把 `SSL_CERT_FILE` 设为其 PEM 文件。要连接回环 IP 上的 TLS 监听，设置 `SERVERBOX_MCP_SCHEME=https`。
+
+## Token 和 scope
+
+token 为 `sbt_` 加 64 位十六进制字符，注册表文件中只保存它的 BLAKE3 摘要（默认是 App 文档目录下的 `app-mcp.json`；桌面自动化在没有保存监听设置时可用 `SERVERBOX_MCP_POLICY` 指定其他文件）。每次请求都会重新读取注册表，因此可以手动编辑：
 
 ```json
 {
-  "tokens": {"<token 的小写十六进制 SHA-256 摘要>": "Desktop"},
-  "commands": {"uptime": "uptime"}
+  "policy": {
+    "scopes": ["read", "exec", "service"],
+    "commands": { "mode": "allow_all", "deny": ["rm -rf *"] }
+  },
+  "tokens": [
+    {
+      "id": "<token 的小写 BLAKE3 摘要>",
+      "name": "Desktop",
+      "scopes": ["read"],
+      "commands": { "mode": "allowlist", "allow": ["uptime", "df *"] },
+      "created_at": 0
+    }
+  ]
 }
 ```
 
-调用 `list` 可以查看 SSH、Monitor 和本机目标的 ID，以及可用的命令预设名称。本机目标 `#local` 在桌面端使用系统 shell，在 Android 使用 proot，在 iOS 使用已安装的 iul 环境。
+省略 `scopes` 表示拥有全部 scope，包括以后版本新增的 scope。token 的权限是它自己的 scope 与 policy scope 的交集；`run_command` 需要同时通过两层命令规则。命令规则使用 Agent 的匹配语法，与 Monitor 相同。
 
-向 `run_command` 传入 `host` 和 `preset`，即可通过主机首选的连接方式执行已保存的命令。SSH 会复用已有连接或使用已保存的配置连接。如果需要确认主机密钥、解锁私钥或回答交互式认证问题，请先在 ServerBox 中连接一次再重试。Monitor 使用自己的认证接口和访问规则。结果包含 stdout、stderr，以及可用时的退出码。stdout 和 stderr 合计最多 256 KiB，SSH 命令通道在 30 秒后关闭。Monitor 使用自己的执行超时，并报告输出截断或超时。删除所有预设后，`run_command` 将从工具列表中隐藏。
-
-### 查看主机状态
-
-以下工具只需传入从 `list` 获取的 `host`。命令在选中的目标上运行，返回 stdout、stderr 和退出状态。如果目标缺少相应程序或服务管理器，工具会返回错误。
-
-| 工具 | 返回内容 |
+| Scope | 工具 |
 | --- | --- |
-| `machine_capabilities` | App 识别到的平台、已配置的连接方式和该平台可用的检查工具 |
-| `machine_status` | 运行时长和负载，Windows 返回上次启动时间 |
-| `machine_metrics` | 内存统计 |
-| `storage` | 已挂载的文件系统和容量 |
-| `processes` | 进程列表 |
-| `services` | 系统服务管理器报告的服务 |
-| `containers` | Docker 容器 ID、名称和状态 |
-| `tmux` | Unix 主机上的 tmux 会话 |
+| `read` | `list`、`machine_capabilities`、`processes`、`services`、`containers`、`tmux`、`app_settings` |
+| `exec` | `run_command` |
+| `process` | `kill_process` |
+| `service` | `service_action` |
+| `container` | `container_action` |
+| `settings` | `app_setting_set` |
 
-用 `cpu`、`network` 和 `disk_io` 查看其他指标。向 `process_detail` 传入数字类型的 `pid` 可以查看单个进程。用 `images` 列出 Docker 镜像，再将完整镜像 ID 传给 `image_inspect` 或 `image_remove`，可以查看或删除该镜像。
+## 工具
 
-### 修改 App 设置、管理容器和服务
+`list` 返回每台服务器的 id、名称、是否已连接以及连接方式（`ssh`、`monitor`、`local`）。id 是 App 内部服务器 id 的摘要。开启 **设置 → AI → 在本机执行命令** 后，列表中会包含本机。
 
-`app_settings` 无需参数，会列出可修改的设置及其当前 JSON 值。`app_setting_set` 接收 `key` 和对应类型的 JSON `value`，写入 App 设置页使用的同一本地存储。两者都无需传入主机 ID。每项设置的类型、可选值和范围见工具的输入 schema。例如，可以将 `editorFontSize` 设为 `15.5`、`serverStatusUpdateInterval` 设为 `4` 秒、`motionPref` 设为 `"reduce"`、`trayMetrics` 设为 `["cpu", "disk"]`，或将 `distNameMap` 设为 `{"arch": "archlinux"}`。列表和映射通常整项替换。
+调用经由 App 自己的连接方式到达服务器：SSH（复用已打开的连接，或按保存的配置连接，包括跳板机和 `ProxyCommand`）、Monitor 或本机。需要确认主机密钥、输入私钥 passphrase 或回答 keyboard-interactive 问题时，调用会失败，且不计入该服务器的重连次数限制；在 App 中连接这台服务器后再调用即可。
 
-`locale` 接受语言代码，`timeOut` 接受整数秒，`homeTabs` 接受按显示顺序排列的标签页名称。要修改当前平台的一项快捷键，将 `keybindings` 设为单条映射，例如 `{"settings.search":"Ctrl+Shift+F"}`。
+`processes`、`services`、`containers`、`tmux`、`kill_process`、`service_action` 和 `container_action` 的参数和返回结构与 Monitor 相同。`machine_capabilities` 返回服务器的平台和连接方式；App 尚未读取过该服务器时，会先探测平台。
 
-向 `container_logs` 或 `container_stats` 传入 `host` 和从 `containers` 获取的容器 ID，可以读取最近 100 行日志或一次资源快照。`container_action` 还需传入 `action`，可选值为 `start`、`stop` 或 `restart`。
+`run_command` 接受 `host` 和 `command`，返回 `exit_code`、`stdout`、`stderr`、`truncated` 和 `timed_out`。命令在该账户自己的 shell 中执行。输出最多保留 256 KiB，命令超过 30 秒会被终止；Monitor 还会应用它自己的限制。
 
-在使用 systemd 的 Linux 主机上，将 `services` 返回的单元名（例如 `demo.service`）作为 `key`，连同 `host` 传给 `service_logs`，即可读取最近 100 条 journal 记录。`service_action` 支持 `start`、`stop` 和 `restart`，主机账户需要具备执行相应操作的权限。
+`app_settings` 列出 App 可编辑的设置及当前值。`app_setting_set` 接受 `key` 和类型匹配的 `value`（见工具的输入 schema），写入与设置页相同的存储。例如把 `editorFontSize` 设为 `15.5`、`motionPref` 设为 `"reduce"`、`trayMetrics` 设为 `["cpu", "disk"]`，或把 `keybindings` 设为 `{"settings.search": "Ctrl+Shift+F"}`。数组和映射会整体替换原设置。

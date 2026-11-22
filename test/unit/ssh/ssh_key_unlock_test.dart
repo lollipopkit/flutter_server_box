@@ -73,6 +73,8 @@ void main() {
       PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k', unattended: handshake),
       throwsA(isA<SshInteractionRequired>()),
     );
+    // A question for the person, which the connect path does not count as a
+    // failed attempt.
     expect(handshake.needsUser, true);
     prompt = ({required keyName, required retry}) async => passphrase;
     final unlocked = await open(lockedPem, cacheKey: 'k', keyName: 'k');

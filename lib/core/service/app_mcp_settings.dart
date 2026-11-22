@@ -1,12 +1,12 @@
 import 'package:fl_lib/fl_lib.dart' show LocaleX, RNodes, StorePropDefault;
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/extension/context/locale.dart' show l10n;
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
+import 'package:server_box/data/res/setting_range.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -77,12 +77,15 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
   integer(s.serverStatusUpdateInterval, [0, for (int i = 2; i <= 10; i++) i]);
   integer(s.termTheme, [0, 1, 2]);
 
-  for (final prop in [s.termFontSize, s.editorFontSize, s.textFactor]) {
-    add(prop, {
-      'type': 'number',
-      'exclusiveMinimum': 0,
-    }, (v) => v is num && v.isFinite && v > 0 ? v.toDouble() : null);
-  }
+  void bounded(StorePropDefault<double> prop, ({double min, double max}) r) =>
+      add(
+        prop,
+        {'type': 'number', 'minimum': r.min, 'maximum': r.max},
+        (v) => v is num && SettingRange.contains(r, v) ? v.toDouble() : null,
+      );
+  bounded(s.termFontSize, SettingRange.fontSize);
+  bounded(s.editorFontSize, SettingRange.fontSize);
+  bounded(s.textFactor, SettingRange.textFactor);
   add(
     s.termLineHeight,
     {
@@ -107,10 +110,12 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
     '',
     ...AppLocalizations.supportedLocales.map((l) => l.code),
   ]);
+  const timeout = SettingRange.timeout;
   add(s.timeout, {
     'type': 'integer',
-    'minimum': 1,
-  }, (v) => v is int && v > 0 ? v : null);
+    'minimum': timeout.min,
+    'maximum': timeout.max,
+  }, (v) => v is int && SettingRange.contains(timeout, v) ? v : null);
   final tabs = AppTab.values.map((t) => t.name).toList();
   add(
     s.homeTabs,
@@ -140,7 +145,8 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
       'minProperties': 1,
       'propertyNames': {'enum': shortcuts.keys.toList()},
       'additionalProperties': {'type': 'string'},
-      'description': l10n.appMcpShortcut,
+      'description':
+          'One shortcut: its command and a chord such as "ctrl+shift+k", or "" to unbind it.',
     },
     () {
       final state = container.read(keybindingsProvider);
@@ -200,28 +206,25 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
   return preferences;
 }
 
-Map<String, Object> mcpPreferenceTool(ProviderContainer container) {
+/// `app_setting_set`'s input: one preference and a value its own schema takes.
+Map<String, Object> mcpPreferenceSchema(ProviderContainer container) {
   final preferences = mcpPreferences(container);
   return {
-    'name': 'app_setting_set',
-    'description': l10n.appMcpSet,
-    'inputSchema': {
-      'type': 'object',
-      'required': ['key', 'value'],
-      'additionalProperties': false,
-      'properties': {
-        'key': {'type': 'string', 'enum': preferences.keys.toList()},
-        'value': <String, Object>{},
-      },
-      'oneOf': [
-        for (final entry in preferences.entries)
-          {
-            'properties': {
-              'key': {'const': entry.key},
-              'value': entry.value.schema,
-            },
-          },
-      ],
+    'type': 'object',
+    'required': ['key', 'value'],
+    'additionalProperties': false,
+    'properties': {
+      'key': {'type': 'string', 'enum': preferences.keys.toList()},
+      'value': <String, Object>{},
     },
+    'oneOf': [
+      for (final entry in preferences.entries)
+        {
+          'properties': {
+            'key': {'const': entry.key},
+            'value': entry.value.schema,
+          },
+        },
+    ],
   };
 }

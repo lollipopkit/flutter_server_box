@@ -468,7 +468,10 @@ class _OfflineServer extends ServerNotifier {
       throw StateError('offline');
 
   @override
-  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial}) async =>
+  Future<CommandExec> ensureScriptExec({
+    VoidCallback? onSshDial,
+    bool unattended = false,
+  }) async =>
       throw StateError('offline');
 
   @override

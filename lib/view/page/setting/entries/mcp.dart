@@ -46,24 +46,7 @@ extension _McpSettings on _AppSettingsPageState {
           l10n.monitorMcpEndpoint,
           () => ListenBuilder(
             listenable: Stores.setting.appMcp.listenable(),
-            builder: () {
-              final bound = appMcpEndpoint(appMcpListen);
-              final url = switch (bound.host) {
-                '0.0.0.0' => bound.replace(host: '127.0.0.1'),
-                '::' => bound.replace(host: '::1'),
-                _ => bound,
-              }.toString();
-              return ListTile(
-                leading: const Icon(Icons.link),
-                title: Text(l10n.monitorMcpEndpoint),
-                subtitle: SelectableText(url),
-                trailing: IconButton(
-                  icon: const Icon(Icons.copy),
-                  tooltip: libL10n.copy,
-                  onPressed: () => Pfs.copy(url),
-                ),
-              );
-            },
+            builder: () => const _McpEndpoints(),
           ),
         ),
       ]),
@@ -138,6 +121,56 @@ extension _McpSettings on _AppSettingsPageState {
   }
 }
 
+/// Where a client reaches the listener: the address it is bound to, or on
+/// a wildcard every address another machine can reach.
+class _McpEndpoints extends StatelessWidget {
+  const _McpEndpoints();
+
+  @override
+  Widget build(BuildContext context) {
+    final bound = appMcpEndpoint(appMcpListen);
+    if (bound.host != '0.0.0.0' && bound.host != '::') {
+      return _tile(context, bound);
+    }
+    return FutureBuilder(
+      future: appMcpInterfaces(),
+      builder: (context, snapshot) {
+        final ipv6 = bound.host == '::';
+        final urls = [
+          for (final item in snapshot.data ?? const [])
+            if (ipv6 || item.address.type == InternetAddressType.IPv4)
+              bound.replace(host: item.address.address),
+        ];
+        if (urls.isEmpty) return _tile(context, null);
+        return Column(children: [for (final url in urls) _tile(context, url)]);
+      },
+    );
+  }
+
+  Widget _tile(BuildContext context, Uri? url) => ListTile(
+    leading: const Icon(Icons.link),
+    title: Text(context.l10n.monitorMcpEndpoint),
+    subtitle: url == null ? Text(libL10n.empty) : SelectableText('$url'),
+    trailing: url == null
+        ? null
+        : IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: libL10n.copy,
+            onPressed: () => Pfs.copy('$url'),
+          ),
+  );
+}
+
+String _mcpScopeName(String scope) => switch (scope) {
+  'read' => l10n.monitorMcpScopeRead,
+  'exec' => l10n.monitorMcpScopeExec,
+  'process' => l10n.monitorMcpScopeProcess,
+  'service' => l10n.monitorMcpScopeService,
+  'container' => l10n.monitorMcpScopeContainer,
+  'settings' => libL10n.setting,
+  _ => scope,
+};
+
 class _McpTokens extends StatefulWidget {
   const _McpTokens();
   @override
@@ -165,7 +198,7 @@ class _McpTokensState extends State<_McpTokens> {
           builder: (_, snapshot) {
             if (snapshot.hasError) {
               return ListTile(
-                title: Text(libL10n.error),
+                title: Text('${snapshot.error}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.refresh),
                   tooltip: libL10n.retry,
@@ -182,11 +215,14 @@ class _McpTokensState extends State<_McpTokens> {
             }
             return Column(
               children: [
-                for (final token in registry.tokens.entries)
+                for (final token in registry.tokens)
                   ListTile(
                     leading: const Icon(Icons.key_outlined),
-                    title: Text(token.value),
-                    subtitle: Text(token.key.substring(0, 8)),
+                    title: Text(token.name),
+                    subtitle: Text(
+                      token.scopes?.map(_mcpScopeName).join(' · ') ??
+                          libL10n.all,
+                    ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
                       tooltip: l10n.monitorMcpRevoke,
@@ -201,15 +237,15 @@ class _McpTokensState extends State<_McpTokens> {
     );
   }
 
-  Future<void> _revoke(MapEntry<String, String> token) async {
+  Future<void> _revoke(AppMcpToken token) async {
     final ok = await context.showSheet<bool>(
       title: l10n.monitorMcpRevoke,
-      child: Text(l10n.monitorMcpRevokeHint(token.value)),
+      child: Text(l10n.monitorMcpRevokeHint(token.name)),
       actions: Btnx.cancelOk,
     );
     if (ok != true || !mounted) return;
     try {
-      await revokeMcpToken(appMcpRegistryFile, token.key);
+      await revokeMcpToken(appMcpRegistryFile, token.id);
       if (mounted) _refresh();
     } catch (e, s) {
       if (mounted) context.showErrSheet(e, s, 'MCP');
@@ -222,8 +258,21 @@ class _McpTokensState extends State<_McpTokens> {
       label: libL10n.name,
     );
     if (name == null || name.trim().isEmpty || !mounted) return;
+    final all = appMcpScopes();
+    final scopes = await context.showPickSheet<String>(
+      title: name.trim(),
+      items: all,
+      display: _mcpScopeName,
+      initial: all,
+    );
+    if (scopes == null || scopes.isEmpty || !mounted) return;
     try {
-      final token = await createMcpToken(appMcpRegistryFile, name);
+      final token = await createMcpToken(
+        appMcpRegistryFile,
+        name,
+        // Every scope is stored as none named, so a newer build's reach too.
+        scopes: scopes.length == all.length ? null : scopes,
+      );
       if (!mounted) return;
       _refresh();
       await context.showSheet<void>(

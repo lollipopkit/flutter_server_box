@@ -22,20 +22,18 @@ use ntex::http::header::{ACCEPT, ALLOW, CONTENT_TYPE, HeaderValue};
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde_json::{Value, json};
 
-use sbm_mcp::{Answer, CallToolResult, Host, Tool, structured, tool_error};
+use sbm_mcp::{Answer, CallToolResult, Host, Tool, catalog, structured, tool_error};
 
-use super::containers::{self, ContainerPart};
 use super::cron::{self, CronEdit};
 use super::firewall;
 use super::fs;
 use super::json;
+use super::machine::{Here, McpCommand};
 use super::process;
 use super::server::{self, AppState};
-use super::service::{self, ServicePart};
 use super::stacks;
 use super::storage;
 use super::system_users::{self, UserPart};
-use super::tmux;
 use super::virt;
 use super::ws::audit::{Action, Event, Kind, Outcome};
 use super::ws::origin_allowed;
@@ -60,366 +58,6 @@ struct TokenHost {
     audited_before_run: AtomicBool,
 }
 
-fn no_args(name: &'static str, description: &'static str) -> Tool {
-    sbm_mcp::tool(
-        name,
-        description,
-        json!({ "type": "object", "properties": {}, "additionalProperties": false }),
-    )
-}
-
-fn tool(name: &'static str, description: &'static str, schema: Value) -> Tool {
-    sbm_mcp::tool(name, description, schema)
-}
-
-impl TokenHost {
-    fn read_tools() -> Vec<Tool> {
-        vec![
-            no_args(
-                "machine_status",
-                "Current summary readings of this machine: CPU, memory, disk, network and temperature.",
-            ),
-            no_args(
-                "machine_metrics",
-                "Detailed current metrics: per-core CPU, memory, disks, network interfaces and disk I/O.",
-            ),
-            no_args(
-                "machine_capabilities",
-                "Platform, Monitor version, collected metrics, retention policy and active features.",
-            ),
-            tool(
-                "processes",
-                "Process table of this machine: PID, start_id, parent, user, state, CPU, memory and command line.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "sort": { "type": "string", "enum": ["cpu", "mem", "rss", "read", "write", "pid", "user", "name"] },
-                        "ascending": { "type": "boolean" }
-                    },
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "services",
-                "Service units of the machine's service manager, or one unit's logs, status or definition.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "part": { "type": "string", "enum": ["list", "logs", "definition", "status"] },
-                        "key": { "type": "string", "description": "Unit key from `list` (required when `part` is not `list`)." }
-                    },
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "containers",
-                "Docker or Podman containers, images, disk usage, or bounded tail logs of one container.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "part": { "type": "string", "enum": ["containers", "images", "usage", "logs"] },
-                        "id": { "type": "string", "description": "Container ID or name when `part` is `logs`." }
-                    },
-                    "additionalProperties": false
-                }),
-            ),
-            no_args("cron", "Crontab jobs and preserved lines of the account the Monitor runs as."),
-            no_args("tmux", "Active tmux sessions on this machine."),
-            tool(
-                "firewall",
-                "Firewall state and rules (ufw or firewalld) and how this Monitor and SSH reach the machine.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "kind": { "type": "string", "enum": ["ufw", "firewalld"] }
-                    },
-                    "additionalProperties": false
-                }),
-            ),
-            no_args("storage", "Block devices, filesystems, mounts, RAID arrays, ZFS pools and disk health."),
-            no_args("virt", "Virtualization host (Proxmox VE or libvirt) and its virtual machines and containers."),
-            no_args("stacks", "Catalog and deployed web app stacks managed by this Monitor."),
-            tool(
-                "system_users",
-                "System users and groups on Linux, or detailed records of one account.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "part": { "type": "string", "enum": ["list", "detail"] },
-                        "name": { "type": "string", "description": "Account name when `part` is `detail`." }
-                    },
-                    "additionalProperties": false
-                }),
-            ),
-        ]
-    }
-
-    fn fs_read_tools() -> Vec<Tool> {
-        vec![
-            no_args("fs_roots", "Home directory and filesystem roots accessible through the Monitor."),
-            tool(
-                "fs_list",
-                "Lists entries in a directory.",
-                json!({
-                    "type": "object",
-                    "properties": { "path": { "type": "string" } },
-                    "required": ["path"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_stat",
-                "Metadata and optimistic-concurrency version token of one file, directory or symlink.",
-                json!({
-                    "type": "object",
-                    "properties": { "path": { "type": "string" } },
-                    "required": ["path"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_read",
-                "Reads a file (UTF-8 text, or base64 when binary), returning its `version` token.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "path": { "type": "string" },
-                        "offset": { "type": "integer", "minimum": 0 },
-                        "max_bytes": { "type": "integer", "minimum": 1, "maximum": 4194304 }
-                    },
-                    "required": ["path"],
-                    "additionalProperties": false
-                }),
-            ),
-        ]
-    }
-
-    fn fs_write_tools() -> Vec<Tool> {
-        vec![
-            tool(
-                "fs_write",
-                "Writes a file atomically, preserving existing permissions. Optional `if_version` guards against concurrent edits.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "path": { "type": "string" },
-                        "content": { "type": "string" },
-                        "encoding": { "type": "string", "enum": ["utf8", "base64"], "description": "Defaults to utf8." },
-                        "if_version": { "type": "string", "description": "Version token from `fs_read` or `fs_stat`." }
-                    },
-                    "required": ["path", "content"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_mkdir",
-                "Creates a directory and any missing parents.",
-                json!({
-                    "type": "object",
-                    "properties": { "path": { "type": "string" } },
-                    "required": ["path"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_rename",
-                "Moves or renames a file, symlink or directory.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "from": { "type": "string" },
-                        "to": { "type": "string" }
-                    },
-                    "required": ["from", "to"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_chmod",
-                "Sets POSIX permission bits on a path (for example 493 for 0o755, or 384 for 0o600).",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "path": { "type": "string" },
-                        "mode": { "type": "integer", "minimum": 0, "maximum": 4095 }
-                    },
-                    "required": ["path", "mode"],
-                    "additionalProperties": false
-                }),
-            ),
-            tool(
-                "fs_remove",
-                "Removes a file, symlink or directory.",
-                json!({
-                    "type": "object",
-                    "properties": {
-                        "path": { "type": "string" },
-                        "recursive": { "type": "boolean" }
-                    },
-                    "required": ["path"],
-                    "additionalProperties": false
-                }),
-            ),
-        ]
-    }
-
-    fn exec_tools() -> Vec<Tool> {
-        vec![tool(
-            "run_command",
-            "Runs a shell command as the Monitor's account within the configured timeout, output cap and command policy.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "Shell command line (pipelines and multi-line scripts supported)."
-                    }
-                },
-                "required": ["command"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn process_tools() -> Vec<Tool> {
-        vec![tool(
-            "kill_process",
-            "Sends TERM or KILL to one process, verified against its `start_id` from `processes`.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "pid": { "type": "integer", "description": "PID from `processes`." },
-                    "start_id": { "type": "string", "description": "Matching `start_id` from `processes`." },
-                    "signal": { "type": "string", "enum": ["term", "kill"], "description": "Defaults to term." }
-                },
-                "required": ["pid", "start_id"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn service_tools() -> Vec<Tool> {
-        vec![tool(
-            "service_action",
-            "Starts, stops, restarts, enables or disables a service unit.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "key": { "type": "string", "description": "Unit key from `services`." },
-                    "action": { "type": "string", "enum": ["start", "stop", "restart", "enable", "disable"] }
-                },
-                "required": ["key", "action"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn container_tools() -> Vec<Tool> {
-        vec![tool(
-            "container_action",
-            "Performs a Docker or Podman action and returns the refreshed listing.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "action": {
-                        "type": "string",
-                        "enum": [
-                            "start",
-                            "stop",
-                            "restart",
-                            "remove",
-                            "prune_containers",
-                            "prune_volumes",
-                            "remove_image",
-                            "pull_image",
-                            "prune_images",
-                            "prune_system",
-                            "run"
-                        ]
-                    },
-                    "id": { "type": "string", "description": "Container or image ID/name for start, stop, restart, remove, remove_image." },
-                    "force": { "type": "boolean", "description": "Force removal of a running container (for `remove`)." },
-                    "reference": { "type": "string", "description": "Image reference `repo:tag` (for `pull_image`)." },
-                    "all_unused": { "type": "boolean", "description": "Remove all unused images rather than dangling only (for `prune_images`)." },
-                    "all_unused_images": { "type": "boolean", "description": "Include unused images in `prune_system`." },
-                    "include_volumes": { "type": "boolean", "description": "Include volumes in `prune_system`." },
-                    "image": { "type": "string", "description": "Image to start (for `run`)." },
-                    "name": { "type": "string", "description": "Container name (for `run`, optional empty string)." },
-                    "args": { "type": "string", "description": "Extra CLI flags for `run`, shell-quoted." }
-                },
-                "required": ["action"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn cron_tools() -> Vec<Tool> {
-        vec![tool(
-            "cron_edit",
-            "Creates, updates, enables/disables or removes a job in the Monitor account's crontab.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "op": { "type": "string", "enum": ["upsert", "remove", "set_enabled"] },
-                    "line_index": { "type": "integer", "minimum": 0, "description": "Job line_index from `cron`; omit on `upsert` to append." },
-                    "schedule": { "type": "string", "description": "5-field cron expression or `@reboot` / `@daily` (for `upsert`)." },
-                    "command": { "type": "string", "description": "Command to schedule (for `upsert`)." },
-                    "enabled": { "type": "boolean", "description": "Whether the job is active (for `upsert` and `set_enabled`)." }
-                },
-                "required": ["op"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn virt_tools() -> Vec<Tool> {
-        vec![tool(
-            "virt_power",
-            "Starts, shuts down, reboots, force-stops, suspends or resumes a VM or LXC guest.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "guest": { "type": "string", "description": "Guest ID from `virt`." },
-                    "action": { "type": "string", "enum": ["start", "shutdown", "reboot", "force_stop", "suspend", "resume"] }
-                },
-                "required": ["guest", "action"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn stacks_tools() -> Vec<Tool> {
-        vec![tool(
-            "stack_action",
-            "Starts, stops, restarts or updates a deployed web app stack.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string", "description": "Stack ID from `stacks`." },
-                    "action": { "type": "string", "enum": ["start", "stop", "restart", "update"] }
-                },
-                "required": ["id", "action"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-
-    fn power_tools() -> Vec<Tool> {
-        vec![tool(
-            "power",
-            "Shuts down, reboots or suspends this machine.",
-            json!({
-                "type": "object",
-                "properties": {
-                    "action": { "type": "string", "enum": ["shutdown", "reboot", "suspend"] }
-                },
-                "required": ["action"],
-                "additionalProperties": false
-            }),
-        )]
-    }
-}
-
 #[async_trait]
 impl Host for TokenHost {
     fn server_info(&self) -> (&'static str, &'static str) {
@@ -427,23 +65,7 @@ impl Host for TokenHost {
     }
 
     fn tools(&self) -> Vec<Tool> {
-        let mut tools = Vec::new();
-        for scope in &self.scopes {
-            match scope {
-                Scope::Read => tools.extend(Self::read_tools()),
-                Scope::FsRead => tools.extend(Self::fs_read_tools()),
-                Scope::FsWrite => tools.extend(Self::fs_write_tools()),
-                Scope::Exec => tools.extend(Self::exec_tools()),
-                Scope::Process => tools.extend(Self::process_tools()),
-                Scope::Service => tools.extend(Self::service_tools()),
-                Scope::Container => tools.extend(Self::container_tools()),
-                Scope::Cron => tools.extend(Self::cron_tools()),
-                Scope::Virt => tools.extend(Self::virt_tools()),
-                Scope::Stacks => tools.extend(Self::stacks_tools()),
-                Scope::Power => tools.extend(Self::power_tools()),
-            }
-        }
-        tools
+        self.scopes.iter().flat_map(|scope| catalog::monitor(*scope)).collect()
     }
 
     async fn call(&self, name: &str, arguments: Value) -> CallToolResult {
@@ -486,35 +108,9 @@ impl Host for TokenHost {
                 };
                 structured(serde_json::to_value(process::table(state, sort, ascending).await).unwrap_or(Value::Null))
             }
-            "services" => {
-                let part: ServicePart = match arguments.get("part") {
-                    None => ServicePart::default(),
-                    Some(v) => match serde_json::from_value(v.clone()) {
-                        Ok(p) => p,
-                        Err(e) => return tool_error(format!("invalid part: {e}")),
-                    },
-                };
-                let key = arguments.get("key").and_then(Value::as_str);
-                structured(serde_json::to_value(service::listing(state, part, key).await).unwrap_or(Value::Null))
-            }
-            "containers" => {
-                let part: ContainerPart = match arguments.get("part") {
-                    None => ContainerPart::default(),
-                    Some(v) => match serde_json::from_value(v.clone()) {
-                        Ok(p) => p,
-                        Err(e) => return tool_error(format!("invalid part: {e}")),
-                    },
-                };
-                let id = arguments.get("id").and_then(Value::as_str);
-                match containers::listing(state, part, id).await {
-                    Ok(resp) => structured(serde_json::to_value(resp).unwrap_or(Value::Null)),
-                    Err(issue) => tool_error(format!("invalid container id: {} ({})", issue, issue.code())),
-                }
-            }
             "cron" => structured(
                 serde_json::to_value(cron::read_crontab(&state.remote_access.exec).await).unwrap_or(Value::Null),
             ),
-            "tmux" => structured(tmux::sessions(state).await),
             "firewall" => {
                 let kind = match arguments.get("kind") {
                     None => None,
@@ -639,20 +235,38 @@ impl Host for TokenHost {
                     Err(e) => tool_error(e),
                 }
             }
-            "run_command" => self.run_command(arguments).await,
-            "kill_process" => self.kill_process(arguments).await,
-            "service_action" => self.service_action(arguments).await,
-            "container_action" => self.container_action(arguments).await,
+            "run_command" => {
+                let max_bytes = state.remote_access.exec.max_request_bytes;
+                let layers = [
+                    ("config.toml [mcp.commands]", &self.config_commands),
+                    ("global MCP policy", &self.global_commands),
+                    ("token command policy", &self.token_commands),
+                ];
+                sbm_mcp::machine::run_command(&self.here(), &arguments, &layers, max_bytes).await
+            }
             "cron_edit" => self.cron_edit(arguments).await,
             "virt_power" => self.virt_power(arguments).await,
             "stack_action" => self.stack_action(arguments).await,
             "power" => self.power(arguments).await,
-            _ => tool_error(format!("unknown tool: {name}")),
+            _ => match sbm_mcp::machine::call(&self.here(), name, &arguments).await {
+                Some(result) => result,
+                None => tool_error(format!("unknown tool: {name}")),
+            },
         }
     }
 }
 
 impl TokenHost {
+    /// This machine, its changes recorded as this token's.
+    fn here(&self) -> Here<'_> {
+        Here {
+            limits: &self.state.remote_access.exec,
+            db: Some(&self.state.db),
+            remote_ip: self.remote_ip.clone(),
+            mcp: Some(McpCommand { token_name: &self.token_name, recorded: &self.audited_before_run }),
+        }
+    }
+
     async fn fs_write(&self, arguments: Value) -> CallToolResult {
         let Some(path) = arguments.get("path").and_then(Value::as_str) else {
             return tool_error("path is required");
@@ -677,122 +291,6 @@ impl TokenHost {
         match fs::mcp_ops::write(&self.state, path, &bytes, if_version, self.remote_ip.clone()).await {
             Ok(v) => structured(v),
             Err(e) => tool_error(e),
-        }
-    }
-
-    async fn run_command(&self, arguments: Value) -> CallToolResult {
-        let Some(command) = arguments.get("command").and_then(Value::as_str) else {
-            return tool_error("command is required");
-        };
-        if command.trim().is_empty() {
-            return tool_error("command must not be empty");
-        }
-        let max_req = self.state.remote_access.exec.max_request_bytes;
-        if command.len() > max_req {
-            return tool_error(format!("command exceeds the {max_req} byte limit"));
-        }
-        for (layer, policy) in [
-            ("config.toml [mcp.commands]", &self.config_commands),
-            ("global MCP policy", &self.global_commands),
-            ("token command policy", &self.token_commands),
-        ] {
-            if let Err(why) = policy.evaluate(command) {
-                return tool_error(format!("refused by {layer}: {why}"));
-            }
-        }
-
-        // Recorded before it runs, with the first line of the command just as
-        // `POST /exec` records it: a command that hangs or reboots the machine
-        // still has to appear in `access_log`.
-        let summary = super::exec::first_line(command);
-        Event::new(Kind::Mcp, Action::Open, Outcome::Ok)
-            .subject(format!("api token '{}'", self.token_name))
-            .remote_ip(self.remote_ip.clone())
-            .detail(format!("tool run_command: {summary}"))
-            .record(&self.state.db)
-            .await;
-        self.audited_before_run.store(true, Ordering::Relaxed);
-
-        match super::exec::run(command, None, None, &self.state.remote_access.exec).await {
-            Ok(out) => structured(json!({
-                "exit_code": out.exit_code,
-                "stdout": out.stdout,
-                "stderr": out.stderr,
-                "truncated": out.truncated,
-                "timed_out": out.timed_out,
-            })),
-            Err(e) => {
-                Event::new(Kind::Mcp, Action::Close, Outcome::Error)
-                    .subject(format!("api token '{}'", self.token_name))
-                    .remote_ip(self.remote_ip.clone())
-                    .detail(format!("tool run_command: {e}"))
-                    .record(&self.state.db)
-                    .await;
-                tool_error(format!("the command could not be run: {e}"))
-            }
-        }
-    }
-
-    async fn kill_process(&self, arguments: Value) -> CallToolResult {
-        #[derive(serde::Deserialize)]
-        struct Args {
-            pid: i64,
-            start_id: String,
-            #[serde(default = "default_term")]
-            signal: sbm_parser::proc::ProcSignal,
-        }
-        fn default_term() -> sbm_parser::proc::ProcSignal {
-            sbm_parser::proc::ProcSignal::Term
-        }
-        let args: Args = match serde_json::from_value(arguments) {
-            Ok(a) => a,
-            Err(e) => return tool_error(format!("invalid arguments: {e}")),
-        };
-        let request = super::process::KillRequest {
-            pid: args.pid,
-            start_id: Some(args.start_id),
-            signal: args.signal,
-            password: None,
-        };
-        match super::process::stop(&self.state, request, self.remote_ip.clone()).await {
-            Ok(response) => structured(serde_json::to_value(response).unwrap_or(Value::Null)),
-            Err(super::process::StopRefused::Unsafe) => tool_error(
-                "this PID cannot be signalled safely: the listing reported no start identity to check it against",
-            ),
-        }
-    }
-
-    async fn service_action(&self, arguments: Value) -> CallToolResult {
-        let mut request: super::service::ServiceActRequest = match serde_json::from_value(arguments) {
-            Ok(r) => r,
-            Err(e) => return tool_error(format!("invalid arguments: {e}")),
-        };
-        request.password = None;
-        match super::service::perform(&self.state, request, self.remote_ip.clone()).await {
-            Ok(response) => structured(serde_json::to_value(response).unwrap_or(Value::Null)),
-            Err(super::service::ServiceRefused::Unsupported) => {
-                tool_error("this machine has no service manager the Monitor talks to")
-            }
-            Err(super::service::ServiceRefused::NoSuchUnit) => {
-                tool_error("no such unit in the current listing")
-            }
-        }
-    }
-
-    async fn container_action(&self, arguments: Value) -> CallToolResult {
-        // Accepts both the flat tagged object (`{ "action": "stop", "id": "…" }`)
-        // and a nested `{ "action": { "action": "stop", "id": "…" } }` envelope.
-        let raw = match arguments.get("action") {
-            Some(inner) if inner.is_object() => inner.clone(),
-            _ => arguments,
-        };
-        let action: sbm_parser::container::ContainerAction = match serde_json::from_value(raw) {
-            Ok(action) => action,
-            Err(e) => return tool_error(format!("invalid action: {e}")),
-        };
-        match super::containers::apply(&self.state, action, self.remote_ip.clone()).await {
-            Ok(response) => structured(response),
-            Err(issue) => tool_error(format!("refused: {} ({})", issue, issue.code())),
         }
     }
 
@@ -874,7 +372,7 @@ impl TokenHost {
 pub async fn method_not_allowed() -> HttpResponse {
     HttpResponse::MethodNotAllowed()
         .header(ALLOW, HeaderValue::from_static("POST"))
-        .json(&json!({ "error": "method_not_allowed" }))
+        .json(&json!({ "error": sbm_mcp::http::METHOD_NOT_ALLOWED.error }))
 }
 
 pub async fn post(
@@ -928,36 +426,16 @@ async fn post_authed(
         return error(StatusCode::FORBIDDEN, "forbidden");
     }
 
-    if let Some(version_hdr) = req.headers().get("mcp-protocol-version") {
-        let Ok(version_str) = version_hdr.to_str() else {
-            return error(StatusCode::BAD_REQUEST, "unsupported_protocol_version");
-        };
-        if !sbm_mcp::speaks_version(version_str.trim()) {
-            return error(StatusCode::BAD_REQUEST, "unsupported_protocol_version");
-        }
+    // A header that is there and cannot be read names no version: refused
+    // rather than read as absent.
+    if req.headers().get("mcp-protocol-version").is_some_and(|v| v.to_str().is_err()) {
+        return error(StatusCode::BAD_REQUEST, "unsupported_protocol_version");
     }
-
-    let accepts_json = req
-        .headers()
-        .get_all(ACCEPT)
-        .filter_map(|v| v.to_str().ok())
-        .any(|a| a.to_ascii_lowercase().contains("application/json"));
-    if !accepts_json {
-        return error(StatusCode::NOT_ACCEPTABLE, "not_acceptable");
-    }
-    let content_type_json = req
-        .headers()
-        .get(CONTENT_TYPE)
-        .and_then(|v| v.to_str().ok())
-        .is_some_and(|c| {
-            c.split(';')
-                .next()
-                .unwrap_or("")
-                .trim()
-                .eq_ignore_ascii_case("application/json")
-        });
-    if !content_type_json {
-        return error(StatusCode::UNSUPPORTED_MEDIA_TYPE, "unsupported_media_type");
+    let header = |name| req.headers().get(name).and_then(|v| v.to_str().ok());
+    let accept: Vec<&str> = req.headers().get_all(ACCEPT).filter_map(|v| v.to_str().ok()).collect();
+    if let Err(refused) = sbm_mcp::http::check_post(header("mcp-protocol-version"), &accept, header(CONTENT_TYPE.as_str()))
+    {
+        return error(StatusCode::from_u16(refused.status).unwrap_or(StatusCode::BAD_REQUEST), refused.error);
     }
 
     let body = match json::collect(&req, &mut payload.0, MAX_BODY).await {
@@ -1002,7 +480,7 @@ async fn post_authed(
         }
     };
     let config_mcp = state.config.get_mcp();
-    let effective_scopes: Vec<Scope> = Scope::ALL
+    let effective_scopes: Vec<Scope> = Scope::MONITOR
         .iter()
         .copied()
         .filter(|&s| {

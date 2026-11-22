@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -9,9 +8,11 @@ import 'package:server_box/core/service/app_mcp.dart';
 import 'package:server_box/core/service/app_mcp_tokens.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -23,7 +24,7 @@ import '../test/helpers/test_db.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('external stdio client runs a local preset through the app', (
+  testWidgets('an external stdio client reaches every server through the app', (
     _,
   ) async {
     await RustLib.init();
@@ -40,16 +41,36 @@ void main() {
     addTearDown(getIt.unregister<ServerStore>);
     addTearDown(getIt.unregister<SettingStore>);
     const port = int.fromEnvironment('MCP_SSH_PORT');
-    const remote = Spi(
+    final directory = await Directory.systemTemp.createTemp('app-mcp-');
+    addTearDown(() => directory.delete(recursive: true));
+    final locked = File('${directory.path}/deferred');
+    if (port != 0) {
+      await locked.writeAsString(
+        generateSshKeyPair([
+          SshKeyAlgorithm.ed25519.name,
+          'fixture',
+          'locked fixture',
+        ])[0],
+      );
+    }
+    final remote = Spi(
       id: 'mcp-ssh-fixture',
       name: 'OpenSSH fixture',
       ssh: SshCredential(
         ip: '127.0.0.1',
         port: port,
         user: 'fixture',
-        identityFiles: [String.fromEnvironment('MCP_SSH_KEY')],
+        identityFiles: [
+          if (port != 0) locked.path,
+          const String.fromEnvironment('MCP_SSH_KEY'),
+        ],
         identityAgent: 'none',
       ),
+    );
+    final onlyLocked = remote.copyWith(
+      id: 'mcp-locked',
+      name: 'Locked fixture',
+      ssh: remote.ssh!.copyWith(identityFiles: [locked.path]),
     );
     final targets = [
       remote,
@@ -65,7 +86,7 @@ void main() {
       ),
     ];
     if (port != 0) {
-      for (final target in targets) {
+      for (final target in [...targets, onlyLocked]) {
         Stores.server.put(target);
       }
     }
@@ -91,19 +112,36 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final directory = await Directory.systemTemp.createTemp('app-mcp-');
-    addTearDown(() => directory.delete(recursive: true));
-    final policy = File('${directory.path}/policy.json');
-    await policy.writeAsString(
-      jsonEncode({
-        'commands': {'probe': 'printf "local-%s" 42'},
-      }),
+    final policy = File('${directory.path}/app-mcp.json');
+    Stores.setting.agentLocalExec.put(true);
+    const probe = 'printf "local-%s" 42';
+    final cert = '${policy.path}.crt';
+    final config = File('${directory.path}/openssl.cnf');
+    await config.writeAsString(
+      '[req]\ndistinguished_name=dn\nx509_extensions=test_cert\nprompt=no\n'
+      '[dn]\nCN=localhost\n[test_cert]\nsubjectAltName=DNS:localhost,IP:127.0.0.1\n'
+      'basicConstraints=critical,CA:TRUE\nkeyUsage=critical,digitalSignature,keyCertSign\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid:always\n',
     );
+    final certificate = await Process.run('openssl', [
+      'req',
+      '-x509',
+      '-newkey',
+      'rsa:2048',
+      '-nodes',
+      '-days',
+      '1',
+      '-config',
+      config.path,
+      '-keyout',
+      '${policy.path}.key',
+      '-out',
+      cert,
+    ]);
+    expect(certificate.exitCode, 0);
     final token = await createMcpToken(policy, 'Fixture');
-    final digest = sha256.convert(utf8.encode(token)).toString();
-    final probe = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
-    final customPort = probe.port;
-    await probe.close();
+    final free = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final customPort = free.port;
+    await free.close();
     await configureAppMcp(
       container,
       enabled: true,
@@ -118,6 +156,7 @@ void main() {
       path: policy.path,
       listen: listen,
     ));
+    final beforeFailedBind = appMcpListener.value;
     final occupied = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     try {
       await expectLater(
@@ -128,7 +167,7 @@ void main() {
         ),
         throwsA(isA<SocketException>()),
       );
-      expect(appMcpListener.value!.address.address, '0.0.0.0');
+      expect(appMcpListener.value, same(beforeFailedBind));
       expect(appMcpListen, listen);
     } finally {
       await occupied.close();
@@ -148,7 +187,10 @@ void main() {
       listen: appMcpListenAt(clientAddress, customPort),
     );
     expect(appMcpListener.value!.address.address, clientAddress.address);
-    final clientHost = clientAddress.address;
+    // The fixture certificate names localhost. Reach the wildcard TLS
+    // listener through that verified name regardless of available interfaces.
+    await configureAppMcp(container, enabled: true, listen: listen);
+    const clientHost = '127.0.0.1';
 
     final client = await Process.start(
       'python3',
@@ -162,6 +204,8 @@ void main() {
         'SERVERBOX_MCP_TOKEN': token,
         'SERVERBOX_MCP_PORT': '$customPort',
         'SERVERBOX_MCP_HOST': clientHost,
+        'SERVERBOX_MCP_SCHEME': 'https',
+        'SSL_CERT_FILE': cert,
       },
     );
     addTearDown(client.kill);
@@ -191,102 +235,92 @@ void main() {
       'capabilities': {},
       'clientInfo': {'name': 'e2e', 'version': '1'},
     });
-    expect(init['result']['serverInfo']['name'], 'ServerBox');
+    expect(init['error'], isNull);
+    expect(init['result']['serverInfo']['name'], 'serverbox');
     client.stdin.writeln(
       jsonEncode({'jsonrpc': '2.0', 'method': 'notifications/initialized'}),
     );
     final tools = await send('tools/list', {});
     expect(
       (tools['result']['tools'] as List).map((tool) => tool['name']),
-      contains('run_command'),
+      containsAll(['run_command', 'processes', 'services', 'app_setting_set']),
     );
-    final listed = await send('tools/call', {'name': 'list'});
+    Future<Map> call(String name, Map arguments) async =>
+        (await send('tools/call', {'name': name, 'arguments': arguments}))['result']
+            as Map;
     final hosts =
-        jsonDecode(listed['result']['content'][0]['text'])['hosts'] as List;
-    if (monitorPort != 0) {
-      final monitor = hosts.singleWhere(
-        (row) => row['name'] == 'Monitor fixture',
-      );
-      final reply = await send('tools/call', {
-        'name': 'run_command',
-        'arguments': {'host': monitor['id'], 'preset': 'probe'},
-      });
-      expect(
-        reply['result']['isError'],
-        isNull,
-        reason: reply['result']['content'][0]['text'],
-      );
-      expect(
-        jsonDecode(reply['result']['content'][0]['text'])['stdout'],
-        'local-42',
-      );
+        (await call('list', {}))['structuredContent']['hosts'] as List;
+    Map row(String name) => hosts.singleWhere((r) => r['name'] == name) as Map;
+    void ranProbe(Map result, String reason) {
+      expect(result['isError'], false, reason: '$reason: $result');
+      expect(result['structuredContent']['stdout'], 'local-42', reason: reason);
+      expect(result['structuredContent']['exit_code'], 0, reason: reason);
     }
-    final host = hosts.singleWhere((row) => row['id'] == '#local');
+
+    if (monitorPort != 0) {
+      final monitor = row('Monitor fixture')['id'];
+      ranProbe(
+        await call('run_command', {'host': monitor, 'command': probe}),
+        'monitor',
+      );
+      final listing = await call('processes', {'host': monitor});
+      expect(listing['structuredContent']['available'], true);
+    }
     if (port != 0) {
-      final row = hosts.singleWhere((row) => row['name'] == remote.name);
-      expect(row['online'], false);
-      final call = {
-        'name': 'run_command',
-        'arguments': {'host': row['id'], 'preset': 'probe'},
-      };
-      final refused = await send('tools/call', call);
-      expect(refused['result']['isError'], true);
-      expect(refused['result']['content'][0]['text'], contains('in ServerBox'));
+      final refused = await call('run_command', {
+        'host': row(remote.name)['id'],
+        'command': probe,
+      });
+      // The host key is unknown: a question for the person, and no connection.
+      expect(refused['isError'], true);
       expect(container.read(serverProvider(remote.id)).client, isNull);
       expect(Stores.setting.sshKnownHostFingerprints.fetch(), isEmpty);
       Stores.setting.sshKnownHostFingerprints.putSync({
-        for (final target in targets)
+        for (final target in [...targets, onlyLocked])
           hostKeyStorageKey(target, 'ssh-ed25519'):
               const String.fromEnvironment('MCP_SSH_HOST_FINGERPRINT'),
       });
+      // A key that needs its passphrase is a question for the person, and
+      // asking it is not a failed attempt: however often it is asked, the
+      // person can still connect.
+      for (var i = 0; i <= Stores.setting.maxRetryCount.fetch(); i++) {
+        final needsUnlock = await call('run_command', {
+          'host': row(onlyLocked.name)['id'],
+          'command': probe,
+        });
+        expect(needsUnlock['isError'], true);
+      }
+      expect(TryLimiter.canTry('${onlyLocked.id}#shell'), true);
       for (final target in targets) {
-        final targetRow = hosts.singleWhere((r) => r['name'] == target.name);
-        expect(targetRow['online'], false);
-        final reply = await send('tools/call', {
-          'name': 'run_command',
-          'arguments': {'host': targetRow['id'], 'preset': 'probe'},
-        });
-        expect(reply['result']['isError'], isNull, reason: target.name);
-        expect(jsonDecode(reply['result']['content'][0]['text']), {
-          'stdout': 'local-42',
-          'stderr': '',
-          'exitCode': 0,
-        });
+        final id = row(target.name)['id'];
+        expect(row(target.name)['online'], false);
+        ranProbe(await call('run_command', {'host': id, 'command': probe}), target.name);
         expect(
           container.read(serverProvider(target.id)).client?.isClosed,
           false,
         );
       }
+      final id = row(remote.name)['id'];
+      final caps = await call('machine_capabilities', {'host': id});
+      expect(caps['structuredContent']['platform'], 'linux');
+      for (final name in ['processes', 'services', 'containers', 'tmux']) {
+        final reading = await call(name, {'host': id});
+        expect(reading['isError'], false, reason: '$name: $reading');
+      }
     }
-    final args = {
-      'name': 'run_command',
-      'arguments': {'host': host['id'], 'preset': 'probe'},
-    };
-    for (final name in [
-      'machine_status',
-      'machine_metrics',
-      'cpu',
-      'network',
-      'disk_io',
-      'storage',
-      'processes',
-    ]) {
-      final inspection = await send('tools/call', {
-        'name': name,
-        'arguments': {'host': host['id']},
-      });
-      expect(inspection['result']['isError'], isNull, reason: name);
-      final output = jsonDecode(inspection['result']['content'][0]['text']);
-      expect(output['stdout'], isNotEmpty, reason: name);
+    final local = hosts.singleWhere(
+      (r) => (r['transports'] as List).contains('local'),
+    )['id'];
+    final args = {'host': local, 'command': probe};
+    for (final name in ['services', 'containers', 'tmux']) {
+      final reading = await call(name, {'host': local});
+      expect(reading['isError'], false, reason: '$name: $reading');
     }
-    final changed = await send('tools/call', {
-      'name': 'app_setting_set',
-      'arguments': {'key': 'editorSoftWrap', 'value': true},
+    final changed = await call('app_setting_set', {
+      'key': 'editorSoftWrap',
+      'value': true,
     });
-    expect(
-      jsonDecode(changed['result']['content'][0]['text'])['editorSoftWrap'],
-      true,
-    );
+    expect(changed['structuredContent']['editorSoftWrap'], true);
     expect(Stores.setting.editorSoftWrap.fetch(), true);
     final edits = <String, Object>{
       'editorFontSize': 15.5,
@@ -300,38 +334,21 @@ void main() {
       'distNameMap': {'arch': 'archlinux'},
     };
     for (final entry in edits.entries) {
-      final reply = await send('tools/call', {
-        'name': 'app_setting_set',
-        'arguments': {'key': entry.key, 'value': entry.value},
+      final reply = await call('app_setting_set', {
+        'key': entry.key,
+        'value': entry.value,
       });
-      expect(
-        jsonDecode(reply['result']['content'][0]['text'])[entry.key],
-        entry.value,
-      );
+      expect(reply['structuredContent'][entry.key], entry.value);
     }
-    final keybinding = await send('tools/call', {
-      'name': 'app_setting_set',
-      'arguments': {
-        'key': 'keybindings',
-        'value': {'settings.search': 'Ctrl+Shift+F'},
-      },
+    final keybinding = await call('app_setting_set', {
+      'key': 'keybindings',
+      'value': {'settings.search': 'Ctrl+Shift+F'},
     });
     expect(
-      jsonDecode(
-        keybinding['result']['content'][0]['text'],
-      )['keybindings']['settings.search'],
+      keybinding['structuredContent']['keybindings']['settings.search'],
       'Ctrl+Shift+F',
     );
-    final detail = await send('tools/call', {
-      'name': 'process_detail',
-      'arguments': {'host': host['id'], 'pid': pid},
-    });
-    expect(detail['result']['isError'], isNull);
-    final reread = await send('tools/call', {
-      'name': 'app_settings',
-      'arguments': {},
-    });
-    final values = jsonDecode(reread['result']['content'][0]['text']);
+    final values = (await call('app_settings', {}))['structuredContent'];
     for (final entry in edits.entries) {
       expect(values[entry.key], entry.value);
     }
@@ -350,22 +367,15 @@ void main() {
         'value': {'arch': 42},
       },
     ]) {
-      expect(
-        (await send('tools/call', {
-          'name': 'app_setting_set',
-          'arguments': bad,
-        }))['error']['code'],
-        -32602,
-      );
+      expect((await call('app_setting_set', bad))['isError'], true);
     }
-    final run = await send('tools/call', args);
-    expect(jsonDecode(run['result']['content'][0]['text']), {
-      'stdout': 'local-42',
-      'stderr': '',
-      'exitCode': 0,
-    });
-    await revokeMcpToken(policy, digest);
-    expect((await send('tools/call', args))['error'], isNotNull);
+    ranProbe(await call('run_command', args), 'this device');
+    final fixture = (await loadMcpRegistry(policy)).tokens.single;
+    await revokeMcpToken(policy, fixture.id);
+    expect(
+      (await send('tools/call', {'name': 'run_command', 'arguments': args}))['error'],
+      isNotNull,
+    );
     await client.stdin.close();
     expect(await client.exitCode, 0);
   }, skip: !Platform.isMacOS && !Platform.isLinux);

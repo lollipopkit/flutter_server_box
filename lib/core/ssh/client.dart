@@ -478,15 +478,32 @@ Future<SSHClient> _clientWith({
   // handed to another isolate, which is why the transfer path can reach this
   // line with no screen to ask on.
   final openedKeys = <String>[];
+  var deferredIdentity = false;
   for (final entry in keyMaterial.entries) {
-    openedKeys.add(
-      await PrivateKeyUnlock.open(
+    try {
+      openedKeys.add(await PrivateKeyUnlock.open(
         entry.value,
         unattended: unattended,
         cacheKey: entry.key,
         keyName: privateKeyDisplayName(entry.key),
-      ),
-    );
+      ));
+    } on SshInteractionRequired {
+      deferredIdentity = true;
+    }
+  }
+
+  Future<SSHClient> finish(SSHClient client) async {
+    if (!deferredIdentity) return client;
+    try {
+      await client.authenticated;
+      return client;
+    } on SSHAuthError {
+      client.close();
+      throw SshInteractionRequired();
+    } catch (_) {
+      client.close();
+      rethrow;
+    }
   }
   final List<SSHKeyPair> identities;
   try {
@@ -495,14 +512,14 @@ Future<SSHClient> _clientWith({
     identities = await identitiesOf(openedKeys);
   } catch (e, s) {
     // As a key that cannot be read, above: another way in goes on.
-    if (ssh.pwd?.isNotEmpty == true || agent != null) {
+    if (ssh.pwd?.isNotEmpty == true || agent != null || deferredIdentity) {
       Loggers.app.warning(
         'SSH key for ${spi.name} does not parse; going on with '
         '${agent == null ? 'the password' : 'the agent\'s keys'}',
         e,
         s,
       );
-      return passwordClient();
+      return finish(passwordClient());
     }
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
@@ -516,7 +533,7 @@ Future<SSHClient> _clientWith({
       ),
     );
   }
-  return SSHClient(
+  return finish(SSHClient(
     socket,
     // The same fallback user the password branch above uses. Key auth read
     // `ssh.user` regardless, so a server reached through its `alterUrl` — which
@@ -539,7 +556,7 @@ Future<SSHClient> _clientWith({
     ),
     handshakeTimeout: timeout,
     authTimeout: timeout,
-  );
+  ));
 }
 
 List<Spi> _resolveJumpCandidates({

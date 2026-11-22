@@ -8,160 +8,16 @@
 //! The token itself is never here: a row holds its BLAKE3 digest, looked up on
 //! every use.
 
-use fl_pi_llm::permissions::rules::{CommandRules, RuleVerdict};
-use serde::{Deserialize, Serialize};
 use sqlx::{Row, SqlitePool};
 
 use crate::utils::error::Result;
 
-/// The prefix every API token starts with, so a credential pasted somewhere
-/// says what it is — the same idea as `sbw_` on a watch token.
-pub const PREFIX: &str = "sbt_";
+pub use sbm_mcp::access::{CommandMode, CommandPolicy, Scope};
+pub use sbm_mcp::token::{PREFIX, hash};
 
 /// Stored in `api_tokens.scopes` when a token holds every scope, including any
 /// scope a newer build adds.
 const ALL_MARKER: &str = "*";
-
-/// What an MCP client may do, split fine enough that a token can read without
-/// writing, manage containers without touching services, or run everything
-/// except `power`.
-///
-/// There is no scope for managing these tokens or the account itself: a
-/// credential that could mint credentials would outlive its own revocation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Scope {
-    /// Machine readings and listings: status, metrics, capabilities, processes,
-    /// services, containers, cron, tmux, firewall, storage, virt, stacks, users.
-    Read,
-    /// Reading files and directory listings (`fs_roots`, `fs_list`, `fs_stat`, `fs_read`).
-    FsRead,
-    /// Writing, creating, moving, chmodding and removing files (`fs_*`).
-    FsWrite,
-    /// Running shell commands (`run_command`), subject to [`CommandPolicy`].
-    Exec,
-    /// Signalling processes (`kill_process`).
-    Process,
-    /// Starting, stopping, restarting, enabling or disabling services (`service_action`).
-    Service,
-    /// Managing containers and images (`container_action`).
-    Container,
-    /// Editing scheduled tasks (`cron_edit`).
-    Cron,
-    /// Controlling virtual machines and LXC containers (`virt_power`).
-    Virt,
-    /// Controlling deployed web apps (`stack_action`).
-    Stacks,
-    /// Shutting down, rebooting or suspending this machine (`power`).
-    Power,
-}
-
-impl Scope {
-    pub const ALL: &'static [Scope] = &[
-        Scope::Read,
-        Scope::FsRead,
-        Scope::FsWrite,
-        Scope::Exec,
-        Scope::Process,
-        Scope::Service,
-        Scope::Container,
-        Scope::Cron,
-        Scope::Virt,
-        Scope::Stacks,
-        Scope::Power,
-    ];
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Scope::Read => "read",
-            Scope::FsRead => "fs_read",
-            Scope::FsWrite => "fs_write",
-            Scope::Exec => "exec",
-            Scope::Process => "process",
-            Scope::Service => "service",
-            Scope::Container => "container",
-            Scope::Cron => "cron",
-            Scope::Virt => "virt",
-            Scope::Stacks => "stacks",
-            Scope::Power => "power",
-        }
-    }
-
-    pub fn parse(s: &str) -> Option<Self> {
-        Self::ALL.iter().copied().find(|sc| sc.as_str() == s)
-    }
-}
-
-/// How [`CommandPolicy`] treats commands that no rule names.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum CommandMode {
-    /// Default: every command runs unless a `deny` (or `ask`) rule matches it.
-    #[default]
-    AllowAll,
-    /// Only commands whose every part is covered by `allow` (and none by
-    /// `deny` or `ask`) may run.
-    Allowlist,
-}
-
-impl CommandMode {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::AllowAll => "allow_all",
-            Self::Allowlist => "allowlist",
-        }
-    }
-
-    pub fn parse(s: &str) -> Self {
-        match s {
-            "allowlist" => Self::Allowlist,
-            _ => Self::AllowAll,
-        }
-    }
-}
-
-/// Rules on `run_command`, shared by `config.toml` (`[mcp.commands]`), the
-/// stored global policy (`mcp_policy`), and each token (`api_tokens`).
-///
-/// Pattern syntax and matching come from [`fl_pi_llm::permissions::rules`].
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CommandPolicy {
-    #[serde(default)]
-    pub mode: CommandMode,
-    #[serde(default)]
-    pub allow: Vec<String>,
-    #[serde(default)]
-    pub deny: Vec<String>,
-}
-
-impl CommandPolicy {
-    pub fn validate(&self) -> std::result::Result<(), String> {
-        CommandRules {
-            allow: self.allow.clone(),
-            ask: Vec::new(),
-            deny: self.deny.clone(),
-        }
-        .check()
-    }
-
-    /// Whether [command] may run under this policy, or why it was refused.
-    pub fn evaluate(&self, command: &str) -> std::result::Result<(), String> {
-        let rules = CommandRules {
-            allow: self.allow.clone(),
-            ask: Vec::new(),
-            deny: self.deny.clone(),
-        };
-        match rules.verdict(command) {
-            RuleVerdict::Deny(rule) => Err(format!("refused by deny rule `{rule}`")),
-            RuleVerdict::Ask(rule) => Err(format!("refused by ask rule `{rule}`")),
-            RuleVerdict::Allow(_) => Ok(()),
-            RuleVerdict::None => match self.mode {
-                CommandMode::AllowAll => Ok(()),
-                CommandMode::Allowlist => Err("not covered by allow rules".into()),
-            },
-        }
-    }
-}
 
 /// The global MCP ceiling stored in `mcp_policy`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,7 +29,7 @@ pub struct McpPolicy {
 impl Default for McpPolicy {
     fn default() -> Self {
         Self {
-            scopes: Scope::ALL.to_vec(),
+            scopes: Scope::MONITOR.to_vec(),
             commands: CommandPolicy::default(),
         }
     }
@@ -230,11 +86,11 @@ fn row_token(row: &sqlx::sqlite::SqliteRow) -> Token {
 pub fn parse_scopes(raw: &str) -> Vec<Scope> {
     let trimmed = raw.trim();
     if trimmed == ALL_MARKER {
-        return Scope::ALL.to_vec();
+        return Scope::MONITOR.to_vec();
     }
     let mut out = Vec::new();
     for part in trimmed.split(',') {
-        if let Some(s) = Scope::parse(part.trim())
+        if let Some(s) = Scope::parse(Scope::MONITOR, part.trim())
             && !out.contains(&s)
         {
             out.push(s);
@@ -244,10 +100,10 @@ pub fn parse_scopes(raw: &str) -> Vec<Scope> {
 }
 
 fn scopes_value(scopes: &[Scope]) -> String {
-    if Scope::ALL.iter().all(|s| scopes.contains(s)) {
+    if Scope::MONITOR.iter().all(|s| scopes.contains(s)) {
         return ALL_MARKER.to_string();
     }
-    Scope::ALL
+    Scope::MONITOR
         .iter()
         .copied()
         .filter(|s| scopes.contains(s))
@@ -257,7 +113,7 @@ fn scopes_value(scopes: &[Scope]) -> String {
 }
 
 fn disabled_scopes_value(enabled: &[Scope]) -> String {
-    Scope::ALL
+    Scope::MONITOR
         .iter()
         .copied()
         .filter(|s| !enabled.contains(s))
@@ -275,8 +131,8 @@ pub async fn load_policy(pool: &SqlitePool) -> Result<McpPolicy> {
     .await?;
     Ok(match row {
         Some((disabled, mode, allow, deny)) => {
-            let off: Vec<Scope> = disabled.split(',').filter_map(|s| Scope::parse(s.trim())).collect();
-            let scopes = Scope::ALL
+            let off: Vec<Scope> = disabled.split(',').filter_map(|s| Scope::parse(Scope::MONITOR, s.trim())).collect();
+            let scopes = Scope::MONITOR
                 .iter()
                 .copied()
                 .filter(|s| !off.contains(s))
@@ -463,10 +319,6 @@ pub async fn revoke(pool: &SqlitePool, id: i64) -> Result<bool> {
     Ok(done.rows_affected() == 1)
 }
 
-/// BLAKE3 hex digest of a token.
-pub fn hash(token: &str) -> String {
-    blake3::hash(token.as_bytes()).to_hex().to_string()
-}
 
 #[cfg(test)]
 mod tests {
@@ -480,8 +332,8 @@ mod tests {
 
     #[test]
     fn scopes_round_trip_and_wildcard_expands() {
-        assert_eq!(parse_scopes("*"), Scope::ALL);
-        assert_eq!(scopes_value(Scope::ALL), "*");
+        assert_eq!(parse_scopes("*"), Scope::MONITOR);
+        assert_eq!(scopes_value(Scope::MONITOR), "*");
         assert_eq!(parse_scopes("read,exec"), vec![Scope::Read, Scope::Exec]);
         assert_eq!(parse_scopes("read,retired"), vec![Scope::Read]);
         assert!(parse_scopes("").is_empty());
@@ -522,7 +374,7 @@ mod tests {
             &pool,
             "ci",
             &digest,
-            Scope::ALL,
+            Scope::MONITOR,
             &CommandPolicy::default(),
             "9999-12-31 00:00:00",
         )
@@ -541,7 +393,7 @@ mod tests {
 
         let found = find(&pool, &digest).await.unwrap().expect("there");
         assert_eq!(found.name, "ci");
-        assert_eq!(found.scopes, Scope::ALL);
+        assert_eq!(found.scopes, Scope::MONITOR);
         assert!(!found.expired);
         assert!(find(&pool, &hash("sbt_old")).await.unwrap().is_none());
 

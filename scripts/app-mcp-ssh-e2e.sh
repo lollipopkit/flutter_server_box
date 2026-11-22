@@ -7,7 +7,7 @@ fixture=
 monitor_pid=
 cleanup() {
   if [[ -n "$monitor_pid" ]]; then kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" || true; fi
-  if [[ -n "$fixture" ]]; then docker rm -f "$fixture" >/dev/null; fi
+  if [[ -n "$fixture" ]]; then docker rm -f "$fixture" >/dev/null || true; fi
   rm -rf -- "$work"
 }
 trap cleanup EXIT

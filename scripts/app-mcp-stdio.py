@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Connect a newline-delimited MCP stdio client to the running desktop app."""
 import http.client
+import ipaddress
 import json
 import locale
 import os
+import ssl
 import sys
 
 
@@ -50,6 +52,23 @@ def main():
             raise ValueError
     except ValueError:
         sys.exit("SERVERBOX_MCP_PORT: 1–65535")
+    # A local tunnel terminates at a loopback address. Never infer that a
+    # private IP or a hostname resolving to loopback is an encrypted route.
+    try:
+        loopback = ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        loopback = host.lower() == "localhost"
+    scheme = os.environ.get("SERVERBOX_MCP_SCHEME", "http" if loopback else "https")
+    options = {}
+    if scheme == "https":
+        options["context"] = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE"))
+        connection_type = http.client.HTTPSConnection
+    elif scheme == "http" and loopback:
+        connection_type = http.client.HTTPConnection
+        if host.lower() == "localhost":
+            host = "127.0.0.1"
+    else:
+        sys.exit(connection_error)
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -57,7 +76,7 @@ def main():
     }
     for line in sys.stdin.buffer:
         message = {}
-        connection = http.client.HTTPConnection(host, port, timeout=55)
+        connection = connection_type(host, port, timeout=55, **options)
         try:
             message = json.loads(line)
             connection.request("POST", "/mcp", line, headers)

@@ -3612,12 +3612,6 @@ abstract class AppLocalizations {
   /// **'API keys, models, and the model a new chat uses'**
   String get agentProvidersTip;
 
-  /// Agent: agentTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Tools'**
-  String get agentTools;
-
   /// Agent: agentToolsTip.
   ///
   /// In en, this message translates to:
@@ -12677,12 +12671,6 @@ abstract class AppLocalizations {
   /// **'MCP Server'**
   String get appMcpServer;
 
-  /// No description provided for @appMcpServerTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Let external agents control ServerBox content through MCP.'**
-  String get appMcpServerTip;
-
   /// No description provided for @appMcpClient.
   ///
   /// In en, this message translates to:
@@ -12700,12 +12688,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid MCP token registry.'**
   String get appMcpRegistry;
-
-  /// No description provided for @appMcpDigest.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid token digest.'**
-  String get appMcpDigest;
 
   /// No description provided for @appMcpName.
   ///
@@ -12725,12 +12707,6 @@ abstract class AppLocalizations {
   /// **'Could not protect the token registry.'**
   String get appMcpProtect;
 
-  /// No description provided for @appMcpChanged.
-  ///
-  /// In en, this message translates to:
-  /// **'The token registry changed. Please retry.'**
-  String get appMcpChanged;
-
   /// No description provided for @appMcpListenBusy.
   ///
   /// In en, this message translates to:
@@ -12742,240 +12718,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter an IP address and port, e.g. 0.0.0.0:49762 or [::]:49762.'**
   String get appMcpInvalidAddress;
-
-  /// No description provided for @appMcpStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Read uptime and load.'**
-  String get appMcpStatus;
-
-  /// No description provided for @appMcpMemory.
-  ///
-  /// In en, this message translates to:
-  /// **'Read memory statistics.'**
-  String get appMcpMemory;
-
-  /// No description provided for @appMcpCpu.
-  ///
-  /// In en, this message translates to:
-  /// **'Read CPU counters or load.'**
-  String get appMcpCpu;
-
-  /// No description provided for @appMcpNetwork.
-  ///
-  /// In en, this message translates to:
-  /// **'Read interface traffic counters.'**
-  String get appMcpNetwork;
-
-  /// No description provided for @appMcpDisk.
-  ///
-  /// In en, this message translates to:
-  /// **'Read disk I/O counters.'**
-  String get appMcpDisk;
-
-  /// No description provided for @appMcpImages.
-  ///
-  /// In en, this message translates to:
-  /// **'List Docker image IDs, tags and sizes.'**
-  String get appMcpImages;
-
-  /// No description provided for @appMcpStorage.
-  ///
-  /// In en, this message translates to:
-  /// **'List mounted filesystems and capacity.'**
-  String get appMcpStorage;
-
-  /// No description provided for @appMcpProcesses.
-  ///
-  /// In en, this message translates to:
-  /// **'List process IDs and executable names.'**
-  String get appMcpProcesses;
-
-  /// No description provided for @appMcpServices.
-  ///
-  /// In en, this message translates to:
-  /// **'List system services.'**
-  String get appMcpServices;
-
-  /// No description provided for @appMcpContainers.
-  ///
-  /// In en, this message translates to:
-  /// **'List running and stopped Docker containers.'**
-  String get appMcpContainers;
-
-  /// No description provided for @appMcpTmux.
-  ///
-  /// In en, this message translates to:
-  /// **'List tmux sessions.'**
-  String get appMcpTmux;
-
-  /// No description provided for @appMcpList.
-  ///
-  /// In en, this message translates to:
-  /// **'List available hosts and named presets.'**
-  String get appMcpList;
-
-  /// No description provided for @appMcpCapabilities.
-  ///
-  /// In en, this message translates to:
-  /// **'List host transports and supported inspections.'**
-  String get appMcpCapabilities;
-
-  /// No description provided for @appMcpPreferences.
-  ///
-  /// In en, this message translates to:
-  /// **'Read editable ServerBox preferences.'**
-  String get appMcpPreferences;
-
-  /// No description provided for @appMcpSet.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a ServerBox preference using its JSON schema.'**
-  String get appMcpSet;
-
-  /// No description provided for @appMcpShortcut.
-  ///
-  /// In en, this message translates to:
-  /// **'Set one shortcut. An empty chord removes the binding.'**
-  String get appMcpShortcut;
-
-  /// No description provided for @appMcpContainerLogs.
-  ///
-  /// In en, this message translates to:
-  /// **'Read the last 100 container log lines.'**
-  String get appMcpContainerLogs;
-
-  /// No description provided for @appMcpContainerStats.
-  ///
-  /// In en, this message translates to:
-  /// **'Read a snapshot of container resource usage.'**
-  String get appMcpContainerStats;
-
-  /// No description provided for @appMcpContainerAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Start, stop or restart a container by Docker ID.'**
-  String get appMcpContainerAction;
-
-  /// No description provided for @appMcpServiceLogs.
-  ///
-  /// In en, this message translates to:
-  /// **'Read the last 100 journal entries for a systemd service.'**
-  String get appMcpServiceLogs;
-
-  /// No description provided for @appMcpServiceAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Start, stop or restart a systemd service.'**
-  String get appMcpServiceAction;
-
-  /// No description provided for @appMcpProcessDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Read CPU and memory use for one process.'**
-  String get appMcpProcessDetail;
-
-  /// No description provided for @appMcpImageRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove a Docker image by its full ID.'**
-  String get appMcpImageRemove;
-
-  /// No description provided for @appMcpImageInspect.
-  ///
-  /// In en, this message translates to:
-  /// **'Read Docker image size and architecture.'**
-  String get appMcpImageInspect;
-
-  /// No description provided for @appMcpRun.
-  ///
-  /// In en, this message translates to:
-  /// **'Run a named command preset on a host.'**
-  String get appMcpRun;
-
-  /// No description provided for @appMcpRequest.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid request.'**
-  String get appMcpRequest;
-
-  /// No description provided for @appMcpParams.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid parameters.'**
-  String get appMcpParams;
-
-  /// No description provided for @appMcpMethod.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown method.'**
-  String get appMcpMethod;
-
-  /// No description provided for @appMcpTool.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown tool or invalid arguments.'**
-  String get appMcpTool;
-
-  /// No description provided for @appMcpHost.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown host.'**
-  String get appMcpHost;
-
-  /// No description provided for @appMcpSystemd.
-  ///
-  /// In en, this message translates to:
-  /// **'Requires systemd on Linux.'**
-  String get appMcpSystemd;
-
-  /// No description provided for @appMcpPreset.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown preset or unsupported inspection.'**
-  String get appMcpPreset;
-
-  /// No description provided for @appMcpLocalUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Local execution is unavailable.'**
-  String get appMcpLocalUnavailable;
-
-  /// No description provided for @appMcpCommandFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'The command failed, timed out or exceeded the output limit.'**
-  String get appMcpCommandFailed;
-
-  /// No description provided for @appMcpHostChanged.
-  ///
-  /// In en, this message translates to:
-  /// **'The host configuration changed.'**
-  String get appMcpHostChanged;
-
-  /// No description provided for @appMcpOutput.
-  ///
-  /// In en, this message translates to:
-  /// **'Command output exceeded the limit.'**
-  String get appMcpOutput;
-
-  /// No description provided for @appMcpTransport.
-  ///
-  /// In en, this message translates to:
-  /// **'Unsupported transport.'**
-  String get appMcpTransport;
-
-  /// No description provided for @appMcpFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to this host in ServerBox first.'**
-  String get appMcpFirst;
-
-  /// No description provided for @appMcpMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'Monitor request failed ({reason}).'**
-  String appMcpMonitor(String reason);
 }
 
 class _AppLocalizationsDelegate

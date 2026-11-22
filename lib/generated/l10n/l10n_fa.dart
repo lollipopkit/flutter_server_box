@@ -2067,9 +2067,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'کلیدهای API، مدل‌ها و مدلی که گفتگوی جدید استفاده می‌کند';
 
   @override
-  String get agentTools => 'ابزارها';
-
-  @override
   String get agentToolsTip =>
       'آنچه Agent می‌تواند استفاده کند و سرورهای MCP آن';
 
@@ -7470,10 +7467,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appMcpServer => 'سرور MCP';
 
   @override
-  String get appMcpServerTip =>
-      'به عامل‌های خارجی اجازه دهید محتوای ServerBox را از طریق MCP کنترل کنند.';
-
-  @override
   String get appMcpClient => 'ابزارها و کلاینت MCP';
 
   @override
@@ -7481,9 +7474,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get appMcpRegistry => 'فهرست توکن‌های MCP نامعتبر است.';
-
-  @override
-  String get appMcpDigest => 'هش توکن نامعتبر است.';
 
   @override
   String get appMcpName => 'نام توکن را وارد کنید.';
@@ -7495,143 +7485,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appMcpProtect => 'محافظت از فایل توکن‌ها ممکن نشد.';
 
   @override
-  String get appMcpChanged => 'فایل توکن‌ها تغییر کرده است. دوباره تلاش کنید.';
-
-  @override
   String get appMcpListenBusy => 'وضعیت سرور MCP در حال تغییر است.';
 
   @override
   String get appMcpInvalidAddress =>
       'نشانی IP و درگاه را وارد کنید، برای مثال 0.0.0.0:49762 یا [::]:49762.';
-
-  @override
-  String get appMcpStatus => 'زمان کارکرد و بار سیستم را بخوانید.';
-
-  @override
-  String get appMcpMemory => 'آمار حافظه را بخوانید.';
-
-  @override
-  String get appMcpCpu => 'شمارنده‌های پردازنده یا بار سیستم را بخوانید.';
-
-  @override
-  String get appMcpNetwork => 'شمارنده‌های ترافیک رابط‌های شبکه را بخوانید.';
-
-  @override
-  String get appMcpDisk => 'شمارنده‌های ورودی و خروجی دیسک را بخوانید.';
-
-  @override
-  String get appMcpImages =>
-      'شناسه، برچسب و اندازهٔ ایمیج‌های Docker را فهرست کنید.';
-
-  @override
-  String get appMcpStorage => 'فایل‌سیستم‌های متصل و ظرفیتشان را فهرست کنید.';
-
-  @override
-  String get appMcpProcesses =>
-      'شناسهٔ فرایندها و نام فایل‌های اجرایی را فهرست کنید.';
-
-  @override
-  String get appMcpServices => 'سرویس‌های سیستم را فهرست کنید.';
-
-  @override
-  String get appMcpContainers =>
-      'کانتینرهای فعال و متوقف Docker را فهرست کنید.';
-
-  @override
-  String get appMcpTmux => 'نشست‌های tmux را فهرست کنید.';
-
-  @override
-  String get appMcpList =>
-      'میزبان‌های در دسترس و فرمان‌های از پیش تعریف‌شده را فهرست کنید.';
-
-  @override
-  String get appMcpCapabilities =>
-      'روش‌های اتصال و بررسی‌های پشتیبانی‌شدهٔ میزبان را فهرست کنید.';
-
-  @override
-  String get appMcpPreferences => 'تنظیمات قابل تغییر ServerBox را بخوانید.';
-
-  @override
-  String get appMcpSet => 'یک تنظیم ServerBox را مطابق شِمای JSON تغییر دهید.';
-
-  @override
-  String get appMcpShortcut =>
-      'یک میان‌بر تعیین کنید. رشتهٔ خالی تخصیص آن را حذف می‌کند.';
-
-  @override
-  String get appMcpContainerLogs => '۱۰۰ خط آخر گزارش کانتینر را بخوانید.';
-
-  @override
-  String get appMcpContainerStats => 'مصرف فعلی منابع کانتینر را بخوانید.';
-
-  @override
-  String get appMcpContainerAction =>
-      'کانتینر را با شناسهٔ Docker اجرا، متوقف یا راه‌اندازی مجدد کنید.';
-
-  @override
-  String get appMcpServiceLogs =>
-      '۱۰۰ رکورد آخر گزارش سرویس systemd را بخوانید.';
-
-  @override
-  String get appMcpServiceAction =>
-      'سرویس systemd را اجرا، متوقف یا راه‌اندازی مجدد کنید.';
-
-  @override
-  String get appMcpProcessDetail =>
-      'مصرف پردازنده و حافظهٔ یک فرایند را بخوانید.';
-
-  @override
-  String get appMcpImageRemove => 'ایمیج Docker را با شناسهٔ کامل حذف کنید.';
-
-  @override
-  String get appMcpImageInspect => 'اندازه و معماری ایمیج Docker را بخوانید.';
-
-  @override
-  String get appMcpRun => 'فرمان از پیش تعریف‌شده‌ای را روی میزبان اجرا کنید.';
-
-  @override
-  String get appMcpRequest => 'درخواست نامعتبر است.';
-
-  @override
-  String get appMcpParams => 'پارامترها نامعتبرند.';
-
-  @override
-  String get appMcpMethod => 'روش ناشناخته است.';
-
-  @override
-  String get appMcpTool => 'ابزار ناشناخته است یا آرگومان‌ها نامعتبرند.';
-
-  @override
-  String get appMcpHost => 'میزبان ناشناخته است.';
-
-  @override
-  String get appMcpSystemd => 'به systemd روی لینوکس نیاز است.';
-
-  @override
-  String get appMcpPreset =>
-      'فرمان از پیش تعریف‌شده ناشناخته است یا این بررسی پشتیبانی نمی‌شود.';
-
-  @override
-  String get appMcpLocalUnavailable => 'اجرای محلی در دسترس نیست.';
-
-  @override
-  String get appMcpCommandFailed =>
-      'فرمان ناموفق بود، مهلت آن تمام شد یا خروجی از حد مجاز گذشت.';
-
-  @override
-  String get appMcpHostChanged => 'پیکربندی میزبان تغییر کرده است.';
-
-  @override
-  String get appMcpOutput => 'خروجی فرمان از حد مجاز گذشت.';
-
-  @override
-  String get appMcpTransport => 'روش اتصال پشتیبانی نمی‌شود.';
-
-  @override
-  String get appMcpFirst => 'ابتدا در ServerBox به این میزبان متصل شوید.';
-
-  @override
-  String appMcpMonitor(String reason) {
-    return 'درخواست Monitor ناموفق بود ($reason).';
-  }
 }

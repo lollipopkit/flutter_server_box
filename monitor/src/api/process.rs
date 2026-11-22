@@ -10,9 +10,10 @@
 //! which columns it can draw. The stop is a script that checks the PID's start
 //! identity before signalling it, and a `sudo` retry for a process this account
 //! does not own — a retry that has to keep the script away from sudo's password
-//! read. Both live in [`sbm_parser::proc`], so the app over SSH and this
-//! endpoint read and stop one machine the same way, and the panel composes no
-//! command line and parses no `ps` output.
+//! read. Both live in [`sbm_parser::proc`], asked through
+//! [`sbm_mcp::machine::processes`], so the app and this endpoint read and stop
+//! one machine the same way, and the panel composes no command line and
+//! parses no `ps` output.
 //!
 //! The table is [`sbm_parser::script::ShellFunc::Process`], run locally: the
 //! same text the app uploads and calls with `-p` over SSH, so a change to it
@@ -41,26 +42,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use super::exec::{ExecResponse, run};
-use super::machine;
+use super::machine::{self, Here};
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::monitoring::system_type;
-use sbm_parser::SystemType;
-use sbm_parser::proc::{
-    ProcColumns, ProcKillOutcome, ProcLoad, ProcRow, ProcSignal, ProcSortMode, PsParseIssue, PsResult,
-};
-
-/// One row per process, and a busy host has thousands: at least this much of
-/// the table is read, whatever `[remote_access.exec]` caps a command at — the
-/// 1 MiB default is exceeded by a few thousand processes, and going over is
-/// reported as "the table is larger than this agent reads", which costs the
-/// reader the whole page.
-const MIN_TABLE_BYTES: usize = 8 * 1024 * 1024;
-
-
+use sbm_mcp::machine::processes::{self, KillRequest, ProcessResponse, StopRefused};
+use sbm_parser::proc::{ProcSortMode, PsResult};
 
 /// How long a reading answers further requests for it.
 ///
@@ -103,54 +90,6 @@ pub struct ProcessQuery {
     ascending: Option<bool>,
 }
 
-#[derive(Serialize)]
-pub(crate) struct ProcessResponse {
-    /// Whether the machine gave a table at all. `false` is a state of the
-    /// machine, not a failure of the caller, so the page draws one screen
-    /// either way.
-    available: bool,
-    /// Which of the known reasons it was, so the page phrases it in its own
-    /// language. `None` alongside `available: false` means the machine said
-    /// something this endpoint does not classify, and `reason` is it.
-    reason_kind: Option<ProcessReason>,
-    /// What the machine said, verbatim. Never translated and never classified
-    /// away: it is the only thing that distinguishes one failure from another.
-    reason: Option<String>,
-    procs: Vec<ProcRow>,
-    /// Rows the parser had to drop. The rest of the table is still here: a
-    /// table with one bad row is a table with one bad row, not an empty page.
-    issue: Option<PsParseIssue>,
-    /// The 1, 5 and 15 minute load averages, where the machine reports them.
-    load: Option<ProcLoad>,
-    /// The instant this reading was taken, in Unix milliseconds. Older than
-    /// the request when the reading was reused — see [`REUSE_WINDOW`].
-    sampled_at_millis: i64,
-    /// Which columns the machine reported, which is what the page draws.
-    columns: ProcColumns,
-    /// The orders this table can answer, in the order the page draws them.
-    sorts: Vec<ProcSortMode>,
-    /// What this answer is ordered by, after the fallbacks above.
-    sort: Option<ProcSortMode>,
-    ascending: Option<bool>,
-    /// The signals this platform offers, empty where it has none implemented.
-    /// The page offers no stop button at all when it is empty.
-    signals: Vec<ProcSignal>,
-}
-
-#[derive(Debug, Clone, Copy, Serialize)]
-#[serde(rename_all = "snake_case")]
-enum ProcessReason {
-    /// The command was killed for exceeding its time limit, or could not be
-    /// started at all.
-    DidNotFinish,
-    /// It printed more than this endpoint reads — a machine with tens of
-    /// thousands of processes. Reported as itself because what a caller can do
-    /// about it is not what it can do about a timeout.
-    TooLarge,
-    /// It ran and printed nothing.
-    Empty,
-}
-
 /// Reads the process table.
 pub async fn list(
     req: HttpRequest,
@@ -171,8 +110,9 @@ pub(crate) async fn table(
     sort: Option<ProcSortMode>,
     ascending: Option<bool>,
 ) -> ProcessResponse {
-    let system = system_type();
-    let now = now_millis();
+    let here = Here::quiet(&state.remote_access.exec);
+    let system = crate::monitoring::system_type();
+    let now = chrono::Utc::now().timestamp_millis();
 
     // Copied out rather than held: the branch below runs a command, and
     // holding the lock across it would queue every caller behind whoever
@@ -188,13 +128,8 @@ pub(crate) async fn table(
     if let Some((age, result)) = &stored
         && *age < REUSE_WINDOW.as_millis() as i64
     {
-        let (sort, ascending) = resolve_sort(result, sort, ascending);
-        return respond(
-            &result.sorted_by(sort, Some(ascending)),
-            system,
-            Some(sort),
-            Some(ascending),
-        );
+        let (sort, ascending) = processes::resolve_sort(result, sort, ascending);
+        return processes::respond(&result.sorted_by(sort, Some(ascending)), system, Some(sort), Some(ascending));
     }
 
     // What this reading's speeds are differenced against. An expired one is
@@ -204,147 +139,18 @@ pub(crate) async fn table(
         .filter(|(age, _)| *age <= BASELINE_MAX_AGE.as_millis() as i64)
         .map(|(_, result)| &**result);
 
-    let out = match crate::monitoring::local_script_command(sbm_parser::script::ShellFunc::Process)
-    {
-        Ok(cmd) => run(&cmd, None, None, &machine::at_least(&state.remote_access.exec, MIN_TABLE_BYTES)).await,
-        Err(e) => Err(e),
+    let parsed = match processes::read(&here, baseline).await {
+        Ok(parsed) => parsed,
+        Err(unavailable) => return *unavailable,
     };
-    let out = match out {
-        Ok(out) => out,
-        Err(error) => {
-            tracing::warn!("process: the table command failed: {error}");
-            return unavailable(system, ProcessReason::DidNotFinish, Some(error.to_string()));
-        }
-    };
-    if out.timed_out {
-        return unavailable(system, ProcessReason::DidNotFinish, None);
-    }
-    if out.truncated {
-        return unavailable(system, ProcessReason::TooLarge, None);
-    }
-    if out.stdout.trim().is_empty() {
-        // What the machine said is the whole answer: `ps` missing from a
-        // minimal image prints to stderr, and "empty" alone would send the
-        // reader looking at the wrong thing.
-        let reason = out.stderr.trim();
-        return unavailable(system, ProcessReason::Empty, (!reason.is_empty()).then(|| reason.to_owned()));
-    }
-
-    // Parsed before it is ordered: which orders a table can answer depends
-    // on the columns the machine printed.
-    let parsed = PsResult::parse(&out.stdout, ProcSortMode::Cpu, Some(false), baseline, now_millis());
-    let (sort, ascending) = resolve_sort(&parsed, sort, ascending);
+    let (sort, ascending) = processes::resolve_sort(&parsed, sort, ascending);
     let result = Arc::new(parsed.sorted_by(sort, Some(ascending)));
-
-    let response = respond(&result, system, Some(sort), Some(ascending));
+    let response = processes::respond(&result, system, Some(sort), Some(ascending));
     *state.process_sample.lock().await = Some(ProcessSample {
         sampled_at_millis: result.sampled_at_millis,
         result,
     });
     response
-}
-
-/// Which of what the caller asked for this table can answer.
-///
-/// A mode whose column the machine never filled would order the whole table by
-/// nulls, which is a table in no order at all — so it is answered with the
-/// default instead, and the response says which one that was.
-fn resolve_sort(
-    result: &PsResult,
-    sort: Option<ProcSortMode>,
-    ascending: Option<bool>,
-) -> (ProcSortMode, bool) {
-    ProcColumns::of(&result.procs).resolve(sort, ascending)
-}
-
-/// The body for a machine that gave no table, or none this build could read.
-fn unavailable(
-    system: SystemType,
-    kind: ProcessReason,
-    reason: Option<String>,
-) -> ProcessResponse {
-    ProcessResponse {
-        available: false,
-        reason_kind: Some(kind),
-        reason,
-        procs: Vec::new(),
-        issue: None,
-        load: None,
-        sampled_at_millis: now_millis(),
-        columns: ProcColumns::default(),
-        sorts: Vec::new(),
-        sort: None,
-        ascending: None,
-        signals: signals(system),
-    }
-}
-
-/// The body for a table that was read.
-fn respond(
-    result: &PsResult,
-    system: SystemType,
-    sort: Option<ProcSortMode>,
-    ascending: Option<bool>,
-) -> ProcessResponse {
-    let columns = ProcColumns::of(&result.procs);
-    ProcessResponse {
-        available: true,
-        reason_kind: None,
-        reason: None,
-        procs: result
-            .procs
-            .iter()
-            .map(|proc| ProcRow::of(proc, system))
-            .collect(),
-        issue: result.issue.clone(),
-        load: result.load,
-        sampled_at_millis: result.sampled_at_millis,
-        sorts: columns.sorts(),
-        columns,
-        sort,
-        ascending,
-        signals: signals(system),
-    }
-}
-
-/// The signals this platform offers, as a list the response can hold.
-fn signals(system: SystemType) -> Vec<ProcSignal> {
-    sbm_parser::proc::signals_for(system).to_vec()
-}
-
-/// What the page sends to stop one process.
-#[derive(Deserialize)]
-pub struct KillRequest {
-    pub(crate) pid: i64,
-    /// The identity the listing reported for that PID, checked against the
-    /// process's own start time before the signal is sent — see
-    /// [`sbm_parser::proc::kill_command`]. A number the kernel has since handed
-    /// to something else is refused rather than signalled.
-    #[serde(default)]
-    pub(crate) start_id: Option<String>,
-    pub(crate) signal: ProcSignal,
-    /// For `sudo -S`, when the process belongs to another account. Never
-    /// logged, and never written into a command line.
-    #[serde(default)]
-    pub(crate) password: Option<String>,
-}
-
-#[derive(Serialize)]
-pub(crate) struct KillResponse {
-    /// What happened, told apart from a non-zero exit because the caller's
-    /// next move differs for each: `denied` is a process this account does not
-    /// own, `target_changed` is a table that has moved on.
-    outcome: ProcKillOutcome,
-    exit_code: Option<i32>,
-    /// The machine's own words, both streams. The markers this endpoint's
-    /// script prints its verdict with are in here; `outcome` is the answer and
-    /// this is what to show when there is no clean one.
-    stdout: String,
-    stderr: String,
-    /// `sudo` refused the password that was sent, or was not given one. Told
-    /// apart from any other failure because the caller's next move is to ask
-    /// the user for a password and send the same request again.
-    sudo_rejected: bool,
 }
 
 /// Stops one process.
@@ -359,100 +165,8 @@ pub async fn kill(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
-    match stop(&state, request, gated.remote_ip).await {
+    match processes::stop(&Here::recorded(&state, gated.remote_ip), request).await {
         Ok(response) => Ok(HttpResponse::Ok().json(&response)),
         Err(StopRefused::Unsafe) => Ok(HttpResponse::BadRequest().build()),
     }
-}
-
-/// Why a process was not signalled.
-pub(crate) enum StopRefused {
-    /// No way to check the PID before signalling it: a platform without the
-    /// script, or a row the machine did not give a start identity for.
-    Unsafe,
-}
-
-/// Signals one process, recording it as the route does. Shared with the MCP
-/// tool; the transport rule is the caller's, asked before this runs.
-pub(crate) async fn stop(
-    state: &AppState,
-    request: KillRequest,
-    remote_ip: Option<String>,
-) -> Result<KillResponse, StopRefused> {
-    let what = format!("process stop {} {}", request.signal.name(), request.pid);
-    let system = system_type();
-    let record = |action, outcome, detail: Option<&str>| {
-        let mut event = Event::new(Kind::Machine, action, outcome)
-            .remote_ip(remote_ip.clone());
-        event = event.detail(match detail {
-            Some(detail) => format!("{what}: {detail}"),
-            None => what.clone(),
-        });
-        event
-    };
-
-    // A row with no start identity to check the PID against, or a platform
-    // with no implementation: refused before anything runs.
-    let Some(text) =
-        sbm_parser::proc::kill_command(request.pid, request.start_id.as_deref(), system, request.signal)
-    else {
-        record(Action::Denied, Outcome::Denied, Some("no way to stop this process safely"))
-            .record(&state.db)
-            .await;
-        return Err(StopRefused::Unsafe);
-    };
-
-    // Recorded before it runs, as power is: what was asked of the machine is
-    // on file whatever happens next.
-    record(Action::Open, Outcome::Ok, None).record(&state.db).await;
-
-    let limits = &state.remote_access.exec;
-    let mut out = if system == SystemType::Windows {
-        // A whole `powershell -EncodedCommand` line: PIDs and base64, nothing
-        // a command interpreter reads as syntax.
-        run(&text, None, None, limits).await
-    } else {
-        machine::as_self(&text, limits).await
-    };
-    let mut sudo_rejected = false;
-    // A process this account does not own is asked again as root, the way a
-    // user would `sudo kill`. Windows has no equivalent.
-    if system != SystemType::Windows && outcome_of(&out) == Some(ProcKillOutcome::Denied) {
-        out = machine::as_root(&text, request.password.as_deref(), limits).await;
-        sudo_rejected = out
-            .as_ref()
-            .is_ok_and(|out| sbm_parser::script::sudo_password_rejected(&out.stderr));
-    }
-
-    let outcome = outcome_of(&out).unwrap_or(ProcKillOutcome::Failed);
-    // How it ended, when not as asked.
-    let failed = match outcome {
-        ProcKillOutcome::Succeeded => None,
-        ProcKillOutcome::Denied => Some("permission denied"),
-        ProcKillOutcome::TargetChanged => Some("target changed"),
-        ProcKillOutcome::Failed if sudo_rejected => Some("sudo password rejected"),
-        ProcKillOutcome::Failed => Some("command failed"),
-    };
-    if let Some(why) = failed {
-        record(Action::Close, Outcome::Error, Some(why)).record(&state.db).await;
-    }
-
-    let (stdout, stderr, exit_code) = match out {
-        Ok(out) => (out.stdout, out.stderr, out.exit_code),
-        Err(e) => (String::new(), e.to_string(), None),
-    };
-    Ok(KillResponse { outcome, exit_code, stdout, stderr, sudo_rejected })
-}
-
-/// What the machine answered, where it answered at all.
-fn outcome_of(out: &std::io::Result<ExecResponse>) -> Option<ProcKillOutcome> {
-    let out = out.as_ref().ok()?;
-    if out.timed_out {
-        return None;
-    }
-    Some(sbm_parser::proc::kill_outcome(&out.stdout))
-}
-
-fn now_millis() -> i64 {
-    chrono::Utc::now().timestamp_millis()
 }
