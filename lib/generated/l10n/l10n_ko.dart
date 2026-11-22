@@ -7127,4 +7127,157 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => '비밀번호를 입력하세요.';
+
+  @override
+  String get appMcpServer => 'MCP 서버';
+
+  @override
+  String get appMcpClient => '도구 및 MCP 클라이언트';
+
+  @override
+  String get appMcpAddress => 'IPv4:포트 / [IPv6]:포트';
+
+  @override
+  String get appMcpRegistry => 'MCP 토큰 저장소 형식이 잘못되었습니다.';
+
+  @override
+  String get appMcpDigest => '토큰 해시가 올바르지 않습니다.';
+
+  @override
+  String get appMcpName => '토큰 이름을 입력하세요.';
+
+  @override
+  String get appMcpBusy => '다른 토큰 변경 사항을 저장하고 있습니다.';
+
+  @override
+  String get appMcpProtect => '토큰 파일을 보호할 수 없습니다.';
+
+  @override
+  String get appMcpChanged => '토큰 파일이 변경되었습니다. 다시 시도하세요.';
+
+  @override
+  String get appMcpListenBusy => 'MCP 서버 상태를 변경하고 있습니다.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP 주소와 포트를 입력하세요. 예: 0.0.0.0:49762 또는 [::]:49762.';
+
+  @override
+  String get appMcpStatus => '가동 시간과 부하를 조회합니다.';
+
+  @override
+  String get appMcpMemory => '메모리 통계를 조회합니다.';
+
+  @override
+  String get appMcpCpu => 'CPU 카운터 또는 부하를 조회합니다.';
+
+  @override
+  String get appMcpNetwork => '인터페이스 트래픽 카운터를 조회합니다.';
+
+  @override
+  String get appMcpDisk => '디스크 I/O 카운터를 조회합니다.';
+
+  @override
+  String get appMcpImages => 'Docker 이미지 ID, 태그 및 크기를 나열합니다.';
+
+  @override
+  String get appMcpStorage => '마운트된 파일 시스템과 용량을 나열합니다.';
+
+  @override
+  String get appMcpProcesses => '프로세스 ID와 실행 파일 이름을 나열합니다.';
+
+  @override
+  String get appMcpServices => '시스템 서비스를 나열합니다.';
+
+  @override
+  String get appMcpContainers => '중지된 컨테이너를 포함한 Docker 컨테이너를 나열합니다.';
+
+  @override
+  String get appMcpTmux => 'tmux 세션을 나열합니다.';
+
+  @override
+  String get appMcpList => '사용 가능한 호스트와 명령 프리셋을 나열합니다.';
+
+  @override
+  String get appMcpCapabilities => '호스트 연결 방식과 지원되는 점검 항목을 나열합니다.';
+
+  @override
+  String get appMcpPreferences => '수정 가능한 ServerBox 설정을 조회합니다.';
+
+  @override
+  String get appMcpSet => 'JSON 스키마에 따라 ServerBox 설정을 변경합니다.';
+
+  @override
+  String get appMcpShortcut => '단축키를 지정합니다. 빈 문자열을 지정하면 할당이 해제됩니다.';
+
+  @override
+  String get appMcpContainerLogs => '컨테이너 로그의 마지막 100줄을 읽습니다.';
+
+  @override
+  String get appMcpContainerStats => '컨테이너의 현재 리소스 사용량을 조회합니다.';
+
+  @override
+  String get appMcpContainerAction => 'Docker ID로 컨테이너를 시작, 중지 또는 재시작합니다.';
+
+  @override
+  String get appMcpServiceLogs => 'systemd 서비스의 최근 저널 항목 100개를 읽습니다.';
+
+  @override
+  String get appMcpServiceAction => 'systemd 서비스를 시작, 중지 또는 재시작합니다.';
+
+  @override
+  String get appMcpProcessDetail => '프로세스 하나의 CPU 및 메모리 사용량을 조회합니다.';
+
+  @override
+  String get appMcpImageRemove => '전체 ID로 Docker 이미지를 삭제합니다.';
+
+  @override
+  String get appMcpImageInspect => 'Docker 이미지의 크기와 아키텍처를 조회합니다.';
+
+  @override
+  String get appMcpRun => '호스트에서 지정한 명령 프리셋을 실행합니다.';
+
+  @override
+  String get appMcpRequest => '잘못된 요청입니다.';
+
+  @override
+  String get appMcpParams => '잘못된 매개변수입니다.';
+
+  @override
+  String get appMcpMethod => '알 수 없는 메서드입니다.';
+
+  @override
+  String get appMcpTool => '알 수 없는 도구이거나 인수가 잘못되었습니다.';
+
+  @override
+  String get appMcpHost => '알 수 없는 호스트입니다.';
+
+  @override
+  String get appMcpSystemd => 'Linux에서 systemd가 필요합니다.';
+
+  @override
+  String get appMcpPreset => '알 수 없는 프리셋이거나 지원하지 않는 점검입니다.';
+
+  @override
+  String get appMcpLocalUnavailable => '로컬 실행을 사용할 수 없습니다.';
+
+  @override
+  String get appMcpCommandFailed => '명령이 실패했거나 시간 또는 출력 제한을 초과했습니다.';
+
+  @override
+  String get appMcpHostChanged => '호스트 구성이 변경되었습니다.';
+
+  @override
+  String get appMcpOutput => '명령 출력이 제한을 초과했습니다.';
+
+  @override
+  String get appMcpTransport => '지원하지 않는 연결 방식입니다.';
+
+  @override
+  String get appMcpFirst => '먼저 ServerBox에서 이 호스트에 연결하세요.';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor 요청이 실패했습니다($reason).';
+  }
 }

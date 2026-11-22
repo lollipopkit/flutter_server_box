@@ -104,7 +104,7 @@ extension _McpSettings on _AppSettingsPageState {
         _McpListenPreset.lan => await _chooseMcpInterface(endpoint.port),
         _McpListenPreset.custom => await context.showInputSheet(
           title: l10n.virtHwListen,
-          label: 'IPv4:port / [IPv6]:port',
+          label: l10n.appMcpAddress,
           initial: current,
         ),
       };

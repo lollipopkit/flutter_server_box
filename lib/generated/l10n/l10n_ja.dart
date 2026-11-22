@@ -7126,4 +7126,157 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'パスワードを入力してください。';
+
+  @override
+  String get appMcpServer => 'MCP サーバー';
+
+  @override
+  String get appMcpClient => 'ツールと MCP クライアント';
+
+  @override
+  String get appMcpAddress => 'IPv4:ポート / [IPv6]:ポート';
+
+  @override
+  String get appMcpRegistry => 'MCP トークンの設定ファイルが無効です。';
+
+  @override
+  String get appMcpDigest => 'トークンのハッシュが無効です。';
+
+  @override
+  String get appMcpName => 'トークン名を入力してください。';
+
+  @override
+  String get appMcpBusy => '別のトークンの変更を保存中です。';
+
+  @override
+  String get appMcpProtect => 'トークンファイルを保護できませんでした。';
+
+  @override
+  String get appMcpChanged => 'トークンファイルが変更されました。再試行してください。';
+
+  @override
+  String get appMcpListenBusy => 'MCP サーバーの状態を変更中です。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP アドレスとポートを入力してください（例：0.0.0.0:49762 または [::]:49762）。';
+
+  @override
+  String get appMcpStatus => '稼働時間と負荷を取得します。';
+
+  @override
+  String get appMcpMemory => 'メモリ統計を取得します。';
+
+  @override
+  String get appMcpCpu => 'CPU カウンターまたは負荷を取得します。';
+
+  @override
+  String get appMcpNetwork => 'インターフェースの通信量を取得します。';
+
+  @override
+  String get appMcpDisk => 'ディスク I/O カウンターを取得します。';
+
+  @override
+  String get appMcpImages => 'Docker イメージの ID、タグ、サイズを一覧表示します。';
+
+  @override
+  String get appMcpStorage => 'マウント済みファイルシステムと容量を一覧表示します。';
+
+  @override
+  String get appMcpProcesses => 'プロセス ID と実行ファイル名を一覧表示します。';
+
+  @override
+  String get appMcpServices => 'システムサービスを一覧表示します。';
+
+  @override
+  String get appMcpContainers => '停止中を含む Docker コンテナを一覧表示します。';
+
+  @override
+  String get appMcpTmux => 'tmux セッションを一覧表示します。';
+
+  @override
+  String get appMcpList => '利用可能なホストと登録済みコマンドを一覧表示します。';
+
+  @override
+  String get appMcpCapabilities => 'ホストの接続方式と対応する検査項目を一覧表示します。';
+
+  @override
+  String get appMcpPreferences => '変更可能な ServerBox 設定を読み取ります。';
+
+  @override
+  String get appMcpSet => 'JSON スキーマに従って ServerBox の設定を変更します。';
+
+  @override
+  String get appMcpShortcut => 'ショートカットを設定します。空文字列で割り当てを解除します。';
+
+  @override
+  String get appMcpContainerLogs => 'コンテナログの末尾 100 行を読み取ります。';
+
+  @override
+  String get appMcpContainerStats => 'コンテナの現在のリソース使用量を取得します。';
+
+  @override
+  String get appMcpContainerAction => 'Docker ID を指定してコンテナを起動、停止、再起動します。';
+
+  @override
+  String get appMcpServiceLogs => 'systemd サービスの直近 100 件のジャーナルエントリを読み取ります。';
+
+  @override
+  String get appMcpServiceAction => 'systemd サービスを起動、停止、再起動します。';
+
+  @override
+  String get appMcpProcessDetail => 'プロセスの CPU とメモリの使用量を取得します。';
+
+  @override
+  String get appMcpImageRemove => '完全な ID を指定して Docker イメージを削除します。';
+
+  @override
+  String get appMcpImageInspect => 'Docker イメージのサイズとアーキテクチャを取得します。';
+
+  @override
+  String get appMcpRun => 'ホストで登録済みのコマンドを実行します。';
+
+  @override
+  String get appMcpRequest => 'リクエストが無効です。';
+
+  @override
+  String get appMcpParams => 'パラメーターが無効です。';
+
+  @override
+  String get appMcpMethod => '不明なメソッドです。';
+
+  @override
+  String get appMcpTool => 'ツールが不明か、引数が無効です。';
+
+  @override
+  String get appMcpHost => 'ホストが見つかりません。';
+
+  @override
+  String get appMcpSystemd => 'Linux の systemd が必要です。';
+
+  @override
+  String get appMcpPreset => 'プリセットが見つからないか、対応していない検査です。';
+
+  @override
+  String get appMcpLocalUnavailable => 'ローカルで実行できません。';
+
+  @override
+  String get appMcpCommandFailed => 'コマンドが失敗したか、時間または出力の上限を超えました。';
+
+  @override
+  String get appMcpHostChanged => 'ホストの設定が変更されました。';
+
+  @override
+  String get appMcpOutput => 'コマンド出力が上限を超えました。';
+
+  @override
+  String get appMcpTransport => '対応していない接続方式です。';
+
+  @override
+  String get appMcpFirst => '先に ServerBox でこのホストに接続してください。';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor リクエストに失敗しました（$reason）。';
+  }
 }

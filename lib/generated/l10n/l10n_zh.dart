@@ -7015,6 +7015,159 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => '请输入密码。';
+
+  @override
+  String get appMcpServer => 'MCP 服务器';
+
+  @override
+  String get appMcpClient => '工具与 MCP 客户端';
+
+  @override
+  String get appMcpAddress => 'IPv4:端口 / [IPv6]:端口';
+
+  @override
+  String get appMcpRegistry => 'MCP token 配置文件格式无效。';
+
+  @override
+  String get appMcpDigest => 'Token 摘要无效。';
+
+  @override
+  String get appMcpName => '请输入 token 名称。';
+
+  @override
+  String get appMcpBusy => '正在保存另一项 token 修改。';
+
+  @override
+  String get appMcpProtect => '无法设置 token 文件的访问权限。';
+
+  @override
+  String get appMcpChanged => 'Token 文件已更改，请重试。';
+
+  @override
+  String get appMcpListenBusy => 'MCP 服务器正在切换状态。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      '请输入 IP 地址和端口，例如 0.0.0.0:49762 或 [::]:49762。';
+
+  @override
+  String get appMcpStatus => '读取运行时长和负载。';
+
+  @override
+  String get appMcpMemory => '读取内存统计。';
+
+  @override
+  String get appMcpCpu => '读取 CPU 计数器或负载。';
+
+  @override
+  String get appMcpNetwork => '读取网络接口流量计数器。';
+
+  @override
+  String get appMcpDisk => '读取磁盘 I/O 计数器。';
+
+  @override
+  String get appMcpImages => '列出 Docker 镜像 ID、标签和大小。';
+
+  @override
+  String get appMcpStorage => '列出已挂载的文件系统及容量。';
+
+  @override
+  String get appMcpProcesses => '列出进程 ID 和可执行文件名。';
+
+  @override
+  String get appMcpServices => '列出系统服务。';
+
+  @override
+  String get appMcpContainers => '列出运行中和已停止的 Docker 容器。';
+
+  @override
+  String get appMcpTmux => '列出 tmux 会话。';
+
+  @override
+  String get appMcpList => '列出可用主机和命令预设。';
+
+  @override
+  String get appMcpCapabilities => '列出主机的连接方式和支持的检查项目。';
+
+  @override
+  String get appMcpPreferences => '读取可修改的 ServerBox 设置。';
+
+  @override
+  String get appMcpSet => '按 JSON schema 修改一项 ServerBox 设置。';
+
+  @override
+  String get appMcpShortcut => '设置一个快捷键。传入空字符串可取消绑定。';
+
+  @override
+  String get appMcpContainerLogs => '读取容器日志的最后 100 行。';
+
+  @override
+  String get appMcpContainerStats => '读取容器当前的资源用量。';
+
+  @override
+  String get appMcpContainerAction => '按 Docker ID 启动、停止或重启容器。';
+
+  @override
+  String get appMcpServiceLogs => '读取 systemd 服务最近 100 条日志。';
+
+  @override
+  String get appMcpServiceAction => '启动、停止或重启 systemd 服务。';
+
+  @override
+  String get appMcpProcessDetail => '读取指定进程的 CPU 和内存用量。';
+
+  @override
+  String get appMcpImageRemove => '按完整 ID 删除 Docker 镜像。';
+
+  @override
+  String get appMcpImageInspect => '读取 Docker 镜像的大小和架构。';
+
+  @override
+  String get appMcpRun => '在主机上运行指定的命令预设。';
+
+  @override
+  String get appMcpRequest => '请求无效。';
+
+  @override
+  String get appMcpParams => '参数无效。';
+
+  @override
+  String get appMcpMethod => '未知方法。';
+
+  @override
+  String get appMcpTool => '工具不存在或参数无效。';
+
+  @override
+  String get appMcpHost => '主机不存在。';
+
+  @override
+  String get appMcpSystemd => '需要使用 systemd 的 Linux 主机。';
+
+  @override
+  String get appMcpPreset => '预设不存在或不支持此项检查。';
+
+  @override
+  String get appMcpLocalUnavailable => '本机执行不可用。';
+
+  @override
+  String get appMcpCommandFailed => '命令执行失败、超时或输出超出限制。';
+
+  @override
+  String get appMcpHostChanged => '主机配置已更改。';
+
+  @override
+  String get appMcpOutput => '命令输出超出限制。';
+
+  @override
+  String get appMcpTransport => '不支持此连接方式。';
+
+  @override
+  String get appMcpFirst => '请先在 ServerBox 中连接此主机。';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor 请求失败（$reason）。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -14032,4 +14185,157 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorMcpPasswordRequired => '請輸入密碼。';
+
+  @override
+  String get appMcpServer => 'MCP 伺服器';
+
+  @override
+  String get appMcpClient => '工具與 MCP 用戶端';
+
+  @override
+  String get appMcpAddress => 'IPv4:連接埠 / [IPv6]:連接埠';
+
+  @override
+  String get appMcpRegistry => 'MCP 權杖設定檔格式無效。';
+
+  @override
+  String get appMcpDigest => '權杖摘要無效。';
+
+  @override
+  String get appMcpName => '請輸入權杖名稱。';
+
+  @override
+  String get appMcpBusy => '正在儲存另一項權杖變更。';
+
+  @override
+  String get appMcpProtect => '無法設定權杖檔案的存取權限。';
+
+  @override
+  String get appMcpChanged => '權杖檔案已變更，請重試。';
+
+  @override
+  String get appMcpListenBusy => 'MCP 伺服器正在切換狀態。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      '請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。';
+
+  @override
+  String get appMcpStatus => '讀取運作時間和負載。';
+
+  @override
+  String get appMcpMemory => '讀取記憶體統計。';
+
+  @override
+  String get appMcpCpu => '讀取 CPU 計數器或負載。';
+
+  @override
+  String get appMcpNetwork => '讀取網路介面流量計數器。';
+
+  @override
+  String get appMcpDisk => '讀取磁碟 I/O 計數器。';
+
+  @override
+  String get appMcpImages => '列出 Docker 映像檔 ID、標籤和大小。';
+
+  @override
+  String get appMcpStorage => '列出已掛載的檔案系統與容量。';
+
+  @override
+  String get appMcpProcesses => '列出程序 ID 與執行檔名稱。';
+
+  @override
+  String get appMcpServices => '列出系統服務。';
+
+  @override
+  String get appMcpContainers => '列出執行中與已停止的 Docker 容器。';
+
+  @override
+  String get appMcpTmux => '列出 tmux 工作階段。';
+
+  @override
+  String get appMcpList => '列出可用主機與預設指令。';
+
+  @override
+  String get appMcpCapabilities => '列出主機的連線方式與支援的檢查項目。';
+
+  @override
+  String get appMcpPreferences => '讀取可修改的 ServerBox 設定。';
+
+  @override
+  String get appMcpSet => '依 JSON schema 修改一項 ServerBox 設定。';
+
+  @override
+  String get appMcpShortcut => '設定一個快速鍵。傳入空字串可解除綁定。';
+
+  @override
+  String get appMcpContainerLogs => '讀取容器日誌的最後 100 行。';
+
+  @override
+  String get appMcpContainerStats => '讀取容器目前的資源用量。';
+
+  @override
+  String get appMcpContainerAction => '依 Docker ID 啟動、停止或重新啟動容器。';
+
+  @override
+  String get appMcpServiceLogs => '讀取 systemd 服務最近 100 筆日誌。';
+
+  @override
+  String get appMcpServiceAction => '啟動、停止或重新啟動 systemd 服務。';
+
+  @override
+  String get appMcpProcessDetail => '讀取指定程序的 CPU 與記憶體用量。';
+
+  @override
+  String get appMcpImageRemove => '依完整 ID 刪除 Docker 映像檔。';
+
+  @override
+  String get appMcpImageInspect => '讀取 Docker 映像檔的大小與架構。';
+
+  @override
+  String get appMcpRun => '在主機上執行指定的預設指令。';
+
+  @override
+  String get appMcpRequest => '請求無效。';
+
+  @override
+  String get appMcpParams => '參數無效。';
+
+  @override
+  String get appMcpMethod => '未知的方法。';
+
+  @override
+  String get appMcpTool => '找不到工具或參數無效。';
+
+  @override
+  String get appMcpHost => '找不到主機。';
+
+  @override
+  String get appMcpSystemd => '需要採用 systemd 的 Linux 主機。';
+
+  @override
+  String get appMcpPreset => '找不到預設指令或不支援此項檢查。';
+
+  @override
+  String get appMcpLocalUnavailable => '無法在本機執行。';
+
+  @override
+  String get appMcpCommandFailed => '指令執行失敗、逾時或輸出超過限制。';
+
+  @override
+  String get appMcpHostChanged => '主機設定已變更。';
+
+  @override
+  String get appMcpOutput => '指令輸出超過限制。';
+
+  @override
+  String get appMcpTransport => '不支援此連線方式。';
+
+  @override
+  String get appMcpFirst => '請先在 ServerBox 連線到此主機。';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor 請求失敗（$reason）。';
+  }
 }

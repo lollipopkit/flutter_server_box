@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/service/app_mcp.dart';
 import 'package:server_box/core/service/app_mcp_tokens.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
@@ -18,6 +19,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
 
 import '../../helpers/fake_agent_health.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -202,6 +204,37 @@ void main() {
         return jsonDecode(await utf8.decoder.bind(res).join())['result'] as Map;
       }
 
+      final previousLocale = app_locale.l10n;
+      addTearDown(() => app_locale.l10n = previousLocale);
+      for (final locale in AppLocalizations.supportedLocales) {
+        final strings = lookupAppLocalizations(locale);
+        app_locale.l10n = strings;
+        final response = await post('tools/list', {});
+        final catalog =
+            jsonDecode(
+                  await utf8.decoder.bind(response).join(),
+                )['result']['tools']
+                as List;
+        final descriptions = {
+          for (final tool in catalog) tool['name']: tool['description'],
+        };
+        expect(descriptions.keys, unorderedEquals(appMcpToolNames));
+        expect(descriptions['machine_status'], strings.appMcpStatus);
+        expect(descriptions['app_setting_set'], strings.appMcpSet);
+        final hosts =
+            jsonDecode((await call('list'))['content'][0]['text'])['hosts']
+                as List;
+        expect(
+          hosts.singleWhere((h) => h['id'] == '#local')['name'],
+          strings.thisDevice,
+        );
+        final error = await post('tools/call', {'name': 'missing'});
+        expect(jsonDecode(await utf8.decoder.bind(error).join())['error'], {
+          'code': -32602,
+          'message': strings.appMcpTool,
+        });
+      }
+      app_locale.l10n = previousLocale;
       final listed = jsonDecode((await call('list'))['content'][0]['text']);
       expect(listed['hosts'], hasLength(3));
       final monitorRow = (listed['hosts'] as List).singleWhere(

@@ -10,6 +10,7 @@ import 'package:fl_tty/fl_tty.dart' show ExecResult, LocalExec, Rootfs;
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/extension/context/locale.dart' show l10n;
 import 'package:server_box/core/local/device.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/monitor/exec.dart';
@@ -73,9 +74,7 @@ Uri appMcpEndpoint(String listen) {
   );
   final port = int.tryParse(match?.group(3) ?? '');
   if (address == null || port == null || port < 1 || port > 65535) {
-    throw const FormatException(
-      'Expected an IP address and port, e.g. 0.0.0.0:49762 or [::]:49762.',
-    );
+    throw FormatException(l10n.appMcpInvalidAddress);
   }
   return Uri(scheme: 'http', host: address.address, port: port, path: '/mcp');
 }
@@ -112,7 +111,7 @@ Future<void> configureAppMcp(
   String? listen,
   bool remember = true,
 }) async {
-  if (_changingListener) throw StateError('MCP server is changing state.');
+  if (_changingListener) throw StateError(l10n.appMcpListenBusy);
   _changingListener = true;
   try {
     final endpointText = (listen ?? appMcpListen).trim();
@@ -254,13 +253,13 @@ Future<void> _handle(
     if (message is! Map ||
         message['jsonrpc'] != '2.0' ||
         (message.containsKey('id') && id is! int && id is! String)) {
-      reply = error(-32600, 'Invalid request');
+      reply = error(-32600, l10n.appMcpRequest);
     } else if (message['method'] is! String) {
       if (id != null &&
           (message.containsKey('result') != message.containsKey('error'))) {
         return await reject(202);
       }
-      reply = error(-32600, 'Invalid request');
+      reply = error(-32600, l10n.appMcpRequest);
     } else if (id == null) {
       return await reject(202);
     } else {
@@ -284,13 +283,9 @@ Future<void> _handle(
         'tools/list' => {
           'result': {
             'tools': [
-              _tool('list', 'List available hosts and preset names.', []),
-              _tool(
-                'machine_capabilities',
-                'Inspect host transports and inspection tools for its platform.',
-                ['host'],
-              ),
-              _tool('app_settings', 'Read editable ServerBox preferences.', []),
+              _tool('list', l10n.appMcpList, []),
+              _tool('machine_capabilities', l10n.appMcpCapabilities, ['host']),
+              _tool('app_settings', l10n.appMcpPreferences, []),
               mcpPreferenceTool(container),
               for (final name in [
                 'container_logs',
@@ -300,11 +295,9 @@ Future<void> _handle(
                 _tool(
                   name,
                   switch (name) {
-                    'container_logs' =>
-                      'Read the last 100 container log lines.',
-                    'container_stats' =>
-                      'Read a container resource usage snapshot.',
-                    _ => 'Start, stop or restart a container by its Docker ID.',
+                    'container_logs' => l10n.appMcpContainerLogs,
+                    'container_stats' => l10n.appMcpContainerStats,
+                    _ => l10n.appMcpContainerAction,
                   },
                   ['host', 'id', if (name == 'container_action') 'action'],
                   types: {
@@ -317,8 +310,8 @@ Future<void> _handle(
                 _tool(
                   name,
                   name == 'service_logs'
-                      ? 'Read the last 100 journal entries for a systemd service.'
-                      : 'Start, stop or restart a systemd service.',
+                      ? l10n.appMcpServiceLogs
+                      : l10n.appMcpServiceAction,
                   ['host', 'key', if (name == 'service_action') 'action'],
                   types: {
                     'key': {'type': 'string', 'pattern': _serviceUnit.pattern},
@@ -328,7 +321,7 @@ Future<void> _handle(
                 ),
               _tool(
                 'process_detail',
-                'Read CPU and memory use for one process.',
+                l10n.appMcpProcessDetail,
                 ['host', 'pid'],
                 types: {
                   'pid': {
@@ -342,8 +335,8 @@ Future<void> _handle(
                 _tool(
                   name,
                   name == 'image_remove'
-                      ? 'Remove a Docker image by its full ID.'
-                      : 'Read Docker image size and architecture.',
+                      ? l10n.appMcpImageRemove
+                      : l10n.appMcpImageInspect,
                   ['host', 'id'],
                   types: {
                     'id': {'type': 'string', 'pattern': _imageId.pattern},
@@ -352,10 +345,7 @@ Future<void> _handle(
               for (final probe in AppMcpInspection.values)
                 _tool(probe.name, probe.description, ['host']),
               if (commands.isNotEmpty)
-                _tool('run_command', 'Run a named preset on a host.', [
-                  'host',
-                  'preset',
-                ]),
+                _tool('run_command', l10n.appMcpRun, ['host', 'preset']),
             ],
           },
         },
@@ -367,8 +357,8 @@ Future<void> _handle(
           params,
           tokenId,
         ),
-        'tools/call' => error(-32602, 'Invalid parameters'),
-        _ => error(-32601, 'Unknown method'),
+        'tools/call' => error(-32602, l10n.appMcpParams),
+        _ => error(-32601, l10n.appMcpMethod),
       };
     }
     request.response.headers.contentType = ContentType.json;
@@ -433,7 +423,7 @@ Future<Map<String, dynamic>> _call(
   };
   final name = params['name'];
   final invalid = {
-    'error': {'code': -32602, 'message': 'Unknown tool or invalid arguments'},
+    'error': {'code': -32602, 'message': l10n.appMcpTool},
   };
   if (!appMcpToolNames.contains(name) ||
       (name == 'run_command' && commands.isEmpty)) {
@@ -455,7 +445,7 @@ Future<Map<String, dynamic>> _call(
     return result({
       'hosts': [
         if (local)
-          {'id': LocalDevice.id, 'name': 'This device', 'online': true},
+          {'id': LocalDevice.id, 'name': l10n.thisDevice, 'online': true},
         for (final entry in hosts.entries)
           {
             'id': entry.key,
@@ -491,7 +481,7 @@ Future<Map<String, dynamic>> _call(
   }
   final spi = hosts[args['host']];
   final isLocal = local && args['host'] == LocalDevice.id;
-  if (!isLocal && spi == null) return result('Unknown host.', failed: true);
+  if (!isLocal && spi == null) return result(l10n.appMcpHost, failed: true);
   final state = spi == null ? null : container.read(serverProvider(spi.id));
   final system = isLocal
       ? LocalServer.systemType
@@ -533,7 +523,7 @@ Future<Map<String, dynamic>> _call(
       return invalid;
     }
     if (system != SystemType.linux) {
-      return result('Requires systemd on Linux.', failed: true);
+      return result(l10n.appMcpSystemd, failed: true);
     }
     command = name == 'service_action'
         ? 'systemctl --no-ask-password $action -- $key'
@@ -555,7 +545,7 @@ Future<Map<String, dynamic>> _call(
     command = preset ? commands[args['preset']] : inspections[name];
   }
   if (command == null) {
-    return result('Unknown preset or unsupported inspection.', failed: true);
+    return result(l10n.appMcpPreset, failed: true);
   }
   Map<String, dynamic> executionResult(Map<String, Object?> output) => result(
     output,
@@ -567,7 +557,7 @@ Future<Map<String, dynamic>> _call(
   if (isLocal) {
     final exec = LocalExec.forThisDevice();
     if (exec == null) {
-      return result('Local execution unavailable.', failed: true);
+      return result(l10n.appMcpLocalUnavailable, failed: true);
     }
     try {
       Logger(
@@ -575,20 +565,17 @@ Future<Map<String, dynamic>> _call(
       ).info('$name token=${tokenId.substring(0, 12)} host=local');
       return executionResult(await _executeLocal(exec, command));
     } catch (_) {
-      return result(
-        'Local command failed, timed out, or exceeded the output limit.',
-        failed: true,
-      );
+      return result(l10n.appMcpCommandFailed, failed: true);
     }
   }
   if (spi == null || state?.spi != spi) {
-    return result('Host configuration changed.', failed: true);
+    return result(l10n.appMcpHostChanged, failed: true);
   }
   final notifier = container.read(serverProvider(spi.id).notifier);
   try {
     final exec = await notifier.ensureUnattendedExec();
     if (!notifier.isExecCurrent(exec, spi)) {
-      return result('Host configuration changed.', failed: true);
+      return result(l10n.appMcpHostChanged, failed: true);
     }
     // Only record opaque identifiers. Preset bodies and output can contain credentials.
     Logger('AppMcp').info(
@@ -602,7 +589,7 @@ Future<Map<String, dynamic>> _call(
       if (utf8.encode(output.stdout).length +
               utf8.encode(output.stderr).length >
           256 * 1024) {
-        return result('Command exceeded the output limit.', failed: true);
+        return result(l10n.appMcpOutput, failed: true);
       }
       return executionResult({
         'stdout': output.stdout,
@@ -612,16 +599,13 @@ Future<Map<String, dynamic>> _call(
         if (output.truncated) 'truncated': true,
       });
     }
-    return result('Unsupported transport.', failed: true);
+    return result(l10n.appMcpTransport, failed: true);
   } on MonitorHttpErr catch (e) {
-    return result('Monitor request failed (${e.type.name}).', failed: true);
+    return result(l10n.appMcpMonitor(e.type.name), failed: true);
   } on SshInteractionRequired {
-    return result('Connect to this host in ServerBox first.', failed: true);
+    return result(l10n.appMcpFirst, failed: true);
   } catch (_) {
-    return result(
-      'Command failed, timed out, or exceeded the output limit.',
-      failed: true,
-    );
+    return result(l10n.appMcpCommandFailed, failed: true);
   }
 }
 

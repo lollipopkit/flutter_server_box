@@ -29,8 +29,6 @@ class AgentProvidersPage extends StatelessWidget {
 class AgentToolsPage extends StatelessWidget {
   const AgentToolsPage({super.key});
 
-  static const title = 'Tools & MCP client';
-
   static const route = AppRouteNoArg(
     page: AgentToolsPage.new,
     path: '/settings/agent/tools',
@@ -39,7 +37,7 @@ class AgentToolsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: const Text(title)),
+      appBar: CustomAppBar(title: Text(context.l10n.appMcpClient)),
       body: const llm.ToolsPage(),
     );
   }

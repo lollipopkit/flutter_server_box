@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart' show LocaleX, RNodes, StorePropDefault;
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart' show l10n;
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -139,8 +140,7 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
       'minProperties': 1,
       'propertyNames': {'enum': shortcuts.keys.toList()},
       'additionalProperties': {'type': 'string'},
-      'description':
-          'Set one shortcut on this platform. An empty chord unbinds it.',
+      'description': l10n.appMcpShortcut,
     },
     () {
       final state = container.read(keybindingsProvider);
@@ -204,8 +204,7 @@ Map<String, Object> mcpPreferenceTool(ProviderContainer container) {
   final preferences = mcpPreferences(container);
   return {
     'name': 'app_setting_set',
-    'description':
-        'Set a ServerBox preference. Each key accepts the JSON value described in its schema.',
+    'description': l10n.appMcpSet,
     'inputSchema': {
       'type': 'object',
       'required': ['key', 'value'],

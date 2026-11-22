@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:server_box/core/extension/context/locale.dart' show l10n;
 
 typedef McpRegistry = ({
   Map<String, String> tokens,
@@ -10,7 +11,12 @@ typedef McpRegistry = ({
 });
 
 McpRegistry readMcpRegistry(String text) {
-  final root = jsonDecode(text);
+  final dynamic root;
+  try {
+    root = jsonDecode(text);
+  } on FormatException {
+    throw FormatException(l10n.appMcpRegistry);
+  }
   // TODO(migration): remove pre-release policy recognition after the preview.
   // Scoped credentials must be reissued before they can access all tools.
   if (root is Map &&
@@ -21,19 +27,19 @@ McpRegistry readMcpRegistry(String text) {
     return (tokens: {}, commands: {});
   }
   if (root is! Map || root.keys.any((k) => k != 'tokens' && k != 'commands')) {
-    throw const FormatException('Invalid MCP token registry.');
+    throw FormatException(l10n.appMcpRegistry);
   }
   Map<String, String> entries(String key) {
     final value = root[key] ?? {};
     if (value is! Map || value.values.any((v) => v is! String)) {
-      throw FormatException('Invalid MCP $key.');
+      throw FormatException(l10n.appMcpRegistry);
     }
     return Map<String, String>.from(value);
   }
 
   final tokens = entries('tokens');
   if (tokens.keys.any((id) => !RegExp(r'^[0-9a-f]{64}$').hasMatch(id))) {
-    throw const FormatException('Invalid token digest.');
+    throw FormatException(l10n.appMcpDigest);
   }
   return (tokens: tokens, commands: entries('commands'));
 }
@@ -45,7 +51,7 @@ Future<McpRegistry> loadMcpRegistry(File file) async =>
 
 Future<String> createMcpToken(File file, String label) async {
   if (label.trim().isEmpty) {
-    throw const FormatException('Expected a token name.');
+    throw FormatException(l10n.appMcpName);
   }
   final random = Random.secure();
   final token =
@@ -63,7 +69,7 @@ Future<void> _editTokens(
   void Function(Map<String, String>) edit,
 ) async {
   if (_editingTokens) {
-    throw StateError('Another token change is being saved.');
+    throw StateError(l10n.appMcpBusy);
   }
   _editingTokens = true;
   try {
@@ -80,12 +86,12 @@ Future<void> _editTokens(
       if (Platform.isMacOS || Platform.isLinux) {
         final chmod = await Process.run('/bin/chmod', ['600', pending.path]);
         if (chmod.exitCode != 0) {
-          throw StateError('Could not protect the token registry.');
+          throw StateError(l10n.appMcpProtect);
         }
       }
       final current = await file.exists() ? await file.readAsString() : null;
       if (current != original) {
-        throw StateError('The token registry changed. Please retry.');
+        throw StateError(l10n.appMcpChanged);
       }
       await pending.rename(file.path);
     } finally {

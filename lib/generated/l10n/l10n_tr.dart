@@ -7400,4 +7400,173 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Parolayı girin.';
+
+  @override
+  String get appMcpServer => 'MCP sunucusu';
+
+  @override
+  String get appMcpClient => 'Araçlar ve MCP istemcisi';
+
+  @override
+  String get appMcpAddress => 'IPv4:bağlantı noktası / [IPv6]:bağlantı noktası';
+
+  @override
+  String get appMcpRegistry => 'MCP belirteç kaydı geçersiz.';
+
+  @override
+  String get appMcpDigest => 'Belirteç özeti geçersiz.';
+
+  @override
+  String get appMcpName => 'Bir belirteç adı girin.';
+
+  @override
+  String get appMcpBusy => 'Başka bir belirteç değişikliği kaydediliyor.';
+
+  @override
+  String get appMcpProtect => 'Belirteç dosyası korunamadı.';
+
+  @override
+  String get appMcpChanged => 'Belirteç dosyası değişti. Yeniden deneyin.';
+
+  @override
+  String get appMcpListenBusy => 'MCP sunucusunun durumu değişiyor.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP adresi ve bağlantı noktası girin, ör. 0.0.0.0:49762 veya [::]:49762.';
+
+  @override
+  String get appMcpStatus => 'Çalışma süresini ve yükü oku.';
+
+  @override
+  String get appMcpMemory => 'Bellek istatistiklerini oku.';
+
+  @override
+  String get appMcpCpu => 'CPU sayaçlarını veya yükü oku.';
+
+  @override
+  String get appMcpNetwork => 'Arabirim trafik sayaçlarını oku.';
+
+  @override
+  String get appMcpDisk => 'Disk G/Ç sayaçlarını oku.';
+
+  @override
+  String get appMcpImages =>
+      'Docker imajlarının kimlik, etiket ve boyutlarını listele.';
+
+  @override
+  String get appMcpStorage =>
+      'Bağlı dosya sistemlerini ve kapasitelerini listele.';
+
+  @override
+  String get appMcpProcesses =>
+      'İşlem kimliklerini ve çalıştırılabilir dosya adlarını listele.';
+
+  @override
+  String get appMcpServices => 'Sistem hizmetlerini listele.';
+
+  @override
+  String get appMcpContainers =>
+      'Çalışan ve durdurulmuş Docker konteynerlerini listele.';
+
+  @override
+  String get appMcpTmux => 'tmux oturumlarını listele.';
+
+  @override
+  String get appMcpList =>
+      'Kullanılabilir makineleri ve hazır komutları listele.';
+
+  @override
+  String get appMcpCapabilities =>
+      'Makinenin bağlantı yöntemlerini ve desteklediği denetimleri listele.';
+
+  @override
+  String get appMcpPreferences => 'Düzenlenebilir ServerBox ayarlarını oku.';
+
+  @override
+  String get appMcpSet => 'Bir ServerBox ayarını JSON şemasına göre değiştir.';
+
+  @override
+  String get appMcpShortcut => 'Bir kısayol ata. Boş dize atamayı kaldırır.';
+
+  @override
+  String get appMcpContainerLogs =>
+      'Konteyner günlüğünün son 100 satırını oku.';
+
+  @override
+  String get appMcpContainerStats =>
+      'Konteynerin anlık kaynak kullanımını oku.';
+
+  @override
+  String get appMcpContainerAction =>
+      'Docker kimliğiyle konteyneri başlat, durdur veya yeniden başlat.';
+
+  @override
+  String get appMcpServiceLogs =>
+      'Bir systemd hizmetinin son 100 günlük kaydını oku.';
+
+  @override
+  String get appMcpServiceAction =>
+      'Bir systemd hizmetini başlat, durdur veya yeniden başlat.';
+
+  @override
+  String get appMcpProcessDetail =>
+      'Bir işlemin CPU ve bellek kullanımını oku.';
+
+  @override
+  String get appMcpImageRemove => 'Docker imajını tam kimliğiyle kaldır.';
+
+  @override
+  String get appMcpImageInspect =>
+      'Docker imajının boyutunu ve mimarisini oku.';
+
+  @override
+  String get appMcpRun => 'Bir makinede kayıtlı hazır komutu çalıştır.';
+
+  @override
+  String get appMcpRequest => 'Geçersiz istek.';
+
+  @override
+  String get appMcpParams => 'Geçersiz parametreler.';
+
+  @override
+  String get appMcpMethod => 'Bilinmeyen yöntem.';
+
+  @override
+  String get appMcpTool =>
+      'Bilinmeyen araç veya geçersiz bağımsız değişkenler.';
+
+  @override
+  String get appMcpHost => 'Bilinmeyen makine.';
+
+  @override
+  String get appMcpSystemd => 'Linux üzerinde systemd gerekir.';
+
+  @override
+  String get appMcpPreset =>
+      'Hazır komut bilinmiyor veya denetim desteklenmiyor.';
+
+  @override
+  String get appMcpLocalUnavailable => 'Yerel yürütme kullanılamıyor.';
+
+  @override
+  String get appMcpCommandFailed =>
+      'Komut başarısız oldu, zaman aşımına uğradı veya çıktı sınırını aştı.';
+
+  @override
+  String get appMcpHostChanged => 'Makine yapılandırması değişti.';
+
+  @override
+  String get appMcpOutput => 'Komut çıktısı sınırı aştı.';
+
+  @override
+  String get appMcpTransport => 'Bağlantı yöntemi desteklenmiyor.';
+
+  @override
+  String get appMcpFirst => 'Önce ServerBox üzerinden bu makineye bağlanın.';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor isteği başarısız oldu ($reason).';
+  }
 }

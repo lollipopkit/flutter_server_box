@@ -7492,4 +7492,176 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Inserisci la password.';
+
+  @override
+  String get appMcpServer => 'Server MCP';
+
+  @override
+  String get appMcpClient => 'Strumenti e client MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:porta / [IPv6]:porta';
+
+  @override
+  String get appMcpRegistry => 'Registro dei token MCP non valido.';
+
+  @override
+  String get appMcpDigest => 'Hash del token non valido.';
+
+  @override
+  String get appMcpName => 'Inserisci un nome per il token.';
+
+  @override
+  String get appMcpBusy =>
+      'È in corso il salvataggio di un’altra modifica ai token.';
+
+  @override
+  String get appMcpProtect => 'Impossibile proteggere il registro dei token.';
+
+  @override
+  String get appMcpChanged => 'Il registro dei token è cambiato. Riprova.';
+
+  @override
+  String get appMcpListenBusy => 'Il server MCP sta cambiando stato.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Inserisci un indirizzo IP e una porta, ad esempio 0.0.0.0:49762 o [::]:49762.';
+
+  @override
+  String get appMcpStatus => 'Leggi il tempo di attività e il carico.';
+
+  @override
+  String get appMcpMemory => 'Leggi le statistiche di memoria.';
+
+  @override
+  String get appMcpCpu => 'Leggi i contatori CPU o il carico.';
+
+  @override
+  String get appMcpNetwork => 'Leggi i contatori di traffico delle interfacce.';
+
+  @override
+  String get appMcpDisk => 'Leggi i contatori di I/O dei dischi.';
+
+  @override
+  String get appMcpImages =>
+      'Elenca ID, tag e dimensioni delle immagini Docker.';
+
+  @override
+  String get appMcpStorage =>
+      'Elenca i file system montati e la loro capacità.';
+
+  @override
+  String get appMcpProcesses => 'Elenca PID e nomi degli eseguibili.';
+
+  @override
+  String get appMcpServices => 'Elenca i servizi di sistema.';
+
+  @override
+  String get appMcpContainers =>
+      'Elenca i container Docker in esecuzione e arrestati.';
+
+  @override
+  String get appMcpTmux => 'Elenca le sessioni tmux.';
+
+  @override
+  String get appMcpList =>
+      'Elenca gli host disponibili e i comandi predefiniti.';
+
+  @override
+  String get appMcpCapabilities =>
+      'Elenca i trasporti e i controlli supportati dall’host.';
+
+  @override
+  String get appMcpPreferences =>
+      'Leggi le impostazioni modificabili di ServerBox.';
+
+  @override
+  String get appMcpSet =>
+      'Modifica un’impostazione di ServerBox secondo il suo schema JSON.';
+
+  @override
+  String get appMcpShortcut =>
+      'Imposta una scorciatoia. Una stringa vuota rimuove l’associazione.';
+
+  @override
+  String get appMcpContainerLogs =>
+      'Leggi le ultime 100 righe del log del container.';
+
+  @override
+  String get appMcpContainerStats =>
+      'Leggi l’utilizzo corrente delle risorse del container.';
+
+  @override
+  String get appMcpContainerAction =>
+      'Avvia, arresta o riavvia un container tramite ID Docker.';
+
+  @override
+  String get appMcpServiceLogs =>
+      'Leggi le ultime 100 voci del journal di un servizio systemd.';
+
+  @override
+  String get appMcpServiceAction =>
+      'Avvia, arresta o riavvia un servizio systemd.';
+
+  @override
+  String get appMcpProcessDetail =>
+      'Leggi l’utilizzo di CPU e memoria di un processo.';
+
+  @override
+  String get appMcpImageRemove =>
+      'Rimuovi un’immagine Docker tramite il suo ID completo.';
+
+  @override
+  String get appMcpImageInspect =>
+      'Leggi dimensione e architettura di un’immagine Docker.';
+
+  @override
+  String get appMcpRun => 'Esegui un comando predefinito su un host.';
+
+  @override
+  String get appMcpRequest => 'Richiesta non valida.';
+
+  @override
+  String get appMcpParams => 'Parametri non validi.';
+
+  @override
+  String get appMcpMethod => 'Metodo sconosciuto.';
+
+  @override
+  String get appMcpTool => 'Strumento sconosciuto o argomenti non validi.';
+
+  @override
+  String get appMcpHost => 'Host sconosciuto.';
+
+  @override
+  String get appMcpSystemd => 'Richiede systemd su Linux.';
+
+  @override
+  String get appMcpPreset =>
+      'Comando predefinito sconosciuto o controllo non supportato.';
+
+  @override
+  String get appMcpLocalUnavailable => 'Esecuzione locale non disponibile.';
+
+  @override
+  String get appMcpCommandFailed =>
+      'Il comando non è riuscito oppure ha superato il tempo o il limite di output.';
+
+  @override
+  String get appMcpHostChanged => 'La configurazione dell’host è cambiata.';
+
+  @override
+  String get appMcpOutput => 'L’output del comando ha superato il limite.';
+
+  @override
+  String get appMcpTransport => 'Trasporto non supportato.';
+
+  @override
+  String get appMcpFirst => 'Connettiti prima a questo host in ServerBox.';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Richiesta Monitor non riuscita ($reason).';
+  }
 }

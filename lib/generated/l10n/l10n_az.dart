@@ -7406,4 +7406,170 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Parolu daxil edin.';
+
+  @override
+  String get appMcpServer => 'MCP serveri';
+
+  @override
+  String get appMcpClient => 'Alətlər və MCP klienti';
+
+  @override
+  String get appMcpAddress => 'IPv4:port / [IPv6]:port';
+
+  @override
+  String get appMcpRegistry => 'MCP token reyestri yanlışdır.';
+
+  @override
+  String get appMcpDigest => 'Token heşi yanlışdır.';
+
+  @override
+  String get appMcpName => 'Token üçün ad daxil edin.';
+
+  @override
+  String get appMcpBusy => 'Başqa token dəyişikliyi saxlanılır.';
+
+  @override
+  String get appMcpProtect => 'Token faylını qorumaq mümkün olmadı.';
+
+  @override
+  String get appMcpChanged => 'Token faylı dəyişib. Yenidən cəhd edin.';
+
+  @override
+  String get appMcpListenBusy => 'MCP serverinin vəziyyəti dəyişir.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP ünvanı və port daxil edin, məsələn 0.0.0.0:49762 və ya [::]:49762.';
+
+  @override
+  String get appMcpStatus => 'İşləmə müddətini və yükü oxu.';
+
+  @override
+  String get appMcpMemory => 'Yaddaş statistikasını oxu.';
+
+  @override
+  String get appMcpCpu => 'CPU sayğaclarını və ya yükü oxu.';
+
+  @override
+  String get appMcpNetwork => 'İnterfeyslərin trafik sayğaclarını oxu.';
+
+  @override
+  String get appMcpDisk => 'Disk giriş-çıxış sayğaclarını oxu.';
+
+  @override
+  String get appMcpImages =>
+      'Docker obrazlarının ID, teq və ölçülərini göstər.';
+
+  @override
+  String get appMcpStorage =>
+      'Qoşulmuş fayl sistemlərini və tutumlarını göstər.';
+
+  @override
+  String get appMcpProcesses =>
+      'Proses ID-lərini və icra fayllarının adlarını göstər.';
+
+  @override
+  String get appMcpServices => 'Sistem xidmətlərini göstər.';
+
+  @override
+  String get appMcpContainers =>
+      'İşləyən və dayandırılmış Docker konteynerlərini göstər.';
+
+  @override
+  String get appMcpTmux => 'tmux seanslarını göstər.';
+
+  @override
+  String get appMcpList => 'Mövcud hostları və hazır əmrləri göstər.';
+
+  @override
+  String get appMcpCapabilities =>
+      'Hostun bağlantı üsullarını və dəstəklədiyi yoxlamaları göstər.';
+
+  @override
+  String get appMcpPreferences =>
+      'Dəyişdirilə bilən ServerBox parametrlərini oxu.';
+
+  @override
+  String get appMcpSet => 'ServerBox parametrini JSON sxeminə uyğun dəyiş.';
+
+  @override
+  String get appMcpShortcut =>
+      'Klaviatura qısayolu təyin et. Boş sətir təyinatı silir.';
+
+  @override
+  String get appMcpContainerLogs => 'Konteyner jurnalının son 100 sətrini oxu.';
+
+  @override
+  String get appMcpContainerStats =>
+      'Konteynerin cari resurs istifadəsini oxu.';
+
+  @override
+  String get appMcpContainerAction =>
+      'Docker ID-si ilə konteyneri başlat, dayandır və ya yenidən başlat.';
+
+  @override
+  String get appMcpServiceLogs =>
+      'systemd xidmətinin son 100 jurnal qeydini oxu.';
+
+  @override
+  String get appMcpServiceAction =>
+      'systemd xidmətini başlat, dayandır və ya yenidən başlat.';
+
+  @override
+  String get appMcpProcessDetail => 'Prosesin CPU və yaddaş istifadəsini oxu.';
+
+  @override
+  String get appMcpImageRemove => 'Docker obrazını tam ID ilə sil.';
+
+  @override
+  String get appMcpImageInspect =>
+      'Docker obrazının ölçüsünü və arxitekturasını oxu.';
+
+  @override
+  String get appMcpRun => 'Hostda əvvəlcədən saxlanmış əmri icra et.';
+
+  @override
+  String get appMcpRequest => 'Yanlış sorğu.';
+
+  @override
+  String get appMcpParams => 'Yanlış parametrlər.';
+
+  @override
+  String get appMcpMethod => 'Naməlum metod.';
+
+  @override
+  String get appMcpTool => 'Alət tanınmır və ya arqumentlər yanlışdır.';
+
+  @override
+  String get appMcpHost => 'Naməlum host.';
+
+  @override
+  String get appMcpSystemd => 'Linux üzərində systemd tələb olunur.';
+
+  @override
+  String get appMcpPreset => 'Hazır əmr tanınmır və ya yoxlama dəstəklənmir.';
+
+  @override
+  String get appMcpLocalUnavailable => 'Yerli icra əlçatan deyil.';
+
+  @override
+  String get appMcpCommandFailed =>
+      'Əmr uğursuz oldu, vaxtı bitdi və ya çıxış həddi aşıldı.';
+
+  @override
+  String get appMcpHostChanged => 'Hostun konfiqurasiyası dəyişib.';
+
+  @override
+  String get appMcpOutput => 'Əmrin çıxışı həddi aşdı.';
+
+  @override
+  String get appMcpTransport => 'Bağlantı üsulu dəstəklənmir.';
+
+  @override
+  String get appMcpFirst => 'Əvvəlcə ServerBox-da bu hosta qoşulun.';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Monitor sorğusu uğursuz oldu ($reason).';
+  }
 }

@@ -53,7 +53,7 @@ extension _AI on _AppSettingsPageState {
   }
 
   SettingsRow _buildAgentTools(AppLocalizations l10n) {
-    const label = AgentToolsPage.title;
+    final label = l10n.appMcpClient;
     return SettingsRow(
       label,
       () => ListTile(

@@ -33,7 +33,7 @@ enum SettingsSection {
     SettingsSection.appearance => libL10n.appearanceSettings,
     SettingsSection.privacy => l10n.privacy,
     SettingsSection.ai => libL10n.ai,
-    SettingsSection.mcp => 'MCP Server',
+    SettingsSection.mcp => l10n.appMcpServer,
     SettingsSection.server => libL10n.server,
     SettingsSection.ssh => libL10n.terminal,
     // Not localized: the id is what the settings search matches on, and Linux

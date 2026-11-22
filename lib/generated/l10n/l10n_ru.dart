@@ -7467,4 +7467,171 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Введите пароль.';
+
+  @override
+  String get appMcpServer => 'Сервер MCP';
+
+  @override
+  String get appMcpClient => 'Инструменты и клиент MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:порт / [IPv6]:порт';
+
+  @override
+  String get appMcpRegistry => 'Некорректный реестр токенов MCP.';
+
+  @override
+  String get appMcpDigest => 'Некорректный хеш токена.';
+
+  @override
+  String get appMcpName => 'Введите имя токена.';
+
+  @override
+  String get appMcpBusy => 'Сохраняется другое изменение токенов.';
+
+  @override
+  String get appMcpProtect => 'Не удалось защитить файл токенов.';
+
+  @override
+  String get appMcpChanged => 'Файл токенов изменился. Повторите попытку.';
+
+  @override
+  String get appMcpListenBusy => 'Состояние сервера MCP меняется.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Введите IP-адрес и порт, например 0.0.0.0:49762 или [::]:49762.';
+
+  @override
+  String get appMcpStatus => 'Получить время работы и нагрузку.';
+
+  @override
+  String get appMcpMemory => 'Получить статистику памяти.';
+
+  @override
+  String get appMcpCpu => 'Прочитать счётчики CPU или нагрузку.';
+
+  @override
+  String get appMcpNetwork => 'Прочитать счётчики трафика интерфейсов.';
+
+  @override
+  String get appMcpDisk => 'Прочитать счётчики дискового ввода-вывода.';
+
+  @override
+  String get appMcpImages => 'Вывести ID, теги и размеры образов Docker.';
+
+  @override
+  String get appMcpStorage =>
+      'Вывести смонтированные файловые системы и их ёмкость.';
+
+  @override
+  String get appMcpProcesses => 'Вывести PID и имена исполняемых файлов.';
+
+  @override
+  String get appMcpServices => 'Вывести системные службы.';
+
+  @override
+  String get appMcpContainers =>
+      'Вывести работающие и остановленные контейнеры Docker.';
+
+  @override
+  String get appMcpTmux => 'Вывести сеансы tmux.';
+
+  @override
+  String get appMcpList => 'Вывести доступные узлы и сохранённые команды.';
+
+  @override
+  String get appMcpCapabilities =>
+      'Вывести способы подключения и доступные проверки узла.';
+
+  @override
+  String get appMcpPreferences => 'Прочитать изменяемые настройки ServerBox.';
+
+  @override
+  String get appMcpSet =>
+      'Изменить настройку ServerBox согласно её JSON-схеме.';
+
+  @override
+  String get appMcpShortcut =>
+      'Назначить сочетание клавиш. Пустая строка снимает назначение.';
+
+  @override
+  String get appMcpContainerLogs =>
+      'Прочитать последние 100 строк журнала контейнера.';
+
+  @override
+  String get appMcpContainerStats =>
+      'Получить текущий расход ресурсов контейнером.';
+
+  @override
+  String get appMcpContainerAction =>
+      'Запустить, остановить или перезапустить контейнер по ID Docker.';
+
+  @override
+  String get appMcpServiceLogs =>
+      'Прочитать последние 100 записей журнала службы systemd.';
+
+  @override
+  String get appMcpServiceAction =>
+      'Запустить, остановить или перезапустить службу systemd.';
+
+  @override
+  String get appMcpProcessDetail =>
+      'Получить нагрузку на CPU и расход памяти процесса.';
+
+  @override
+  String get appMcpImageRemove => 'Удалить образ Docker по полному ID.';
+
+  @override
+  String get appMcpImageInspect =>
+      'Получить размер и архитектуру образа Docker.';
+
+  @override
+  String get appMcpRun => 'Выполнить сохранённую команду на узле.';
+
+  @override
+  String get appMcpRequest => 'Некорректный запрос.';
+
+  @override
+  String get appMcpParams => 'Некорректные параметры.';
+
+  @override
+  String get appMcpMethod => 'Неизвестный метод.';
+
+  @override
+  String get appMcpTool => 'Неизвестный инструмент или некорректные аргументы.';
+
+  @override
+  String get appMcpHost => 'Неизвестный узел.';
+
+  @override
+  String get appMcpSystemd => 'Требуется Linux с systemd.';
+
+  @override
+  String get appMcpPreset =>
+      'Неизвестная команда или неподдерживаемая проверка.';
+
+  @override
+  String get appMcpLocalUnavailable => 'Локальное выполнение недоступно.';
+
+  @override
+  String get appMcpCommandFailed =>
+      'Команда завершилась ошибкой, превысила время ожидания или лимит вывода.';
+
+  @override
+  String get appMcpHostChanged => 'Конфигурация узла изменилась.';
+
+  @override
+  String get appMcpOutput => 'Превышен лимит вывода команды.';
+
+  @override
+  String get appMcpTransport => 'Неподдерживаемый способ подключения.';
+
+  @override
+  String get appMcpFirst => 'Сначала подключитесь к этому узлу в ServerBox.';
+
+  @override
+  String appMcpMonitor(String reason) {
+    return 'Ошибка запроса к Monitor ($reason).';
+  }
 }
