@@ -11,6 +11,7 @@ import 'package:server_box/core/ssh/control_master.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/noninteractive.dart';
 import 'package:server_box/core/ssh/owning_socket.dart';
 import 'package:server_box/core/ssh/proxy_command_socket.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -49,6 +50,7 @@ Future<SSHClient> genClient(
   List<HostCertAuthority>? hostCertAuthorities,
   HostKeyPersistCallback? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
+  NonInteractiveSsh? unattended,
   Set<String>? visitedServerIds,
 }) async {
   // Bound once, up front: everything below needs SSH, and a server reached
@@ -131,7 +133,12 @@ Future<SSHClient> genClient(
     knownHostFingerprints ?? loadKnownHostFingerprints(),
   );
   final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
-  final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
+  final hostKeyPrompt = unattended == null
+      ? onHostKeyPrompt ?? showHostKeyPrompt
+      : (HostKeyPromptInfo _) async {
+          unattended.decline();
+          return false;
+        };
   final authorities = hostCertAuthorities ?? loadHostCertAuthorities();
 
   String? alterUser;
@@ -196,6 +203,7 @@ Future<SSHClient> genClient(
                 hostCertAuthorities: authorities,
                 onHostKeyAccepted: hostKeyPersist,
                 onHostKeyPrompt: hostKeyPrompt,
+                unattended: unattended,
                 visitedServerIds: {...chainVisitedServerIds},
               );
 
@@ -292,6 +300,7 @@ Future<SSHClient> genClient(
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
+      unattended: unattended,
       hostKeyVerifier: HostKeyVerifier(
         spi: spi,
         cache: hostKeyCache,
@@ -330,6 +339,7 @@ Future<SSHClient> _authenticatedClient({
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required NonInteractiveSsh? unattended,
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
 }) async {
@@ -355,6 +365,7 @@ Future<SSHClient> _authenticatedClient({
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
+      unattended: unattended,
       hostKeyVerifier: hostKeyVerifier,
       hostCertificateTrust: hostCertificateTrust,
       agent: agent,
@@ -388,6 +399,7 @@ Future<SSHClient> _clientWith({
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required NonInteractiveSsh? unattended,
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
   required SSHAgentClient? agent,
@@ -470,6 +482,7 @@ Future<SSHClient> _clientWith({
     openedKeys.add(
       await PrivateKeyUnlock.open(
         entry.value,
+        unattended: unattended,
         cacheKey: entry.key,
         keyName: privateKeyDisplayName(entry.key),
       ),

@@ -22,11 +22,17 @@ abstract final class KeyboardInteractiveAuth {
     Spi spi,
     SSHUserInfoRequest request, {
     BuildContext? context,
+    void Function()? onInteractionRequired,
     Duration timeout = promptTimeout,
   }) {
     final prepared = _prepareRequest(spi, request);
     if (prepared.pendingPrompts.isEmpty) {
       return prepared.merge(const <String>[]);
+    }
+
+    if (onInteractionRequired != null) {
+      onInteractionRequired();
+      return null;
     }
 
     final queued = _QueuedKeyboardInteractiveRequest(

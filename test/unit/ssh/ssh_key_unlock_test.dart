@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/core/ssh/keygen.dart';
+import 'package:server_box/core/ssh/noninteractive.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/src/rust/api/digest.dart';
 
@@ -65,6 +66,20 @@ void main() {
     keyName: keyName,
     prompt: prompt,
   );
+
+  test('an unattended locked key leaves interactive unlocking available', () async {
+    final handshake = NonInteractiveSsh();
+    await expectLater(
+      PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k', unattended: handshake),
+      throwsA(isA<SshInteractionRequired>()),
+    );
+    expect(handshake.needsUser, true);
+    prompt = ({required keyName, required retry}) async => passphrase;
+    final unlocked = await open(lockedPem, cacheKey: 'k', keyName: 'k');
+    final next = NonInteractiveSsh();
+    expect(await PrivateKeyUnlock.open(lockedPem, cacheKey: 'k', keyName: 'k', unattended: next), unlocked);
+    expect(next.needsUser, false);
+  });
 
   test('a key that needs no passphrase is never asked about', () async {
     var asked = 0;

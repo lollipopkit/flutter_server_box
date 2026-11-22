@@ -487,6 +487,20 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// model do to this machine, and a restore should not carry it.
   late final agentLocalExec = propertyDefault('agentLocalExec', false);
 
+  /// The device-local MCP token registry path and listener state.
+  late final appMcp = property<({bool enabled, String path, String listen})>(
+    'appMcp',
+    fromObj: (raw) => switch (raw) {
+      {'enabled': bool enabled, 'path': String path, 'listen': String listen} =>
+        (enabled: enabled, path: path, listen: listen),
+      // TODO(migration): remove after builds with loopback-only MCP settings retire.
+      {'enabled': bool enabled, 'path': String path} =>
+        (enabled: enabled, path: path, listen: '127.0.0.1:49762'),
+      _ => null,
+    },
+    toObj: (value) => value == null ? null : {'enabled': value.enabled, 'path': value.path, 'listen': value.listen},
+  );
+
   /// Whether secrets in what the Agent sends a model are replaced first. On
   /// by default: a server's output is full of credentials nobody meant to
   /// paste, and the model is somebody else's endpoint.
@@ -550,6 +564,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// answer instead of being quietly reset by a rename.
   static const deviceLocalKeys = {
     'agentLocalExec',
+    'appMcp',
     'liveActivity',
     // Whether this device keeps key passphrases: one that does not neither
     // sends nor takes them (`SyncCategory.passphrases`).

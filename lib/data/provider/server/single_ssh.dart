@@ -133,7 +133,7 @@ mixin _SshStatus on _ScriptStatus {
         client.close();
         return false;
       }
-      _setClient(client);
+      _adoptConnectedClient(client);
 
       final spentTime = elapsed.elapsedMilliseconds;
       if (spi.resolvedJumpIds.isEmpty) {
