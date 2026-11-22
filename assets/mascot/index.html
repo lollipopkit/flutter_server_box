@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ServerBox Mascot Preview</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #14161a;
+      --bg-radial: radial-gradient(circle at 50% 42%, #262a33 0%, #14161a 70%);
+      --surface: rgba(28, 31, 38, 0.78);
+      --surface-border: rgba(255, 255, 255, 0.09);
+      --text: #f3f5f8;
+      --active-bg: #f3f5f8;
+      --active-text: #14161a;
+      --hover: rgba(255, 255, 255, 0.08);
+      --shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #eceef2;
+      --bg-radial: radial-gradient(circle at 50% 42%, #ffffff 0%, #dfe3ea 72%);
+      --surface: rgba(255, 255, 255, 0.8);
+      --surface-border: rgba(15, 23, 42, 0.08);
+      --text: #14161a;
+      --active-bg: #14161a;
+      --active-text: #ffffff;
+      --hover: rgba(15, 23, 42, 0.06);
+      --shadow: 0 12px 36px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-radial);
+      display: grid;
+      place-items: center;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      --poster-color: transparent;
+      --progress-bar-color: #82c352;
+      --progress-bar-height: 2px;
+      outline: none;
+    }
+
+    .render-view {
+      display: none;
+      width: min(76vh, 88vw);
+      height: min(76vh, 88vw);
+      object-fit: contain;
+      border-radius: 28px;
+      user-select: none;
+      -webkit-user-drag: none;
+      box-shadow: var(--shadow);
+    }
+
+    .stage[data-mode="render"] model-viewer {
+      display: none;
+    }
+
+    .stage[data-mode="render"] .render-view {
+      display: block;
+    }
+
+    .bar {
+      position: fixed;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      box-shadow: var(--shadow);
+    }
+
+    .top-right {
+      top: 20px;
+      right: 20px;
+    }
+
+    .bottom-center {
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 24px);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .bottom-center::-webkit-scrollbar {
+      display: none;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font: 500 14px/1 inherit;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 140ms ease, color 140ms ease, transform 100ms ease;
+    }
+
+    button:hover {
+      background: var(--hover);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button[aria-pressed="true"] {
+      background: var(--active-bg);
+      color: var(--active-text);
+    }
+
+    button.icon-btn {
+      padding: 10px 12px;
+    }
+
+    .divider {
+      width: 1px;
+      height: 18px;
+      background: var(--surface-border);
+      margin: 0 2px;
+      flex: none;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .pose-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: var(--bg);
+      padding: 84px 24px 32px;
+      overflow: auto;
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      align-content: start;
+    }
+
+    .pose-grid.open {
+      display: grid;
+    }
+
+    .card {
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      border-radius: 20px;
+      overflow: hidden;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      transition: transform 140ms ease, border-color 140ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background: var(--surface);
+      border-color: rgba(130, 195, 82, 0.55);
+    }
+
+    .card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card span {
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .top-right { top: 12px; right: 12px; }
+      .bottom-center { bottom: 14px; }
+      button { padding: 9px 12px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage" data-mode="3d">
+    <model-viewer
+      id="viewer"
+      src="./pig/serverbox_pig.glb"
+      poster="./pig/render_idle.png"
+      camera-controls
+      autoplay
+      animation-crossfade-duration="350"
+      auto-rotate
+      auto-rotate-delay="1200"
+      rotation-per-second="18deg"
+      shadow-intensity="0.85"
+      shadow-softness="0.9"
+      exposure="1.05"
+      environment-image="neutral"
+      interaction-prompt="none"
+      camera-orbit="22deg 78deg 105%"
+      min-camera-orbit="auto 15deg auto"
+      max-camera-orbit="auto 165deg auto"
+      alt="ServerBox Mascot"
+    ></model-viewer>
+    <img id="renderImg" class="render-view" alt="ServerBox Mascot Render" />
+  </main>
+
+  <div class="bar top-right">
+    <button id="modeBtn" type="button" aria-pressed="false">渲染图</button>
+    <button id="backBtn" type="button" aria-pressed="false" hidden>背面</button>
+    <button id="playBtn" type="button" aria-pressed="true">动画</button>
+    <button id="rotateBtn" type="button" aria-pressed="true">旋转</button>
+    <button id="gridBtn" type="button" aria-pressed="false">总览</button>
+    <div class="divider"></div>
+    <button id="themeBtn" type="button" class="icon-btn" aria-label="切换明暗主题">☀</button>
+  </div>
+
+  <nav class="bar bottom-center" id="poseBar" aria-label="动作"></nav>
+
+  <section class="pose-grid" id="poseGrid" aria-label="全部动作总览"></section>
+
+  <script>
+    const POSES = [
+      { id: "idle", label: "空闲", color: "#82c352" },
+      { id: "working", label: "工作中", color: "#56aee0" },
+      { id: "confused", label: "疑惑", color: "#fcc153" },
+      { id: "happy", label: "开心", color: "#82c352" },
+      { id: "crying", label: "哭泣", color: "#ec6b5e" },
+    ];
+
+    const params = new URLSearchParams(location.search);
+    const state = {
+      pose: POSES.some(p => p.id === params.get("pose")) ? params.get("pose") : "idle",
+      mode: params.get("mode") === "render" || location.protocol === "file:" ? "render" : "3d",
+      back: false,
+      playing: true,
+      rotate: true,
+      grid: false,
+      theme: localStorage.getItem("mascot-theme") || "dark",
+    };
+
+    const stage = document.getElementById("stage");
+    const viewer = document.getElementById("viewer");
+    const renderImg = document.getElementById("renderImg");
+    const poseBar = document.getElementById("poseBar");
+    const poseGrid = document.getElementById("poseGrid");
+    const modeBtn = document.getElementById("modeBtn");
+    const backBtn = document.getElementById("backBtn");
+    const playBtn = document.getElementById("playBtn");
+    const rotateBtn = document.getElementById("rotateBtn");
+    const gridBtn = document.getElementById("gridBtn");
+    const themeBtn = document.getElementById("themeBtn");
+
+    function renderUrl(poseId, isBack = false) {
+      return `./pig/render_${isBack ? "back" : poseId}.png`;
+    }
+
+    function syncUrl() {
+      if (location.protocol === "file:") return;
+      const u = new URL(location.href);
+      u.searchParams.delete("animal");
+      u.searchParams.set("pose", state.pose);
+      u.searchParams.set("mode", state.mode);
+      history.replaceState(null, "", u);
+    }
+
+    function buildBars() {
+      poseBar.innerHTML = "";
+      for (const p of POSES) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.pose = p.id;
+        btn.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.label}`;
+        btn.addEventListener("click", () => {
+          state.pose = p.id;
+          state.back = false;
+          state.grid = false;
+          update();
+        });
+        poseBar.appendChild(btn);
+      }
+    }
+
+    function buildGrid() {
+      poseGrid.innerHTML = "";
+      for (const p of POSES) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "card";
+        card.innerHTML = `<img loading="lazy" src="${renderUrl(p.id)}" alt="${p.label}" /><span>${p.label}</span>`;
+        card.addEventListener("click", () => {
+          state.pose = p.id;
+          state.back = false;
+          state.grid = false;
+          update();
+        });
+        poseGrid.appendChild(card);
+      }
+    }
+
+    function update() {
+      document.documentElement.dataset.theme = state.theme;
+      themeBtn.textContent = state.theme === "dark" ? "☀" : "☾";
+
+      stage.dataset.mode = state.mode;
+      modeBtn.setAttribute("aria-pressed", String(state.mode === "render"));
+
+      const canShowBack = state.mode === "render" && state.pose === "idle";
+      if (!canShowBack) state.back = false;
+      backBtn.hidden = !canShowBack;
+      backBtn.setAttribute("aria-pressed", String(state.back));
+
+      playBtn.hidden = state.mode !== "3d";
+      playBtn.setAttribute("aria-pressed", String(state.playing));
+
+      rotateBtn.hidden = state.mode !== "3d";
+      rotateBtn.setAttribute("aria-pressed", String(state.rotate));
+      if (state.rotate) {
+        viewer.setAttribute("auto-rotate", "");
+      } else {
+        viewer.removeAttribute("auto-rotate");
+      }
+
+      gridBtn.setAttribute("aria-pressed", String(state.grid));
+      poseGrid.classList.toggle("open", state.grid);
+
+      for (const btn of poseBar.querySelectorAll("button")) {
+        btn.setAttribute("aria-pressed", String(btn.dataset.pose === state.pose));
+      }
+
+      renderImg.src = renderUrl(state.pose, state.back);
+
+      if (state.mode === "3d") {
+        viewer.animationName = state.pose;
+        if (state.playing) {
+          viewer.play();
+        } else {
+          viewer.pause();
+        }
+      }
+
+      syncUrl();
+    }
+
+    viewer.addEventListener("load", () => {
+      viewer.animationName = state.pose;
+      if (state.playing) {
+        viewer.play();
+      } else {
+        viewer.pause();
+      }
+    });
+
+    modeBtn.addEventListener("click", () => {
+      state.mode = state.mode === "3d" ? "render" : "3d";
+      state.grid = false;
+      update();
+    });
+
+    backBtn.addEventListener("click", () => {
+      state.back = !state.back;
+      update();
+    });
+
+    playBtn.addEventListener("click", () => {
+      state.playing = !state.playing;
+      update();
+    });
+
+    rotateBtn.addEventListener("click", () => {
+      state.rotate = !state.rotate;
+      update();
+    });
+
+    gridBtn.addEventListener("click", () => {
+      state.grid = !state.grid;
+      update();
+    });
+
+    themeBtn.addEventListener("click", () => {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("mascot-theme", state.theme);
+      update();
+    });
+
+    viewer.addEventListener("error", () => {
+      if (state.mode === "3d") {
+        state.mode = "render";
+        update();
+      }
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        const idx = POSES.findIndex(p => p.id === state.pose);
+        const delta = e.key === "ArrowRight" ? 1 : -1;
+        state.pose = POSES[(idx + delta + POSES.length) % POSES.length].id;
+        state.back = false;
+        update();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        state.rotate = !state.rotate;
+        update();
+      } else if (e.key === "Escape" && state.grid) {
+        state.grid = false;
+        update();
+      }
+    });
+
+    buildBars();
+    buildGrid();
+    update();
+  </script>
+</body>
+</html>
