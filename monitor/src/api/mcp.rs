@@ -957,14 +957,17 @@ pub async fn post(
         return error(StatusCode::PAYLOAD_TOO_LARGE, "too_large");
     }
 
-    // Re-verify the account's password generation after reading the body so a
-    // password change committed during upload revokes the token before dispatch.
-    if !authz::caller(&state)
-        .await
-        .is_some_and(|current| current.since == caller.caller.since)
-    {
-        return authz::unauthorized();
-    }
+    // Re-fetch the token and account generation after reading the body (without
+    // recording another use) so revocations, expirations, scope tightenings, or
+    // password changes committed during upload take effect before dispatch.
+    let token = match api_tokens::find_with_owner(&state.db, &caller.token_hash).await {
+        Ok(Some((token, _, owner_since))) if owner_since == caller.caller.since => token,
+        Ok(_) => return authz::unauthorized(),
+        Err(e) => {
+            tracing::warn!("Could not re-verify API token: {e}");
+            return authz::unauthorized();
+        }
+    };
 
     let global_policy = match api_tokens::load_policy(&state.db).await {
         Ok(policy) => policy,
@@ -980,20 +983,20 @@ pub async fn post(
         .filter(|&s| {
             config_mcp.allows_scope(s)
                 && global_policy.scopes.contains(&s)
-                && caller.token.scopes.contains(&s)
+                && token.scopes.contains(&s)
         })
         .collect();
 
     let host = TokenHost {
         state: state.clone(),
         caller: caller.caller.clone(),
-        token_name: caller.token.name.clone(),
+        token_name: token.name.clone(),
         peer: req.peer_addr(),
         remote_ip: caller.remote_ip.clone(),
         scopes: effective_scopes,
         config_commands: config_mcp.commands,
         global_commands: global_policy.commands,
-        token_commands: caller.token.commands.clone(),
+        token_commands: token.commands.clone(),
         audited_before_run: AtomicBool::new(false),
     };
 

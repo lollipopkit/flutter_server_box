@@ -36,9 +36,14 @@ pub enum Answer {
     Accepted,
 }
 
+const SPOKEN: [ProtocolVersion; 2] = [
+    ProtocolVersion::V_2025_11_25,
+    ProtocolVersion::V_2025_06_18,
+];
+
 /// Whether `MCP-Protocol-Version` names a protocol version this server speaks.
 pub fn speaks_version(v: &str) -> bool {
-    matches!(v, "2025-11-25" | "2025-06-18")
+    SPOKEN.iter().any(|sp| sp.as_str() == v)
 }
 
 /// Turns one JSON-RPC message into one answer.
@@ -110,10 +115,6 @@ pub async fn serve(host: &dyn Host, body: &Value) -> Answer {
 }
 
 fn negotiate(client: Option<&str>) -> ProtocolVersion {
-    const SPOKEN: [ProtocolVersion; 2] = [
-        ProtocolVersion::V_2025_11_25,
-        ProtocolVersion::V_2025_06_18,
-    ];
     match client {
         Some(v) => SPOKEN
             .iter()

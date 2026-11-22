@@ -137,6 +137,7 @@ async fn caller_of(state: &AppState, claims: &auth::Claims) -> Option<Caller> {
 pub struct TokenCaller {
     pub caller: Caller,
     pub token: crate::db::api_tokens::Token,
+    pub token_hash: String,
     pub remote_ip: Option<String>,
 }
 
@@ -165,7 +166,12 @@ pub async fn token_caller(req: &HttpRequest, state: &AppState) -> Result<TokenCa
             crate::db::api_tokens::record_use(&state.db, found.id, remote_ip.as_deref())
                 .await
                 .ok();
-            Ok(TokenCaller { caller, token: found, remote_ip })
+            Ok(TokenCaller {
+                caller,
+                token: found,
+                token_hash: hash,
+                remote_ip,
+            })
         }
         Ok(None) => Err(unauthorized()),
         Err(e) => {
