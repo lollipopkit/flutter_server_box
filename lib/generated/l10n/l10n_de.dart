@@ -7420,4 +7420,96 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get average => 'Durchschnitt';
+
+  @override
+  String get monitorMcpAccess => 'MCP-Zugang';
+
+  @override
+  String get monitorMcpEndpoint => 'Endpunkt';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Globale Berechtigungen';
+
+  @override
+  String get monitorMcpTokens => 'Token';
+
+  @override
+  String get monitorMcpNewToken => 'Neues Token';
+
+  @override
+  String get monitorMcpDays => 'Tage';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => 'Widerrufen';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name widerrufen?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Zuletzt verwendet';
+
+  @override
+  String get monitorMcpNeverUsed => 'Nie verwendet';
+
+  @override
+  String get monitorMcpExpires => 'Läuft ab';
+
+  @override
+  String get monitorMcpExpired => 'Abgelaufen';
+
+  @override
+  String get monitorMcpNoTokens => 'Keine Token';
+
+  @override
+  String get monitorMcpAllScopes => 'Alle Berechtigungen';
+
+  @override
+  String get monitorMcpAllowlist => 'Positivliste';
+
+  @override
+  String get monitorMcpScopeRead => 'Messwerte';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Dateien lesen';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Dateien schreiben';
+
+  @override
+  String get monitorMcpScopeExec => 'Befehle ausführen';
+
+  @override
+  String get monitorMcpScopeProcess => 'Prozesse';
+
+  @override
+  String get monitorMcpScopeService => 'Dienste';
+
+  @override
+  String get monitorMcpScopeContainer => 'Container';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualisierung';
+
+  @override
+  String get monitorMcpScopeStacks => 'Web-Apps';
+
+  @override
+  String get monitorMcpScopePower => 'Energie';
+
+  @override
+  String get monitorMcpNameRequired => 'Namen eingeben.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Mindestens eine Berechtigung wählen.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Passwort eingeben.';
 }

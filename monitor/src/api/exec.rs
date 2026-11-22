@@ -121,7 +121,7 @@ pub async fn exec(
 ///
 /// Reads the command rather than the input it was given, so nothing a caller
 /// sends as a credential is ever quoted here.
-fn first_line(cmd: &str) -> String {
+pub(crate) fn first_line(cmd: &str) -> String {
     let line = cmd.lines().next().unwrap_or("").trim();
     if line.len() <= 200 {
         return line.to_string();

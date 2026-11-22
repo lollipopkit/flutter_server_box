@@ -7373,4 +7373,96 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get average => 'میانگین';
+
+  @override
+  String get monitorMcpAccess => 'دسترسی MCP';
+
+  @override
+  String get monitorMcpEndpoint => 'نقطه پایانی';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'مجوزهای سراسری';
+
+  @override
+  String get monitorMcpTokens => 'توکن‌ها';
+
+  @override
+  String get monitorMcpNewToken => 'توکن جدید';
+
+  @override
+  String get monitorMcpDays => 'روز';
+
+  @override
+  String get monitorMcpCreated => 'توکن';
+
+  @override
+  String get monitorMcpRevoke => 'لغو';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name لغو شود؟';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'آخرین استفاده';
+
+  @override
+  String get monitorMcpNeverUsed => 'هرگز استفاده نشده';
+
+  @override
+  String get monitorMcpExpires => 'انقضا';
+
+  @override
+  String get monitorMcpExpired => 'منقضی‌شده';
+
+  @override
+  String get monitorMcpNoTokens => 'توکنی وجود ندارد';
+
+  @override
+  String get monitorMcpAllScopes => 'همه مجوزها';
+
+  @override
+  String get monitorMcpAllowlist => 'فهرست مجاز';
+
+  @override
+  String get monitorMcpScopeRead => 'وضعیت سیستم';
+
+  @override
+  String get monitorMcpScopeFsRead => 'خواندن فایل‌ها';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'نوشتن فایل‌ها';
+
+  @override
+  String get monitorMcpScopeExec => 'اجرای دستورات';
+
+  @override
+  String get monitorMcpScopeProcess => 'پردازش‌ها';
+
+  @override
+  String get monitorMcpScopeService => 'سرویس‌ها';
+
+  @override
+  String get monitorMcpScopeContainer => 'کانتینرها';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'مجازی‌سازی';
+
+  @override
+  String get monitorMcpScopeStacks => 'برنامه‌های وب';
+
+  @override
+  String get monitorMcpScopePower => 'تغذیه';
+
+  @override
+  String get monitorMcpNameRequired => 'نام را وارد کنید.';
+
+  @override
+  String get monitorMcpScopesRequired => 'حداقل یک مجوز انتخاب کنید.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'گذرواژه را وارد کنید.';
 }

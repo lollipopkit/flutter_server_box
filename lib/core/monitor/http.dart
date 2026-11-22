@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_api_token.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor/monitor_exec_output.dart';
@@ -893,6 +894,92 @@ class MonitorHttpClient {
       return MonitorPushList.fromJson(await _object('/api/v1/push'));
     });
   }
+
+  // ------------------------------------------------------------- MCP tokens
+  //
+  // Credentials and global permission ceiling for MCP clients (`/api/v1/api-tokens*`, #1681).
+
+  String get mcpEndpointUrl =>
+      '${monitor.addr.trim().replaceAll(RegExp(r'/+$'), '')}/api/v1/mcp';
+
+  Future<MonitorMcpPolicy> mcpPolicy() {
+    return _authed(() async {
+      final json = await _object('/api/v1/api-tokens/policy');
+      return MonitorMcpPolicy.fromJson(json);
+    });
+  }
+
+  Future<MonitorMcpPolicy> saveMcpPolicy({
+    required List<String> scopes,
+    required MonitorMcpCommandPolicy commands,
+  }) {
+    return _authed(() async {
+      final json = await _object(
+        '/api/v1/api-tokens/policy',
+        put: {
+          'scopes': scopes,
+          'commands': commands.toJson(),
+        },
+      );
+      return MonitorMcpPolicy.fromJson(json);
+    });
+  }
+
+  Future<List<MonitorApiToken>> apiTokens() {
+    return _authed(() async {
+      final data = (await _session().get<dynamic>('/api/v1/api-tokens')).data;
+      return MonitorApiToken.listFrom(data);
+    });
+  }
+
+  /// Mints a token, shown this once. [days] defaults to 90 and maxes at 3650.
+  Future<({MonitorApiToken token, String value})> createApiToken({
+    required String name,
+    required String password,
+    List<String>? scopes,
+    MonitorMcpCommandPolicy? commands,
+    int? days,
+  }) {
+    return _authed(() async {
+      final json = await _object(
+        '/api/v1/api-tokens',
+        post: {
+          'name': name,
+          'password': password,
+          'scopes': ?scopes,
+          'commands': ?commands?.toJson(),
+          'days': ?days,
+        },
+      );
+      return (
+        token: MonitorApiToken.fromJson(json),
+        value: json['token_value'] as String? ?? '',
+      );
+    });
+  }
+
+  Future<MonitorApiToken> updateApiToken(
+    int id, {
+    required String name,
+    required List<String> scopes,
+    required MonitorMcpCommandPolicy commands,
+  }) {
+    return _authed(() async {
+      final json = await _object(
+        '/api/v1/api-tokens/$id',
+        put: {
+          'name': name,
+          'scopes': scopes,
+          'commands': commands.toJson(),
+        },
+      );
+      return MonitorApiToken.fromJson(json);
+    });
+  }
+
+  Future<void> revokeApiToken(int id) => _authed(() async {
+    await _session().delete<dynamic>('/api/v1/api-tokens/$id');
+  });
 
   // ------------------------------------------------------------- account
   //

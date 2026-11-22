@@ -76,6 +76,11 @@ pub async fn set_password_hash(pool: &SqlitePool, hash: &str) -> Result<()> {
     sqlx::query("DELETE FROM watch_tokens")
         .execute(&mut *tx)
         .await?;
+    // An API token could have been minted with the old password known, so it
+    // goes with the watch tokens (#1681).
+    sqlx::query("DELETE FROM api_tokens")
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM login_device")
         .execute(&mut *tx)
         .await?;

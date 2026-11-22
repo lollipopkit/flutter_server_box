@@ -7326,4 +7326,96 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get average => 'rata-rata';
+
+  @override
+  String get monitorMcpAccess => 'Akses MCP';
+
+  @override
+  String get monitorMcpEndpoint => 'Endpoint';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Izin global';
+
+  @override
+  String get monitorMcpTokens => 'Token';
+
+  @override
+  String get monitorMcpNewToken => 'Token baru';
+
+  @override
+  String get monitorMcpDays => 'Hari';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => 'Cabut';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return 'Cabut $name?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Terakhir digunakan';
+
+  @override
+  String get monitorMcpNeverUsed => 'Belum pernah digunakan';
+
+  @override
+  String get monitorMcpExpires => 'Kedaluwarsa';
+
+  @override
+  String get monitorMcpExpired => 'Kedaluwarsa';
+
+  @override
+  String get monitorMcpNoTokens => 'Tidak ada token';
+
+  @override
+  String get monitorMcpAllScopes => 'Semua izin';
+
+  @override
+  String get monitorMcpAllowlist => 'Daftar izin';
+
+  @override
+  String get monitorMcpScopeRead => 'Pembacaan';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Baca berkas';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Tulis berkas';
+
+  @override
+  String get monitorMcpScopeExec => 'Jalankan perintah';
+
+  @override
+  String get monitorMcpScopeProcess => 'Proses';
+
+  @override
+  String get monitorMcpScopeService => 'Layanan';
+
+  @override
+  String get monitorMcpScopeContainer => 'Kontainer';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualisasi';
+
+  @override
+  String get monitorMcpScopeStacks => 'Aplikasi web';
+
+  @override
+  String get monitorMcpScopePower => 'Daya';
+
+  @override
+  String get monitorMcpNameRequired => 'Masukkan nama.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Pilih setidaknya satu izin.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Masukkan kata sandi.';
 }

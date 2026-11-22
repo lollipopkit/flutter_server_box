@@ -102,6 +102,14 @@ pub struct ChmodBody {
     mode: u32,
 }
 
+async fn record_fs(state: &AppState, remote_ip: Option<String>, action: &str, subject: &str) {
+    Event::new(Kind::Fs, Action::Open, Outcome::Ok)
+        .remote_ip(remote_ip)
+        .subject(format!("{action} {subject}"))
+        .record(&state.db)
+        .await;
+}
+
 /// Authorises the request and reports why not.
 ///
 /// Every handler starts here. Re-checked per request rather than trusted from
@@ -116,11 +124,7 @@ async fn admit(
     super::machine::gate_as(Kind::Fs, req, state, action).await?;
     // Logged by what was asked for, before it is attempted: an operation that
     // kills the agent still has to appear here.
-    Event::new(Kind::Fs, Action::Open, Outcome::Ok)
-        .remote_ip(peer_ip(req))
-        .subject(format!("{action} {subject}"))
-        .record(&state.db)
-        .await;
+    record_fs(state, peer_ip(req), action, subject).await;
     Ok(())
 }
 
@@ -724,6 +728,349 @@ fn staging_path(path: &Path) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
     name.push(format!("{STAGING_MARK}{}-{n}", std::process::id()));
     PathBuf::from(name)
+}
+
+/// Shared filesystem operations for the MCP tools (`api::mcp`), under the
+/// exact same [`FsRoots`] confinement, [`REPLACE`] lock and [`Kind::Fs`] audit
+/// as the HTTP endpoints above.
+pub(crate) mod mcp_ops {
+    use super::*;
+    use base64::Engine;
+    use serde_json::{Value, json};
+
+    const DEFAULT_READ_MAX: usize = 256 * 1024;
+    const HARD_READ_MAX: usize = 4 * 1024 * 1024;
+
+    async fn blocking<T, F>(f: F) -> std::result::Result<T, String>
+    where
+        T: Send + 'static,
+        F: FnOnce() -> std::result::Result<T, String> + Send + 'static,
+    {
+        tokio::task::spawn_blocking(f)
+            .await
+            .map_err(|e| format!("task join failed: {e}"))?
+    }
+
+    pub(crate) async fn roots(state: &Arc<AppState>, remote_ip: Option<String>) -> Value {
+        record_fs(state, remote_ip, "roots", "").await;
+        let st = state.clone();
+        let roots = tokio::task::spawn_blocking(move || {
+            let home = std::env::var_os("HOME")
+                .or_else(|| std::env::var_os("USERPROFILE"))
+                .and_then(|home| std::fs::canonicalize(home).ok())
+                .filter(|home| !st.remote_access.fs.roots.hides(home));
+            home.iter()
+                .chain(st.remote_access.fs.roots.as_slice())
+                .map(|p| exposed_path(p))
+                .collect::<Vec<String>>()
+        })
+        .await
+        .unwrap_or_default();
+        json!({ "roots": roots })
+    }
+
+    pub(crate) async fn list(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "list", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let dir = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
+        let mut reader = tokio::fs::read_dir(&dir).await.map_err(|e| e.to_string())?;
+        let roots = &state.remote_access.fs.roots;
+        let mut entries = Vec::new();
+        loop {
+            match reader.next_entry().await.map_err(|e| e.to_string())? {
+                Some(entry) if roots.hides(&entry.path()) => {}
+                Some(entry) if is_staging_name(&entry.file_name().to_string_lossy()) => {}
+                Some(entry) => entries.push(view_of(&entry.path()).await),
+                None => break,
+            }
+        }
+        Ok(json!({ "entries": entries }))
+    }
+
+    pub(crate) async fn stat(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "stat", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| match e {
+                    FsDenied::OutsideRoots => "not found".to_string(),
+                    other => other.to_string(),
+                })
+        })
+        .await?;
+        Ok(serde_json::to_value(view_of(&path).await).unwrap_or(Value::Null))
+    }
+
+    pub(crate) async fn read(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        offset: u64,
+        max_bytes: Option<usize>,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "read", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_existing(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
+        let pre_meta = tokio::fs::metadata(&path).await.map_err(|e| e.to_string())?;
+        if !pre_meta.is_file() {
+            return Err("not a regular file".into());
+        }
+        let mut file = tokio::fs::File::open(&path).await.map_err(|e| e.to_string())?;
+        let meta = file.metadata().await.map_err(|e| e.to_string())?;
+        if !meta.is_file() {
+            return Err("not a regular file".into());
+        }
+        let total_bytes = meta.len();
+        let version = version_of(&meta);
+        let cap = max_bytes.unwrap_or(DEFAULT_READ_MAX).min(HARD_READ_MAX);
+        if offset > 0 {
+            file.seek(std::io::SeekFrom::Start(offset))
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        let mut buf = Vec::new();
+        file.take((cap as u64).saturating_add(1))
+            .read_to_end(&mut buf)
+            .await
+            .map_err(|e| e.to_string())?;
+        let mut truncated = buf.len() > cap;
+        if truncated {
+            buf.truncate(cap);
+        }
+        let (content, encoding, bytes_read) = match String::from_utf8(buf) {
+            Ok(text) => {
+                let len = text.len();
+                (text, "utf8", len)
+            }
+            Err(err)
+                if truncated
+                    && err.utf8_error().error_len().is_none()
+                    && err.utf8_error().valid_up_to() > 0 =>
+            {
+                // Cut inside a trailing multi-byte UTF-8 sequence: step back to
+                // the character boundary so a text file stays UTF-8.
+                let valid = err.utf8_error().valid_up_to();
+                let mut bytes = err.into_bytes();
+                bytes.truncate(valid);
+                truncated = true;
+                let len = bytes.len();
+                (String::from_utf8(bytes).unwrap_or_default(), "utf8", len)
+            }
+            Err(err) => {
+                let bytes = err.into_bytes();
+                let len = bytes.len();
+                (base64::engine::general_purpose::STANDARD.encode(bytes), "base64", len)
+            }
+        };
+        Ok(json!({
+            "content": content,
+            "encoding": encoding,
+            "bytes": bytes_read,
+            "total_bytes": total_bytes,
+            "truncated": truncated,
+            "version": version,
+        }))
+    }
+
+    pub(crate) async fn write(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        bytes: &[u8],
+        if_version: Option<&str>,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "write", raw_path).await;
+        let limit = state.remote_access.fs.max_write_bytes;
+        if bytes.len() as u64 > limit {
+            return Err(format!("file exceeds the {limit} byte limit"));
+        }
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_new(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
+        let staging = staging_path(&path);
+        let mut opts = tokio::fs::OpenOptions::new();
+        opts.write(true).create_new(true);
+        #[cfg(unix)]
+        opts.mode(0o600);
+        let mut file = opts.open(&staging).await.map_err(|e| e.to_string())?;
+        let mut staged = Staged::new(staging.clone());
+        file.write_all(bytes).await.map_err(|e| e.to_string())?;
+        file.flush().await.map_err(|e| e.to_string())?;
+        drop(file);
+
+        let _replacing = REPLACE.lock().await;
+        if let Some(expected) = if_version
+            && version_at(&path).await.as_deref() != Some(expected)
+        {
+            return Err("modified: file changed since if_version".into());
+        }
+        if let Ok(existing) = tokio::fs::metadata(&path).await {
+            tokio::fs::set_permissions(&staging, existing.permissions())
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        tokio::fs::rename(&staging, &path)
+            .await
+            .map_err(|e| e.to_string())?;
+        staged.keep();
+        let version = version_at(&path).await;
+        Ok(json!({ "bytes": bytes.len(), "version": version }))
+    }
+
+    pub(crate) async fn mkdir(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "mkdir", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            st.remote_access
+                .fs
+                .roots
+                .resolve_new(&raw)
+                .map_err(|e| e.to_string())
+        })
+        .await?;
+        tokio::fs::create_dir_all(&path)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(json!({ "ok": true }))
+    }
+
+    pub(crate) async fn remove(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        recursive: bool,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "remove", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let path = roots.resolve_entry(&raw).map_err(|e| e.to_string())?;
+            roots.check_mutable(&path).map_err(|e| e.to_string())?;
+            if roots.as_slice().iter().any(|root| root == &path) {
+                return Err(FsDenied::OutsideRoots.to_string());
+            }
+            Ok(path)
+        })
+        .await?;
+        let _replacing = REPLACE.lock().await;
+        let meta = tokio::fs::symlink_metadata(&path)
+            .await
+            .map_err(|e| e.to_string())?;
+        if meta.is_dir() {
+            if recursive {
+                tokio::fs::remove_dir_all(&path).await
+            } else {
+                tokio::fs::remove_dir(&path).await
+            }
+        } else {
+            tokio::fs::remove_file(&path).await
+        }
+        .map_err(|e| e.to_string())?;
+        Ok(json!({ "ok": true }))
+    }
+
+    pub(crate) async fn rename(
+        state: &Arc<AppState>,
+        raw_from: &str,
+        raw_to: &str,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "rename", raw_from).await;
+        let st = state.clone();
+        let rf = raw_from.to_owned();
+        let rt = raw_to.to_owned();
+        let (from, to) = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let from = roots.resolve_entry(&rf).map_err(|e| e.to_string())?;
+            let to = roots.resolve_new(&rt).map_err(|e| e.to_string())?;
+            for end in [&from, &to] {
+                roots.check_mutable(end).map_err(|e| e.to_string())?;
+            }
+            if roots.as_slice().iter().any(|root| root == &from) {
+                return Err(FsDenied::OutsideRoots.to_string());
+            }
+            Ok((from, to))
+        })
+        .await?;
+        let _replacing = REPLACE.lock().await;
+        tokio::fs::rename(&from, &to)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(json!({ "ok": true }))
+    }
+
+    pub(crate) async fn chmod(
+        state: &Arc<AppState>,
+        raw_path: &str,
+        mode: u32,
+        remote_ip: Option<String>,
+    ) -> std::result::Result<Value, String> {
+        record_fs(state, remote_ip, "chmod", raw_path).await;
+        let st = state.clone();
+        let raw = raw_path.to_owned();
+        let path = blocking(move || {
+            let roots = &st.remote_access.fs.roots;
+            let path = roots.resolve_existing(&raw).map_err(|e| e.to_string())?;
+            roots.check_mutable(&path).map_err(|e| e.to_string())?;
+            Ok(path)
+        })
+        .await?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = std::fs::Permissions::from_mode(mode & 0o7777);
+            tokio::fs::set_permissions(&path, perms)
+                .await
+                .map_err(|e| e.to_string())?;
+            Ok(json!({ "ok": true }))
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = (&path, mode);
+            Err("this platform has no file modes".into())
+        }
+    }
 }
 
 #[cfg(test)]

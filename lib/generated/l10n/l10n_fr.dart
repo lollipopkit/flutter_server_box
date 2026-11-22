@@ -7440,4 +7440,96 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get average => 'moyenne';
+
+  @override
+  String get monitorMcpAccess => 'Accès MCP';
+
+  @override
+  String get monitorMcpEndpoint => 'Point de terminaison';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Permissions globales';
+
+  @override
+  String get monitorMcpTokens => 'Jetons';
+
+  @override
+  String get monitorMcpNewToken => 'Nouveau jeton';
+
+  @override
+  String get monitorMcpDays => 'Jours';
+
+  @override
+  String get monitorMcpCreated => 'Jeton';
+
+  @override
+  String get monitorMcpRevoke => 'Révoquer';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return 'Révoquer $name ?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Dernière utilisation';
+
+  @override
+  String get monitorMcpNeverUsed => 'Jamais utilisé';
+
+  @override
+  String get monitorMcpExpires => 'Expire';
+
+  @override
+  String get monitorMcpExpired => 'Expiré';
+
+  @override
+  String get monitorMcpNoTokens => 'Aucun jeton';
+
+  @override
+  String get monitorMcpAllScopes => 'Toutes les permissions';
+
+  @override
+  String get monitorMcpAllowlist => 'Liste blanche';
+
+  @override
+  String get monitorMcpScopeRead => 'Lectures';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Lire les fichiers';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Écrire les fichiers';
+
+  @override
+  String get monitorMcpScopeExec => 'Exécuter des commandes';
+
+  @override
+  String get monitorMcpScopeProcess => 'Processus';
+
+  @override
+  String get monitorMcpScopeService => 'Services';
+
+  @override
+  String get monitorMcpScopeContainer => 'Conteneurs';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualisation';
+
+  @override
+  String get monitorMcpScopeStacks => 'Applications web';
+
+  @override
+  String get monitorMcpScopePower => 'Alimentation';
+
+  @override
+  String get monitorMcpNameRequired => 'Saisissez un nom.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Choisissez au moins une permission.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Saisissez le mot de passe.';
 }

@@ -27,6 +27,10 @@ pub struct Config {
     /// The web apps it deploys (`stacks`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stacks: Option<StacksConfig>,
+    /// What an MCP client may do (`/mcp`, #1681). Absent in every config
+    /// written before the endpoint existed, hence `Option`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mcp: Option<McpConfig>,
     /// LK Cloud (`crate::lkc`), off as the app's `Lkc.enabled` is: no
     /// `lkc` feature, no `/lkc*`, no sign-in renewed and no push through it.
     /// Only `SBM_LKC=1` turns it on, read at start: never from or into
@@ -117,6 +121,42 @@ pub struct ServerConfig {
     /// never read by the backend itself, purely a sync point for the panel.
     #[serde(default)]
     pub card_order: Vec<String>,
+}
+
+/// Operator ceiling on what MCP clients may do (`config.toml` `[mcp]`),
+/// intersected with the UI-managed `mcp_policy` table and each token's own
+/// permissions. Everything defaults open: all scopes enabled and every
+/// command allowed unless denied.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct McpConfig {
+    /// Scopes disabled in `config.toml`; empty leaves every scope enabled.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub disabled_scopes: Vec<String>,
+    /// Shorthand for disabling `power` (`false` turns `power` off; `true` or
+    /// absent leaves it enabled unless listed in `disabled_scopes`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub allow_power: Option<bool>,
+    /// Command rules at the `config.toml` layer (`allow_all` by default).
+    #[serde(default)]
+    pub commands: crate::db::api_tokens::CommandPolicy,
+}
+
+impl McpConfig {
+    pub fn allows_scope(&self, scope: crate::db::api_tokens::Scope) -> bool {
+        if scope == crate::db::api_tokens::Scope::Power && self.allow_power == Some(false) {
+            return false;
+        }
+        !self.disabled_scopes.iter().any(|s| s == scope.as_str())
+    }
+
+    pub fn allowed_scopes(&self) -> Vec<crate::db::api_tokens::Scope> {
+        crate::db::api_tokens::Scope::ALL
+            .iter()
+            .copied()
+            .filter(|&s| self.allows_scope(s))
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -466,6 +506,16 @@ impl Config {
                 retention.validate().map_err(anyhow::Error::msg)?;
             }
         }
+        if let Some(mcp) = self.mcp.as_ref() {
+            for scope in &mcp.disabled_scopes {
+                if crate::db::api_tokens::Scope::parse(scope).is_none() {
+                    anyhow::bail!("mcp.disabled_scopes: unknown scope {scope:?}");
+                }
+            }
+            mcp.commands
+                .validate()
+                .map_err(|e| anyhow::anyhow!("mcp.commands: {e}"))?;
+        }
         Ok(())
     }
 
@@ -569,6 +619,10 @@ impl Config {
     /// `[server]` one silently ignored `SBM_HOST`.
     pub fn get_server(&self) -> ServerConfig {
         self.server.clone().unwrap_or_default()
+    }
+
+    pub fn get_mcp(&self) -> McpConfig {
+        self.mcp.clone().unwrap_or_default()
     }
 
     pub fn get_stacks(&self) -> StacksConfig {
@@ -931,6 +985,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             server: Some(ServerConfig::default()),
+            mcp: None,
             monitoring: Some(MonitoringConfig {
                 rules: vec![
                     MonitoringRule {

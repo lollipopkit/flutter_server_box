@@ -132,6 +132,55 @@ async fn caller_of(state: &AppState, claims: &auth::Claims) -> Option<Caller> {
     (claims.iat as i64 >= caller.since.div_euclid(1000)).then_some(caller)
 }
 
+/// The account behind a request's API token (#1681), and what the token may
+/// do — the third credential beside the panel JWT and the watch token.
+pub struct TokenCaller {
+    pub caller: Caller,
+    pub token: crate::db::api_tokens::Token,
+    pub token_hash: String,
+    pub remote_ip: Option<String>,
+}
+
+/// What a route serving an MCP client takes: `Authorization: Bearer sbt_…`,
+/// naming the account and the token's scopes. The use is recorded here, as
+/// the owner reads it in the token list.
+///
+/// The credential only: what the link may carry is the caller's, as it is for
+/// every other route (`machine::gate` for the JWT). A token lives for months
+/// and is minted to act, so its route asks the acting rule and records the
+/// refusal, naming the token.
+pub async fn token_caller(req: &HttpRequest, state: &AppState) -> Result<TokenCaller, HttpResponse> {
+    let Ok(token) = bearer_token(req) else {
+        return Err(unauthorized());
+    };
+    // Named by its prefix, so a panel JWT or watch token sent here is a
+    // missing credential, not a token the database failed to find.
+    if !token.starts_with(crate::db::api_tokens::PREFIX) {
+        return Err(unauthorized());
+    }
+    let hash = crate::db::api_tokens::hash(token);
+    match crate::db::api_tokens::find_with_owner(&state.db, &hash).await {
+        Ok(Some((found, owner_id, owner_since))) => {
+            let caller = Caller { id: owner_id, since: owner_since };
+            let remote_ip = req.peer_addr().map(|a| a.ip().to_string());
+            crate::db::api_tokens::record_use(&state.db, found.id, remote_ip.as_deref())
+                .await
+                .ok();
+            Ok(TokenCaller {
+                caller,
+                token: found,
+                token_hash: hash,
+                remote_ip,
+            })
+        }
+        Ok(None) => Err(unauthorized()),
+        Err(e) => {
+            tracing::warn!("Could not read an API token: {e}");
+            Err(unauthorized())
+        }
+    }
+}
+
 /// Who may read the numbers: the account, or a watch token with the `read`
 /// scope.
 pub enum Reader {

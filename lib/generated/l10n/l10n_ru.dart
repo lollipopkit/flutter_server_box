@@ -7375,4 +7375,96 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get average => 'среднее';
+
+  @override
+  String get monitorMcpAccess => 'Доступ MCP';
+
+  @override
+  String get monitorMcpEndpoint => 'Конечная точка';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Глобальные права';
+
+  @override
+  String get monitorMcpTokens => 'Токены';
+
+  @override
+  String get monitorMcpNewToken => 'Новый токен';
+
+  @override
+  String get monitorMcpDays => 'Дней';
+
+  @override
+  String get monitorMcpCreated => 'Токен';
+
+  @override
+  String get monitorMcpRevoke => 'Отозвать';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return 'Отозвать $name?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Последнее использование';
+
+  @override
+  String get monitorMcpNeverUsed => 'Не использовался';
+
+  @override
+  String get monitorMcpExpires => 'Истекает';
+
+  @override
+  String get monitorMcpExpired => 'Истёк';
+
+  @override
+  String get monitorMcpNoTokens => 'Нет токенов';
+
+  @override
+  String get monitorMcpAllScopes => 'Все права';
+
+  @override
+  String get monitorMcpAllowlist => 'Белый список';
+
+  @override
+  String get monitorMcpScopeRead => 'Показатели';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Чтение файлов';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Запись файлов';
+
+  @override
+  String get monitorMcpScopeExec => 'Выполнение команд';
+
+  @override
+  String get monitorMcpScopeProcess => 'Процессы';
+
+  @override
+  String get monitorMcpScopeService => 'Службы';
+
+  @override
+  String get monitorMcpScopeContainer => 'Контейнеры';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Виртуализация';
+
+  @override
+  String get monitorMcpScopeStacks => 'Веб-приложения';
+
+  @override
+  String get monitorMcpScopePower => 'Питание';
+
+  @override
+  String get monitorMcpNameRequired => 'Введите имя.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Выберите хотя бы одно право.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Введите пароль.';
 }

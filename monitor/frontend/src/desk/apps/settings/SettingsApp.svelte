@@ -24,6 +24,7 @@
   import { useDeskPrefs } from '../../deskState.svelte'
   import GeneralSection from './GeneralSection.svelte'
   import ServerSection from './ServerSection.svelte'
+  import McpSection from './McpSection.svelte'
   import MonitorBackupSection from './MonitorBackupSection.svelte'
   import { resolveSection, type SettingsSection } from './sections'
 
@@ -42,9 +43,15 @@
   /// on; a window restored at it otherwise falls back rather than showing a
   /// panel with nothing in it.
   const agent = $derived(machineAccess(caps, 'agent_mode'))
+  /// MCP server endpoint and API tokens (`/api-tokens*`, `/mcp`).
+  const mcp = $derived(machineAccess(caps, 'mcp'))
   /// Backups of the monitor's settings, on a monitor that makes them.
   const backup = $derived(machineAccess(caps, 'monitor_backup'))
-  const current = $derived((section === 'agent' && !agent) || (section === 'backup' && !backup) ? 'account' : section)
+  const current = $derived(
+    (section === 'agent' && !agent) || (section === 'backup' && !backup) || (section === 'mcp' && !mcp)
+      ? 'account'
+      : section,
+  )
 
   function show(next: SettingsSection) {
     win.setAppState({ section: next })
@@ -165,6 +172,14 @@
         active={current === 'server'}
         onclick={() => show('server')}
       />
+      {#if mcp}
+        <SidebarItem
+          label={$LL.mcpAccess()}
+          icon="hub"
+          active={current === 'mcp'}
+          onclick={() => show('mcp')}
+        />
+      {/if}
       {#if backup}
         <SidebarItem
           label={$LL.monitorBackupTitle()}
@@ -242,6 +257,10 @@
     <AccountSection />
   {:else if current === 'server'}
     <ServerSection />
+  {:else if current === 'mcp'}
+    {#key servers.currentId}
+      <McpSection />
+    {/key}
   {:else if current === 'backup'}
     <MonitorBackupSection />
   {:else if current === 'agent' && agentPermissions}

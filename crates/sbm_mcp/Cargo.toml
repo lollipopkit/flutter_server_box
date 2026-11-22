@@ -1,0 +1,15 @@
+[package]
+name = "sbm_mcp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Model types only (Tool, results, protocol versions): the server feature
+# carries them without any transport, TLS or HTTP client stack.
+rmcp = { version = "3.11", default-features = false, features = ["server"] }
+async-trait = "0.1"
+serde = "1.0"
+serde_json = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1.53", features = ["macros", "rt"] }

@@ -17,6 +17,8 @@ vi.mock('../lib/api', async (importOriginal) => ({
     getSettings: vi.fn(),
     getCustomCmds: vi.fn(),
     getPush: vi.fn(),
+    listApiTokens: vi.fn(),
+    getMcpPolicy: vi.fn(),
     // The host card is optional: unread here.
     getMetrics: () => Promise.reject(new Error('not in this test')),
   },
@@ -50,7 +52,7 @@ const settingsView = (): SettingsView => ({
 
 const caps = (ok: boolean): Capabilities =>
   ({
-    features: ['agent_mode'],
+    features: ['agent_mode', 'mcp'],
     access: ok ? { ok } : { ok, why: 'insecure_transport' },
   }) as unknown as Capabilities
 
@@ -77,11 +79,17 @@ beforeEach(() => {
     push_types: ['webhook'],
     applies_on_restart: true,
   })
+  mocked.listApiTokens.mockResolvedValue([])
+  mocked.getMcpPolicy.mockResolvedValue({
+    scopes: ['read', 'fs_read', 'fs_write', 'exec', 'process', 'service', 'container', 'cron', 'virt', 'stacks', 'power'],
+    commands: { mode: 'allow_all', allow: [], deny: [] },
+    config_scopes: ['read', 'fs_read', 'fs_write', 'exec', 'process', 'service', 'container', 'cron', 'virt', 'stacks', 'power'],
+  })
 })
 
 describe('settings sections', () => {
   it('knows its own sections and nothing else', () => {
-    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'backup', 'agent'])
+    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'mcp', 'backup', 'agent'])
     expect(isSection('server')).toBe(true)
     expect(isSection('Server')).toBe(false)
     expect(isSection(null)).toBe(false)
@@ -148,9 +156,19 @@ describe('settings app', () => {
     render(SettingsWindowHarness, { desk, id })
 
     expect(screen.queryByRole('button', { name: ll.settingsAgent() })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.mcpAccess() })).toBeNull()
     // The section it asked for is not offered, so it falls back rather than
     // showing a panel with nothing in it.
     expect(screen.getByRole('heading', { level: 1, name: ll.settingsAccount() })).toBeInTheDocument()
+  })
+
+  it('opens MCP access as its own top-level section when supported', async () => {
+    const { desk, id } = deskWith({ section: 'mcp' })
+    render(SettingsWindowHarness, { desk, id })
+
+    expect(await screen.findByRole('heading', { level: 1, name: ll.mcpAccess() })).toBeInTheDocument()
+    expect(await screen.findByText(ll.mcpGlobalPolicy())).toBeInTheDocument()
+    expect(screen.getByText(ll.mcpTokens())).toBeInTheDocument()
   })
 })
 

@@ -78,10 +78,15 @@ pub async fn refresh(req: HttpRequest, state: Arc<AppState>) -> Result<HttpRespo
 }
 
 async fn answer_list(state: &AppState) -> Result<HttpResponse, WebError> {
-    let rows = match store::all(&state.db).await {
-        Ok(rows) => rows,
-        Err(e) => return Ok(super::respond::internal(&e)),
-    };
+    match list_apps(state).await {
+        Ok(body) => Ok(HttpResponse::Ok().json(&body)),
+        Err(e) => Ok(super::respond::internal(&e)),
+    }
+}
+
+/// `/stacks`'s body, shared with the MCP tool.
+pub(crate) async fn list_apps(state: &AppState) -> std::result::Result<Value, sqlx::Error> {
+    let rows = store::all(&state.db).await?;
     let apps: Vec<Value> = state
         .stacks
         .catalog
@@ -103,7 +108,7 @@ async fn answer_list(state: &AppState) -> Result<HttpResponse, WebError> {
             })
         })
         .collect();
-    Ok(HttpResponse::Ok().json(&json!({ "apps": apps })))
+    Ok(json!({ "apps": apps }))
 }
 
 pub async fn prepare(

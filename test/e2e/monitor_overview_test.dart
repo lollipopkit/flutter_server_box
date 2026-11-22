@@ -16,6 +16,7 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/ssh_e2e.dart';
 
 Future<void> main() async {
@@ -33,6 +34,7 @@ Future<void> main() async {
       allowInsecure: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_INSECURE') == '1',
     ),
   );
+  setUpAll(initRustLibForTest);
   tearDownAll(client.dispose);
 
   test('the agent offers the tab\'s sections', () async {

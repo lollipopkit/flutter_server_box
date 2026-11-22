@@ -45,7 +45,7 @@ impl PowerAction {
 
     /// Written into the audit row. Stable on its own, so renaming a variant
     /// cannot rewrite what was recorded.
-    fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             PowerAction::Shutdown => "shutdown",
             PowerAction::Reboot => "reboot",
@@ -56,14 +56,14 @@ impl PowerAction {
 
 #[derive(Deserialize)]
 pub struct PowerRequest {
-    action: PowerAction,
+    pub(crate) action: PowerAction,
     /// For `sudo -S`. Never recorded.
     #[serde(default)]
-    password: Option<String>,
+    pub(crate) password: Option<String>,
 }
 
 #[derive(Serialize)]
-struct PowerResponse {
+pub(crate) struct PowerResponse {
     /// Null when the command did not exit on its own: killed at the timeout,
     /// which is an ordinary way for a suspend to end.
     exit_code: Option<i32>,
@@ -73,6 +73,14 @@ struct PowerResponse {
     sudo_rejected: bool,
     truncated: bool,
     timed_out: bool,
+}
+
+/// Why a power action did not answer, as the route reports it.
+pub(crate) enum PowerRefused {
+    /// The status script could not be written, so nothing ran.
+    Script,
+    /// The command could not be run at all.
+    Failed(String),
 }
 
 pub async fn power(
@@ -86,19 +94,36 @@ pub async fn power(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    match perform(&state, body.into_inner(), gated.remote_ip).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(&response)),
+        Err(PowerRefused::Script | PowerRefused::Failed(_)) => {
+            Ok(HttpResponse::InternalServerError().build())
+        }
+    }
+}
+
+/// Runs one power action, recording it as the route does. Shared with the MCP
+/// tool; the transport rule is the caller's, asked before this runs.
+pub(crate) async fn perform(
+    state: &AppState,
+    body: PowerRequest,
+    remote_ip: Option<String>,
+) -> Result<PowerResponse, PowerRefused> {
+    let action = body.action;
+    let what = format!("power {}", action.as_str());
 
     let cmd = match crate::monitoring::local_script_command(action.shell_func()) {
         Ok(cmd) => cmd,
         Err(e) => {
             tracing::warn!("power: could not write the status script: {e}");
-            return Ok(HttpResponse::InternalServerError().build());
+            return Err(PowerRefused::Script);
         }
     };
 
     // Recorded before it runs: the command that succeeds is the one that
     // takes the agent down with it, and a row written afterwards never is.
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .remote_ip(gated.remote_ip.clone())
+        .remote_ip(remote_ip.clone())
         .detail(&what)
         .record(&state.db)
         .await;
@@ -110,11 +135,11 @@ pub async fn power(
         Ok(out) => out,
         Err(e) => {
             Event::new(Kind::Machine, Action::Close, Outcome::Error)
-                .remote_ip(gated.remote_ip)
+                .remote_ip(remote_ip)
                 .detail(format!("{what}: {e}"))
                 .record(&state.db)
                 .await;
-            return Ok(HttpResponse::InternalServerError().build());
+            return Err(PowerRefused::Failed(e.to_string()));
         }
     };
 
@@ -123,7 +148,7 @@ pub async fn power(
         // Which way it failed, not what it printed: this column never carries
         // a command's output.
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .remote_ip(gated.remote_ip)
+            .remote_ip(remote_ip)
             .detail(format!(
                 "{what}: {}",
                 if sudo_rejected {
@@ -136,14 +161,14 @@ pub async fn power(
             .await;
     }
 
-    Ok(HttpResponse::Ok().json(&PowerResponse {
+    Ok(PowerResponse {
         exit_code: out.exit_code,
         stdout: out.stdout,
         stderr: out.stderr,
         sudo_rejected,
         truncated: out.truncated,
         timed_out: out.timed_out,
-    }))
+    })
 }
 
 #[cfg(test)]

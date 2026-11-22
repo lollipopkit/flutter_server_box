@@ -150,6 +150,12 @@ sysinfo = { version = "0.40", default-features = false, features = ["system"] }
 # A command's process tree as a job object (`utils::job`).
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Diagnostics_ToolHelp", "Win32_System_JobObjects", "Win32_System_Threading"] }
 
+[dependencies.async-trait]
+version = "0.1"
+
+[dependencies.sbm_mcp]
+path = "../crates/sbm_mcp"
+
 [dev-dependencies]
 # ntex's test server otherwise turns on every crate's trace log, which
 # makes Cranelift compiling a component take tens of seconds.

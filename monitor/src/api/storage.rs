@@ -130,10 +130,21 @@ pub(crate) async fn arrays_and_pools(state: &AppState) -> (Vec<st::MdArray>, Vec
 
 pub async fn view(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
-    if !cfg!(target_os = "linux") {
-        return Ok(super::respond::error_u16(409, "notLinux"));
+    match view_body(&state).await {
+        Ok(body) => Ok(HttpResponse::Ok().json(&body)),
+        Err("notLinux") => Ok(super::respond::error_u16(409, "notLinux")),
+        Err(code) => Ok(super::respond::error_u16(502, code)),
     }
-    let Some(v) = read_view(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
+}
+
+/// `/storage`'s body, shared with the MCP tool.
+pub(crate) async fn view_body(state: &AppState) -> std::result::Result<serde_json::Value, &'static str> {
+    if !cfg!(target_os = "linux") {
+        return Err("notLinux");
+    }
+    let Some(v) = read_view(state).await else {
+        return Err("unreadable");
+    };
     let job = state.storage.job().map(|j| j.view(u64::MAX));
     let health = state.storage.health();
     let maintenance = crate::storage_watch::tasks(&state.db).await;
@@ -146,7 +157,7 @@ pub async fn view(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse
         // Who a sudoers rule for the schedule names.
         o.insert("account".into(), json!(std::env::var("USER").ok()));
     }
-    Ok(HttpResponse::Ok().json(&body))
+    Ok(body)
 }
 
 /// Every disk's SMART as root; `Err` is sudo's refusal, as `act` answers it.

@@ -7035,4 +7035,96 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get average => '평균';
+
+  @override
+  String get monitorMcpAccess => 'MCP 액세스';
+
+  @override
+  String get monitorMcpEndpoint => '엔드포인트';
+
+  @override
+  String get monitorMcpGlobalPolicy => '전역 권한';
+
+  @override
+  String get monitorMcpTokens => '토큰';
+
+  @override
+  String get monitorMcpNewToken => '새 토큰';
+
+  @override
+  String get monitorMcpDays => '일수';
+
+  @override
+  String get monitorMcpCreated => '토큰';
+
+  @override
+  String get monitorMcpRevoke => '폐기';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '$name 토큰을 폐기할까요?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => '마지막 사용';
+
+  @override
+  String get monitorMcpNeverUsed => '사용 안 함';
+
+  @override
+  String get monitorMcpExpires => '만료';
+
+  @override
+  String get monitorMcpExpired => '만료됨';
+
+  @override
+  String get monitorMcpNoTokens => '토큰 없음';
+
+  @override
+  String get monitorMcpAllScopes => '모든 권한';
+
+  @override
+  String get monitorMcpAllowlist => '허용 목록';
+
+  @override
+  String get monitorMcpScopeRead => '상태 읽기';
+
+  @override
+  String get monitorMcpScopeFsRead => '파일 읽기';
+
+  @override
+  String get monitorMcpScopeFsWrite => '파일 쓰기';
+
+  @override
+  String get monitorMcpScopeExec => '명령 실행';
+
+  @override
+  String get monitorMcpScopeProcess => '프로세스';
+
+  @override
+  String get monitorMcpScopeService => '서비스';
+
+  @override
+  String get monitorMcpScopeContainer => '컨테이너';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => '가상화';
+
+  @override
+  String get monitorMcpScopeStacks => '웹 앱';
+
+  @override
+  String get monitorMcpScopePower => '전원';
+
+  @override
+  String get monitorMcpNameRequired => '이름을 입력하세요.';
+
+  @override
+  String get monitorMcpScopesRequired => '하나 이상의 권한을 선택하세요.';
+
+  @override
+  String get monitorMcpPasswordRequired => '비밀번호를 입력하세요.';
 }

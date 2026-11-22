@@ -474,6 +474,55 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
   return answer
 }
 
+/// Every scope an API token or the global MCP policy can hold (`db::api_tokens::Scope`).
+export const ALL_API_TOKEN_SCOPES = [
+  'read',
+  'fs_read',
+  'fs_write',
+  'exec',
+  'process',
+  'service',
+  'container',
+  'cron',
+  'virt',
+  'stacks',
+  'power',
+] as const
+
+export type ApiTokenScope = (typeof ALL_API_TOKEN_SCOPES)[number]
+
+export type McpCommandMode = 'allow_all' | 'allowlist'
+
+export interface McpCommandPolicy {
+  mode: McpCommandMode
+  allow: string[]
+  deny: string[]
+}
+
+export interface McpPolicy {
+  scopes: ApiTokenScope[]
+  commands: McpCommandPolicy
+  config_scopes: ApiTokenScope[]
+}
+
+/// One token, as the owner reads it — never the token itself.
+export interface ApiToken {
+  id: number
+  name: string
+  scopes: ApiTokenScope[]
+  commands: McpCommandPolicy
+  created_at: string
+  expires_at: string
+  expired: boolean
+  last_used_at: string | null
+  last_used_ip: string | null
+}
+
+/// A token just minted: the row, and the value shown this once.
+export interface CreatedApiToken extends ApiToken {
+  token_value: string
+}
+
 export const api = {
   getStatus: (signal?: AbortSignal) =>
     request<StatusResponse>('/status', {}, signal),
@@ -1165,6 +1214,47 @@ export const api = {
       '/push/test',
       { method: 'POST', body: JSON.stringify({ push, message }) },
     ),
+  /// API tokens and global MCP policy (#1681). The token secret is answered
+  /// once, by `createApiToken`, and never listed again.
+  listApiTokens: (entry = servers.current) => requestFor<ApiToken[]>(entry, '/api-tokens', {}),
+  createApiToken: (
+    body: {
+      name: string
+      password: string
+      scopes?: ApiTokenScope[]
+      commands?: McpCommandPolicy
+      days?: number
+    },
+    entry = servers.current,
+  ) =>
+    requestFor<CreatedApiToken>(entry, '/api-tokens', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateApiToken: (
+    id: number,
+    body: {
+      name: string
+      scopes: ApiTokenScope[]
+      commands: McpCommandPolicy
+    },
+    entry = servers.current,
+  ) =>
+    requestFor<ApiToken>(entry, `/api-tokens/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  revokeApiToken: (id: number, entry = servers.current) =>
+    requestFor<void>(entry, `/api-tokens/${id}`, { method: 'DELETE' }),
+  getMcpPolicy: (entry = servers.current) => requestFor<McpPolicy>(entry, '/api-tokens/policy', {}),
+  saveMcpPolicy: (
+    body: { scopes: ApiTokenScope[]; commands: McpCommandPolicy },
+    entry = servers.current,
+  ) =>
+    requestFor<McpPolicy>(entry, '/api-tokens/policy', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
   changeMyPassword: (current_password: string, new_password: string) =>
     request<void>(
       '/me/password',

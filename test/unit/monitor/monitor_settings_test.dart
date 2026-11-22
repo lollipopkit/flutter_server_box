@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/monitor/monitor_api_token.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 
@@ -180,6 +181,53 @@ void main() {
     test('editable is the agent\'s answer and is never sent back', () {
       final list = MonitorPushList.fromJson(_pushResponse);
       expect(list.pushes.first.toJson().containsKey('editable'), isFalse);
+    });
+  });
+
+  group('API tokens and MCP policy', () {
+    test('a row and policy are read as the agent answers them', () {
+      final tokens = MonitorApiToken.listFrom([
+        {
+          'id': 3,
+          'name': 'claude',
+          'scopes': MonitorApiToken.allScopes,
+          'commands': {
+            'mode': 'allow_all',
+            'allow': <String>[],
+            'deny': ['rm -rf *'],
+          },
+          'created_at': '2026-11-20 10:00:00',
+          'expires_at': '2027-02-18 10:00:00',
+          'expired': false,
+          'last_used_at': null,
+          'last_used_ip': null,
+        },
+      ]);
+      expect(tokens.single.name, 'claude');
+      expect(tokens.single.scopes, MonitorApiToken.allScopes);
+      expect(tokens.single.commands.mode, MonitorMcpCommandPolicy.modeAllowAll);
+      expect(tokens.single.commands.deny, ['rm -rf *']);
+      expect(tokens.single.expired, isFalse);
+      expect(tokens.single.lastUsedAt, isNull);
+
+      final policy = MonitorMcpPolicy.fromJson({
+        'scopes': ['read', 'exec'],
+        'commands': {
+          'mode': 'allowlist',
+          'allow': ['df *'],
+          'deny': <String>[],
+        },
+        'config_scopes': MonitorApiToken.allScopes,
+      });
+      expect(policy.scopes, ['read', 'exec']);
+      expect(policy.commands.mode, MonitorMcpCommandPolicy.modeAllowlist);
+      expect(policy.commands.allow, ['df *']);
+      expect(policy.configScopes, MonitorApiToken.allScopes);
+    });
+
+    test('an answer with no rows is no tokens, not a failure', () {
+      expect(MonitorApiToken.listFrom(null), isEmpty);
+      expect(MonitorApiToken.listFrom(const []), isEmpty);
     });
   });
 }

@@ -23,9 +23,9 @@ use ntex::web::{HttpResponse, WebRequest, WebResponse};
 /// against that drifting again.
 const ALLOW_METHODS: &str = "GET, POST, PUT, DELETE";
 
-/// Headers a cross-origin panel may send; `x-sbm-protocol` is
-/// `sbm_parser::protocol::HEADER`, sent with every request.
-const ALLOW_HEADERS: &str = "authorization, content-type, x-sbm-protocol";
+/// Headers a cross-origin panel or MCP client may send; `x-sbm-protocol` is
+/// `sbm_parser::protocol::HEADER`, and `mcp-protocol-version` is MCP's.
+const ALLOW_HEADERS: &str = "authorization, content-type, x-sbm-protocol, mcp-protocol-version";
 
 pub struct Cors {
     origins: Rc<Vec<String>>,

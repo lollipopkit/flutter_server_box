@@ -39,6 +39,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 ## Access
 
 - **One account, signed in with its password alone; it may do what the system account the agent runs as may do.** No roles or grants: where it is installed decides the reach. Acting needs TLS or a loopback peer unless `allow_insecure`.
+- **MCP clients sign in with an API token, not the password** (`/api-tokens*`, `POST /mcp`, #1681): `sbt_` + 64 hex, stored as BLAKE3, 11 scopes (`read`, `fs_read`, `fs_write`, `exec`, `process`, `service`, `container`, `cron`, `virt`, `stacks`, `power`) and `CommandPolicy` (`allow_all` default or `allowlist`), all open by default and narrowed by intersecting `config.toml` `[mcp]`, `mcp_policy`, and the token's own permissions. Listed with their last use and deleted on password change; `/mcp` is exempt from the protocol header and answers `405` on `GET`/`DELETE`.
 - `api/authz.rs` is the one place a request becomes a `Caller`. Every route that acts on or configures the machine or the agent takes `authz::acting_caller` (or `machine::gate`); `jwt_caller` alone is for the desk's own state and lists. `tests/permissions_api.rs::a_plaintext_link_only_reads` holds the list.
 - A password change ends everything signed with the old one through `authz::end_account` (sessions, tickets, Agent mode tasks, relays, watch tokens, the LK Cloud account and a sign-in waiting). Logins are throttled per known device and audited.
 - Retired config keys restrict nothing and are named in a startup warning (TODO remove).
@@ -78,5 +79,5 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 - Test machines: `--profile monitor-test` (no fat LTO, incremental). Shipped: `--profile release-monitor` (`lto = "fat"`, `codegen-units = 1`).
 - **`monitor/Dockerfile` builds outside the workspace** and passes profile settings as `CARGO_PROFILE_RELEASE_*`: anything added to a workspace profile must be repeated there. `nix/package.nix` builds inside it.
 - Agent mode depends on `packages/fl_pi_llm` by path: CI, the Dockerfile and the release check out that submodule.
-- **One crypto implementation, `ring`**: `cargo tree -i aws-lc-sys` must be empty; `monitoring::push::http_client` installs ring before reqwest.
+- **`ring` is the preferred crypto implementation** (2026-11-18: aws-lc-sys is allowed when a dependency brings it — musl static builds pay cmake for it); `monitoring::push::http_client` installs ring before reqwest, since two rustls providers cannot both be the process default.
 - `install.sh install` (systemd user service; OpenRC with sudo; `--system` for root; `SBM_INSTALL_PKG=<path>` for an unreleased build). sbOS images: `monitor/os/` (never Ubuntu-based, no distribution name in an image's name).

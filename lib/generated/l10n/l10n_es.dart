@@ -7427,4 +7427,96 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get average => 'promedio';
+
+  @override
+  String get monitorMcpAccess => 'Acceso MCP';
+
+  @override
+  String get monitorMcpEndpoint => 'Endpoint';
+
+  @override
+  String get monitorMcpGlobalPolicy => 'Permisos globales';
+
+  @override
+  String get monitorMcpTokens => 'Tokens';
+
+  @override
+  String get monitorMcpNewToken => 'Nuevo token';
+
+  @override
+  String get monitorMcpDays => 'Días';
+
+  @override
+  String get monitorMcpCreated => 'Token';
+
+  @override
+  String get monitorMcpRevoke => 'Revocar';
+
+  @override
+  String monitorMcpRevokeHint(String name) {
+    return '¿Revocar $name?';
+  }
+
+  @override
+  String get monitorMcpLastUsed => 'Último uso';
+
+  @override
+  String get monitorMcpNeverUsed => 'Nunca usado';
+
+  @override
+  String get monitorMcpExpires => 'Vence';
+
+  @override
+  String get monitorMcpExpired => 'Vencido';
+
+  @override
+  String get monitorMcpNoTokens => 'Sin tokens';
+
+  @override
+  String get monitorMcpAllScopes => 'Todos los permisos';
+
+  @override
+  String get monitorMcpAllowlist => 'Lista blanca';
+
+  @override
+  String get monitorMcpScopeRead => 'Lecturas';
+
+  @override
+  String get monitorMcpScopeFsRead => 'Leer archivos';
+
+  @override
+  String get monitorMcpScopeFsWrite => 'Escribir archivos';
+
+  @override
+  String get monitorMcpScopeExec => 'Ejecutar comandos';
+
+  @override
+  String get monitorMcpScopeProcess => 'Procesos';
+
+  @override
+  String get monitorMcpScopeService => 'Servicios';
+
+  @override
+  String get monitorMcpScopeContainer => 'Contenedores';
+
+  @override
+  String get monitorMcpScopeCron => 'Cron';
+
+  @override
+  String get monitorMcpScopeVirt => 'Virtualización';
+
+  @override
+  String get monitorMcpScopeStacks => 'Apps web';
+
+  @override
+  String get monitorMcpScopePower => 'Energía';
+
+  @override
+  String get monitorMcpNameRequired => 'Introduce un nombre.';
+
+  @override
+  String get monitorMcpScopesRequired => 'Elige al menos un permiso.';
+
+  @override
+  String get monitorMcpPasswordRequired => 'Introduce la contraseña.';
 }

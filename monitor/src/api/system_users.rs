@@ -195,15 +195,24 @@ pub async fn list(
     if part == UserPart::Detail && name.is_none() {
         return Ok(HttpResponse::BadRequest().build());
     }
+    Ok(HttpResponse::Ok().json(&listing(&state, part, name).await))
+}
+
+/// `/system-users`'s body, shared with the MCP tool.
+pub(crate) async fn listing(state: &AppState, part: UserPart, name: Option<&str>) -> serde_json::Value {
+    let name = name.filter(|name| !name.is_empty());
+    if part == UserPart::Detail && name.is_none() {
+        return serde_json::to_value(empty_response(part, UserReason::NoSuchUser, None)).unwrap_or_default();
+    }
     let exec = &state.remote_access.exec;
 
     if system_type() != SystemType::Linux {
-        return Ok(HttpResponse::Ok().json(&empty_response(part, UserReason::UnsupportedPlatform, None)));
+        return serde_json::to_value(empty_response(part, UserReason::UnsupportedPlatform, None)).unwrap_or_default();
     }
     let catalog = match read_catalog(exec).await {
         Ok(catalog) => catalog,
         Err(reason) => {
-            return Ok(HttpResponse::Ok().json(&empty_response(part, UserReason::Unreadable, reason)));
+            return serde_json::to_value(empty_response(part, UserReason::Unreadable, reason)).unwrap_or_default();
         }
     };
 
@@ -229,26 +238,27 @@ pub async fn list(
         detail: None,
     };
     if part == UserPart::List {
-        return Ok(HttpResponse::Ok().json(&response));
+        return serde_json::to_value(response).unwrap_or_default();
     }
 
     // Resolved against the catalog: the name is the request's, everything else
     // about the account is the machine's.
     let name = name.unwrap_or_default();
     let Some(user) = catalog.find(name).cloned() else {
-        return Ok(HttpResponse::Ok().json(&empty_response(
+        return serde_json::to_value(empty_response(
             part,
             UserReason::NoSuchUser,
             Some(name.to_string()),
-        )));
+        ))
+        .unwrap_or_default();
     };
     match read_detail(&user, exec).await {
         Ok(detail) => {
             response.name = Some(user.name.clone());
             response.detail = Some(detail);
-            Ok(HttpResponse::Ok().json(&response))
+            serde_json::to_value(response).unwrap_or_default()
         }
-        Err(reason) => Ok(HttpResponse::Ok().json(&empty_response(part, UserReason::Unreadable, reason))),
+        Err(reason) => serde_json::to_value(empty_response(part, UserReason::Unreadable, reason)).unwrap_or_default(),
     }
 }
 
