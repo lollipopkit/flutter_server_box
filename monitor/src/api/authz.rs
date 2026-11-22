@@ -142,8 +142,8 @@ pub struct TokenCaller {
 }
 
 /// What a route serving an MCP client takes: `Authorization: Bearer sbt_…`,
-/// naming the account and the token's scopes. The use is recorded here, as
-/// the owner reads it in the token list.
+/// naming the account and the token's scopes. Callers record use only after
+/// passing per-token rate limiting so rejected bursts do not touch SQLite.
 ///
 /// The credential only: what the link may carry is the caller's, as it is for
 /// every other route (`machine::gate` for the JWT). A token lives for months
@@ -163,9 +163,6 @@ pub async fn token_caller(req: &HttpRequest, state: &AppState) -> Result<TokenCa
         Ok(Some((found, owner_id, owner_since))) => {
             let caller = Caller { id: owner_id, since: owner_since };
             let remote_ip = req.peer_addr().map(|a| a.ip().to_string());
-            crate::db::api_tokens::record_use(&state.db, found.id, remote_ip.as_deref())
-                .await
-                .ok();
             Ok(TokenCaller {
                 caller,
                 token: found,

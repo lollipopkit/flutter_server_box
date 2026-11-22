@@ -47,9 +47,6 @@ use crate::db::api_tokens::{self, CommandPolicy, Scope};
 /// bounded up front before a byte is read.
 const MAX_BODY: usize = 4 * 1024 * 1024;
 
-// TODO: a per-IP limiter before the token is looked up, and a per-token one
-// after, once `ntex-ratelimiter` 0.4 keys on something other than an address.
-
 struct TokenHost {
     state: Arc<AppState>,
     caller: Caller,
@@ -882,13 +879,41 @@ pub async fn method_not_allowed() -> HttpResponse {
 
 pub async fn post(
     req: HttpRequest,
-    mut payload: web::types::Payload,
+    payload: web::types::Payload,
     state: Arc<AppState>,
 ) -> HttpResponse {
+    let ip_rate = state.mcp_ip_limiter.check_http_request(&req);
+    if !ip_rate.allowed {
+        return ip_rate.error_response();
+    }
+
     let caller: TokenCaller = match authz::token_caller(&req, &state).await {
         Ok(caller) => caller,
         Err(refused) => return refused,
     };
+
+    let token_rate = state.mcp_token_limiter.check_rate_limit(&caller.token.id);
+    if !token_rate.allowed {
+        return token_rate.error_response();
+    }
+
+    api_tokens::record_use(&state.db, caller.token.id, caller.remote_ip.as_deref())
+        .await
+        .ok();
+
+    let mut response = post_authed(req, payload, state, caller).await;
+    if response.status() != StatusCode::UNAUTHORIZED {
+        token_rate.apply_headers(response.headers_mut());
+    }
+    response
+}
+
+async fn post_authed(
+    req: HttpRequest,
+    mut payload: web::types::Payload,
+    state: Arc<AppState>,
+    caller: TokenCaller,
+) -> HttpResponse {
     if let Err(why) = caller.caller.check(&state, authz::is_secure(&req, &state)) {
         Event::new(Kind::Mcp, Action::Denied, Outcome::Denied)
             .subject(format!("api token '{}'", caller.token.name))

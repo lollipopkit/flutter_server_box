@@ -698,3 +698,65 @@ async fn a_token_is_listed_with_its_scopes_and_what_it_last_used() {
     .await;
     assert_eq!(status, 400);
 }
+
+#[ntex::test]
+async fn per_token_rate_limit_isolates_tokens_and_answers_429() {
+    let (srv, state) = server().await;
+    let (id_a, token_a) = mint(&srv, "token-a", &["read"]).await;
+    let (_, token_b) = mint(&srv, "token-b", &["read"]).await;
+
+    // Drain token A's bucket without consuming the IP limiter.
+    for _ in 0..state.mcp_token_limiter.stats().capacity {
+        assert!(state.mcp_token_limiter.check_rate_limit(&id_a).allowed);
+    }
+
+    let resp_a = srv
+        .post("/api/v1/mcp")
+        .header("authorization", format!("Bearer {token_a}"))
+        .header("accept", "application/json")
+        .header("content-type", "application/json")
+        .send_json(&initialize())
+        .await
+        .unwrap();
+    assert_eq!(resp_a.status().as_u16(), 429);
+    assert_eq!(resp_a.headers().get("x-ratelimit-remaining").unwrap(), "0");
+    assert!(resp_a.headers().get("retry-after").is_some());
+
+    // Token B on the same peer IP keeps its own bucket and succeeds.
+    let resp_b = srv
+        .post("/api/v1/mcp")
+        .header("authorization", format!("Bearer {token_b}"))
+        .header("accept", "application/json")
+        .header("content-type", "application/json")
+        .send_json(&initialize())
+        .await
+        .unwrap();
+    assert_eq!(resp_b.status().as_u16(), 200);
+    assert!(resp_b.headers().get("x-ratelimit-remaining").is_some());
+    assert!(resp_b.headers().get("x-ratelimit-limit").is_some());
+    assert!(resp_b.headers().get("x-ratelimit-reset").is_some());
+}
+
+#[ntex::test]
+async fn pre_auth_ip_rate_limit_blocks_before_auth_and_ignores_xff() {
+    let (srv, state) = server().await;
+    let loopback: std::net::IpAddr = "127.0.0.1".parse().unwrap();
+
+    for _ in 0..state.mcp_ip_limiter.stats().capacity {
+        assert!(state.mcp_ip_limiter.check_rate_limit(&loopback).allowed);
+    }
+
+    // Even without credentials and with a spoofed X-Forwarded-For, IP limiting
+    // rejects with 429 before auth runs (rather than 401).
+    let resp = srv
+        .post("/api/v1/mcp")
+        .header("x-forwarded-for", "203.0.113.9")
+        .header("accept", "application/json")
+        .header("content-type", "application/json")
+        .send_json(&initialize())
+        .await
+        .unwrap();
+    assert_eq!(resp.status().as_u16(), 429);
+    assert_eq!(resp.headers().get("x-ratelimit-remaining").unwrap(), "0");
+    assert!(resp.headers().get("retry-after").is_some());
+}

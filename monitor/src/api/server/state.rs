@@ -14,6 +14,7 @@ use crate::{
     monitoring::velocity::VelocityManager,
     utils::error::{MonitorError, Result},
 };
+use ntex_ratelimiter::RateLimiter;
 use sqlx::SqlitePool;
 use std::sync::{Arc, OnceLock};
 use tokio::sync::{Mutex, RwLock, Semaphore, broadcast};
@@ -121,6 +122,10 @@ pub struct AppState {
     /// now — see `api::ws::live`.
     pub live: Arc<crate::api::ws::live::LiveConnections>,
     pub login_throttle: Arc<LoginThrottle>,
+    /// Pre-auth per-IP rate limiter on `/api/v1/mcp`.
+    pub mcp_ip_limiter: Arc<RateLimiter>,
+    /// Post-auth per-token rate limiter on `/api/v1/mcp`, keyed by `api_tokens.id`.
+    pub mcp_token_limiter: Arc<RateLimiter<i64>>,
     /// Fired when the password changed, carrying the code a client whose
     /// connection ends because of it is told (`password_changed`).
     ///
@@ -270,6 +275,8 @@ impl AppState {
             pending: Arc::new(PendingStore::default()),
             live: Arc::default(),
             login_throttle: Arc::new(LoginThrottle::new()),
+            mcp_ip_limiter: RateLimiter::new(240, 60),
+            mcp_token_limiter: RateLimiter::new(120, 60),
             password_changed: broadcast::channel(16).0,
             desk: Arc::new(crate::api::desk::DeskHub::default()),
             themes: Arc::new(crate::api::desk_themes::ThemeStore::default()),
