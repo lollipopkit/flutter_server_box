@@ -2,20 +2,19 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
 
 /// The drives the BMC sees, whatever the host OS is doing: the ones to look
 /// at first.
 final class BmcDrivesPage extends ConsumerStatefulWidget {
-  final SpiRequiredArgs args;
+  final BmcTargetRequiredArgs args;
 
   const BmcDrivesPage({super.key, required this.args});
 
-  static const route = AppRouteArg<void, SpiRequiredArgs>(
+  static const route = AppRouteArg<void, BmcTargetRequiredArgs>(
     page: BmcDrivesPage.new,
     path: '/server/bmc/drives',
   );
@@ -29,7 +28,7 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
   String? _err;
   var _loading = false;
 
-  Spi get _spi => widget.args.spi;
+  String get _targetId => widget.args.target.id;
 
   @override
   void initState() {
@@ -39,11 +38,16 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final target = ref.watch(
+      bmcTargetsProvider.select(
+        (s) => s.targets[_targetId] ?? widget.args.target,
+      ),
+    );
     // Watched so the session lives while this page does.
-    ref.watch(bmcProvider(_spi).select((s) => s.hasData));
+    ref.watch(bmcProvider(_targetId).select((s) => s.hasData));
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.bmcDrives, down: _spi.name),
+        title: TwoLineText(up: l10n.bmcDrives, down: target.name),
         actions: [
           Btn.icon(
             text: libL10n.refresh,
@@ -132,7 +136,7 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
       _err = null;
     });
     try {
-      final report = await ref.read(bmcProvider(_spi).notifier).storage();
+      final report = await ref.read(bmcProvider(_targetId).notifier).storage();
       if (!mounted) return;
       setState(() {
         _report = report;

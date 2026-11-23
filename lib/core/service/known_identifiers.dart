@@ -1,3 +1,4 @@
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// Every string this install knows to be the user's, and what replaces it.
@@ -16,12 +17,17 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 /// Numbered rather than hashed. A reader following one server through a log
 /// needs to see the same token twice; they do not need it to mean anything.
 abstract final class KnownIdentifiers {
-  /// The identifiers of [servers], in the order they are stored.
-  static Map<String, String> of(List<Spi> servers) {
+  /// The identifiers of [servers] and [bmcTargets], in the order they are stored.
+  static Map<String, String> of(
+    List<Spi> servers, {
+    List<BmcTarget> bmcTargets = const [],
+  }) {
     final out = <String, String>{};
+    final serverNumbers = <String, int>{};
     for (var i = 0; i < servers.length; i++) {
       final spi = servers[i];
       final n = i + 1;
+      serverNumbers[spi.id] = n;
       _add(out, spi.name, '<server-$n>');
       _add(out, spi.ssh?.ip, '<host-$n>');
       _add(out, spi.ssh?.user, '<user-$n>');
@@ -32,8 +38,13 @@ abstract final class KnownIdentifiers {
       _add(out, _hostOf(spi.monitorHttp?.addr), '<agent-$n>');
       _add(out, spi.monitorHttp?.fallbackAddr, '<agent-$n>');
       _add(out, _hostOf(spi.monitorHttp?.fallbackAddr), '<agent-$n>');
-      _add(out, spi.bmc?.addr, '<bmc-$n>');
-      _add(out, _hostOf(spi.bmc?.addr), '<bmc-$n>');
+    }
+    var nextStandalone = servers.length + 1;
+    for (final bmc in bmcTargets) {
+      final n = serverNumbers[bmc.serverId] ?? nextStandalone++;
+      _add(out, bmc.name, '<bmc-name-$n>');
+      _add(out, bmc.addr, '<bmc-$n>');
+      _add(out, _hostOf(bmc.addr), '<bmc-$n>');
     }
     return out;
   }

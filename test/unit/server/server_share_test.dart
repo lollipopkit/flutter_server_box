@@ -15,12 +15,15 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/store/bmc_credential.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
@@ -38,11 +41,9 @@ Spi _spi({
   String? keyId,
   String? jumpId,
   String? keyPath,
-  BmcCfg? bmc,
 }) => Spi(
   id: id,
   name: name,
-  bmc: bmc,
   ssh: SshCredential(
     ip: ip,
     port: 22,
@@ -68,8 +69,16 @@ void main() {
     if (!getIt.isRegistered<PveStore>()) {
       getIt.registerSingleton<PveStore>(PveStore());
     }
+    if (!getIt.isRegistered<BmcCredentialStore>()) {
+      getIt.registerSingleton<BmcCredentialStore>(BmcCredentialStore());
+    }
+    if (!getIt.isRegistered<BmcTargetStore>()) {
+      getIt.registerSingleton<BmcTargetStore>(BmcTargetStore());
+    }
     Stores.server.dropCache();
     Stores.key.dropCache();
+    Stores.bmcCredential.dropCache();
+    Stores.bmcTarget.dropCache();
   });
 
   tearDown(closeTestDb);
@@ -91,19 +100,30 @@ void main() {
     });
 
     test('references that only mean something here are dropped', () {
-      final share = ServerShare.of(
-        _spi(
-          jumpId: 'other-server',
-          keyPath: '/home/me/.ssh/id_ed25519',
-          bmc: const BmcCfg(addr: 'https://bmc.local', credId: 'cred1'),
+      final host = _spi(
+        jumpId: 'other-server',
+        keyPath: '/home/me/.ssh/id_ed25519',
+      );
+      Stores.server.put(host);
+      Stores.bmcCredential.put(
+        const BmcCredential(id: 'cred1', name: 'rack', user: 'root'),
+      );
+      Stores.bmcTarget.put(
+        BmcTarget(
+          id: 'bmc-1',
+          name: 'web-bmc',
+          addr: 'https://bmc.local',
+          credId: 'cred1',
+          serverId: host.id,
         ),
       );
+      final share = ServerShare.of(host);
 
       expect(share.spi.ssh?.resolvedJumpIds.firstOrNull, isNull);
       expect(share.spi.ssh?.resolvedIdentityFiles.firstOrNull, isNull);
-      expect(share.spi.bmc?.credId, isNull);
+      expect(share.bmc?.credId, isNull);
       // The address is not a reference and survives; only the account goes.
-      expect(share.spi.bmc?.addr, 'https://bmc.local');
+      expect(share.bmc?.addr, 'https://bmc.local');
     });
 
     test('a key id nothing can resolve is dropped, not handed over', () {
@@ -128,10 +148,22 @@ void main() {
         ServerShare.omissionsOf(_spi(keyId: 'k-gone')),
         contains(ServerShareOmission.missingKey),
       );
-      expect(
-        ServerShare.omissionsOf(
-          _spi(bmc: const BmcCfg(addr: 'a', credId: 'c')),
+      final hostWithBmc = _spi(id: 'srv-bmc');
+      Stores.server.put(hostWithBmc);
+      Stores.bmcCredential.put(
+        const BmcCredential(id: 'c', name: 'c', user: 'root'),
+      );
+      Stores.bmcTarget.put(
+        const BmcTarget(
+          id: 'b1',
+          name: 'b',
+          addr: 'https://a',
+          credId: 'c',
+          serverId: 'srv-bmc',
         ),
+      );
+      expect(
+        ServerShare.omissionsOf(hostWithBmc),
         contains(ServerShareOmission.bmcCredential),
       );
     });

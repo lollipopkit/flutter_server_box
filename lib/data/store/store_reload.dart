@@ -1,7 +1,14 @@
 import 'package:fl_lib/fl_lib.dart';
 
 /// A store a restore or a sync rewrites, whose providers then read it again.
-enum ReloadedStore { servers, snippets, keys, bmcCredentials, containers }
+enum ReloadedStore {
+  servers,
+  snippets,
+  keys,
+  bmcCredentials,
+  bmcTargets,
+  containers,
+}
 
 /// Tells whoever reads the stores a restore or a sync just rewrote to read
 /// them again.

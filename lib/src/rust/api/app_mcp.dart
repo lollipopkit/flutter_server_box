@@ -96,7 +96,7 @@ class AppMcpCall {
 /// Why `run` did not reach the server.
 enum AppMcpFailure {
   /// The connection needs the person first: a key's passphrase, a host key
-  /// to confirm.
+  /// or a Monitor's certificate to confirm.
   needsUser,
 
   /// The server was edited or reconnected while the call ran.

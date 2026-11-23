@@ -151,6 +151,9 @@ async fn members<T: Transport>(client: &T, collection: Option<&str>) -> Vec<Stri
     }
 }
 
+/// How many power sensors a lightweight [`summary`] poll reads at most.
+pub const MAX_SUMMARY_POWER_SENSORS: usize = 8;
+
 /// One read of a machine: what it is, its power, and its readings.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -159,6 +162,32 @@ pub struct Snapshot {
     /// Set when the `Sensors` collection had more than [`MAX_SENSOR_MEMBERS`]
     /// and only that many were read.
     pub sensors_truncated: bool,
+}
+
+/// Lightweight read for a list card: system power/health and chassis draw,
+/// skipping full temperature and fan sweeps.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Summary {
+    pub topology: Topology,
+    pub watts: Option<f64>,
+}
+
+async fn resolve_topology<T: Transport>(client: &T, known: Option<&Topology>) -> Result<Topology, Error> {
+    match known {
+        Some(known) => {
+            let mut topology = known.with_system(read_system(client, known).await?);
+            // A manager that could not be read at discovery is tried again:
+            // its logs and virtual media are reached through nothing else.
+            if topology.manager.is_none()
+                && let Some(path) = topology.manager_path.clone()
+                && let Ok(json) = client.get(&path).await
+            {
+                topology.manager = Some(RedfishManager::from_json(&json));
+            }
+            Ok(topology)
+        }
+        None => discover(client).await,
+    }
 }
 
 /// Reads the machine once.
@@ -173,27 +202,20 @@ pub struct Snapshot {
 /// Sensors are best effort: a failure there costs the readings, never the
 /// snapshot. Closes nothing — the caller owns the client.
 pub async fn snapshot<T: Transport>(client: &T, known: Option<&Topology>) -> Result<Snapshot, Error> {
-    let topology = match known {
-        Some(known) => {
-            let mut topology = known.with_system(read_system(client, known).await?);
-            // A manager that could not be read at discovery is tried again:
-            // its logs and virtual media are reached through nothing else.
-            if topology.manager.is_none()
-                && let Some(path) = topology.manager_path.clone()
-                && let Ok(json) = client.get(&path).await
-            {
-                topology.manager = Some(RedfishManager::from_json(&json));
-            }
-            topology
-        }
-        None => discover(client).await?,
-    };
+    let topology = resolve_topology(client, known).await?;
     let (sensors, sensors_truncated) = read_sensors(client, topology.chassis.as_ref()).await;
     Ok(Snapshot {
         topology,
         sensors,
         sensors_truncated,
     })
+}
+
+/// Reads the system state and chassis watts without sweeping temperatures or fans.
+pub async fn summary<T: Transport>(client: &T, known: Option<&Topology>) -> Result<Summary, Error> {
+    let topology = resolve_topology(client, known).await?;
+    let watts = read_watts(client, topology.chassis.as_ref()).await;
+    Ok(Summary { topology, watts })
 }
 
 /// Re-reads the system a topology names — what a poll after a power action
@@ -326,4 +348,50 @@ pub async fn read_sensors<T: Transport>(client: &T, chassis: Option<&RedfishChas
         }
         SensorModel::None => (BmcSensors::default(), false),
     }
+}
+
+/// Chassis power draw only, skipping thermal and fan reads.
+pub async fn read_watts<T: Transport>(client: &T, chassis: Option<&RedfishChassis>) -> Option<f64> {
+    let chassis = chassis?;
+    match chassis.model() {
+        SensorModel::Legacy => read_legacy_watts(client, chassis.power.as_deref()).await,
+        SensorModel::Modern => {
+            let modern = async {
+                let collection = chassis.sensors.as_deref()?;
+                let listing = client.get(collection).await.ok()?;
+                let members = model::power_sensors(collection_members(&listing));
+                let mut fetched = Vec::with_capacity(members.len().min(MAX_SUMMARY_POWER_SENSORS));
+                let mut failed = 0;
+                for path in members.iter().take(MAX_SUMMARY_POWER_SENSORS) {
+                    match client.get(path).await {
+                        Ok(sensor) => {
+                            fetched.push(sensor);
+                            failed = 0;
+                        }
+                        Err(_) => {
+                            failed += 1;
+                            if failed == MAX_SENSOR_FAILURES_IN_A_ROW {
+                                break;
+                            }
+                        }
+                    }
+                }
+                BmcSensors::from_sensors(&fetched).watts
+            }
+            .await;
+            if modern.is_some() {
+                return modern;
+            }
+            // Dual-model firmware may name sensor IDs numerically so the id
+            // filter skips them; fall back once to legacy `/Power` when linked.
+            read_legacy_watts(client, chassis.power.as_deref()).await
+        }
+        SensorModel::None => None,
+    }
+}
+
+async fn read_legacy_watts<T: Transport>(client: &T, power_path: Option<&str>) -> Option<f64> {
+    let path = power_path?;
+    let power = client.get(path).await.ok()?;
+    BmcSensors::from_legacy(None, Some(&power)).watts
 }

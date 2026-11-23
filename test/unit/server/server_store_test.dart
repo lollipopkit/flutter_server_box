@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/snippet.dart';
@@ -128,8 +129,9 @@ void main() {
     expect(ssh.resolvedIdentityFiles, paths);
   });
 
-  group('the BMC side channel', () {
+  group('linked BMC targets', () {
     late BmcCredentialStore creds;
+    late BmcTargetStore bmcTargets;
 
     const cred = BmcCredential(
       id: 'cred-1',
@@ -138,109 +140,74 @@ void main() {
       pwd: 'calvin',
     );
 
-    const withBmc = Spi(
+    const metal = Spi(
       id: 'metal',
       name: 'r730',
       ssh: SshCredential(ip: '10.0.0.2', port: 22, user: 'root'),
-      bmc: BmcCfg(
-        addr: 'https://10.0.0.9',
-        credId: 'cred-1',
-        certSha256: _fingerprint,
-      ),
+    );
+
+    const target = BmcTarget(
+      id: 'bmc-metal',
+      name: 'r730',
+      addr: 'https://10.0.0.9',
+      credId: 'cred-1',
+      certSha256: _fingerprint,
+      serverId: 'metal',
+      tags: ['rack-a'],
     );
 
     setUp(() {
       creds = BmcCredentialStore();
+      bmcTargets = BmcTargetStore();
       creds.put(cred);
+      store = ServerStore(bmcTargets: bmcTargets);
     });
 
-    test('round trips beside the SSH credential rather than instead of it', () {
-      store.put(withBmc);
-      store.invalidate();
+    test('round trips linked to a server and resolves via forServer', () {
+      store.put(metal);
+      bmcTargets.put(target);
+      bmcTargets.invalidate();
 
-      final got = store.fetchOneRaw('metal')!;
-      // Both, on one record: a BMC is not a way of reaching the host, so it
-      // neither satisfies the SSH-or-monitor requirement nor conflicts with it.
-      expect(got.ssh?.ip, '10.0.0.2');
-      expect(got.bmc?.addr, 'https://10.0.0.9');
-      expect(got.bmc?.credId, 'cred-1');
-      expect(got.bmc?.certSha256, _fingerprint);
+      final got = bmcTargets.forServer('metal')!;
+      expect(got.addr, 'https://10.0.0.9');
+      expect(got.credId, 'cred-1');
+      expect(got.certSha256, _fingerprint);
+      expect(got.tags, ['rack-a']);
     });
 
-    test('an account that does not exist is refused by the schema', () {
-      // Rather than stored and discovered at connect time. The whole point of
-      // the reference being a foreign key.
-      expect(
-        () => store.put(
-          withBmc.copyWith(bmc: withBmc.bmc!.copyWith(credId: 'gone')),
-        ),
-        throwsA(anything),
-      );
+    test('deleting the server unlinks the BMC target instead of deleting it', () {
+      store.put(metal);
+      bmcTargets.put(target);
+
+      store.deleteById('metal');
+      bmcTargets.invalidate();
+
+      final got = bmcTargets.fetchOneRaw('bmc-metal')!;
+      expect(got.serverId, isNull);
+      expect(got.addr, 'https://10.0.0.9');
     });
 
-    test('several servers share one account', () {
-      store.put(withBmc);
-      store.put(
-        withBmc.copyWith(
-          id: 'metal-2',
-          name: 'r730-b',
-          ssh: const SshCredential(ip: '10.0.0.3', port: 22, user: 'root'),
-          bmc: const BmcCfg(addr: 'https://10.0.0.10', credId: 'cred-1'),
-        ),
-      );
-      store.invalidate();
+    test('renaming the server id repoints linked BMC targets', () {
+      store.put(metal);
+      bmcTargets.put(target);
 
-      // The reason it is a table: one password, rotated in one place.
-      expect(creds.serversUsing('cred-1'), 2);
-      expect(store.fetchOneRaw('metal')!.bmc?.credId, 'cred-1');
-      expect(store.fetchOneRaw('metal-2')!.bmc?.credId, 'cred-1');
+      store.rename(metal, metal.copyWith(id: 'metal-new'));
+      bmcTargets.invalidate();
+
+      expect(bmcTargets.forServer('metal'), isNull);
+      expect(bmcTargets.forServer('metal-new')?.id, 'bmc-metal');
     });
 
-    test('deleting the account keeps the servers that used it', () {
-      store.put(withBmc);
+    test('deleting the account keeps the BMC target without a credential', () {
+      store.put(metal);
+      bmcTargets.put(target);
       creds.deleteById('cred-1');
-      store.invalidate();
+      bmcTargets.invalidate();
 
-      final got = store.fetchOneRaw('metal');
-      // `ON DELETE SET NULL`, not cascade: losing an account must not lose the
-      // server. What is left is an address with nothing to log in with, which
-      // `isComplete` answers false to and the editor can say.
-      expect(got, isNotNull);
-      expect(got!.bmc?.addr, 'https://10.0.0.9');
-      expect(got.bmc?.credId, isNull);
-      expect(got.bmc?.isComplete, isFalse);
-    });
-
-    test('a server without one reads back as having none', () {
-      store.put(rich);
-      store.invalidate();
-      expect(store.fetchOneRaw('srv-1')!.bmc, isNull);
-    });
-
-    test('clearing the pinned certificate is stored, not ignored', () {
-      store.put(withBmc);
-      store.update(
-        withBmc,
-        withBmc.copyWith(bmc: withBmc.bmc!.copyWith(certSha256: null)),
-      );
-      store.invalidate();
-
-      final got = store.fetchOneRaw('metal')!;
-      expect(got.bmc?.addr, 'https://10.0.0.9');
-      expect(
-        got.bmc?.certSha256,
-        isNull,
-        reason:
-            'un-reviewing a certificate has to reach the column, or the '
-            'next connection trusts one the user withdrew',
-      );
-    });
-
-    test('removing the BMC removes it', () {
-      store.put(withBmc);
-      store.update(withBmc, withBmc.copyWith(bmc: null));
-      store.invalidate();
-      expect(store.fetchOneRaw('metal')!.bmc, isNull);
+      final got = bmcTargets.fetchOneRaw('bmc-metal')!;
+      expect(got.addr, 'https://10.0.0.9');
+      expect(got.credId, isNull);
+      expect(got.isComplete, isFalse);
     });
   });
 

@@ -2,11 +2,16 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
+import 'package:server_box/data/model/status/card_item.dart';
+import 'package:server_box/data/provider/bmc/summary.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/parser.dart' as ffi;
 
 /// Whether the list is cut into sections, and by what.
@@ -254,6 +259,99 @@ class ServerSortOrder {
         return keyA == null ? 1 : -1;
       }
       return rank[a]!.compareTo(rank[b]!);
+    });
+    return sorted;
+  }
+
+  /// Applies this sort order across heterogeneous [StatusCardItem]s.
+  ///
+  /// Non-server items participate in name, status, and alert ordering; server-
+  /// only metrics (CPU, uptime) yield null for them so they settle at the end.
+  List<StatusCardItem> applyItems(
+    List<StatusCardItem> items, {
+    required ServerState Function(String id) serverStateOf,
+    required BmcSummaryState Function(BmcTarget target) bmcStateOf,
+  }) {
+    switch (field) {
+      case ServerSortField.manual:
+        return items;
+      case ServerSortField.name:
+        final rank = {
+          for (var i = 0; i < items.length; i++) items[i].cardKey: i,
+        };
+        final sorted = items.toList();
+        sorted.sort((a, b) {
+          final byName = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          if (byName != 0) return ascending ? byName : -byName;
+          return rank[a.cardKey]!.compareTo(rank[b.cardKey]!);
+        });
+        return sorted;
+      case ServerSortField.status:
+        return _byItem(items, (item) => switch (item) {
+          ServerCardItem(:final id) => serverStateOf(id).conn.index.toDouble(),
+          BmcCardItem(:final target) => _bmcStatusKey(bmcStateOf(target)),
+        });
+      case ServerSortField.cpu:
+        return _byItem(items, (item) => switch (item) {
+          ServerCardItem(:final id) => () {
+            final used = serverStateOf(id).status.cpu.usedPercent(coreIdx: 0);
+            return used == null ? null : -used;
+          }(),
+          BmcCardItem() => null,
+        });
+      case ServerSortField.alert:
+        return _byItem(items, (item) => switch (item) {
+          ServerCardItem(:final id) =>
+            serverCardReadings(serverStateOf(id)).all.any((m) => m.over)
+                ? 0
+                : 1,
+          BmcCardItem(:final target) => _bmcHasAlert(bmcStateOf(target)) ? 0 : 1,
+        });
+      case ServerSortField.uptime:
+        return _byItem(items, (item) => switch (item) {
+          ServerCardItem(:final id) => () {
+            final raw = serverStateOf(id).status.more[StatusCmdType.uptime];
+            return raw == null
+                ? null
+                : ffi.uptimeSeconds(formatted: raw)?.toDouble();
+          }(),
+          BmcCardItem() => null,
+        });
+    }
+  }
+
+  static double _bmcStatusKey(BmcSummaryState s) {
+    if (s.failure != null) return ServerConn.failed.index.toDouble();
+    if (s.isBusy && !s.hasData) return ServerConn.connecting.index.toDouble();
+    if (s.powerState == PowerState.on_) {
+      return ServerConn.finished.index.toDouble();
+    }
+    return ServerConn.disconnected.index.toDouble();
+  }
+
+  static bool _bmcHasAlert(BmcSummaryState s) {
+    if (s.failure != null) return true;
+    final health = s.topology?.system?.health;
+    return health == 'Critical' || health == 'Warning';
+  }
+
+  List<StatusCardItem> _byItem(
+    List<StatusCardItem> items,
+    double? Function(StatusCardItem item) keyOf,
+  ) {
+    final keys = {for (final item in items) item.cardKey: keyOf(item)};
+    final rank = {for (var i = 0; i < items.length; i++) items[i].cardKey: i};
+    final sorted = items.toList();
+    sorted.sort((a, b) {
+      final keyA = keys[a.cardKey];
+      final keyB = keys[b.cardKey];
+      if (keyA != null && keyB != null) {
+        final byKey = keyA.compareTo(keyB);
+        if (byKey != 0) return ascending ? byKey : -byKey;
+      } else if (keyA != keyB) {
+        return keyA == null ? 1 : -1;
+      }
+      return rank[a.cardKey]!.compareTo(rank[b.cardKey]!);
     });
     return sorted;
   }

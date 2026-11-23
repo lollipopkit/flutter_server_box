@@ -8,14 +8,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 
 import '../../helpers/rust_lib_helper.dart';
-import '../../helpers/spi_fixture.dart';
 
 const _cred = BmcCredential(id: 'c', name: 'bmc', user: 'root', pwd: 'p');
 
@@ -28,10 +28,26 @@ final class _Creds extends BmcCredentialNotifier {
       state = BmcCredentialState(creds: [_cred.copyWith(pwd: pwd)]);
 }
 
-/// The first state after [spi]'s BMC was read, whatever it said.
-Future<BmcState> _settled(ProviderContainer container, Spi spi) {
+final class _Targets extends BmcTargetsNotifier {
+  _Targets(this._initial);
+
+  final List<BmcTarget> _initial;
+
+  @override
+  BmcTargetsState build() => BmcTargetsState(
+    targets: {for (final t in _initial) t.id: t},
+    order: [for (final t in _initial) t.id],
+  );
+
+  void replace(BmcTarget target) {
+    state = state.copyWith(targets: {...state.targets, target.id: target});
+  }
+}
+
+/// The first state after [targetId]'s BMC was read, whatever it said.
+Future<BmcState> _settled(ProviderContainer container, String targetId) {
   final settled = Completer<BmcState>();
-  container.listen(bmcProvider(spi), (_, next) {
+  container.listen(bmcProvider(targetId), (_, next) {
     if (!next.isBusy && !settled.isCompleted) settled.complete(next);
   }, fireImmediately: true);
   return settled.future.timeout(const Duration(seconds: 20));
@@ -41,28 +57,122 @@ void main() {
   setUpAll(initRustLibForTest);
 
   test('the first read runs, and reports, once the page opens', () async {
-    // Nothing listens there: the read fails fast, which is a result.
     final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     final port = socket.port;
     await socket.close();
 
-    final spi = spiFixture(name: 'web', id: 'web').copyWith(
-      bmc: BmcCfg(addr: 'https://127.0.0.1:$port', credId: _cred.id),
+    final target = BmcTarget(
+      id: 'bmc-web',
+      name: 'web',
+      addr: 'https://127.0.0.1:$port',
+      credId: _cred.id,
     );
     final container = ProviderContainer(
-      overrides: [bmcCredentialProvider.overrideWith(_Creds.new)],
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => _Targets([target])),
+      ],
     );
     addTearDown(container.dispose);
 
-    final state = await _settled(container, spi);
+    final state = await _settled(container, target.id);
     expect(state.failure, isNotNull);
+  });
+
+  test('incomplete targets report exact failure (invalidUrl vs noCredential)', () {
+    const badUrl = BmcTarget(
+      id: 'b-url',
+      name: 'bad',
+      addr: 'not-a-url',
+      credId: 'c',
+    );
+    const noCred = BmcTarget(
+      id: 'b-cred',
+      name: 'nocred',
+      addr: 'https://127.0.0.1:443',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => _Targets([badUrl, noCred])),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(bmcProvider(badUrl.id)).failure, RedfishFailure.invalidUrl);
+    expect(container.read(bmcProvider(noCred.id)).failure, RedfishFailure.noCredential);
+  });
+
+  test('renaming or retagging a target does not tear down the active session', () async {
+    final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = socket.port;
+    await socket.close();
+
+    final target = BmcTarget(
+      id: 'bmc-stable',
+      name: 'old-name',
+      addr: 'https://127.0.0.1:$port',
+      credId: _cred.id,
+    );
+    final targets = _Targets([target]);
+    final container = ProviderContainer(
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => targets),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final before = await _settled(container, target.id);
+    expect(before.failure, isNotNull);
+
+    var emissions = 0;
+    final sub = container.listen(bmcProvider(target.id), (_, _) => emissions++);
+    addTearDown(sub.close);
+
+    targets.replace(target.copyWith(name: 'new-name', tags: const ['rack-a']));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(emissions, 0);
+  });
+
+  test('logServices awaits in-flight initial discovery and surfaces real failure', () async {
+    final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = socket.port;
+    await socket.close();
+
+    final target = BmcTarget(
+      id: 'bmc-direct-logs',
+      name: 'web',
+      addr: 'https://127.0.0.1:$port',
+      credId: _cred.id,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => _Targets([target])),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final sub = container.listen(bmcProvider(target.id), (_, _) {});
+    addTearDown(sub.close);
+
+    // Invoked immediately before initial discovery finishes: must wait for
+    // discovery rather than throwing a spurious `noSystem`.
+    await expectLater(
+      container.read(bmcProvider(target.id).notifier).logServices(),
+      throwsA(
+        isA<BmcError>().having(
+          (e) => e.failure,
+          'failure',
+          isNot(RedfishFailure.noSystem),
+        ),
+      ),
+    );
   });
 
   test('a rebuild during a read still reads, and does not wait for the timer',
       () async {
-    // The first connection is held open and never answered, so the first
-    // build's read is still going when the account changes; every later one
-    // is closed at once, which is a result.
     final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     final held = <Socket>[];
     server.listen((socket) {
@@ -79,24 +189,32 @@ void main() {
       await server.close();
     });
 
-    final spi = spiFixture(name: 'web', id: 'web').copyWith(
-      bmc: BmcCfg(addr: 'https://127.0.0.1:${server.port}', credId: _cred.id),
+    final target = BmcTarget(
+      id: 'bmc-web',
+      name: 'web',
+      addr: 'https://127.0.0.1:${server.port}',
+      credId: _cred.id,
     );
     final container = ProviderContainer(
-      overrides: [bmcCredentialProvider.overrideWith(_Creds.new)],
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => _Targets([target])),
+      ],
     );
     addTearDown(container.dispose);
-    final sub = container.listen(bmcProvider(spi), (_, _) {});
+    final sub = container.listen(bmcProvider(target.id), (_, _) {});
     addTearDown(sub.close);
 
     final deadline = DateTime.now().add(const Duration(seconds: 10));
     while (held.isEmpty) {
-      if (DateTime.now().isAfter(deadline)) fail('the first read never connected');
+      if (DateTime.now().isAfter(deadline)) {
+        fail('the first read never connected');
+      }
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     (container.read(bmcCredentialProvider.notifier) as _Creds).rotate('q');
 
-    final state = await _settled(container, spi);
+    final state = await _settled(container, target.id);
     expect(state.failure, isNotNull);
   });
 }

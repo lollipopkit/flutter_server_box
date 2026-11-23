@@ -24,6 +24,7 @@ import 'package:server_box/data/store/migrations/m039_ssh_identity_agent.dart';
 import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
 import 'package:server_box/data/store/migrations/m041_ssh_control_path.dart';
 import 'package:server_box/data/store/migrations/m042_monitor_fallback_addr.dart';
+import 'package:server_box/data/store/migrations/m043_bmc_target.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -101,6 +102,7 @@ void main() {
     await const SshForwardAgentMigration().apply();
     await const SshControlPathMigration().apply();
     await const MonitorFallbackAddrMigration().apply();
+    await const BmcTargetMigration().apply();
 
     expect(_xinfo('server'), fresh);
   });

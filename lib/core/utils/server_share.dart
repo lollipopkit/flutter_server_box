@@ -7,6 +7,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -344,7 +346,19 @@ abstract final class ServerShareCodec {
     if (wasEncrypted) {
       final ServerShare share;
       try {
-        share = ServerShare.fromJson(decoded);
+        final rawShare = ServerShare.fromJson(decoded);
+        // Backwards compatibility: payloads written before v44 nested `bmc`
+        // under `spi`. Lift it onto `share.bmc` when top-level `bmc` is absent.
+        if (rawShare.bmc == null &&
+            decoded['spi'] is Map &&
+            (decoded['spi'] as Map)['bmc'] is Map) {
+          final legacyBmc = BmcCfg.fromJson(
+            Map<String, dynamic>.from((decoded['spi'] as Map)['bmc'] as Map),
+          );
+          share = rawShare.copyWith(bmc: legacyBmc.copyWith(credId: null));
+        } else {
+          share = rawShare;
+        }
       } catch (e) {
         // Wrapped for the same reason the `Spi` branch below is. A truncated
         // or hand-edited payload — `{"version": 1}`, a `version` that is a
@@ -461,6 +475,19 @@ abstract final class ServerShareInstaller {
     Stores.server.put(spi);
     final pve = share.pve;
     if (pve != null) Stores.pve.put(spi.id, pve);
+    final bmc = share.bmc;
+    if (bmc != null && bmc.addr.trim().isNotEmpty) {
+      Stores.bmcTarget.put(
+        BmcTarget(
+          id: ShortId.generate(),
+          name: spi.name,
+          addr: bmc.addr,
+          certSha256: bmc.certSha256,
+          serverId: spi.id,
+          tags: spi.tags,
+        ),
+      );
+    }
     return ServerShareResult(spi: spi, addedKeys: added);
   }
 

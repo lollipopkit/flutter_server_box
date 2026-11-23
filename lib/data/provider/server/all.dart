@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/refresh_scheduler.dart';
@@ -382,6 +383,7 @@ class ServersNotifier extends _$ServersNotifier {
       newOrder = List<String>.from(state.serverOrder)..remove(id);
       Stores.setting.serverOrder.put(newOrder);
       Stores.server.deleteById(id);
+      ref.read(bmcTargetsProvider.notifier).reload();
     } finally {
       finishWidgetDeletion();
       WatchSync.instance.finishServerDeletion(id);
@@ -490,6 +492,7 @@ class ServersNotifier extends _$ServersNotifier {
           throw DuplicateNameException(newSpi.name);
         }
         Stores.server.rename(old, newSpi);
+        ref.read(bmcTargetsProvider.notifier).reload();
       } else {
         Stores.server.update(old, newSpi);
       }

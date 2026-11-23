@@ -17,7 +17,18 @@ extension on _ServerDetailPageState {
   /// [ServerNoticeForm.page]. The actions are this page's own, and come in
   /// under it the way the facts come in beside the readings.
   Widget _buildNothingYet(ServerState srv) {
-    final notice = ServerNotice.of(srv);
+    final linkedBmc = ref.watch(
+      bmcTargetsProvider.select((s) => s.forServer(srv.spi.id)),
+    );
+    final bmcState = linkedBmc != null && linkedBmc.isComplete
+        ? ref.watch(bmcProvider(linkedBmc.id))
+        : null;
+    final bmcPower =
+        bmcState != null && bmcState.failure == null && bmcState.hasData
+        ? bmcState.powerState
+        : null;
+    final notice = ServerNotice.of(srv, bmcPower: bmcPower);
+    final bmcCard = _buildBmc(srv);
 
     return _hosted(
       srv,
@@ -40,7 +51,7 @@ extension on _ServerDetailPageState {
                   form: ServerNoticeForm.page,
                   openness: 1,
                 ),
-                byCard: ServerNotice.onCard(srv) != null,
+                byCard: ServerNotice.onCard(srv, bmcPower: bmcPower) != null,
                 from: const Offset(0, 24),
               ),
               _entering(
@@ -54,7 +65,12 @@ extension on _ServerDetailPageState {
                         alignment: WrapAlignment.center,
                         spacing: 9,
                         runSpacing: 9,
-                        children: _actionsOf(srv, notice),
+                        children: _actionsOf(
+                          srv,
+                          notice,
+                          linkedBmc: linkedBmc,
+                          bmcState: bmcState,
+                        ),
                       ),
                       if (notice.hint.isNotEmpty) ...[
                         UIs.height13,
@@ -69,6 +85,10 @@ extension on _ServerDetailPageState {
                 ),
                 from: const Offset(0, 24),
               ),
+              if (bmcCard != null) ...[
+                UIs.height13,
+                _entering(bmcCard, from: const Offset(0, 24)),
+              ],
             ],
           ),
           // Not when the tab is the host: it floats one of its own above
@@ -90,7 +110,12 @@ extension on _ServerDetailPageState {
   }
 
   /// What changes the answer, for the state [notice] found the machine in.
-  List<Widget> _actionsOf(ServerState srv, ServerNotice notice) {
+  List<Widget> _actionsOf(
+    ServerState srv,
+    ServerNotice notice, {
+    BmcTarget? linkedBmc,
+    BmcState? bmcState,
+  }) {
     final retry = Btn.elevated(
       text: libL10n.retry,
       icon: const Icon(Icons.refresh, size: 18),
@@ -108,7 +133,37 @@ extension on _ServerDetailPageState {
       ),
     );
 
+    final system = bmcState != null && bmcState.failure == null
+        ? bmcState.topology?.system
+        : null;
+    final canPowerOn =
+        linkedBmc != null &&
+        system != null &&
+        bmcPlan(system: system, intent: PowerIntent.on_) != null;
+
     return switch (notice.kind) {
+      ServerNoticeKind.poweredOff => [
+        if (canPowerOn)
+          Btn.elevated(
+            text: l10n.bmcPowerOnAction,
+            icon: const Icon(Icons.power_settings_new, size: 18),
+            mainAxisSize: MainAxisSize.min,
+            gap: 8,
+            onTap: bmcState!.isPowering
+                ? null
+                : () => unawaited(
+                    confirmAndRunBmcPowerOn(
+                      context: context,
+                      target: linkedBmc,
+                      run: () => ref
+                          .read(bmcProvider(linkedBmc.id).notifier)
+                          .power(PowerIntent.on_),
+                    ),
+                  ),
+          ),
+        retry,
+        edit,
+      ],
       ServerNoticeKind.plainHttp => [
         Btn.elevated(
           // Says what it does to what: the switch it flips is this server's

@@ -61,7 +61,7 @@ final class BmcCfg {
   /// https only, as a plain connection has no certificate to pin, and no
   /// query, fragment or credential. Accepting more here saved an address the
   /// client then refused (`bmc_ffi_test.dart` holds the two together).
-  Uri? get uri {
+  static Uri? parseUri(String addr) {
     final parsed = Uri.tryParse(addr.trim());
     if (parsed == null || parsed.scheme != 'https' || parsed.host.isEmpty) {
       return null;
@@ -75,6 +75,8 @@ final class BmcCfg {
     if (path.contains('..') || path.contains('//')) return null;
     return parsed;
   }
+
+  Uri? get uri => parseUri(addr);
 
   /// The port to reach, 443 unless [addr] names one.
   ///

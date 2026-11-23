@@ -862,6 +862,33 @@ pub fn shown_sensors_first(mut members: Vec<String>) -> Vec<String> {
     members
 }
 
+/// Filters `members` down to sensors whose last path segment names power draw,
+/// placing whole-system / total power sensors first so capped summary reads do
+/// not miss chassis totals on boards with many per-rail sensors.
+pub fn power_sensors(members: Vec<String>) -> Vec<String> {
+    let seg_lower = |path: &str| {
+        path.trim_end_matches('/')
+            .rsplit('/')
+            .next()
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+    };
+    let mut out: Vec<String> = members
+        .into_iter()
+        .filter(|path| {
+            let id = seg_lower(path);
+            ["power", "pwr", "watt"].iter().any(|kind| id.contains(kind))
+        })
+        .collect();
+    out.sort_by_key(|path| {
+        let id = seg_lower(path);
+        !["total", "system", "chassis", "input"]
+            .iter()
+            .any(|kind| id.contains(kind))
+    });
+    out
+}
+
 fn push_fan(fans: &mut Vec<BmcReading>, name: String, raw: Option<&Value>, unit: Option<String>) {
     if let Some(value) = reading(raw, 0.0, FAN_MAX) {
         fans.push(BmcReading::new(name, value, unit.unwrap_or_else(|| "RPM".into())));

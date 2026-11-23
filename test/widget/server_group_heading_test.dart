@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/status/memory.dart';
 import 'package:server_box/data/model/server/status/net_speed.dart';
 import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/status/card_item.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -77,16 +78,19 @@ void main() {
 
   testWidgets('the alert count follows a poll', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
+      ProviderScope(
         child: MaterialApp(
-          localizationsDelegates: [
+          localizationsDelegates: const [
             ...appLocalizationsDelegates,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: ServerGroupHeading(
               label: 'prod',
-              ids: ['srv-0', 'srv-1'],
+              items: [
+                ServerCardItem(spiFixture(id: 'srv-0', name: 'srv-0')),
+                ServerCardItem(spiFixture(id: 'srv-1', name: 'srv-1')),
+              ],
               first: true,
             ),
           ),

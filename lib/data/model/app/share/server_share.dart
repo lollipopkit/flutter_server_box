@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -72,6 +73,9 @@ abstract class ServerShare with _$ServerShare {
     /// part of [Spi].
     PveConfig? pve,
 
+    /// [spi]'s linked BMC endpoint, stripped of its device-local credential id.
+    BmcCfg? bmc,
+
     /// Unix milliseconds, or null for a payload with no deadline.
     ///
     /// Set for the QR flavour and not for the file one, which is the whole
@@ -101,11 +105,19 @@ abstract class ServerShare with _$ServerShare {
     final key = keyId == null ? null : Stores.key.fetchOne(keyId);
     if (key != null) keys.add(key);
 
+    final bmcTarget = Stores.bmcTarget.forServer(spi.id);
+
     return ServerShare(
       version: formatVer,
       spi: _portable(spi, keptKey: key),
       keys: keys,
       pve: Stores.pve.fetch(spi.id),
+      bmc: bmcTarget == null
+          ? null
+          : BmcCfg(
+              addr: bmcTarget.addr,
+              certSha256: bmcTarget.certSha256,
+            ),
       expiresAt: ttl == null
           ? null
           : DateTime.now().add(ttl).millisecondsSinceEpoch,
@@ -129,7 +141,7 @@ abstract class ServerShare with _$ServerShare {
         out.add(ServerShareOmission.missingKey);
       }
     }
-    if (spi.bmc?.credId != null) {
+    if (Stores.bmcTarget.forServer(spi.id)?.credId != null) {
       out.add(ServerShareOmission.bmcCredential);
     }
     return out;
@@ -152,7 +164,6 @@ abstract class ServerShare with _$ServerShare {
         // store, and it is as likely to be right on the receiving machine as
         // on this one. Dropping it would break a working config silently.
       ),
-      bmc: spi.bmc?.copyWith(credId: null),
     );
   }
 

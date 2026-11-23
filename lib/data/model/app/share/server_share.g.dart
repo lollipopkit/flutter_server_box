@@ -17,6 +17,9 @@ _ServerShare _$ServerShareFromJson(Map<String, dynamic> json) => _ServerShare(
   pve: json['pve'] == null
       ? null
       : PveConfig.fromJson(json['pve'] as Map<String, dynamic>),
+  bmc: json['bmc'] == null
+      ? null
+      : BmcCfg.fromJson(json['bmc'] as Map<String, dynamic>),
   expiresAt: (json['expiresAt'] as num?)?.toInt(),
 );
 
@@ -26,5 +29,6 @@ Map<String, dynamic> _$ServerShareToJson(_ServerShare instance) =>
       'spi': instance.spi,
       'keys': instance.keys,
       'pve': instance.pve,
+      'bmc': instance.bmc,
       'expiresAt': instance.expiresAt,
     };

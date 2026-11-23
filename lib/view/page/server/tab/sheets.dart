@@ -90,11 +90,38 @@ extension _Sheets on _ServerPageState {
   /// The column beside an open card is this same list, where there is room
   /// for one; this is for where there is not, and for a list long enough to
   /// want something to type into and the tags to group by.
-  Future<void> _showServerSheet(List<String> filtered, String openId) async {
-    final picked = await showServerSwitcher(
+  Future<void> _showItemSheet(
+    List<StatusCardItem> filtered,
+    StatusCardItem openItem,
+  ) async {
+    final hasNonServer = filtered.any((i) => i is! ServerCardItem);
+    if (!hasNonServer && openItem is ServerCardItem) {
+      final picked = await showServerSwitcher(
+        context,
+        ids: [for (final i in filtered) i.id],
+        current: openItem.id,
+      );
+      if (picked == null || !mounted) return;
+      final item = filtered.firstWhereOrNull((i) => i.id == picked);
+      if (item != null) _openDetail(item);
+      return;
+    }
+
+    final picked = await showRowsSheet<StatusCardItem>(
       context,
-      ids: filtered,
-      current: openId,
+      rows: (ctx) => [
+        for (final item in filtered)
+          SheetChoiceTile(
+            icon: switch (item) {
+              ServerCardItem() => BoxIcons.bx_server,
+              BmcCardItem() => Icons.developer_board,
+            },
+            title: item.name,
+            subtitle: item.displayAddr,
+            selected: item.cardKey == openItem.cardKey,
+            onTap: () => Navigator.of(ctx).pop(item),
+          ),
+      ],
     );
     if (picked == null || !mounted) return;
     _openDetail(picked);

@@ -373,3 +373,115 @@ fn failures_are_coded_by_their_dart_names() {
         assert_eq!(serde_json::to_value(failure).unwrap(), failure.as_str());
     }
 }
+
+#[tokio::test]
+async fn summary_legacy_reads_power_without_thermal() {
+    let mut resources = vendor("dell_idrac9");
+    resources.insert(
+        "/redfish/v1/Chassis/System.Embedded.1/Power".into(),
+        json!({"PowerControl": [{"PowerConsumedWatts": 182}]}),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/System.Embedded.1/Thermal".into(),
+        json!({"Temperatures": [{"Name": "CPU1", "ReadingCelsius": 45}]}),
+    );
+    let t = FakeTransport::new(resources);
+    let first = sbm_redfish::summary(&t, None).await.unwrap();
+    assert!(first.topology.system.is_some());
+    assert_eq!(first.watts, Some(182.0));
+    {
+        let gets = t.gets.lock().unwrap();
+        assert!(!gets.iter().any(|p| p.ends_with("/Thermal")));
+        assert!(gets.iter().any(|p| p.ends_with("/Power")));
+    }
+
+    // Subsequent poll with known topology skips discovery and still avoids Thermal.
+    t.gets.lock().unwrap().clear();
+    let second = sbm_redfish::summary(&t, Some(&first.topology)).await.unwrap();
+    assert_eq!(second.watts, Some(182.0));
+    let gets = t.gets.lock().unwrap();
+    assert!(!gets.iter().any(|p| p == "/redfish/v1/"));
+    assert!(!gets.iter().any(|p| p.ends_with("/Thermal")));
+    assert!(gets.iter().any(|p| p.ends_with("/Power")));
+}
+
+#[tokio::test]
+async fn summary_modern_skips_temperature_and_fan_sensors() {
+    let mut resources = vendor("openbmc");
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Sensors".into(),
+        json!({
+            "Members": [
+                {"@odata.id": "/redfish/v1/Chassis/chassis/Sensors/temp_cpu"},
+                {"@odata.id": "/redfish/v1/Chassis/chassis/Sensors/fan_1"},
+                {"@odata.id": "/redfish/v1/Chassis/chassis/Sensors/total_power"},
+            ]
+        }),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Sensors/temp_cpu".into(),
+        json!({"Name": "CPU", "ReadingType": "Temperature", "Reading": 55.0}),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Sensors/fan_1".into(),
+        json!({"Name": "FAN1", "ReadingType": "Rotational", "Reading": 3000.0}),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Sensors/total_power".into(),
+        json!({"Name": "Total Power", "ReadingType": "Power", "Reading": 245.5}),
+    );
+    let t = FakeTransport::new(resources);
+    let result = sbm_redfish::summary(&t, None).await.unwrap();
+    assert_eq!(result.watts, Some(245.5));
+    let gets = t.gets.lock().unwrap();
+    assert!(gets.iter().any(|p| p.ends_with("/total_power")));
+    assert!(!gets.iter().any(|p| p.ends_with("/temp_cpu")));
+    assert!(!gets.iter().any(|p| p.ends_with("/fan_1")));
+}
+
+#[test]
+fn power_sensors_prioritizes_total_over_per_rail_sensors() {
+    let members = vec![
+        "/redfish/v1/Chassis/1/Sensors/Cpu0Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Cpu1Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Dimm0Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Dimm1Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Gpu0Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Gpu1Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Pcie0Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Pcie1Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Psu0Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/TotalPower".into(),
+    ];
+    let filtered = sbm_redfish::model::power_sensors(members);
+    assert_eq!(
+        filtered.first().map(String::as_str),
+        Some("/redfish/v1/Chassis/1/Sensors/TotalPower")
+    );
+}
+
+#[tokio::test]
+async fn summary_modern_falls_back_to_legacy_power_when_sensor_ids_opaque() {
+    let mut resources = vendor("openbmc");
+    // Dual-model chassis: links both modern Sensors (with opaque numeric IDs)
+    // and legacy Power.
+    resources.insert(
+        "/redfish/v1/Chassis/chassis".into(),
+        json!({
+            "@odata.id": "/redfish/v1/Chassis/chassis",
+            "Sensors": {"@odata.id": "/redfish/v1/Chassis/chassis/Sensors"},
+            "Power": {"@odata.id": "/redfish/v1/Chassis/chassis/Power"},
+        }),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Sensors".into(),
+        json!({"Members": [{"@odata.id": "/redfish/v1/Chassis/chassis/Sensors/101"}]}),
+    );
+    resources.insert(
+        "/redfish/v1/Chassis/chassis/Power".into(),
+        json!({"PowerControl": [{"PowerConsumedWatts": 198.5}]}),
+    );
+    let t = FakeTransport::new(resources);
+    let result = sbm_redfish::summary(&t, None).await.unwrap();
+    assert_eq!(result.watts, Some(198.5));
+}

@@ -2,20 +2,20 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
 
 /// The logs a BMC keeps — the machine's event log first, then the BMC's own —
 /// one at a time, newest entry first.
 final class BmcLogsPage extends ConsumerStatefulWidget {
-  final SpiRequiredArgs args;
+  final BmcTargetRequiredArgs args;
 
   const BmcLogsPage({super.key, required this.args});
 
-  static const route = AppRouteArg<void, SpiRequiredArgs>(
+  static const route = AppRouteArg<void, BmcTargetRequiredArgs>(
     page: BmcLogsPage.new,
     path: '/server/bmc/logs',
   );
@@ -35,8 +35,10 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   /// dropped.
   var _read = 0;
 
-  Spi get _spi => widget.args.spi;
-  BmcNotifier get _bmc => ref.read(bmcProvider(_spi).notifier);
+  BmcTarget get _target =>
+      ref.read(bmcTargetsProvider).targets[widget.args.target.id] ??
+      widget.args.target;
+  BmcNotifier get _bmc => ref.read(bmcProvider(widget.args.target.id).notifier);
 
   @override
   void initState() {
@@ -46,12 +48,17 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final target = ref.watch(
+      bmcTargetsProvider.select(
+        (s) => s.targets[widget.args.target.id] ?? widget.args.target,
+      ),
+    );
     // Watched so the session lives while this page does.
-    ref.watch(bmcProvider(_spi).select((s) => s.hasData));
+    ref.watch(bmcProvider(target.id).select((s) => s.hasData));
     final picked = _picked;
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: libL10n.logs, down: _spi.name),
+        title: TwoLineText(up: libL10n.logs, down: target.name),
         actions: [
           if (picked?.clearTarget != null)
             Btn.icon(
@@ -224,7 +231,7 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   Future<void> _clear(LogService service) async {
     final ok = await context.showSheet<bool>(
       title: libL10n.clear,
-      child: Text(l10n.bmcClearLogConfirm(_serviceName(service), _spi.name)),
+      child: Text(l10n.bmcClearLogConfirm(_serviceName(service), _target.name)),
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;

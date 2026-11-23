@@ -10,6 +10,7 @@ import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/data/model/file/backend/ssh.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/stores.dart';
 
 /// The text a user pastes into an issue after a crash.
@@ -93,7 +94,12 @@ abstract final class CrashReport {
     build: BuildData.build,
     os: '${Pfs.type.name} ${Platform.operatingSystemVersion}',
     locale: Platform.localeName,
-    identifiers: KnownIdentifiers.of(Stores.server.fetch()),
+    identifiers: KnownIdentifiers.of(
+      Stores.server.fetch(),
+      bmcTargets: getIt.isRegistered<BmcTargetStore>()
+          ? Stores.bmcTarget.fetch()
+          : const [],
+    ),
     previousExit: NativeExitReport.shared.lastExit,
     previousExitTrace: NativeExitReport.shared.lastExitTrace,
   );

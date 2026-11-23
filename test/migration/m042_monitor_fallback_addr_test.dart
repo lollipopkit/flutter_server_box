@@ -6,6 +6,7 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m042_monitor_fallback_addr.dart';
+import 'package:server_box/data/store/migrations/m043_bmc_target.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -57,6 +58,8 @@ void main() {
     SqliteDb.openInMemory();
     await createV42Server();
     await const MonitorFallbackAddrMigration().apply();
+    // The steps since that touch `server`.
+    await const BmcTargetMigration().apply();
 
     expect(_serverColumns(), fresh);
   });

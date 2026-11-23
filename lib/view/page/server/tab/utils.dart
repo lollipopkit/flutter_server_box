@@ -3,22 +3,9 @@
 part of 'tab.dart';
 
 extension _Actions on _ServerPageState {
-  /// [context] is the tapped widget's, not the state's.
-  ///
-  /// `PaneScope` is installed by the layout this page builds, so it is a
-  /// descendant of the state's own context — and an inherited lookup only
-  /// travels upwards. Asking from the state would always answer "no pane".
-  ///
-  /// [inPlace] is for a layout that knows the answer [_opensInPlace] cannot
-  /// give. That one asks the window's width, which is right for the list and
-  /// wrong for the full-screen pager: it draws no grid and no detail, so a tap
-  /// in a wide window selected the server and started the card's growth with
-  /// nothing on screen to show either.
   void _onTapCard(BuildContext context, ServerState srv, {bool? inPlace}) {
-    // Held on a pointer, a tap is the start of choosing several rather than
-    // the opening of one — the convention every file manager has.
     if (_modifierHeld) {
-      _toggleSelected(srv.spi.id);
+      _toggleSelected(ServerCardItem.keyOf(srv.spi.id));
       return;
     }
     if (srv.needsInteractiveAuth) {
@@ -26,17 +13,8 @@ extension _Actions on _ServerPageState {
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
-    // The one place that knows about the layout. With room for it, opening a
-    // server means growing its card into the page; without, it means pushing
-    // one — and the detail cannot tell the difference either way.
-    //
-    // Opened even when it has nothing to show yet. On one screen, jumping
-    // straight to the edit form is the only useful thing a tap can do for a
-    // server that has never connected. In place it is not: the detail says why
-    // it is empty, and the list is still there, which is what lets someone
-    // work through several servers that are all failing.
     if (inPlace ?? _opensInPlace(context)) {
-      _openDetail(srv.spi.id);
+      _openDetail(ServerCardItem(srv.spi));
       return;
     }
 
@@ -47,14 +25,18 @@ extension _Actions on _ServerPageState {
     }
   }
 
-  /// Shows actions for one server without leaving the list.
-  ///
-  /// [ctx] is the pressed card's, and [at] where a pointer was — null for a
-  /// long press, which has a finger over the spot.
-  ///
-  /// A machine that has never connected offers only what is true of it: the
-  /// editor, because changing the configuration is the only thing that could
-  /// help.
+  void _onTapBmcCard(BuildContext context, BmcTarget target) {
+    if (_modifierHeld) {
+      _toggleSelected(BmcCardItem.keyOf(target.id));
+      return;
+    }
+    if (_opensInPlace(context)) {
+      _openDetail(BmcCardItem(target));
+      return;
+    }
+    BmcDetailPage.route.go(context, BmcTargetRequiredArgs(target));
+  }
+
   void _onLongPressCard(
     BuildContext ctx,
     ServerState srv, {
@@ -66,74 +48,122 @@ extension _Actions on _ServerPageState {
       return;
     }
 
-    // Pointer input provides an anchor; narrow touch layouts use a sheet.
     final sheet = at == null && !_opensInPlace(ctx);
-    final id = srv.spi.id;
+    final key = ServerCardItem.keyOf(srv.spi.id);
 
     _keys.requestFocus();
-    setState(() => _menuId = id);
+    setState(() => _menuId = key);
     unawaited(
       showServerActions(
         context,
         ref,
         srv,
-        // Anchor the menu to the pressed row when possible.
         at: at ?? (sheet ? null : contextMenuAnchorBelow(ctx)),
-        // Said inside the menu only where the menu is not beside the thing it
-        // is about: a sheet is at the bottom of the window, and a 44pt tile
-        // has no room for identifying information beyond the name. A card or
-        // a row has said it already, right under the menu and highlighted.
         header: sheet || density == ServerListDensity.grid
             ? serverMenuHead(srv)
             : null,
-        // Touch users enter multi-selection through the menu.
-        onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+        onSelect: isMobile ? () => _toggleSelected(key) : null,
       ).whenComplete(() {
-        // Do not clear a newer menu's highlight.
-        if (!mounted || _menuId != id) return;
+        if (!mounted || _menuId != key) return;
         setState(() => _menuId = null);
       }),
     );
   }
 
-  /// The three ways a server gets onto this device, in one place.
-  ///
-  /// The two import paths used to live in two different settings groups — a
-  /// scan under SSH preferences, a file under Backup — and which one a person
-  /// needed depended on what the *sender* had picked, which they have no way
-  /// of knowing before opening the app. Both are ways of acquiring a server,
-  /// which is what this button is for, and it puts them opposite the share
-  /// button on a server's own page.
-  ///
-  /// The cost is a tap: this used to open the editor directly. Adding a server
-  /// is rare enough that finding the other two is worth more than saving it.
-  ///
-  /// A menu dropped from the button that was pressed, rather than a dialog:
-  /// three entries with nothing to read first, and a dialog took the middle of
-  /// the window and a cancel button to say so.
+  void _onLongPressBmcCard(
+    BuildContext ctx,
+    BmcTarget target, {
+    Offset? at,
+  }) {
+    final sheet = at == null && !_opensInPlace(ctx);
+    final key = BmcCardItem.keyOf(target.id);
+
+    _keys.requestFocus();
+    setState(() => _menuId = key);
+    final actions = <ContextMenuAction>[
+      ContextMenuAction(
+        text: libL10n.refresh,
+        icon: Icons.refresh,
+        onTap: () => unawaited(
+          ref.read(bmcSummaryProvider(target.id).notifier).refresh(force: true),
+        ),
+      ),
+      ContextMenuAction(
+        text: libL10n.edit,
+        icon: Icons.edit_outlined,
+        onTap: () => unawaited(
+          BmcTargetEditPage.route.go(
+            context,
+            args: BmcTargetEditArgs(target: target),
+          ),
+        ),
+      ),
+      ContextMenuAction(
+        text: libL10n.logs,
+        icon: Icons.receipt_long,
+        onTap: () => unawaited(
+          BmcLogsPage.route.go(context, BmcTargetRequiredArgs(target)),
+        ),
+      ),
+      ContextMenuAction(
+        text: l10n.bmcDrives,
+        icon: Icons.storage,
+        onTap: () => unawaited(
+          BmcDrivesPage.route.go(context, BmcTargetRequiredArgs(target)),
+        ),
+      ),
+      if (isMobile)
+        ContextMenuAction(
+          text: libL10n.select,
+          icon: Icons.check_box_outlined,
+          onTap: () => _toggleSelected(key),
+        ),
+      ContextMenuAction(
+        text: libL10n.delete,
+        icon: Icons.delete_outline,
+        destructive: true,
+        onTap: () => unawaited(_deleteBmcTarget(target)),
+      ),
+    ];
+
+    unawaited(
+      showContextMenu(
+        ctx,
+        actions,
+        at: at ?? (sheet ? null : contextMenuAnchorBelow(ctx)),
+      ).whenComplete(() {
+        if (!mounted || _menuId != key) return;
+        setState(() => _menuId = null);
+      }),
+    );
+  }
+
+  Future<void> _deleteBmcTarget(BmcTarget target) async {
+    final ok = await context.showSheet<bool>(
+      title: libL10n.attention,
+      child: Text(libL10n.askContinue('${libL10n.delete} ${target.name}')),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
+    if (ref.read(bmcSelectionProvider) == target.id) {
+      _closeDetail();
+    }
+    ref.read(bmcTargetsProvider.notifier).delete(target.id);
+  }
+
   void _onTapAddServer(BuildContext anchor) => showContextMenu(
     anchor,
     _addServerMenu(),
     at: contextMenuAnchorBelow(anchor),
   );
 
-  List<ContextMenuAction> _addServerMenu() => addServerMenu(context, ref);
+  List<ContextMenuAction> _addServerMenu() => addStatusItemMenu(context, ref);
 
-  /// Opens a server something else asked for — today the Agent's `open_server`.
-  ///
-  /// Deliberately not [_onTapCard]: a tap is a person deciding what to look
-  /// at, and its answer to a server that has never connected is to offer the
-  /// edit form instead. A request names a server, so this shows that server's
-  /// page whatever state it is in, error and all. [split] is passed in rather
-  /// than looked up — see the call site.
   void _openRequestedServer(String id, bool split) {
-    if (!ref.read(serversProvider).servers.containsKey(id)) return;
+    final spi = ref.read(serversProvider).servers[id];
+    if (spi == null) return;
     if (split) {
-      // No card flight, unlike a tap: that animation carries the card the
-      // finger was on into the pane, and is measured from where that card is.
-      // Nothing was touched here, so there is nothing to fly — and handing it
-      // this page's own context would launch the whole page instead.
-      ref.read(serverSelectionProvider.notifier).select(id);
+      _openDetail(ServerCardItem(spi));
       return;
     }
     ServerDetailPage.route.go(
@@ -143,11 +173,6 @@ extension _Actions on _ServerPageState {
   }
 }
 
-/// Opens whatever was requested while this layout is the one on screen.
-///
-/// A widget rather than a method on the page so that it can be given [split]
-/// by the builder that decided it, and so that it is mounted and unmounted
-/// with the layout it belongs to.
 class _ServerOpenRequest extends ConsumerStatefulWidget {
   const _ServerOpenRequest({
     required this.split,
@@ -167,8 +192,6 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
   @override
   void initState() {
     super.initState();
-    // The request that brought this tab into existence was made before there
-    // was anything here to hear it, so the first thing to do is look.
     WidgetsBinding.instance.addPostFrameCallback((_) => _drain());
   }
 
@@ -187,11 +210,6 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
   }
 }
 
-/// Whether a key that turns a tap into "add this one too" is down.
-///
-/// Read from the hardware rather than from a gesture's details, which carry no
-/// modifiers: this is the only place it is asked, and a tap is synchronous
-/// with the key being held.
 bool get _modifierHeld {
   final keys = HardwareKeyboard.instance.logicalKeysPressed;
   return keys.contains(LogicalKeyboardKey.metaLeft) ||
@@ -203,55 +221,39 @@ bool get _modifierHeld {
 }
 
 extension _Utils on _ServerPageState {
-  /// The list narrowed by both of the things that narrow it: the tag picked in
-  /// the bar, and whatever is typed into it.
-  List<String> _filterServers(List<String> order) {
+  List<StatusCardItem> _filterItems(List<StatusCardItem> items) {
     final tag = _tag.value;
-    if (tag == TagSwitcher.kDefaultTag) return _filterByQuery(order);
+    if (tag == TagSwitcher.kDefaultTag) return _filterItemsByQuery(items);
 
-    final servers = ref.read(serversProvider).servers;
-    return _filterByQuery([
-      for (final id in order)
-        if (servers[id]?.tags?.contains(tag) == true) id,
+    return _filterItemsByQuery([
+      for (final item in items)
+        if (item.tags.contains(tag)) item,
     ]);
   }
 
-  /// The list narrowed by the search alone.
-  ///
-  /// Its own step because the rail uses this one without the tag: it groups by
-  /// tag rather than filtering to one, so a tag picked in the grid must not
-  /// take rows out of it — a search must, since that is what was just typed.
-  List<String> _filterByQuery(List<String> order) {
+  List<StatusCardItem> _filterItemsByQuery(List<StatusCardItem> items) {
     final needle = _search.needle;
-    if (needle.isEmpty) return order;
+    if (needle.isEmpty) return items;
 
-    final servers = ref.read(serversProvider).servers;
-    return order.where((id) {
-      final spi = servers[id];
-      if (spi == null) return false;
-      // Name and address, which is what a server is known by and what it is
-      // reached at — the same two the editor asks for first.
-      return spi.name.toLowerCase().contains(needle) ||
-          spi.displayAddr.toLowerCase().contains(needle);
-    }).toList();
+    return [
+      for (final item in items)
+        if (item.name.toLowerCase().contains(needle) ||
+            item.displayAddr.toLowerCase().contains(needle))
+          item,
+    ];
   }
 
-  /// Which reading [id]'s card draws in full, or null for whichever the
-  /// machine reports first.
   ServerMetricKind? _promotedOf(String id) => ServerPromoted.of(id);
 
   void _promote(String id, ServerMetricKind kind) {
     if (ServerPromoted.put(id, kind)) setState(() {});
   }
 
-  /// Folds the rows of [id]'s card, or unfolds them.
   void _toggleExpanded(String id) {
     ServerCardExpanded.toggle(id);
     setState(() {});
   }
 
-  /// Moves full screen's content to somewhere else within
-  /// [_kBurnInShift] of its place, so no pixel holds one colour for long.
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
     final r = math.Random();
@@ -271,4 +273,3 @@ extension _Utils on _ServerPageState {
     });
   }
 }
-

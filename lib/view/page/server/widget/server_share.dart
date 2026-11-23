@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 
@@ -288,6 +289,9 @@ abstract final class ServerShareUi {
 
     try {
       final result = ServerShareInstaller.install(share);
+      if (share.bmc != null) {
+        ref.read(bmcTargetsProvider.notifier).reload();
+      }
       // The stores were written directly, so both providers are holding a list
       // that predates it. `reload` rather than `addServer`: the id, the name
       // and the key reference were all resolved during the install, and

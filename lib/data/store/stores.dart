@@ -3,6 +3,7 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:get_it/get_it.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -50,6 +51,7 @@ abstract final class Stores {
   static PveStore get pve => getIt<PveStore>();
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static BmcCredentialStore get bmcCredential => getIt<BmcCredentialStore>();
+  static BmcTargetStore get bmcTarget => getIt<BmcTargetStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
   static ConnectionStatsStore get connectionStats =>
@@ -95,6 +97,7 @@ abstract final class Stores {
     server,
     key,
     bmcCredential,
+    bmcTarget,
     snippet,
     portForward,
     remoteDesktop,
@@ -116,6 +119,9 @@ abstract final class Stores {
     );
     getIt.registerLazySingleton<BmcCredentialStore>(
       () => BmcCredentialStore.instance,
+    );
+    getIt.registerLazySingleton<BmcTargetStore>(
+      () => BmcTargetStore.instance,
     );
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);

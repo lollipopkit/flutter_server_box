@@ -12,6 +12,7 @@ import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -34,6 +35,9 @@ class ServerCardTitle extends StatelessWidget {
     required this.openness,
     this.selected,
     this.heroName = false,
+    this.bmcPower,
+    this.bmcPowering = false,
+    this.onBmcPowerOn,
   });
 
   final ServerState srv;
@@ -47,6 +51,13 @@ class ServerCardTitle extends StatelessWidget {
   /// Whether this machine is one of the ones being acted on, or null when
   /// nothing is — see `ServerCard.selected`.
   final bool? selected;
+
+  final PowerState? bmcPower;
+  final bool bmcPowering;
+  final VoidCallback? onBmcPowerOn;
+
+  bool get _isBmcOff =>
+      srv.conn == ServerConn.failed && bmcPower == PowerState.off;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +73,9 @@ class ServerCardTitle extends StatelessWidget {
   /// its uptime, which changes once a minute. What the control on the right
   /// does is of the record, which is listed.
   Widget _title() {
-    final line = srv.needsInteractiveAuth ? libL10n.tapToAuth : srv.listLine;
+    final line = _isBmcOff
+        ? l10n.bmcPowerOff
+        : (srv.needsInteractiveAuth ? libL10n.tapToAuth : srv.listLine);
     return BuiltFrom(
       [
         srv.spi,
@@ -72,6 +85,9 @@ class ServerCardTitle extends StatelessWidget {
         selected,
         Stores.setting.showDistMark.fetch(),
         heroName,
+        bmcPower,
+        bmcPowering,
+        onBmcPowerOn != null,
       ],
       builder: (_) => _titleRow(line),
     );
@@ -142,7 +158,12 @@ class ServerCardTitle extends StatelessWidget {
               ),
             ),
           const SizedBox(width: 7),
-          ServerCardConnAction(srv: srv),
+          ServerCardConnAction(
+            srv: srv,
+            bmcPower: bmcPower,
+            bmcPowering: bmcPowering,
+            onBmcPowerOn: onBmcPowerOn,
+          ),
         ],
       ),
     );
@@ -152,12 +173,22 @@ class ServerCardTitle extends StatelessWidget {
 /// What the right of the title offers, which is different in every
 /// connection state and is the only control a collapsed card has.
 class ServerCardConnAction extends ConsumerWidget {
-  const ServerCardConnAction({super.key, required this.srv});
+  const ServerCardConnAction({
+    super.key,
+    required this.srv,
+    this.bmcPower,
+    this.bmcPowering = false,
+    this.onBmcPowerOn,
+  });
 
   final ServerState srv;
+  final PowerState? bmcPower;
+  final bool bmcPowering;
+  final VoidCallback? onBmcPowerOn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bmcOff = srv.conn == ServerConn.failed && bmcPower == PowerState.off;
     final (child, onTap, label) = switch (srv.conn) {
       ServerConn.connecting ||
       ServerConn.loading ||
@@ -165,6 +196,20 @@ class ServerCardConnAction extends ConsumerWidget {
         const SizedBox.square(dimension: 19, child: SizedLoading(19, padding: 2)),
         null,
         null,
+      ),
+      ServerConn.failed when bmcOff && bmcPowering => (
+        const SizedBox.square(dimension: 19, child: SizedLoading(19, padding: 2)),
+        null,
+        null,
+      ),
+      ServerConn.failed when bmcOff && onBmcPowerOn != null => (
+        const Icon(
+          Icons.power_settings_new,
+          size: 19,
+          color: StatePalette.running,
+        ),
+        onBmcPowerOn,
+        l10n.bmcPowerOnAction,
       ),
       // A certificate to review is answered here, where the card is: asking
       // again is refused the same way.

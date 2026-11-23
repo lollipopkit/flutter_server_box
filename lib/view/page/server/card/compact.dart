@@ -8,6 +8,7 @@ import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -42,9 +43,18 @@ class ServerCardLine extends StatelessWidget {
     this.stale,
     this.selected,
     this.heroName = false,
+    this.bmcPower,
+    this.bmcPowering = false,
+    this.onBmcPowerOn,
   });
 
   final ServerState srv;
+  final PowerState? bmcPower;
+  final bool bmcPowering;
+  final VoidCallback? onBmcPowerOn;
+
+  bool get _isBmcOff =>
+      srv.conn == ServerConn.failed && bmcPower == PowerState.off;
 
   /// Whether the name flies to the page's bar — see [ServerNameHero].
   final bool heroName;
@@ -90,7 +100,9 @@ class ServerCardLine extends StatelessWidget {
                   height: ServerCardSizes.dot,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: serverStateDot(srv, readings: readings),
+                    color: _isBmcOff
+                        ? StatePalette.idle
+                        : serverStateDot(srv, readings: readings),
                   ),
                 ),
                 const SizedBox(width: 11),
@@ -183,7 +195,12 @@ class ServerCardLine extends StatelessWidget {
                 if (srv.conn.busy)
                   const SizedBox(width: ServerCardSizes.action)
                 else
-                  ServerCardConnAction(srv: srv),
+                  ServerCardConnAction(
+                    srv: srv,
+                    bmcPower: bmcPower,
+                    bmcPowering: bmcPowering,
+                    onBmcPowerOn: onBmcPowerOn,
+                  ),
               ],
             );
           },
@@ -211,6 +228,7 @@ class ServerCardLine extends StatelessWidget {
       ServerConn.connecting ||
       ServerConn.connected ||
       ServerConn.loading => (l10n.connecting, Colors.grey),
+      ServerConn.failed when _isBmcOff => (l10n.bmcPowerOff, StatePalette.idle),
       ServerConn.failed => (libL10n.retry, StatePalette.failed),
       // The numbers are still the most recent thing known about it, so what
       // this says is how old they are rather than that they are gone.
@@ -247,6 +265,7 @@ class ServerCardLine extends StatelessWidget {
 
     final err = srv.status.err;
     final (text, color) = switch (srv) {
+      _ when _isBmcOff => (l10n.bmcPowerOff, StatePalette.idle),
       _ when srv.needsInteractiveAuth => (libL10n.tapToAuth, StatePalette.warn),
       _ when err != null => (
         err.solution ?? err.message ?? libL10n.fail,
@@ -399,9 +418,14 @@ class ServerCardTile extends StatelessWidget {
     this.stale = false,
     this.selected,
     this.heroName = false,
+    this.bmcPower,
   });
 
   final ServerState srv;
+  final PowerState? bmcPower;
+
+  bool get _isBmcOff =>
+      srv.conn == ServerConn.failed && bmcPower == PowerState.off;
 
   /// Whether the name flies to the page's bar — see [ServerNameHero].
   final bool heroName;
@@ -440,7 +464,9 @@ class ServerCardTile extends StatelessWidget {
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: serverStateDot(srv, readings: readings),
+                    color: _isBmcOff
+                        ? StatePalette.idle
+                        : serverStateDot(srv, readings: readings),
                   ),
                 ),
                 const SizedBox(width: 5),
@@ -493,12 +519,14 @@ class ServerCardTile extends StatelessWidget {
   /// what a card has room for and a tile has not, and a tile that elides its
   /// own state says less than the dash it replaced.
   String get _tileWord => switch (srv.conn) {
+    ServerConn.failed when _isBmcOff => l10n.bmcPowerOff,
     ServerConn.failed =>
       srv.needsInteractiveAuth ? l10n.authShort : libL10n.fail,
     _ => '—',
   };
 
   Color get _tileWordColor => switch (srv.conn) {
+    ServerConn.failed when _isBmcOff => StatePalette.idle,
     ServerConn.failed =>
       srv.needsInteractiveAuth ? StatePalette.warn : StatePalette.failed,
     _ => Colors.grey,

@@ -167,26 +167,6 @@ class Servers extends Table with SyncMeta {
   TextColumn get wolIp => text().nullable()();
   TextColumn get wolPwd => text().nullable()();
 
-  /// The BMC, a side channel beside the Wake-on-LAN fields above.
-  ///
-  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
-  /// of reaching the host, so it neither satisfies that requirement nor
-  /// conflicts with either side of it. A server may carry one alongside SSH or
-  /// alongside a monitor agent.
-  ///
-  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
-  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
-  /// connection is refused rather than trusted.
-  TextColumn get bmcAddr => text().nullable()();
-  TextColumn get bmcCertSha256 => text().nullable()();
-
-  /// Deleting an account must not delete the servers that used it; it must
-  /// leave them with an address and nothing to log in with, which the editor
-  /// can then say. Same rule as [sshKeyId].
-  TextColumn get bmcCredId => text()
-      .nullable()
-      .references(BmcCredentials, #id, onDelete: KeyAction.setNull)();
-
   TextColumn get preferTempDev => text().nullable()();
   BoolColumn get tempIsCelsius => boolean().withDefault(const Constant(true))();
   TextColumn get logoUrl => text().nullable()();
@@ -752,6 +732,52 @@ class SyncRecords extends Table {
   Set<Column> get primaryKey => {c, id};
 }
 
+/// Standalone or server-linked Redfish BMC endpoints (`BmcTarget`).
+///
+/// Unlinked rows appear as independent cards in the Status tab; rows with
+/// [serverId] attach to that server's card and detail page. Deleting the
+/// referenced credential or server clears the pointer rather than taking the
+/// BMC record with it.
+@DataClassName('BmcTargetRow')
+class BmcTargets extends Table with SyncMeta {
+  @override
+  String get tableName => 'bmc_target';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get addr => text()();
+  TextColumn get credId => text()
+      .nullable()
+      .references(BmcCredentials, #id, onDelete: KeyAction.setNull)();
+  TextColumn get certSha256 => text().nullable()();
+  TextColumn get serverId => text()
+      .nullable()
+      .references(Servers, #id, onDelete: KeyAction.setNull)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('BmcTargetTagRow')
+class BmcTargetTags extends Table {
+  @override
+  String get tableName => 'bmc_target_tag';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get targetId => text().references(
+    BmcTargets,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get tag => text()();
+
+  @override
+  Set<Column> get primaryKey => {targetId, tag};
+}
+
 /// The database, over the connection the app already opened and keyed.
 ///
 /// Drift is a query and mapping layer here, not the owner of the connection:
@@ -781,6 +807,8 @@ class SyncRecords extends Table {
     ServerJumps,
     ServerIdentityFiles,
     ServerDisabledCmds,
+    BmcTargets,
+    BmcTargetTags,
     KnownHosts,
     Snippets,
     SnippetTags,
@@ -826,11 +854,9 @@ class AppDb extends _$AppDb {
   /// `server`.
   static const _indexes = <({String table, String sql})>[
     (table: 'server', sql: 'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);'),
-    // Same read as `ssh_key_id`: "how many servers use this account", asked
-    // once per row of the account list and on every rebuild of the server
-    // editor. It also serves the ON DELETE SET NULL, which without it scans
-    // `server` once per deleted account.
-    (table: 'server', sql: 'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);'),
+    (table: 'bmc_target', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_cred ON bmc_target(cred_id);'),
+    (table: 'bmc_target', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_server ON bmc_target(server_id);'),
+    (table: 'bmc_target_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_tag_tag ON bmc_target_tag(tag);'),
     (table: 'server_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_server_tag_tag ON server_tag(tag);'),
     (table: 'server_jump', sql: 'CREATE INDEX IF NOT EXISTS idx_server_jump_target ON server_jump(jump_id);'),
     (table: 'snippet_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_snippet_tag_tag ON snippet_tag(tag);'),
@@ -871,6 +897,19 @@ class AppDb extends _$AppDb {
     };
     for (final index in _indexes) {
       if (tables.contains(index.table)) db.execute(index.sql);
+    }
+    // Historical migrations (m017, m028, m030, m035) rebuild `server` while
+    // `bmc_cred_id` still lived there; restore its index when the column exists.
+    if (tables.contains('server')) {
+      final serverCols = {
+        for (final row in db.select('PRAGMA table_info(server);'))
+          row['name'] as String,
+      };
+      if (serverCols.contains('bmc_cred_id')) {
+        db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_server_bmc_cred ON server(bmc_cred_id);',
+        );
+      }
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
-import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
@@ -8,6 +7,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/pve.dart';
@@ -26,16 +26,19 @@ class ServerStore extends EntityStore<Spi> {
     RemoteDesktopStore? remoteDesktops,
     SnippetStore? snippets,
     PveStore? pve,
+    BmcTargetStore? bmcTargets,
   }) : _portForwards = portForwards,
        _remoteDesktops = remoteDesktops,
        _snippets = snippets,
-       _pve = pve;
+       _pve = pve,
+       _bmcTargets = bmcTargets;
 
   static final instance = ServerStore(
     portForwards: PortForwardStore.instance,
     remoteDesktops: RemoteDesktopStore.instance,
     snippets: SnippetStore.instance,
     pve: PveStore.instance,
+    bmcTargets: BmcTargetStore.instance,
   );
 
   final PortForwardStore? _portForwards;
@@ -45,6 +48,10 @@ class ServerStore extends EntityStore<Spi> {
   /// `server_pve` cascades with its server and moves with a rename, neither
   /// of which goes through [PveStore], so its watchers hear it from here.
   final PveStore? _pve;
+
+  /// `bmc_target.server_id` clears on delete and moves on rename, so its
+  /// watchers hear it from here.
+  final BmcTargetStore? _bmcTargets;
 
   bool _hasPve(String id) => db.select(
     'SELECT 1 FROM server_pve WHERE server_id = ?;',
@@ -202,18 +209,6 @@ class ServerStore extends EntityStore<Spi> {
               ip: row['wol_ip'] as String? ?? '',
               pwd: row['wol_pwd'] as String?,
             ),
-      // Keyed off the address, which is the one field a BMC cannot be reached
-      // without. A row carrying an address but no `bmc_cred_id` — because the
-      // account it named was deleted, which sets this to null rather than
-      // taking the server with it — comes back incomplete, so the editor shows
-      // it and nothing tries to log in.
-      bmc: row['bmc_addr'] == null
-          ? null
-          : BmcCfg(
-              addr: row['bmc_addr'] as String,
-              credId: row['bmc_cred_id'] as String?,
-              certSha256: row['bmc_cert_sha256'] as String?,
-            ),
       custom: _customOf(row),
     );
   }
@@ -265,7 +260,6 @@ class ServerStore extends EntityStore<Spi> {
   void write(Spi item) {
     final ssh = item.ssh;
     final monitor = item.monitorHttp;
-    final bmc = item.bmc;
     final custom = item.custom;
     const columns = [
       'id',
@@ -298,9 +292,6 @@ class ServerStore extends EntityStore<Spi> {
       'wol_mac',
       'wol_ip',
       'wol_pwd',
-      'bmc_addr',
-      'bmc_cred_id',
-      'bmc_cert_sha256',
       'prefer_temp_dev',
       'temp_is_celsius',
       'logo_url',
@@ -353,9 +344,6 @@ class ServerStore extends EntityStore<Spi> {
       item.wolCfg?.mac,
       item.wolCfg?.ip,
       item.wolCfg?.pwd,
-      bmc?.addr,
-      bmc?.credId,
-      bmc?.certSha256,
       custom?.preferTempDev,
       (custom?.tempIsCelsius ?? true) ? 1 : 0,
       custom?.logoUrl,
@@ -450,7 +438,7 @@ class ServerStore extends EntityStore<Spi> {
       .toList();
 
   @override
-  void deleteById(String id) {
+  void deleteById(String id, {bool notify = true}) {
     final pfIds = db
         .select('SELECT id FROM port_forward WHERE server_id = ?;', [id])
         .map((r) => r['id'] as String)
@@ -467,6 +455,10 @@ class ServerStore extends EntityStore<Spi> {
     );
     final jumpOwnerIds = _referencingIds(
       'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
+      id,
+    );
+    final bmcTargetIds = _referencingIds(
+      'SELECT id FROM bmc_target WHERE server_id = ?;',
       id,
     );
     final hadPve = _hasPve(id);
@@ -491,6 +483,16 @@ class ServerStore extends EntityStore<Spi> {
       for (final ownerId in jumpOwnerIds) {
         if (ownerId != id) synced.stamp(ownerId, at: at);
       }
+      if (bmcTargetIds.isNotEmpty) {
+        db.execute(
+          'UPDATE bmc_target SET server_id = NULL WHERE server_id = ?;',
+          [id],
+        );
+        final bmcSync = SyncedTable('bmc_target');
+        for (final targetId in bmcTargetIds) {
+          bmcSync.stamp(targetId, at: at);
+        }
+      }
       db.execute('DELETE FROM port_forward WHERE server_id = ?;', [id]);
       db.execute('DELETE FROM remote_desktop_profile WHERE server_id = ?;', [
         id,
@@ -498,11 +500,13 @@ class ServerStore extends EntityStore<Spi> {
       db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
       synced.tombstone(id, at: at);
     });
+    if (!notify) return;
     invalidate();
     if (pfIds.isNotEmpty) _portForwards?.invalidate();
     if (remoteDesktopIds.isNotEmpty) _remoteDesktops?.invalidate();
     if (snippetIds.isNotEmpty) _snippets?.invalidate();
     if (hadPve) _pve?.invalidate();
+    if (bmcTargetIds.isNotEmpty) _bmcTargets?.invalidate();
   }
 
   /// Changes a server's stable id without exposing a state in which either
@@ -532,6 +536,10 @@ class ServerStore extends EntityStore<Spi> {
     );
     final jumpOwnerIds = _referencingIds(
       'SELECT server_id AS id FROM server_jump WHERE jump_id = ?;',
+      old.id,
+    );
+    final bmcTargetIds = _referencingIds(
+      'SELECT id FROM bmc_target WHERE server_id = ?;',
       old.id,
     );
     final hadPve = _hasPve(old.id);
@@ -575,6 +583,7 @@ class ServerStore extends EntityStore<Spi> {
           'container_host',
           'container_runtime',
           'server_pve',
+          'bmc_target',
           'port_forward',
           'remote_desktop_profile',
           'conn_stat',
@@ -611,6 +620,10 @@ class ServerStore extends EntityStore<Spi> {
         for (final profileId in remoteDesktopIds) {
           remoteDesktopSync.stamp(profileId, at: at);
         }
+        final bmcTargetSync = SyncedTable('bmc_target');
+        for (final targetId in bmcTargetIds) {
+          bmcTargetSync.stamp(targetId, at: at);
+        }
         for (final ownerId in jumpOwnerIds) {
           if (ownerId != old.id) synced.stamp(ownerId, at: at);
         }
@@ -631,6 +644,7 @@ class ServerStore extends EntityStore<Spi> {
     if (remoteDesktopIds.isNotEmpty) _remoteDesktops?.invalidate();
     if (snippetIds.isNotEmpty) _snippets?.invalidate();
     if (hadPve) _pve?.invalidate();
+    if (bmcTargetIds.isNotEmpty) _bmcTargets?.invalidate();
   }
 
   /// Moves the chats of server [from]'s terminals to [to], within the rename's

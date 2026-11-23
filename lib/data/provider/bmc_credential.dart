@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
-import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/stores.dart';
 
 part 'bmc_credential.freezed.dart';
@@ -76,15 +76,15 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
   /// The key action stays as the backstop for a row written by anything that
   /// does not come through here.
   Future<void> delete(BmcCredential cred) async {
-    final affected = Stores.server
+    final affected = Stores.bmcTarget
         .fetch()
-        .where((spi) => spi.bmc?.credId == cred.id)
+        .where((target) => target.credId == cred.id)
         .toList();
 
-    for (final spi in affected) {
-      Stores.server.update(
-        spi,
-        spi.copyWith(bmc: spi.bmc!.copyWith(credId: null)),
+    for (final target in affected) {
+      Stores.bmcTarget.update(
+        target,
+        target.copyWith(credId: null),
       );
     }
 
@@ -98,7 +98,7 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
     );
 
     if (affected.isNotEmpty) {
-      unawaited(ref.read(serversProvider.notifier).reload());
+      ref.read(bmcTargetsProvider.notifier).reload();
     }
   }
 

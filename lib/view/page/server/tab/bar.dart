@@ -13,19 +13,16 @@ extension _Bar on _ServerPageState {
   /// [SessionTabBar.height] rather than a bar of its own measurements: the
   /// strips are read as one line down the app, and a taller one here would
   /// shift the page contents by that much on every switch between tabs.
-  PreferredSizeWidget _buildTagBar(String? openId, List<String> filtered) {
+  PreferredSizeWidget _buildTagBar(
+    StatusCardItem? openItem,
+    List<StatusCardItem> filtered,
+  ) {
     if (_selecting) return _buildSelectionBar(filtered);
     final narrow = !_opensInPlace(context);
     return PreferredSizeListenBuilder(
-      // Which tag is on, what tags there are to choose between, and how the
-      // list is ordered — the sort button draws its own current icon.
       listenable: Listenable.merge([_tags, _tag, _sortVersion, _autoDensity]),
-      // The wrapper is what the `Scaffold` measures, so it has to be told; its
-      // own default is a full toolbar.
       preferSize: const Size.fromHeight(SwitcherBar.height),
       builder: () {
-        // One column: every tab's bar. A server opens as a page of its own
-        // there, so this is always the list's.
         if (narrow) {
           return SwitcherBar(
             search: _search,
@@ -42,28 +39,17 @@ extension _Bar on _ServerPageState {
               child: LayoutBuilder(
                 builder: (_, cons) => Row(
                   children: [
-                    // The way back comes first and takes no room when there is
-                    // nowhere to go back to.
-                    //
-                    // Inset to where the switcher's own glyph sits when there is
-                    // nothing open — `SessionSwitcherLabel` holds it 14 off the
-                    // edge, and a button's own 7 is half of that — so the first
-                    // thing in the bar is in the same place either way.
-                    if (openId != null) SwitcherBar.back(onTap: _closeDetail),
+                    if (openItem != null) SwitcherBar.back(onTap: _closeDetail),
                     Expanded(
-                      child: openId == null
+                      child: openItem == null
                           ? _buildTagSwitcher()
-                          : _buildServerSwitcher(openId, filtered),
+                          : _buildItemSwitcher(openItem, filtered),
                     ),
-                    // Not while one is open: the page is one machine then, and
-                    // how many of them fit on a screen is not a question it has.
-                    if (openId == null)
+                    if (openItem == null)
                       _buildDensityControl(filtered.length, room: cons.maxWidth),
-                    // With one open, the page is that machine, so the bar offers
-                    // what its own page does when pushed on a phone.
-                    for (final action in openId == null
+                    for (final action in openItem == null
                         ? _listActions()
-                        : _serverActions(openId))
+                        : _openItemActions(openItem))
                       action.button(),
                     const SizedBox(width: 7),
                   ],
@@ -76,18 +62,38 @@ extension _Bar on _ServerPageState {
     );
   }
 
-  List<BarAction> _serverActions(String openId) {
-    final spi = ref.read(serversProvider).servers[openId];
-    if (spi == null) return const [];
-    return [
+  List<BarAction> _openItemActions(StatusCardItem openItem) => switch (openItem) {
+    ServerCardItem(:final spi) => [
       for (final action in ServerPageAction.of(
         context,
         spi,
         onDeleted: _closeDetail,
       ))
         BarAction(icon: action.icon, label: action.label, onTap: action.onTap),
-    ];
-  }
+    ],
+    BmcCardItem(:final target) => [
+      BarAction(
+        icon: Icons.refresh,
+        label: libL10n.refresh,
+        onTap: () => unawaited(ref.read(bmcProvider(target.id).notifier).refresh()),
+      ),
+      BarAction(
+        icon: Icons.edit_outlined,
+        label: libL10n.edit,
+        onTap: () => unawaited(
+          BmcTargetEditPage.route.go(
+            context,
+            args: BmcTargetEditArgs(target: target),
+          ),
+        ),
+      ),
+      BarAction(
+        icon: Icons.delete_outline,
+        label: libL10n.delete,
+        onTap: () => unawaited(_deleteBmcTarget(target)),
+      ),
+    ],
+  };
 
   /// How much of each machine the list draws.
   ///
@@ -206,16 +212,21 @@ extension _Bar on _ServerPageState {
   /// — because it answers the same question: this is one of several, and here
   /// is how to reach the others. The column beside the card is the same list;
   /// this is what is left of it where there is no room for one.
-  Widget _buildServerSwitcher(String openId, List<String> filtered) {
-    final at = filtered.indexOf(openId);
-    final spi = ref.read(serversProvider).servers[openId];
+  Widget _buildItemSwitcher(
+    StatusCardItem openItem,
+    List<StatusCardItem> filtered,
+  ) {
+    final at = filtered.indexWhere((i) => i.cardKey == openItem.cardKey);
 
     return SessionSwitcherLabel(
-      name: spi?.name ?? openId,
+      name: openItem.name,
       position: at < 0 ? null : at + 1,
       total: filtered.length,
-      icon: BoxIcons.bx_server,
-      onTap: () => _showServerSheet(filtered, openId),
+      icon: switch (openItem) {
+        ServerCardItem() => BoxIcons.bx_server,
+        BmcCardItem() => Icons.developer_board,
+      },
+      onTap: () => _showItemSheet(filtered, openItem),
     );
   }
 
@@ -328,34 +339,27 @@ extension _Bar on _ServerPageState {
   }
 
   void _toggleGlobe() {
-    if (!_globe.value &&
-        _filterServers(ref.read(serversProvider).serverOrder).isEmpty) {
+    final hasServers = _lastFiltered.any((i) => i is ServerCardItem);
+    if (!_globe.value && !hasServers) {
       Toast.show(l10n.serverTabEmpty);
       return;
     }
     final on = !_globe.value;
     _globe.value = on;
     Stores.setting.serverPageGlobe.put(on);
-    // The button is the feature's only front door, so this is what says whether
-    // it is used at all. The pair matters rather than the opening alone: the
-    // choice is remembered across launches, so a globe that is turned back off
-    // is the one signal that someone tried it and did not keep it.
     Diag.crumb(SbDiag.globe, on ? 'open' : 'close');
   }
 
-  /// [immersive] is the globe having the window rather than sharing it with a
-  /// pane, which is what decides whether it has to carry its own way out: the
-  /// bar holding the toggle is not on screen then, and neither is the
-  /// navigation.
-  ///
-  /// Clear of the home indicator on its own: the tab's body leaves the bottom
-  /// inset to what is in it.
-  Widget _buildGlobe(List<String> filtered, {bool immersive = false}) {
+  Widget _buildGlobe(List<StatusCardItem> filtered, {bool immersive = false}) {
+    final serverIds = [
+      for (final item in filtered)
+        if (item is ServerCardItem) item.id,
+    ];
     return SafeArea(
       key: const ValueKey('globe'),
       top: false,
       child: ServerGlobe(
-        ids: filtered,
+        ids: serverIds,
         onTapServer: (spi) =>
             _onTapCard(context, ref.read(serverProvider(spi.id))),
         onEditServer: (spi) =>

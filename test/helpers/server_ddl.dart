@@ -91,13 +91,30 @@ String serverDdlBeforeControlPath(String fresh) {
   return before.replaceFirst(controlPathColumn, '');
 }
 
+/// The three BMC columns m043 moved out, as Drift declared them from v6 to v43.
+const bmcServerColumns =
+    '"bmc_addr" TEXT NULL, '
+    '"bmc_cert_sha256" TEXT NULL, '
+    '"bmc_cred_id" TEXT NULL REFERENCES bmc_credential (id) ON DELETE SET NULL, ';
+
+/// `server` as it was before v44: today's table with the three BMC columns
+/// m043 moved into `bmc_target` put back before `prefer_temp_dev`, the anchor
+/// asserted to have been found.
+String serverDdlBeforeBmcTarget(String fresh) {
+  const anchor = '"prefer_temp_dev" TEXT NULL, ';
+  expect(fresh, contains(anchor));
+  expect(fresh, isNot(contains('"bmc_addr"')));
+  return fresh.replaceFirst(anchor, '$bmcServerColumns$anchor');
+}
+
 /// The column m042 added: last, where `ADD COLUMN` puts it too.
 const monitorFallbackColumn = ', "monitor_fallback_addr" TEXT NULL';
 
 /// `server` as it was before v43, asserted to have been found.
 String serverDdlBeforeMonitorFallback(String fresh) {
-  expect(fresh, contains(monitorFallbackColumn));
-  return fresh.replaceFirst(monitorFallbackColumn, '');
+  final before = serverDdlBeforeBmcTarget(fresh);
+  expect(before, contains(monitorFallbackColumn));
+  return before.replaceFirst(monitorFallbackColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

@@ -8,6 +8,7 @@ import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m040_ssh_forward_agent.dart';
 import 'package:server_box/data/store/migrations/m041_ssh_control_path.dart';
 import 'package:server_box/data/store/migrations/m042_monitor_fallback_addr.dart';
+import 'package:server_box/data/store/migrations/m043_bmc_target.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -62,6 +63,7 @@ void main() {
     // The steps since that touch `server`.
     await const SshControlPathMigration().apply();
     await const MonitorFallbackAddrMigration().apply();
+    await const BmcTargetMigration().apply();
 
     expect(_serverColumns(), fresh);
   });

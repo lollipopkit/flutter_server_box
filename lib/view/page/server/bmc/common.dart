@@ -1,8 +1,28 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/view/widget/cert_sheet.dart';
+
+/// Route argument carrying a [BmcTarget] for detail, logs, and drives pages.
+final class BmcTargetRequiredArgs {
+  final BmcTarget target;
+
+  const BmcTargetRequiredArgs(this.target);
+}
+
+/// Optional route argument for [BmcTargetEditPage].
+final class BmcTargetEditArgs {
+  final BmcTarget? target;
+  final String? serverId;
+
+  const BmcTargetEditArgs({this.target, this.serverId});
+}
 
 /// What a BMC's failure means, in this app's words.
 String bmcFailureText(RedfishFailure failure, String? detail) =>
@@ -28,6 +48,121 @@ String bmcFailureText(RedfishFailure failure, String? detail) =>
 String bmcErrorText(Object e) =>
     e is BmcError ? bmcFailureText(e.failure, e.detail) : '$e';
 
+String bmcIntentText(PowerIntent intent) => switch (intent) {
+  PowerIntent.on_ => l10n.bmcPowerOnAction,
+  PowerIntent.gracefulShutdown => l10n.bmcShutdown,
+  PowerIntent.forceOff => l10n.bmcForceOff,
+  PowerIntent.restart => l10n.restart,
+  PowerIntent.powerCycle => l10n.bmcPowerCycle,
+};
+
+String bmcPowerText(PowerState state) => switch (state) {
+  PowerState.on_ => l10n.bmcPowerOn,
+  PowerState.off => l10n.bmcPowerOff,
+  PowerState.poweringOn || PowerState.poweringOff => libL10n.loadingEllipsis,
+  PowerState.paused => l10n.virtPaused,
+  PowerState.unknown => libL10n.unknown,
+};
+
+/// Formats a sensor reading without leaving trailing whitespace when [r.unit]
+/// is missing or empty.
+String formatBmcReading(BmcReading r) {
+  final unit = r.unit;
+  if (unit == 'Cel') return '${r.value.toStringAsFixed(1)}°C';
+  final numText = r.value.toStringAsFixed(0);
+  if (unit == null || unit.isEmpty) return numText;
+  return '$numText $unit';
+}
+
+String bmcBootEnabledText(String enabled) => switch (enabled) {
+  'Disabled' => l10n.bmcBootDisabled,
+  'Once' => l10n.bmcBootOnce,
+  'Continuous' => l10n.bmcBootContinuous,
+  _ => enabled,
+};
+
+/// Fetches the leaf TLS certificate presented by [addr] and asks the user to
+/// confirm its fingerprint. Returns the accepted SHA-256 fingerprint, or null
+/// when cancelled / failed.
+Future<String?> reviewBmcCert(
+  BuildContext context, {
+  required String addr,
+  String? pinned,
+  bool reconnects = false,
+}) async {
+  final uri = BmcCfg.parseUri(addr);
+  if (uri == null) {
+    Toast.error(l10n.bmcAddrInvalid);
+    return null;
+  }
+  final host = uri.host;
+  final port = uri.port;
+
+  final (info, err) = await context.showLoadingSheet(
+    fn: () => bmcFetchServerCert(host: host, port: port),
+    showErr: false,
+  );
+  if (!context.mounted) return null;
+  if (err != null || info == null) {
+    Toast.error(libL10n.fail, body: err == null ? null : bmcErrorText(err));
+    return null;
+  }
+
+  final accepted = await showCertTrustSheet(
+    context,
+    cert: info,
+    previous: pinned != info.fingerprint ? pinned : null,
+    source: '$host:$port',
+    reconnects: reconnects,
+  );
+  if (!accepted || !context.mounted) return null;
+  return info.fingerprint;
+}
+
+/// Prompts the user to review [target]'s certificate and persists the accepted
+/// SHA-256 fingerprint immediately.
+Future<bool> trustBmcTargetCert(
+  BuildContext context,
+  WidgetRef ref,
+  BmcTarget target,
+) async {
+  final fp = await reviewBmcCert(
+    context,
+    addr: target.addr,
+    pinned: target.certSha256,
+    reconnects: true,
+  );
+  if (fp == null || !context.mounted) return false;
+  ref.read(bmcTargetsProvider.notifier).updateCertPin(target.id, fp);
+  return true;
+}
+
+/// Asks for confirmation before sending Power On to [target], runs [run], and
+/// surfaces the outcome via toast.
+Future<void> confirmAndRunBmcPowerOn({
+  required BuildContext context,
+  required BmcTarget target,
+  required Future<BmcPowerResult> Function() run,
+}) async {
+  final ok = await context.showSheet<bool>(
+    title: l10n.bmcPowerOnAction,
+    child: Text(l10n.bmcPowerConfirm(target.name, 'On')),
+    actions: Btnx.cancelOk,
+  );
+  if (ok != true || !context.mounted) return;
+  final result = await run();
+  switch (result) {
+    case BmcPowerResult.confirmed:
+      Toast.success(l10n.bmcPowerDone);
+    case BmcPowerResult.accepted:
+      Toast.warn(l10n.bmcPowerAccepted);
+    case BmcPowerResult.notSupported:
+      Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
+    case BmcPowerResult.failed:
+      Toast.error(libL10n.fail);
+  }
+}
+
 extension BmcRun on BuildContext {
   /// Runs one change behind a loading sheet and says how it went. Bounded by
   /// the client's own timeout per request, not the sheet's: a write is a read
@@ -48,11 +183,23 @@ extension BmcRun on BuildContext {
       Toast.error(libL10n.fail, body: bmcErrorText(err));
       return false;
     }
-    if (result is BmcPowerResult && result == BmcPowerResult.accepted) {
-      Toast.warn(l10n.bmcPowerAccepted);
-    } else {
-      Toast.success(libL10n.success);
+    if (result is BmcPowerResult) {
+      switch (result) {
+        case BmcPowerResult.confirmed:
+          Toast.success(libL10n.success);
+          return true;
+        case BmcPowerResult.accepted:
+          Toast.warn(l10n.bmcPowerAccepted);
+          return true;
+        case BmcPowerResult.notSupported:
+          Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
+          return false;
+        case BmcPowerResult.failed:
+          Toast.error(libL10n.fail);
+          return false;
+      }
     }
+    Toast.success(libL10n.success);
     return true;
   }
 }

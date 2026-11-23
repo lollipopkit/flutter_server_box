@@ -55,15 +55,19 @@ abstract final class ServerSyncRecords {
       Stores.key.invalidate();
       if (keysBefore != null) KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     }
-    if (written.contains(Stores.bmcCredential.table)) Stores.bmcCredential.invalidate();
+    final bmcCreds = written.contains(Stores.bmcCredential.table);
+    final bmcTargets = written.contains(Stores.bmcTarget.table);
+    if (bmcCreds) Stores.bmcCredential.invalidate();
     if (servers) {
       Stores.server.invalidate();
-      // A server's delete cascades these rows.
+      // A server's delete cascades or unlinks these rows.
       Stores.portForward.invalidate();
       Stores.remoteDesktop.invalidate();
       Stores.snippet.invalidate();
       Stores.pve.invalidate();
+      Stores.bmcTarget.invalidate();
     }
+    if (bmcTargets || bmcCreds) Stores.bmcTarget.invalidate();
     if (written.contains(Stores.snippet.table)) Stores.snippet.invalidate();
     if (written.contains(Stores.portForward.table)) Stores.portForward.invalidate();
     if (written.contains(Stores.remoteDesktop.table)) Stores.remoteDesktop.invalidate();
@@ -71,7 +75,8 @@ abstract final class ServerSyncRecords {
       if (servers) ...{ReloadedStore.servers, ReloadedStore.containers},
       if (written.contains(Stores.snippet.table)) ReloadedStore.snippets,
       if (written.contains(Stores.key.table)) ReloadedStore.keys,
-      if (written.contains(Stores.bmcCredential.table)) ReloadedStore.bmcCredentials,
+      if (bmcCreds) ReloadedStore.bmcCredentials,
+      if (bmcTargets || servers || bmcCreds) ReloadedStore.bmcTargets,
     });
   }
 }

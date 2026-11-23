@@ -104,6 +104,12 @@ extension _Tags on _ServerEditPageState {
         old.copyWith(tags: next.isEmpty ? null : next),
       );
     }
+    if (getIt.isRegistered<BmcTargetStore>()) {
+      final bmcNotifier = ref.read(bmcTargetsProvider.notifier);
+      for (final entry in _pendingTagRenames.entries) {
+        bmcNotifier.renameTag(entry.key, entry.value);
+      }
+    }
     _pendingTagRenames.clear();
   }
 }
@@ -242,15 +248,20 @@ extension _Actions on _ServerEditPageState {
   /// Fetches the certificate the BMC presents, shows it, and pins it if the
   /// user agrees.
   Future<void> _onTapBmcCert() async {
-    final cfg = BmcCfg(addr: _bmcAddrCtrl.text.trim());
+    final addr = _bmcAddrCtrl.text.trim();
+    final cfg = BmcCfg(addr: addr);
     final uri = cfg.uri;
     final port = cfg.port;
     if (uri == null || port == null) {
       Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
       return;
     }
-    final pin = await _reviewCert(uri.host, port, pinned: _bmcCert.value);
-    if (pin != null) _bmcCert.value = pin;
+    final pinned = _bmcCertAddr?.trim() == addr ? _bmcCert.value : null;
+    final pin = await _reviewCert(uri.host, port, pinned: pinned);
+    if (pin != null) {
+      _bmcCertAddr = addr;
+      _bmcCert.value = pin;
+    }
   }
 
   /// The same for the agent at the monitor URL; the pin is kept for that
@@ -570,7 +581,7 @@ extension _Actions on _ServerEditPageState {
       Toast.error(_validationErrorMessage(error));
       return;
     }
-    if (!await _persist(spi, form.pve)) return;
+    if (!await _persist(spi, form.pve, form.bmc)) return;
     if (!mounted) return;
     _reportSaved(form);
     // Saved either way — the address may well be one TLS is being set up for,
@@ -724,14 +735,14 @@ extension _Actions on _ServerEditPageState {
         : BmcCfg(
             addr: bmcAddr,
             credId: _bmcCredId.value,
-            certSha256: _bmcCert.value,
+            certSha256: _bmcCertAddr?.trim() == bmcAddr ? _bmcCert.value : null,
           );
   }
 
   /// The server the form describes, defaults applied once. Pure: nothing on
   /// the form is written.
   Spi _buildSpi(_SaveForm form) {
-    final (:local, :selectedKey, :geo, :wol, :bmc, useSsh: _, useMonitorHttp: _, pve: _) = form;
+    final (:local, :selectedKey, :geo, :wol, bmc: _, useSsh: _, useMonitorHttp: _, pve: _) = form;
     final proxyCommandText = _proxyCommandCtrl.text.trim();
     final custom = ServerCustom(
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
@@ -818,7 +829,6 @@ extension _Actions on _ServerEditPageState {
       autoConnect: _autoConnect.value,
       custom: custom,
       wolCfg: wol,
-      bmc: bmc,
       monitorHttp: monitorHttp,
       // Only meaningful with two to order. Storing it for a server with one
       // way in would leave a preference behind for a transport that is not
@@ -841,9 +851,9 @@ extension _Actions on _ServerEditPageState {
     );
   }
 
-  /// Writes [spi], its sudo password, its PVE config and the tag renames.
+  /// Writes [spi], its sudo password, its PVE/BMC configs and the tag renames.
   /// False when it did not save, having said why.
-  Future<bool> _persist(Spi spi, PveConfig? pve) async {
+  Future<bool> _persist(Spi spi, PveConfig? pve, BmcCfg? bmc) async {
     try {
       if (this.spi == null) {
         final existsIds = Stores.server.keys();
@@ -859,6 +869,7 @@ extension _Actions on _ServerEditPageState {
       }
       // A child of the server row, so only once that row exists.
       Stores.pve.put(spi.id, _pveKeepsPin(pve, spi));
+      _persistLinkedBmc(spi, bmc);
       // After this server is written, so that a failure above leaves the other
       // servers alone — and so that the state this reads back already has this
       // server's own tags in it.
@@ -872,6 +883,34 @@ extension _Actions on _ServerEditPageState {
     }
     return true;
 
+  }
+
+  void _persistLinkedBmc(Spi spi, BmcCfg? bmc) {
+    if (!getIt.isRegistered<BmcTargetStore>()) return;
+    final existing = Stores.bmcTarget.forServer(spi.id);
+    if (bmc == null) {
+      if (existing != null) Stores.bmcTarget.deleteById(existing.id);
+    } else {
+      final next = BmcTarget(
+        id: existing?.id ?? ShortId.generate(),
+        name: existing?.name.isNotEmpty == true ? existing!.name : spi.name,
+        addr: bmc.addr,
+        credId: bmc.credId,
+        certSha256: bmc.certSha256,
+        serverId: spi.id,
+        // Keep existing BMC tags intact when editing the host; only seed
+        // from the host's tags when creating a new linked target.
+        tags: existing != null ? existing.tags : spi.tags,
+      );
+      if (existing != null) {
+        Stores.bmcTarget.update(existing, next);
+      } else {
+        Stores.bmcTarget.put(next);
+      }
+    }
+    if (mounted) {
+      ref.read(bmcTargetsProvider.notifier).reload();
+    }
   }
 
   /// Closes the funnel `edit opened` began, and is the one place that knows
@@ -1114,11 +1153,12 @@ extension _Utils on _ServerEditPageState {
       _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 
-    final bmc = spi.bmc;
+    final bmc = ref.read(bmcTargetsProvider).forServer(spi.id);
     if (bmc != null) {
       _bmcAddrCtrl.text = bmc.addr;
       _bmcCredId.value = bmc.credId;
       _bmcCert.value = bmc.certSha256;
+      _bmcCertAddr = bmc.certSha256 != null ? bmc.addr.trim() : null;
     }
 
     final wol = spi.wolCfg;

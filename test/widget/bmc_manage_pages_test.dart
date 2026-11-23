@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/view/page/server/bmc/common.dart';
 import 'package:server_box/view/page/server/bmc/drives.dart';
 import 'package:server_box/view/page/server/bmc/logs.dart';
-
-import '../helpers/spi_fixture.dart';
 
 const _event = LogService(
   path: '/redfish/v1/Systems/1/LogServices/EventLog',
@@ -44,7 +43,7 @@ final class _FakeBmc extends BmcNotifier {
   );
 
   @override
-  BmcState build(Spi spi) => const BmcState();
+  BmcState build(String targetId) => const BmcState();
 
   @override
   Future<List<LogService>> logServices() async => [_event, _journal];
@@ -71,8 +70,23 @@ final class _FakeBmc extends BmcNotifier {
   Future<StorageReport> storage() async => report;
 }
 
+final class _FakeTargets extends BmcTargetsNotifier {
+  _FakeTargets(this._target);
+  final BmcTarget _target;
+
+  @override
+  BmcTargetsState build() => BmcTargetsState(
+    targets: {_target.id: _target},
+    order: [_target.id],
+  );
+}
+
 void main() {
-  final spi = spiFixture(name: 'web', id: 'web');
+  const target = BmcTarget(
+    id: 'bmc-web',
+    name: 'web',
+    addr: 'https://10.0.0.9',
+  );
   late _FakeBmc bmc;
 
   setUp(() => bmc = _FakeBmc());
@@ -81,7 +95,10 @@ void main() {
   Future<void> pump(WidgetTester tester, Widget page) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [bmcProvider(spi).overrideWith(() => bmc)],
+        overrides: [
+          bmcTargetsProvider.overrideWith(() => _FakeTargets(target)),
+          bmcProvider(target.id).overrideWith(() => bmc),
+        ],
         child: MaterialApp(
           localizationsDelegates: app_locale.appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -102,7 +119,7 @@ void main() {
   testWidgets('logs: the event log first, and cleared', (
     tester,
   ) async {
-    await pump(tester, BmcLogsPage(args: SpiRequiredArgs(spi)));
+    await pump(tester, const BmcLogsPage(args: BmcTargetRequiredArgs(target)));
 
     expect(find.text('Event Log'), findsOneWidget);
     expect(find.text('Journal'), findsOneWidget);
@@ -122,7 +139,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(
-      find.text(app_locale.l10n.bmcClearLogConfirm('Event Log', spi.name)),
+      find.text(app_locale.l10n.bmcClearLogConfirm('Event Log', target.name)),
       findsOneWidget,
     );
     expect(bmc.cleared, isEmpty);
@@ -151,7 +168,10 @@ void main() {
       truncated: false,
       unsupported: false,
     );
-    await pump(tester, BmcDrivesPage(args: SpiRequiredArgs(spi)));
+    await pump(
+      tester,
+      const BmcDrivesPage(args: BmcTargetRequiredArgs(target)),
+    );
 
     final failing = tester.getTopLeft(find.text('failing'));
     final good = tester.getTopLeft(find.text('good'));
@@ -160,7 +180,10 @@ void main() {
   });
 
   testWidgets('drives: a service without storage says so', (tester) async {
-    await pump(tester, BmcDrivesPage(args: SpiRequiredArgs(spi)));
+    await pump(
+      tester,
+      const BmcDrivesPage(args: BmcTargetRequiredArgs(target)),
+    );
     expect(find.text(app_locale.l10n.bmcNoStorage), findsOneWidget);
   });
 }
