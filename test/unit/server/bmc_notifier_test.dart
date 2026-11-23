@@ -217,4 +217,61 @@ void main() {
     final state = await _settled(container, target.id);
     expect(state.failure, isNotNull);
   });
+
+  test('insertMedia and ejectMedia reject a stale expectedGeneration with closed', () async {
+    final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = socket.port;
+    await socket.close();
+
+    final target = BmcTarget(
+      id: 'bmc-media-gen',
+      name: 'web',
+      addr: 'https://127.0.0.1:$port',
+      credId: _cred.id,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        bmcCredentialProvider.overrideWith(_Creds.new),
+        bmcTargetsProvider.overrideWith(() => _Targets([target])),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final sub = container.listen(bmcProvider(target.id), (_, _) {});
+    addTearDown(sub.close);
+
+    final notifier = container.read(bmcProvider(target.id).notifier);
+    final staleGen = notifier.endpointGeneration + 99;
+    const slot = MediaSlot(
+      path: '/redfish/v1/Managers/bmc/VirtualMedia/CD1',
+      id: 'CD1',
+      mediaTypes: ['CD'],
+      inserted: false,
+    );
+
+    await expectLater(
+      notifier.insertMedia(
+        slot,
+        'https://10.0.0.2/os.iso',
+        expectedGeneration: staleGen,
+      ),
+      throwsA(
+        isA<BmcError>().having(
+          (e) => e.failure,
+          'failure',
+          RedfishFailure.closed,
+        ),
+      ),
+    );
+    await expectLater(
+      notifier.ejectMedia(slot, expectedGeneration: staleGen),
+      throwsA(
+        isA<BmcError>().having(
+          (e) => e.failure,
+          'failure',
+          RedfishFailure.closed,
+        ),
+      ),
+    );
+  });
 }

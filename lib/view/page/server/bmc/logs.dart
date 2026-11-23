@@ -33,6 +33,7 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   String? _err;
   var _loading = false;
   _BmcEndpoint? _activeEndpoint;
+  int? _activeGen;
   int? _servicesGen;
 
   /// Rises on every read or endpoint change, so a slow answer for a previous
@@ -54,6 +55,20 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   void initState() {
     super.initState();
     _activeEndpoint = _endpointOf(_target);
+    _activeGen = _bmc.endpointGeneration;
+    Future.microtask(_loadServices);
+  }
+
+  void _invalidateForReload(_BmcEndpoint endpoint, int generation) {
+    _activeEndpoint = endpoint;
+    _activeGen = generation;
+    _read++;
+    _services = null;
+    _servicesGen = null;
+    _picked = null;
+    _page = null;
+    _err = null;
+    _loading = true;
     Future.microtask(_loadServices);
   }
 
@@ -64,20 +79,14 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
         (s) => s.targets[widget.args.target.id] ?? widget.args.target,
       ),
     );
+    // Watched so the session lives while this page does and rebuilds whenever
+    // the underlying notifier reconnects (e.g. shared credential rotation).
+    ref.watch(bmcProvider(target.id));
     final endpoint = _endpointOf(target);
-    if (_activeEndpoint != endpoint) {
-      _activeEndpoint = endpoint;
-      _read++;
-      _services = null;
-      _servicesGen = null;
-      _picked = null;
-      _page = null;
-      _err = null;
-      _loading = true;
-      Future.microtask(_loadServices);
+    final currentGen = _bmc.endpointGeneration;
+    if (_activeEndpoint != endpoint || _activeGen != currentGen) {
+      _invalidateForReload(endpoint, currentGen);
     }
-    // Watched so the session lives while this page does.
-    ref.watch(bmcProvider(target.id).select((s) => s.hasData));
     final picked = _picked;
     return Scaffold(
       appBar: CustomAppBar(
@@ -199,6 +208,9 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
 
   Future<void> _loadServices() async {
     final endpoint = _endpointOf(_target);
+    final startGen = _bmc.endpointGeneration;
+    _activeEndpoint = endpoint;
+    _activeGen = startGen;
     final read = ++_read;
     setState(() {
       _loading = true;
@@ -206,18 +218,23 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
     });
     try {
       final services = await _bmc.logServices();
-      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+      if (!mounted ||
+          read != _read ||
+          _endpointOf(_target) != endpoint ||
+          _bmc.endpointGeneration != startGen) {
         return;
       }
-      final gen = _bmc.endpointGeneration;
       setState(() {
         _services = services;
-        _servicesGen = gen;
+        _servicesGen = startGen;
         _loading = false;
       });
       if (services.isNotEmpty) await _pick(services.first);
     } catch (e) {
-      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+      if (!mounted ||
+          read != _read ||
+          _endpointOf(_target) != endpoint ||
+          _bmc.endpointGeneration != startGen) {
         return;
       }
       setState(() {
@@ -231,6 +248,11 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   /// so a refresh that fails leaves the entries it has, with the reason.
   Future<void> _pick(LogService service, {bool keep = false}) async {
     final endpoint = _endpointOf(_target);
+    final currentGen = _bmc.endpointGeneration;
+    if (_servicesGen != currentGen) {
+      setState(() => _invalidateForReload(endpoint, currentGen));
+      return;
+    }
     final gen = _servicesGen;
     final read = ++_read;
     setState(() {
@@ -241,7 +263,10 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
     });
     try {
       final page = await _bmc.logEntries(service, expectedGeneration: gen);
-      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+      if (!mounted ||
+          read != _read ||
+          _endpointOf(_target) != endpoint ||
+          _bmc.endpointGeneration != gen) {
         return;
       }
       setState(() {
@@ -249,7 +274,10 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
         _loading = false;
       });
     } catch (e) {
-      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+      if (!mounted ||
+          read != _read ||
+          _endpointOf(_target) != endpoint ||
+          _bmc.endpointGeneration != gen) {
         return;
       }
       setState(() {
@@ -261,12 +289,21 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
 
   Future<void> _reload() async {
     final picked = _picked;
-    if (_services == null || picked == null) return _loadServices();
+    if (_services == null ||
+        picked == null ||
+        _servicesGen != _bmc.endpointGeneration) {
+      return _loadServices();
+    }
     await _pick(picked, keep: true);
   }
 
   Future<void> _clear(LogService service) async {
     final endpoint = _endpointOf(_target);
+    final currentGen = _bmc.endpointGeneration;
+    if (_servicesGen != currentGen) {
+      setState(() => _invalidateForReload(endpoint, currentGen));
+      return;
+    }
     final gen = _servicesGen;
     final ok = await context.showSheet<bool>(
       title: libL10n.clear,
@@ -274,7 +311,9 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    if (_endpointOf(_target) != endpoint || _servicesGen != gen) {
+    if (_endpointOf(_target) != endpoint ||
+        _servicesGen != gen ||
+        _bmc.endpointGeneration != gen) {
       Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
       return;
     }
@@ -282,7 +321,8 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
           () => _bmc.clearLog(service, expectedGeneration: gen),
         ) &&
         mounted &&
-        _endpointOf(_target) == endpoint) {
+        _endpointOf(_target) == endpoint &&
+        _bmc.endpointGeneration == gen) {
       await _pick(service, keep: true);
     }
   }

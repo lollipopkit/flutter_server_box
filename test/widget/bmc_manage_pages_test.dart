@@ -11,6 +11,7 @@ import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
 import 'package:server_box/view/page/server/bmc/drives.dart';
 import 'package:server_box/view/page/server/bmc/logs.dart';
+import 'package:server_box/view/page/server/bmc/panel.dart';
 
 const _event = LogService(
   path: '/redfish/v1/Systems/1/LogServices/EventLog',
@@ -32,6 +33,12 @@ const _journal = LogService(
 /// A BMC answering from memory, recording what was asked of it.
 final class _FakeBmc extends BmcNotifier {
   final cleared = <LogService>[];
+  final clearedGens = <int?>[];
+  final entriesGens = <int?>[];
+  final ejectedGens = <int?>[];
+  var _gen = 0;
+  var serviceLoadCount = 0;
+  var slots = const <MediaSlot>[];
   var eventEntries = const [
     LogEntry(id: '2', severity: 'Critical', message: 'CPU 1 over temperature'),
     LogEntry(id: '1', severity: 'OK', message: 'Power on'),
@@ -43,34 +50,66 @@ final class _FakeBmc extends BmcNotifier {
   );
 
   @override
+  int get endpointGeneration => _gen;
+
+  void bumpGeneration() {
+    _gen++;
+    state = state.copyWith(isBusy: !state.isBusy);
+  }
+
+  @override
   BmcState build(String targetId) => const BmcState();
 
   @override
-  Future<List<LogService>> logServices() async => [_event, _journal];
+  Future<List<LogService>> logServices() async {
+    serviceLoadCount++;
+    return [_event, _journal];
+  }
 
   @override
   Future<LogPage> logEntries(
     LogService service, {
     int? expectedGeneration,
-  }) async => service == _event
-      ? LogPage(
-          entries: eventEntries,
-          total: BigInt.from(eventEntries.isEmpty ? 0 : 500),
-          truncated: eventEntries.isNotEmpty,
-        )
-      : const LogPage(
-          entries: [LogEntry(id: 'j', message: 'bmcweb started')],
-          truncated: false,
-        );
+  }) async {
+    entriesGens.add(expectedGeneration);
+    if (expectedGeneration != null && expectedGeneration != _gen) {
+      throw const BmcError(failure: RedfishFailure.closed);
+    }
+    return service == _event
+        ? LogPage(
+            entries: eventEntries,
+            total: BigInt.from(eventEntries.isEmpty ? 0 : 500),
+            truncated: eventEntries.isNotEmpty,
+          )
+        : const LogPage(
+            entries: [LogEntry(id: 'j', message: 'bmcweb started')],
+            truncated: false,
+          );
+  }
 
   @override
   Future<void> clearLog(LogService service, {int? expectedGeneration}) async {
+    clearedGens.add(expectedGeneration);
+    if (expectedGeneration != null && expectedGeneration != _gen) {
+      throw const BmcError(failure: RedfishFailure.closed);
+    }
     cleared.add(service);
     eventEntries = const [];
   }
 
   @override
   Future<StorageReport> storage() async => report;
+
+  @override
+  Future<List<MediaSlot>> mediaSlots() async => slots;
+
+  @override
+  Future<void> ejectMedia(MediaSlot slot, {int? expectedGeneration}) async {
+    ejectedGens.add(expectedGeneration);
+    if (expectedGeneration != null && expectedGeneration != _gen) {
+      throw const BmcError(failure: RedfishFailure.closed);
+    }
+  }
 }
 
 final class _FakeTargets extends BmcTargetsNotifier {
@@ -243,5 +282,83 @@ void main() {
     expect(find.text('old-drive'), findsNothing);
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('new-drive'), findsOneWidget);
+  });
+
+  testWidgets('logs: reloads services when endpointGeneration changes and passes new generation', (
+    tester,
+  ) async {
+    await pump(tester, const BmcLogsPage(args: BmcTargetRequiredArgs(target)));
+    expect(bmc.serviceLoadCount, 1);
+    expect(bmc.entriesGens, [0]);
+
+    // Simulate credential rotation bumping endpointGeneration without changing
+    // BmcTarget's fields.
+    bmc.bumpGeneration();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(bmc.serviceLoadCount, 2);
+    expect(bmc.entriesGens.last, 1);
+
+    // Clear log now succeeds using the refreshed generation 1.
+    await tester.tap(find.byIcon(Icons.delete_sweep));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text(libL10n.ok));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    expect(bmc.clearedGens, [1]);
+    expect(bmc.cleared, [_event]);
+  });
+
+  testWidgets('virtual media: forwards captured generation and rejects stale sheet actions', (
+    tester,
+  ) async {
+    bmc.slots = const [
+      MediaSlot(
+        path: '/redfish/v1/Managers/bmc/VirtualMedia/CD1',
+        id: 'CD1',
+        name: 'Virtual CD',
+        mediaTypes: ['CD'],
+        inserted: true,
+        image: 'https://10.0.0.2/os.iso',
+      ),
+    ];
+
+    await pump(
+      tester,
+      Consumer(
+        builder: (context, ref, _) {
+          ref.watch(bmcProvider(target.id));
+          return Center(
+            child: TextButton(
+              onPressed: () =>
+                  BmcManageActions.openMediaSheet(context, ref, target),
+              child: const Text('OPEN_MEDIA'),
+            ),
+          );
+        },
+      ),
+    );
+
+    await tester.tap(find.text('OPEN_MEDIA'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    expect(find.text('Virtual CD'), findsOneWidget);
+
+    // Endpoint rebuilds while media sheet is open.
+    bmc.bumpGeneration();
+    await tester.pump();
+
+    await tester.tap(find.text(app_locale.l10n.bmcEjectMedia));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    // Eject was invoked with the sheet's original generation 0 and rejected.
+    expect(bmc.ejectedGens, [0]);
+    expect(find.text('Virtual CD'), findsOneWidget);
   });
 }

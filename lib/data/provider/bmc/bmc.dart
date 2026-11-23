@@ -423,14 +423,24 @@ class BmcNotifier extends _$BmcNotifier {
   Future<List<MediaSlot>> mediaSlots() =>
       _with((c, t) => c.mediaSlots(topology: t));
 
-  Future<void> insertMedia(MediaSlot slot, String image) async {
+  Future<void> insertMedia(
+    MediaSlot slot,
+    String image, {
+    int? expectedGeneration,
+  }) async {
     Diag.crumb(SbDiag.bmc, 'insert media');
-    await _with((c, _) => c.insertMedia(slot: slot, image: image));
+    await _with(
+      (c, _) => c.insertMedia(slot: slot, image: image),
+      expectedGeneration: expectedGeneration,
+    );
   }
 
-  Future<void> ejectMedia(MediaSlot slot) async {
+  Future<void> ejectMedia(MediaSlot slot, {int? expectedGeneration}) async {
     Diag.crumb(SbDiag.bmc, 'eject media');
-    await _with((c, _) => c.ejectMedia(slot: slot));
+    await _with(
+      (c, _) => c.ejectMedia(slot: slot),
+      expectedGeneration: expectedGeneration,
+    );
   }
 
   /// Sets the next boot's device, then reads the system back so the card

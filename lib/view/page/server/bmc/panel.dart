@@ -258,6 +258,7 @@ final class BmcManageActions extends ConsumerWidget {
     BmcTarget target,
   ) async {
     final notifier = ref.read(bmcProvider(target.id).notifier);
+    final expectedGen = notifier.endpointGeneration;
     final (slots, err) = await context.showLoadingSheet(
       fn: notifier.mediaSlots,
       showErr: false,
@@ -266,6 +267,10 @@ final class BmcManageActions extends ConsumerWidget {
     if (!context.mounted) return;
     if (err != null || slots == null) {
       Toast.error(libL10n.fail, body: err == null ? null : bmcErrorText(err));
+      return;
+    }
+    if (notifier.endpointGeneration != expectedGen) {
+      Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
       return;
     }
     if (slots.isEmpty) {
@@ -292,11 +297,13 @@ final class BmcManageActions extends ConsumerWidget {
               ),
               trailing: slot.inserted
                   ? TextButton(
-                      onPressed: () => _eject(ctx, notifier, slot),
+                      onPressed: () =>
+                          _eject(ctx, ref, target.id, slot, expectedGen),
                       child: Text(l10n.bmcEjectMedia),
                     )
                   : TextButton(
-                      onPressed: () => _insert(ctx, notifier, slot),
+                      onPressed: () =>
+                          _insert(ctx, ref, target.id, slot, expectedGen),
                       child: Text(l10n.bmcInsertMedia),
                     ),
             ),
@@ -307,8 +314,10 @@ final class BmcManageActions extends ConsumerWidget {
 
   static Future<void> _insert(
     BuildContext ctx,
-    BmcNotifier notifier,
+    WidgetRef ref,
+    String targetId,
     MediaSlot slot,
+    int expectedGen,
   ) async {
     final image = (await ctx.showInputSheet(
       title: l10n.bmcInsertMedia,
@@ -321,7 +330,14 @@ final class BmcManageActions extends ConsumerWidget {
       Toast.error(l10n.bmcImageUrlInvalid);
       return;
     }
-    if (await ctx.bmcRun(() => notifier.insertMedia(slot, image)) &&
+    final notifier = ref.read(bmcProvider(targetId).notifier);
+    if (await ctx.bmcRun(
+          () => notifier.insertMedia(
+            slot,
+            image,
+            expectedGeneration: expectedGen,
+          ),
+        ) &&
         ctx.mounted) {
       ctx.popSheet();
     }
@@ -329,10 +345,16 @@ final class BmcManageActions extends ConsumerWidget {
 
   static Future<void> _eject(
     BuildContext ctx,
-    BmcNotifier notifier,
+    WidgetRef ref,
+    String targetId,
     MediaSlot slot,
+    int expectedGen,
   ) async {
-    if (await ctx.bmcRun(() => notifier.ejectMedia(slot)) && ctx.mounted) {
+    final notifier = ref.read(bmcProvider(targetId).notifier);
+    if (await ctx.bmcRun(
+          () => notifier.ejectMedia(slot, expectedGeneration: expectedGen),
+        ) &&
+        ctx.mounted) {
       ctx.popSheet();
     }
   }
