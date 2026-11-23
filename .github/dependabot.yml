@@ -78,6 +78,11 @@ updates:
       web:
         patterns:
           - "*"
+    ignore:
+      # svelte-check takes `typescript` ^5 || ^6 as a peer, so 7 fails
+      # `npm ci` with ERESOLVE. Lift this once svelte-check takes 7.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Its own group for the same reason as the three above: the actions in a
   # workflow are bumped for one reason at a time (a runner's Node version, most
