@@ -1,5 +1,6 @@
 use crate::core::remote_access::RemoteAccessConfig;
 use crate::core::config_file;
+use crate::db::api_tokens::{CommandPolicy, Scope};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -139,19 +140,19 @@ pub struct McpConfig {
     pub allow_power: Option<bool>,
     /// Command rules at the `config.toml` layer (`allow_all` by default).
     #[serde(default)]
-    pub commands: crate::db::api_tokens::CommandPolicy,
+    pub commands: CommandPolicy,
 }
 
 impl McpConfig {
-    pub fn allows_scope(&self, scope: crate::db::api_tokens::Scope) -> bool {
-        if scope == crate::db::api_tokens::Scope::Power && self.allow_power == Some(false) {
+    pub fn allows_scope(&self, scope: Scope) -> bool {
+        if scope == Scope::Power && self.allow_power == Some(false) {
             return false;
         }
         !self.disabled_scopes.iter().any(|s| s == scope.as_str())
     }
 
-    pub fn allowed_scopes(&self) -> Vec<crate::db::api_tokens::Scope> {
-        crate::db::api_tokens::Scope::ALL
+    pub fn allowed_scopes(&self) -> Vec<Scope> {
+        Scope::MONITOR
             .iter()
             .copied()
             .filter(|&s| self.allows_scope(s))
@@ -508,7 +509,7 @@ impl Config {
         }
         if let Some(mcp) = self.mcp.as_ref() {
             for scope in &mcp.disabled_scopes {
-                if crate::db::api_tokens::Scope::parse(scope).is_none() {
+                if Scope::parse(Scope::MONITOR, scope).is_none() {
                     anyhow::bail!("mcp.disabled_scopes: unknown scope {scope:?}");
                 }
             }

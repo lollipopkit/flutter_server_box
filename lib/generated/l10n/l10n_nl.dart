@@ -2073,9 +2073,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'API-sleutels, modellen en het model van een nieuwe chat';
 
   @override
-  String get agentTools => 'Hulpmiddelen';
-
-  @override
   String get agentToolsTip => 'Wat de Agent mag gebruiken, en zijn MCP-servers';
 
   @override
@@ -7483,4 +7480,32 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Voer het wachtwoord in.';
+
+  @override
+  String get appMcpServer => 'MCP-server';
+
+  @override
+  String get appMcpClient => 'Hulpmiddelen en MCP-client';
+
+  @override
+  String get appMcpAddress => 'IPv4:poort / [IPv6]:poort';
+
+  @override
+  String get appMcpRegistry => 'Ongeldig MCP-tokenregister.';
+
+  @override
+  String get appMcpName => 'Voer een tokennaam in.';
+
+  @override
+  String get appMcpBusy => 'Een andere tokenwijziging wordt opgeslagen.';
+
+  @override
+  String get appMcpProtect => 'Het tokenregister kon niet worden beveiligd.';
+
+  @override
+  String get appMcpListenBusy => 'De MCP-server verandert van status.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Voer een IP-adres en poort in, bijvoorbeeld 0.0.0.0:49762 of [::]:49762.';
 }

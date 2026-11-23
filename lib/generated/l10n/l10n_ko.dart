@@ -1951,9 +1951,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentProvidersTip => 'API 키, 모델, 새 채팅에 쓰는 모델';
 
   @override
-  String get agentTools => '도구';
-
-  @override
   String get agentToolsTip => 'Agent가 쓸 수 있는 도구와 MCP 서버';
 
   @override
@@ -7127,4 +7124,32 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => '비밀번호를 입력하세요.';
+
+  @override
+  String get appMcpServer => 'MCP 서버';
+
+  @override
+  String get appMcpClient => '도구 및 MCP 클라이언트';
+
+  @override
+  String get appMcpAddress => 'IPv4:포트 / [IPv6]:포트';
+
+  @override
+  String get appMcpRegistry => 'MCP 토큰 저장소 형식이 잘못되었습니다.';
+
+  @override
+  String get appMcpName => '토큰 이름을 입력하세요.';
+
+  @override
+  String get appMcpBusy => '다른 토큰 변경 사항을 저장하고 있습니다.';
+
+  @override
+  String get appMcpProtect => '토큰 파일을 보호할 수 없습니다.';
+
+  @override
+  String get appMcpListenBusy => 'MCP 서버 상태를 변경하고 있습니다.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP 주소와 포트를 입력하세요. 예: 0.0.0.0:49762 또는 [::]:49762.';
 }

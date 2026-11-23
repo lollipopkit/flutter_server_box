@@ -2077,9 +2077,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentProvidersTip => 'Ключи API, модели и модель для нового чата';
 
   @override
-  String get agentTools => 'Инструменты';
-
-  @override
   String get agentToolsTip => 'Что может использовать Agent, и его серверы MCP';
 
   @override
@@ -7467,4 +7464,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Введите пароль.';
+
+  @override
+  String get appMcpServer => 'Сервер MCP';
+
+  @override
+  String get appMcpClient => 'Инструменты и клиент MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:порт / [IPv6]:порт';
+
+  @override
+  String get appMcpRegistry => 'Некорректный реестр токенов MCP.';
+
+  @override
+  String get appMcpName => 'Введите имя токена.';
+
+  @override
+  String get appMcpBusy => 'Сохраняется другое изменение токенов.';
+
+  @override
+  String get appMcpProtect => 'Не удалось защитить файл токенов.';
+
+  @override
+  String get appMcpListenBusy => 'Состояние сервера MCP меняется.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Введите IP-адрес и порт, например 0.0.0.0:49762 или [::]:49762.';
 }

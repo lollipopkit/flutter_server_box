@@ -9,9 +9,14 @@
 //! may not: [`gate`] is that, and nothing else in these handlers decides it.
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 
+use async_trait::async_trait;
 use ntex::http::StatusCode;
+use sqlx::SqlitePool;
 
+use sbm_mcp::machine::{Audit, Machine, Ran, Run, Stage};
+use sbm_parser::SystemType;
 use sbm_parser::output::CommandOutput;
 use sbm_parser::sudo::SudoEntry;
 
@@ -141,6 +146,102 @@ pub async fn gate_as(kind: Kind, req: &HttpRequest, state: &AppState, what: &str
         return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));
     }
     Ok(Gated { caller, remote_ip })
+}
+
+/// This machine, as [`sbm_mcp::machine`] reaches it: every command run here
+/// under [limits], and every change recorded under [`Kind::Machine`] when
+/// there is a [db] to record it in.
+pub(crate) struct Here<'a> {
+    pub limits: &'a Limits,
+    pub db: Option<&'a SqlitePool>,
+    pub remote_ip: Option<String>,
+    /// For `run_command`, the MCP token's: recorded under [`Kind::Mcp`] with
+    /// the token as the subject, and [`McpCommand::recorded`] set once it is.
+    pub mcp: Option<McpCommand<'a>>,
+}
+
+pub(crate) struct McpCommand<'a> {
+    pub token_name: &'a str,
+    pub recorded: &'a AtomicBool,
+}
+
+impl<'a> Here<'a> {
+    /// Commands only: nothing is recorded.
+    pub fn quiet(limits: &'a Limits) -> Self {
+        Self { limits, db: None, remote_ip: None, mcp: None }
+    }
+
+    /// Commands, and the changes they make recorded as [remote_ip]'s.
+    pub fn recorded(state: &'a AppState, remote_ip: Option<String>) -> Self {
+        Self { limits: &state.remote_access.exec, db: Some(&state.db), remote_ip, mcp: None }
+    }
+}
+
+#[async_trait]
+impl Machine for Here<'_> {
+    fn system(&self) -> SystemType {
+        crate::monitoring::system_type()
+    }
+
+    async fn run(&self, run: Run<'_>, room: usize) -> Result<Ran, String> {
+        let limits = &at_least(self.limits, room);
+        let out = match run {
+            Run::Line(text) => super::exec::run(text, None, None, limits).await,
+            Run::Sh(text) => as_self(text, limits).await,
+            Run::Root { text, password } => as_root(text, password, limits).await,
+            Run::Script(func) => match crate::monitoring::local_script_command(func) {
+                Ok(cmd) => super::exec::run(&cmd, None, None, limits).await,
+                Err(e) => Err(e),
+            },
+        };
+        out.map(|out| Ran {
+            stdout: out.stdout,
+            stderr: out.stderr,
+            exit_code: out.exit_code,
+            truncated: out.truncated,
+            timed_out: out.timed_out,
+        })
+        .map_err(|e| e.to_string())
+    }
+
+    async fn record(&self, audit: Audit<'_>) {
+        let Some(db) = self.db else { return };
+        match audit {
+            Audit::Change { stage, what, detail } => {
+                let (action, outcome) = outcome_of(stage);
+                Event::new(Kind::Machine, action, outcome)
+                    .remote_ip(self.remote_ip.clone())
+                    .detail(match detail {
+                        Some(detail) => format!("{what}: {detail}"),
+                        None => what.to_owned(),
+                    })
+                    .record(db)
+                    .await;
+            }
+            Audit::Command { stage, line } => {
+                let Some(mcp) = &self.mcp else { return };
+                let (action, outcome) = outcome_of(stage);
+                let written = Event::new(Kind::Mcp, action, outcome)
+                    .subject(format!("api token '{}'", mcp.token_name))
+                    .remote_ip(self.remote_ip.clone())
+                    .detail(format!("tool run_command: {line}"))
+                    .record(db)
+                    .await;
+                // Only a row on file stands in for the one written after the call.
+                if stage == Stage::Started && written {
+                    mcp.recorded.store(true, Ordering::Relaxed);
+                }
+            }
+        }
+    }
+}
+
+fn outcome_of(stage: Stage) -> (Action, Outcome) {
+    match stage {
+        Stage::Refused => (Action::Denied, Outcome::Denied),
+        Stage::Started => (Action::Open, Outcome::Ok),
+        Stage::Failed => (Action::Close, Outcome::Error),
+    }
 }
 
 /// `/exec`'s bounds with the output cap raised to at least [min_bytes]: for a

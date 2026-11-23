@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Scherm lezen",
   "agentProviders": "Providers",
   "agentProvidersTip": "API-sleutels, modellen en het model van een nieuwe chat",
-  "agentTools": "Hulpmiddelen",
   "agentToolsTip": "Wat de Agent mag gebruiken, en zijn MCP-servers",
   "agentSnippetToolsTip": "Snippets weergeven, toevoegen, bewerken en verwijderen.",
   "agentVirtToolsTip": "De VM’s en containers lezen die het tabblad Virtualisatie heeft geladen.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Stroom",
   "monitorMcpNameRequired": "Voer een naam in.",
   "monitorMcpScopesRequired": "Kies minstens één recht.",
-  "monitorMcpPasswordRequired": "Voer het wachtwoord in."
+  "monitorMcpPasswordRequired": "Voer het wachtwoord in.",
+  "appMcpServer": "MCP-server",
+  "appMcpClient": "Hulpmiddelen en MCP-client",
+  "appMcpAddress": "IPv4:poort / [IPv6]:poort",
+  "appMcpRegistry": "Ongeldig MCP-tokenregister.",
+  "appMcpName": "Voer een tokennaam in.",
+  "appMcpBusy": "Een andere tokenwijziging wordt opgeslagen.",
+  "appMcpProtect": "Het tokenregister kon niet worden beveiligd.",
+  "appMcpListenBusy": "De MCP-server verandert van status.",
+  "appMcpInvalidAddress": "Voer een IP-adres en poort in, bijvoorbeeld 0.0.0.0:49762 of [::]:49762."
 }

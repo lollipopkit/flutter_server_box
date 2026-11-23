@@ -11,6 +11,7 @@ import 'package:server_box/core/ssh/control_master.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/noninteractive.dart';
 import 'package:server_box/core/ssh/owning_socket.dart';
 import 'package:server_box/core/ssh/proxy_command_socket.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -49,6 +50,7 @@ Future<SSHClient> genClient(
   List<HostCertAuthority>? hostCertAuthorities,
   HostKeyPersistCallback? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
+  NonInteractiveSsh? unattended,
   Set<String>? visitedServerIds,
 }) async {
   // Bound once, up front: everything below needs SSH, and a server reached
@@ -131,7 +133,12 @@ Future<SSHClient> genClient(
     knownHostFingerprints ?? loadKnownHostFingerprints(),
   );
   final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
-  final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
+  final hostKeyPrompt = unattended == null
+      ? onHostKeyPrompt ?? showHostKeyPrompt
+      : (HostKeyPromptInfo _) async {
+          unattended.decline();
+          return false;
+        };
   final authorities = hostCertAuthorities ?? loadHostCertAuthorities();
 
   String? alterUser;
@@ -196,9 +203,12 @@ Future<SSHClient> genClient(
                 hostCertAuthorities: authorities,
                 onHostKeyAccepted: hostKeyPersist,
                 onHostKeyPrompt: hostKeyPrompt,
+                unattended: unattended,
                 visitedServerIds: {...chainVisitedServerIds},
               );
 
+              await jumpClient.authenticated;
+              unattended?.settle();
               final forwarded = await jumpClient
                   .forwardLocal(ssh.ip, ssh.port)
                   .timeout(
@@ -217,6 +227,8 @@ Future<SSHClient> genClient(
               if (!isJumpFailoverError(e)) {
                 rethrow;
               }
+              // What this candidate declined is not why the next one fails.
+              unattended?.settle();
               lastNetworkError = e;
               lastNetworkStack = stack;
               Loggers.app.warning(
@@ -292,6 +304,7 @@ Future<SSHClient> genClient(
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
+      unattended: unattended,
       hostKeyVerifier: HostKeyVerifier(
         spi: spi,
         cache: hostKeyCache,
@@ -330,6 +343,7 @@ Future<SSHClient> _authenticatedClient({
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required NonInteractiveSsh? unattended,
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
 }) async {
@@ -355,6 +369,7 @@ Future<SSHClient> _authenticatedClient({
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
+      unattended: unattended,
       hostKeyVerifier: hostKeyVerifier,
       hostCertificateTrust: hostCertificateTrust,
       agent: agent,
@@ -388,6 +403,7 @@ Future<SSHClient> _clientWith({
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required NonInteractiveSsh? unattended,
   required HostKeyVerifier hostKeyVerifier,
   required SSHHostCertificateTrust? hostCertificateTrust,
   required SSHAgentClient? agent,
@@ -466,14 +482,33 @@ Future<SSHClient> _clientWith({
   // handed to another isolate, which is why the transfer path can reach this
   // line with no screen to ask on.
   final openedKeys = <String>[];
+  var deferredIdentity = false;
   for (final entry in keyMaterial.entries) {
-    openedKeys.add(
-      await PrivateKeyUnlock.open(
+    try {
+      openedKeys.add(await PrivateKeyUnlock.open(
         entry.value,
+        unattended: unattended,
         cacheKey: entry.key,
         keyName: privateKeyDisplayName(entry.key),
-      ),
-    );
+      ));
+    } on SshInteractionRequired {
+      deferredIdentity = true;
+    }
+  }
+
+  Future<SSHClient> finish(SSHClient client) async {
+    if (!deferredIdentity) return client;
+    try {
+      await client.authenticated;
+      unattended?.settle();
+      return client;
+    } on SSHAuthError {
+      client.close();
+      throw SshInteractionRequired();
+    } catch (_) {
+      client.close();
+      rethrow;
+    }
   }
   final List<SSHKeyPair> identities;
   try {
@@ -482,14 +517,14 @@ Future<SSHClient> _clientWith({
     identities = await identitiesOf(openedKeys);
   } catch (e, s) {
     // As a key that cannot be read, above: another way in goes on.
-    if (ssh.pwd?.isNotEmpty == true || agent != null) {
+    if (ssh.pwd?.isNotEmpty == true || agent != null || deferredIdentity) {
       Loggers.app.warning(
         'SSH key for ${spi.name} does not parse; going on with '
         '${agent == null ? 'the password' : 'the agent\'s keys'}',
         e,
         s,
       );
-      return passwordClient();
+      return finish(passwordClient());
     }
     // A PEM that will not parse is a key problem and the caller has a category
     // for those. Left raw it arrived as whatever the parser threw — naming
@@ -503,7 +538,7 @@ Future<SSHClient> _clientWith({
       ),
     );
   }
-  return SSHClient(
+  return finish(SSHClient(
     socket,
     // The same fallback user the password branch above uses. Key auth read
     // `ssh.user` regardless, so a server reached through its `alterUrl` — which
@@ -526,7 +561,7 @@ Future<SSHClient> _clientWith({
     ),
     handshakeTimeout: timeout,
     authTimeout: timeout,
-  );
+  ));
 }
 
 List<Spi> _resolveJumpCandidates({

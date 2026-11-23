@@ -37,8 +37,12 @@ COPY packages/fl_lib/rust/theme/ ./fl_theme/
 COPY packages/fl_lib/rust/lkc/ ./fl_lkc/
 # fl_pi_llm's runtime (Agent mode's pi), from its submodule likewise.
 COPY packages/fl_pi_llm/fl_pi_llm/rust/ ./fl_pi_llm/
+# The command rules sbm_mcp and fl_pi_llm share, from theirs.
+COPY packages/cmd_rules/ ./cmd_rules/
 COPY monitor/migrations/ ./migrations/
 COPY monitor/.sqlx/ ./.sqlx/
+# Desk apps' interface (`apps::runtime`'s `bindgen!`), read at compile time.
+COPY monitor/wit/ ./wit/
 
 # Copy source code
 COPY monitor/src/ ./src/
@@ -75,6 +79,8 @@ RUN sed -i -e 's|path = "../crates/|path = "crates/|' \
            -e 's|path = "../packages/fl_lib/rust/lkc"|path = "fl_lkc"|' \
            -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' \
            -e 's|path = "../packages/fl_pi_llm/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
+    && sed -i 's|path = "../../packages/cmd_rules"|path = "../../cmd_rules"|' crates/sbm_mcp/Cargo.toml \
+    && printf '\n[patch."https://github.com/lollipopkit/cmd_rules"]\ncmd_rules = { path = "cmd_rules" }\n' >> Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \
        CARGO_PROFILE_RELEASE_LTO=fat \
        CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \

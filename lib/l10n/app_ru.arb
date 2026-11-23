@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Прочитать экран",
   "agentProviders": "Провайдеры",
   "agentProvidersTip": "Ключи API, модели и модель для нового чата",
-  "agentTools": "Инструменты",
   "agentToolsTip": "Что может использовать Agent, и его серверы MCP",
   "agentSnippetToolsTip": "Просматривайте, добавляйте, изменяйте и удаляйте snippets.",
   "agentVirtToolsTip": "Чтение ВМ и контейнеров, загруженных вкладкой «Виртуализация».",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Питание",
   "monitorMcpNameRequired": "Введите имя.",
   "monitorMcpScopesRequired": "Выберите хотя бы одно право.",
-  "monitorMcpPasswordRequired": "Введите пароль."
+  "monitorMcpPasswordRequired": "Введите пароль.",
+  "appMcpServer": "Сервер MCP",
+  "appMcpClient": "Инструменты и клиент MCP",
+  "appMcpAddress": "IPv4:порт / [IPv6]:порт",
+  "appMcpRegistry": "Некорректный реестр токенов MCP.",
+  "appMcpName": "Введите имя токена.",
+  "appMcpBusy": "Сохраняется другое изменение токенов.",
+  "appMcpProtect": "Не удалось защитить файл токенов.",
+  "appMcpListenBusy": "Состояние сервера MCP меняется.",
+  "appMcpInvalidAddress": "Введите IP-адрес и порт, например 0.0.0.0:49762 или [::]:49762."
 }

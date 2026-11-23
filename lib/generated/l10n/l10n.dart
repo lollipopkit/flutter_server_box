@@ -3612,12 +3612,6 @@ abstract class AppLocalizations {
   /// **'API keys, models, and the model a new chat uses'**
   String get agentProvidersTip;
 
-  /// Agent: agentTools.
-  ///
-  /// In en, this message translates to:
-  /// **'Tools'**
-  String get agentTools;
-
   /// Agent: agentToolsTip.
   ///
   /// In en, this message translates to:
@@ -12670,6 +12664,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter the password.'**
   String get monitorMcpPasswordRequired;
+
+  /// No description provided for @appMcpServer.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Server'**
+  String get appMcpServer;
+
+  /// No description provided for @appMcpClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools & MCP client'**
+  String get appMcpClient;
+
+  /// No description provided for @appMcpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'IPv4:port / [IPv6]:port'**
+  String get appMcpAddress;
+
+  /// No description provided for @appMcpRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid MCP token registry.'**
+  String get appMcpRegistry;
+
+  /// No description provided for @appMcpName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a token name.'**
+  String get appMcpName;
+
+  /// No description provided for @appMcpBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Another token change is being saved.'**
+  String get appMcpBusy;
+
+  /// No description provided for @appMcpProtect.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not protect the token registry.'**
+  String get appMcpProtect;
+
+  /// No description provided for @appMcpListenBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The MCP server is changing state.'**
+  String get appMcpListenBusy;
+
+  /// No description provided for @appMcpInvalidAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an IP address and port, e.g. 0.0.0.0:49762 or [::]:49762.'**
+  String get appMcpInvalidAddress;
 }
 
 class _AppLocalizationsDelegate

@@ -2057,9 +2057,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'API anahtarları, modeller ve yeni sohbetin modeli';
 
   @override
-  String get agentTools => 'Araçlar';
-
-  @override
   String get agentToolsTip => 'Agent\'ın kullanabildikleri ve MCP sunucuları';
 
   @override
@@ -7400,4 +7397,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Parolayı girin.';
+
+  @override
+  String get appMcpServer => 'MCP sunucusu';
+
+  @override
+  String get appMcpClient => 'Araçlar ve MCP istemcisi';
+
+  @override
+  String get appMcpAddress => 'IPv4:bağlantı noktası / [IPv6]:bağlantı noktası';
+
+  @override
+  String get appMcpRegistry => 'MCP belirteç kaydı geçersiz.';
+
+  @override
+  String get appMcpName => 'Bir belirteç adı girin.';
+
+  @override
+  String get appMcpBusy => 'Başka bir belirteç değişikliği kaydediliyor.';
+
+  @override
+  String get appMcpProtect => 'Belirteç dosyası korunamadı.';
+
+  @override
+  String get appMcpListenBusy => 'MCP sunucusunun durumu değişiyor.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP adresi ve bağlantı noktası girin, ör. 0.0.0.0:49762 veya [::]:49762.';
 }

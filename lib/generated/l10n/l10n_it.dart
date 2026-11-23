@@ -2084,9 +2084,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Chiavi API, modelli e il modello di una nuova chat';
 
   @override
-  String get agentTools => 'Strumenti';
-
-  @override
   String get agentToolsTip => 'Cosa può usare l\'Agent e i suoi server MCP';
 
   @override
@@ -7492,4 +7489,33 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Inserisci la password.';
+
+  @override
+  String get appMcpServer => 'Server MCP';
+
+  @override
+  String get appMcpClient => 'Strumenti e client MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:porta / [IPv6]:porta';
+
+  @override
+  String get appMcpRegistry => 'Registro dei token MCP non valido.';
+
+  @override
+  String get appMcpName => 'Inserisci un nome per il token.';
+
+  @override
+  String get appMcpBusy =>
+      'È in corso il salvataggio di un’altra modifica ai token.';
+
+  @override
+  String get appMcpProtect => 'Impossibile proteggere il registro dei token.';
+
+  @override
+  String get appMcpListenBusy => 'Il server MCP sta cambiando stato.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Inserisci un indirizzo IP e una porta, ad esempio 0.0.0.0:49762 o [::]:49762.';
 }

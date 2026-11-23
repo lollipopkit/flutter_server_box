@@ -1948,9 +1948,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentProvidersTip => 'API キー、モデル、新しいチャットで使うモデル';
 
   @override
-  String get agentTools => 'ツール';
-
-  @override
   String get agentToolsTip => 'Agent が使えるツールと MCP サーバー';
 
   @override
@@ -7126,4 +7123,32 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'パスワードを入力してください。';
+
+  @override
+  String get appMcpServer => 'MCP サーバー';
+
+  @override
+  String get appMcpClient => 'ツールと MCP クライアント';
+
+  @override
+  String get appMcpAddress => 'IPv4:ポート / [IPv6]:ポート';
+
+  @override
+  String get appMcpRegistry => 'MCP トークンの設定ファイルが無効です。';
+
+  @override
+  String get appMcpName => 'トークン名を入力してください。';
+
+  @override
+  String get appMcpBusy => '別のトークンの変更を保存中です。';
+
+  @override
+  String get appMcpProtect => 'トークンファイルを保護できませんでした。';
+
+  @override
+  String get appMcpListenBusy => 'MCP サーバーの状態を変更中です。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP アドレスとポートを入力してください（例：0.0.0.0:49762 または [::]:49762）。';
 }

@@ -11,6 +11,16 @@ extension _AI on _AppSettingsPageState {
       SettingsGroup(libL10n.general, [
         _buildAgentProviders(l10n),
         _buildAgentTools(l10n),
+        SettingsRow(
+          SettingsSection.mcp.title,
+          () => ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: Text(SettingsSection.mcp.title),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () => SettingsSectionPage.route.go(context, SettingsSection.mcp),
+          ),
+          keywords: 'MCP server token HTTP',
+        ),
         _buildAgentSkills(l10n),
       ]),
       SettingsGroup(l10n.agentPermissions, [
@@ -43,7 +53,7 @@ extension _AI on _AppSettingsPageState {
   }
 
   SettingsRow _buildAgentTools(AppLocalizations l10n) {
-    final label = l10n.agentTools;
+    final label = l10n.appMcpClient;
     return SettingsRow(
       label,
       () => ListTile(

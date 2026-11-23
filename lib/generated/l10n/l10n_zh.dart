@@ -1906,9 +1906,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentProvidersTip => 'API Key、模型，以及新对话使用的模型';
 
   @override
-  String get agentTools => '工具';
-
-  @override
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
 
   @override
@@ -7015,6 +7012,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => '请输入密码。';
+
+  @override
+  String get appMcpServer => 'MCP 服务器';
+
+  @override
+  String get appMcpClient => '工具与 MCP 客户端';
+
+  @override
+  String get appMcpAddress => 'IPv4:端口 / [IPv6]:端口';
+
+  @override
+  String get appMcpRegistry => 'MCP token 配置文件格式无效。';
+
+  @override
+  String get appMcpName => '请输入 token 名称。';
+
+  @override
+  String get appMcpBusy => '正在保存另一项 token 修改。';
+
+  @override
+  String get appMcpProtect => '无法设置 token 文件的访问权限。';
+
+  @override
+  String get appMcpListenBusy => 'MCP 服务器正在切换状态。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      '请输入 IP 地址和端口，例如 0.0.0.0:49762 或 [::]:49762。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8917,9 +8942,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentProvidersTip => 'API Key、模型，以及新對話使用的模型';
-
-  @override
-  String get agentTools => '工具';
 
   @override
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 伺服器';
@@ -14032,4 +14054,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorMcpPasswordRequired => '請輸入密碼。';
+
+  @override
+  String get appMcpServer => 'MCP 伺服器';
+
+  @override
+  String get appMcpClient => '工具與 MCP 用戶端';
+
+  @override
+  String get appMcpAddress => 'IPv4:連接埠 / [IPv6]:連接埠';
+
+  @override
+  String get appMcpRegistry => 'MCP 權杖設定檔格式無效。';
+
+  @override
+  String get appMcpName => '請輸入權杖名稱。';
+
+  @override
+  String get appMcpBusy => '正在儲存另一項權杖變更。';
+
+  @override
+  String get appMcpProtect => '無法設定權杖檔案的存取權限。';
+
+  @override
+  String get appMcpListenBusy => 'MCP 伺服器正在切換狀態。';
+
+  @override
+  String get appMcpInvalidAddress =>
+      '請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。';
 }

@@ -14,6 +14,7 @@ import 'package:server_box/core/ssh/auth.dart';
 import 'package:server_box/core/ssh/client.dart';
 import 'package:server_box/core/ssh/decoder.dart';
 import 'package:server_box/core/ssh/exec.dart';
+import 'package:server_box/core/ssh/noninteractive.dart';
 import 'package:server_box/core/ssh/system_detector.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -151,8 +152,18 @@ mixin _ServerCore on _$ServerNotifier {
     SystemType? system,
   });
   void _setClient(SSHClient? client);
+
+  SSHClient _adoptConnectedClient(SSHClient client) {
+    final concurrent = state.client;
+    if (concurrent != null && !concurrent.isClosed) {
+      client.close();
+      return concurrent;
+    }
+    _setClient(client);
+    return client;
+  }
   void _setFailedState(ServerStatus status, {bool closeClient = false});
-  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial});
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial, bool unattended = false});
 }
 
 @Riverpod(keepAlive: true)
@@ -572,13 +583,18 @@ class ServerNotifier extends _$ServerNotifier
   /// transport *leads* does not answer that, because a server carrying both
   /// falls through to sshd when the agent does not reply. Not called when a
   /// client is already open, since nothing is dialled and nothing prompts.
-  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async {
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) => _ensureExec(onSshDial: onSshDial);
+
+  Future<CommandExec> ensureUnattendedExec() => _ensureExec(unattended: NonInteractiveSsh());
+
+  Future<CommandExec> _ensureExec({VoidCallback? onSshDial, NonInteractiveSsh? unattended}) async {
     final spi = state.spi;
     final fallbackExists = spi.fallbackTransport != null;
     try {
       return await _execOver(
         ServerConnectCredential.fromSpi(spi),
         onSshDial: onSshDial,
+        unattended: unattended,
         // Only when there is somewhere to fall through to. Handing back a
         // `MonitorExec` costs no request, so a dead agent is not discovered
         // until the *caller's* command runs — outside the catch below, and too
@@ -601,20 +617,23 @@ class ServerNotifier extends _$ServerNotifier
         e,
         s,
       );
-      return await _execOver(fallback, onSshDial: onSshDial);
+      return await _execOver(fallback, onSshDial: onSshDial, unattended: unattended);
     }
   }
 
   Future<CommandExec> _execOver(
     ServerConnectCredential credential, {
     bool probe = false,
+    NonInteractiveSsh? unattended,
     VoidCallback? onSshDial,
   }) async {
     switch (credential) {
       case ServerConnectCredentialSsh():
         // Connecting *is* the probe here, and it always happens.
         return SshExec(
-          await ensureShellClient(onDial: onSshDial),
+          unattended == null
+              ? await ensureShellClient(onDial: onSshDial)
+              : await _ensureShellClient(unattended: unattended),
           sudoPassword: () => SudoPassword.known(state.spi.id),
         );
       case ServerConnectCredentialMonitorHttp():
@@ -666,12 +685,15 @@ class ServerNotifier extends _$ServerNotifier
   /// alternative is a page reporting an empty list on a server that has plenty
   /// of processes. [onSshDial] as for [ensureExec].
   @override
-  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial}) async {
+  ///
+  /// [unattended]: connecting asks the person nothing, as
+  /// [ensureUnattendedExec].
+  Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial, bool unattended = false}) async {
     // Before the connect: a server edited or reconnected while it is pending
     // must not have this one's script written for it.
     final gen = _operationGeneration;
     final origSpi = state.spi;
-    final exec = await ensureExec(onSshDial: onSshDial);
+    final exec = unattended ? await ensureUnattendedExec() : await ensureExec(onSshDial: onSshDial);
     if (_scriptWritten) return exec;
 
     final spi = state.spi;
@@ -718,7 +740,9 @@ class ServerNotifier extends _$ServerNotifier
   ///
   /// Throws [SSHErr] when the server has no SSH configuration, or when the
   /// retry limiter has given up on it.
-  Future<SSHClient> ensureShellClient({VoidCallback? onDial}) async {
+  Future<SSHClient> ensureShellClient({VoidCallback? onDial}) => _ensureShellClient(onDial: onDial);
+
+  Future<SSHClient> _ensureShellClient({VoidCallback? onDial, NonInteractiveSsh? unattended}) async {
     final existing = state.client;
     if (existing != null && !existing.isClosed) return existing;
 
@@ -755,7 +779,8 @@ class ServerNotifier extends _$ServerNotifier
       client = await genClient(
         spi,
         timeout: _timeout,
-        onKeyboardInteractive: KeyboardInteractiveAuth.handle,
+        unattended: unattended,
+        onKeyboardInteractive: (server, request) => KeyboardInteractiveAuth.handle(server, request, onInteractionRequired: unattended?.decline),
       );
       await client.authenticated;
       // Checked after, as every await in the refresh paths already does.
@@ -771,8 +796,7 @@ class ServerNotifier extends _$ServerNotifier
         throw StateError('superseded shell connect for ${origSpi.name}');
       }
       TryLimiter.reset(_shellTryId);
-      _setClient(client);
-      return client;
+      return _adoptConnectedClient(client);
     } catch (e, s) {
       // Authentication is awaited before _setClient, so a failure would leak
       // the newly created client if we only close state.client.
@@ -788,6 +812,11 @@ class ServerNotifier extends _$ServerNotifier
       if (!_isRefreshCurrent(gen, origSpi)) {
         Loggers.app.info('Discarded superseded shell connect for ${spi.name}');
         rethrow;
+      }
+      // A question only the person can answer is not a failed attempt: the
+      // limiter would otherwise lock them out of their own server.
+      if (e is SshInteractionRequired || unattended?.needsUser == true) {
+        throw SshInteractionRequired();
       }
       TryLimiter.inc(_shellTryId);
       Loggers.app.warning('Connect shell for ${spi.name}', e, s);

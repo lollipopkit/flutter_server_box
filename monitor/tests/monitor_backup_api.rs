@@ -19,6 +19,11 @@ use server_box_monitor::monitor_backup;
 
 use common::machine::{call, server_with};
 
+/// Held by every test here for its whole run: they share the process's
+/// working directory, so one test's `config.toml` is in the next one's
+/// backup, and a write there between two checks reads as a change.
+static CONFIG_TOML: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 // -----------------------------------------------------------------------------
 // A WebDAV server
 // -----------------------------------------------------------------------------
@@ -160,6 +165,7 @@ async fn snippet(state: &AppState, id: &str) {
 
 #[ntex::test]
 async fn backups_are_made_kept_and_restored() {
+    let _config = CONFIG_TOML.lock().await;
     let (dav_srv, store) = dav_server().await;
     let (srv, state) = server_with(Config::default()).await;
     state.monitor_backup.never_restart();
@@ -331,6 +337,7 @@ async fn backups_are_made_kept_and_restored() {
 /// starts with none of the last one's state.
 #[ntex::test]
 async fn shared_folders_and_refused_deletes() {
+    let _config = CONFIG_TOML.lock().await;
     let (dav_srv, store) = dav_server().await;
     let (srv, state) = server_with(Config::default()).await;
     state.monitor_backup.never_restart();

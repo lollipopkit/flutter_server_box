@@ -622,7 +622,6 @@
   "agentToolTerminalScreen": "读取屏幕",
   "agentProviders": "提供商",
   "agentProvidersTip": "API Key、模型，以及新对话使用的模型",
-  "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 服务器",
   "agentSnippetToolsTip": "查看、创建、编辑和删除代码片段。",
   "agentVirtToolsTip": "读取虚拟化标签页已加载的虚拟机和容器。",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "电源控制",
   "monitorMcpNameRequired": "请输入名称。",
   "monitorMcpScopesRequired": "至少选择一项权限。",
-  "monitorMcpPasswordRequired": "请输入密码。"
+  "monitorMcpPasswordRequired": "请输入密码。",
+  "appMcpServer": "MCP 服务器",
+  "appMcpClient": "工具与 MCP 客户端",
+  "appMcpAddress": "IPv4:端口 / [IPv6]:端口",
+  "appMcpRegistry": "MCP token 配置文件格式无效。",
+  "appMcpName": "请输入 token 名称。",
+  "appMcpBusy": "正在保存另一项 token 修改。",
+  "appMcpProtect": "无法设置 token 文件的访问权限。",
+  "appMcpListenBusy": "MCP 服务器正在切换状态。",
+  "appMcpInvalidAddress": "请输入 IP 地址和端口，例如 0.0.0.0:49762 或 [::]:49762。"
 }

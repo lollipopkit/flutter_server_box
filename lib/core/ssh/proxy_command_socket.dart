@@ -238,15 +238,14 @@ class ProxyCommandSocket implements SSHSocket {
     required String originalHost,
     required String jump,
   }) {
-    const percentPlaceholder = '\u0000PERCENT\u0000';
-    return command
-        .replaceAll('%%', percentPlaceholder)
-        .replaceAll('%h', checkSubstitutable('host', host))
-        .replaceAll('%n', checkSubstitutable('original host', originalHost))
-        .replaceAll('%p', port.toString())
-        .replaceAll('%r', checkSubstitutable('user', user))
-        .replaceAll('%j', checkSubstitutable('jump', jump))
-        .replaceAll(percentPlaceholder, '%');
+    return command.replaceAllMapped(RegExp(r'%[%hnprj]'), (match) => switch (match[0]) {
+      '%h' => checkSubstitutable('host', host),
+      '%n' => checkSubstitutable('original host', originalHost),
+      '%p' => port.toString(),
+      '%r' => checkSubstitutable('user', user),
+      '%j' => checkSubstitutable('jump', jump),
+      _ => '%',
+    });
   }
 
   static ({String executable, List<String> arguments}) _buildShellCommand(

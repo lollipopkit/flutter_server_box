@@ -80,10 +80,29 @@ class MonitorExec implements CommandExec {
     if (out.stdout.isNotEmpty) onStdout?.call(out.stdout);
     if (stderr.isNotEmpty) onStderr?.call(stderr);
 
-    return ExecResult(
+    return MonitorExecResult(
       exitCode: out.exitCode,
       stdout: out.stdout,
       stderr: stderr,
+      outputIncomplete: out.truncated,
+      timedOut: out.timedOut,
     );
   }
+}
+
+/// What a monitor's `/exec` answered: an [ExecResult] that also says whether
+/// the monitor stopped the command at its own timeout.
+///
+/// Its output cap is [ExecResult.outputIncomplete]: what arrived is here, and
+/// there was more.
+final class MonitorExecResult extends ExecResult {
+  const MonitorExecResult({
+    required super.exitCode,
+    required super.stdout,
+    required super.stderr,
+    super.outputIncomplete,
+    required this.timedOut,
+  });
+
+  final bool timedOut;
 }

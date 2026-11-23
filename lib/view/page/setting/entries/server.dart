@@ -121,7 +121,7 @@ extension _Server on _AppSettingsPageState {
 
   void _onSaveTextScaler(String s) {
     final val = double.tryParse(s);
-    if (val == null) {
+    if (val == null || !SettingRange.contains(SettingRange.textFactor, val)) {
       Toast.error(libL10n.fail);
       return;
     }

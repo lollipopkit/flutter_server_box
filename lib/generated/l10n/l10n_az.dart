@@ -2069,9 +2069,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'API açarları, modellər və yeni söhbətin modeli';
 
   @override
-  String get agentTools => 'Alətlər';
-
-  @override
   String get agentToolsTip =>
       'Agent-in istifadə edə bildikləri və onun MCP serverləri';
 
@@ -7406,4 +7403,32 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Parolu daxil edin.';
+
+  @override
+  String get appMcpServer => 'MCP serveri';
+
+  @override
+  String get appMcpClient => 'Alətlər və MCP klienti';
+
+  @override
+  String get appMcpAddress => 'IPv4:port / [IPv6]:port';
+
+  @override
+  String get appMcpRegistry => 'MCP token reyestri yanlışdır.';
+
+  @override
+  String get appMcpName => 'Token üçün ad daxil edin.';
+
+  @override
+  String get appMcpBusy => 'Başqa token dəyişikliyi saxlanılır.';
+
+  @override
+  String get appMcpProtect => 'Token faylını qorumaq mümkün olmadı.';
+
+  @override
+  String get appMcpListenBusy => 'MCP serverinin vəziyyəti dəyişir.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'IP ünvanı və port daxil edin, məsələn 0.0.0.0:49762 və ya [::]:49762.';
 }

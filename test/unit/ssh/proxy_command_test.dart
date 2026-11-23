@@ -17,6 +17,15 @@ void main() {
       );
     });
 
+    test('a display name with spaces is checked only when substituted', () {
+      String resolve(String command) => ProxyCommandSocket.resolveCommand(
+        command: command, host: 'localhost', port: 22, originalHost: 'Proxy target', user: 'fixture', jump: '',
+      );
+      expect(resolve('nc %h %p'), 'nc localhost 22');
+      expect(resolve('echo %%n'), 'echo %n');
+      expect(() => resolve('nc %n %p'), throwsA(isA<Object>()));
+    });
+
     test('the shapes a real host or user comes in are all allowed', () {
       for (final value in [
         'example.com',

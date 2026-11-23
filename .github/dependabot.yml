@@ -94,9 +94,10 @@ updates:
         patterns:
           - "*"
 
-  # fl_pi_llm, the LLM layer shared with LLMBox, moves with its own repository
-  # rather than with a release: a bump is the submodule pointer following its
-  # `main` (the `branch` in .gitmodules). Only that submodule — the others are
+  # fl_pi_llm, the LLM layer shared with LLMBox, and cmd_rules, its command
+  # rules, move with their own repositories rather than with a release: a bump
+  # is the submodule pointer following its `main` (the `branch` in
+  # .gitmodules). Only those submodules — the others are
   # moved by hand, with the change that needs them. The shortest cooldown
   # there is: the commits are this project's own, reviewed where they were
   # made. Left unset it is not none but GitHub's default of 3 days, and 0 is
@@ -109,3 +110,4 @@ updates:
       default-days: 1
     allow:
       - dependency-name: "packages/fl_pi_llm"
+      - dependency-name: "packages/cmd_rules"

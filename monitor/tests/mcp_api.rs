@@ -638,7 +638,7 @@ async fn a_password_change_ends_every_token() {
 }
 
 #[ntex::test]
-async fn calls_are_audited_and_run_command_records_its_first_line() {
+async fn calls_are_audited_and_run_command_records_its_programs() {
     let (srv, state) = server().await;
     let (_, token) = mint_default(&srv, "claude").await;
     let mcp = Mcp::new(&srv, Some(token));
@@ -663,7 +663,9 @@ async fn calls_are_audited_and_run_command_records_its_first_line() {
     assert_eq!(rows[0].2.as_deref(), Some("api token 'claude'"));
     assert_eq!(rows[0].3.as_deref(), Some("tool machine_capabilities"));
     assert_eq!(rows[1].1, "ok");
-    assert_eq!(rows[1].3.as_deref(), Some("tool run_command: echo first"));
+    let detail = rows[1].3.as_deref().unwrap();
+    assert!(detail.starts_with("tool run_command: echo (22 bytes, blake3 "), "{detail}");
+    assert!(!detail.contains("first"), "{detail}");
 }
 
 #[ntex::test]

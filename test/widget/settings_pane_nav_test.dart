@@ -181,6 +181,25 @@ void main() {
     });
   });
 
+  testWidgets('AI settings opens MCP Server separately from Tools & MCP client', (tester) async {
+    _useWideView(tester);
+    await tester.pumpWidget(_app());
+    await tester.pump(const Duration(milliseconds: 300));
+    final menuEntry = find.descendant(of: find.byKey(settingsMenuKey), matching: find.text(libL10n.ai));
+    await tester.tap(menuEntry);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text(app_locale.l10n.appMcpClient), findsOneWidget);
+    await tester.tap(find.text(app_locale.l10n.appMcpServer));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    final labels = app_locale.l10n;
+    expect(find.text(labels.enable), findsOneWidget);
+    expect(find.text(labels.virtHwListen), findsOneWidget);
+    expect(find.text(labels.monitorMcpNewToken), findsOneWidget);
+    expect(find.text(labels.agentProviders), findsNothing);
+  });
+
   testWidgets('a pushed page goes when another section is picked', (
     tester,
   ) async {

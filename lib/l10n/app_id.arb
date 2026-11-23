@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Baca layar",
   "agentProviders": "Penyedia",
   "agentProvidersTip": "Kunci API, model, dan model untuk obrolan baru",
-  "agentTools": "Alat",
   "agentToolsTip": "Apa yang boleh dipakai Agent, dan server MCP-nya",
   "agentSnippetToolsTip": "Tampilkan daftar, tambahkan, ubah, dan hapus snippet.",
   "agentVirtToolsTip": "Membaca VM dan kontainer yang dimuat tab Virtualisasi.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Daya",
   "monitorMcpNameRequired": "Masukkan nama.",
   "monitorMcpScopesRequired": "Pilih setidaknya satu izin.",
-  "monitorMcpPasswordRequired": "Masukkan kata sandi."
+  "monitorMcpPasswordRequired": "Masukkan kata sandi.",
+  "appMcpServer": "Server MCP",
+  "appMcpClient": "Alat dan klien MCP",
+  "appMcpAddress": "IPv4:port / [IPv6]:port",
+  "appMcpRegistry": "Registri token MCP tidak valid.",
+  "appMcpName": "Masukkan nama token.",
+  "appMcpBusy": "Perubahan token lain sedang disimpan.",
+  "appMcpProtect": "Registri token tidak dapat dilindungi.",
+  "appMcpListenBusy": "Status server MCP sedang berubah.",
+  "appMcpInvalidAddress": "Masukkan alamat IP dan port, misalnya 0.0.0.0:49762 atau [::]:49762."
 }

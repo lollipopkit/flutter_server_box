@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Bildschirm lesen",
   "agentProviders": "Anbieter",
   "agentProvidersTip": "API-Schlüssel, Modelle und das Modell für neue Chats",
-  "agentTools": "Werkzeuge",
   "agentToolsTip": "Was der Agent nutzen darf, und seine MCP-Server",
   "agentSnippetToolsTip": "Code-Snippets auflisten, hinzufügen, bearbeiten und löschen.",
   "agentVirtToolsTip": "Die VMs und Container lesen, die der Tab Virtualisierung geladen hat.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Energie",
   "monitorMcpNameRequired": "Namen eingeben.",
   "monitorMcpScopesRequired": "Mindestens eine Berechtigung wählen.",
-  "monitorMcpPasswordRequired": "Passwort eingeben."
+  "monitorMcpPasswordRequired": "Passwort eingeben.",
+  "appMcpServer": "MCP-Server",
+  "appMcpClient": "Werkzeuge und MCP-Client",
+  "appMcpAddress": "IPv4:Port / [IPv6]:Port",
+  "appMcpRegistry": "Ungültiges MCP-Tokenverzeichnis.",
+  "appMcpName": "Token-Namen eingeben.",
+  "appMcpBusy": "Eine Token-Änderung wird bereits gespeichert.",
+  "appMcpProtect": "Die Token-Datei konnte nicht geschützt werden.",
+  "appMcpListenBusy": "Der MCP-Server wechselt gerade den Zustand.",
+  "appMcpInvalidAddress": "IP-Adresse und Port eingeben, z. B. 0.0.0.0:49762 oder [::]:49762."
 }

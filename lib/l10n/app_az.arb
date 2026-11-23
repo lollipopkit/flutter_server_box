@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Ekranı oxu",
   "agentProviders": "Provayderlər",
   "agentProvidersTip": "API açarları, modellər və yeni söhbətin modeli",
-  "agentTools": "Alətlər",
   "agentToolsTip": "Agent-in istifadə edə bildikləri və onun MCP serverləri",
   "agentSnippetToolsTip": "Snippet-ləri siyahıya al, əlavə et, redaktə et və sil.",
   "agentVirtToolsTip": "Virtualizasiya bölməsinin yüklədiyi VM və konteynerləri oxu.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Güc",
   "monitorMcpNameRequired": "Ad daxil edin.",
   "monitorMcpScopesRequired": "Ən azı bir icazə seçin.",
-  "monitorMcpPasswordRequired": "Parolu daxil edin."
+  "monitorMcpPasswordRequired": "Parolu daxil edin.",
+  "appMcpServer": "MCP serveri",
+  "appMcpClient": "Alətlər və MCP klienti",
+  "appMcpAddress": "IPv4:port / [IPv6]:port",
+  "appMcpRegistry": "MCP token reyestri yanlışdır.",
+  "appMcpName": "Token üçün ad daxil edin.",
+  "appMcpBusy": "Başqa token dəyişikliyi saxlanılır.",
+  "appMcpProtect": "Token faylını qorumaq mümkün olmadı.",
+  "appMcpListenBusy": "MCP serverinin vəziyyəti dəyişir.",
+  "appMcpInvalidAddress": "IP ünvanı və port daxil edin, məsələn 0.0.0.0:49762 və ya [::]:49762."
 }

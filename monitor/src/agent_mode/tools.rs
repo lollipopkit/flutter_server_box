@@ -245,7 +245,7 @@ impl RunCommand {
             let picked = flow.view.locked().mode;
             let decision = permissions::decide(&perms, picked, Some(&command), effect, hub.approved(&flow, &command));
             if perms.mode_for(picked) == Mode::Bypass && decision == Decision::Run && effect != Effect::Read {
-                record(state, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
+                record(state, &format!("bypass: ran {}", sbm_mcp::machine::command_summary(&command)), Outcome::Ok).await;
             }
             let decision = match decision {
                 Decision::Judge => match judge(state, &flow, &command, &title, claimed.as_str(), sudo, &perms.auto_mode).await {

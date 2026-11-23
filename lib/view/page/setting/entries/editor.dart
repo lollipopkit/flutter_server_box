@@ -151,7 +151,8 @@ extension _Editor on _AppSettingsPageState {
     void onSave() {
       context.popSheet();
       final fontSize = double.tryParse(ctrl.text);
-      if (fontSize == null) {
+      if (fontSize == null ||
+          !SettingRange.contains(SettingRange.fontSize, fontSize)) {
         context.showSheet(
           title: libL10n.fail,
           child: Text('${libL10n.invalid}: ${ctrl.text}'),

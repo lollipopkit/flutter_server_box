@@ -41,6 +41,22 @@ void main() {
     app_locale.l10n = en;
   });
 
+  test('unattended auth uses a saved password but declines a second factor', () {
+    var requested = false;
+    final password = KeyboardInteractiveAuth.handle(
+      _spiWithPassword, SSHUserInfoRequest('Login', '', [SSHUserInfoPrompt('Password:', false)]),
+      onInteractionRequired: () => requested = true,
+    );
+    expect(password, ['stored-password']);
+    expect(requested, false);
+    final secondFactor = KeyboardInteractiveAuth.handle(
+      _spiWithPassword, SSHUserInfoRequest('Login', '', [SSHUserInfoPrompt('Verification code:', false)]),
+      onInteractionRequired: () => requested = true,
+    );
+    expect(secondFactor, isNull);
+    expect(requested, true);
+  });
+
   test('empty keyboard-interactive request needs no dialog', () {
     final result = KeyboardInteractiveAuth.handle(
       _spi,

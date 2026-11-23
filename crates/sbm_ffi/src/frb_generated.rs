@@ -28,12 +28,12 @@
 // Section: imports
 
 use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;
 use crate::api::pve::*;
 use crate::api::ssh_crypto::*;
-use crate::api::agent_pipe::*;
 use crate::api::control_master::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -45,7 +45,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 848949290;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2053059160;
             
 
 // Section: executor
@@ -1928,6 +1928,62 @@ let api_mac_size = <u32>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::ssh_crypto::SshMac::new(api_algorithm, api_key, api_mac_size)?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_authorized_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_authorized", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+let api_authorization = <Option<String>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::app_mcp::app_mcp_authorized(api_text, api_authorization))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_mint_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_mint", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+let api_name = <String>::sse_decode(&mut deserializer);
+let api_scopes = <Option<Vec<String>>>::sse_decode(&mut deserializer);
+let api_now_millis = <i64>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::app_mcp::app_mcp_mint(api_text, api_name, api_scopes, api_now_millis)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_registry_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_registry", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::app_mcp::app_mcp_registry(api_text)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_revoke_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_revoke", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+let api_id = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::app_mcp::app_mcp_revoke(api_text, api_id)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_scopes_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_scopes", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::app_mcp::app_mcp_scopes())?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__app_mcp__app_mcp_serve_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "app_mcp_serve", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::app_mcp::AppMcpRequest>::sse_decode(&mut deserializer);
+let api_run = decode_DartFn_Inputs_app_mcp_run_Output_app_mcp_ran_AnyhowException(<flutter_rust_bridge::DartOpaque>::sse_decode(&mut deserializer));
+let api_settings = decode_DartFn_Inputs_String_String_Output_opt_String_AnyhowException(<flutter_rust_bridge::DartOpaque>::sse_decode(&mut deserializer));deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, ()>((move || async move {
+                         let output_ok = Ok::<_, ()>(crate::api::app_mcp::app_mcp_serve(api_request, api_run, api_settings).await)?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
             }fn wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "bcrypt_pbkdf", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -6543,7 +6599,57 @@ let _: String = VolumeRef.volume;
 
 // Section: related_funcs
 
-flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AgentPipe>);
+fn decode_DartFn_Inputs_String_String_Output_opt_String_AnyhowException(
+                    dart_opaque: flutter_rust_bridge::DartOpaque,
+                ) -> impl Fn(String, String) -> flutter_rust_bridge::DartFnFuture<Option<String>> {
+                    use flutter_rust_bridge::IntoDart;
+
+                    async fn body(dart_opaque: flutter_rust_bridge::DartOpaque, arg0: String, arg1: String) -> Option<String> {
+                        let args = vec![arg0.into_into_dart().into_dart(),arg1.into_into_dart().into_dart(),];
+                        let message = FLUTTER_RUST_BRIDGE_HANDLER.dart_fn_invoke(dart_opaque, args).await;
+
+                        let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+                        let action = deserializer.cursor.read_u8().unwrap();
+                        let ans = match action {
+                            0 => std::result::Result::Ok(<Option<String>>::sse_decode(&mut deserializer)),
+                            1 => std::result::Result::Err(<flutter_rust_bridge::for_generated::anyhow::Error>::sse_decode(&mut deserializer)),
+                            _ => unreachable!(),
+                        };
+                        deserializer.end();
+                        let ans = ans.expect("Dart throws exception but Rust side assume it is not failable");ans
+                    }
+
+                    move |arg0: String, arg1: String| {
+                        flutter_rust_bridge::for_generated::convert_into_dart_fn_future(body(
+                            dart_opaque.clone(), arg0, arg1
+                        ))
+                    }
+                }fn decode_DartFn_Inputs_app_mcp_run_Output_app_mcp_ran_AnyhowException(
+                    dart_opaque: flutter_rust_bridge::DartOpaque,
+                ) -> impl Fn(crate::api::app_mcp::AppMcpRun) -> flutter_rust_bridge::DartFnFuture<crate::api::app_mcp::AppMcpRan> {
+                    use flutter_rust_bridge::IntoDart;
+
+                    async fn body(dart_opaque: flutter_rust_bridge::DartOpaque, arg0: crate::api::app_mcp::AppMcpRun) -> crate::api::app_mcp::AppMcpRan {
+                        let args = vec![arg0.into_into_dart().into_dart(),];
+                        let message = FLUTTER_RUST_BRIDGE_HANDLER.dart_fn_invoke(dart_opaque, args).await;
+
+                        let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+                        let action = deserializer.cursor.read_u8().unwrap();
+                        let ans = match action {
+                            0 => std::result::Result::Ok(<crate::api::app_mcp::AppMcpRan>::sse_decode(&mut deserializer)),
+                            1 => std::result::Result::Err(<flutter_rust_bridge::for_generated::anyhow::Error>::sse_decode(&mut deserializer)),
+                            _ => unreachable!(),
+                        };
+                        deserializer.end();
+                        let ans = ans.expect("Dart throws exception but Rust side assume it is not failable");ans
+                    }
+
+                    move |arg0: crate::api::app_mcp::AppMcpRun| {
+                        flutter_rust_bridge::for_generated::convert_into_dart_fn_future(body(
+                            dart_opaque.clone(), arg0
+                        ))
+                    }
+                }flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AgentPipe>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<BmcClient>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<LibvirtRates>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<MuxForward>);
@@ -6559,6 +6665,12 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
 // Section: dart2rust
 
 
+                impl SseDecode for flutter_rust_bridge::for_generated::anyhow::Error {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <String>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::anyhow::anyhow!("{}", inner);}
+                }
+                
                 impl SseDecode for AgentPipe {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AgentPipe>>>::sse_decode(deserializer);
@@ -6629,6 +6741,12 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <String>::sse_decode(deserializer);
         return inner.chars().next().unwrap();}
+                }
+                
+                impl SseDecode for flutter_rust_bridge::DartOpaque {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <usize>::sse_decode(deserializer);
+        return unsafe { flutter_rust_bridge::for_generated::sse_decode_dart_opaque(inner) };}
                 }
                 
                 impl SseDecode for std::collections::HashMap<String, String> {
@@ -6737,6 +6855,119 @@ let mut var_utilization = <Option<i64>>::sse_decode(deserializer);
 let mut var_fanSpeed = <Option<i64>>::sse_decode(deserializer);
 let mut var_clockSpeed = <Option<i64>>::sse_decode(deserializer);
 return crate::api::parser::AmdSmiItem{name: var_name, temp: var_temp, power: var_power, memory: var_memory, utilization: var_utilization, fan_speed: var_fanSpeed, clock_speed: var_clockSpeed};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpAuth {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::app_mcp::AppMcpAuth::Authorized,
+1 => crate::api::app_mcp::AppMcpAuth::Unauthorized,
+2 => crate::api::app_mcp::AppMcpAuth::Unreadable,
+            _ => unreachable!("Invalid variant for AppMcpAuth: {}", inner),
+        };}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpCall {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_tool = <String>::sse_decode(deserializer);
+let mut var_token = <String>::sse_decode(deserializer);
+let mut var_host = <Option<String>>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpCall{tool: var_tool, token: var_token, host: var_host};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::app_mcp::AppMcpFailure::NeedsUser,
+1 => crate::api::app_mcp::AppMcpFailure::HostChanged,
+2 => crate::api::app_mcp::AppMcpFailure::Unavailable,
+3 => crate::api::app_mcp::AppMcpFailure::Failed,
+            _ => unreachable!("Invalid variant for AppMcpFailure: {}", inner),
+        };}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpHost {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_id = <String>::sse_decode(deserializer);
+let mut var_name = <String>::sse_decode(deserializer);
+let mut var_online = <bool>::sse_decode(deserializer);
+let mut var_transports = <Vec<String>>::sse_decode(deserializer);
+let mut var_system = <Option<crate::api::parser::SystemType>>::sse_decode(deserializer);
+let mut var_script = <bool>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpHost{id: var_id, name: var_name, online: var_online, transports: var_transports, system: var_system, script: var_script};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpMinted {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_registry = <String>::sse_decode(deserializer);
+let mut var_token = <String>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpMinted{registry: var_registry, token: var_token};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpRan {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_stdout = <String>::sse_decode(deserializer);
+let mut var_stderr = <String>::sse_decode(deserializer);
+let mut var_exitCode = <Option<i32>>::sse_decode(deserializer);
+let mut var_truncated = <bool>::sse_decode(deserializer);
+let mut var_timedOut = <bool>::sse_decode(deserializer);
+let mut var_failure = <Option<crate::api::app_mcp::AppMcpFailure>>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpRan{stdout: var_stdout, stderr: var_stderr, exit_code: var_exitCode, truncated: var_truncated, timed_out: var_timedOut, failure: var_failure};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpRegistry {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_scopes = <Option<Vec<String>>>::sse_decode(deserializer);
+let mut var_tokens = <Vec<crate::api::app_mcp::AppMcpToken>>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpRegistry{scopes: var_scopes, tokens: var_tokens};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpRequest {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_registry = <String>::sse_decode(deserializer);
+let mut var_authorization = <Option<String>>::sse_decode(deserializer);
+let mut var_protocolVersion = <Option<String>>::sse_decode(deserializer);
+let mut var_accept = <Vec<String>>::sse_decode(deserializer);
+let mut var_contentType = <Option<String>>::sse_decode(deserializer);
+let mut var_body = <Vec<u8>>::sse_decode(deserializer);
+let mut var_hosts = <Vec<crate::api::app_mcp::AppMcpHost>>::sse_decode(deserializer);
+let mut var_settingsSchema = <String>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpRequest{registry: var_registry, authorization: var_authorization, protocol_version: var_protocolVersion, accept: var_accept, content_type: var_contentType, body: var_body, hosts: var_hosts, settings_schema: var_settingsSchema};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpResponse {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_status = <u16>::sse_decode(deserializer);
+let mut var_body = <Option<String>>::sse_decode(deserializer);
+let mut var_call = <Option<crate::api::app_mcp::AppMcpCall>>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpResponse{status: var_status, body: var_body, call: var_call};}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpRun {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut tag_ = <i32>::sse_decode(deserializer);
+            match tag_ {0 => { let mut var_host = <String>::sse_decode(deserializer);
+let mut var_script = <String>::sse_decode(deserializer);
+let mut var_entry = <Option<String>>::sse_decode(deserializer);
+let mut var_stdin = <Option<String>>::sse_decode(deserializer);
+let mut var_room = <u64>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpRun::Command{host: var_host, script: var_script, entry: var_entry, stdin: var_stdin, room: var_room}; }
+1 => { let mut var_host = <String>::sse_decode(deserializer);
+let mut var_func = <crate::api::script::ShellFuncKind>::sse_decode(deserializer);
+let mut var_room = <u64>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpRun::Script{host: var_host, func: var_func, room: var_room}; }
+ _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseDecode for crate::api::app_mcp::AppMcpToken {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_id = <String>::sse_decode(deserializer);
+let mut var_name = <String>::sse_decode(deserializer);
+let mut var_scopes = <Option<Vec<String>>>::sse_decode(deserializer);
+let mut var_createdAt = <i64>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpToken{id: var_id, name: var_name, scopes: var_scopes, created_at: var_createdAt};}
                 }
                 
                 impl SseDecode for crate::api::virt_model::Backup {
@@ -8168,6 +8399,11 @@ return crate::api::virt_model::HwNic{key: var_key, mac: var_mac, nic_type: var_n
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i64::<NativeEndian>().unwrap()}
                 }
                 
+                impl SseDecode for isize {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i64::<NativeEndian>().unwrap() as _}
+                }
+                
                 impl SseDecode for crate::api::virt::LibvirtPoolRef {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_name = <String>::sse_decode(deserializer);
@@ -8197,6 +8433,22 @@ return crate::api::virt_model::Limits{host_cpus: var_hostCpus, host_memory_bytes
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ { ans_.push(<crate::api::parser::AmdSmiItem>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
+                impl SseDecode for Vec<crate::api::app_mcp::AppMcpHost> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::app_mcp::AppMcpHost>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
+                impl SseDecode for Vec<crate::api::app_mcp::AppMcpToken> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::app_mcp::AppMcpToken>::sse_decode(deserializer)); }
         return ans_;}
                 }
                 
@@ -9370,6 +9622,24 @@ return crate::api::parser::NvidiaSmiItem{name: var_name, temp: var_temp, power: 
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
                 return Some(<String>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::app_mcp::AppMcpCall> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::app_mcp::AppMcpCall>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
+                impl SseDecode for Option<crate::api::app_mcp::AppMcpFailure> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::app_mcp::AppMcpFailure>::sse_decode(deserializer));
             } else {
                 return None;
             }}
@@ -12697,44 +12967,45 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 82 => wire__crate__api__pve__PveSession_volumes_impl(port, ptr, rust_vec_len, data_len),
 83 => wire__crate__api__pve__PveSession_wait_task_impl(port, ptr, rust_vec_len, data_len),
 85 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_next_event_impl(port, ptr, rust_vec_len, data_len),
-109 => wire__crate__api__bench__bench_decode_asset_impl(port, ptr, rust_vec_len, data_len),
-123 => wire__crate__api__bmc__bmc_fetch_server_cert_impl(port, ptr, rust_vec_len, data_len),
-147 => wire__crate__api__container__container_parse_images_impl(port, ptr, rust_vec_len, data_len),
-148 => wire__crate__api__container__container_parse_ps_impl(port, ptr, rust_vec_len, data_len),
-159 => wire__crate__api__file__copy_file_exclusive_impl(port, ptr, rust_vec_len, data_len),
-235 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-253 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-254 => wire__crate__api__parser__parse_status_impl(port, ptr, rust_vec_len, data_len),
-256 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
-257 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
-261 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
-262 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
-263 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
-264 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
-269 => wire__crate__api__proc__proc_sorted_impl(port, ptr, rust_vec_len, data_len),
-270 => wire__crate__api__proc__proc_view_impl(port, ptr, rust_vec_len, data_len),
-281 => wire__crate__api__service__service_parse_listing_impl(port, ptr, rust_vec_len, data_len),
-292 => wire__crate__api__shares__shares_parse_impl(port, ptr, rust_vec_len, data_len),
-293 => wire__crate__api__shares__shares_parse_connections_impl(port, ptr, rust_vec_len, data_len),
-306 => wire__crate__api__storage__storage_parse_health_impl(port, ptr, rust_vec_len, data_len),
-307 => wire__crate__api__storage__storage_parse_view_impl(port, ptr, rust_vec_len, data_len),
-338 => wire__crate__api__users__users_parse_detail_impl(port, ptr, rust_vec_len, data_len),
-339 => wire__crate__api__users__users_parse_list_impl(port, ptr, rust_vec_len, data_len),
-376 => wire__crate__api__virt__virt_libvirt_create_host_impl(port, ptr, rust_vec_len, data_len),
-379 => wire__crate__api__virt__virt_libvirt_create_volumes_impl(port, ptr, rust_vec_len, data_len),
-381 => wire__crate__api__virt__virt_libvirt_define_result_impl(port, ptr, rust_vec_len, data_len),
-385 => wire__crate__api__virt__virt_libvirt_domain_detail_impl(port, ptr, rust_vec_len, data_len),
-387 => wire__crate__api__virt__virt_libvirt_firmware_impl(port, ptr, rust_vec_len, data_len),
-390 => wire__crate__api__virt__virt_libvirt_hardware_outcome_impl(port, ptr, rust_vec_len, data_len),
-391 => wire__crate__api__virt__virt_libvirt_hardware_read_impl(port, ptr, rust_vec_len, data_len),
-393 => wire__crate__api__virt__virt_libvirt_host_devices_read_impl(port, ptr, rust_vec_len, data_len),
-401 => wire__crate__api__virt__virt_libvirt_probe_impl(port, ptr, rust_vec_len, data_len),
-403 => wire__crate__api__virt__virt_libvirt_seed_read_impl(port, ptr, rust_vec_len, data_len),
-404 => wire__crate__api__virt__virt_libvirt_snap_diff_impl(port, ptr, rust_vec_len, data_len),
-406 => wire__crate__api__virt__virt_libvirt_storage_impl(port, ptr, rust_vec_len, data_len),
-407 => wire__crate__api__virt__virt_libvirt_vnc_console_impl(port, ptr, rust_vec_len, data_len),
-415 => wire__crate__api__virt__virt_overview_check_impl(port, ptr, rust_vec_len, data_len),
-427 => wire__crate__api__virt__virt_snap_chain_check_impl(port, ptr, rust_vec_len, data_len),
+110 => wire__crate__api__app_mcp__app_mcp_serve_impl(port, ptr, rust_vec_len, data_len),
+115 => wire__crate__api__bench__bench_decode_asset_impl(port, ptr, rust_vec_len, data_len),
+129 => wire__crate__api__bmc__bmc_fetch_server_cert_impl(port, ptr, rust_vec_len, data_len),
+153 => wire__crate__api__container__container_parse_images_impl(port, ptr, rust_vec_len, data_len),
+154 => wire__crate__api__container__container_parse_ps_impl(port, ptr, rust_vec_len, data_len),
+165 => wire__crate__api__file__copy_file_exclusive_impl(port, ptr, rust_vec_len, data_len),
+241 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+259 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+260 => wire__crate__api__parser__parse_status_impl(port, ptr, rust_vec_len, data_len),
+262 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
+263 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
+267 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
+268 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
+269 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
+270 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
+275 => wire__crate__api__proc__proc_sorted_impl(port, ptr, rust_vec_len, data_len),
+276 => wire__crate__api__proc__proc_view_impl(port, ptr, rust_vec_len, data_len),
+287 => wire__crate__api__service__service_parse_listing_impl(port, ptr, rust_vec_len, data_len),
+298 => wire__crate__api__shares__shares_parse_impl(port, ptr, rust_vec_len, data_len),
+299 => wire__crate__api__shares__shares_parse_connections_impl(port, ptr, rust_vec_len, data_len),
+312 => wire__crate__api__storage__storage_parse_health_impl(port, ptr, rust_vec_len, data_len),
+313 => wire__crate__api__storage__storage_parse_view_impl(port, ptr, rust_vec_len, data_len),
+344 => wire__crate__api__users__users_parse_detail_impl(port, ptr, rust_vec_len, data_len),
+345 => wire__crate__api__users__users_parse_list_impl(port, ptr, rust_vec_len, data_len),
+382 => wire__crate__api__virt__virt_libvirt_create_host_impl(port, ptr, rust_vec_len, data_len),
+385 => wire__crate__api__virt__virt_libvirt_create_volumes_impl(port, ptr, rust_vec_len, data_len),
+387 => wire__crate__api__virt__virt_libvirt_define_result_impl(port, ptr, rust_vec_len, data_len),
+391 => wire__crate__api__virt__virt_libvirt_domain_detail_impl(port, ptr, rust_vec_len, data_len),
+393 => wire__crate__api__virt__virt_libvirt_firmware_impl(port, ptr, rust_vec_len, data_len),
+396 => wire__crate__api__virt__virt_libvirt_hardware_outcome_impl(port, ptr, rust_vec_len, data_len),
+397 => wire__crate__api__virt__virt_libvirt_hardware_read_impl(port, ptr, rust_vec_len, data_len),
+399 => wire__crate__api__virt__virt_libvirt_host_devices_read_impl(port, ptr, rust_vec_len, data_len),
+407 => wire__crate__api__virt__virt_libvirt_probe_impl(port, ptr, rust_vec_len, data_len),
+409 => wire__crate__api__virt__virt_libvirt_seed_read_impl(port, ptr, rust_vec_len, data_len),
+410 => wire__crate__api__virt__virt_libvirt_snap_diff_impl(port, ptr, rust_vec_len, data_len),
+412 => wire__crate__api__virt__virt_libvirt_storage_impl(port, ptr, rust_vec_len, data_len),
+413 => wire__crate__api__virt__virt_libvirt_vnc_console_impl(port, ptr, rust_vec_len, data_len),
+421 => wire__crate__api__virt__virt_overview_check_impl(port, ptr, rust_vec_len, data_len),
+433 => wire__crate__api__virt__virt_snap_chain_check_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -12782,315 +13053,320 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 102 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
 103 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
 104 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
-105 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
-106 => wire__crate__api__bench__bench_cancel_command_impl(ptr, rust_vec_len, data_len),
-107 => wire__crate__api__bench__bench_cancelled_exit_code_impl(ptr, rust_vec_len, data_len),
-108 => wire__crate__api__bench__bench_cleanup_command_impl(ptr, rust_vec_len, data_len),
-110 => wire__crate__api__bench__bench_install_entry_impl(ptr, rust_vec_len, data_len),
-111 => wire__crate__api__bench__bench_launcher_impl(ptr, rust_vec_len, data_len),
-112 => wire__crate__api__bench__bench_parse_poll_impl(ptr, rust_vec_len, data_len),
-113 => wire__crate__api__bench__bench_poll_command_impl(ptr, rust_vec_len, data_len),
-114 => wire__crate__api__bench__bench_probe_command_impl(ptr, rust_vec_len, data_len),
-115 => wire__crate__api__bench__bench_run_dir_impl(ptr, rust_vec_len, data_len),
-116 => wire__crate__api__bench__bench_script_installed_impl(ptr, rust_vec_len, data_len),
-117 => wire__crate__api__bench__bench_script_present_impl(ptr, rust_vec_len, data_len),
-118 => wire__crate__api__bench__bench_start_entry_impl(ptr, rust_vec_len, data_len),
-119 => wire__crate__api__bench__bench_started_impl(ptr, rust_vec_len, data_len),
-120 => wire__crate__api__bench__bench_upstream_version_impl(ptr, rust_vec_len, data_len),
-121 => wire__crate__api__digest__blake3_hex_impl(ptr, rust_vec_len, data_len),
-122 => wire__crate__api__bmc__bmc_boot_default_impl(ptr, rust_vec_len, data_len),
-124 => wire__crate__api__bmc__bmc_is_image_url_impl(ptr, rust_vec_len, data_len),
-125 => wire__crate__api__bmc__bmc_plan_impl(ptr, rust_vec_len, data_len),
-126 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
-127 => wire__crate__api__bmc__cert_fingerprint_impl(ptr, rust_vec_len, data_len),
-128 => wire__crate__api__bmc__cert_info_from_der_impl(ptr, rust_vec_len, data_len),
-129 => wire__crate__api__bmc__cert_info_is_expired_impl(ptr, rust_vec_len, data_len),
-130 => wire__crate__api__bmc__cert_info_pretty_fingerprint_impl(ptr, rust_vec_len, data_len),
-131 => wire__crate__api__bmc__cert_normalize_fingerprint_impl(ptr, rust_vec_len, data_len),
-132 => wire__crate__api__bmc__cert_pin_accepts_impl(ptr, rust_vec_len, data_len),
-133 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
-134 => wire__crate__api__container__container_action_command_impl(ptr, rust_vec_len, data_len),
-135 => wire__crate__api__container__container_batch_command_impl(ptr, rust_vec_len, data_len),
-136 => wire__crate__api__container__container_command_impl(ptr, rust_vec_len, data_len),
-137 => wire__crate__api__container__container_count_unused_tagged_images_impl(ptr, rust_vec_len, data_len),
-138 => wire__crate__api__container__container_image_prune_command_impl(ptr, rust_vec_len, data_len),
-139 => wire__crate__api__container__container_image_pull_command_impl(ptr, rust_vec_len, data_len),
-140 => wire__crate__api__container__container_image_reference_impl(ptr, rust_vec_len, data_len),
-141 => wire__crate__api__container__container_image_remove_command_impl(ptr, rust_vec_len, data_len),
-142 => wire__crate__api__container__container_is_not_installed_impl(ptr, rust_vec_len, data_len),
-143 => wire__crate__api__container__container_is_podman_emulation_impl(ptr, rust_vec_len, data_len),
-144 => wire__crate__api__container__container_logs_command_impl(ptr, rust_vec_len, data_len),
-145 => wire__crate__api__container__container_menu_items_impl(ptr, rust_vec_len, data_len),
-146 => wire__crate__api__container__container_parse_disk_usage_impl(ptr, rust_vec_len, data_len),
-149 => wire__crate__api__container__container_parse_run_args_impl(ptr, rust_vec_len, data_len),
-150 => wire__crate__api__container__container_parse_version_impl(ptr, rust_vec_len, data_len),
-151 => wire__crate__api__container__container_run_command_impl(ptr, rust_vec_len, data_len),
-152 => wire__crate__api__container__container_runtime_command_impl(ptr, rust_vec_len, data_len),
-153 => wire__crate__api__container__container_separator_prefix_impl(ptr, rust_vec_len, data_len),
-154 => wire__crate__api__container__container_shell_command_impl(ptr, rust_vec_len, data_len),
-155 => wire__crate__api__container__container_system_prune_command_impl(ptr, rust_vec_len, data_len),
-156 => wire__crate__api__container__container_user_facing_output_impl(ptr, rust_vec_len, data_len),
-157 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
-158 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
-160 => wire__crate__api__cron__cron_check_save_impl(ptr, rust_vec_len, data_len),
-161 => wire__crate__api__cron__cron_list_script_impl(ptr, rust_vec_len, data_len),
-162 => wire__crate__api__cron__cron_next_run_impl(ptr, rust_vec_len, data_len),
-163 => wire__crate__api__cron__cron_read_listing_impl(ptr, rust_vec_len, data_len),
-164 => wire__crate__api__cron__cron_remove_impl(ptr, rust_vec_len, data_len),
-165 => wire__crate__api__cron__cron_save_command_impl(ptr, rust_vec_len, data_len),
-166 => wire__crate__api__cron__cron_schedule_parse_impl(ptr, rust_vec_len, data_len),
-167 => wire__crate__api__cron__cron_set_enabled_impl(ptr, rust_vec_len, data_len),
-168 => wire__crate__api__cron__cron_upsert_impl(ptr, rust_vec_len, data_len),
-169 => wire__crate__api__cron__cron_validate_impl(ptr, rust_vec_len, data_len),
-170 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
-171 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
-172 => wire__crate__api__desktop__desktop_validate_profile_impl(ptr, rust_vec_len, data_len),
-173 => wire__crate__api__desktop__desktop_validate_vnc_password_impl(ptr, rust_vec_len, data_len),
-174 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
-175 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
-176 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
-177 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
-178 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
-179 => wire__crate__api__exec_session__exec_session_env_name_impl(ptr, rust_vec_len, data_len),
-180 => wire__crate__api__exec_session__exec_session_find_marker_impl(ptr, rust_vec_len, data_len),
-181 => wire__crate__api__exec_session__exec_session_gone_impl(ptr, rust_vec_len, data_len),
-182 => wire__crate__api__exec_session__exec_session_kill_command_impl(ptr, rust_vec_len, data_len),
-183 => wire__crate__api__exec_session__exec_session_marker_max_impl(ptr, rust_vec_len, data_len),
-184 => wire__crate__api__exec_session__exec_session_owned_impl(ptr, rust_vec_len, data_len),
-185 => wire__crate__api__exec_session__exec_session_owns_command_impl(ptr, rust_vec_len, data_len),
-186 => wire__crate__api__exec_session__exec_session_wrap_impl(ptr, rust_vec_len, data_len),
-187 => wire__crate__api__files__files_after_out_mark_impl(ptr, rust_vec_len, data_len),
-188 => wire__crate__api__files__files_atomic_write_command_impl(ptr, rust_vec_len, data_len),
-189 => wire__crate__api__files__files_capped_read_command_impl(ptr, rust_vec_len, data_len),
-190 => wire__crate__api__files__files_capped_read_exits_impl(ptr, rust_vec_len, data_len),
-191 => wire__crate__api__files__files_chmod_command_impl(ptr, rust_vec_len, data_len),
-192 => wire__crate__api__files__files_editor_command_impl(ptr, rust_vec_len, data_len),
-193 => wire__crate__api__files__files_extract_command_impl(ptr, rust_vec_len, data_len),
-194 => wire__crate__api__files__files_framed_command_impl(ptr, rust_vec_len, data_len),
-195 => wire__crate__api__files__files_framed_stat_command_impl(ptr, rust_vec_len, data_len),
-196 => wire__crate__api__files__files_home_command_impl(ptr, rust_vec_len, data_len),
-197 => wire__crate__api__files__files_home_from_impl(ptr, rust_vec_len, data_len),
-198 => wire__crate__api__files__files_in_dir_command_impl(ptr, rust_vec_len, data_len),
-199 => wire__crate__api__files__files_list_command_impl(ptr, rust_vec_len, data_len),
-200 => wire__crate__api__files__files_mkdir_command_impl(ptr, rust_vec_len, data_len),
-201 => wire__crate__api__files__files_parse_capped_read_impl(ptr, rust_vec_len, data_len),
-202 => wire__crate__api__files__files_parse_records_impl(ptr, rust_vec_len, data_len),
-203 => wire__crate__api__files__files_parse_size_impl(ptr, rust_vec_len, data_len),
-204 => wire__crate__api__files__files_read_command_impl(ptr, rust_vec_len, data_len),
-205 => wire__crate__api__files__files_remove_command_impl(ptr, rust_vec_len, data_len),
-206 => wire__crate__api__files__files_rename_command_impl(ptr, rust_vec_len, data_len),
-207 => wire__crate__api__files__files_scp_sink_command_impl(ptr, rust_vec_len, data_len),
-208 => wire__crate__api__files__files_scp_source_command_impl(ptr, rust_vec_len, data_len),
-209 => wire__crate__api__files__files_size_command_impl(ptr, rust_vec_len, data_len),
-210 => wire__crate__api__files__files_stat_markers_impl(ptr, rust_vec_len, data_len),
-211 => wire__crate__api__files__files_sudo_command_impl(ptr, rust_vec_len, data_len),
-212 => wire__crate__api__files__files_terminal_shell_cwd_impl(ptr, rust_vec_len, data_len),
-213 => wire__crate__api__files__files_terminal_shells_command_impl(ptr, rust_vec_len, data_len),
-214 => wire__crate__api__files__files_unframe_impl(ptr, rust_vec_len, data_len),
-215 => wire__crate__api__files__files_writable_command_impl(ptr, rust_vec_len, data_len),
-216 => wire__crate__api__files__files_write_base64_command_impl(ptr, rust_vec_len, data_len),
-217 => wire__crate__api__firewall__firewall_parse_probe_impl(ptr, rust_vec_len, data_len),
-218 => wire__crate__api__firewall__firewall_plan_commands_impl(ptr, rust_vec_len, data_len),
-219 => wire__crate__api__firewall__firewall_preferred_impl(ptr, rust_vec_len, data_len),
-220 => wire__crate__api__firewall__firewall_probe_script_impl(ptr, rust_vec_len, data_len),
-221 => wire__crate__api__firewall__firewall_script_impl(ptr, rust_vec_len, data_len),
-222 => wire__crate__api__firewall__firewalld_drifted_impl(ptr, rust_vec_len, data_len),
-223 => wire__crate__api__firewall__firewalld_parse_impl(ptr, rust_vec_len, data_len),
-224 => wire__crate__api__firewall__firewalld_plan_impl(ptr, rust_vec_len, data_len),
-225 => wire__crate__api__firewall__firewalld_port_spec_impl(ptr, rust_vec_len, data_len),
-226 => wire__crate__api__firewall__firewalld_read_script_impl(ptr, rust_vec_len, data_len),
-227 => wire__crate__api__firewall__firewalld_shut_by_reload_impl(ptr, rust_vec_len, data_len),
-228 => wire__crate__api__firewall__firewalld_target_token_impl(ptr, rust_vec_len, data_len),
-229 => wire__crate__api__firewall__firewalld_zones_for_impl(ptr, rust_vec_len, data_len),
-230 => wire__crate__api__users__groups_create_command_impl(ptr, rust_vec_len, data_len),
-231 => wire__crate__api__users__groups_delete_command_impl(ptr, rust_vec_len, data_len),
-232 => wire__crate__api__users__groups_delete_refusal_impl(ptr, rust_vec_len, data_len),
-233 => wire__crate__api__users__groups_edit_command_impl(ptr, rust_vec_len, data_len),
-234 => wire__crate__api__users__groups_validate_draft_impl(ptr, rust_vec_len, data_len),
-236 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-237 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-238 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-239 => wire__crate__api__iperf__iperf_client_command_impl(ptr, rust_vec_len, data_len),
-240 => wire__crate__api__iperf__iperf_normalize_host_impl(ptr, rust_vec_len, data_len),
-241 => wire__crate__api__iperf__iperf_valid_port_impl(ptr, rust_vec_len, data_len),
-242 => wire__crate__api__script__monitor_outdated_impl(ptr, rust_vec_len, data_len),
-243 => wire__crate__api__protocol__monitor_protocol_impl(ptr, rust_vec_len, data_len),
-244 => wire__crate__api__protocol__monitor_protocol_compat_impl(ptr, rust_vec_len, data_len),
-245 => wire__crate__api__protocol__monitor_protocol_header_impl(ptr, rust_vec_len, data_len),
-246 => wire__crate__api__script__monitor_release_max_pages_impl(ptr, rust_vec_len, data_len),
-247 => wire__crate__api__script__monitor_release_page_impl(ptr, rust_vec_len, data_len),
-248 => wire__crate__api__script__monitor_releases_url_impl(ptr, rust_vec_len, data_len),
-249 => wire__crate__api__script__monitor_start_update_script_impl(ptr, rust_vec_len, data_len),
-250 => wire__crate__api__script__monitor_update_sudo_refused_exit_impl(ptr, rust_vec_len, data_len),
-251 => wire__crate__api__script__monitor_upgrade_command_impl(ptr, rust_vec_len, data_len),
-252 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-255 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
-258 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
-259 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
-260 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
-265 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
-266 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
-267 => wire__crate__api__proc__proc_kill_command_impl(ptr, rust_vec_len, data_len),
-268 => wire__crate__api__proc__proc_kill_outcome_impl(ptr, rust_vec_len, data_len),
-271 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-272 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-273 => wire__crate__api__service__service_actions_impl(ptr, rust_vec_len, data_len),
-274 => wire__crate__api__service__service_command_impl(ptr, rust_vec_len, data_len),
-275 => wire__crate__api__service__service_definition_command_impl(ptr, rust_vec_len, data_len),
-276 => wire__crate__api__service__service_detect_script_impl(ptr, rust_vec_len, data_len),
-277 => wire__crate__api__service__service_listing_commands_impl(ptr, rust_vec_len, data_len),
-278 => wire__crate__api__service__service_log_command_impl(ptr, rust_vec_len, data_len),
-279 => wire__crate__api__service__service_needs_attention_impl(ptr, rust_vec_len, data_len),
-280 => wire__crate__api__service__service_needs_root_impl(ptr, rust_vec_len, data_len),
-282 => wire__crate__api__service__service_parse_probe_impl(ptr, rust_vec_len, data_len),
-283 => wire__crate__api__service__service_parse_recent_log_impl(ptr, rust_vec_len, data_len),
-284 => wire__crate__api__service__service_recent_log_command_impl(ptr, rust_vec_len, data_len),
-285 => wire__crate__api__service__service_terminal_command_impl(ptr, rust_vec_len, data_len),
-286 => wire__crate__api__service__service_unit_status_command_impl(ptr, rust_vec_len, data_len),
-287 => wire__crate__api__shares__shares_connections_script_impl(ptr, rust_vec_len, data_len),
-288 => wire__crate__api__shares__shares_exit_not_a_folder_impl(ptr, rust_vec_len, data_len),
-289 => wire__crate__api__shares__shares_exit_refused_impl(ptr, rust_vec_len, data_len),
-290 => wire__crate__api__shares__shares_install_script_impl(ptr, rust_vec_len, data_len),
-291 => wire__crate__api__shares__shares_nfs_script_impl(ptr, rust_vec_len, data_len),
-294 => wire__crate__api__shares__shares_read_script_impl(ptr, rust_vec_len, data_len),
-295 => wire__crate__api__shares__shares_smb_password_script_impl(ptr, rust_vec_len, data_len),
-296 => wire__crate__api__shares__shares_smb_script_impl(ptr, rust_vec_len, data_len),
-297 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-298 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
-299 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
-300 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
-301 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
-302 => wire__crate__api__storage__storage_action_needs_key_impl(ptr, rust_vec_len, data_len),
-303 => wire__crate__api__storage__storage_action_script_impl(ptr, rust_vec_len, data_len),
-304 => wire__crate__api__storage__storage_check_impl(ptr, rust_vec_len, data_len),
-305 => wire__crate__api__storage__storage_health_script_impl(ptr, rust_vec_len, data_len),
-308 => wire__crate__api__storage__storage_view_script_impl(ptr, rust_vec_len, data_len),
-309 => wire__crate__api__exec_session__sudo_entry_impl(ptr, rust_vec_len, data_len),
-310 => wire__crate__api__script__sudo_password_rejected_impl(ptr, rust_vec_len, data_len),
-311 => wire__crate__api__parser__system_from_uname_impl(ptr, rust_vec_len, data_len),
-312 => wire__crate__api__parser__system_from_ver_impl(ptr, rust_vec_len, data_len),
-313 => wire__crate__api__parser__system_probe_uname_impl(ptr, rust_vec_len, data_len),
-314 => wire__crate__api__parser__system_probe_ver_impl(ptr, rust_vec_len, data_len),
-315 => wire__crate__api__tmux__tmux_attach_session_command_impl(ptr, rust_vec_len, data_len),
-316 => wire__crate__api__tmux__tmux_attach_window_command_impl(ptr, rust_vec_len, data_len),
-317 => wire__crate__api__tmux__tmux_find_command_impl(ptr, rust_vec_len, data_len),
-318 => wire__crate__api__tmux__tmux_list_sessions_command_impl(ptr, rust_vec_len, data_len),
-319 => wire__crate__api__tmux__tmux_list_windows_command_impl(ptr, rust_vec_len, data_len),
-320 => wire__crate__api__tmux__tmux_new_session_or_attach_command_impl(ptr, rust_vec_len, data_len),
-321 => wire__crate__api__tmux__tmux_parse_find_impl(ptr, rust_vec_len, data_len),
-322 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
-323 => wire__crate__api__tmux__tmux_read_sessions_impl(ptr, rust_vec_len, data_len),
-324 => wire__crate__api__firewall__ufw_direction_token_impl(ptr, rust_vec_len, data_len),
-325 => wire__crate__api__firewall__ufw_log_token_impl(ptr, rust_vec_len, data_len),
-326 => wire__crate__api__firewall__ufw_parse_impl(ptr, rust_vec_len, data_len),
-327 => wire__crate__api__firewall__ufw_plan_impl(ptr, rust_vec_len, data_len),
-328 => wire__crate__api__firewall__ufw_read_script_impl(ptr, rust_vec_len, data_len),
-329 => wire__crate__api__firewall__ufw_validate_draft_impl(ptr, rust_vec_len, data_len),
-330 => wire__crate__api__parser__uptime_seconds_impl(ptr, rust_vec_len, data_len),
-331 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
-332 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
-333 => wire__crate__api__users__users_delete_refusal_impl(ptr, rust_vec_len, data_len),
-334 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
-335 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
-336 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
-337 => wire__crate__api__users__users_login_shell_command_impl(ptr, rust_vec_len, data_len),
-340 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
-341 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
-342 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
-343 => wire__crate__api__backup__virt_backup_job_takes_only_impl(ptr, rust_vec_len, data_len),
-344 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
-345 => wire__crate__api__create__virt_clone_node_issue_impl(ptr, rust_vec_len, data_len),
-346 => wire__crate__api__create__virt_clone_storage_issue_impl(ptr, rust_vec_len, data_len),
-347 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
-348 => wire__crate__api__create__virt_cloud_init_issue_impl(ptr, rust_vec_len, data_len),
-349 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
-350 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
-351 => wire__crate__api__create__virt_create_issue_impl(ptr, rust_vec_len, data_len),
-352 => wire__crate__api__create__virt_create_networks_impl(ptr, rust_vec_len, data_len),
-353 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
-354 => wire__crate__api__resource__virt_default_dhcp_range_impl(ptr, rust_vec_len, data_len),
-355 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
-356 => wire__crate__api__create__virt_disk_storages_impl(ptr, rust_vec_len, data_len),
-357 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
-358 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
-359 => wire__crate__api__create__virt_guest_name_ok_impl(ptr, rust_vec_len, data_len),
-360 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
-361 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
-362 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
-363 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
-364 => wire__crate__api__hardware__virt_hw_disk_growable_impl(ptr, rust_vec_len, data_len),
-365 => wire__crate__api__hardware__virt_hw_issue_impl(ptr, rust_vec_len, data_len),
-366 => wire__crate__api__create__virt_image_storages_impl(ptr, rust_vec_len, data_len),
-367 => wire__crate__api__create__virt_is_cloud_image_impl(ptr, rust_vec_len, data_len),
-368 => wire__crate__api__create__virt_is_media_impl(ptr, rust_vec_len, data_len),
-369 => wire__crate__api__hardware__virt_is_unicast_mac_impl(ptr, rust_vec_len, data_len),
-370 => wire__crate__api__virt__virt_libvirt_chain_impl(ptr, rust_vec_len, data_len),
-371 => wire__crate__api__create__virt_libvirt_clone_disks_impl(ptr, rust_vec_len, data_len),
-372 => wire__crate__api__create__virt_libvirt_clone_spec_impl(ptr, rust_vec_len, data_len),
-373 => wire__crate__api__create__virt_libvirt_cloud_init_impl(ptr, rust_vec_len, data_len),
-374 => wire__crate__api__hardware__virt_libvirt_cloud_init_state_impl(ptr, rust_vec_len, data_len),
-375 => wire__crate__api__hardware__virt_libvirt_cloud_init_update_impl(ptr, rust_vec_len, data_len),
-377 => wire__crate__api__create__virt_libvirt_create_options_impl(ptr, rust_vec_len, data_len),
-378 => wire__crate__api__create__virt_libvirt_create_spec_impl(ptr, rust_vec_len, data_len),
-380 => wire__crate__api__create__virt_libvirt_created_impl(ptr, rust_vec_len, data_len),
-382 => wire__crate__api__create__virt_libvirt_delete_needs_chain_impl(ptr, rust_vec_len, data_len),
-383 => wire__crate__api__create__virt_libvirt_delete_plan_impl(ptr, rust_vec_len, data_len),
-384 => wire__crate__api__create__virt_libvirt_disk_format_impl(ptr, rust_vec_len, data_len),
-386 => wire__crate__api__virt__virt_libvirt_external_snapshot_impl(ptr, rust_vec_len, data_len),
-388 => wire__crate__api__virt__virt_libvirt_guest_detail_impl(ptr, rust_vec_len, data_len),
-389 => wire__crate__api__hardware__virt_libvirt_hardware_impl(ptr, rust_vec_len, data_len),
-392 => wire__crate__api__hardware__virt_libvirt_host_devices_impl(ptr, rust_vec_len, data_len),
-394 => wire__crate__api__hardware__virt_libvirt_hw_change_impl(ptr, rust_vec_len, data_len),
-395 => wire__crate__api__hardware__virt_libvirt_hw_revert_impl(ptr, rust_vec_len, data_len),
-396 => wire__crate__api__resource__virt_libvirt_networks_impl(ptr, rust_vec_len, data_len),
-397 => wire__crate__api__virt__virt_libvirt_pool_holds_files_impl(ptr, rust_vec_len, data_len),
-398 => wire__crate__api__virt__virt_libvirt_pool_of_file_impl(ptr, rust_vec_len, data_len),
-399 => wire__crate__api__resource__virt_libvirt_pools_impl(ptr, rust_vec_len, data_len),
-400 => wire__crate__api__virt__virt_libvirt_power_plan_impl(ptr, rust_vec_len, data_len),
-402 => wire__crate__api__resource__virt_libvirt_resource_script_impl(ptr, rust_vec_len, data_len),
-405 => wire__crate__api__virt__virt_libvirt_snapshots_impl(ptr, rust_vec_len, data_len),
-408 => wire__crate__api__resource__virt_libvirt_volumes_impl(ptr, rust_vec_len, data_len),
-409 => wire__crate__api__resource__virt_libvirt_with_backs_impl(ptr, rust_vec_len, data_len),
-410 => wire__crate__api__create__virt_libvirt_with_volumes_impl(ptr, rust_vec_len, data_len),
-411 => wire__crate__api__create__virt_media_storages_impl(ptr, rust_vec_len, data_len),
-412 => wire__crate__api__hardware__virt_mount_point_ok_impl(ptr, rust_vec_len, data_len),
-413 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
-414 => wire__crate__api__create__virt_new_mac_impl(ptr, rust_vec_len, data_len),
-416 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
-417 => wire__crate__api__resource__virt_pool_takes_media_impl(ptr, rust_vec_len, data_len),
-418 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
-419 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
-420 => wire__crate__api__resource__virt_pve_live_net_script_impl(ptr, rust_vec_len, data_len),
-421 => wire__crate__api__resource__virt_pve_volume_vmid_impl(ptr, rust_vec_len, data_len),
-422 => wire__crate__api__resource__virt_resource_issue_impl(ptr, rust_vec_len, data_len),
-423 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
-424 => wire__crate__api__backup__virt_schedule_issue_impl(ptr, rust_vec_len, data_len),
-425 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
-426 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
-428 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
-429 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
-430 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
-431 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
-432 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
-433 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
-434 => wire__crate__api__virt__virt_snapshot_memory_impl(ptr, rust_vec_len, data_len),
-435 => wire__crate__api__virt__virt_snapshot_name_issue_impl(ptr, rust_vec_len, data_len),
-436 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
-437 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
-438 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
-439 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
-440 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
-441 => wire__crate__api__resource__virt_upload_issue_impl(ptr, rust_vec_len, data_len),
-442 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
-443 => wire__crate__api__hardware__virt_usb_address_impl(ptr, rust_vec_len, data_len),
-444 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
-445 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
-446 => wire__crate__api__resource__virt_volume_file_name_impl(ptr, rust_vec_len, data_len),
-447 => wire__crate__api__resource__virt_volume_formats_impl(ptr, rust_vec_len, data_len),
-448 => wire__crate__api__resource__virt_volume_resizable_impl(ptr, rust_vec_len, data_len),
-449 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
-450 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-451 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+105 => wire__crate__api__app_mcp__app_mcp_authorized_impl(ptr, rust_vec_len, data_len),
+106 => wire__crate__api__app_mcp__app_mcp_mint_impl(ptr, rust_vec_len, data_len),
+107 => wire__crate__api__app_mcp__app_mcp_registry_impl(ptr, rust_vec_len, data_len),
+108 => wire__crate__api__app_mcp__app_mcp_revoke_impl(ptr, rust_vec_len, data_len),
+109 => wire__crate__api__app_mcp__app_mcp_scopes_impl(ptr, rust_vec_len, data_len),
+111 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
+112 => wire__crate__api__bench__bench_cancel_command_impl(ptr, rust_vec_len, data_len),
+113 => wire__crate__api__bench__bench_cancelled_exit_code_impl(ptr, rust_vec_len, data_len),
+114 => wire__crate__api__bench__bench_cleanup_command_impl(ptr, rust_vec_len, data_len),
+116 => wire__crate__api__bench__bench_install_entry_impl(ptr, rust_vec_len, data_len),
+117 => wire__crate__api__bench__bench_launcher_impl(ptr, rust_vec_len, data_len),
+118 => wire__crate__api__bench__bench_parse_poll_impl(ptr, rust_vec_len, data_len),
+119 => wire__crate__api__bench__bench_poll_command_impl(ptr, rust_vec_len, data_len),
+120 => wire__crate__api__bench__bench_probe_command_impl(ptr, rust_vec_len, data_len),
+121 => wire__crate__api__bench__bench_run_dir_impl(ptr, rust_vec_len, data_len),
+122 => wire__crate__api__bench__bench_script_installed_impl(ptr, rust_vec_len, data_len),
+123 => wire__crate__api__bench__bench_script_present_impl(ptr, rust_vec_len, data_len),
+124 => wire__crate__api__bench__bench_start_entry_impl(ptr, rust_vec_len, data_len),
+125 => wire__crate__api__bench__bench_started_impl(ptr, rust_vec_len, data_len),
+126 => wire__crate__api__bench__bench_upstream_version_impl(ptr, rust_vec_len, data_len),
+127 => wire__crate__api__digest__blake3_hex_impl(ptr, rust_vec_len, data_len),
+128 => wire__crate__api__bmc__bmc_boot_default_impl(ptr, rust_vec_len, data_len),
+130 => wire__crate__api__bmc__bmc_is_image_url_impl(ptr, rust_vec_len, data_len),
+131 => wire__crate__api__bmc__bmc_plan_impl(ptr, rust_vec_len, data_len),
+132 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
+133 => wire__crate__api__bmc__cert_fingerprint_impl(ptr, rust_vec_len, data_len),
+134 => wire__crate__api__bmc__cert_info_from_der_impl(ptr, rust_vec_len, data_len),
+135 => wire__crate__api__bmc__cert_info_is_expired_impl(ptr, rust_vec_len, data_len),
+136 => wire__crate__api__bmc__cert_info_pretty_fingerprint_impl(ptr, rust_vec_len, data_len),
+137 => wire__crate__api__bmc__cert_normalize_fingerprint_impl(ptr, rust_vec_len, data_len),
+138 => wire__crate__api__bmc__cert_pin_accepts_impl(ptr, rust_vec_len, data_len),
+139 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
+140 => wire__crate__api__container__container_action_command_impl(ptr, rust_vec_len, data_len),
+141 => wire__crate__api__container__container_batch_command_impl(ptr, rust_vec_len, data_len),
+142 => wire__crate__api__container__container_command_impl(ptr, rust_vec_len, data_len),
+143 => wire__crate__api__container__container_count_unused_tagged_images_impl(ptr, rust_vec_len, data_len),
+144 => wire__crate__api__container__container_image_prune_command_impl(ptr, rust_vec_len, data_len),
+145 => wire__crate__api__container__container_image_pull_command_impl(ptr, rust_vec_len, data_len),
+146 => wire__crate__api__container__container_image_reference_impl(ptr, rust_vec_len, data_len),
+147 => wire__crate__api__container__container_image_remove_command_impl(ptr, rust_vec_len, data_len),
+148 => wire__crate__api__container__container_is_not_installed_impl(ptr, rust_vec_len, data_len),
+149 => wire__crate__api__container__container_is_podman_emulation_impl(ptr, rust_vec_len, data_len),
+150 => wire__crate__api__container__container_logs_command_impl(ptr, rust_vec_len, data_len),
+151 => wire__crate__api__container__container_menu_items_impl(ptr, rust_vec_len, data_len),
+152 => wire__crate__api__container__container_parse_disk_usage_impl(ptr, rust_vec_len, data_len),
+155 => wire__crate__api__container__container_parse_run_args_impl(ptr, rust_vec_len, data_len),
+156 => wire__crate__api__container__container_parse_version_impl(ptr, rust_vec_len, data_len),
+157 => wire__crate__api__container__container_run_command_impl(ptr, rust_vec_len, data_len),
+158 => wire__crate__api__container__container_runtime_command_impl(ptr, rust_vec_len, data_len),
+159 => wire__crate__api__container__container_separator_prefix_impl(ptr, rust_vec_len, data_len),
+160 => wire__crate__api__container__container_shell_command_impl(ptr, rust_vec_len, data_len),
+161 => wire__crate__api__container__container_system_prune_command_impl(ptr, rust_vec_len, data_len),
+162 => wire__crate__api__container__container_user_facing_output_impl(ptr, rust_vec_len, data_len),
+163 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
+164 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
+166 => wire__crate__api__cron__cron_check_save_impl(ptr, rust_vec_len, data_len),
+167 => wire__crate__api__cron__cron_list_script_impl(ptr, rust_vec_len, data_len),
+168 => wire__crate__api__cron__cron_next_run_impl(ptr, rust_vec_len, data_len),
+169 => wire__crate__api__cron__cron_read_listing_impl(ptr, rust_vec_len, data_len),
+170 => wire__crate__api__cron__cron_remove_impl(ptr, rust_vec_len, data_len),
+171 => wire__crate__api__cron__cron_save_command_impl(ptr, rust_vec_len, data_len),
+172 => wire__crate__api__cron__cron_schedule_parse_impl(ptr, rust_vec_len, data_len),
+173 => wire__crate__api__cron__cron_set_enabled_impl(ptr, rust_vec_len, data_len),
+174 => wire__crate__api__cron__cron_upsert_impl(ptr, rust_vec_len, data_len),
+175 => wire__crate__api__cron__cron_validate_impl(ptr, rust_vec_len, data_len),
+176 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
+177 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
+178 => wire__crate__api__desktop__desktop_validate_profile_impl(ptr, rust_vec_len, data_len),
+179 => wire__crate__api__desktop__desktop_validate_vnc_password_impl(ptr, rust_vec_len, data_len),
+180 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
+181 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
+182 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
+183 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
+184 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
+185 => wire__crate__api__exec_session__exec_session_env_name_impl(ptr, rust_vec_len, data_len),
+186 => wire__crate__api__exec_session__exec_session_find_marker_impl(ptr, rust_vec_len, data_len),
+187 => wire__crate__api__exec_session__exec_session_gone_impl(ptr, rust_vec_len, data_len),
+188 => wire__crate__api__exec_session__exec_session_kill_command_impl(ptr, rust_vec_len, data_len),
+189 => wire__crate__api__exec_session__exec_session_marker_max_impl(ptr, rust_vec_len, data_len),
+190 => wire__crate__api__exec_session__exec_session_owned_impl(ptr, rust_vec_len, data_len),
+191 => wire__crate__api__exec_session__exec_session_owns_command_impl(ptr, rust_vec_len, data_len),
+192 => wire__crate__api__exec_session__exec_session_wrap_impl(ptr, rust_vec_len, data_len),
+193 => wire__crate__api__files__files_after_out_mark_impl(ptr, rust_vec_len, data_len),
+194 => wire__crate__api__files__files_atomic_write_command_impl(ptr, rust_vec_len, data_len),
+195 => wire__crate__api__files__files_capped_read_command_impl(ptr, rust_vec_len, data_len),
+196 => wire__crate__api__files__files_capped_read_exits_impl(ptr, rust_vec_len, data_len),
+197 => wire__crate__api__files__files_chmod_command_impl(ptr, rust_vec_len, data_len),
+198 => wire__crate__api__files__files_editor_command_impl(ptr, rust_vec_len, data_len),
+199 => wire__crate__api__files__files_extract_command_impl(ptr, rust_vec_len, data_len),
+200 => wire__crate__api__files__files_framed_command_impl(ptr, rust_vec_len, data_len),
+201 => wire__crate__api__files__files_framed_stat_command_impl(ptr, rust_vec_len, data_len),
+202 => wire__crate__api__files__files_home_command_impl(ptr, rust_vec_len, data_len),
+203 => wire__crate__api__files__files_home_from_impl(ptr, rust_vec_len, data_len),
+204 => wire__crate__api__files__files_in_dir_command_impl(ptr, rust_vec_len, data_len),
+205 => wire__crate__api__files__files_list_command_impl(ptr, rust_vec_len, data_len),
+206 => wire__crate__api__files__files_mkdir_command_impl(ptr, rust_vec_len, data_len),
+207 => wire__crate__api__files__files_parse_capped_read_impl(ptr, rust_vec_len, data_len),
+208 => wire__crate__api__files__files_parse_records_impl(ptr, rust_vec_len, data_len),
+209 => wire__crate__api__files__files_parse_size_impl(ptr, rust_vec_len, data_len),
+210 => wire__crate__api__files__files_read_command_impl(ptr, rust_vec_len, data_len),
+211 => wire__crate__api__files__files_remove_command_impl(ptr, rust_vec_len, data_len),
+212 => wire__crate__api__files__files_rename_command_impl(ptr, rust_vec_len, data_len),
+213 => wire__crate__api__files__files_scp_sink_command_impl(ptr, rust_vec_len, data_len),
+214 => wire__crate__api__files__files_scp_source_command_impl(ptr, rust_vec_len, data_len),
+215 => wire__crate__api__files__files_size_command_impl(ptr, rust_vec_len, data_len),
+216 => wire__crate__api__files__files_stat_markers_impl(ptr, rust_vec_len, data_len),
+217 => wire__crate__api__files__files_sudo_command_impl(ptr, rust_vec_len, data_len),
+218 => wire__crate__api__files__files_terminal_shell_cwd_impl(ptr, rust_vec_len, data_len),
+219 => wire__crate__api__files__files_terminal_shells_command_impl(ptr, rust_vec_len, data_len),
+220 => wire__crate__api__files__files_unframe_impl(ptr, rust_vec_len, data_len),
+221 => wire__crate__api__files__files_writable_command_impl(ptr, rust_vec_len, data_len),
+222 => wire__crate__api__files__files_write_base64_command_impl(ptr, rust_vec_len, data_len),
+223 => wire__crate__api__firewall__firewall_parse_probe_impl(ptr, rust_vec_len, data_len),
+224 => wire__crate__api__firewall__firewall_plan_commands_impl(ptr, rust_vec_len, data_len),
+225 => wire__crate__api__firewall__firewall_preferred_impl(ptr, rust_vec_len, data_len),
+226 => wire__crate__api__firewall__firewall_probe_script_impl(ptr, rust_vec_len, data_len),
+227 => wire__crate__api__firewall__firewall_script_impl(ptr, rust_vec_len, data_len),
+228 => wire__crate__api__firewall__firewalld_drifted_impl(ptr, rust_vec_len, data_len),
+229 => wire__crate__api__firewall__firewalld_parse_impl(ptr, rust_vec_len, data_len),
+230 => wire__crate__api__firewall__firewalld_plan_impl(ptr, rust_vec_len, data_len),
+231 => wire__crate__api__firewall__firewalld_port_spec_impl(ptr, rust_vec_len, data_len),
+232 => wire__crate__api__firewall__firewalld_read_script_impl(ptr, rust_vec_len, data_len),
+233 => wire__crate__api__firewall__firewalld_shut_by_reload_impl(ptr, rust_vec_len, data_len),
+234 => wire__crate__api__firewall__firewalld_target_token_impl(ptr, rust_vec_len, data_len),
+235 => wire__crate__api__firewall__firewalld_zones_for_impl(ptr, rust_vec_len, data_len),
+236 => wire__crate__api__users__groups_create_command_impl(ptr, rust_vec_len, data_len),
+237 => wire__crate__api__users__groups_delete_command_impl(ptr, rust_vec_len, data_len),
+238 => wire__crate__api__users__groups_delete_refusal_impl(ptr, rust_vec_len, data_len),
+239 => wire__crate__api__users__groups_edit_command_impl(ptr, rust_vec_len, data_len),
+240 => wire__crate__api__users__groups_validate_draft_impl(ptr, rust_vec_len, data_len),
+242 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+243 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+244 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+245 => wire__crate__api__iperf__iperf_client_command_impl(ptr, rust_vec_len, data_len),
+246 => wire__crate__api__iperf__iperf_normalize_host_impl(ptr, rust_vec_len, data_len),
+247 => wire__crate__api__iperf__iperf_valid_port_impl(ptr, rust_vec_len, data_len),
+248 => wire__crate__api__script__monitor_outdated_impl(ptr, rust_vec_len, data_len),
+249 => wire__crate__api__protocol__monitor_protocol_impl(ptr, rust_vec_len, data_len),
+250 => wire__crate__api__protocol__monitor_protocol_compat_impl(ptr, rust_vec_len, data_len),
+251 => wire__crate__api__protocol__monitor_protocol_header_impl(ptr, rust_vec_len, data_len),
+252 => wire__crate__api__script__monitor_release_max_pages_impl(ptr, rust_vec_len, data_len),
+253 => wire__crate__api__script__monitor_release_page_impl(ptr, rust_vec_len, data_len),
+254 => wire__crate__api__script__monitor_releases_url_impl(ptr, rust_vec_len, data_len),
+255 => wire__crate__api__script__monitor_start_update_script_impl(ptr, rust_vec_len, data_len),
+256 => wire__crate__api__script__monitor_update_sudo_refused_exit_impl(ptr, rust_vec_len, data_len),
+257 => wire__crate__api__script__monitor_upgrade_command_impl(ptr, rust_vec_len, data_len),
+258 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+261 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
+264 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
+265 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
+266 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
+271 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
+272 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
+273 => wire__crate__api__proc__proc_kill_command_impl(ptr, rust_vec_len, data_len),
+274 => wire__crate__api__proc__proc_kill_outcome_impl(ptr, rust_vec_len, data_len),
+277 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+278 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+279 => wire__crate__api__service__service_actions_impl(ptr, rust_vec_len, data_len),
+280 => wire__crate__api__service__service_command_impl(ptr, rust_vec_len, data_len),
+281 => wire__crate__api__service__service_definition_command_impl(ptr, rust_vec_len, data_len),
+282 => wire__crate__api__service__service_detect_script_impl(ptr, rust_vec_len, data_len),
+283 => wire__crate__api__service__service_listing_commands_impl(ptr, rust_vec_len, data_len),
+284 => wire__crate__api__service__service_log_command_impl(ptr, rust_vec_len, data_len),
+285 => wire__crate__api__service__service_needs_attention_impl(ptr, rust_vec_len, data_len),
+286 => wire__crate__api__service__service_needs_root_impl(ptr, rust_vec_len, data_len),
+288 => wire__crate__api__service__service_parse_probe_impl(ptr, rust_vec_len, data_len),
+289 => wire__crate__api__service__service_parse_recent_log_impl(ptr, rust_vec_len, data_len),
+290 => wire__crate__api__service__service_recent_log_command_impl(ptr, rust_vec_len, data_len),
+291 => wire__crate__api__service__service_terminal_command_impl(ptr, rust_vec_len, data_len),
+292 => wire__crate__api__service__service_unit_status_command_impl(ptr, rust_vec_len, data_len),
+293 => wire__crate__api__shares__shares_connections_script_impl(ptr, rust_vec_len, data_len),
+294 => wire__crate__api__shares__shares_exit_not_a_folder_impl(ptr, rust_vec_len, data_len),
+295 => wire__crate__api__shares__shares_exit_refused_impl(ptr, rust_vec_len, data_len),
+296 => wire__crate__api__shares__shares_install_script_impl(ptr, rust_vec_len, data_len),
+297 => wire__crate__api__shares__shares_nfs_script_impl(ptr, rust_vec_len, data_len),
+300 => wire__crate__api__shares__shares_read_script_impl(ptr, rust_vec_len, data_len),
+301 => wire__crate__api__shares__shares_smb_password_script_impl(ptr, rust_vec_len, data_len),
+302 => wire__crate__api__shares__shares_smb_script_impl(ptr, rust_vec_len, data_len),
+303 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+304 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
+305 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
+306 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
+307 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
+308 => wire__crate__api__storage__storage_action_needs_key_impl(ptr, rust_vec_len, data_len),
+309 => wire__crate__api__storage__storage_action_script_impl(ptr, rust_vec_len, data_len),
+310 => wire__crate__api__storage__storage_check_impl(ptr, rust_vec_len, data_len),
+311 => wire__crate__api__storage__storage_health_script_impl(ptr, rust_vec_len, data_len),
+314 => wire__crate__api__storage__storage_view_script_impl(ptr, rust_vec_len, data_len),
+315 => wire__crate__api__exec_session__sudo_entry_impl(ptr, rust_vec_len, data_len),
+316 => wire__crate__api__script__sudo_password_rejected_impl(ptr, rust_vec_len, data_len),
+317 => wire__crate__api__parser__system_from_uname_impl(ptr, rust_vec_len, data_len),
+318 => wire__crate__api__parser__system_from_ver_impl(ptr, rust_vec_len, data_len),
+319 => wire__crate__api__parser__system_probe_uname_impl(ptr, rust_vec_len, data_len),
+320 => wire__crate__api__parser__system_probe_ver_impl(ptr, rust_vec_len, data_len),
+321 => wire__crate__api__tmux__tmux_attach_session_command_impl(ptr, rust_vec_len, data_len),
+322 => wire__crate__api__tmux__tmux_attach_window_command_impl(ptr, rust_vec_len, data_len),
+323 => wire__crate__api__tmux__tmux_find_command_impl(ptr, rust_vec_len, data_len),
+324 => wire__crate__api__tmux__tmux_list_sessions_command_impl(ptr, rust_vec_len, data_len),
+325 => wire__crate__api__tmux__tmux_list_windows_command_impl(ptr, rust_vec_len, data_len),
+326 => wire__crate__api__tmux__tmux_new_session_or_attach_command_impl(ptr, rust_vec_len, data_len),
+327 => wire__crate__api__tmux__tmux_parse_find_impl(ptr, rust_vec_len, data_len),
+328 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
+329 => wire__crate__api__tmux__tmux_read_sessions_impl(ptr, rust_vec_len, data_len),
+330 => wire__crate__api__firewall__ufw_direction_token_impl(ptr, rust_vec_len, data_len),
+331 => wire__crate__api__firewall__ufw_log_token_impl(ptr, rust_vec_len, data_len),
+332 => wire__crate__api__firewall__ufw_parse_impl(ptr, rust_vec_len, data_len),
+333 => wire__crate__api__firewall__ufw_plan_impl(ptr, rust_vec_len, data_len),
+334 => wire__crate__api__firewall__ufw_read_script_impl(ptr, rust_vec_len, data_len),
+335 => wire__crate__api__firewall__ufw_validate_draft_impl(ptr, rust_vec_len, data_len),
+336 => wire__crate__api__parser__uptime_seconds_impl(ptr, rust_vec_len, data_len),
+337 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
+338 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
+339 => wire__crate__api__users__users_delete_refusal_impl(ptr, rust_vec_len, data_len),
+340 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
+341 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
+342 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
+343 => wire__crate__api__users__users_login_shell_command_impl(ptr, rust_vec_len, data_len),
+346 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
+347 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
+348 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
+349 => wire__crate__api__backup__virt_backup_job_takes_only_impl(ptr, rust_vec_len, data_len),
+350 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
+351 => wire__crate__api__create__virt_clone_node_issue_impl(ptr, rust_vec_len, data_len),
+352 => wire__crate__api__create__virt_clone_storage_issue_impl(ptr, rust_vec_len, data_len),
+353 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
+354 => wire__crate__api__create__virt_cloud_init_issue_impl(ptr, rust_vec_len, data_len),
+355 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
+356 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
+357 => wire__crate__api__create__virt_create_issue_impl(ptr, rust_vec_len, data_len),
+358 => wire__crate__api__create__virt_create_networks_impl(ptr, rust_vec_len, data_len),
+359 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
+360 => wire__crate__api__resource__virt_default_dhcp_range_impl(ptr, rust_vec_len, data_len),
+361 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
+362 => wire__crate__api__create__virt_disk_storages_impl(ptr, rust_vec_len, data_len),
+363 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
+364 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
+365 => wire__crate__api__create__virt_guest_name_ok_impl(ptr, rust_vec_len, data_len),
+366 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
+367 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
+368 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
+369 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
+370 => wire__crate__api__hardware__virt_hw_disk_growable_impl(ptr, rust_vec_len, data_len),
+371 => wire__crate__api__hardware__virt_hw_issue_impl(ptr, rust_vec_len, data_len),
+372 => wire__crate__api__create__virt_image_storages_impl(ptr, rust_vec_len, data_len),
+373 => wire__crate__api__create__virt_is_cloud_image_impl(ptr, rust_vec_len, data_len),
+374 => wire__crate__api__create__virt_is_media_impl(ptr, rust_vec_len, data_len),
+375 => wire__crate__api__hardware__virt_is_unicast_mac_impl(ptr, rust_vec_len, data_len),
+376 => wire__crate__api__virt__virt_libvirt_chain_impl(ptr, rust_vec_len, data_len),
+377 => wire__crate__api__create__virt_libvirt_clone_disks_impl(ptr, rust_vec_len, data_len),
+378 => wire__crate__api__create__virt_libvirt_clone_spec_impl(ptr, rust_vec_len, data_len),
+379 => wire__crate__api__create__virt_libvirt_cloud_init_impl(ptr, rust_vec_len, data_len),
+380 => wire__crate__api__hardware__virt_libvirt_cloud_init_state_impl(ptr, rust_vec_len, data_len),
+381 => wire__crate__api__hardware__virt_libvirt_cloud_init_update_impl(ptr, rust_vec_len, data_len),
+383 => wire__crate__api__create__virt_libvirt_create_options_impl(ptr, rust_vec_len, data_len),
+384 => wire__crate__api__create__virt_libvirt_create_spec_impl(ptr, rust_vec_len, data_len),
+386 => wire__crate__api__create__virt_libvirt_created_impl(ptr, rust_vec_len, data_len),
+388 => wire__crate__api__create__virt_libvirt_delete_needs_chain_impl(ptr, rust_vec_len, data_len),
+389 => wire__crate__api__create__virt_libvirt_delete_plan_impl(ptr, rust_vec_len, data_len),
+390 => wire__crate__api__create__virt_libvirt_disk_format_impl(ptr, rust_vec_len, data_len),
+392 => wire__crate__api__virt__virt_libvirt_external_snapshot_impl(ptr, rust_vec_len, data_len),
+394 => wire__crate__api__virt__virt_libvirt_guest_detail_impl(ptr, rust_vec_len, data_len),
+395 => wire__crate__api__hardware__virt_libvirt_hardware_impl(ptr, rust_vec_len, data_len),
+398 => wire__crate__api__hardware__virt_libvirt_host_devices_impl(ptr, rust_vec_len, data_len),
+400 => wire__crate__api__hardware__virt_libvirt_hw_change_impl(ptr, rust_vec_len, data_len),
+401 => wire__crate__api__hardware__virt_libvirt_hw_revert_impl(ptr, rust_vec_len, data_len),
+402 => wire__crate__api__resource__virt_libvirt_networks_impl(ptr, rust_vec_len, data_len),
+403 => wire__crate__api__virt__virt_libvirt_pool_holds_files_impl(ptr, rust_vec_len, data_len),
+404 => wire__crate__api__virt__virt_libvirt_pool_of_file_impl(ptr, rust_vec_len, data_len),
+405 => wire__crate__api__resource__virt_libvirt_pools_impl(ptr, rust_vec_len, data_len),
+406 => wire__crate__api__virt__virt_libvirt_power_plan_impl(ptr, rust_vec_len, data_len),
+408 => wire__crate__api__resource__virt_libvirt_resource_script_impl(ptr, rust_vec_len, data_len),
+411 => wire__crate__api__virt__virt_libvirt_snapshots_impl(ptr, rust_vec_len, data_len),
+414 => wire__crate__api__resource__virt_libvirt_volumes_impl(ptr, rust_vec_len, data_len),
+415 => wire__crate__api__resource__virt_libvirt_with_backs_impl(ptr, rust_vec_len, data_len),
+416 => wire__crate__api__create__virt_libvirt_with_volumes_impl(ptr, rust_vec_len, data_len),
+417 => wire__crate__api__create__virt_media_storages_impl(ptr, rust_vec_len, data_len),
+418 => wire__crate__api__hardware__virt_mount_point_ok_impl(ptr, rust_vec_len, data_len),
+419 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
+420 => wire__crate__api__create__virt_new_mac_impl(ptr, rust_vec_len, data_len),
+422 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
+423 => wire__crate__api__resource__virt_pool_takes_media_impl(ptr, rust_vec_len, data_len),
+424 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
+425 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
+426 => wire__crate__api__resource__virt_pve_live_net_script_impl(ptr, rust_vec_len, data_len),
+427 => wire__crate__api__resource__virt_pve_volume_vmid_impl(ptr, rust_vec_len, data_len),
+428 => wire__crate__api__resource__virt_resource_issue_impl(ptr, rust_vec_len, data_len),
+429 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
+430 => wire__crate__api__backup__virt_schedule_issue_impl(ptr, rust_vec_len, data_len),
+431 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
+432 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
+434 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
+435 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
+436 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
+437 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
+438 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
+439 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
+440 => wire__crate__api__virt__virt_snapshot_memory_impl(ptr, rust_vec_len, data_len),
+441 => wire__crate__api__virt__virt_snapshot_name_issue_impl(ptr, rust_vec_len, data_len),
+442 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
+443 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
+444 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
+445 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
+446 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
+447 => wire__crate__api__resource__virt_upload_issue_impl(ptr, rust_vec_len, data_len),
+448 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
+449 => wire__crate__api__hardware__virt_usb_address_impl(ptr, rust_vec_len, data_len),
+450 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
+451 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
+452 => wire__crate__api__resource__virt_volume_file_name_impl(ptr, rust_vec_len, data_len),
+453 => wire__crate__api__resource__virt_volume_formats_impl(ptr, rust_vec_len, data_len),
+454 => wire__crate__api__resource__virt_volume_resizable_impl(ptr, rust_vec_len, data_len),
+455 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
+456 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+457 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -13281,6 +13557,201 @@ self.0.clock_speed.into_into_dart().into_dart()
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::parser::AmdSmiItem>> for crate::api::parser::AmdSmiItem {
             fn into_into_dart(self) -> FrbWrapper<crate::api::parser::AmdSmiItem> {
                 self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpAuth {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::Authorized => 0.into_dart(),
+Self::Unauthorized => 1.into_dart(),
+Self::Unreadable => 2.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpAuth {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpAuth> for crate::api::app_mcp::AppMcpAuth {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpAuth {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpCall {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.tool.into_into_dart().into_dart(),
+self.token.into_into_dart().into_dart(),
+self.host.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpCall {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpCall> for crate::api::app_mcp::AppMcpCall {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpCall {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpFailure {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::NeedsUser => 0.into_dart(),
+Self::HostChanged => 1.into_dart(),
+Self::Unavailable => 2.into_dart(),
+Self::Failed => 3.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpFailure {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpFailure> for crate::api::app_mcp::AppMcpFailure {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpFailure {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpHost {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.id.into_into_dart().into_dart(),
+self.name.into_into_dart().into_dart(),
+self.online.into_into_dart().into_dart(),
+self.transports.into_into_dart().into_dart(),
+self.system.into_into_dart().into_dart(),
+self.script.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpHost {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpHost> for crate::api::app_mcp::AppMcpHost {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpHost {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpMinted {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.registry.into_into_dart().into_dart(),
+self.token.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpMinted {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpMinted> for crate::api::app_mcp::AppMcpMinted {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpMinted {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpRan {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.stdout.into_into_dart().into_dart(),
+self.stderr.into_into_dart().into_dart(),
+self.exit_code.into_into_dart().into_dart(),
+self.truncated.into_into_dart().into_dart(),
+self.timed_out.into_into_dart().into_dart(),
+self.failure.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpRan {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpRan> for crate::api::app_mcp::AppMcpRan {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpRan {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpRegistry {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.scopes.into_into_dart().into_dart(),
+self.tokens.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpRegistry {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpRegistry> for crate::api::app_mcp::AppMcpRegistry {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpRegistry {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpRequest {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.registry.into_into_dart().into_dart(),
+self.authorization.into_into_dart().into_dart(),
+self.protocol_version.into_into_dart().into_dart(),
+self.accept.into_into_dart().into_dart(),
+self.content_type.into_into_dart().into_dart(),
+self.body.into_into_dart().into_dart(),
+self.hosts.into_into_dart().into_dart(),
+self.settings_schema.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpRequest> for crate::api::app_mcp::AppMcpRequest {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpRequest {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpResponse {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.status.into_into_dart().into_dart(),
+self.body.into_into_dart().into_dart(),
+self.call.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpResponse {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpResponse> for crate::api::app_mcp::AppMcpResponse {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpResponse {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpRun {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {crate::api::app_mcp::AppMcpRun::Command{host,script,entry,stdin,room} => { [0.into_dart(),
+host.into_into_dart().into_dart(),
+script.into_into_dart().into_dart(),
+entry.into_into_dart().into_dart(),
+stdin.into_into_dart().into_dart(),
+room.into_into_dart().into_dart()].into_dart() }
+crate::api::app_mcp::AppMcpRun::Script{host,func,room} => { [1.into_dart(),
+host.into_into_dart().into_dart(),
+func.into_into_dart().into_dart(),
+room.into_into_dart().into_dart()].into_dart() }
+ _ => { unimplemented!(""); }}
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpRun {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpRun> for crate::api::app_mcp::AppMcpRun {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpRun {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::app_mcp::AppMcpToken {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.id.into_into_dart().into_dart(),
+self.name.into_into_dart().into_dart(),
+self.scopes.into_into_dart().into_dart(),
+self.created_at.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::app_mcp::AppMcpToken {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpToken> for crate::api::app_mcp::AppMcpToken {
+            fn into_into_dart(self) -> crate::api::app_mcp::AppMcpToken {
+                self
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -19625,6 +20096,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
             }
         }
 
+                impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(format!("{:?}", self), serializer);}
+                }
+                
                 impl SseEncode for AgentPipe {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AgentPipe>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);}
@@ -19683,6 +20159,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 impl SseEncode for char {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.to_string(), serializer);}
+                }
+                
+                impl SseEncode for flutter_rust_bridge::DartOpaque {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<usize>::sse_encode(self.encode(), serializer);}
                 }
                 
                 impl SseEncode for std::collections::HashMap<String, String> {
@@ -19796,6 +20277,104 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <Option<i64>>::sse_encode(self.utilization, serializer);
 <Option<i64>>::sse_encode(self.fan_speed, serializer);
 <Option<i64>>::sse_encode(self.clock_speed, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpAuth {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::app_mcp::AppMcpAuth::Authorized => { 0 }
+crate::api::app_mcp::AppMcpAuth::Unauthorized => { 1 }
+crate::api::app_mcp::AppMcpAuth::Unreadable => { 2 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpCall {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.tool, serializer);
+<String>::sse_encode(self.token, serializer);
+<Option<String>>::sse_encode(self.host, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::app_mcp::AppMcpFailure::NeedsUser => { 0 }
+crate::api::app_mcp::AppMcpFailure::HostChanged => { 1 }
+crate::api::app_mcp::AppMcpFailure::Unavailable => { 2 }
+crate::api::app_mcp::AppMcpFailure::Failed => { 3 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpHost {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.id, serializer);
+<String>::sse_encode(self.name, serializer);
+<bool>::sse_encode(self.online, serializer);
+<Vec<String>>::sse_encode(self.transports, serializer);
+<Option<crate::api::parser::SystemType>>::sse_encode(self.system, serializer);
+<bool>::sse_encode(self.script, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpMinted {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.registry, serializer);
+<String>::sse_encode(self.token, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpRan {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.stdout, serializer);
+<String>::sse_encode(self.stderr, serializer);
+<Option<i32>>::sse_encode(self.exit_code, serializer);
+<bool>::sse_encode(self.truncated, serializer);
+<bool>::sse_encode(self.timed_out, serializer);
+<Option<crate::api::app_mcp::AppMcpFailure>>::sse_encode(self.failure, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpRegistry {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Option<Vec<String>>>::sse_encode(self.scopes, serializer);
+<Vec<crate::api::app_mcp::AppMcpToken>>::sse_encode(self.tokens, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpRequest {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.registry, serializer);
+<Option<String>>::sse_encode(self.authorization, serializer);
+<Option<String>>::sse_encode(self.protocol_version, serializer);
+<Vec<String>>::sse_encode(self.accept, serializer);
+<Option<String>>::sse_encode(self.content_type, serializer);
+<Vec<u8>>::sse_encode(self.body, serializer);
+<Vec<crate::api::app_mcp::AppMcpHost>>::sse_encode(self.hosts, serializer);
+<String>::sse_encode(self.settings_schema, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpResponse {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<u16>::sse_encode(self.status, serializer);
+<Option<String>>::sse_encode(self.body, serializer);
+<Option<crate::api::app_mcp::AppMcpCall>>::sse_encode(self.call, serializer);}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpRun {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {match self {crate::api::app_mcp::AppMcpRun::Command{host,script,entry,stdin,room} => { <i32>::sse_encode(0, serializer); <String>::sse_encode(host, serializer);
+<String>::sse_encode(script, serializer);
+<Option<String>>::sse_encode(entry, serializer);
+<Option<String>>::sse_encode(stdin, serializer);
+<u64>::sse_encode(room, serializer);
+ }
+crate::api::app_mcp::AppMcpRun::Script{host,func,room} => { <i32>::sse_encode(1, serializer); <String>::sse_encode(host, serializer);
+<crate::api::script::ShellFuncKind>::sse_encode(func, serializer);
+<u64>::sse_encode(room, serializer);
+ }
+ _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseEncode for crate::api::app_mcp::AppMcpToken {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.id, serializer);
+<String>::sse_encode(self.name, serializer);
+<Option<Vec<String>>>::sse_encode(self.scopes, serializer);
+<i64>::sse_encode(self.created_at, serializer);}
                 }
                 
                 impl SseEncode for crate::api::virt_model::Backup {
@@ -21083,6 +21662,11 @@ crate::api::virt_model::HwIssue::Unsupported => { 20 }
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i64::<NativeEndian>(self).unwrap();}
                 }
                 
+                impl SseEncode for isize {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i64::<NativeEndian>(self as _).unwrap();}
+                }
+                
                 impl SseEncode for crate::api::virt::LibvirtPoolRef {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.name, serializer);
@@ -21107,6 +21691,18 @@ crate::api::virt_model::HwIssue::Unsupported => { 20 }
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
         for item in self { <crate::api::parser::AmdSmiItem>::sse_encode(item, serializer); }}
+                }
+                
+                impl SseEncode for Vec<crate::api::app_mcp::AppMcpHost> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::app_mcp::AppMcpHost>::sse_encode(item, serializer); }}
+                }
+                
+                impl SseEncode for Vec<crate::api::app_mcp::AppMcpToken> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::app_mcp::AppMcpToken>::sse_encode(item, serializer); }}
                 }
                 
                 impl SseEncode for Vec<crate::api::virt_model::Backup> {
@@ -22019,6 +22615,22 @@ crate::api::bmc::LogScope::Manager => { 1 }
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
                 if let Some(value) = self {
                     <String>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::app_mcp::AppMcpCall> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::app_mcp::AppMcpCall>::sse_encode(value, serializer);
+                }}
+                }
+                
+                impl SseEncode for Option<crate::api::app_mcp::AppMcpFailure> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::app_mcp::AppMcpFailure>::sse_encode(value, serializer);
                 }}
                 }
                 
@@ -24921,12 +25533,12 @@ crate::api::virt_libvirt::VirtResourceOp::NetDelete{name} => { <i32>::sse_encode
 // Section: imports
 
 use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;
 use crate::api::pve::*;
 use crate::api::ssh_crypto::*;
-use crate::api::agent_pipe::*;
 use crate::api::control_master::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -25082,12 +25694,12 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 // Section: imports
 
 use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;
 use crate::api::pve::*;
 use crate::api::ssh_crypto::*;
-use crate::api::agent_pipe::*;
 use crate::api::control_master::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/noninteractive.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// Asks for a key's passphrase and answers with it, or null if the person
@@ -74,11 +75,21 @@ abstract final class PrivateKeyUnlock {
     required String cacheKey,
     required String keyName,
     PassphrasePrompt? prompt,
+    NonInteractiveSsh? unattended,
   }) async {
     if (!isLocked(pem)) return pem;
 
     final already = _opened[cacheKey];
     if (already != null) return already;
+
+    if (unattended != null) {
+      // Never join an interactive prompt or register a refusal in its cache.
+      return _ask(pem, cacheKey: cacheKey, keyName: keyName,
+        prompt: ({required keyName, required retry}) async {
+          unattended.decline();
+          throw SshInteractionRequired();
+        });
+    }
 
     // Asked and refused already. Reported the same way, without putting the
     // same dialog up again.

@@ -33,3 +33,7 @@
 [submodule "packages/fl_tty"]
 	path = packages/fl_tty
 	url = https://github.com/lollipopkit/fl_tty
+[submodule "packages/cmd_rules"]
+	path = packages/cmd_rules
+	url = https://github.com/lollipopkit/cmd_rules
+	branch = main

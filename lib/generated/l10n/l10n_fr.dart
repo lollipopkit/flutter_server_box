@@ -2089,9 +2089,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Clés d\'API, modèles, et le modèle d\'une nouvelle discussion';
 
   @override
-  String get agentTools => 'Outils';
-
-  @override
   String get agentToolsTip =>
       'Ce que l\'Agent peut utiliser, et ses serveurs MCP';
 
@@ -7532,4 +7529,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Saisissez le mot de passe.';
+
+  @override
+  String get appMcpServer => 'Serveur MCP';
+
+  @override
+  String get appMcpClient => 'Outils et client MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:port / [IPv6]:port';
+
+  @override
+  String get appMcpRegistry => 'Registre de jetons MCP invalide.';
+
+  @override
+  String get appMcpName => 'Saisissez un nom de jeton.';
+
+  @override
+  String get appMcpBusy => 'Une modification des jetons est en cours.';
+
+  @override
+  String get appMcpProtect => 'Impossible de protéger le registre de jetons.';
+
+  @override
+  String get appMcpListenBusy => 'Le serveur MCP change d’état.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Saisissez une adresse IP et un port, par exemple 0.0.0.0:49762 ou [::]:49762.';
 }

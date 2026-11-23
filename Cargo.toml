@@ -6,9 +6,10 @@
 # - crates/sbm_virt:   virtualization (libvirt command layer) shared by monitor and the app
 # - crates/sbm_ffi:    flutter_rust_bridge binding layer + cargokit Flutter plugin shell (one directory)
 # - monitor:           server-side monitoring (service + web frontend)
+# - packages/cmd_rules: command permission rules (submodule), for sbm_mcp and fl_pi_llm
 [workspace]
 resolver = "2"
-members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_mcp", "crates/sbm_ffi", "monitor"]
+members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_mcp", "crates/sbm_ffi", "monitor", "packages/cmd_rules"]
 exclude = ["third_party/ironrdp", "packages/fl_pi_llm/fl_pi_llm/rust", ".pub-cache"]
 
 [profile.release]
@@ -111,3 +112,8 @@ opt-level = 3
 [profile.monitor-test]
 inherits = "release"
 incremental = true
+
+# fl_pi_llm takes the command rules from their repository; this build takes
+# them from the submodule sbm_mcp uses, so one copy is built.
+[patch."https://github.com/lollipopkit/cmd_rules"]
+cmd_rules = { path = "packages/cmd_rules" }

@@ -2075,9 +2075,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentProvidersTip => 'Ключі API, моделі та модель для нового чату';
 
   @override
-  String get agentTools => 'Інструменти';
-
-  @override
   String get agentToolsTip =>
       'Що може використовувати Agent, і його сервери MCP';
 
@@ -7467,4 +7464,32 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Введіть пароль.';
+
+  @override
+  String get appMcpServer => 'Сервер MCP';
+
+  @override
+  String get appMcpClient => 'Інструменти та клієнт MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:порт / [IPv6]:порт';
+
+  @override
+  String get appMcpRegistry => 'Некоректний реєстр токенів MCP.';
+
+  @override
+  String get appMcpName => 'Введіть назву токена.';
+
+  @override
+  String get appMcpBusy => 'Зберігається інша зміна токенів.';
+
+  @override
+  String get appMcpProtect => 'Не вдалося захистити файл токенів.';
+
+  @override
+  String get appMcpListenBusy => 'Стан сервера MCP змінюється.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Введіть IP-адресу й порт, наприклад 0.0.0.0:49762 або [::]:49762.';
 }

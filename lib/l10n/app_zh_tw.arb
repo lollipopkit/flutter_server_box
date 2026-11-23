@@ -589,7 +589,6 @@
   "agentToolTerminalScreen": "讀取螢幕",
   "agentProviders": "提供者",
   "agentProvidersTip": "API Key、模型，以及新對話使用的模型",
-  "agentTools": "工具",
   "agentToolsTip": "Agent 可以使用的工具，以及 MCP 伺服器",
   "agentSnippetToolsTip": "列出、新增、修改和刪除 snippet。",
   "agentVirtToolsTip": "讀取虛擬化分頁已載入的虛擬機和容器。",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "電源控制",
   "monitorMcpNameRequired": "請輸入名稱。",
   "monitorMcpScopesRequired": "至少選擇一項權限。",
-  "monitorMcpPasswordRequired": "請輸入密碼。"
+  "monitorMcpPasswordRequired": "請輸入密碼。",
+  "appMcpServer": "MCP 伺服器",
+  "appMcpClient": "工具與 MCP 用戶端",
+  "appMcpAddress": "IPv4:連接埠 / [IPv6]:連接埠",
+  "appMcpRegistry": "MCP 權杖設定檔格式無效。",
+  "appMcpName": "請輸入權杖名稱。",
+  "appMcpBusy": "正在儲存另一項權杖變更。",
+  "appMcpProtect": "無法設定權杖檔案的存取權限。",
+  "appMcpListenBusy": "MCP 伺服器正在切換狀態。",
+  "appMcpInvalidAddress": "請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。"
 }

@@ -152,6 +152,11 @@ jobs:
       - name: Check out fl_pi_llm
         run: git submodule update --init --depth 1 packages/fl_pi_llm
 
+      # The command rules (`packages/cmd_rules`), a path dependency of
+      # sbm_mcp and the `[patch]` fl_pi_llm's copy resolves to.
+      - name: Check out cmd_rules
+        run: git submodule update --init --depth 1 packages/cmd_rules
+
       - name: Build (Linux)
         if: matrix.platform == 'linux'
         uses: ./.github/actions/monitor-linux-build

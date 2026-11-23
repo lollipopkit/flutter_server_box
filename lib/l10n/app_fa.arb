@@ -597,7 +597,6 @@
   "agentToolTerminalScreen": "خواندن صفحه",
   "agentProviders": "ارائه‌دهندگان",
   "agentProvidersTip": "کلیدهای API، مدل‌ها و مدلی که گفتگوی جدید استفاده می‌کند",
-  "agentTools": "ابزارها",
   "agentToolsTip": "آنچه Agent می‌تواند استفاده کند و سرورهای MCP آن",
   "agentSnippetToolsTip": "قطعه‌کدها را فهرست کنید، بیفزایید، ویرایش کنید یا حذف کنید.",
   "agentVirtToolsTip": "خواندن ماشین‌های مجازی و کانتینرهایی که برگه مجازی‌سازی بارگیری کرده است.",
@@ -1771,5 +1770,14 @@
   "monitorMcpScopePower": "تغذیه",
   "monitorMcpNameRequired": "نام را وارد کنید.",
   "monitorMcpScopesRequired": "حداقل یک مجوز انتخاب کنید.",
-  "monitorMcpPasswordRequired": "گذرواژه را وارد کنید."
+  "monitorMcpPasswordRequired": "گذرواژه را وارد کنید.",
+  "appMcpServer": "سرور MCP",
+  "appMcpClient": "ابزارها و کلاینت MCP",
+  "appMcpAddress": "IPv4:درگاه / [IPv6]:درگاه",
+  "appMcpRegistry": "فهرست توکن‌های MCP نامعتبر است.",
+  "appMcpName": "نام توکن را وارد کنید.",
+  "appMcpBusy": "تغییر دیگری در توکن‌ها در حال ذخیره است.",
+  "appMcpProtect": "محافظت از فایل توکن‌ها ممکن نشد.",
+  "appMcpListenBusy": "وضعیت سرور MCP در حال تغییر است.",
+  "appMcpInvalidAddress": "نشانی IP و درگاه را وارد کنید، برای مثال 0.0.0.0:49762 یا [::]:49762."
 }

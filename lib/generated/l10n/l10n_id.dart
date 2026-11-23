@@ -2067,9 +2067,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Kunci API, model, dan model untuk obrolan baru';
 
   @override
-  String get agentTools => 'Alat';
-
-  @override
   String get agentToolsTip =>
       'Apa yang boleh dipakai Agent, dan server MCP-nya';
 
@@ -7418,4 +7415,32 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'Masukkan kata sandi.';
+
+  @override
+  String get appMcpServer => 'Server MCP';
+
+  @override
+  String get appMcpClient => 'Alat dan klien MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:port / [IPv6]:port';
+
+  @override
+  String get appMcpRegistry => 'Registri token MCP tidak valid.';
+
+  @override
+  String get appMcpName => 'Masukkan nama token.';
+
+  @override
+  String get appMcpBusy => 'Perubahan token lain sedang disimpan.';
+
+  @override
+  String get appMcpProtect => 'Registri token tidak dapat dilindungi.';
+
+  @override
+  String get appMcpListenBusy => 'Status server MCP sedang berubah.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'Masukkan alamat IP dan port, misalnya 0.0.0.0:49762 atau [::]:49762.';
 }

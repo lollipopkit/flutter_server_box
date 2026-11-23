@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "画面を読む",
   "agentProviders": "プロバイダー",
   "agentProvidersTip": "API キー、モデル、新しいチャットで使うモデル",
-  "agentTools": "ツール",
   "agentToolsTip": "Agent が使えるツールと MCP サーバー",
   "agentSnippetToolsTip": "スニペットの一覧表示、追加、編集、削除ができます。",
   "agentVirtToolsTip": "仮想化タブが読み込んだ VM とコンテナを読み取ります。",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "電源",
   "monitorMcpNameRequired": "名前を入力してください。",
   "monitorMcpScopesRequired": "少なくとも 1 つの権限を選択してください。",
-  "monitorMcpPasswordRequired": "パスワードを入力してください。"
+  "monitorMcpPasswordRequired": "パスワードを入力してください。",
+  "appMcpServer": "MCP サーバー",
+  "appMcpClient": "ツールと MCP クライアント",
+  "appMcpAddress": "IPv4:ポート / [IPv6]:ポート",
+  "appMcpRegistry": "MCP トークンの設定ファイルが無効です。",
+  "appMcpName": "トークン名を入力してください。",
+  "appMcpBusy": "別のトークンの変更を保存中です。",
+  "appMcpProtect": "トークンファイルを保護できませんでした。",
+  "appMcpListenBusy": "MCP サーバーの状態を変更中です。",
+  "appMcpInvalidAddress": "IP アドレスとポートを入力してください（例：0.0.0.0:49762 または [::]:49762）。"
 }

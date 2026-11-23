@@ -2067,9 +2067,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'کلیدهای API، مدل‌ها و مدلی که گفتگوی جدید استفاده می‌کند';
 
   @override
-  String get agentTools => 'ابزارها';
-
-  @override
   String get agentToolsTip =>
       'آنچه Agent می‌تواند استفاده کند و سرورهای MCP آن';
 
@@ -7465,4 +7462,32 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorMcpPasswordRequired => 'گذرواژه را وارد کنید.';
+
+  @override
+  String get appMcpServer => 'سرور MCP';
+
+  @override
+  String get appMcpClient => 'ابزارها و کلاینت MCP';
+
+  @override
+  String get appMcpAddress => 'IPv4:درگاه / [IPv6]:درگاه';
+
+  @override
+  String get appMcpRegistry => 'فهرست توکن‌های MCP نامعتبر است.';
+
+  @override
+  String get appMcpName => 'نام توکن را وارد کنید.';
+
+  @override
+  String get appMcpBusy => 'تغییر دیگری در توکن‌ها در حال ذخیره است.';
+
+  @override
+  String get appMcpProtect => 'محافظت از فایل توکن‌ها ممکن نشد.';
+
+  @override
+  String get appMcpListenBusy => 'وضعیت سرور MCP در حال تغییر است.';
+
+  @override
+  String get appMcpInvalidAddress =>
+      'نشانی IP و درگاه را وارد کنید، برای مثال 0.0.0.0:49762 یا [::]:49762.';
 }

@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Ekranı oku",
   "agentProviders": "Sağlayıcılar",
   "agentProvidersTip": "API anahtarları, modeller ve yeni sohbetin modeli",
-  "agentTools": "Araçlar",
   "agentToolsTip": "Agent'ın kullanabildikleri ve MCP sunucuları",
   "agentSnippetToolsTip": "Snippet’leri listeleyin, ekleyin, düzenleyin ve silin.",
   "agentVirtToolsTip": "Sanallaştırma sekmesinin yüklediği VM ve konteynerleri oku.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Güç",
   "monitorMcpNameRequired": "Ad girin.",
   "monitorMcpScopesRequired": "En az bir izin seçin.",
-  "monitorMcpPasswordRequired": "Parolayı girin."
+  "monitorMcpPasswordRequired": "Parolayı girin.",
+  "appMcpServer": "MCP sunucusu",
+  "appMcpClient": "Araçlar ve MCP istemcisi",
+  "appMcpAddress": "IPv4:bağlantı noktası / [IPv6]:bağlantı noktası",
+  "appMcpRegistry": "MCP belirteç kaydı geçersiz.",
+  "appMcpName": "Bir belirteç adı girin.",
+  "appMcpBusy": "Başka bir belirteç değişikliği kaydediliyor.",
+  "appMcpProtect": "Belirteç dosyası korunamadı.",
+  "appMcpListenBusy": "MCP sunucusunun durumu değişiyor.",
+  "appMcpInvalidAddress": "IP adresi ve bağlantı noktası girin, ör. 0.0.0.0:49762 veya [::]:49762."
 }

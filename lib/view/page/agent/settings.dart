@@ -37,7 +37,7 @@ class AgentToolsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(context.l10n.agentTools)),
+      appBar: CustomAppBar(title: Text(context.l10n.appMcpClient)),
       body: const llm.ToolsPage(),
     );
   }

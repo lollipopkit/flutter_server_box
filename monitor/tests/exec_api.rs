@@ -357,7 +357,7 @@ async fn a_forged_token_is_refused() {
 }
 
 /// What ran is recorded before it runs, so a command that hangs or takes the
-/// agent down still leaves a trace.
+/// agent down still leaves a trace: by its programs, never its arguments.
 #[ntex::test]
 async fn the_command_is_audited() {
     let state = app_state().await;
@@ -373,7 +373,9 @@ async fn the_command_is_audited() {
     .fetch_one(&db)
     .await
     .unwrap();
-    assert_eq!(subject.as_deref(), Some("echo audited-command"));
+    let subject = subject.unwrap();
+    assert!(subject.starts_with("echo (20 bytes, blake3 "), "{subject}");
+    assert!(!subject.contains("audited-command"), "{subject}");
 }
 
 #[ntex::test]

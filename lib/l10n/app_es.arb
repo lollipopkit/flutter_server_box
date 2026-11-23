@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Leer la pantalla",
   "agentProviders": "Proveedores",
   "agentProvidersTip": "Claves de API, modelos y el modelo de un chat nuevo",
-  "agentTools": "Herramientas",
   "agentToolsTip": "Lo que el Agent puede usar y sus servidores MCP",
   "agentSnippetToolsTip": "Lista, añade, modifica y elimina fragmentos de código.",
   "agentVirtToolsTip": "Leer las VM y contenedores que ha cargado la pestaña Virtualización.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Energía",
   "monitorMcpNameRequired": "Introduce un nombre.",
   "monitorMcpScopesRequired": "Elige al menos un permiso.",
-  "monitorMcpPasswordRequired": "Introduce la contraseña."
+  "monitorMcpPasswordRequired": "Introduce la contraseña.",
+  "appMcpServer": "Servidor MCP",
+  "appMcpClient": "Herramientas y cliente MCP",
+  "appMcpAddress": "IPv4:puerto / [IPv6]:puerto",
+  "appMcpRegistry": "Registro de tokens MCP no válido.",
+  "appMcpName": "Introduce un nombre para el token.",
+  "appMcpBusy": "Se está guardando otro cambio en los tokens.",
+  "appMcpProtect": "No se pudo proteger el registro de tokens.",
+  "appMcpListenBusy": "El servidor MCP está cambiando de estado.",
+  "appMcpInvalidAddress": "Introduce una IP y un puerto, por ejemplo 0.0.0.0:49762 o [::]:49762."
 }

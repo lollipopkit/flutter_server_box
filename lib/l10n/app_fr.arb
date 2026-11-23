@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "Lire l'écran",
   "agentProviders": "Fournisseurs",
   "agentProvidersTip": "Clés d'API, modèles, et le modèle d'une nouvelle discussion",
-  "agentTools": "Outils",
   "agentToolsTip": "Ce que l'Agent peut utiliser, et ses serveurs MCP",
   "agentSnippetToolsTip": "Listez, ajoutez, modifiez et supprimez des snippets.",
   "agentVirtToolsTip": "Lire les VM et conteneurs chargés par l’onglet Virtualisation.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "Alimentation",
   "monitorMcpNameRequired": "Saisissez un nom.",
   "monitorMcpScopesRequired": "Choisissez au moins une permission.",
-  "monitorMcpPasswordRequired": "Saisissez le mot de passe."
+  "monitorMcpPasswordRequired": "Saisissez le mot de passe.",
+  "appMcpServer": "Serveur MCP",
+  "appMcpClient": "Outils et client MCP",
+  "appMcpAddress": "IPv4:port / [IPv6]:port",
+  "appMcpRegistry": "Registre de jetons MCP invalide.",
+  "appMcpName": "Saisissez un nom de jeton.",
+  "appMcpBusy": "Une modification des jetons est en cours.",
+  "appMcpProtect": "Impossible de protéger le registre de jetons.",
+  "appMcpListenBusy": "Le serveur MCP change d’état.",
+  "appMcpInvalidAddress": "Saisissez une adresse IP et un port, par exemple 0.0.0.0:49762 ou [::]:49762."
 }

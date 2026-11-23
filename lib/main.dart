@@ -18,6 +18,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/motion.dart';
+import 'package:server_box/core/service/app_mcp.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
@@ -89,6 +90,7 @@ Future<void> main() async {
       runApp(RescueApp(page: LaunchFailedPage(err: e, stack: s, logDir: _logDir())));
       return;
     }
+    unawaited(startAppMcp(container));
     runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
   });
 }

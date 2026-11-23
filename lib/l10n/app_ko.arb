@@ -628,7 +628,6 @@
   "agentToolTerminalScreen": "화면 읽기",
   "agentProviders": "제공자",
   "agentProvidersTip": "API 키, 모델, 새 채팅에 쓰는 모델",
-  "agentTools": "도구",
   "agentToolsTip": "Agent가 쓸 수 있는 도구와 MCP 서버",
   "agentSnippetToolsTip": "snippet을 나열하고 추가, 수정 또는 삭제합니다.",
   "agentVirtToolsTip": "가상화 탭이 불러온 VM과 컨테이너를 읽습니다.",
@@ -2088,5 +2087,14 @@
   "monitorMcpScopePower": "전원",
   "monitorMcpNameRequired": "이름을 입력하세요.",
   "monitorMcpScopesRequired": "하나 이상의 권한을 선택하세요.",
-  "monitorMcpPasswordRequired": "비밀번호를 입력하세요."
+  "monitorMcpPasswordRequired": "비밀번호를 입력하세요.",
+  "appMcpServer": "MCP 서버",
+  "appMcpClient": "도구 및 MCP 클라이언트",
+  "appMcpAddress": "IPv4:포트 / [IPv6]:포트",
+  "appMcpRegistry": "MCP 토큰 저장소 형식이 잘못되었습니다.",
+  "appMcpName": "토큰 이름을 입력하세요.",
+  "appMcpBusy": "다른 토큰 변경 사항을 저장하고 있습니다.",
+  "appMcpProtect": "토큰 파일을 보호할 수 없습니다.",
+  "appMcpListenBusy": "MCP 서버 상태를 변경하고 있습니다.",
+  "appMcpInvalidAddress": "IP 주소와 포트를 입력하세요. 예: 0.0.0.0:49762 또는 [::]:49762."
 }
