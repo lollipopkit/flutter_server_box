@@ -420,9 +420,9 @@ final class BmcCard extends ConsumerWidget {
               Text(
                 '${watts.toStringAsFixed(0)} W',
                 style: TextStyle(
-                  fontSize: 21,
+                  fontSize: 16,
                   height: 1.1,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   fontFeatures: kTabularFigures,
                   color: isOff ? Colors.grey : null,
                 ),
