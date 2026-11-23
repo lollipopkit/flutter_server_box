@@ -376,9 +376,15 @@ abstract final class ServerShareCodec {
     }
 
     try {
+      final legacyBmc = decoded['bmc'] is Map
+          ? BmcCfg.fromJson(
+              Map<String, dynamic>.from(decoded['bmc'] as Map),
+            ).copyWith(credId: null)
+          : null;
       return ServerShare(
         version: ServerShare.formatVer,
         spi: Spi.fromJson(decoded),
+        bmc: legacyBmc,
       );
     } catch (e) {
       throw ServerShareUnreadableException(e);

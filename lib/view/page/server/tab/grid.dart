@@ -235,12 +235,12 @@ extension _Grid on _ServerPageState {
     if (target == null) return;
     await confirmAndRunBmcPowerOn(
       context: context,
+      ref: ref,
       target: target,
       run: () {
         if (!mounted) return Future.value(BmcPowerResult.failed);
-        final latest = ref.read(bmcTargetsProvider).forServer(serverId) ?? target;
         return ref
-            .read(bmcSummaryProvider(latest.id).notifier)
+            .read(bmcSummaryProvider(target.id).notifier)
             .power(PowerIntent.on_);
       },
     );

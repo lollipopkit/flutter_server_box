@@ -94,6 +94,10 @@ class BmcNotifier extends _$BmcNotifier {
   /// tell that its answer is no longer wanted.
   var _generation = 0;
 
+  /// Current endpoint/connection generation; changes whenever connection
+  /// settings (address, credentials, or cert pin) rebuild this notifier.
+  int get endpointGeneration => _generation;
+
   /// The build generation whose read is going, if one is.
   ///
   /// The timer fires on a fixed period; a poll of a slow BMC can take longer
@@ -291,12 +295,20 @@ class BmcNotifier extends _$BmcNotifier {
   /// Never called by a test against real hardware. What the caller must not skip is the
   /// confirmation: this is the one thing in the app that can take a running
   /// server away from whoever is using it.
-  Future<BmcPowerResult> power(PowerIntent intent) async {
+  Future<BmcPowerResult> power(
+    PowerIntent intent, {
+    ResetRequest? expectedRequest,
+  }) async {
     final client = _client;
     final topology = state.topology;
     final request = plan(intent);
     if (client == null || topology == null || request == null) {
       return BmcPowerResult.notSupported;
+    }
+    if (expectedRequest != null &&
+        (request.target != expectedRequest.target ||
+            request.resetType != expectedRequest.resetType)) {
+      return BmcPowerResult.failed;
     }
     // One at a time: two resets watched at once contradict each other, and
     // the first to finish would reopen polling under the second.
@@ -354,8 +366,12 @@ class BmcNotifier extends _$BmcNotifier {
   /// initial discovery when it has not completed yet, and fails with `closed`
   /// once the config changed under it.
   Future<T> _with<T>(
-    Future<T> Function(BmcClient client, RedfishTopology topology) fn,
-  ) async {
+    Future<T> Function(BmcClient client, RedfishTopology topology) fn, {
+    int? expectedGeneration,
+  }) async {
+    if (expectedGeneration != null && expectedGeneration != _generation) {
+      throw const BmcError(failure: RedfishFailure.closed);
+    }
     final client = _client;
     if (client == null) {
       throw BmcError(
@@ -370,7 +386,9 @@ class BmcNotifier extends _$BmcNotifier {
         await refresh();
       }
     }
-    if (!ref.mounted || !identical(_client, client)) {
+    if (!ref.mounted ||
+        !identical(_client, client) ||
+        (expectedGeneration != null && expectedGeneration != _generation)) {
       throw const BmcError(failure: RedfishFailure.closed);
     }
     final topology = state.topology;
@@ -386,12 +404,18 @@ class BmcNotifier extends _$BmcNotifier {
   Future<List<LogService>> logServices() =>
       _with((c, t) => c.logServices(topology: t));
 
-  Future<LogPage> logEntries(LogService service) =>
-      _with((c, _) => c.logEntries(service: service));
+  Future<LogPage> logEntries(LogService service, {int? expectedGeneration}) =>
+      _with(
+        (c, _) => c.logEntries(service: service),
+        expectedGeneration: expectedGeneration,
+      );
 
-  Future<void> clearLog(LogService service) async {
+  Future<void> clearLog(LogService service, {int? expectedGeneration}) async {
     Diag.crumb(SbDiag.bmc, 'clear log');
-    await _with((c, _) => c.clearLog(service: service));
+    await _with(
+      (c, _) => c.clearLog(service: service),
+      expectedGeneration: expectedGeneration,
+    );
   }
 
   Future<StorageReport> storage() => _with((c, t) => c.storage(topology: t));

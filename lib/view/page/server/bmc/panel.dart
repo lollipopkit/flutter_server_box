@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
@@ -108,6 +109,8 @@ final class BmcPowerActions extends ConsumerWidget {
     final notifier = ref.read(bmcProvider(target.id).notifier);
     final request = notifier.plan(intent);
     if (request == null) return;
+    final expectedAddr = target.addr.trim();
+    final expectedCert = target.certSha256;
 
     final ok = await context.showSheet<bool>(
       title: bmcIntentText(intent),
@@ -116,7 +119,24 @@ final class BmcPowerActions extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
 
-    final result = await notifier.power(intent);
+    final currentTarget = ref.read(bmcTargetsProvider).targets[target.id];
+    if (currentTarget != null &&
+        (currentTarget.addr.trim() != expectedAddr ||
+            currentTarget.certSha256 != expectedCert)) {
+      Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+      return;
+    }
+
+    final liveNotifier = ref.read(bmcProvider(target.id).notifier);
+    final currentPlan = liveNotifier.plan(intent);
+    if (currentPlan == null ||
+        currentPlan.target != request.target ||
+        currentPlan.resetType != request.resetType) {
+      Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+      return;
+    }
+
+    final result = await liveNotifier.power(intent, expectedRequest: request);
     switch (result) {
       case BmcPowerResult.confirmed:
         Toast.success(l10n.bmcPowerDone);

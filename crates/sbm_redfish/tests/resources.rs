@@ -446,11 +446,11 @@ fn power_sensors_prioritizes_total_over_per_rail_sensors() {
         "/redfish/v1/Chassis/1/Sensors/Cpu1Power".into(),
         "/redfish/v1/Chassis/1/Sensors/Dimm0Power".into(),
         "/redfish/v1/Chassis/1/Sensors/Dimm1Power".into(),
+        "/redfish/v1/Chassis/1/Sensors/Psu0InputPower".into(),
+        "/redfish/v1/Chassis/1/Sensors/Psu1InputPower".into(),
+        "/redfish/v1/Chassis/1/Sensors/SystemPower".into(),
+        "/redfish/v1/Chassis/1/Sensors/ChassisPower".into(),
         "/redfish/v1/Chassis/1/Sensors/Gpu0Power".into(),
-        "/redfish/v1/Chassis/1/Sensors/Gpu1Power".into(),
-        "/redfish/v1/Chassis/1/Sensors/Pcie0Power".into(),
-        "/redfish/v1/Chassis/1/Sensors/Pcie1Power".into(),
-        "/redfish/v1/Chassis/1/Sensors/Psu0Power".into(),
         "/redfish/v1/Chassis/1/Sensors/TotalPower".into(),
     ];
     let filtered = sbm_redfish::model::power_sensors(members);
@@ -458,17 +458,34 @@ fn power_sensors_prioritizes_total_over_per_rail_sensors() {
         filtered.first().map(String::as_str),
         Some("/redfish/v1/Chassis/1/Sensors/TotalPower")
     );
+    assert_eq!(
+        filtered.get(1).map(String::as_str),
+        Some("/redfish/v1/Chassis/1/Sensors/SystemPower")
+    );
+    assert_eq!(
+        filtered.get(2).map(String::as_str),
+        Some("/redfish/v1/Chassis/1/Sensors/ChassisPower")
+    );
+    assert_eq!(
+        filtered.get(3).map(String::as_str),
+        Some("/redfish/v1/Chassis/1/Sensors/Psu0InputPower")
+    );
+    assert_eq!(
+        filtered.get(4).map(String::as_str),
+        Some("/redfish/v1/Chassis/1/Sensors/Psu1InputPower")
+    );
 }
 
 #[tokio::test]
 async fn summary_modern_falls_back_to_legacy_power_when_sensor_ids_opaque() {
     let mut resources = vendor("openbmc");
-    // Dual-model chassis: links both modern Sensors (with opaque numeric IDs)
-    // and legacy Power.
+    // Dual-model chassis: links PowerSubsystem + Sensors (selecting Modern)
+    // alongside legacy Power.
     resources.insert(
         "/redfish/v1/Chassis/chassis".into(),
         json!({
             "@odata.id": "/redfish/v1/Chassis/chassis",
+            "PowerSubsystem": {"@odata.id": "/redfish/v1/Chassis/chassis/PowerSubsystem"},
             "Sensors": {"@odata.id": "/redfish/v1/Chassis/chassis/Sensors"},
             "Power": {"@odata.id": "/redfish/v1/Chassis/chassis/Power"},
         }),
@@ -484,4 +501,7 @@ async fn summary_modern_falls_back_to_legacy_power_when_sensor_ids_opaque() {
     let t = FakeTransport::new(resources);
     let result = sbm_redfish::summary(&t, None).await.unwrap();
     assert_eq!(result.watts, Some(198.5));
+    let gets = t.gets.lock().unwrap();
+    assert!(gets.iter().any(|p| p.ends_with("/Sensors")));
+    assert!(gets.iter().any(|p| p.ends_with("/Power")));
 }

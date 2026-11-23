@@ -459,6 +459,66 @@ void main() {
     expect(saved?.addr, 'https://10.0.0.20');
     expect(saved?.certSha256, isNull);
   });
+
+  testWidgets('BmcTargetEditPage name-only edit preserves synced addr and certSha256', (
+    tester,
+  ) async {
+    const original = BmcTarget(
+      id: 'b-sync-edit',
+      name: 'old-name',
+      addr: 'https://10.0.0.10',
+      credId: 'c1',
+      certSha256: '1111111111111111111111111111111111111111111111111111111111111111',
+    );
+    Stores.bmcTarget.put(original);
+
+    late ProviderContainer container;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: const [...appLocalizationsDelegates],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (_, child) => ToastHost(child: child ?? const SizedBox()),
+          home: Consumer(
+            builder: (context, ref, _) {
+              l10n = AppLocalizations.of(context)!;
+              context.setLibL10n();
+              container = ProviderScope.containerOf(context);
+              return const BmcTargetEditPage(
+                args: BmcTargetEditArgs(target: original),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await settle(tester);
+
+    // Background sync updates addr and certSha256 while editor is open.
+    container.read(bmcTargetsProvider.notifier).update(
+      original,
+      original.copyWith(
+        addr: 'https://10.0.0.99',
+        certSha256: '2222222222222222222222222222222222222222222222222222222222222222',
+      ),
+    );
+    await tester.pump();
+
+    // User only edits the name and saves.
+    final nameField = find.widgetWithText(TextField, 'old-name');
+    await tester.enterText(nameField, 'renamed-bmc');
+    await tester.pump();
+    await tester.tap(find.byType(FloatingActionButton));
+    await settle(tester);
+
+    final saved = Stores.bmcTarget.fetchOne('b-sync-edit');
+    expect(saved?.name, 'renamed-bmc');
+    expect(saved?.addr, 'https://10.0.0.99');
+    expect(
+      saved?.certSha256,
+      '2222222222222222222222222222222222222222222222222222222222222222',
+    );
+  });
 }
 
 final class _DetailFakeBmc extends BmcNotifier {

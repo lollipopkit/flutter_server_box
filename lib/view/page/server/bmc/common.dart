@@ -126,30 +126,50 @@ Future<bool> trustBmcTargetCert(
   WidgetRef ref,
   BmcTarget target,
 ) async {
+  final reviewedAddr = target.addr.trim();
   final fp = await reviewBmcCert(
     context,
-    addr: target.addr,
+    addr: reviewedAddr,
     pinned: target.certSha256,
     reconnects: true,
   );
   if (fp == null || !context.mounted) return false;
-  ref.read(bmcTargetsProvider.notifier).updateCertPin(target.id, fp);
+  final saved = ref
+      .read(bmcTargetsProvider.notifier)
+      .updateCertPin(target.id, fp, expectedAddr: reviewedAddr);
+  if (!saved) {
+    Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+    return false;
+  }
   return true;
 }
 
 /// Asks for confirmation before sending Power On to [target], runs [run], and
 /// surfaces the outcome via toast.
+///
+/// Captures [target]'s address and certificate pin before opening the sheet and
+/// aborts without sending if either changed while the confirmation was open.
 Future<void> confirmAndRunBmcPowerOn({
   required BuildContext context,
+  required WidgetRef ref,
   required BmcTarget target,
   required Future<BmcPowerResult> Function() run,
 }) async {
+  final expectedAddr = target.addr.trim();
+  final expectedCert = target.certSha256;
   final ok = await context.showSheet<bool>(
     title: l10n.bmcPowerOnAction,
     child: Text(l10n.bmcPowerConfirm(target.name, 'On')),
     actions: Btnx.cancelOk,
   );
   if (ok != true || !context.mounted) return;
+  final current = ref.read(bmcTargetsProvider).targets[target.id];
+  if (current == null ||
+      current.addr.trim() != expectedAddr ||
+      current.certSha256 != expectedCert) {
+    Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+    return;
+  }
   final result = await run();
   switch (result) {
     case BmcPowerResult.confirmed:

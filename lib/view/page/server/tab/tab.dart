@@ -610,54 +610,66 @@ class _ServerPageState extends ConsumerState<ServerPage>
       for (final target in standaloneBmcs) BmcCardItem(target),
     ];
 
-    final needsState = ServerSortOrder.of(_tag.value).field.readsStatus;
-    final serverStates = !needsState
-        ? const <String, ServerState>{}
-        : {for (final id in serverOrder) id: ref.watch(serverProvider(id))};
-    final bmcStates = !needsState
-        ? const <String, BmcSummaryState>{}
-        : {
-            for (final target in standaloneBmcs)
-              target.id: ref.watch(bmcSummaryProvider(target.id)),
-          };
-
     return _ServerOpenRequest(
       split: _opensInPlace(context),
       onOpen: _openRequestedServer,
       child: ListenableBuilder(
-        listenable: Listenable.merge([_tag, _sortVersion, _search, _globe]),
-        builder: (_, _) {
-          final ordered = ServerSortOrder.of(_tag.value).applyItems(
-            rawItems,
-            serverStateOf: (id) =>
-                serverStates[id] ?? ref.read(serverProvider(id)),
-            bmcStateOf: (target) =>
-                bmcStates[target.id] ?? ref.read(bmcSummaryProvider(target.id)),
-          );
-          final filtered = _filterItems(ordered);
-          _lastFiltered = filtered;
-          if (_heroId != null && !filtered.any((i) => i.cardKey == _heroId)) {
-            _resetMissingHero();
-          }
-          final openItem = openKey == null
-              ? null
-              : filtered.firstWhereOrNull((i) => i.cardKey == openKey);
-          final hasServers = filtered.any((i) => i is ServerCardItem);
-          final globe = _globe.value && hasServers && openItem == null;
-          _publishImmersive(globe);
-          return _bound(
-            _buildScaffold(
-              _buildBodySmall(
-                filtered: filtered,
-                globe: globe,
-                openItem: openItem,
-              ),
-              bare: globe,
-              openItem: openItem,
-              filtered: filtered,
-            ),
-          );
-        },
+        listenable: Listenable.merge([_tag, _sortVersion]),
+        builder: (_, _) => Consumer(
+          builder: (_, ref, _) {
+            final sortOrder = ServerSortOrder.of(_tag.value);
+            final needsState = sortOrder.field.readsStatus;
+            final serverStates = !needsState
+                ? const <String, ServerState>{}
+                : {
+                    for (final id in serverOrder) id: ref.watch(serverProvider(id)),
+                  };
+            final bmcStates = !needsState
+                ? const <String, BmcSummaryState>{}
+                : {
+                    for (final target in standaloneBmcs)
+                      target.id: ref.watch(bmcSummaryProvider(target.id)),
+                  };
+
+            return ListenableBuilder(
+              listenable: Listenable.merge([_search, _globe]),
+              builder: (_, _) {
+                final ordered = sortOrder.applyItems(
+                  rawItems,
+                  serverStateOf: (id) =>
+                      serverStates[id] ?? ref.read(serverProvider(id)),
+                  bmcStateOf: (target) =>
+                      bmcStates[target.id] ??
+                      ref.read(bmcSummaryProvider(target.id)),
+                );
+                final filtered = _filterItems(ordered);
+                _lastFiltered = filtered;
+                if (_heroId != null &&
+                    !filtered.any((i) => i.cardKey == _heroId)) {
+                  _resetMissingHero();
+                }
+                final openItem = openKey == null
+                    ? null
+                    : filtered.firstWhereOrNull((i) => i.cardKey == openKey);
+                final hasServers = filtered.any((i) => i is ServerCardItem);
+                final globe = _globe.value && hasServers && openItem == null;
+                _publishImmersive(globe);
+                return _bound(
+                  _buildScaffold(
+                    _buildBodySmall(
+                      filtered: filtered,
+                      globe: globe,
+                      openItem: openItem,
+                    ),
+                    bare: globe,
+                    openItem: openItem,
+                    filtered: filtered,
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

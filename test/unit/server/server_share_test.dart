@@ -289,6 +289,21 @@ void main() {
       final share = ServerShareCodec.decode(legacy);
       expect(share.spi.name, 'old');
       expect(share.keys, isEmpty);
+      expect(share.bmc, isNull);
+    });
+
+    test('a clear-text Spi with legacy nested bmc lifts bmc and strips credId', () {
+      final raw = Map<String, dynamic>.from(_spi(name: 'old-bmc').toJson())
+        ..['bmc'] = {
+          'addr': 'https://10.0.0.9',
+          'credId': 'secret-cred-id',
+          'certSha256': 'abcd',
+        };
+      final share = ServerShareCodec.decode(json.encode(raw));
+      expect(share.spi.name, 'old-bmc');
+      expect(share.bmc?.addr, 'https://10.0.0.9');
+      expect(share.bmc?.certSha256, 'abcd');
+      expect(share.bmc?.credId, isNull);
     });
 
     test('a payload from a newer build is refused', () {

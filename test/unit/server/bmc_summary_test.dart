@@ -216,6 +216,65 @@ void main() {
     expect(reads, greaterThanOrEqualTo(2));
   });
 
+  test('BmcSummaryNotifier.power clears isPowering and resumes refresh when connection rebuilds mid-flight', () async {
+    final powerGate = Completer<void>();
+    var reads = 0;
+    BmcSummaryNotifier.testReadSummary = (target, _) async {
+      reads++;
+      return BmcSummary(topology: _topology(PowerState.off), watts: 10.0);
+    };
+    BmcSummaryNotifier.testPower = (_, _, _) async {
+      await powerGate.future;
+      return const BmcOutcome();
+    };
+
+    const target = BmcTarget(
+      id: 'bmc-rebuild',
+      name: 'rack',
+      addr: 'https://10.0.0.10',
+      credId: 'c1',
+    );
+    final targets = _FakeTargets([target]);
+    final container = ProviderContainer(
+      overrides: [
+        bmcCredentialProvider.overrideWith(_FakeCreds.new),
+        bmcTargetsProvider.overrideWith(() => targets),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final firstDone = Completer<void>();
+    final sub = container.listen(bmcSummaryProvider(target.id), (_, next) {
+      if (!next.isBusy && next.hasData && !firstDone.isCompleted) {
+        firstDone.complete();
+      }
+    }, fireImmediately: true);
+    addTearDown(sub.close);
+    await firstDone.future.timeout(const Duration(seconds: 5));
+    expect(reads, 1);
+
+    final powerFuture = container
+        .read(bmcSummaryProvider(target.id).notifier)
+        .power(PowerIntent.on_);
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(bmcSummaryProvider(target.id)).isPowering, isTrue);
+
+    // Trigger a connection rebuild (changing certSha256) while power() is in flight.
+    targets.replace(target.copyWith(certSha256: 'newpin'));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(container.read(bmcSummaryProvider(target.id)).isPowering, isTrue);
+
+    // Complete power(): isPowering must clear and the skipped refresh must run.
+    powerGate.complete();
+    await powerFuture;
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+
+    final after = container.read(bmcSummaryProvider(target.id));
+    expect(after.isPowering, isFalse);
+    expect(after.isBusy, isFalse);
+    expect(reads, greaterThanOrEqualTo(2));
+  });
+
   test('ServerSortOrder.applyItems sorts mixed servers and BMCs coherently', () {
     final srvZ = spiFixture(id: 's-z', name: 'zeta', ip: '10.0.0.2');
     final srvA = spiFixture(id: 's-a', name: 'alpha', ip: '10.0.0.1');

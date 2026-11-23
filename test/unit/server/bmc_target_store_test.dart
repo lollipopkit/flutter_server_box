@@ -328,6 +328,32 @@ void main() {
     expect(Stores.bmcTarget.synced.lastModTime, deleteAt);
   });
 
+  test('EntityStore.merge server tombstone does not lower newer bmc_target updated_at', () {
+    Stores.server.put(spiFixture(id: 's1', name: 'web', ip: '10.0.0.1'));
+    Stores.bmcTarget.put(
+      const BmcTarget(
+        id: 'b1',
+        name: 'web-bmc',
+        addr: 'https://10.0.0.11',
+        serverId: 's1',
+      ),
+    );
+    final newerBmcTs = Stores.bmcTarget.synced.lastModTime + 50000;
+    Stores.bmcTarget.synced.stamp('b1', at: newerBmcTs);
+    final olderDeleteAt = newerBmcTs - 10000;
+
+    final changed = Stores.server.merge(
+      {
+        StoreDefaults.defaultLastUpdateTsKey: {'s1': olderDeleteAt},
+      },
+      force: false,
+    );
+    expect(changed, isTrue);
+    Stores.bmcTarget.invalidate();
+    expect(Stores.bmcTarget.fetchOne('b1')?.serverId, isNull);
+    expect(Stores.bmcTarget.synced.lastModTime, newerBmcTs);
+  });
+
   test('BmcTargetsNotifier & BmcSelection handle CRUD, tags, cert pin, mutual exclusion, and selection cleanup', () {
     Stores.bmcCredential.put(
       const BmcCredential(id: 'c1', name: 'rack', user: 'root', pwd: 'pw'),
@@ -361,7 +387,26 @@ void main() {
     selection.select('b1');
     expect(container.read(bmcSelectionProvider), 'b1');
 
-    notifier.updateCertPin('b1', 'deadbeef');
+    // Mismatched expectedAddr rejects stale cert pin write.
+    expect(
+      notifier.updateCertPin(
+        'b1',
+        'badpin',
+        expectedAddr: 'https://10.0.0.99',
+      ),
+      isFalse,
+    );
+    expect(container.read(bmcTargetsProvider).targets['b1']?.certSha256, isNull);
+
+    // Matching expectedAddr persists the pin.
+    expect(
+      notifier.updateCertPin(
+        'b1',
+        'deadbeef',
+        expectedAddr: 'https://10.0.0.11',
+      ),
+      isTrue,
+    );
     expect(container.read(bmcTargetsProvider).targets['b1']?.certSha256, 'deadbeef');
 
     notifier.setTags('b1', const ['rack-a', 'gpu']);

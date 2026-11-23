@@ -106,8 +106,24 @@ extension _Tags on _ServerEditPageState {
     }
     if (getIt.isRegistered<BmcTargetStore>()) {
       final bmcNotifier = ref.read(bmcTargetsProvider.notifier);
-      for (final entry in _pendingTagRenames.entries) {
-        bmcNotifier.renameTag(entry.key, entry.value);
+      for (final target
+          in ref.read(bmcTargetsProvider).targets.values.toList()) {
+        final tags = target.tags;
+        if (tags == null || tags.isEmpty) continue;
+
+        var changed = false;
+        final next = <String>[];
+        for (final tag in tags) {
+          final to = _pendingTagRenames[tag];
+          if (to == null) {
+            if (!next.contains(tag)) next.add(tag);
+            continue;
+          }
+          changed = true;
+          if (!next.contains(to)) next.add(to);
+        }
+        if (!changed) continue;
+        bmcNotifier.setTags(target.id, next.isEmpty ? null : next);
       }
     }
     _pendingTagRenames.clear();

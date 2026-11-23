@@ -151,15 +151,22 @@ extension on _ServerDetailPageState {
             gap: 8,
             onTap: bmcState!.isPowering
                 ? null
-                : () => unawaited(
-                    confirmAndRunBmcPowerOn(
-                      context: context,
-                      target: linkedBmc,
-                      run: () => ref
-                          .read(bmcProvider(linkedBmc.id).notifier)
-                          .power(PowerIntent.on_),
-                    ),
-                  ),
+                : () {
+                    final expected = ref
+                        .read(bmcProvider(linkedBmc.id).notifier)
+                        .plan(PowerIntent.on_);
+                    if (expected == null) return;
+                    unawaited(
+                      confirmAndRunBmcPowerOn(
+                        context: context,
+                        ref: ref,
+                        target: linkedBmc,
+                        run: () => ref
+                            .read(bmcProvider(linkedBmc.id).notifier)
+                            .power(PowerIntent.on_, expectedRequest: expected),
+                      ),
+                    );
+                  },
           ),
         retry,
         edit,

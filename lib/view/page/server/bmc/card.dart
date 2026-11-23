@@ -773,6 +773,7 @@ final class BmcCard extends ConsumerWidget {
   Future<void> _onQuickPowerOn(BuildContext context, WidgetRef ref) =>
       confirmAndRunBmcPowerOn(
         context: context,
+        ref: ref,
         target: target,
         run: () => ref
             .read(bmcSummaryProvider(target.id).notifier)

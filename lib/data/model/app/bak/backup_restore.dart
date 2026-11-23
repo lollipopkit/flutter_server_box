@@ -454,9 +454,8 @@ extension BackupV2Restore on BackupV2 {
       final targetId =
           Stores.bmcTarget.forServer(serverId)?.id ?? 'bmc_$serverId';
       final rawCredId = bmc['credId'];
-      final credId = rawCredId is String
-          ? (credIds[rawCredId] ?? rawCredId)
-          : null;
+      // `_serverWithRestoredIds` already remapped `bmc['credId']` through `credIds`.
+      final credId = rawCredId is String ? rawCredId : null;
       liftedServerIds.add(serverId);
       lifted[targetId] = <String, Object?>{
         'id': targetId,

@@ -228,7 +228,10 @@ class BmcSummaryNotifier extends _$BmcSummaryNotifier {
 
     try {
       final result = await BmcPollBudget.shared.run(() async {
-        if (!ref.mounted || generation != _generation || seq != _refreshSeq) {
+        if (!ref.mounted ||
+            generation != _generation ||
+            seq != _refreshSeq ||
+            (!force && _paused)) {
           return null;
         }
         if (testReadSummary case final hook?) {
@@ -258,10 +261,18 @@ class BmcSummaryNotifier extends _$BmcSummaryNotifier {
           }
         }
       });
-      if (result == null ||
-          !ref.mounted ||
-          generation != _generation ||
-          seq != _refreshSeq) {
+      if (result == null) {
+        if (ref.mounted &&
+            generation == _generation &&
+            seq == _refreshSeq &&
+            !force &&
+            _paused &&
+            state.isBusy) {
+          state = state.copyWith(isBusy: false);
+        }
+        return;
+      }
+      if (!ref.mounted || generation != _generation || seq != _refreshSeq) {
         return;
       }
 
@@ -362,9 +373,15 @@ class BmcSummaryNotifier extends _$BmcSummaryNotifier {
       return BmcPowerResult.failed;
     } finally {
       _powering = false;
-      if (ref.mounted && generation == _generation) {
+      if (ref.mounted) {
         state = state.copyWith(isPowering: false);
-        unawaited(refresh(force: true));
+        if (generation == _generation) {
+          unawaited(refresh(force: true));
+        } else if (!_paused && state.isBusy) {
+          // A rebuild during power() skipped its initial refresh while
+          // `_powering` was true.
+          unawaited(refresh());
+        }
       }
     }
   }

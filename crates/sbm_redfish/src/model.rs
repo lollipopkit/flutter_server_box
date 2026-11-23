@@ -882,9 +882,15 @@ pub fn power_sensors(members: Vec<String>) -> Vec<String> {
         .collect();
     out.sort_by_key(|path| {
         let id = seg_lower(path);
-        !["total", "system", "chassis", "input"]
-            .iter()
-            .any(|kind| id.contains(kind))
+        if id.contains("total") {
+            0u8
+        } else if id.contains("system") || id.contains("chassis") {
+            1u8
+        } else if id.contains("input") {
+            2u8
+        } else {
+            3u8
+        }
     });
     out
 }

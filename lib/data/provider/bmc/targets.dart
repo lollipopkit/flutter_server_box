@@ -98,10 +98,18 @@ class BmcTargetsNotifier extends _$BmcTargetsNotifier {
   }
 
   /// Persists a newly reviewed leaf certificate SHA-256 fingerprint on [id].
-  void updateCertPin(String id, String sha256) {
+  ///
+  /// When [expectedAddr] is given, refuses the write if the target's address
+  /// changed in the meantime so a pin reviewed for one host is never stored on
+  /// another.
+  bool updateCertPin(String id, String sha256, {String? expectedAddr}) {
     final existing = state.targets[id];
-    if (existing == null) return;
+    if (existing == null) return false;
+    if (expectedAddr != null && existing.addr.trim() != expectedAddr.trim()) {
+      return false;
+    }
     update(existing, existing.copyWith(certSha256: sha256));
+    return true;
   }
 
   /// Updates or clears tags on [id].

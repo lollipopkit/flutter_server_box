@@ -317,6 +317,76 @@ final class _BmcTargetEditPageState extends ConsumerState<BmcTargetEditPage> {
 
   void _onSave() {
     final addr = _addrCtrl.text.trim();
+    final existing = _existing;
+    final notifier = ref.read(bmcTargetsProvider.notifier);
+
+    if (existing != null) {
+      final latest = ref.read(bmcTargetsProvider).targets[existing.id];
+      final nameText = _nameCtrl.text.trim();
+      final nameChanged = nameText != existing.name.trim();
+      final addrChanged = addr != existing.addr.trim();
+      final credChanged = _credId != existing.credId;
+      final certChanged = _effectiveCertSha256 != existing.certSha256;
+      final serverChanged = _serverId != existing.serverId;
+      final oldTags = Set<String>.from(existing.tags ?? const []);
+      final tagsChanged =
+          _tags.value.length != oldTags.length ||
+          !_tags.value.containsAll(oldTags);
+
+      if (latest != null &&
+          !addrChanged &&
+          certChanged &&
+          latest.addr.trim() != existing.addr.trim()) {
+        Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+        return;
+      }
+
+      final base = latest ?? existing;
+      final finalAddr = addrChanged ? addr : base.addr;
+      final uri = BmcCfg.parseUri(finalAddr);
+      if (uri == null) {
+        Toast.error(l10n.bmcAddrInvalid);
+        return;
+      }
+      final finalCredId = credChanged ? _credId : base.credId;
+      final creds = ref.read(bmcCredentialProvider).creds;
+      final hasCred =
+          finalCredId != null &&
+          finalCredId.isNotEmpty &&
+          creds.any((c) => c.id == finalCredId);
+      if (!hasCred) {
+        Toast.error(l10n.bmcAccountMissing);
+        return;
+      }
+
+      final finalName = nameChanged
+          ? (nameText.isEmpty ? uri.host : nameText)
+          : base.name;
+      final finalTags = tagsChanged
+          ? (_tags.value.isEmpty ? null : List<String>.from(_tags.value))
+          : base.tags;
+      final finalCert = addrChanged
+          ? _effectiveCertSha256
+          : (certChanged ? _effectiveCertSha256 : base.certSha256);
+
+      final merged = BmcTarget(
+        id: base.id,
+        name: finalName,
+        addr: finalAddr,
+        credId: finalCredId,
+        certSha256: finalCert,
+        serverId: serverChanged ? _serverId : base.serverId,
+        tags: finalTags,
+      );
+      if (latest != null) {
+        notifier.update(latest, merged);
+      } else {
+        notifier.add(merged);
+      }
+      context.pop(merged);
+      return;
+    }
+
     final uri = BmcCfg.parseUri(addr);
     if (uri == null) {
       Toast.error(l10n.bmcAddrInvalid);
@@ -337,7 +407,7 @@ final class _BmcTargetEditPageState extends ConsumerState<BmcTargetEditPage> {
     final tags = _tags.value.isEmpty ? null : List<String>.from(_tags.value);
 
     final target = BmcTarget(
-      id: _existing?.id ?? ShortId.generate(),
+      id: ShortId.generate(),
       name: name,
       addr: addr,
       credId: _credId,
@@ -345,13 +415,7 @@ final class _BmcTargetEditPageState extends ConsumerState<BmcTargetEditPage> {
       serverId: _serverId,
       tags: tags,
     );
-
-    final notifier = ref.read(bmcTargetsProvider.notifier);
-    if (_existing case final old?) {
-      notifier.update(old, target);
-    } else {
-      notifier.add(target);
-    }
+    notifier.add(target);
     context.pop(target);
   }
 

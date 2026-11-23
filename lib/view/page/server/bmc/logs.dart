@@ -24,15 +24,19 @@ final class BmcLogsPage extends ConsumerStatefulWidget {
   ConsumerState<BmcLogsPage> createState() => _BmcLogsPageState();
 }
 
+typedef _BmcEndpoint = ({String addr, String? credId, String? certSha256});
+
 final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   List<LogService>? _services;
   LogService? _picked;
   LogPage? _page;
   String? _err;
   var _loading = false;
+  _BmcEndpoint? _activeEndpoint;
+  int? _servicesGen;
 
-  /// Rises on every read, so a slow answer for a log no longer picked is
-  /// dropped.
+  /// Rises on every read or endpoint change, so a slow answer for a previous
+  /// log or endpoint is dropped.
   var _read = 0;
 
   BmcTarget get _target =>
@@ -40,9 +44,16 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
       widget.args.target;
   BmcNotifier get _bmc => ref.read(bmcProvider(widget.args.target.id).notifier);
 
+  static _BmcEndpoint _endpointOf(BmcTarget t) => (
+    addr: t.addr.trim(),
+    credId: t.credId,
+    certSha256: t.certSha256,
+  );
+
   @override
   void initState() {
     super.initState();
+    _activeEndpoint = _endpointOf(_target);
     Future.microtask(_loadServices);
   }
 
@@ -53,6 +64,18 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
         (s) => s.targets[widget.args.target.id] ?? widget.args.target,
       ),
     );
+    final endpoint = _endpointOf(target);
+    if (_activeEndpoint != endpoint) {
+      _activeEndpoint = endpoint;
+      _read++;
+      _services = null;
+      _servicesGen = null;
+      _picked = null;
+      _page = null;
+      _err = null;
+      _loading = true;
+      Future.microtask(_loadServices);
+    }
     // Watched so the session lives while this page does.
     ref.watch(bmcProvider(target.id).select((s) => s.hasData));
     final picked = _picked;
@@ -175,20 +198,28 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   String _serviceName(LogService s) => s.name ?? s.id ?? s.path;
 
   Future<void> _loadServices() async {
+    final endpoint = _endpointOf(_target);
+    final read = ++_read;
     setState(() {
       _loading = true;
       _err = null;
     });
     try {
       final services = await _bmc.logServices();
-      if (!mounted) return;
+      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+        return;
+      }
+      final gen = _bmc.endpointGeneration;
       setState(() {
         _services = services;
+        _servicesGen = gen;
         _loading = false;
       });
       if (services.isNotEmpty) await _pick(services.first);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+        return;
+      }
       setState(() {
         _err = bmcErrorText(e);
         _loading = false;
@@ -199,6 +230,8 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   /// Reads [service]. [keep] leaves what is shown up while it is read again,
   /// so a refresh that fails leaves the entries it has, with the reason.
   Future<void> _pick(LogService service, {bool keep = false}) async {
+    final endpoint = _endpointOf(_target);
+    final gen = _servicesGen;
     final read = ++_read;
     setState(() {
       _picked = service;
@@ -207,14 +240,18 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
       _loading = true;
     });
     try {
-      final page = await _bmc.logEntries(service);
-      if (!mounted || read != _read) return;
+      final page = await _bmc.logEntries(service, expectedGeneration: gen);
+      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+        return;
+      }
       setState(() {
         _page = page;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted || read != _read) return;
+      if (!mounted || read != _read || _endpointOf(_target) != endpoint) {
+        return;
+      }
       setState(() {
         _err = bmcErrorText(e);
         _loading = false;
@@ -229,13 +266,23 @@ final class _BmcLogsPageState extends ConsumerState<BmcLogsPage> {
   }
 
   Future<void> _clear(LogService service) async {
+    final endpoint = _endpointOf(_target);
+    final gen = _servicesGen;
     final ok = await context.showSheet<bool>(
       title: libL10n.clear,
       child: Text(l10n.bmcClearLogConfirm(_serviceName(service), _target.name)),
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    if (await context.bmcRun(() => _bmc.clearLog(service)) && mounted) {
+    if (_endpointOf(_target) != endpoint || _servicesGen != gen) {
+      Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
+      return;
+    }
+    if (await context.bmcRun(
+          () => _bmc.clearLog(service, expectedGeneration: gen),
+        ) &&
+        mounted &&
+        _endpointOf(_target) == endpoint) {
       await _pick(service, keep: true);
     }
   }

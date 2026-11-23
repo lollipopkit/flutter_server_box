@@ -49,7 +49,10 @@ final class _FakeBmc extends BmcNotifier {
   Future<List<LogService>> logServices() async => [_event, _journal];
 
   @override
-  Future<LogPage> logEntries(LogService service) async => service == _event
+  Future<LogPage> logEntries(
+    LogService service, {
+    int? expectedGeneration,
+  }) async => service == _event
       ? LogPage(
           entries: eventEntries,
           total: BigInt.from(eventEntries.isEmpty ? 0 : 500),
@@ -61,7 +64,7 @@ final class _FakeBmc extends BmcNotifier {
         );
 
   @override
-  Future<void> clearLog(LogService service) async {
+  Future<void> clearLog(LogService service, {int? expectedGeneration}) async {
     cleared.add(service);
     eventEntries = const [];
   }
@@ -79,6 +82,10 @@ final class _FakeTargets extends BmcTargetsNotifier {
     targets: {_target.id: _target},
     order: [_target.id],
   );
+
+  void replace(BmcTarget next) {
+    state = state.copyWith(targets: {...state.targets, next.id: next});
+  }
 }
 
 void main() {
@@ -185,5 +192,56 @@ void main() {
       const BmcDrivesPage(args: BmcTargetRequiredArgs(target)),
     );
     expect(find.text(app_locale.l10n.bmcNoStorage), findsOneWidget);
+  });
+
+  testWidgets('drives: retains report on rename, discards stale report on addr change', (
+    tester,
+  ) async {
+    bmc.report = const StorageReport(
+      drives: [Drive(model: 'old-drive', health: 'OK', needsAttention: false)],
+      truncated: false,
+      unsupported: false,
+    );
+    final targets = _FakeTargets(target);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          bmcTargetsProvider.overrideWith(() => targets),
+          bmcProvider(target.id).overrideWith(() => bmc),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: app_locale.appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (_, child) => ToastHost(child: child ?? const SizedBox()),
+          home: Builder(
+            builder: (context) {
+              app_locale.l10n = AppLocalizations.of(context)!;
+              context.setLibL10n();
+              return const BmcDrivesPage(args: BmcTargetRequiredArgs(target));
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('old-drive'), findsOneWidget);
+
+    // Name-only change keeps the loaded report without losing it.
+    targets.replace(target.copyWith(name: 'renamed'));
+    await tester.pump();
+    expect(find.text('old-drive'), findsOneWidget);
+    expect(find.text('renamed'), findsOneWidget);
+
+    // Address change drops the stale report and loads from the new endpoint.
+    bmc.report = const StorageReport(
+      drives: [Drive(model: 'new-drive', health: 'OK', needsAttention: false)],
+      truncated: false,
+      unsupported: false,
+    );
+    targets.replace(target.copyWith(name: 'renamed', addr: 'https://10.0.0.22'));
+    await tester.pump();
+    expect(find.text('old-drive'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('new-drive'), findsOneWidget);
   });
 }
