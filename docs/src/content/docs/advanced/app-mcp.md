@@ -56,6 +56,6 @@ A call reaches its server the way the app does: over SSH (reusing an open connec
 
 `processes`, `services`, `containers`, `tmux`, `kill_process`, `service_action` and `container_action` take the Monitor's arguments and return its answers. `machine_capabilities` returns the server's platform and transports. When the app has not read the server yet, its platform is probed first.
 
-`run_command` takes `host` and `command` and returns `exit_code`, `stdout`, `stderr`, `truncated` and `timed_out`. The command runs in the account's own shell. Output is kept up to 256 KiB and a command is stopped after 30 seconds; a Monitor applies its own limits too.
+`run_command` takes `host` and `command` and returns `exit_code`, `stdout`, `stderr`, `truncated` and `timed_out`. The command runs in the account's own shell. Output is kept up to 256 KiB. The app answers after 30 seconds at most, with `timed_out` set, and stops the command where the connection allows: a command reached through a Monitor may keep running until the Monitor's own timeout.
 
 `app_settings` lists the app's editable preferences with their current values. `app_setting_set` takes `key` and a typed `value`, as the tool's input schema describes, and writes through the same store as the settings page. For example, set `editorFontSize` to `15.5`, `motionPref` to `"reduce"`, `trayMetrics` to `["cpu", "disk"]`, or `keybindings` to `{"settings.search": "Ctrl+Shift+F"}`. Arrays and maps replace the whole setting.

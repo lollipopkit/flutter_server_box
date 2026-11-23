@@ -214,9 +214,10 @@ required; the MCP protocol version is negotiated in `initialize`.
 
 `tools/list` answers only what the effective scopes allow. Every `tools/call`
 is an audit row (`mcp`), naming the tool and the token; arguments are not
-recorded, except that `run_command` records the first line of the command
-before running it, as `POST /exec` does, and `fs_*` tools record `fs` audit
-rows.
+recorded, except that `run_command` records the programs the command runs,
+its size and the start of its BLAKE3 digest before running it, as `POST /exec`
+and Agent mode's bypass do (`set, mysql (412 bytes, blake3 1a2b…)`: no
+argument or value), and `fs_*` tools record `fs` audit rows.
 
 | Scope | Tools |
 |---|---|

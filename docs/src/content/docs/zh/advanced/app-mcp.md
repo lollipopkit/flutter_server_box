@@ -56,6 +56,6 @@ token 为 `sbt_` 加 64 位十六进制字符，注册表文件中只保存它�
 
 `processes`、`services`、`containers`、`tmux`、`kill_process`、`service_action` 和 `container_action` 的参数和返回结构与 Monitor 相同。`machine_capabilities` 返回服务器的平台和连接方式；App 尚未读取过该服务器时，会先探测平台。
 
-`run_command` 接受 `host` 和 `command`，返回 `exit_code`、`stdout`、`stderr`、`truncated` 和 `timed_out`。命令在该账户自己的 shell 中执行。输出最多保留 256 KiB，命令超过 30 秒会被终止；Monitor 还会应用它自己的限制。
+`run_command` 接受 `host` 和 `command`，返回 `exit_code`、`stdout`、`stderr`、`truncated` 和 `timed_out`。命令在该账户自己的 shell 中执行。输出最多保留 256 KiB。App 最多等待 30 秒即返回结果并设置 `timed_out`，在连接支持时会终止命令；通过 Monitor 执行的命令可能继续运行，直到 Monitor 自己的超时。
 
 `app_settings` 列出 App 可编辑的设置及当前值。`app_setting_set` 接受 `key` 和类型匹配的 `value`（见工具的输入 schema），写入与设置页相同的存储。例如把 `editorFontSize` 设为 `15.5`、`motionPref` 设为 `"reduce"`、`trayMetrics` 设为 `["cpu", "disk"]`，或把 `keybindings` 设为 `{"settings.search": "Ctrl+Shift+F"}`。数组和映射会整体替换原设置。

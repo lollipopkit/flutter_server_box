@@ -70,21 +70,31 @@ pub async fn read(m: &dyn Machine, baseline: Option<&PsResult>) -> Result<PsResu
     let system = m.system();
     let out = match m.run(Run::Script(ShellFunc::Process), MIN_TABLE_BYTES).await {
         Ok(out) => out,
-        Err(error) => return Err(Box::new(unavailable(system, ProcessReason::DidNotFinish, Some(error)))),
+        Err(error) => return Err(Box::new(unavailable(system, Some(ProcessReason::DidNotFinish), Some(error)))),
     };
     if out.timed_out {
-        return Err(Box::new(unavailable(system, ProcessReason::DidNotFinish, None)));
+        return Err(Box::new(unavailable(system, Some(ProcessReason::DidNotFinish), None)));
     }
     if out.truncated {
-        return Err(Box::new(unavailable(system, ProcessReason::TooLarge, None)));
+        return Err(Box::new(unavailable(system, Some(ProcessReason::TooLarge), None)));
     }
     if out.stdout.trim().is_empty() {
         // What the machine said is the whole answer: `ps` missing from a
         // minimal image prints to stderr.
         let reason = out.stderr.trim();
-        return Err(Box::new(unavailable(system, ProcessReason::Empty, (!reason.is_empty()).then(|| reason.to_owned()))));
+        return Err(Box::new(unavailable(system, Some(ProcessReason::Empty), (!reason.is_empty()).then(|| reason.to_owned()))));
     }
-    Ok(PsResult::parse(&out.stdout, ProcSortMode::Cpu, Some(false), baseline, now_millis()))
+    let result = PsResult::parse(&out.stdout, ProcSortMode::Cpu, Some(false), baseline, now_millis());
+    // Nothing readable at all is no table; dropped rows beside readable ones
+    // are a table with a notice.
+    if result.procs.is_empty()
+        && let Some(issue) = result.issue
+    {
+        let mut response = unavailable(system, None, Some(issue.diagnostics.clone()));
+        response.issue = Some(issue);
+        return Err(Box::new(response));
+    }
+    Ok(result)
 }
 
 /// The table, in the order asked for where it can answer it.
@@ -104,11 +114,12 @@ pub fn resolve_sort(result: &PsResult, sort: Option<ProcSortMode>, ascending: Op
     ProcColumns::of(&result.procs).resolve(sort, ascending)
 }
 
-/// The body for a machine that gave no table, or none this build could read.
-fn unavailable(system: SystemType, kind: ProcessReason, reason: Option<String>) -> ProcessResponse {
+/// The body for a machine that gave no table, or none this build could read
+/// (no [kind]: [reason] is what the parser could not read).
+fn unavailable(system: SystemType, kind: Option<ProcessReason>, reason: Option<String>) -> ProcessResponse {
     ProcessResponse {
         available: false,
-        reason_kind: Some(kind),
+        reason_kind: kind,
         reason,
         procs: Vec::new(),
         issue: None,
@@ -181,12 +192,18 @@ pub enum StopRefused {
     /// No way to check the PID before signalling it: a platform without the
     /// script, or a row the machine gave no start identity for.
     Unsafe,
+    /// A signal this platform does not offer ([`sbm_parser::proc::signals_for`]).
+    Signal,
 }
 
 /// Signals one process, recording it.
 pub async fn stop(m: &dyn Machine, request: KillRequest) -> Result<KillResponse, StopRefused> {
     let what = format!("process stop {} {}", request.signal.name(), request.pid);
     let system = m.system();
+    if !sbm_parser::proc::signals_for(system).contains(&request.signal) {
+        change(m, Stage::Refused, &what, Some("signal not offered on this platform")).await;
+        return Err(StopRefused::Signal);
+    }
     let Some(text) = sbm_parser::proc::kill_command(request.pid, request.start_id.as_deref(), system, request.signal)
     else {
         change(m, Stage::Refused, &what, Some("no way to stop this process safely")).await;
@@ -251,5 +268,21 @@ mod tests {
         let answer = table(&m, None, None).await;
         assert_eq!(answer.reason_kind, Some(ProcessReason::Empty));
         assert_eq!(answer.reason.as_deref(), Some("ps: not found"));
+    }
+
+    #[tokio::test]
+    async fn a_table_with_no_readable_row_is_no_table() {
+        let m = Fake::new(SystemType::Linux, vec![("script:", ok("garbage\nmore garbage\n"))]);
+        let answer = table(&m, None, None).await;
+        assert!(!answer.available);
+        assert!(answer.issue.is_some() && answer.reason.is_some(), "{answer:?}");
+    }
+
+    #[tokio::test]
+    async fn a_signal_the_platform_does_not_offer_is_refused_as_such() {
+        let m = Fake::new(SystemType::Windows, vec![]);
+        let request = KillRequest { pid: 42, start_id: Some("1".into()), signal: ProcSignal::Term, password: None };
+        assert_eq!(stop(&m, request).await.unwrap_err(), StopRefused::Signal);
+        assert!(m.asked.lock().unwrap().is_empty());
     }
 }

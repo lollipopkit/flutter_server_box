@@ -221,13 +221,14 @@ impl Machine for Here<'_> {
             Audit::Command { stage, line } => {
                 let Some(mcp) = &self.mcp else { return };
                 let (action, outcome) = outcome_of(stage);
-                Event::new(Kind::Mcp, action, outcome)
+                let written = Event::new(Kind::Mcp, action, outcome)
                     .subject(format!("api token '{}'", mcp.token_name))
                     .remote_ip(self.remote_ip.clone())
                     .detail(format!("tool run_command: {line}"))
                     .record(db)
                     .await;
-                if stage == Stage::Started {
+                // Only a row on file stands in for the one written after the call.
+                if stage == Stage::Started && written {
                     mcp.recorded.store(true, Ordering::Relaxed);
                 }
             }

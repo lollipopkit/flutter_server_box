@@ -16,6 +16,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_trait::async_trait;
 use flutter_rust_bridge::DartFnFuture;
@@ -23,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use sbm_mcp::access::{CommandPolicy, Scope};
-use sbm_mcp::machine::{Machine, Ran, Run};
+use sbm_mcp::machine::{Audit, Machine, Ran, Run, Stage};
 use sbm_mcp::{Answer, CallToolResult, Host, Tool, catalog, structured, tool_error};
 use sbm_parser::SystemType;
 use sbm_parser::sudo::SudoEntry;
@@ -248,6 +249,9 @@ pub struct AppMcpHost {
     pub transports: Vec<String>,
     /// What it runs, when the app already knows.
     pub system: Option<SystemType>,
+    /// Whether the app keeps its status script there; without one, a script
+    /// function is run from the script itself, read on stdin.
+    pub script: bool,
 }
 
 pub struct AppMcpRequest {
@@ -374,10 +378,18 @@ pub async fn app_mcp_serve(
         run: &run,
         settings: &settings,
     };
-    let call = (message.get("method").and_then(Value::as_str) == Some("tools/call")).then(|| AppMcpCall {
-        tool: message.pointer("/params/name").and_then(Value::as_str).unwrap_or_default().to_owned(),
-        token: token.id[..12].to_owned(),
-        host: message.pointer("/params/arguments/host").and_then(Value::as_str).map(str::to_owned),
+    // Logged, so only what this server itself names: a tool of its catalog
+    // and a host of its list, never the caller's text.
+    let call = (message.get("method").and_then(Value::as_str) == Some("tools/call")).then(|| {
+        let tool = message.pointer("/params/name").and_then(Value::as_str);
+        let host_key = message.pointer("/params/arguments/host").and_then(Value::as_str);
+        AppMcpCall {
+            tool: tool
+                .and_then(|name| host.tools().into_iter().find(|t| t.name == name))
+                .map_or_else(|| "rejected".to_owned(), |t| t.name.to_string()),
+            token: token.id[..12].to_owned(),
+            host: host_key.and_then(|k| host.hosts.get_key_value(k)).map(|(k, _)| k.clone()),
+        }
     });
     match sbm_mcp::serve(&host, &message).await {
         Answer::Json(value) => AppMcpResponse { status: 200, body: Some(value.to_string()), call },
@@ -446,7 +458,24 @@ impl AppHost<'_> {
         let Some(host) = key.as_ref().and_then(Value::as_str).and_then(|k| self.hosts.get(k)) else {
             return tool_error("unknown host: name one by its id from `list`");
         };
-        let mut machine = AppMachine { host, system: SystemType::Linux, run: self.run, failure: Mutex::new(None) };
+        let mut machine = AppMachine {
+            host,
+            system: SystemType::Linux,
+            run: self.run,
+            failure: Mutex::new(None),
+            started: AtomicBool::new(false),
+            acted: AtomicBool::new(false),
+        };
+        if name == "run_command" {
+            // A command line needs no platform: the policy is asked first, and
+            // a refused command costs the server nothing.
+            let layers = [("global MCP policy", self.policy), ("token command policy", self.token)];
+            let result = sbm_mcp::machine::run_command(&machine, &arguments, &layers, APP_MCP_MAX_BODY).await;
+            return match machine.failure() {
+                Some(failure) => tool_error(failure.message()),
+                None => result,
+            };
+        }
         machine.system = match host.system {
             Some(system) => system,
             None => match machine.detect().await {
@@ -468,10 +497,6 @@ impl AppHost<'_> {
                 },
                 "transports": host.transports,
             })),
-            "run_command" => {
-                let layers = [("global MCP policy", self.policy), ("token command policy", self.token)];
-                sbm_mcp::machine::run_command(&machine, &arguments, &layers, APP_MCP_MAX_BODY).await
-            }
             _ => match sbm_mcp::machine::call(&machine, name, &arguments).await {
                 Some(result) => result,
                 None => tool_error(format!("unknown tool: {name}")),
@@ -479,10 +504,11 @@ impl AppHost<'_> {
         };
         // A command that never reached the server is the answer, whatever a
         // tool made of the silence: a server switched off is not one without
-        // Docker.
+        // Docker. Once a change has run, though, the answer is the tool's:
+        // what came after it (a refreshed listing) says it was not read.
         match machine.failure() {
-            Some(failure) => tool_error(failure.message()),
-            None => result,
+            Some(failure) if !machine.acted.load(Ordering::Relaxed) => tool_error(failure.message()),
+            _ => result,
         }
     }
 }
@@ -525,6 +551,10 @@ struct AppMachine<'a> {
     run: &'a RunFn,
     /// The first time `run` did not reach the server.
     failure: Mutex<Option<AppMcpFailure>>,
+    /// A change is about to run ([`Audit::Change`] at [`Stage::Started`]).
+    started: AtomicBool,
+    /// A command ran once the change started: the change itself.
+    acted: AtomicBool,
 }
 
 impl AppMachine<'_> {
@@ -580,12 +610,25 @@ impl Machine for AppMachine<'_> {
             Run::Root { text, password: Some(password) } => {
                 command(text, Some(SudoEntry::SudoPassword.wrap("sh")), Some(format!("{password}\n")))
             }
-            Run::Script(func) => AppMcpRun::Script { host: host.clone(), func: func.into(), room },
+            Run::Script(func) if self.host.script => AppMcpRun::Script { host: host.clone(), func: func.into(), room },
+            Run::Script(_) if self.system == SystemType::Windows => {
+                return Err("no status script is kept on this device".to_owned());
+            }
+            // `sh -s`: the script read on stdin, its function named as on a
+            // copy kept there.
+            Run::Script(func) => command(
+                &sbm_parser::script::build_script(self.system, &Default::default()),
+                Some(format!("sh -s -- -{}", func.flag())),
+                None,
+            ),
         };
         let ran = (self.run)(asked).await;
         if let Some(failure) = ran.failure {
             self.failure.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert(failure);
             return Err(failure.message().to_owned());
+        }
+        if self.started.load(Ordering::Relaxed) {
+            self.acted.store(true, Ordering::Relaxed);
         }
         Ok(Ran {
             stdout: ran.stdout,
@@ -594,6 +637,12 @@ impl Machine for AppMachine<'_> {
             truncated: ran.truncated,
             timed_out: ran.timed_out,
         })
+    }
+
+    async fn record(&self, audit: Audit<'_>) {
+        if let Audit::Change { stage: Stage::Started, .. } = audit {
+            self.started.store(true, Ordering::Relaxed);
+        }
     }
 }
 
@@ -626,6 +675,7 @@ mod tests {
                 online: true,
                 transports: vec!["ssh".into()],
                 system: None,
+                script: true,
             }],
             settings_schema: "{}".into(),
         }
@@ -739,5 +789,82 @@ mod tests {
         assert_eq!(status(req).await, 400);
         let note = json!({ "jsonrpc": "2.0", "method": "notifications/initialized" });
         assert_eq!(status(request(&minted.registry, &minted.token, note)).await, 202);
+    }
+
+    #[tokio::test]
+    async fn a_refused_command_never_reaches_the_server() {
+        let minted = app_mcp_mint(String::new(), "ci".into(), None, 0).unwrap();
+        let mut registry: Value = serde_json::from_str(&minted.registry).unwrap();
+        registry["policy"]["commands"] = json!({ "mode": "allowlist", "allow": ["uptime"] });
+        let params = json!({ "name": "run_command", "arguments": { "host": host_key("spi-1"), "command": "rm -rf /" } });
+        let refused = call(&registry.to_string(), &minted.token, rpc("tools/call", params), |_| {
+            panic!("nothing is run for a refused command, not even a probe")
+        })
+        .await;
+        assert_eq!(refused["result"]["isError"], true);
+    }
+
+    #[tokio::test]
+    async fn a_change_that_ran_is_answered_though_what_came_after_did_not_reach() {
+        let minted = app_mcp_mint(String::new(), "ci".into(), None, 0).unwrap();
+        let mut req = request(&minted.registry, &minted.token, json!({}));
+        req.hosts[0].system = Some(SystemType::Linux);
+        let params = json!({ "name": "container_action", "arguments": { "host": host_key("spi-1"), "action": "stop", "id": "web" } });
+        req.body = rpc("tools/call", params).to_string().into_bytes();
+        let response = app_mcp_serve(
+            req,
+            |r| {
+                Box::pin(async move {
+                    match r {
+                        AppMcpRun::Command { script, .. } if script.contains(" stop ") => ran(""),
+                        AppMcpRun::Command { script, .. } if script.contains("docker version") && !script.contains("SrvBox") => {
+                            ran("{}")
+                        }
+                        _ => AppMcpRan { failure: Some(AppMcpFailure::HostChanged), ..ran("") },
+                    }
+                })
+            },
+            no_settings,
+        )
+        .await;
+        let body: Value = serde_json::from_str(&response.body.unwrap()).unwrap();
+        assert_eq!(body["result"]["isError"], false, "{body}");
+        assert_eq!(body["result"]["structuredContent"]["exit_code"], 0);
+    }
+
+    #[tokio::test]
+    async fn a_call_is_logged_by_what_this_server_names() {
+        let minted = app_mcp_mint(String::new(), "ci".into(), None, 0).unwrap();
+        let params = json!({ "name": "nope\nforged", "arguments": { "host": "x\ny" } });
+        let response =
+            app_mcp_serve(request(&minted.registry, &minted.token, rpc("tools/call", params)), |_| Box::pin(async { ran("") }), no_settings)
+                .await;
+        let call = response.call.unwrap();
+        assert_eq!(call.tool, "rejected");
+        assert_eq!(call.host, None);
+    }
+
+    #[tokio::test]
+    async fn a_device_without_a_kept_script_reads_it_on_stdin() {
+        let minted = app_mcp_mint(String::new(), "ci".into(), None, 0).unwrap();
+        let mut req = request(&minted.registry, &minted.token, json!({}));
+        req.hosts[0].system = Some(SystemType::Linux);
+        req.hosts[0].script = false;
+        let params = json!({ "name": "processes", "arguments": { "host": host_key("spi-1") } });
+        req.body = rpc("tools/call", params).to_string().into_bytes();
+        app_mcp_serve(
+            req,
+            |r| {
+                Box::pin(async move {
+                    match r {
+                        AppMcpRun::Command { entry: Some(entry), .. } => assert_eq!(entry, "sh -s -- -p"),
+                        _ => panic!("no kept script to call"),
+                    }
+                    ran("")
+                })
+            },
+            no_settings,
+        )
+        .await;
     }
 }

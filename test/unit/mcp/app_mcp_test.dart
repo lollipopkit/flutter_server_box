@@ -334,13 +334,6 @@ void main() {
       ]),
     );
     expect(await names(reader), isNot(contains('run_command')));
-    expect(
-      (await rpc('tools/call', {
-        'name': 'run_command',
-        'arguments': {},
-      }, as: reader))['error']['code'],
-      -32602,
-    );
 
     final listed = (await call('list'))['structuredContent'] as Map;
     expect(jsonEncode(listed), isNot(contains('private-host')));
@@ -351,6 +344,16 @@ void main() {
       (h) => h['name'] == host.name && (h['transports'] as List).contains('ssh'),
     )['id'];
     final viaMonitor = idOf(monitor.name);
+
+    // A token without `exec` is refused a well-formed call, and nothing runs.
+    expect(
+      (await rpc('tools/call', {
+        'name': 'run_command',
+        'arguments': {'host': ssh, 'command': 'uptime'},
+      }, as: reader))['error']['code'],
+      -32602,
+    );
+    expect(client.calls, isEmpty);
 
     final ran = await call('run_command', {'host': ssh, 'command': 'uptime'});
     expect(ran['structuredContent']?['stdout'], 'ok', reason: '$ran');

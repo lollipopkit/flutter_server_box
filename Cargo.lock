@@ -888,6 +888,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmd_rules"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+]
+
+[[package]]
 name = "cmov"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1914,7 +1922,7 @@ name = "fl_pi_llm"
 version = "0.1.0"
 dependencies = [
  "cc",
- "fl_pi_rules",
+ "cmd_rules",
  "getrandom 0.4.3",
  "regex",
  "reqwest 0.13.5",
@@ -1925,14 +1933,6 @@ dependencies = [
  "sqlite3mc-src",
  "tokio",
  "yaml-rust2",
-]
-
-[[package]]
-name = "fl_pi_rules"
-version = "0.1.0"
-dependencies = [
- "regex",
- "serde",
 ]
 
 [[package]]
@@ -5407,7 +5407,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "blake3",
- "fl_pi_rules",
+ "cmd_rules",
  "futures",
  "getrandom 0.4.3",
  "rmcp",

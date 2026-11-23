@@ -162,7 +162,7 @@ pub async fn listing(
         let id = id.ok_or(ContainerActionError::Empty)?;
         sbm_parser::container::validate_identifier(id)?;
     }
-    Ok(read(m, part, id).await)
+    Ok(read(m, part, id, None).await)
 }
 
 /// Performs one container action and answers the refreshed listing, with the
@@ -177,7 +177,7 @@ pub async fn apply(m: &dyn Machine, action: ContainerAction) -> Result<Value, Co
     }
     let Some(runtime) = detect_runtime(m).await else {
         let part = refresh_part(&action);
-        return Ok(serde_json::to_value(read(m, part, None).await).unwrap_or_default());
+        return Ok(serde_json::to_value(read(m, part, None, None).await).unwrap_or_default());
     };
     let command = action.exec(runtime)?;
 
@@ -188,28 +188,43 @@ pub async fn apply(m: &dyn Machine, action: ContainerAction) -> Result<Value, Co
     // command, by the host's own limit.
     // TODO: start a pull detached and poll it, so a large image does not need
     // the limit raised.
-    let result = run_bounded(m, &command).await;
-    let failed = match &result {
-        Some(output) if output.exit_code == Some(0) => None,
-        Some(output) => Some(format!("exit {:?}", output.exit_code)),
-        None => Some("did not finish".to_owned()),
+    let result = m.run(Run::Line(&command), MAX_OUTPUT_BYTES).await;
+    // A command stopped or never heard from may have changed the machine
+    // anyway: its outcome is unknown, and said so.
+    let interrupted = match &result {
+        Ok(output) if output.timed_out => Some("the action did not finish in time".to_owned()),
+        Ok(output) if output.truncated => Some("the action printed more than is read".to_owned()),
+        Ok(_) => None,
+        Err(e) => Some(e.clone()),
+    };
+    let failed = match (&result, &interrupted) {
+        (_, Some(_)) => Some("did not finish".to_owned()),
+        (Ok(output), None) if output.exit_code != Some(0) => Some(format!("exit {:?}", output.exit_code)),
+        _ => None,
     };
     if let Some(why) = failed {
         change(m, Stage::Failed, &what, Some(&why)).await;
     }
 
     // The refreshed listing comes back with the answer, in one round trip:
-    // the part the change was about.
+    // the part the change was about, from the runtime the change was made on.
     let part = refresh_part(&action);
-    let mut response = serde_json::to_value(read(m, part, None).await).unwrap_or_default();
-    if let Some(output) = result
-        && let Some(object) = response.as_object_mut()
-    {
-        object.insert("exit_code".to_owned(), output.exit_code.into());
-        object.insert(
-            "output".to_owned(),
-            sbm_parser::container::user_facing_output(&output.stderr, &output.stdout).into(),
-        );
+    let mut response = serde_json::to_value(read(m, part, None, Some(runtime)).await).unwrap_or_default();
+    if let Some(object) = response.as_object_mut() {
+        match (result, interrupted) {
+            (_, Some(why)) => {
+                object.insert("exit_code".to_owned(), Value::Null);
+                object.insert("outcome_unknown".to_owned(), why.into());
+            }
+            (Ok(output), None) => {
+                object.insert("exit_code".to_owned(), output.exit_code.into());
+                object.insert(
+                    "output".to_owned(),
+                    sbm_parser::container::user_facing_output(&output.stderr, &output.stdout).into(),
+                );
+            }
+            (Err(_), None) => {}
+        }
     }
     Ok(response)
 }
@@ -249,8 +264,14 @@ pub fn action_subject(action: &ContainerAction) -> String {
     }
 }
 
-/// Everything there is to answer, gathered per part.
-async fn read(m: &dyn Machine, part: ContainerPart, id: Option<&str>) -> ContainerListResponse {
+/// Everything there is to answer, gathered per part: from [only] when given,
+/// else from whichever runtime answers first.
+async fn read(
+    m: &dyn Machine,
+    part: ContainerPart,
+    id: Option<&str>,
+    only: Option<ContainerType>,
+) -> ContainerListResponse {
     let empty = |kind: ContainerReason, reason: Option<String>| ContainerListResponse {
         part,
         available: false,
@@ -270,7 +291,11 @@ async fn read(m: &dyn Machine, part: ContainerPart, id: Option<&str>) -> Contain
     // "no docker" and "no docker *and* no podman" are two different things to
     // say to a user.
     let mut last = None;
-    for ty in [ContainerType::Docker, ContainerType::Podman] {
+    let runtimes = match only {
+        Some(ty) => vec![ty],
+        None => vec![ContainerType::Docker, ContainerType::Podman],
+    };
+    for ty in runtimes {
         match probe(m, ty, part, id).await {
             Probe::NotInstalled { reason } => last = reason,
             probe => return finish(part, probe),
@@ -337,14 +362,20 @@ async fn probe(m: &dyn Machine, ty: ContainerType, part: ContainerPart, id: Opti
     if needs_permission(&stderr) {
         return Probe::PermissionDenied { ty, reason: reason() };
     }
-    let segments = sbm_parser::container::split_segments(&stdout, &separator);
+    let segments = sbm_parser::container::split_segments(&stdout, &separator, Some(exit_code));
     // One segment per command. A count that does not match is not something to
     // guess at: attaching one command's output to another's name is worse than
     // saying so.
     if segments.len() != cmds.len() {
         return Probe::Unreadable { ty, reason: reason() };
     }
-    Probe::Answered { ty, segments }
+    // A read that failed is not an empty one. `version` and `stats` are
+    // extras: the client's version and a sample the rows go on without.
+    let optional = |i: usize| i == 0 || (part == ContainerPart::Containers && i == 2);
+    if segments.iter().enumerate().any(|(i, s)| !optional(i) && s.exit_code != Some(0)) {
+        return Probe::Unreadable { ty, reason: reason() };
+    }
+    Probe::Answered { ty, segments: segments.into_iter().map(|s| s.output).collect() }
 }
 
 /// Whether the runtime is there but would not talk to this account. Read from
@@ -473,7 +504,7 @@ async fn run_bounded(m: &dyn Machine, text: &str) -> Option<Ran> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::fake::{Fake, failed};
+    use super::super::fake::{Fake, failed, ok};
     use super::*;
 
     #[test]
@@ -487,7 +518,7 @@ mod tests {
     #[tokio::test]
     async fn no_runtime_is_answered_as_not_installed() {
         let m = Fake::new(SystemType::Linux, vec![("", failed("sh: docker: not found", 127))]);
-        let answer = read(&m, ContainerPart::Containers, None).await;
+        let answer = read(&m, ContainerPart::Containers, None, None).await;
         assert_eq!(answer.reason_kind, Some(ContainerReason::NotInstalled));
         assert_eq!(m.asked.lock().unwrap().len(), 2);
     }
@@ -499,5 +530,20 @@ mod tests {
         assert!(apply(&m, action).await.is_err());
         assert!(m.asked.lock().unwrap().is_empty());
         assert_eq!(m.audits.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn an_action_that_did_not_finish_has_an_unknown_outcome() {
+        let m = Fake::new(
+            SystemType::Linux,
+            vec![
+                (" stop ", Ran { timed_out: true, ..Default::default() }),
+                ("version", ok("{}")),
+            ],
+        );
+        let action: ContainerAction = serde_json::from_value(serde_json::json!({ "action": "stop", "id": "web" })).unwrap();
+        let answer = apply(&m, action).await.unwrap();
+        assert!(answer["outcome_unknown"].is_string(), "{answer}");
+        assert_eq!(answer["exit_code"], Value::Null);
     }
 }

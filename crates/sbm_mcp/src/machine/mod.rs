@@ -19,7 +19,7 @@ use sbm_parser::SystemType;
 use sbm_parser::output::CommandOutput;
 use sbm_parser::script::ShellFunc;
 
-pub use tools::{call, first_line, run_command};
+pub use tools::{call, command_summary, run_command};
 
 /// One command, and how it is to be run.
 #[derive(Debug, Clone, Copy)]
@@ -98,8 +98,8 @@ pub enum Audit<'a> {
     /// A change to the machine: [what] is the feature and verb with what it
     /// was about, [detail] why it stopped where it did.
     Change { stage: Stage, what: &'a str, detail: Option<&'a str> },
-    /// `run_command`: [line] is the command's first line at [`Stage::Started`]
-    /// and why it could not be run at [`Stage::Failed`].
+    /// `run_command`: [line] is [`command_summary`] at [`Stage::Started`] and
+    /// why it could not be run at [`Stage::Failed`].
     Command { stage: Stage, line: &'a str },
 }
 

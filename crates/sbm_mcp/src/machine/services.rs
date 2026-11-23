@@ -178,7 +178,8 @@ pub async fn listing(m: &dyn Machine, part: ServicePart, key: Option<&str>) -> S
 
     let read = read_listing(m, manager).await;
     let mut response = base_response(part, &probe, manager, read);
-    if part == ServicePart::List {
+    // A listing that could not be read has no unit to look for.
+    if part == ServicePart::List || !response.available {
         return response;
     }
 
@@ -202,9 +203,16 @@ pub async fn listing(m: &dyn Machine, part: ServicePart, key: Option<&str>) -> S
             };
             // Both streams, in the order a terminal would have shown them:
             // `rc-service status` prints "stopped" on stdout with a non-zero
-            // exit, and half of `systemctl status` is on stderr.
-            let output = command_output(m.run(Run::Sh(&text), 0).await);
-            response.text = Some(output.combined().trim().to_string());
+            // exit, and half of `systemctl status` is on stderr. A command that
+            // did not finish is no text.
+            let raw = m.run(Run::Sh(&text), 0).await;
+            if let Some(why) = unfinished(&raw) {
+                response.available = false;
+                response.reason_kind = Some(ServiceReason::Unreadable);
+                response.reason = Some(why);
+                return response;
+            }
+            response.text = Some(command_output(raw).combined().trim().to_string());
         }
         ServicePart::List => {}
     }
@@ -244,6 +252,8 @@ pub enum ServiceRefused {
     Unsupported,
     /// A key the current listing does not have.
     NoSuchUnit,
+    /// The listing the key is resolved against could not be read.
+    Unreadable,
 }
 
 /// Runs one action on one unit, recording it.
@@ -261,16 +271,16 @@ pub async fn perform(m: &dyn Machine, request: ServiceActRequest) -> Result<Serv
 
     // Resolved against a listing read now, so a unit the machine no longer has
     // cannot be acted on through a stale key.
-    let unit = match read_listing(m, manager)
-        .await
-        .ok()
-        .and_then(|listing| listing.units.into_iter().find(|unit| unit.key() == request.key))
-    {
-        Some(unit) => unit,
-        None => {
-            change(m, Stage::Refused, &what, Some("no such unit")).await;
-            return Err(ServiceRefused::NoSuchUnit);
+    let listing = match read_listing(m, manager).await {
+        Ok(listing) => listing,
+        Err(_) => {
+            change(m, Stage::Refused, &what, Some("listing unreadable")).await;
+            return Err(ServiceRefused::Unreadable);
         }
+    };
+    let Some(unit) = listing.units.into_iter().find(|unit| unit.key() == request.key) else {
+        change(m, Stage::Refused, &what, Some("no such unit")).await;
+        return Err(ServiceRefused::NoSuchUnit);
     };
 
     change(m, Stage::Started, &what, None).await;
@@ -291,6 +301,17 @@ pub async fn perform(m: &dyn Machine, request: ServiceActRequest) -> Result<Serv
         Err(e) => (String::new(), e, None),
     };
     Ok(ServiceActResponse { succeeded, sudo_rejected, exit_code, stdout, stderr })
+}
+
+/// Why [raw] is no answer to read: a command that could not be run, was
+/// stopped, or was cut short.
+fn unfinished(raw: &Result<Ran, String>) -> Option<String> {
+    match raw {
+        Err(_) => Some("the command could not be run".to_string()),
+        Ok(out) if out.timed_out => Some("the command did not finish in time".to_string()),
+        Ok(out) if out.truncated => Some("the command printed more than is read".to_string()),
+        Ok(_) => None,
+    }
 }
 
 /// Asks the machine which manager it runs. `None` beside the probe is a
@@ -399,10 +420,10 @@ async fn fill_log(m: &dyn Machine, response: &mut ServiceListResponse, manager: 
     // opened rather than because anyone asked for a change, and a password
     // prompt belongs to an action.
     let raw: Result<Ran, String> = m.run(Run::Sh(&command), 0).await;
-    if raw.is_err() {
+    if let Some(why) = unfinished(&raw) {
         response.available = false;
         response.reason_kind = Some(ServiceReason::Unreadable);
-        response.reason = Some("the command could not be run".to_string());
+        response.reason = Some(why);
         return;
     }
     let output = command_output(raw);
@@ -420,7 +441,7 @@ async fn fill_log(m: &dyn Machine, response: &mut ServiceListResponse, manager: 
 
 #[cfg(test)]
 mod tests {
-    use super::super::fake::{Fake, failed};
+    use super::super::fake::{Fake, failed, ok};
     use super::*;
 
     #[tokio::test]
@@ -451,5 +472,15 @@ mod tests {
         let audits = m.audits.lock().unwrap();
         assert_eq!(audits.len(), 1);
         assert!(audits[0].contains("Refused") && audits[0].contains("unsupported platform"), "{audits:?}");
+    }
+
+    #[tokio::test]
+    async fn a_listing_that_cannot_be_read_is_not_a_missing_unit() {
+        let m = Fake::new(SystemType::Linux, vec![("pid1=", ok("openrc\t"))]);
+        let answer = listing(&m, ServicePart::Logs, Some("system:sshd")).await;
+        assert_eq!(answer.reason_kind, Some(ServiceReason::Unreadable));
+        let request = ServiceActRequest { key: "system:sshd".into(), action: ServiceAction::Restart, password: None };
+        assert_eq!(perform(&m, request).await.unwrap_err(), ServiceRefused::Unreadable);
+        assert!(m.asked.lock().unwrap().iter().all(|c| !c.contains("restart")));
     }
 }

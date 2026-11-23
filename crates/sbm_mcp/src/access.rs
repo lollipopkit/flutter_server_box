@@ -6,7 +6,7 @@
 //! no rules — and narrows where the operator asks. Effective reach is the
 //! intersection of every layer that has a say.
 
-use fl_pi_rules::{CommandRules, RuleVerdict};
+use cmd_rules::{CommandRules, RuleVerdict};
 use serde::{Deserialize, Serialize};
 
 /// What an MCP client may do, split fine enough that a token can read without
@@ -124,7 +124,7 @@ impl CommandMode {
 }
 
 /// Rules on `run_command`. Pattern syntax and matching are
-/// [`fl_pi_rules`]'s, the Agent's own command rules.
+/// [`cmd_rules`]'s, the Agent's own command rules.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CommandPolicy {

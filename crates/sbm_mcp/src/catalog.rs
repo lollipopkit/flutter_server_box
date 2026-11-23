@@ -103,7 +103,7 @@ pub fn shell(scope: Scope) -> Vec<Tool> {
                 "properties": {
                     "pid": { "type": "integer", "description": "PID from `processes`." },
                     "start_id": { "type": "string", "description": "Matching `start_id` from `processes`." },
-                    "signal": { "type": "string", "enum": ["term", "kill"], "description": "Defaults to term." }
+                    "signal": { "type": "string", "enum": ["term", "kill"], "description": "Defaults to term; required on Windows, which takes kill alone." }
                 },
                 "required": ["pid", "start_id"],
                 "additionalProperties": false

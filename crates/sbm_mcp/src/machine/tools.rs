@@ -9,6 +9,7 @@ use super::services::{self, ServiceActRequest, ServicePart, ServiceRefused};
 use super::{Audit, Machine, Run, Stage, tmux};
 use crate::access::{CommandPolicy, evaluate_layers};
 use crate::{CallToolResult, structured, tool_error};
+use sbm_parser::SystemType;
 
 /// Answers [name] on [m]; `None` for a tool that is not one of
 /// [`crate::catalog::shell`]'s, or is `run_command` (see [`run_command`]).
@@ -49,9 +50,12 @@ pub async fn call(m: &dyn Machine, name: &str, arguments: &Value) -> Option<Call
         }
         "tmux" => structured(tmux::sessions(m).await),
         "kill_process" => {
-            // The tool's `signal` defaults to TERM; the route's is required.
+            // The tool's `signal` defaults to TERM where there is one; Windows
+            // has KILL alone, which is never sent unasked.
             let mut arguments = arguments.clone();
-            if let Some(args) = arguments.as_object_mut() {
+            if let Some(args) = arguments.as_object_mut()
+                && m.system() != SystemType::Windows
+            {
                 args.entry("signal").or_insert_with(|| json!("term"));
             }
             let mut request: KillRequest = match parse(&arguments) {
@@ -64,6 +68,9 @@ pub async fn call(m: &dyn Machine, name: &str, arguments: &Value) -> Option<Call
             request.password = None;
             match processes::stop(m, request).await {
                 Ok(response) => to_result(&response),
+                Err(StopRefused::Signal) => tool_error(
+                    "this signal is not offered on this platform: `machine_capabilities` names the platform; Windows takes kill alone",
+                ),
                 Err(StopRefused::Unsafe) => tool_error(
                     "this PID cannot be signalled safely: the listing reported no start identity to check it against",
                 ),
@@ -79,6 +86,7 @@ pub async fn call(m: &dyn Machine, name: &str, arguments: &Value) -> Option<Call
                 Ok(response) => to_result(&response),
                 Err(ServiceRefused::Unsupported) => tool_error("this machine has no service manager that is talked to"),
                 Err(ServiceRefused::NoSuchUnit) => tool_error("no such unit in the current listing"),
+                Err(ServiceRefused::Unreadable) => tool_error("the unit listing could not be read; nothing was run"),
             }
         }
         "container_action" => {
@@ -104,7 +112,7 @@ pub async fn call(m: &dyn Machine, name: &str, arguments: &Value) -> Option<Call
 /// `run_command`: [arguments]' command under every policy layer, no longer
 /// than [max_bytes], as a command line of the account's own shell.
 ///
-/// Recorded before it runs ([`Audit::Command`]), with its first line: a
+/// Recorded before it runs ([`Audit::Command`], [`command_summary`]): a
 /// command that hangs or reboots the machine still has to be on file.
 pub async fn run_command(
     m: &dyn Machine,
@@ -124,7 +132,7 @@ pub async fn run_command(
     if let Err(why) = evaluate_layers(command, layers) {
         return tool_error(why);
     }
-    m.record(Audit::Command { stage: Stage::Started, line: &first_line(command) }).await;
+    m.record(Audit::Command { stage: Stage::Started, line: &command_summary(command) }).await;
     match m.run(Run::Line(command), 0).await {
         Ok(out) => structured(json!({
             "exit_code": out.exit_code,
@@ -140,18 +148,22 @@ pub async fn run_command(
     }
 }
 
-/// The first line, capped — an audit row records which command ran, not a
-/// script's entire body.
-pub fn first_line(cmd: &str) -> String {
-    let line = cmd.lines().next().unwrap_or("").trim();
-    if line.len() <= 200 {
-        return line.to_string();
+/// What an audit row keeps of [cmd]: the programs it runs
+/// ([`cmd_rules::programs`]), its size and the start of its BLAKE3 digest.
+/// Never an argument or a value, which can be a secret; the digest tells
+/// whether a command someone holds is the one that ran.
+pub fn command_summary(cmd: &str) -> String {
+    const MAX_PROGRAMS: usize = 16;
+    let programs = cmd_rules::programs(cmd);
+    let mut names = programs.iter().take(MAX_PROGRAMS).cloned().collect::<Vec<_>>().join(", ");
+    if programs.len() > MAX_PROGRAMS {
+        names.push_str(", …");
     }
-    let mut end = 200;
-    while !line.is_char_boundary(end) {
-        end -= 1;
+    if names.is_empty() {
+        names.push('-');
     }
-    format!("{}…", &line[..end])
+    let digest = blake3::hash(cmd.as_bytes()).to_hex();
+    format!("{names} ({} bytes, blake3 {})", cmd.len(), &digest[..16])
 }
 
 fn optional<T: DeserializeOwned>(arguments: &Value, key: &str) -> Result<Option<T>, serde_json::Error> {
@@ -171,7 +183,6 @@ mod tests {
     use super::super::fake::{Fake, ok};
     use super::*;
     use crate::access::CommandMode;
-    use sbm_parser::SystemType;
 
     #[tokio::test]
     async fn a_command_is_held_to_every_layer_and_recorded_before_it_runs() {
@@ -189,6 +200,16 @@ mod tests {
 
         let long = run_command(&m, &json!({ "command": "echo hi" }), &[], 3).await;
         assert_eq!(long.is_error, Some(true));
+    }
+
+    #[test]
+    fn a_command_is_recorded_by_its_programs_never_its_arguments() {
+        let script = "set -e\nMYSQL_PWD=hunter2 mysql -u root -phunter2 db < dump.sql";
+        let summary = command_summary(script);
+        assert!(summary.starts_with("set, mysql ("), "{summary}");
+        assert!(!summary.contains("hunter2") && !summary.contains("root"), "{summary}");
+        assert!(summary.contains(&format!("{} bytes", script.len())));
+        assert_eq!(command_summary("   "), format!("- (3 bytes, blake3 {})", &blake3::hash(b"   ").to_hex()[..16]));
     }
 
     #[tokio::test]

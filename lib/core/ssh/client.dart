@@ -207,6 +207,8 @@ Future<SSHClient> genClient(
                 visitedServerIds: {...chainVisitedServerIds},
               );
 
+              await jumpClient.authenticated;
+              unattended?.settle();
               final forwarded = await jumpClient
                   .forwardLocal(ssh.ip, ssh.port)
                   .timeout(
@@ -496,6 +498,7 @@ Future<SSHClient> _clientWith({
     if (!deferredIdentity) return client;
     try {
       await client.authenticated;
+      unattended?.settle();
       return client;
     } on SSHAuthError {
       client.close();

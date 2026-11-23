@@ -9,7 +9,7 @@ edition = "2024"
 rmcp = { version = "3.11", default-features = false, features = ["server"] }
 async-trait = "0.1"
 blake3 = "1"
-fl_pi_rules = { path = "../../packages/fl_pi_llm/fl_pi_llm/rust/rules" }
+cmd_rules = { path = "../../packages/cmd_rules" }
 futures = "0.3.34"
 getrandom = "0.4"
 sbm_parser = { path = "../sbm_parser" }

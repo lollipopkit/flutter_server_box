@@ -17801,14 +17801,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AppMcpHost dco_decode_app_mcp_host(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return AppMcpHost(
       id: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
       online: dco_decode_bool(arr[2]),
       transports: dco_decode_list_String(arr[3]),
       system: dco_decode_opt_box_autoadd_system_type(arr[4]),
+      script: dco_decode_bool(arr[5]),
     );
   }
 
@@ -25615,12 +25616,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_online = sse_decode_bool(deserializer);
     final var_transports = sse_decode_list_String(deserializer);
     final var_system = sse_decode_opt_box_autoadd_system_type(deserializer);
+    final var_script = sse_decode_bool(deserializer);
     return AppMcpHost(
       id: var_id,
       name: var_name,
       online: var_online,
       transports: var_transports,
       system: var_system,
+      script: var_script,
     );
   }
 
@@ -35949,6 +35952,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.online, serializer);
     sse_encode_list_String(self.transports, serializer);
     sse_encode_opt_box_autoadd_system_type(self.system, serializer);
+    sse_encode_bool(self.script, serializer);
   }
 
   @protected

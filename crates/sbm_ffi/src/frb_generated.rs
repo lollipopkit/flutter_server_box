@@ -27,13 +27,13 @@
 
 // Section: imports
 
-use crate::api::agent_pipe::*;
-use crate::api::bmc::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::bmc::*;
+use crate::api::pve::*;
+use crate::api::ssh_crypto::*;
 use crate::api::control_master::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -6895,7 +6895,8 @@ let mut var_name = <String>::sse_decode(deserializer);
 let mut var_online = <bool>::sse_decode(deserializer);
 let mut var_transports = <Vec<String>>::sse_decode(deserializer);
 let mut var_system = <Option<crate::api::parser::SystemType>>::sse_decode(deserializer);
-return crate::api::app_mcp::AppMcpHost{id: var_id, name: var_name, online: var_online, transports: var_transports, system: var_system};}
+let mut var_script = <bool>::sse_decode(deserializer);
+return crate::api::app_mcp::AppMcpHost{id: var_id, name: var_name, online: var_online, transports: var_transports, system: var_system, script: var_script};}
                 }
                 
                 impl SseDecode for crate::api::app_mcp::AppMcpMinted {
@@ -13617,7 +13618,8 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::app_mcp::AppMcpFailure> for c
 self.name.into_into_dart().into_dart(),
 self.online.into_into_dart().into_dart(),
 self.transports.into_into_dart().into_dart(),
-self.system.into_into_dart().into_dart()
+self.system.into_into_dart().into_dart(),
+self.script.into_into_dart().into_dart()
                 ].into_dart()
                 }
             }
@@ -20307,7 +20309,8 @@ crate::api::app_mcp::AppMcpFailure::Failed => { 3 }
 <String>::sse_encode(self.name, serializer);
 <bool>::sse_encode(self.online, serializer);
 <Vec<String>>::sse_encode(self.transports, serializer);
-<Option<crate::api::parser::SystemType>>::sse_encode(self.system, serializer);}
+<Option<crate::api::parser::SystemType>>::sse_encode(self.system, serializer);
+<bool>::sse_encode(self.script, serializer);}
                 }
                 
                 impl SseEncode for crate::api::app_mcp::AppMcpMinted {
@@ -25529,13 +25532,13 @@ crate::api::virt_libvirt::VirtResourceOp::NetDelete{name} => { <i32>::sse_encode
 
 // Section: imports
 
-use crate::api::agent_pipe::*;
-use crate::api::bmc::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::bmc::*;
+use crate::api::pve::*;
+use crate::api::ssh_crypto::*;
 use crate::api::control_master::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -25690,13 +25693,13 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::agent_pipe::*;
-use crate::api::bmc::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::bmc::*;
+use crate::api::pve::*;
+use crate::api::ssh_crypto::*;
 use crate::api::control_master::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::agent_pipe::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

@@ -28,5 +28,11 @@ pub async fn list(
         return Ok(refused);
     }
     let here = Here::quiet(&state.remote_access.exec);
-    Ok(HttpResponse::Ok().json(&sbm_mcp::machine::tmux::sessions(&here).await))
+    let sessions = sbm_mcp::machine::tmux::sessions(&here).await;
+    // tmux not installed is an answer; a lookup that could not run is this
+    // agent's own failure.
+    if sessions["available"] == false && !sessions["error"].is_null() {
+        tracing::warn!("tmux lookup failed: {}", sessions["error"]);
+    }
+    Ok(HttpResponse::Ok().json(&sessions))
 }

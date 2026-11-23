@@ -92,7 +92,7 @@ pub async fn exec(
     // did: a command that hangs or kills the agent still has to appear here.
     Event::new(Kind::Exec, Action::Open, Outcome::Ok)
         .remote_ip(remote_ip.clone())
-        .subject(first_line(&cmd))
+        .subject(command_summary(&cmd))
         .record(&app_state.db)
         .await;
 
@@ -116,7 +116,7 @@ pub async fn exec(
     }
 }
 
-pub(crate) use sbm_mcp::machine::first_line;
+pub(crate) use sbm_mcp::machine::command_summary;
 
 /// Runs [cmd] in a shell under [limits]. Also what the machine-management
 /// endpoints (`api::machine`) run their commands through, so a command they

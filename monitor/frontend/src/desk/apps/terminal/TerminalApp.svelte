@@ -426,7 +426,7 @@
               <p class="px-[9px] py-[7px] text-[13px] text-(--color-danger)">{$LL.terminalTmuxListFailed()}</p>
               <p class="lk-mono break-all px-[9px] pb-[7px] text-[12px] text-(--text-tertiary)">{tmux.error}</p>
             {/if}
-            {#if tmux && !tmux.available}
+            {#if tmux && !tmux.available && !tmux.error}
               <p class="px-[9px] py-[7px] text-[13px] text-(--text-secondary)">{$LL.terminalTmuxNoTmux()}</p>
             {:else if tmux?.available}
               {#each tmux.sessions as s (s.id)}

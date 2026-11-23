@@ -794,7 +794,8 @@ fn ssh_e2e_unix_container_listing() {
         if ty == ContainerType::Docker && container::is_podman_emulation(&stderr) {
             continue;
         }
-        let segments = container::split_segments(&stdout, &separator);
+        let segments: Vec<String> =
+            container::split_segments(&stdout, &separator, Some(code)).into_iter().map(|s| s.output).collect();
         assert_eq!(segments.len(), cmds.len(), "{stdout}");
         assert!(container::parse_version(&segments[0]).is_some(), "{}", segments[0]);
         let listed = match ty {

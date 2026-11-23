@@ -1366,7 +1366,9 @@ impl ProcColumns {
     /// `ascending` where given, else that order's own default.
     pub fn resolve(&self, sort: Option<ProcSortMode>, ascending: Option<bool>) -> (ProcSortMode, bool) {
         let mode = sort.filter(|mode| self.sorts().contains(mode)).unwrap_or_else(|| self.default_sort());
-        let ascending = if sort == Some(mode) { ascending } else { None };
+        // A direction is the caller's for the order it asked for, or for the
+        // default when it asked for none; not for an order swapped in.
+        let ascending = if sort.is_none_or(|sort| sort == mode) { ascending } else { None };
         (mode, ascending.unwrap_or_else(|| mode.default_ascending()))
     }
 }
@@ -1413,6 +1415,14 @@ impl PsView {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_direction_follows_the_order_it_was_asked_for() {
+        let columns = ProcColumns { cpu: true, ..Default::default() };
+        assert_eq!(columns.resolve(None, Some(true)), (ProcSortMode::Cpu, true));
+        assert_eq!(columns.resolve(Some(ProcSortMode::Mem), Some(true)).1, ProcSortMode::Cpu.default_ascending());
+        assert_eq!(columns.resolve(None, None), (ProcSortMode::Cpu, ProcSortMode::Cpu.default_ascending()));
+    }
 
     fn proc(pid: i64, command: &str) -> Proc {
         Proc {

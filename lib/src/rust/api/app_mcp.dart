@@ -13,7 +13,7 @@ part 'app_mcp.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `app_tool`, `check`, `detect`, `failure`, `host_key`, `message`, `on_host`, `parse_scopes`, `parse`, `scope_names`, `scopes`, `text`, `token`, `tools_of`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `AppHost`, `AppMachine`, `Policy`, `Registry`, `TokenEntry`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `call`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `run`, `server_info`, `system`, `tools`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `call`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `record`, `run`, `server_info`, `system`, `tools`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `default`
 
 /// Every scope the app serves, in the order a list shows them.
@@ -122,12 +122,17 @@ class AppMcpHost {
   /// What it runs, when the app already knows.
   final SystemType? system;
 
+  /// Whether the app keeps its status script there; without one, a script
+  /// function is run from the script itself, read on stdin.
+  final bool script;
+
   const AppMcpHost({
     required this.id,
     required this.name,
     required this.online,
     required this.transports,
     this.system,
+    required this.script,
   });
 
   @override
@@ -136,7 +141,8 @@ class AppMcpHost {
       name.hashCode ^
       online.hashCode ^
       transports.hashCode ^
-      system.hashCode;
+      system.hashCode ^
+      script.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -147,7 +153,8 @@ class AppMcpHost {
           name == other.name &&
           online == other.online &&
           transports == other.transports &&
-          system == other.system;
+          system == other.system &&
+          script == other.script;
 }
 
 class AppMcpMinted {

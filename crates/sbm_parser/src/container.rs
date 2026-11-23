@@ -164,21 +164,46 @@ impl ContainerCmd {
 /// container, so it carries an id, and [`ContainerCmd`] is `Copy` precisely
 /// because every one of its cases is the same for every machine.
 ///
-/// The separator is written *between* the commands, so N commands produce N
-/// segments when the answer is split — not N+1, and not a leading marker that
-/// someone has to remember to skip.
+/// The separator is written *between* the commands, followed by the exit
+/// status of the command before it, so N commands produce N segments when the
+/// answer is split — not N+1, and not a leading marker that someone has to
+/// remember to skip. The last command's status is the whole batch's.
 pub fn join_commands(commands: &[String], separator: &str) -> String {
-    let joined = commands.join(&format!("\necho {separator}\n"));
+    let joined = commands.join(&format!("\necho {separator}$?\n"));
     format!("sh -c {}", crate::script::shell_quote_unix(&joined))
 }
 
-/// Split a batched answer back into one segment per command.
+/// One command's share of a batched answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Segment {
+    pub output: String,
+    /// `None` where the status could not be read.
+    pub exit_code: Option<i32>,
+}
+
+/// Split a batched answer back into one segment per command; [last_exit] is
+/// the batch's own exit status, which is the last command's.
 ///
 /// A segment count that does not match the command count is the caller's to
 /// refuse: a short answer cannot be matched to commands safely, and guessing
 /// which one is missing would attach one command's output to another's name.
-pub fn split_segments(raw: &str, separator: &str) -> Vec<String> {
-    raw.split(separator).map(str::to_string).collect()
+pub fn split_segments(raw: &str, separator: &str, last_exit: Option<i32>) -> Vec<Segment> {
+    let parts: Vec<&str> = raw.split(separator).collect();
+    let status = |part: &str| part.split_once('\n').map_or(part, |(code, _)| code).trim().parse().ok();
+    parts
+        .iter()
+        .enumerate()
+        .map(|(i, part)| Segment {
+            output: match i {
+                0 => part.to_string(),
+                _ => part.split_once('\n').map_or("", |(_, rest)| rest).to_string(),
+            },
+            exit_code: match parts.get(i + 1) {
+                Some(next) => status(next),
+                None => last_exit,
+            },
+        })
+        .collect()
 }
 
 /// What the shell said when the runtime is not installed.
@@ -1945,12 +1970,17 @@ mod tests {
         );
         assert!(cmd.starts_with("sh -c '"));
         assert!(cmd.ends_with('\''));
-        assert!(cmd.contains("\necho SrvBoxContainerSep_1_0\n"));
+        assert!(cmd.contains("\necho SrvBoxContainerSep_1_0$?\n"));
         // The separator is the caller's, so one refresh's answer cannot be
         // matched against another's commands.
+        let segment = |output: &str, exit_code| Segment { output: output.into(), exit_code };
         assert_eq!(
-            split_segments("a\nSrvBoxContainerSep_1_0\nb", "SrvBoxContainerSep_1_0"),
-            vec!["a\n", "\nb"]
+            split_segments("a\nSrvBoxContainerSep_1_0\nb", "SrvBoxContainerSep_1_0", Some(0)),
+            vec![segment("a\n", None), segment("b", Some(0))]
+        );
+        assert_eq!(
+            split_segments("SrvBoxContainerSep_1_01\nb", "SrvBoxContainerSep_1_0", Some(0)),
+            vec![segment("", Some(1)), segment("b", Some(0))]
         );
     }
 
@@ -2574,7 +2604,7 @@ mod tests {
         let cmd = join_commands(&commands, "SEP");
         assert!(cmd.starts_with("sh -c '"));
         assert!(cmd.ends_with('\''));
-        assert!(cmd.contains("\necho SEP\n"));
+        assert!(cmd.contains("\necho SEP$?\n"));
         // The inner single quote is escaped for the outer `sh -c` as well as by
         // the id's own quoting, and there is exactly one escaping pass over the
         // whole batch — a second would double it.

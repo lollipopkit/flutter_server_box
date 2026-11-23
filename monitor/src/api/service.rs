@@ -78,5 +78,6 @@ pub async fn act(
         Ok(response) => Ok(HttpResponse::Ok().json(&response)),
         Err(ServiceRefused::Unsupported) => Ok(HttpResponse::BadRequest().build()),
         Err(ServiceRefused::NoSuchUnit) => Ok(HttpResponse::NotFound().build()),
+        Err(ServiceRefused::Unreadable) => Ok(HttpResponse::BadGateway().build()),
     }
 }

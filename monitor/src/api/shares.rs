@@ -90,7 +90,9 @@ pub(crate) async fn as_root(state: &AppState, script: &str, password: Option<&st
 pub(crate) fn record(req: &HttpRequest, state: &AppState, detail: String) -> impl std::future::Future<Output = ()> {
     let event = Event::new(Kind::Machine, Action::Write, Outcome::Ok).remote_ip(peer_ip(req)).detail(detail);
     let db = state.db.clone();
-    async move { event.record(&db).await }
+    async move {
+        event.record(&db).await;
+    }
 }
 
 #[derive(Deserialize)]

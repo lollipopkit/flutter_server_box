@@ -348,13 +348,15 @@ impl TokenHost {
         let action_name = request.action.as_str();
         // Recorded before `perform` runs, since shutdown/reboot may stop the
         // process before `serve` returns.
-        Event::new(Kind::Mcp, Action::Open, Outcome::Ok)
+        let written = Event::new(Kind::Mcp, Action::Open, Outcome::Ok)
             .subject(format!("api token '{}'", self.token_name))
             .remote_ip(self.remote_ip.clone())
             .detail(format!("tool power: {action_name}"))
             .record(&self.state.db)
             .await;
-        self.audited_before_run.store(true, Ordering::Relaxed);
+        if written {
+            self.audited_before_run.store(true, Ordering::Relaxed);
+        }
 
         match super::power::perform(&self.state, request, self.remote_ip.clone()).await {
             Ok(response) => structured(serde_json::to_value(response).unwrap_or(Value::Null)),
@@ -514,7 +516,7 @@ async fn post_authed(
                     && let Some(cmd) = message.pointer("/params/arguments/command").and_then(Value::as_str)
                     && !cmd.trim().is_empty()
                 {
-                    format!("tool run_command: {}", super::exec::first_line(cmd))
+                    format!("tool run_command: {}", super::exec::command_summary(cmd))
                 } else {
                     format!("tool {tool_name}")
                 };

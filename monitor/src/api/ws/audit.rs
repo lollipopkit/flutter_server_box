@@ -222,7 +222,8 @@ impl Event {
         self
     }
 
-    pub async fn record(self, pool: &SqlitePool) {
+    /// Whether the row was written.
+    pub async fn record(self, pool: &SqlitePool) -> bool {
         let kind = self.kind.as_str();
         let action = self.action.as_str();
         let result = self.outcome.as_str();
@@ -246,9 +247,10 @@ impl Event {
         .execute(pool)
         .await;
 
-        if let Err(e) = write {
+        if let Err(e) = &write {
             tracing::warn!("Failed to record {kind}/{action} in access_log: {e}");
         }
+        write.is_ok()
     }
 }
 

@@ -168,5 +168,6 @@ pub async fn kill(
     match processes::stop(&Here::recorded(&state, gated.remote_ip), request).await {
         Ok(response) => Ok(HttpResponse::Ok().json(&response)),
         Err(StopRefused::Unsafe) => Ok(HttpResponse::BadRequest().build()),
+        Err(StopRefused::Signal) => Ok(HttpResponse::BadRequest().build()),
     }
 }

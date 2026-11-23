@@ -306,6 +306,9 @@ Future<void> _handle(
       await chunks.cancel();
     }
 
+    // One view of the servers for the whole call: a server edited while it
+    // runs is a different server, and no later command of the call reaches it.
+    final servers = container.read(serversProvider).servers;
     // Read after the body so edits and revocations take effect before dispatch.
     final response = await ffi.appMcpServe(
       request: ffi.AppMcpRequest(
@@ -315,10 +318,10 @@ Future<void> _handle(
         accept: request.headers[HttpHeaders.acceptHeader] ?? const [],
         contentType: request.headers.value(HttpHeaders.contentTypeHeader),
         body: body.takeBytes(),
-        hosts: _hosts(container),
+        hosts: _hosts(container, servers),
         settingsSchema: jsonEncode(mcpPreferenceSchema(container)),
       ),
-      run: (run) => _run(container, run),
+      run: (run) => _run(container, servers, run),
       settings: (name, arguments) => _settings(container, name, arguments),
     );
     if (response.call case final call?) {
@@ -335,7 +338,10 @@ Future<void> _handle(
   }
 }
 
-List<ffi.AppMcpHost> _hosts(ProviderContainer container) => [
+List<ffi.AppMcpHost> _hosts(
+  ProviderContainer container,
+  Map<String, Spi> servers,
+) => [
   if (LocalDevice.isOffered)
     ffi.AppMcpHost(
       id: LocalDevice.id,
@@ -343,8 +349,10 @@ List<ffi.AppMcpHost> _hosts(ProviderContainer container) => [
       online: true,
       transports: const ['local'],
       system: LocalServer.systemType.ffi,
+      // No status script is kept for this device.
+      script: false,
     ),
-  for (final spi in container.read(serversProvider).servers.values)
+  for (final spi in servers.values)
     // A server with every way there turned off is not one to reach, and this
     // device only with the person's consent, however it is configured.
     if (spi.local ? LocalDevice.isOffered : spi.sshOn != null || spi.monitorOn != null)
@@ -366,6 +374,7 @@ ffi.AppMcpHost _host(Spi spi, ServerState state) => ffi.AppMcpHost(
   system: (spi.customSystemType ??
           (state.conn == ServerConn.finished ? state.status.system : null))
       ?.ffi,
+  script: true,
 );
 
 ffi.AppMcpRan _failed(ffi.AppMcpFailure failure) => ffi.AppMcpRan(
@@ -378,6 +387,7 @@ ffi.AppMcpRan _failed(ffi.AppMcpFailure failure) => ffi.AppMcpRan(
 
 Future<ffi.AppMcpRan> _run(
   ProviderContainer container,
+  Map<String, Spi> servers,
   ffi.AppMcpRun run,
 ) async {
   final host = switch (run) {
@@ -397,13 +407,15 @@ Future<ffi.AppMcpRan> _run(
       return switch (run) {
         ffi.AppMcpRun_Command(:final script, :final entry, :final stdin) =>
           await _bounded(exec, script, entry: entry, stdin: stdin, room: room),
-        // No status script is kept for this device.
+        // Asked only of a host with `script` set.
         ffi.AppMcpRun_Script() => _failed(ffi.AppMcpFailure.unavailable),
       };
     }
 
-    final spi = container.read(serversProvider).servers[host];
-    if (spi == null) return _failed(ffi.AppMcpFailure.hostChanged);
+    final spi = servers[host];
+    if (spi == null || container.read(serversProvider).servers[host] != spi) {
+      return _failed(ffi.AppMcpFailure.hostChanged);
+    }
     if (spi.local && !LocalDevice.isOffered) {
       return _failed(ffi.AppMcpFailure.unavailable);
     }
@@ -506,19 +518,24 @@ Future<String?> _settings(
   String name,
   String arguments,
 ) async {
-  final args = jsonDecode(arguments);
-  if (args is! Map) return null;
-  final preferences = mcpPreferences(container);
-  if (name == 'app_settings') {
-    if (args.isNotEmpty) return null;
-    return jsonEncode({
-      for (final e in preferences.entries) e.key: e.value.read(),
-    });
-  }
-  final key = args['key'];
-  final pref = preferences[key];
-  if (args.length != 2 || pref == null || !pref.write(args['value'])) {
+  try {
+    final args = jsonDecode(arguments);
+    if (args is! Map) return null;
+    final preferences = mcpPreferences(container);
+    if (name == 'app_settings') {
+      if (args.isNotEmpty) return null;
+      return jsonEncode({
+        for (final e in preferences.entries) e.key: e.value.read(),
+      });
+    }
+    final key = args['key'];
+    final pref = preferences[key];
+    if (args.length != 2 || pref == null || !pref.write(args['value'])) {
+      return null;
+    }
+    return jsonEncode({key as String: pref.read()});
+  } catch (e) {
+    _log.warning('Preference call failed: ${e.runtimeType}');
     return null;
   }
-  return jsonEncode({key as String: pref.read()});
 }
