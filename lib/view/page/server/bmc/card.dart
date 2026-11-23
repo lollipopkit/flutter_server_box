@@ -397,15 +397,18 @@ final class BmcCard extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
             children: [
-              Icon(
-                Icons.bolt,
-                size: 18,
-                color: isOff ? StatePalette.idle : scheme.primary,
+              SizedBox(
+                width: kSideMarkSize,
+                child: Center(
+                  child: Icon(
+                    Icons.bolt,
+                    size: 17,
+                    color: isOff ? StatePalette.idle : scheme.primary,
+                  ),
+                ),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 7),
               Text(
                 l10n.power,
                 style: const TextStyle(
