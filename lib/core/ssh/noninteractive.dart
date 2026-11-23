@@ -7,7 +7,7 @@ class NonInteractiveSsh {
 
   void decline() => needsUser = true;
 
-  /// A handshake authenticated anyway: what it declined did not stop it, and
-  /// is not why anything after it fails.
+  /// A handshake authenticated anyway, or a jump candidate was given up for
+  /// the next: what was declined is not why anything after it fails.
   void settle() => needsUser = false;
 }

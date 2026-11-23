@@ -227,6 +227,8 @@ Future<SSHClient> genClient(
               if (!isJumpFailoverError(e)) {
                 rethrow;
               }
+              // What this candidate declined is not why the next one fails.
+              unattended?.settle();
               lastNetworkError = e;
               lastNetworkStack = stack;
               Loggers.app.warning(

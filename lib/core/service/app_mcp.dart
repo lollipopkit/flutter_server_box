@@ -413,7 +413,8 @@ Future<ffi.AppMcpRan> _run(
     }
 
     final spi = servers[host];
-    if (spi == null || container.read(serversProvider).servers[host] != spi) {
+    bool unchanged() => container.read(serversProvider).servers[host] == spi;
+    if (spi == null || !unchanged()) {
       return _failed(ffi.AppMcpFailure.hostChanged);
     }
     if (spi.local && !LocalDevice.isOffered) {
@@ -423,7 +424,9 @@ Future<ffi.AppMcpRan> _run(
     final exec = run is ffi.AppMcpRun_Script
         ? await notifier.ensureScriptExec(unattended: true)
         : await notifier.ensureUnattendedExec();
-    if (!notifier.isExecCurrent(exec, spi)) {
+    // Again once connected: the server may have been edited or removed
+    // while the connection was made.
+    if (!unchanged() || !notifier.isExecCurrent(exec, spi)) {
       return _failed(ffi.AppMcpFailure.hostChanged);
     }
     return switch (run) {
