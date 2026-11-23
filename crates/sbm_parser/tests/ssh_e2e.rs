@@ -401,10 +401,11 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     };
 
     if system == SystemType::Linux {
-        // A GPU it can talk to: an `nvidia-smi` whose NVML does not
-        // initialise has nothing to report, and the segment is rightly empty.
+        // A GPU the status command's own `nvidia-smi` can talk to (the one on
+        // PATH, else WSL's): one whose NVML does not initialise has nothing to
+        // report, and the segment is rightly empty.
         let has_nvidia = has(
-            "if nvidia-smi -L >/dev/null 2>&1 || /usr/lib/wsl/lib/nvidia-smi -L >/dev/null 2>&1; then echo yes; else echo no; fi",
+            "if command -v nvidia-smi >/dev/null 2>&1; then smi=nvidia-smi; else smi=/usr/lib/wsl/lib/nvidia-smi; fi; if [ -n \"$(command -v $smi)\" ] && $smi -L >/dev/null 2>&1; then echo yes; else echo no; fi",
         );
         if has_nvidia {
             assert!(
