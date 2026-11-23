@@ -16,6 +16,7 @@ import 'package:server_box/core/monitor/exec.dart';
 import 'package:server_box/core/service/app_mcp_settings.dart';
 import 'package:server_box/core/service/app_mcp_tokens.dart';
 import 'package:server_box/core/ssh/noninteractive.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -509,12 +510,32 @@ Future<ffi.AppMcpRan> _bounded(
       timedOut:
           timedOut || (result is MonitorExecResult && result.timedOut),
     );
-  } catch (_) {
-    return _failed(ffi.AppMcpFailure.failed);
+  } catch (e) {
+    return _failed(_failureOf(e));
   } finally {
     timer.cancel();
   }
 }
+
+/// Why [e] kept a command from its answer: a Monitor that refused before the
+/// command was sent did not run it, and a certificate to confirm is the
+/// person's; anything else may have run.
+ffi.AppMcpFailure _failureOf(Object e) => switch (e) {
+  MonitorHttpErr(
+    type: MonitorHttpErrType.certUnconfirmed || MonitorHttpErrType.certChanged,
+  ) =>
+    ffi.AppMcpFailure.needsUser,
+  MonitorHttpErr(
+    type: MonitorHttpErrType.loginFailed ||
+        MonitorHttpErrType.auth ||
+        MonitorHttpErrType.notGranted ||
+        MonitorHttpErrType.forbidden ||
+        MonitorHttpErrType.agentTooOld ||
+        MonitorHttpErrType.clientTooOld,
+  ) =>
+    ffi.AppMcpFailure.unavailable,
+  _ => ffi.AppMcpFailure.failed,
+};
 
 Future<String?> _settings(
   ProviderContainer container,

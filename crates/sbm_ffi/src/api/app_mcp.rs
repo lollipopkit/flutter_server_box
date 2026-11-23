@@ -302,7 +302,7 @@ pub enum AppMcpRun {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppMcpFailure {
     /// The connection needs the person first: a key's passphrase, a host key
-    /// to confirm.
+    /// or a Monitor's certificate to confirm.
     NeedsUser,
     /// The server was edited or reconnected while the call ran.
     HostChanged,
@@ -316,7 +316,7 @@ impl AppMcpFailure {
     fn message(self) -> &'static str {
         match self {
             Self::NeedsUser => {
-                "this server needs the person at ServerBox first (a key passphrase or a host key to confirm); connect to it there, then call again"
+                "this server needs the person at ServerBox first (a key passphrase, a host key or a certificate to confirm); connect to it there, then call again"
             }
             Self::HostChanged => "the server changed in ServerBox while the call ran; call again",
             Self::Unavailable => "commands cannot be run on this server now",

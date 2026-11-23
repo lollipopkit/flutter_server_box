@@ -401,8 +401,10 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     };
 
     if system == SystemType::Linux {
+        // A GPU it can talk to: an `nvidia-smi` whose NVML does not
+        // initialise has nothing to report, and the segment is rightly empty.
         let has_nvidia = has(
-            "if command -v nvidia-smi >/dev/null 2>&1 || [ -x /usr/lib/wsl/lib/nvidia-smi ]; then echo yes; else echo no; fi",
+            "if nvidia-smi -L >/dev/null 2>&1 || /usr/lib/wsl/lib/nvidia-smi -L >/dev/null 2>&1; then echo yes; else echo no; fi",
         );
         if has_nvidia {
             assert!(
@@ -794,9 +796,11 @@ fn ssh_e2e_unix_container_listing() {
         if ty == ContainerType::Docker && container::is_podman_emulation(&stderr) {
             continue;
         }
-        let segments: Vec<String> =
-            container::split_segments(&stdout, &separator, Some(code)).into_iter().map(|s| s.output).collect();
+        let segments = container::split_segments(&stdout, &separator, Some(code));
         assert_eq!(segments.len(), cmds.len(), "{stdout}");
+        // Each command's own status comes back with its output.
+        assert!(segments.iter().all(|s| s.exit_code == Some(0)), "{segments:?}");
+        let segments: Vec<String> = segments.into_iter().map(|s| s.output).collect();
         assert!(container::parse_version(&segments[0]).is_some(), "{}", segments[0]);
         let listed = match ty {
             ContainerType::Docker => container::parse_docker_ps(&segments[1]),

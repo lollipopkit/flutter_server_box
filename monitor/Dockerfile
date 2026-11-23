@@ -41,6 +41,8 @@ COPY packages/fl_pi_llm/fl_pi_llm/rust/ ./fl_pi_llm/
 COPY packages/cmd_rules/ ./cmd_rules/
 COPY monitor/migrations/ ./migrations/
 COPY monitor/.sqlx/ ./.sqlx/
+# Desk apps' interface (`apps::runtime`'s `bindgen!`), read at compile time.
+COPY monitor/wit/ ./wit/
 
 # Copy source code
 COPY monitor/src/ ./src/
