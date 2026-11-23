@@ -18,7 +18,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.7.0",
-    "tailwind-variants": "^4.0.1"
+    "tailwind-variants": "^4.0.2"
   },
   "devDependencies": {
     "svelte": "^5.57.3",
