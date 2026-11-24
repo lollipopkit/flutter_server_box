@@ -129,6 +129,12 @@ if [ "${actual_apk_names[*]}" != "${expected_apk_names[*]}" ]; then
   exit 1
 fi
 
+dart --packages="$REPO_ROOT/scripts/release/empty-package-config.json" \
+  "$REPO_ROOT/scripts/release/verify_android_version_codes.dart" \
+  build/app/outputs/apk/release/output-metadata.json \
+  pubspec.yaml \
+  "${expected_apk_names[@]}"
+
 for apk in "${apks[@]}"; do
   sha256sum "$apk"
 done

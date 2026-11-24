@@ -4,13 +4,7 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
+import com.android.build.api.variant.FilterConfiguration
 
 // The release key, from 1Password: `scripts/release/android-signing.sh`.
 def releaseStoreFilePath = System.getenv('SBX_KEYSTORE')?.trim()
@@ -76,16 +70,6 @@ def pinnedNdkVersion = rootProject.file('ndk-version.txt').text.trim()
 def pinnedCompileSdkVersion = rootProject.file('compile-sdk-version.txt').text.trim().toInteger()
 def pinnedBuildToolsVersion = rootProject.file('build-tools-version.txt').text.trim()
 
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
-
 android {
     namespace "tech.lolli.toolbox"
     compileSdk pinnedCompileSdkVersion
@@ -138,8 +122,8 @@ android {
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        versionCode flutter.versionCode
+        versionName flutter.versionName
         // AppAuth's redirect receiver: `Lkc.redirectUrl`, `serverbox://auth/…`.
         manifestPlaceholders += [appAuthRedirectScheme: 'serverbox']
         
@@ -227,18 +211,25 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 }
 
-ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
-import com.android.build.OutputFile
-// Through the legacy variant API on purpose, and it has to stay that way until
-// Flutter's own Gradle plugin moves: it sets `versionCodeOverride` on the same
-// outputs (`<abi> * 1000 + <build>`), and only a later write of the same kind
-// replaces it. A value set through `androidComponents` is overwritten.
-// TODO: move to `androidComponents` with flutter/flutter#166550.
-android.applicationVariants.all { variant ->
-  variant.outputs.each { output ->
-    def abiVersionCode = project.ext.abiCodes.get(output.getFilter(OutputFile.ABI))
-    if (abiVersionCode != null) {
-      output.versionCodeOverride = variant.versionCode * 100 + abiVersionCode
+def abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
+// Flutter 3.50 sets per-ABI version codes (`abiOffset * 1000 + versionCode`)
+// in its own `androidComponents.onVariants` callback before this runs. Set
+// ours in `onVariants` too, from the un-offset `flutter.versionCode`, so our
+// `<build>0<abi>` scheme replaces Flutter's instead of multiplying it.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def baseVersionCode = flutter.versionCode
+        variant.outputs.each { output ->
+            def abi = output.filters.find {
+                it.filterType == FilterConfiguration.FilterType.ABI
+            }?.identifier
+            if (abi != null) {
+                def abiVersionCode = abiCodes.get(abi)
+                if (abiVersionCode == null) {
+                    throw new IllegalStateException("Unsupported split ABI: ${abi}")
+                }
+                output.versionCode.set(baseVersionCode * 100 + abiVersionCode)
+            }
+        }
     }
-  }
 }
