@@ -1,7 +1,7 @@
 part of 'tab.dart';
 
 extension _Sheets on _ServerPageState {
-  Future<void> _showDensitySheet(int count) async {
+  Future<void> _showDensitySheet(List<StatusCardItem> items) async {
     final stored = ServerDensityPref.of(_tag.value);
     await showRowsSheet<void>(
       context,
@@ -21,8 +21,8 @@ extension _Sheets on _ServerPageState {
         Padding(
           padding: const EdgeInsets.fromLTRB(17, 7, 17, 27),
           child: Text(
-            '${libL10n.auto} · $count → '
-            '${_resolvedDensity(ServerListDensity.auto, count).label}',
+            '${libL10n.auto} · ${items.length} → '
+            '${_resolvedDensity(ServerListDensity.auto, items).label}',
             style: UIs.text11Grey,
             textAlign: TextAlign.center,
           ),

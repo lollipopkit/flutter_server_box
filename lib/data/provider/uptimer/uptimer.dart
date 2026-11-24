@@ -69,6 +69,11 @@ final class UptimerState {
     return incidentsFor(monitorId).isNotEmpty;
   }
 
+  /// Whether `UptimerCard` renders an alert/maintenance banner for [monitorId].
+  bool hasBanner(int monitorId) =>
+      incidentsFor(monitorId).isNotEmpty ||
+      activeMaintenanceFor(monitorId).isNotEmpty;
+
   static List<String> computeSortedGroups(
     Map<int, UptimerMonitorCard> monitors,
   ) {

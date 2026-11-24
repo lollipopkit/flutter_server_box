@@ -120,25 +120,48 @@ extension _Grid on _ServerPageState {
       return buildBody();
     }
 
+    final uptimer = ref.watch(uptimerProvider);
+    final itemGroups = groups?.map((g) => g.items).toList();
+
     Widget grid(double pageInset) => LayoutBuilder(
       builder: (_, cons) {
+        _lastGridViewport = cons.biggest;
+        _syncCardHeightCache(cons.biggest, textScale);
         if (hero ? _heroDensity : null case final held?) {
           return gridOf(cons, held, pageInset);
         }
-        final auto = ServerListDensity.auto.resolve(
-          count: filtered.length,
+        final auto = ServerListDensity.auto.resolveItems(
+          filtered,
+          groups: itemGroups,
           textScale: textScale,
           viewport: cons.biggest,
           folded: folded,
+          uptimerHasBanner: uptimer.hasBanner,
+          heightOf: (item) => _cardHeightOf(
+            item,
+            folded: folded,
+            unfolded: unfolded,
+            textScale: textScale,
+            uptimer: uptimer,
+          ),
         );
         _publishAuto(auto);
         final density = stored == ServerListDensity.auto
             ? auto
-            : stored.resolve(
-                count: filtered.length,
+            : stored.resolveItems(
+                filtered,
+                groups: itemGroups,
                 textScale: textScale,
                 viewport: cons.biggest,
                 folded: folded,
+                uptimerHasBanner: uptimer.hasBanner,
+                heightOf: (item) => _cardHeightOf(
+                  item,
+                  folded: folded,
+                  unfolded: unfolded,
+                  textScale: textScale,
+                  uptimer: uptimer,
+                ),
               );
         _heroDensity = hero ? density : null;
         return gridOf(cons, density, pageInset);
@@ -149,7 +172,6 @@ extension _Grid on _ServerPageState {
       for (final item in filtered)
         if (item is ServerCardItem) item.id,
     ];
-    final uptimer = ref.watch(uptimerProvider);
     final showUptimerErr =
         openItem == null && uptimer.signedIn && uptimer.error != null;
 
@@ -196,6 +218,135 @@ extension _Grid on _ServerPageState {
     );
   }
 
+  void _invalidateCardHeights() {
+    _cardHeights.clear();
+    _pendingCardHeights.clear();
+    _cardHeightCommitTimer?.cancel();
+    _cardHeightsEpoch++;
+  }
+
+  void _syncCardHeightCache(Size viewport, double textScale) {
+    final availWidth = math.max(
+      0.0,
+      viewport.width - MasonryList.kPadding.horizontal,
+    );
+    final cols = ServerListDensity.columnsFor(availWidth);
+    final colWidth = (availWidth - MasonryList.kSpacing * (cols - 1)) / cols;
+    final scaleChanged =
+        _cardHeightsTextScale != null &&
+        (_cardHeightsTextScale! - textScale).abs() > 0.01;
+    final widthChanged =
+        _cardHeightsColWidth != null &&
+        (_cardHeightsColWidth! - colWidth).abs() > 48.0;
+    if (scaleChanged || widthChanged) {
+      _invalidateCardHeights();
+      _cardHeightsTextScale = textScale;
+      _cardHeightsColWidth = colWidth;
+    } else {
+      _cardHeightsTextScale ??= textScale;
+      _cardHeightsColWidth ??= colWidth;
+    }
+  }
+
+  double? _cardHeightOf(
+    StatusCardItem item, {
+    required bool folded,
+    required bool Function(String id) unfolded,
+    required double textScale,
+    required UptimerState uptimer,
+  }) {
+    final factor = 1.0 + math.max(0.0, textScale - 1.0) * 0.35;
+    // A single card manually unfolded while global UI Fold is active must not
+    // push the whole list out of `cards` density.
+    final manuallyUnfolded =
+        item is ServerCardItem && folded && unfolded(item.id);
+    if (!manuallyUnfolded) {
+      if (_cardHeights[item.cardKey] case final measured?) return measured;
+    }
+    final base = switch (item) {
+      ServerCardItem(:final id) => () {
+        final srv = ref.read(serverProvider(id));
+        return switch (srv.conn) {
+          ServerConn.disconnected => ServerListDensity.cardCompact,
+          ServerConn.failed => ServerListDensity.cardServerFailed,
+          _ =>
+            (manuallyUnfolded || !unfolded(id))
+                ? ServerListDensity.cardFolded
+                : ServerListDensity.cardUnfolded,
+        };
+      }(),
+      BmcCardItem(:final target) => () {
+        final s = ref.read(bmcSummaryProvider(target.id));
+        if (s.failure != null) return ServerListDensity.cardBmcFailed;
+        if (s.watts != null) return ServerListDensity.cardBmc;
+        return ServerListDensity.cardCompact;
+      }(),
+      UptimerCardItem(:final monitor) =>
+        uptimer.hasBanner(monitor.id)
+            ? ServerListDensity.cardUptimerAlert
+            : ServerListDensity.cardUptimer,
+    };
+    return base * factor;
+  }
+
+  void _recordCardHeight(String cardKey, double height) {
+    final prev = _pendingCardHeights[cardKey] ?? _cardHeights[cardKey];
+    if (prev != null && (prev - height).abs() <= 1.5) return;
+    _pendingCardHeights[cardKey] = height;
+    // Trailing debounce waits for `ServerCard`'s `AnimatedSize` transitions to
+    // settle so intermediate heights never pollute `_cardHeights`.
+    _cardHeightCommitTimer?.cancel();
+    _cardHeightCommitTimer = Timer(
+      const Duration(milliseconds: 120),
+      _commitPendingCardHeights,
+    );
+  }
+
+  void _commitPendingCardHeights() {
+    _cardHeightCommitTimer = null;
+    if (!mounted || _pendingCardHeights.isEmpty) return;
+    _cardHeights.addAll(_pendingCardHeights);
+    _pendingCardHeights.clear();
+    if (_cardHeights.length > _lastFiltered.length * 2 + 32) {
+      final keep = {for (final i in _lastFiltered) i.cardKey};
+      _cardHeights.removeWhere((k, _) => !keep.contains(k));
+    }
+    if (_heroId != null) return;
+    final viewport = _lastGridViewport;
+    if (viewport == null || _lastFiltered.isEmpty) return;
+    final groups = ServerListGrouping.of(_tag.value) == ServerListGrouping.tag
+        ? groupByTag(_lastFiltered, (item) => item.tags)
+              .map((g) => g.items)
+              .toList()
+        : null;
+    final folded = Stores.setting.collapseUIDefault.fetch();
+    final unfolded = ServerCardExpanded.reader;
+    final uptimer = ref.read(uptimerProvider);
+    final textScale = _textScale;
+    final next = ServerListDensity.auto.resolveItems(
+      _lastFiltered,
+      groups: groups,
+      textScale: textScale,
+      viewport: viewport,
+      folded: folded,
+      uptimerHasBanner: uptimer.hasBanner,
+      heightOf: (item) => _cardHeightOf(
+        item,
+        folded: folded,
+        unfolded: unfolded,
+        textScale: textScale,
+        uptimer: uptimer,
+      ),
+    );
+    final prevAuto = _autoDensity.value;
+    if (next != prevAuto) {
+      _autoDensity.value = next;
+      if (ServerDensityPref.of(_tag.value) == ServerListDensity.auto) {
+        _sortVersion.notify();
+      }
+    }
+  }
+
   Widget _buildItemConsumer(
     StatusCardItem item, {
     double openness = 0,
@@ -203,53 +354,68 @@ extension _Grid on _ServerPageState {
     ServerListDensity density = ServerListDensity.cards,
     double pageWidth = 0,
     bool expanded = false,
-  }) => switch (item) {
-    ServerCardItem(:final id) => Consumer(
+  }) {
+    final child = switch (item) {
+      ServerCardItem(:final id) => Consumer(
+        builder: (_, ref, _) {
+          final srv = ref.watch(serverProvider(id));
+          final linkedBmc = srv.conn == ServerConn.failed
+              ? ref.watch(
+                  bmcTargetsProvider.select((s) => s.forServer(srv.spi.id)),
+                )
+              : null;
+          final bmcSummary = linkedBmc != null && linkedBmc.isComplete
+              ? ref.watch(bmcSummaryProvider(linkedBmc.id))
+              : null;
+          final bmcHealthy = bmcSummary != null && bmcSummary.failure == null;
+          final bmcPower =
+              bmcHealthy && bmcSummary.hasData ? bmcSummary.powerState : null;
+          final bmcSystem = bmcHealthy ? bmcSummary.topology?.system : null;
+          final canBmcPowerOn =
+              linkedBmc != null &&
+              bmcSystem != null &&
+              bmcPlan(system: bmcSystem, intent: PowerIntent.on_) != null;
+          return _buildEachServerCard(
+            srv,
+            openness: openness,
+            fade: fade,
+            density: density,
+            pageWidth: pageWidth,
+            expanded: expanded,
+            bmcPower: bmcPower,
+            bmcPowering: bmcSummary?.isPowering ?? false,
+            onBmcPowerOn: canBmcPowerOn
+                ? () => _onTapLinkedBmcPowerOn(srv.spi.id)
+                : null,
+          );
+        },
+      ),
+      BmcCardItem(:final target) => _buildEachBmcCard(
+        target,
+        fade: fade,
+        density: density,
+      ),
+      UptimerCardItem(:final monitor) => _buildEachUptimerCard(
+        monitor,
+        fade: fade,
+        density: density,
+      ),
+    };
+    final manuallyUnfolded =
+        item is ServerCardItem &&
+        expanded &&
+        Stores.setting.collapseUIDefault.fetch();
+    return _ReportCardHeight(
       key: ValueKey(item.cardKey),
-      builder: (_, ref, _) {
-        final srv = ref.watch(serverProvider(id));
-        final linkedBmc = srv.conn == ServerConn.failed
-            ? ref.watch(
-                bmcTargetsProvider.select((s) => s.forServer(srv.spi.id)),
-              )
-            : null;
-        final bmcSummary = linkedBmc != null && linkedBmc.isComplete
-            ? ref.watch(bmcSummaryProvider(linkedBmc.id))
-            : null;
-        final bmcHealthy = bmcSummary != null && bmcSummary.failure == null;
-        final bmcPower =
-            bmcHealthy && bmcSummary.hasData ? bmcSummary.powerState : null;
-        final bmcSystem = bmcHealthy ? bmcSummary.topology?.system : null;
-        final canBmcPowerOn =
-            linkedBmc != null &&
-            bmcSystem != null &&
-            bmcPlan(system: bmcSystem, intent: PowerIntent.on_) != null;
-        return _buildEachServerCard(
-          srv,
-          openness: openness,
-          fade: fade,
-          density: density,
-          pageWidth: pageWidth,
-          expanded: expanded,
-          bmcPower: bmcPower,
-          bmcPowering: bmcSummary?.isPowering ?? false,
-          onBmcPowerOn: canBmcPowerOn
-              ? () => _onTapLinkedBmcPowerOn(srv.spi.id)
-              : null,
-        );
-      },
-    ),
-    BmcCardItem(:final target) => _buildEachBmcCard(
-      target,
-      fade: fade,
-      density: density,
-    ),
-    UptimerCardItem(:final monitor) => _buildEachUptimerCard(
-      monitor,
-      fade: fade,
-      density: density,
-    ),
-  };
+      enabled:
+          density == ServerListDensity.cards &&
+          openness == 0 &&
+          !manuallyUnfolded,
+      epoch: _cardHeightsEpoch,
+      onHeight: (h) => _recordCardHeight(item.cardKey, h),
+      child: child,
+    );
+  }
 
   Future<void> _onTapLinkedBmcPowerOn(String serverId) async {
     final target = ref.read(bmcTargetsProvider).forServer(serverId);
@@ -354,7 +520,6 @@ extension _Grid on _ServerPageState {
     );
 
     return IgnorePointer(
-      key: ValueKey(cardKey),
       ignoring: fade != null,
       child: FadeTransition(
         opacity: fade ?? kAlwaysCompleteAnimation,
@@ -391,12 +556,94 @@ extension _Grid on _ServerPageState {
     );
 
     return IgnorePointer(
-      key: ValueKey(cardKey),
       ignoring: fade != null,
       child: FadeTransition(
         opacity: fade ?? kAlwaysCompleteAnimation,
         child: RepaintBoundary(child: card),
       ),
     );
+  }
+}
+
+/// Reports a card's actual laid-out height while [enabled] (resting `cards`
+/// density) without wrapping or rebuilding its child subtree.
+final class _ReportCardHeight extends SingleChildRenderObjectWidget {
+  final bool enabled;
+  final int epoch;
+  final ValueChanged<double> onHeight;
+
+  const _ReportCardHeight({
+    super.key,
+    required this.enabled,
+    required this.epoch,
+    required this.onHeight,
+    required super.child,
+  });
+
+  @override
+  _RenderReportCardHeight createRenderObject(BuildContext context) =>
+      _RenderReportCardHeight(
+        enabled: enabled,
+        epoch: epoch,
+        onHeight: onHeight,
+      );
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderReportCardHeight renderObject,
+  ) {
+    renderObject
+      ..enabled = enabled
+      ..epoch = epoch
+      ..onHeight = onHeight;
+  }
+}
+
+final class _RenderReportCardHeight extends RenderProxyBox {
+  bool _enabled;
+  int _epoch;
+  ValueChanged<double> _onHeight;
+  double _reported = -1;
+
+  _RenderReportCardHeight({
+    required bool enabled,
+    required int epoch,
+    required ValueChanged<double> onHeight,
+  }) : _enabled = enabled,
+       _epoch = epoch,
+       _onHeight = onHeight;
+
+  set enabled(bool value) {
+    if (_enabled == value) return;
+    _enabled = value;
+    if (_enabled) {
+      _reported = -1;
+      markNeedsLayout();
+    }
+  }
+
+  set epoch(int value) {
+    if (_epoch == value) return;
+    _epoch = value;
+    if (_enabled) {
+      _reported = -1;
+      markNeedsLayout();
+    }
+  }
+
+  set onHeight(ValueChanged<double> value) {
+    _onHeight = value;
+  }
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    if (!_enabled) return;
+    final h = size.height;
+    if (h > 0 && (h - _reported).abs() > 1.0) {
+      _reported = h;
+      _onHeight(h);
+    }
   }
 }

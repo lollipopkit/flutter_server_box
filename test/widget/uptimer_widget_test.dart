@@ -904,4 +904,81 @@ void main() {
       expect(persistedActive, isFalse);
     },
   );
+
+  testWidgets('UptimerCard height matches ServerListDensity constants', (
+    tester,
+  ) async {
+    final user = ValueNotifier<LkcUser?>(_user);
+    addTearDown(user.dispose);
+
+    // Without active incident/maintenance alert.
+    final plainApi = UptimerApi(
+      call: (method, path, {query, body}) async {
+        if (method == 'GET' && path == '/api/v1/me/page') {
+          return {
+            'generated_at': 1700000000,
+            'overall_status': 'up',
+            'monitors': const [],
+            'active_incidents': const [],
+            'maintenance_windows': {'active': const [], 'upcoming': const []},
+          };
+        }
+        return {};
+      },
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        user: user,
+        api: plainApi,
+        child: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 338,
+              child: UptimerCard(
+                monitor: _monitor,
+                density: ServerListDensity.cards,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getSize(find.byType(UptimerCard)).height,
+      moreOrLessEquals(ServerListDensity.cardUptimer, epsilon: 10),
+    );
+
+    // With active incident banner (from _mockApi). Reset ProviderScope first so
+    // the new API override triggers a fresh page load with active incidents.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      _wrap(
+        user: user,
+        api: _mockApi(),
+        child: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 338,
+              child: UptimerCard(
+                monitor: _monitor,
+                density: ServerListDensity.cards,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Elevated edge latency'), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(UptimerCard)).height,
+      moreOrLessEquals(ServerListDensity.cardUptimerAlert, epsilon: 10),
+    );
+  });
 }

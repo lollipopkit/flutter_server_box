@@ -1089,11 +1089,12 @@ void main() {
         card.density,
     };
 
-    // Three columns of four: ten of them fit, where ten used to be lines.
+    // Three columns: all ten cards fit completely at 1200x900.
     expect(drawn(), {ServerListDensity.cards});
 
-    // One column, and two screens of it is nine.
-    tester.view.physicalSize = const Size(500, 900);
+    // Shrink to a single-column 500x550 viewport where fewer than 90% of cards
+    // fit completely, while >= 90% of single-line rows still fit.
+    tester.view.physicalSize = const Size(500, 550);
     await settle(tester);
     expect(drawn(), {ServerListDensity.rows});
     // The bar is a button this narrow, and wears what auto came to — which

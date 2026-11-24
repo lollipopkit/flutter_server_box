@@ -33,7 +33,7 @@ extension _Bar on _ServerPageState {
                 ? _buildTagSwitcher()
                 : _buildItemSwitcher(openItem, filtered),
             actions: openItem == null
-                ? [_densityAction(filtered.length), ..._listActions()]
+                ? [_densityAction(filtered), ..._listActions()]
                 : _openItemActions(openItem),
           );
         }
@@ -53,7 +53,7 @@ extension _Bar on _ServerPageState {
                           : _buildItemSwitcher(openItem, filtered),
                     ),
                     if (openItem == null)
-                      _buildDensityControl(filtered.length, room: cons.maxWidth),
+                      _buildDensityControl(filtered, room: cons.maxWidth),
                     for (final action in openItem == null
                         ? _listActions()
                         : _openItemActions(openItem))
@@ -135,13 +135,16 @@ extension _Bar on _ServerPageState {
   /// current one filled, so what the other three are is visible rather than
   /// something to go looking for. Where it has not, the same four are a sheet
   /// behind a button, which is what the tag and the sort already do.
-  Widget _buildDensityControl(int count, {required double room}) {
+  Widget _buildDensityControl(
+    List<StatusCardItem> items, {
+    required double room,
+  }) {
     final stored = ServerDensityPref.of(_tag.value);
 
     // Room for four labelled positions, the switcher beside them and the four
     // buttons after them. Below it the labels are what would have to shrink,
     // and a segmented control with no labels is four unexplained icons.
-    if (room < 860) return _densityAction(count).button();
+    if (room < 860) return _densityAction(items).button();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -168,12 +171,12 @@ extension _Bar on _ServerPageState {
 
   /// The density as a button that opens the four as a sheet, which is what
   /// the tag and the sort already do.
-  BarAction _densityAction(int count) {
-    final resolved = _resolvedDensity(ServerDensityPref.of(_tag.value), count);
+  BarAction _densityAction(List<StatusCardItem> items) {
+    final resolved = _resolvedDensity(ServerDensityPref.of(_tag.value), items);
     return BarAction(
       icon: resolved.icon,
       label: resolved.label,
-      onTap: () => _showDensitySheet(count),
+      onTap: () => _showDensitySheet(items),
     );
   }
 
@@ -194,27 +197,52 @@ extension _Bar on _ServerPageState {
   /// knows. Before that — the globe is up, so there has been no grid — the
   /// window stands in for the list: the same question of a box a bar or two
   /// taller.
-  ServerListDensity _resolvedDensity(ServerListDensity stored, int count) {
+  ServerListDensity _resolvedDensity(
+    ServerListDensity stored,
+    List<StatusCardItem> items,
+  ) {
     if (stored == ServerListDensity.auto) {
+      if (items.length <= 1) return ServerListDensity.cards;
       if (_autoDensity.value case final known?) return known;
     }
-    return stored.resolve(
-      count: count,
-      textScale: _textScale,
-      viewport: MediaQuery.sizeOf(context),
-      folded: Stores.setting.collapseUIDefault.fetch(),
+    final groups = ServerListGrouping.of(_tag.value) == ServerListGrouping.tag
+        ? groupByTag(items, (item) => item.tags).map((g) => g.items).toList()
+        : null;
+    final folded = Stores.setting.collapseUIDefault.fetch();
+    final unfolded = ServerCardExpanded.reader;
+    final uptimer = ref.read(uptimerProvider);
+    final textScale = _textScale;
+    return stored.resolveItems(
+      items,
+      groups: groups,
+      textScale: textScale,
+      viewport: _lastGridViewport ?? MediaQuery.sizeOf(context),
+      folded: folded,
+      uptimerHasBanner: uptimer.hasBanner,
+      heightOf: (item) => _cardHeightOf(
+        item,
+        folded: folded,
+        unfolded: unfolded,
+        textScale: textScale,
+        uptimer: uptimer,
+      ),
     );
   }
 
   /// Tells the bar what `auto` came to, once the frame that found out is over.
   ///
-  /// Found during layout, which is too late to build the bar with and no time
-  /// to mark it dirty in. Only when it changes: this runs on every layout of
-  /// the grid, and a window being dragged wider is hundreds of them.
-  void _publishAuto(ServerListDensity auto) {
+  /// Coalesces multiple layout passes in the same frame so an earlier callback
+  /// never overwrites a newer result.
+  void _publishAuto(ServerListDensity? auto) {
+    _pendingAuto = auto;
+    if (_autoPublishScheduled) return;
     if (_autoDensity.value == auto) return;
+    _autoPublishScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _autoDensity.value = auto;
+      _autoPublishScheduled = false;
+      if (mounted && _autoDensity.value != _pendingAuto) {
+        _autoDensity.value = _pendingAuto;
+      }
     });
   }
 
