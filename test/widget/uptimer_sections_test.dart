@@ -1,10 +1,13 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/uptimer/detail.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
 import 'package:server_box/view/page/uptimer/detail_latency.dart';
 import 'package:server_box/view/page/uptimer/detail_sections.dart';
 import 'package:server_box/view/page/uptimer/detail_status.dart';
@@ -23,8 +26,8 @@ void main() {
     lastLatencyMs: 42,
     uptime30d: UptimerTotals(uptimePct: 99.95, downtimeSec: 30),
     heartbeats: [
-      UptimerHeartbeat(checkedAt: 1700000000, status: 'up', latencyMs: 42),
       UptimerHeartbeat(checkedAt: 1700000060, status: 'down'),
+      UptimerHeartbeat(checkedAt: 1700000000, status: 'up', latencyMs: 42),
     ],
     uptimeDays: [
       UptimerDay(
@@ -139,6 +142,79 @@ void main() {
     expect(find.text('502 Bad Gateway'), findsOneWidget);
     expect(find.text('https://api.example.com/health'), findsWidgets);
     expect(find.textContaining('avg 45 ms'), findsOneWidget);
+
+    // Newest check (down) occupies the heartbeat strip's rightmost slot.
+    final stripBoxes = tester
+        .widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(UptimerHeartbeatStrip),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .toList();
+    expect(stripBoxes, hasLength(45));
+    final rightmost = stripBoxes.last.decoration as BoxDecoration;
+    expect(rightmost.color, StatePalette.failed.withValues(alpha: 0.85));
+
+    // Latency chart renders and breaks the series at the null measurement.
+    final chart = tester.widget<LineChart>(find.byType(LineChart));
+    final spots = chart.data.lineBarsData.single.spots;
+    expect(spots, hasLength(3));
+    expect(spots[0], const FlSpot(0, 42));
+    expect(spots[1], FlSpot.nullSpot);
+    expect(spots[2], const FlSpot(2, 50));
+  });
+
+  testWidgets('UptimerLatencyCard heartbeat visibility handles all-null and single 0 ms points', (
+    tester,
+  ) async {
+    const heartbeatMonitor = UptimerMonitorCard(
+      id: 12,
+      name: 'Cron Job',
+      type: UptimerMonitorType.heartbeat,
+      status: UptimerMonitorStatus.up,
+    );
+    const allNullDetail = UptimerDetailState(
+      latency: UptimerLatencyData(
+        rangeStartAt: 1700000000,
+        rangeEndAt: 1700000060,
+        points: [
+          UptimerHeartbeat(checkedAt: 1700000000, status: 'up'),
+          UptimerHeartbeat(checkedAt: 1700000060, status: 'down'),
+        ],
+      ),
+    );
+    expect(UptimerLatencyCard.shouldShow(heartbeatMonitor, allNullDetail), isFalse);
+    await pump(
+      tester,
+      UptimerLatencyCard(
+        monitor: heartbeatMonitor,
+        detail: allNullDetail,
+        onRetry: () {},
+      ),
+    );
+    expect(find.byType(LineChart), findsNothing);
+
+    const zeroMsDetail = UptimerDetailState(
+      latency: UptimerLatencyData(
+        rangeStartAt: 1700000000,
+        rangeEndAt: 1700000060,
+        points: [
+          UptimerHeartbeat(checkedAt: 1700000000, status: 'up', latencyMs: 0),
+        ],
+      ),
+    );
+    expect(UptimerLatencyCard.shouldShow(heartbeatMonitor, zeroMsDetail), isTrue);
+    await pump(
+      tester,
+      UptimerLatencyCard(
+        monitor: heartbeatMonitor,
+        detail: zeroMsDetail,
+        onRetry: () {},
+      ),
+    );
+    final chart = tester.widget<LineChart>(find.byType(LineChart));
+    expect(chart.data.lineBarsData.single.spots, [const FlSpot(0, 0)]);
   });
 
   testWidgets('Uptimer edit sections render target, schedule, behaviour, and HTTP optional groups', (
@@ -177,8 +253,10 @@ void main() {
             saving: false,
             showOnStatusPage: true,
             onShowOnStatusPageChanged: (_) {},
+            onToggleShowOnStatusPage: () {},
             isActive: true,
             onActiveChanged: (_) {},
+            onToggleActive: () {},
             displayUrlCtrl: ctrls.displayUrl,
           ),
           UptimerHttpOptionalSection(
@@ -191,6 +269,7 @@ void main() {
             onHttpMethodChanged: (_) {},
             followRedirects: true,
             onFollowRedirectsChanged: (_) {},
+            onToggleFollowRedirects: () {},
             headers: const {},
             onEditHeaders: () {},
             bodyCtrl: ctrls.body,

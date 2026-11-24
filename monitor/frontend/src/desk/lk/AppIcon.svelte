@@ -1,6 +1,6 @@
 <script lang="ts" module>
-  import type { IconTone } from './iconTone'
-  export type { IconTone }
+  import type { IconTone as _IconTone } from './iconTone'
+  export type IconTone = _IconTone
 </script>
 
 <script lang="ts">

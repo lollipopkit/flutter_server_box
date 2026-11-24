@@ -99,7 +99,10 @@ void main() {
     await tester.pump();
     await tester.pump(Durations.medium4);
 
-    expect(find.byType(BmcCredentialEditPage), findsOneWidget);
+    final editPage = tester.widget<BmcCredentialEditPage>(
+      find.byType(BmcCredentialEditPage),
+    );
+    expect(editPage.args?.cred?.id, 'cred-1');
   });
 
   testWidgets('tapping FAB opens create credential page', (tester) async {
@@ -109,6 +112,9 @@ void main() {
     await tester.pump();
     await tester.pump(Durations.medium4);
 
-    expect(find.byType(BmcCredentialEditPage), findsOneWidget);
+    final createPage = tester.widget<BmcCredentialEditPage>(
+      find.byType(BmcCredentialEditPage),
+    );
+    expect(createPage.args?.cred, isNull);
   });
 }

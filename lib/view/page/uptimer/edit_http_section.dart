@@ -16,6 +16,7 @@ final class UptimerHttpOptionalSection extends StatelessWidget {
   final ValueChanged<String> onHttpMethodChanged;
   final bool followRedirects;
   final ValueChanged<bool> onFollowRedirectsChanged;
+  final VoidCallback onToggleFollowRedirects;
   final Map<String, String> headers;
   final VoidCallback onEditHeaders;
   final TextEditingController bodyCtrl;
@@ -40,6 +41,7 @@ final class UptimerHttpOptionalSection extends StatelessWidget {
     required this.onHttpMethodChanged,
     required this.followRedirects,
     required this.onFollowRedirectsChanged,
+    required this.onToggleFollowRedirects,
     required this.headers,
     required this.onEditHeaders,
     required this.bodyCtrl,
@@ -110,7 +112,7 @@ final class UptimerHttpOptionalSection extends StatelessWidget {
                 value: followRedirects,
                 onChanged: onFollowRedirectsChanged,
               ),
-              onTap: () => onFollowRedirectsChanged(!followRedirects),
+              onTap: onToggleFollowRedirects,
             ).cardx,
             ListTile(
               leading: const Icon(Icons.code),

@@ -324,8 +324,11 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
                 showOnStatusPage: _showOnStatusPage,
                 onShowOnStatusPageChanged: (v) =>
                     setState(() => _showOnStatusPage = v),
+                onToggleShowOnStatusPage: () =>
+                    setState(() => _showOnStatusPage = !_showOnStatusPage),
                 isActive: _isActive,
                 onActiveChanged: (v) => setState(() => _isActive = v),
+                onToggleActive: () => setState(() => _isActive = !_isActive),
                 displayUrlCtrl: _ctrls.displayUrl,
               ),
               if (_type == UptimerMonitorType.http)
@@ -340,6 +343,8 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
                   followRedirects: _followRedirects,
                   onFollowRedirectsChanged: (v) =>
                       setState(() => _followRedirects = v),
+                  onToggleFollowRedirects: () =>
+                      setState(() => _followRedirects = !_followRedirects),
                   headers: _headers,
                   onEditHeaders: () => unawaited(_editHeaders()),
                   bodyCtrl: _ctrls.body,

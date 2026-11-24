@@ -211,10 +211,12 @@ class ServersNotifier extends _$ServersNotifier {
     if (deleting == null) return;
     // Keep both surfaces from minting while local cleanup still needs the row.
     unawaited(WatchSync.instance.revokeServer(deleting));
+    final lifecycle = ref.read(serverLifecycleProvider);
+    final finishLifecycleDeletion = lifecycle.beginDelete(id);
     final finishWidgetDeletion = WidgetSync.instance.beginServerDeletion(deleting);
     final List<String> newOrder;
     try {
-      await ref.read(serverLifecycleProvider).beforeDelete(id);
+      await lifecycle.beforeDelete(id);
       ref.read(workspacesProvider.notifier).removeServer(id);
       await _clearServerData(id);
       newOrder = List<String>.from(state.serverOrder)..remove(id);
@@ -222,6 +224,7 @@ class ServersNotifier extends _$ServersNotifier {
       Stores.server.deleteById(id);
       ref.read(bmcTargetsProvider.notifier).reload();
     } finally {
+      finishLifecycleDeletion();
       finishWidgetDeletion();
       WatchSync.instance.finishServerDeletion(id);
     }

@@ -145,15 +145,17 @@ final class ServerConnections {
   }
 
   void closeOneServer(String id) {
+    final sessionId = TermSessionManager.statusSessionId(id);
     final spi = _ref.read(serversProvider).servers[id];
     if (spi == null) {
+      TermSessionManager.remove(sessionId);
       Loggers.app.warning('Server with id $id not found');
       return;
     }
 
     _ref.read(serverProvider(id).notifier).closeConnection();
     _ref.read(serversProvider.notifier).markManualDisconnected(id);
-    TermSessionManager.remove(TermSessionManager.statusSessionId(id));
+    TermSessionManager.remove(sessionId);
   }
 }
 

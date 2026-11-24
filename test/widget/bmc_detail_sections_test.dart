@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/bmc/summary.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/bmc/card_body.dart';
+import 'package:server_box/view/page/bmc/common.dart';
 import 'package:server_box/view/page/bmc/detail_sections.dart';
 
 import '../helpers/rust_lib_helper.dart';
@@ -127,6 +128,11 @@ void main() {
       bmcState: state,
     );
 
+    expect(find.text(bmcIntentText(PowerIntent.restart)), findsOneWidget);
+    expect(
+      find.text(bmcIntentText(PowerIntent.gracefulShutdown)),
+      findsOneWidget,
+    );
     expect(find.text(libL10n.logs), findsOneWidget);
     expect(find.text(app_locale.l10n.bmcDrives), findsOneWidget);
     expect(find.text(app_locale.l10n.bmcLocator), findsOneWidget);

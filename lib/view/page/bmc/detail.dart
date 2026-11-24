@@ -233,12 +233,15 @@ final class BmcDetailPage extends ConsumerWidget {
           if (v != null && v.isNotEmpty) (k, v),
     ];
 
-    final hasPowerBar = BmcPowerBar.hasContent(
+    final plannedPowerIntents = BmcPowerBar.planIntents(
       ref,
       target,
       bmc,
       needsCert: needsCert,
     );
+    final hasPowerBar =
+        needsCert ||
+        (plannedPowerIntents != null && plannedPowerIntents.isNotEmpty);
     final health = system?.health;
     final healthColor = health == null || health == 'OK'
         ? scheme.outline
@@ -414,6 +417,7 @@ final class BmcDetailPage extends ConsumerWidget {
                 target: target,
                 bmc: bmc,
                 needsCert: needsCert,
+                availableIntents: plannedPowerIntents,
               ),
             ),
           ],

@@ -1096,9 +1096,7 @@ impl Client {
             .to_owned();
         let uptime = resources::int(data.get("uptime"));
         let at = self.now();
-        self.state
-            .lock()
-            .unwrap()
+        self.lock_state()
             .fresh
             .insert(guest.id.clone(), Fresh { status: status.clone(), uptime, at });
         Some(status)

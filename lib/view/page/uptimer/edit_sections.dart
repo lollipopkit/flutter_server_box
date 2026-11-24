@@ -311,8 +311,10 @@ final class UptimerBehaviourSection extends StatelessWidget {
   final bool saving;
   final bool showOnStatusPage;
   final ValueChanged<bool> onShowOnStatusPageChanged;
+  final VoidCallback onToggleShowOnStatusPage;
   final bool isActive;
   final ValueChanged<bool> onActiveChanged;
+  final VoidCallback onToggleActive;
   final TextEditingController displayUrlCtrl;
 
   const UptimerBehaviourSection({
@@ -321,8 +323,10 @@ final class UptimerBehaviourSection extends StatelessWidget {
     required this.saving,
     required this.showOnStatusPage,
     required this.onShowOnStatusPageChanged,
+    required this.onToggleShowOnStatusPage,
     required this.isActive,
     required this.onActiveChanged,
+    required this.onToggleActive,
     required this.displayUrlCtrl,
   });
 
@@ -340,7 +344,7 @@ final class UptimerBehaviourSection extends StatelessWidget {
             value: showOnStatusPage,
             onChanged: onShowOnStatusPageChanged,
           ),
-          onTap: () => onShowOnStatusPageChanged(!showOnStatusPage),
+          onTap: onToggleShowOnStatusPage,
         ).cardx,
         if (isEditing)
           ListTile(
@@ -350,7 +354,7 @@ final class UptimerBehaviourSection extends StatelessWidget {
               value: isActive,
               onChanged: saving ? null : onActiveChanged,
             ),
-            onTap: saving ? null : () => onActiveChanged(!isActive),
+            onTap: saving ? null : onToggleActive,
           ).cardx,
         Input(
           controller: displayUrlCtrl,

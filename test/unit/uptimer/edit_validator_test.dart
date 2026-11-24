@@ -97,6 +97,60 @@ void main() {
       expect(p.containsKey('is_active'), isFalse);
     });
 
+    test('distinguishes explicit HTTP clears on edit from omitted fields on create', () {
+      final ctrls = UptimerEditControllers();
+      addTearDown(ctrls.dispose);
+      ctrls.name.text = 'API';
+      ctrls.target.text = 'https://api.example.com/health';
+      ctrls.interval.text = '60';
+      ctrls.timeout.text = '10000';
+      ctrls.body.text = '{"stale":true}';
+
+      final edited = validateAndBuildUptimerPayload(
+        isEditing: true,
+        type: UptimerMonitorType.http,
+        ctrls: ctrls,
+        rawGroupName: '',
+        minInterval: 60,
+        showOnStatusPage: false,
+        submittedActive: true,
+        initialIsActive: true,
+        initialWasPaused: false,
+        httpMethod: 'GET',
+        followRedirects: true,
+        rawHeaders: const {},
+        keywordMode: 'contains',
+        forbiddenKeywordMode: 'contains',
+      );
+      expect(edited.error, isNull);
+      final ep = edited.payload!;
+      expect(ep.containsKey('http_body'), isTrue);
+      expect(ep['http_body'], isNull);
+      expect(ep.containsKey('http_headers_json'), isTrue);
+      expect(ep['http_headers_json'], isNull);
+
+      final created = validateAndBuildUptimerPayload(
+        isEditing: false,
+        type: UptimerMonitorType.http,
+        ctrls: ctrls,
+        rawGroupName: '',
+        minInterval: 60,
+        showOnStatusPage: false,
+        submittedActive: true,
+        initialIsActive: true,
+        initialWasPaused: false,
+        httpMethod: 'GET',
+        followRedirects: true,
+        rawHeaders: const {},
+        keywordMode: 'contains',
+        forbiddenKeywordMode: 'contains',
+      );
+      expect(created.error, isNull);
+      final cp = created.payload!;
+      expect(cp.containsKey('http_body'), isFalse);
+      expect(cp.containsKey('http_headers_json'), isFalse);
+    });
+
     test('rejects empty name and empty target', () {
       final ctrls = UptimerEditControllers();
       addTearDown(ctrls.dispose);
@@ -252,16 +306,24 @@ void main() {
         status: UptimerMonitorStatus.up,
         groupName: '',
       );
+      const m4 = UptimerMonitorCard(
+        id: 4,
+        name: 'D',
+        type: UptimerMonitorType.http,
+        status: UptimerMonitorStatus.up,
+        groupName: 'OPS',
+      );
       final sorted = UptimerState.computeSortedGroups(const {
         1: m1,
         2: m2,
         3: m3,
+        4: m4,
       });
       expect(sorted, ['API', 'OPS']);
 
       final state = UptimerState(
         userId: 'u1',
-        monitors: const {1: m1, 2: m2, 3: m3},
+        monitors: const {1: m1, 2: m2, 3: m3, 4: m4},
         sortedGroupNames: sorted,
       );
       expect(state.signedIn, isTrue);

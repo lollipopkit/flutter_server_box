@@ -14,7 +14,25 @@ typedef ServerRefreshHandler =
 final class ServerLifecycle {
   final List<ServerLifecycleHook> _beforeDelete = [];
   final List<ServerRenameHook> _beforeRename = [];
+  final Map<String, int> _deletingCounts = {};
   ServerRefreshHandler? _refreshHandler;
+
+  bool isDeleting(String serverId) => (_deletingCounts[serverId] ?? 0) > 0;
+
+  void Function() beginDelete(String serverId) {
+    _deletingCounts[serverId] = (_deletingCounts[serverId] ?? 0) + 1;
+    var done = false;
+    return () {
+      if (done) return;
+      done = true;
+      final remaining = (_deletingCounts[serverId] ?? 0) - 1;
+      if (remaining <= 0) {
+        _deletingCounts.remove(serverId);
+      } else {
+        _deletingCounts[serverId] = remaining;
+      }
+    };
+  }
 
   void Function() onBeforeDelete(ServerLifecycleHook hook) {
     _beforeDelete.add(hook);
@@ -33,9 +51,20 @@ final class ServerLifecycle {
     };
   }
 
+  /// Runs every registered deletion hook for [serverId], including any hook
+  /// registered while earlier hooks were awaiting.
   Future<void> beforeDelete(String serverId) async {
-    for (final hook in List<ServerLifecycleHook>.of(_beforeDelete)) {
-      await hook(serverId);
+    final invoked = <ServerLifecycleHook>{};
+    while (true) {
+      final pending = [
+        for (final hook in _beforeDelete)
+          if (invoked.add(hook)) hook,
+      ];
+      if (pending.isEmpty) break;
+      for (final hook in pending) {
+        if (!_beforeDelete.contains(hook)) continue;
+        await hook(serverId);
+      }
     }
   }
 

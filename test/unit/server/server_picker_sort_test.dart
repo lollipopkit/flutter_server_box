@@ -8,8 +8,8 @@ Spi _spi(String id, String name) =>
 
 void main() {
   final servers = {
-    '1': _spi('1', 'beta'),
-    '2': _spi('2', 'Alpha'),
+    '1': _spi('1', 'Beta'),
+    '2': _spi('2', 'alpha'),
     '3': _spi('3', 'gamma'),
   };
   const order = ['1', '2', '3'];

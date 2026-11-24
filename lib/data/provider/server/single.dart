@@ -263,9 +263,15 @@ class ServerNotifier extends _$ServerNotifier
 
   @override
   void _disconnectStatusSession(String serverId) {
+    final sessionId = TermSessionManager.statusSessionId(serverId);
+    if (!ref.mounted ||
+        !ref.read(serversProvider).servers.containsKey(serverId)) {
+      TermSessionManager.remove(sessionId);
+      return;
+    }
     closeConnection();
     ref.read(serversProvider.notifier).markManualDisconnected(serverId);
-    TermSessionManager.remove(TermSessionManager.statusSessionId(serverId));
+    TermSessionManager.remove(sessionId);
   }
 
   @override

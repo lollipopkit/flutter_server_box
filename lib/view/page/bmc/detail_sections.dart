@@ -337,19 +337,38 @@ final class BmcPowerBar extends ConsumerWidget {
   final BmcTarget target;
   final BmcState bmc;
   final bool needsCert;
+  final List<PowerIntent>? availableIntents;
 
   const BmcPowerBar({
     super.key,
     required this.target,
     required this.bmc,
     required this.needsCert,
+    this.availableIntents,
   });
 
-  static bool hasContent(WidgetRef ref, BmcTarget target, BmcState bmc, {required bool needsCert}) {
-    if (needsCert) return true;
-    if (!bmc.hasData) return false;
+  /// Plans the available power intents once per build; returns `null` when the
+  /// bar is certificate-only or the BMC has no data yet.
+  static List<PowerIntent>? planIntents(
+    WidgetRef ref,
+    BmcTarget target,
+    BmcState bmc, {
+    required bool needsCert,
+  }) {
+    if (needsCert || !bmc.hasData) return null;
     final notifier = ref.read(bmcProvider(target.id).notifier);
-    return BmcPowerActions.availableIntents(notifier).isNotEmpty;
+    return BmcPowerActions.availableIntents(notifier);
+  }
+
+  static bool hasContent(
+    WidgetRef ref,
+    BmcTarget target,
+    BmcState bmc, {
+    required bool needsCert,
+  }) {
+    if (needsCert) return true;
+    final planned = planIntents(ref, target, bmc, needsCert: false);
+    return planned != null && planned.isNotEmpty;
   }
 
   @override
@@ -369,8 +388,11 @@ final class BmcPowerBar extends ConsumerWidget {
     }
 
     if (!bmc.hasData) return const SizedBox.shrink();
-    final notifier = ref.read(bmcProvider(target.id).notifier);
-    final available = BmcPowerActions.availableIntents(notifier);
+    final available =
+        availableIntents ??
+        BmcPowerActions.availableIntents(
+          ref.read(bmcProvider(target.id).notifier),
+        );
     if (available.isEmpty) return const SizedBox.shrink();
 
     final busy = bmc.isPowering;
