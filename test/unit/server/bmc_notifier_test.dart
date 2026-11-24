@@ -273,5 +273,28 @@ void main() {
         ),
       ),
     );
+    await expectLater(
+      notifier.setBoot(
+        const BootRequest(target: 'Pxe', enabled: 'Once'),
+        expectedGeneration: staleGen,
+      ),
+      throwsA(
+        isA<BmcError>().having(
+          (e) => e.failure,
+          'failure',
+          RedfishFailure.closed,
+        ),
+      ),
+    );
+    await expectLater(
+      notifier.setLocator(true, expectedGeneration: staleGen),
+      throwsA(
+        isA<BmcError>().having(
+          (e) => e.failure,
+          'failure',
+          RedfishFailure.closed,
+        ),
+      ),
+    );
   });
 }

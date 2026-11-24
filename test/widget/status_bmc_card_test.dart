@@ -382,10 +382,11 @@ void main() {
     // Fan with empty unit must not leave trailing whitespace.
     expect(find.text('4200'), findsOneWidget);
 
-    // Tapping the locator row text (not just the Switch) toggles locator.
+    // Tapping the locator row text (not just the Switch) toggles locator with
+    // the current endpointGeneration.
     await tester.tap(find.text(l10n.bmcLocator));
     await settle(tester);
-    expect(fake.locatorCalls, [true]);
+    expect(fake.locatorCalls, [(true, 0)]);
 
     // When isPowering becomes true while PowerState.on_, show progress indicator.
     fake.setPowering(true);
@@ -525,7 +526,7 @@ final class _DetailFakeBmc extends BmcNotifier {
   _DetailFakeBmc(this._initial);
 
   final BmcState _initial;
-  final locatorCalls = <bool>[];
+  final locatorCalls = <(bool, int?)>[];
 
   @override
   BmcState build(String targetId) => _initial;
@@ -533,8 +534,11 @@ final class _DetailFakeBmc extends BmcNotifier {
   void setPowering(bool v) => state = state.copyWith(isPowering: v);
 
   @override
-  Future<BmcPowerResult> setLocator(bool lit) async {
-    locatorCalls.add(lit);
+  Future<BmcPowerResult> setLocator(
+    bool lit, {
+    int? expectedGeneration,
+  }) async {
+    locatorCalls.add((lit, expectedGeneration));
     return BmcPowerResult.confirmed;
   }
 }

@@ -597,11 +597,8 @@ final class _BmcDetailPageState extends ConsumerState<BmcDetailPage> {
       );
     }
     if (locator != null) {
-      void toggleLocator(bool on) => unawaited(
-        context.bmcRunTask(
-          () => ref.read(bmcProvider(target.id).notifier).setLocator(on),
-        ),
-      );
+      void toggleLocator(bool on) =>
+          unawaited(BmcManageActions.toggleLocator(context, ref, target.id, on));
       final disabledColor = scheme.onSurface.withValues(alpha: 0.38);
       rows.add(
         MergeSemantics(

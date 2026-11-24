@@ -447,32 +447,48 @@ class BmcNotifier extends _$BmcNotifier {
   /// shows what the service kept. A service doing the work as a task is
   /// `accepted`, never applied: what the card shows until then is the old
   /// value.
-  Future<BmcPowerResult> setBoot(BootRequest request) async {
+  Future<BmcPowerResult> setBoot(
+    BootRequest request, {
+    int? expectedGeneration,
+  }) async {
     Diag.crumb(
       SbDiag.bmc,
       'boot',
       data: {'target': request.target, 'enabled': request.enabled},
     );
-    return _write((c, t) => c.setBoot(topology: t, request: request));
+    return _write(
+      (c, t) => c.setBoot(topology: t, request: request),
+      expectedGeneration: expectedGeneration,
+    );
   }
 
-  Future<BmcPowerResult> setLocator(bool lit) async {
+  Future<BmcPowerResult> setLocator(
+    bool lit, {
+    int? expectedGeneration,
+  }) async {
     Diag.crumb(SbDiag.bmc, 'locator', data: {'lit': '$lit'});
-    return _write((c, t) => c.setLocator(topology: t, lit: lit));
+    return _write(
+      (c, t) => c.setLocator(topology: t, lit: lit),
+      expectedGeneration: expectedGeneration,
+    );
   }
 
   /// One write, then the system read back; `accepted` when the service
   /// answered with a task rather than having done it.
   Future<BmcPowerResult> _write(
-    Future<BmcOutcome> Function(BmcClient client, RedfishTopology topology) fn,
-  ) async {
+    Future<BmcOutcome> Function(BmcClient client, RedfishTopology topology) fn, {
+    int? expectedGeneration,
+  }) async {
+    if (expectedGeneration != null && expectedGeneration != _generation) {
+      throw const BmcError(failure: RedfishFailure.closed);
+    }
     // One at a time, as `power()`: two writes racing would each read the
     // system back and the slower answer would outlive the newer one.
     if (_writing) return BmcPowerResult.failed;
     _writing = true;
     try {
       _writes++;
-      final outcome = await _with(fn);
+      final outcome = await _with(fn, expectedGeneration: expectedGeneration);
       await _reread();
       return outcome.task == null
           ? BmcPowerResult.confirmed

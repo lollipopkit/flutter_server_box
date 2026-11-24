@@ -222,12 +222,24 @@ final class BmcManageActions extends ConsumerWidget {
               selected: locator.lit,
               onSelected: busy
                   ? null
-                  : (on) => context.bmcRunTask(
-                      () => ref.read(bmcProvider(target.id).notifier).setLocator(on),
-                    ),
+                  : (on) => toggleLocator(context, ref, target.id, on),
             ),
         ],
       ),
+    );
+  }
+
+  static Future<bool> toggleLocator(
+    BuildContext context,
+    WidgetRef ref,
+    String targetId,
+    bool on,
+  ) {
+    final expectedGen = ref.read(bmcProvider(targetId).notifier).endpointGeneration;
+    return context.bmcRunTask(
+      () => ref
+          .read(bmcProvider(targetId).notifier)
+          .setLocator(on, expectedGeneration: expectedGen),
     );
   }
 
@@ -239,6 +251,8 @@ final class BmcManageActions extends ConsumerWidget {
   ) async {
     final start = bmcBootDefault(boot: boot);
     if (start == null) return;
+    final expectedGen =
+        ref.read(bmcProvider(target.id).notifier).endpointGeneration;
     final picked = ValueNotifier(start);
     final ok = await context.showSheet<bool>(
       title: l10n.bmcBoot,
@@ -249,7 +263,9 @@ final class BmcManageActions extends ConsumerWidget {
     picked.dispose();
     if (ok != true || !context.mounted) return;
     final notifier = ref.read(bmcProvider(target.id).notifier);
-    await context.bmcRunTask(() => notifier.setBoot(request));
+    await context.bmcRunTask(
+      () => notifier.setBoot(request, expectedGeneration: expectedGen),
+    );
   }
 
   static Future<void> openMediaSheet(
