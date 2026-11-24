@@ -252,15 +252,18 @@ final class BmcCard extends ConsumerWidget {
       dotColor: statusDotColor(s),
       cutoutBg: highlighted ? scheme.secondaryContainer : cardColorOf(context),
     );
-    return Opacity(
-      opacity: hideMark ? 0 : 1,
-      child: FlightAnchor(
-        binding: markAnchor,
-        child: SharedElementHero(
-          tag: 'bmc_mark_${target.id}',
-          enabled: !opensInPlace,
-          fit: BoxFit.contain,
-          child: mark,
+    return IgnorePointer(
+      ignoring: hideMark,
+      child: Opacity(
+        opacity: hideMark ? 0 : 1,
+        child: FlightAnchor(
+          binding: markAnchor,
+          child: SharedElementHero(
+            tag: 'bmc_mark_${target.id}',
+            enabled: !opensInPlace,
+            fit: BoxFit.contain,
+            child: mark,
+          ),
         ),
       ),
     );

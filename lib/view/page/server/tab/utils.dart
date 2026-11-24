@@ -234,7 +234,7 @@ extension _Actions on _ServerPageState {
       if (!mounted) return;
       final parts = <String>[
         monitor.name,
-        res.isUp ? l10n.uptimerStatusUp : l10n.uptimerStatusDown,
+        uptimerTestStatusText(res),
         if (res.latencyMs case final ms?) formatLatencyMs(ms),
         if (res.httpStatus case final code?) 'HTTP $code',
         ?res.error,
@@ -268,10 +268,11 @@ extension _Actions on _ServerPageState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    final wasOpen = ref.read(uptimerSelectionProvider) == monitor.id;
     try {
+      // Provider clears selection only if this monitor is still selected, and
+      // `_resetMissingHero()` resets in-place pane state once it leaves the
+      // list — avoiding closing a different item opened while deleting.
       await ref.read(uptimerProvider.notifier).deleteMonitor(monitor.id);
-      if (mounted && wasOpen) _closeDetail();
     } catch (e) {
       if (mounted) Toast.show(uptimerErrorMessage(e));
     }

@@ -38,6 +38,18 @@ String uptimerStatusText(UptimerMonitorStatus status) => switch (status) {
   UptimerMonitorStatus.unknown => l10n.uptimerStatusUnknown,
 };
 
+String uptimerTestStatusText(UptimerTestResult res) => switch (res.status) {
+  'up' => l10n.uptimerStatusUp,
+  'down' => l10n.uptimerStatusDown,
+  _ => l10n.uptimerStatusUnknown,
+};
+
+Color uptimerTestStatusColor(UptimerTestResult res) => switch (res.status) {
+  'up' => StatePalette.running,
+  'down' => StatePalette.failed,
+  _ => StatePalette.idle,
+};
+
 IconData uptimerTypeIcon(UptimerMonitorType type) => switch (type) {
   UptimerMonitorType.http => Icons.language,
   UptimerMonitorType.tcp => Icons.lan_outlined,
@@ -155,6 +167,24 @@ final class UptimerHeartbeatStrip extends StatelessWidget {
     this.onSelect,
   });
 
+  /// Resolves the displayed slot index (`0..count-1`, oldest -> newest left to
+  /// right) and matching [UptimerHeartbeat] for [checkedAt] within the newest
+  /// [count] entries of newest-first [heartbeats].
+  static ({int index, UptimerHeartbeat beat})? slotOf(
+    List<UptimerHeartbeat> heartbeats,
+    int count,
+    int checkedAt,
+  ) {
+    final take = heartbeats.length < count ? heartbeats.length : count;
+    for (var i = 0; i < take; i++) {
+      final beat = heartbeats[i];
+      if (beat.checkedAt == checkedAt) {
+        return (index: count - 1 - i, beat: beat);
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -228,7 +258,7 @@ final class UptimerHeartbeatStrip extends StatelessWidget {
 }
 
 /// Compact error strip shown on the Status tab when Uptimer sync fails while
-/// signed in and no monitors are cached yet.
+/// signed in.
 final class UptimerSyncErrorBanner extends StatelessWidget {
   final Object error;
   final bool loading;

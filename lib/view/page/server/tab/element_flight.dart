@@ -254,8 +254,8 @@ final class StatusElementFlight {
         },
       ),
     );
-    _entry = entry;
     overlay.insert(entry);
+    _entry = entry;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (gen != _gen || !context.mounted || !identical(_entry, entry)) return;
       final activeOverlay = _overlay;
@@ -312,7 +312,7 @@ final class StatusElementFlight {
     _fromRect = null;
     _toRect = null;
     if (entry != null) {
-      if (entry.mounted) entry.remove();
+      entry.remove();
       entry.dispose();
     }
   }

@@ -134,30 +134,49 @@ const _kViewSwapDuration = Durations.medium2;
 /// land — which is not knowable when the transition has to start, because
 /// nothing is placed until the lookups come back. Converging on the sphere
 /// needs none of that. See TODOS for the full argument.
-Widget _viewSwapTransition(Widget child, Animation<double> animation) {
-  return FadeTransition(
-    opacity: animation,
-    // `drive` rather than a `CurvedAnimation`, which owns resources and would
-    // be built and dropped on every frame of the transition.
-    child: ScaleTransition(
-      scale: animation.drive(
-        Tween(
-          begin: 0.9,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+Widget _viewSwapTransition(Widget child, Animation<double> animation) =>
+    FadeTransition(
+      opacity: animation,
+      // `drive` rather than a `CurvedAnimation`, which owns resources and would
+      // be built and dropped on every frame of the transition.
+      child: ScaleTransition(
+        scale: animation.drive(
+          Tween(
+            begin: 0.9,
+            end: 1.0,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        ),
+        child: child,
       ),
-      child: child,
-    ),
-  );
-}
+    );
 
 /// Both children in the same box, which is what makes the anchor above right.
 ///
 /// Also what keeps a scrolling child full height: the default `Stack` sizes to
 /// its child and hands it loose constraints, under which a
 /// `SingleChildScrollView` takes the height of its contents.
-Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
-    Stack(fit: StackFit.expand, children: [...previous, ?current]);
+///
+/// Exiting children (`previous`) have pointer hits and [HeroMode] disabled on
+/// the exact frame they start leaving (preserving each entry's [KeyedSubtree]
+/// key so state is never remounted), preventing duplicate [SharedElementHero]
+/// tags if a route push begins mid-transition.
+Widget _viewSwapLayout(Widget? current, List<Widget> previous) => Stack(
+  fit: StackFit.expand,
+  children: [
+    for (final p in previous)
+      IgnorePointer(
+        key: p.key,
+        ignoring: true,
+        child: HeroMode(enabled: false, child: p),
+      ),
+    if (current != null)
+      IgnorePointer(
+        key: current.key,
+        ignoring: false,
+        child: HeroMode(enabled: true, child: current),
+      ),
+  ],
+);
 
 /// How far burn-in protection moves full screen's content, each way.
 const _kBurnInShift = 7.0;
@@ -552,6 +571,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
         ? null
         : _lastFiltered.firstWhereOrNull((i) => i.cardKey == closingKey);
     final wasDetailShowing = _detailShowing;
+    final wasWaitingChrome = _closeTimer?.isActive ?? false;
+    // If a Server detail is already waiting out its chrome-exit timer, let the
+    // scheduled reverse finish on time instead of resetting or bypassing it.
+    if (closingItem is ServerCardItem && wasWaitingChrome) {
+      return;
+    }
     if (_detailShowing) setState(() => _detailShowing = false);
     _openCtrl.duration = context.motion(_kOpenDuration);
     _closeTimer?.cancel();
@@ -926,9 +951,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
       onClearTag: () => _tag.value = TagSwitcher.kDefaultTag,
       onAdd: _onTapAddServer,
     );
-    if (!uptimer.signedIn ||
-        uptimer.error == null ||
-        uptimer.monitors.isNotEmpty) {
+    if (!uptimer.signedIn || uptimer.error == null) {
       return empty;
     }
     return KeyedSubtree(

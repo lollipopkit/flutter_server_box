@@ -421,9 +421,9 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
 
   Widget _buildTestResultBanner(BuildContext context, UptimerTestResult test) {
     final scheme = Theme.of(context).colorScheme;
-    final tone = test.isUp ? StatePalette.running : StatePalette.failed;
+    final tone = uptimerTestStatusColor(test);
     final parts = <String>[
-      test.isUp ? l10n.uptimerStatusUp : l10n.uptimerStatusDown,
+      uptimerTestStatusText(test),
       if (test.latencyMs case final ms?) formatLatencyMs(ms),
       if (test.httpStatus case final code?) 'HTTP $code',
     ];
@@ -439,7 +439,11 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
           Row(
             children: [
               Icon(
-                test.isUp ? Icons.check_circle_outline : Icons.cancel_outlined,
+                test.isUp
+                    ? Icons.check_circle_outline
+                    : test.status == 'down'
+                    ? Icons.cancel_outlined
+                    : Icons.help_outline,
                 size: 16,
                 color: tone,
               ),
@@ -539,23 +543,19 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
     final scheme = Theme.of(context).colorScheme;
     final totals = detail.currentUptime ??
         (detail.range == UptimerRange.d30 ? monitor.uptime30d : null);
-    // Resolve the inspected heartbeat by timestamp (`checkedAt`) so 60s
-    // background polls shifting `monitor.heartbeats` never desync highlight
-    // index and readout text.
+    // Resolve the inspected heartbeat using the same newest-45 oldest-to-newest
+    // slot mapping as [UptimerHeartbeatStrip] so 60s polls relocate the same
+    // check cleanly.
     const stripCount = 45;
-    final recentBeats = monitor.heartbeats.length > stripCount
-        ? monitor.heartbeats.sublist(monitor.heartbeats.length - stripCount)
-        : monitor.heartbeats;
-    final padCount = stripCount - recentBeats.length;
-    int? inspectedIndex;
-    UptimerHeartbeat? inspected;
-    if (_inspectedCheckedAt case final ts?) {
-      final beatIdx = recentBeats.indexWhere((b) => b.checkedAt == ts);
-      if (beatIdx >= 0) {
-        inspectedIndex = padCount + beatIdx;
-        inspected = recentBeats[beatIdx];
-      }
-    }
+    final inspectedSlot = _inspectedCheckedAt == null
+        ? null
+        : UptimerHeartbeatStrip.slotOf(
+            monitor.heartbeats,
+            stripCount,
+            _inspectedCheckedAt!,
+          );
+    final inspectedIndex = inspectedSlot?.index;
+    final inspected = inspectedSlot?.beat;
 
     return CardX(
       child: Padding(
@@ -629,30 +629,43 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                 ),
               ],
             ),
+            if (detail.uptimeError case final err?) ...[
+              const SizedBox(height: 8),
+              _buildInlineError(
+                context,
+                err,
+                onRetry: () => unawaited(
+                  ref.read(uptimerDetailProvider(_monitorId).notifier).refresh(),
+                ),
+              ),
+            ],
             if (monitor.heartbeats.isNotEmpty) ...[
               const SizedBox(height: 11),
-              Opacity(
-                opacity: widget.hideStrip ? 0 : 1,
-                child: FlightAnchor(
-                  binding: widget.stripAnchor,
-                  child: UptimerStripHero(
-                    monitorId: _monitorId,
-                    enabled: !widget.bare,
-                    child: UptimerHeartbeatStrip(
-                      heartbeats: monitor.heartbeats,
-                      count: stripCount,
-                      height: 22,
-                      gap: 2,
-                      radius: 2.5,
-                      selectedIndex: inspectedIndex,
-                      onSelect: (_, beat) => setState(() {
-                        if (beat == null ||
-                            _inspectedCheckedAt == beat.checkedAt) {
-                          _inspectedCheckedAt = null;
-                        } else {
-                          _inspectedCheckedAt = beat.checkedAt;
-                        }
-                      }),
+              IgnorePointer(
+                ignoring: widget.hideStrip,
+                child: Opacity(
+                  opacity: widget.hideStrip ? 0 : 1,
+                  child: FlightAnchor(
+                    binding: widget.stripAnchor,
+                    child: UptimerStripHero(
+                      monitorId: _monitorId,
+                      enabled: !widget.bare,
+                      child: UptimerHeartbeatStrip(
+                        heartbeats: monitor.heartbeats,
+                        count: stripCount,
+                        height: 22,
+                        gap: 2,
+                        radius: 2.5,
+                        selectedIndex: inspectedIndex,
+                        onSelect: (_, beat) => setState(() {
+                          if (beat == null ||
+                              _inspectedCheckedAt == beat.checkedAt) {
+                            _inspectedCheckedAt = null;
+                          } else {
+                            _inspectedCheckedAt = beat.checkedAt;
+                          }
+                        }),
+                      ),
                     ),
                   ),
                 ),
@@ -785,19 +798,46 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
   }) {
     final latency = detail.latency;
     final points = latency?.points ?? const [];
-    final spots = <FlSpot>[
-      for (var i = 0; i < points.length; i++)
-        if (points[i].latencyMs case final ms?) FlSpot(i.toDouble(), ms.toDouble()),
-    ];
-    if (monitor.type == UptimerMonitorType.heartbeat && spots.isEmpty) {
+    // Insert [FlSpot.nullSpot] for null latency measurements so fl_chart breaks
+    // the line across outages while keeping a single series (preventing
+    // duplicate tooltips/indicators near gaps).
+    final spots = <FlSpot>[];
+    final shortRunIndices = <int>{};
+    var hasMeasured = false;
+    var maxMeasuredY = 0.0;
+    var runStart = -1;
+    void finishRun(int endExclusive) {
+      if (runStart < 0) return;
+      if (endExclusive - runStart <= 2) {
+        for (var j = runStart; j < endExclusive; j++) {
+          shortRunIndices.add(j);
+        }
+      }
+      runStart = -1;
+    }
+
+    for (var i = 0; i < points.length; i++) {
+      final ms = points[i].latencyMs;
+      if (ms != null) {
+        final y = ms.toDouble();
+        spots.add(FlSpot(i.toDouble(), y));
+        hasMeasured = true;
+        if (y > maxMeasuredY) maxMeasuredY = y;
+        if (runStart < 0) runStart = i;
+      } else {
+        finishRun(i);
+        spots.add(FlSpot.nullSpot);
+      }
+    }
+    finishRun(points.length);
+
+    if (monitor.type == UptimerMonitorType.heartbeat && !hasMeasured) {
       return null;
     }
 
     final scheme = Theme.of(context).colorScheme;
     final accent = ChartPalette.accent;
-    final maxY = spots.isEmpty
-        ? 100.0
-        : math.max(10.0, spots.map((s) => s.y).reduce(math.max) * 1.15);
+    final maxY = !hasMeasured ? 100.0 : math.max(10.0, maxMeasuredY * 1.15);
 
     return CardX(
       child: Padding(
@@ -852,6 +892,18 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                 ),
               ],
             ),
+            if (hasMeasured && detail.latencyError != null) ...[
+              const SizedBox(height: 11),
+              _buildInlineError(
+                context,
+                detail.latencyError!,
+                onRetry: () => unawaited(
+                  ref
+                      .read(uptimerDetailProvider(_monitorId).notifier)
+                      .refresh(),
+                ),
+              ),
+            ],
             const SizedBox(height: 13),
             SizedBox(
               height: chartHeight,
@@ -859,7 +911,7 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                 duration: context.motion(Durations.medium1),
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
-                child: spots.isEmpty
+                child: !hasMeasured
                     ? Center(
                         key: ValueKey(
                           detail.isLoading
@@ -972,7 +1024,11 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                             curveSmoothness: 0.2,
                             color: accent,
                             barWidth: 2,
-                            dotData: FlDotData(show: spots.length <= 2),
+                            dotData: FlDotData(
+                              show: shortRunIndices.isNotEmpty,
+                              checkToShowDot: (spot, _) =>
+                                  shortRunIndices.contains(spot.x.round()),
+                            ),
                             belowBarData: BarAreaData(
                               show: true,
                               gradient: LinearGradient(
@@ -1037,6 +1093,16 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (detail.outagesError case final err?) ...[
+            _buildInlineError(
+              context,
+              err,
+              onRetry: () => unawaited(
+                ref.read(uptimerDetailProvider(_monitorId).notifier).refresh(),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           for (var i = 0; i < outages.length; i++) ...[
             if (i > 0)
               Divider(
@@ -1051,7 +1117,7 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
             Align(
               alignment: Alignment.center,
               child: TextButton(
-                onPressed: detail.loadingMoreOutages
+                onPressed: detail.loadingMoreOutages || detail.isLoading
                     ? null
                     : () => unawaited(_onLoadMoreOutages()),
                 child: detail.loadingMoreOutages

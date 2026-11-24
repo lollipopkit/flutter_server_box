@@ -202,14 +202,17 @@ final class UptimerCard extends ConsumerWidget {
       gap: spec.gap,
       radius: spec.radius,
     );
-    return Opacity(
-      opacity: hideStrip ? 0 : 1,
-      child: FlightAnchor(
-        binding: stripAnchor,
-        child: UptimerStripHero(
-          monitorId: monitor.id,
-          enabled: !opensInPlace,
-          child: strip,
+    return IgnorePointer(
+      ignoring: hideStrip,
+      child: Opacity(
+        opacity: hideStrip ? 0 : 1,
+        child: FlightAnchor(
+          binding: stripAnchor,
+          child: UptimerStripHero(
+            monitorId: monitor.id,
+            enabled: !opensInPlace,
+            child: strip,
+          ),
         ),
       ),
     );

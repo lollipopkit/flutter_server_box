@@ -151,10 +151,7 @@ extension _Grid on _ServerPageState {
     ];
     final uptimer = ref.watch(uptimerProvider);
     final showUptimerErr =
-        openItem == null &&
-        uptimer.signedIn &&
-        uptimer.error != null &&
-        uptimer.monitors.isEmpty;
+        openItem == null && uptimer.signedIn && uptimer.error != null;
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

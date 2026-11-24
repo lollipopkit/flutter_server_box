@@ -206,13 +206,63 @@ void main() {
 
     test('validates TCP targets strictly', () {
       expect(UptimerEditPage.isValidTcpTarget('example.com:443'), isTrue);
+      expect(UptimerEditPage.isValidTcpTarget('[::1]:443'), isTrue);
       expect(UptimerEditPage.isValidTcpTarget('[2001:db8::1]:443'), isTrue);
+      expect(UptimerEditPage.isValidTcpTarget('[foo:bar]:443'), isFalse);
+      expect(UptimerEditPage.isValidTcpTarget('[::1::2]:443'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('::1:443'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('[2001:db8::1:443'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('[]:443'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('bad host:443'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('example.com:0'), isFalse);
       expect(UptimerEditPage.isValidTcpTarget('example.com:70000'), isFalse);
+    });
+
+    test('preserves outer whitespace on keyword patterns while treating blank as null', () {
+      final cfg = UptimerMonitorConfig.fromJson({
+        ..._configJson(1),
+        'response_keyword': '  OK  ',
+        'response_forbidden_keyword': '\tERROR\n',
+      });
+      expect(cfg.responseKeyword, '  OK  ');
+      expect(cfg.responseForbiddenKeyword, '\tERROR\n');
+
+      final blank = UptimerMonitorConfig.fromJson({
+        ..._configJson(2),
+        'response_keyword': '   ',
+        'response_forbidden_keyword': '',
+      });
+      expect(blank.responseKeyword, isNull);
+      expect(blank.responseForbiddenKeyword, isNull);
+    });
+
+    test('maps heartbeat strip slot indices to newest-count oldest-to-newest slots', () {
+      // 60 heartbeats, newest-first (index 0 is newest: checkedAt 6000).
+      final beats = [
+        for (var i = 0; i < 60; i++)
+          UptimerHeartbeat(
+            checkedAt: (60 - i) * 100,
+            status: 'up',
+            latencyMs: 20 + i,
+          ),
+      ];
+      // Newest beat (beats[0]) lands at the rightmost slot (44).
+      final newest = UptimerHeartbeatStrip.slotOf(beats, 45, 6000);
+      expect(newest?.index, 44);
+      expect(newest?.beat.checkedAt, 6000);
+
+      // Oldest visible beat (beats[44]) lands at the leftmost slot (0).
+      final oldestVisible = UptimerHeartbeatStrip.slotOf(beats, 45, 1600);
+      expect(oldestVisible?.index, 0);
+      expect(oldestVisible?.beat.checkedAt, 1600);
+
+      // Beat older than the 45-slot window is not highlighted.
+      expect(UptimerHeartbeatStrip.slotOf(beats, 45, 1500), isNull);
+
+      // When fewer than 45 beats exist, leading slots are padded on the left.
+      final short = beats.take(3).toList();
+      expect(UptimerHeartbeatStrip.slotOf(short, 45, 6000)?.index, 44);
+      expect(UptimerHeartbeatStrip.slotOf(short, 45, 5800)?.index, 42);
     });
   });
 
@@ -627,6 +677,212 @@ void main() {
       final finalState = container.read(uptimerDetailProvider(1));
       expect(finalState.range, UptimerRange.d90);
       expect(finalState.currentUptime?.uptimePct, 99.5);
+    });
+
+    test(
+      'clears loadingMoreOutages when refresh interrupts pagination and allows paginating again',
+      () async {
+        final user = ValueNotifier<LkcUser?>(_userA);
+        addTearDown(user.dispose);
+        final stalePage2 = Completer<Object?>();
+        var cursor50Calls = 0;
+
+        final container = ProviderContainer(
+          overrides: [
+            uptimerAuthSourceProvider.overrideWithValue((
+              enabled: true,
+              user: user,
+            )),
+            uptimerApiProvider.overrideWithValue(
+              UptimerApi(
+                call: (method, path, {query, body}) async {
+                  if (path == '/api/v1/me/page') return _pageJson();
+                  if (path == '/api/v1/me/monitors/1/latency') {
+                    return {
+                      'range_start_at': 100,
+                      'range_end_at': 200,
+                      'points': const [],
+                    };
+                  }
+                  if (path == '/api/v1/me/monitors/1/uptime') {
+                    return {
+                      'total_sec': 1000,
+                      'downtime_sec': 0,
+                      'unknown_sec': 0,
+                      'uptime_sec': 1000,
+                      'uptime_pct': 100.0,
+                    };
+                  }
+                  if (path == '/api/v1/me/monitors/1/outages') {
+                    final cursor = query?['cursor'];
+                    if (cursor == 50) {
+                      cursor50Calls++;
+                      if (cursor50Calls == 1) return stalePage2.future;
+                      return {
+                        'outages': [
+                          {
+                            'id': 49,
+                            'monitor_id': 1,
+                            'started_at': 1000,
+                            'ended_at': 1120,
+                            'last_error': 'timeout',
+                          },
+                        ],
+                        'next_cursor': null,
+                      };
+                    }
+                    return {
+                      'outages': [
+                        {
+                          'id': 50,
+                          'monitor_id': 1,
+                          'started_at': 2000,
+                          'ended_at': 2060,
+                          'last_error': '502',
+                        },
+                      ],
+                      'next_cursor': 50,
+                    };
+                  }
+                  return {};
+                },
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final sub = container.listen(uptimerDetailProvider(1), (_, _) {});
+        addTearDown(sub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(uptimerDetailProvider(1)).nextOutageCursor, 50);
+
+        // Start pagination (blocks on stalePage2), then interrupt with refresh().
+        final staleLoad = container
+            .read(uptimerDetailProvider(1).notifier)
+            .loadMoreOutages();
+        expect(
+          container.read(uptimerDetailProvider(1)).loadingMoreOutages,
+          isTrue,
+        );
+
+        final refreshF = container
+            .read(uptimerDetailProvider(1).notifier)
+            .refresh();
+        expect(
+          container.read(uptimerDetailProvider(1)).loadingMoreOutages,
+          isFalse,
+        );
+        // Pagination is ignored while refresh is still in flight.
+        await container.read(uptimerDetailProvider(1).notifier).loadMoreOutages();
+        expect(cursor50Calls, 1);
+
+        await refreshF;
+        expect(
+          container.read(uptimerDetailProvider(1)).loadingMoreOutages,
+          isFalse,
+        );
+
+        // Starting pagination again succeeds even before stalePage2 completes.
+        await container.read(uptimerDetailProvider(1).notifier).loadMoreOutages();
+        expect(
+          container.read(uptimerDetailProvider(1)).outages.map((o) => o.id),
+          [50, 49],
+        );
+        expect(cursor50Calls, 2);
+
+        // Completing the outdated pagination request does not corrupt state.
+        stalePage2.complete({
+          'outages': [
+            {
+              'id': 999,
+              'monitor_id': 1,
+              'started_at': 1,
+              'ended_at': 2,
+              'last_error': 'stale',
+            },
+          ],
+          'next_cursor': null,
+        });
+        await staleLoad;
+        expect(
+          container.read(uptimerDetailProvider(1)).outages.map((o) => o.id),
+          [50, 49],
+        );
+      },
+    );
+
+    test('tracks uptimeError separately from latencyError and outagesError', () async {
+      final user = ValueNotifier<LkcUser?>(_userA);
+      addTearDown(user.dispose);
+      var failUptime = false;
+      var failLatency = true;
+      var failOutages = true;
+
+      final container = ProviderContainer(
+        overrides: [
+          uptimerAuthSourceProvider.overrideWithValue((
+            enabled: true,
+            user: user,
+          )),
+          uptimerApiProvider.overrideWithValue(
+            UptimerApi(
+              call: (method, path, {query, body}) async {
+                if (path == '/api/v1/me/page') return _pageJson();
+                if (path == '/api/v1/me/monitors/1/latency') {
+                  if (failLatency) {
+                    throw const LkcException(status: 500, message: 'lat err');
+                  }
+                  return {
+                    'range_start_at': 100,
+                    'range_end_at': 200,
+                    'points': const [],
+                  };
+                }
+                if (path == '/api/v1/me/monitors/1/outages') {
+                  if (failOutages) {
+                    throw const LkcException(status: 500, message: 'out err');
+                  }
+                  return {'outages': const [], 'next_cursor': null};
+                }
+                if (path == '/api/v1/me/monitors/1/uptime') {
+                  if (failUptime) {
+                    throw const LkcException(status: 500, message: 'up err');
+                  }
+                  return {
+                    'total_sec': 1000,
+                    'downtime_sec': 0,
+                    'unknown_sec': 0,
+                    'uptime_sec': 1000,
+                    'uptime_pct': 100.0,
+                  };
+                }
+                return {};
+              },
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(uptimerDetailProvider(1), (_, _) {});
+      addTearDown(sub.close);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      final s1 = container.read(uptimerDetailProvider(1));
+      expect(s1.uptimeError, isNull);
+      expect(s1.latencyError, isNotNull);
+      expect(s1.outagesError, isNotNull);
+
+      failUptime = true;
+      failLatency = false;
+      failOutages = false;
+      await container.read(uptimerDetailProvider(1).notifier).refresh();
+
+      final s2 = container.read(uptimerDetailProvider(1));
+      expect(s2.uptimeError, isNotNull);
+      expect(s2.latencyError, isNull);
+      expect(s2.outagesError, isNull);
     });
   });
 

@@ -89,6 +89,13 @@ String? _asNonEmptyString(Object? v) {
   return trimmed.isEmpty ? null : trimmed;
 }
 
+/// Preserves outer whitespace in pattern strings (e.g. response keywords)
+/// while still treating empty or whitespace-only values as unset.
+String? _asRawNonEmptyString(Object? v) {
+  if (v is! String) return null;
+  return v.trim().isEmpty ? null : v;
+}
+
 List<int> _asIntList(Object? v) {
   if (v is! List) return const [];
   return [for (final e in v) ?_asIntOrNull(e)];
@@ -509,9 +516,9 @@ final class UptimerMonitorConfig {
       forbiddenStatus: UptimerStatusRule.fromJsonList(
         json['forbidden_status_json'],
       ),
-      responseKeyword: _asNonEmptyString(json['response_keyword']),
+      responseKeyword: _asRawNonEmptyString(json['response_keyword']),
       responseKeywordMode: _asNonEmptyString(json['response_keyword_mode']),
-      responseForbiddenKeyword: _asNonEmptyString(
+      responseForbiddenKeyword: _asRawNonEmptyString(
         json['response_forbidden_keyword'],
       ),
       responseForbiddenKeywordMode: _asNonEmptyString(

@@ -36,7 +36,10 @@ final class UptimerEditPage extends ConsumerStatefulWidget {
       if (close <= 1 || close + 2 >= trimmed.length) return false;
       host = trimmed.substring(1, close);
       portStr = trimmed.substring(close + 2);
-      if (host.contains('[') || host.contains(']') || !host.contains(':')) {
+      if (host.contains('[') || host.contains(']')) return false;
+      try {
+        Uri.parseIPv6Address(host);
+      } on FormatException {
         return false;
       }
     } else {
@@ -661,9 +664,13 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
             title: Text(l10n.uptimerActive),
             trailing: SwitchX(
               value: _isActive,
-              onChanged: (v) => setState(() => _isActive = v),
+              onChanged: _saving
+                  ? null
+                  : (v) => setState(() => _isActive = v),
             ),
-            onTap: () => setState(() => _isActive = !_isActive),
+            onTap: _saving
+                ? null
+                : () => setState(() => _isActive = !_isActive),
           ).cardx,
         Input(
           controller: _displayUrlCtrl,
@@ -926,11 +933,15 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
       }
     }
 
+    final submittedActive = _isActive;
     List<UptimerStatusRule>? expectedStatus;
     List<UptimerStatusRule>? forbiddenStatus;
     Map<String, String>? headers;
-    final keyword = _keywordCtrl.text.trim();
-    final forbiddenKeyword = _forbiddenKeywordCtrl.text.trim();
+    // Preserve outer whitespace in keyword patterns; trim only for emptiness.
+    final keyword = _keywordCtrl.text;
+    final hasKeyword = keyword.trim().isNotEmpty;
+    final forbiddenKeyword = _forbiddenKeywordCtrl.text;
+    final hasForbiddenKeyword = forbiddenKeyword.trim().isNotEmpty;
     if (_type == UptimerMonitorType.http) {
       try {
         expectedStatus = UptimerStatusRule.parseInput(_expectedStatusCtrl.text);
@@ -939,10 +950,10 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
         );
         final cleanHeaders = _sanitizeHeaders(_headers);
         headers = cleanHeaders.isEmpty ? null : cleanHeaders;
-        if (keyword.isNotEmpty && _keywordMode == 'regex') {
+        if (hasKeyword && _keywordMode == 'regex') {
           RegExp(keyword);
         }
-        if (forbiddenKeyword.isNotEmpty && _forbiddenKeywordMode == 'regex') {
+        if (hasForbiddenKeyword && _forbiddenKeywordMode == 'regex') {
           RegExp(forbiddenKeyword);
         }
       } on FormatException catch (e) {
@@ -963,8 +974,10 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
         'timeout_ms': timeoutMs,
       'group_name': groupName.isEmpty ? null : groupName,
       'show_on_status_page': _showOnStatusPage,
-      if (_isEditing && _isActive != _initialIsActive && _isActive == _initialWasPaused)
-        'is_active': _isActive,
+      if (_isEditing &&
+          submittedActive != _initialIsActive &&
+          submittedActive == _initialWasPaused)
+        'is_active': submittedActive,
       if (_type == UptimerMonitorType.http) ...{
         'http_method': _httpMethod,
         'follow_redirects': _followRedirects,
@@ -981,17 +994,17 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
           'http_body': _bodyCtrl.text.isEmpty ? null : _bodyCtrl.text
         else if (_isEditing)
           'http_body': null,
-        if (_isEditing || keyword.isNotEmpty) ...{
-          'response_keyword': keyword.isEmpty ? null : keyword,
-          'response_keyword_mode': keyword.isEmpty ? null : _keywordMode,
+        if (_isEditing || hasKeyword) ...{
+          'response_keyword': hasKeyword ? keyword : null,
+          'response_keyword_mode': hasKeyword ? _keywordMode : null,
         },
-        if (_isEditing || forbiddenKeyword.isNotEmpty) ...{
-          'response_forbidden_keyword': forbiddenKeyword.isEmpty
-              ? null
-              : forbiddenKeyword,
-          'response_forbidden_keyword_mode': forbiddenKeyword.isEmpty
-              ? null
-              : _forbiddenKeywordMode,
+        if (_isEditing || hasForbiddenKeyword) ...{
+          'response_forbidden_keyword': hasForbiddenKeyword
+              ? forbiddenKeyword
+              : null,
+          'response_forbidden_keyword_mode': hasForbiddenKeyword
+              ? _forbiddenKeywordMode
+              : null,
         },
       },
     };
@@ -1004,9 +1017,9 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
       final notifier = ref.read(uptimerProvider.notifier);
       if (_editingId case final id?) {
         await notifier.updateMonitor(id, payload);
-        if (_isActive && _initialWasPaused) {
+        if (submittedActive && _initialWasPaused) {
           await notifier.resumeMonitor(id);
-        } else if (!_isActive && !_initialWasPaused) {
+        } else if (!submittedActive && !_initialWasPaused) {
           await notifier.pauseMonitor(id);
         }
         if (mounted) Navigator.of(context).pop(UptimerEditResult.saved);

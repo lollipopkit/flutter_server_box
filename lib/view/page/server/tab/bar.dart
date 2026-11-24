@@ -25,9 +25,16 @@ extension _Bar on _ServerPageState {
       builder: () {
         if (narrow) {
           return SwitcherBar(
-            search: _search,
-            switcher: _buildTagSwitcher(),
-            actions: [_densityAction(filtered.length), ..._listActions()],
+            leading: openItem == null
+                ? null
+                : SwitcherBar.back(onTap: _closeDetail),
+            search: openItem == null ? _search : null,
+            switcher: openItem == null
+                ? _buildTagSwitcher()
+                : _buildItemSwitcher(openItem, filtered),
+            actions: openItem == null
+                ? [_densityAction(filtered.length), ..._listActions()]
+                : _openItemActions(openItem),
           );
         }
         return WindowControlsInset(

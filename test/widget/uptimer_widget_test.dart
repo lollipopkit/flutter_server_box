@@ -428,7 +428,8 @@ void main() {
                       ),
                     ),
                     // Two detail anchors for different monitors coexisting (as
-                    // in DirectionalSwap sidebar switches).
+                    // in DirectionalSwap sidebar switches), given distinct
+                    // bounds so the flight target is unambiguously verifiable.
                     Positioned(
                       left: 260,
                       top: 120,
@@ -440,10 +441,10 @@ void main() {
                       ),
                     ),
                     Positioned(
-                      left: 260,
-                      top: 120,
-                      width: 400,
-                      height: 22,
+                      left: 40,
+                      top: 360,
+                      width: 180,
+                      height: 36,
                       child: FlightAnchor(
                         binding: flight.detailBinding('uptimer:2'),
                         child: const SizedBox.expand(),
@@ -462,12 +463,15 @@ void main() {
         context: hostCtx,
         cardKey: 'uptimer:1',
         opening: true,
-        departing: UptimerHeartbeatStrip(
-          heartbeats: _monitor.heartbeats,
-          count: 12,
-          height: 11,
-          gap: 1.5,
-          radius: 1.5,
+        departing: KeyedSubtree(
+          key: const ValueKey('flight_proxy_departing'),
+          child: UptimerHeartbeatStrip(
+            heartbeats: _monitor.heartbeats,
+            count: 12,
+            height: 11,
+            gap: 1.5,
+            radius: 1.5,
+          ),
         ),
         arriving: UptimerHeartbeatStrip(
           heartbeats: _monitor.heartbeats,
@@ -484,6 +488,17 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
 
+      // Mid-flight proxy rect should be halfway between the newest uptimer:1
+      // card anchor (24, 24, 120x14) and uptimer:1 detail anchor
+      // (260, 120, 400x22), NOT uptimer:2 (40, 360, 180x36).
+      final proxyRect = tester.getRect(
+        find.byKey(const ValueKey('flight_proxy_departing')),
+      );
+      expect(proxyRect.left, closeTo(142, 0.5));
+      expect(proxyRect.top, closeTo(72, 0.5));
+      expect(proxyRect.width, closeTo(260, 0.5));
+      expect(proxyRect.height, closeTo(18, 0.5));
+
       flight.end(gen);
       await tester.pump();
       expect(flight.isFlying('uptimer:1'), isFalse);
@@ -499,6 +514,135 @@ void main() {
       );
       expect(skipped, isNull);
       expect(flight.isFlying('uptimer:999'), isFalse);
+    },
+  );
+
+  testWidgets(
+    'UptimerDetailPage shows refresh errors alongside cached latency/outages and ignores hidden strip hits',
+    (tester) async {
+      final user = ValueNotifier<LkcUser?>(_user);
+      addTearDown(user.dispose);
+      var failRefresh = false;
+
+      final api = UptimerApi(
+        call: (method, path, {query, body}) async {
+          if (method == 'GET' && path == '/api/v1/me/page') {
+            return {
+              'generated_at': 1700000000,
+              'overall_status': 'up',
+              'monitors': [
+                {
+                  'id': 1,
+                  'name': 'Prod API',
+                  'type': 'http',
+                  'display_url': 'https://api.example.com',
+                  'group_name': 'prod',
+                  'is_public': true,
+                  'status': 'up',
+                  'last_checked_at': 1700000000,
+                  'last_latency_ms': 42,
+                  'heartbeats': [
+                    {'checked_at': 1700000000, 'status': 'up', 'latency_ms': 42},
+                    {'checked_at': 1699999940, 'status': 'down', 'latency_ms': null},
+                    {'checked_at': 1699999880, 'status': 'up', 'latency_ms': 39},
+                  ],
+                  'uptime_30d': {
+                    'total_sec': 1000,
+                    'downtime_sec': 1,
+                    'unknown_sec': 0,
+                    'uptime_sec': 999,
+                    'uptime_pct': 99.9,
+                  },
+                  'uptime_days': const [],
+                },
+              ],
+              'active_incidents': const [],
+              'maintenance_windows': {'active': const [], 'upcoming': const []},
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/latency') {
+            if (failRefresh) {
+              throw const LkcException(status: 500, message: 'latency fail');
+            }
+            return {
+              'range_start_at': 1699913600,
+              'range_end_at': 1700000000,
+              'avg_latency_ms': 42,
+              'p95_latency_ms': 71,
+              'points': [
+                {'checked_at': 1699950000, 'status': 'up', 'latency_ms': 38},
+                {'checked_at': 1699960000, 'status': 'down', 'latency_ms': null},
+                {'checked_at': 1700000000, 'status': 'up', 'latency_ms': 46},
+              ],
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/uptime') {
+            if (failRefresh) {
+              throw const LkcException(status: 500, message: 'uptime fail');
+            }
+            return {
+              'total_sec': 86400,
+              'downtime_sec': 120,
+              'unknown_sec': 0,
+              'uptime_sec': 86280,
+              'uptime_pct': 99.86,
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/outages') {
+            if (failRefresh) {
+              throw const LkcException(status: 500, message: 'outages fail');
+            }
+            return {
+              'outages': [
+                {
+                  'id': 10,
+                  'monitor_id': 1,
+                  'started_at': 1699990000,
+                  'ended_at': 1699990120,
+                  'last_error': 'HTTP 502 Bad Gateway',
+                },
+              ],
+              'next_cursor': null,
+            };
+          }
+          return {};
+        },
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          user: user,
+          api: api,
+          child: const UptimerDetailPage(
+            args: UptimerDetailArgs(monitor: _monitor),
+            hideStrip: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Hidden heartbeat strip must ignore pointer hits during flight.
+      final stripFinder = find.byType(UptimerHeartbeatStrip);
+      expect(stripFinder, findsOneWidget);
+      final ignore = tester.widget<IgnorePointer>(
+        find.ancestor(of: stripFinder, matching: find.byType(IgnorePointer)).first,
+      );
+      expect(ignore.ignoring, isTrue);
+
+      // Cached latency & outage rows are present.
+      expect(find.text('avg 42 ms · p95 71 ms'), findsOneWidget);
+      expect(find.text('HTTP 502 Bad Gateway'), findsOneWidget);
+
+      // Trigger a refresh failure -> cached data stays visible alongside errors.
+      failRefresh = true;
+      await tester.tap(find.byIcon(Icons.refresh).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('uptime fail'), findsOneWidget);
+      expect(find.text('latency fail'), findsOneWidget);
+      expect(find.text('outages fail'), findsOneWidget);
+      expect(find.text('HTTP 502 Bad Gateway'), findsOneWidget);
+      expect(find.text('avg 42 ms · p95 71 ms'), findsOneWidget);
     },
   );
 }

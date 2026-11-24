@@ -14,6 +14,7 @@ part 'detail.g.dart';
 final class UptimerDetailState {
   final bool isLoading;
   final Object? error;
+  final Object? uptimeError;
   final Object? latencyError;
   final Object? outagesError;
   final UptimerLatencyData? latency;
@@ -28,6 +29,7 @@ final class UptimerDetailState {
   const UptimerDetailState({
     this.isLoading = false,
     this.error,
+    this.uptimeError,
     this.latencyError,
     this.outagesError,
     this.latency,
@@ -45,6 +47,7 @@ final class UptimerDetailState {
   UptimerDetailState copyWith({
     bool? isLoading,
     Object? error = _sentinel,
+    Object? uptimeError = _sentinel,
     Object? latencyError = _sentinel,
     Object? outagesError = _sentinel,
     Object? latency = _sentinel,
@@ -58,6 +61,9 @@ final class UptimerDetailState {
   }) => UptimerDetailState(
     isLoading: isLoading ?? this.isLoading,
     error: identical(error, _sentinel) ? this.error : error,
+    uptimeError: identical(uptimeError, _sentinel)
+        ? this.uptimeError
+        : uptimeError,
     latencyError: identical(latencyError, _sentinel)
         ? this.latencyError
         : latencyError,
@@ -125,8 +131,10 @@ class UptimerDetail extends _$UptimerDetail {
     state = state.copyWith(
       isLoading: true,
       error: null,
+      uptimeError: null,
       latencyError: null,
       outagesError: null,
+      loadingMoreOutages: false,
     );
 
     final latencyF = _capture(() => _api.fetchLatency(monitorId), 'latency');
@@ -160,6 +168,7 @@ class UptimerDetail extends _$UptimerDetail {
     state = state.copyWith(
       isLoading: sameRange ? false : state.isLoading,
       error: sameRange ? (uptimeErr ?? outagesErr ?? latencyErr) : state.error,
+      uptimeError: sameRange ? uptimeErr : state.uptimeError,
       latencyError: latencyErr,
       outagesError: sameRange ? outagesErr : state.outagesError,
       latency: latency ?? state.latency,
@@ -180,6 +189,7 @@ class UptimerDetail extends _$UptimerDetail {
       range: range,
       isLoading: true,
       error: null,
+      uptimeError: null,
       outagesError: null,
       outages: const [],
       nextOutageCursor: null,
@@ -207,6 +217,7 @@ class UptimerDetail extends _$UptimerDetail {
     state = state.copyWith(
       isLoading: false,
       error: uptimeErr ?? outagesErr,
+      uptimeError: uptimeErr,
       outagesError: outagesErr,
       uptimeByRange: nextUptime,
       outages: outages?.outages ?? const [],
@@ -216,7 +227,12 @@ class UptimerDetail extends _$UptimerDetail {
 
   Future<void> loadMoreOutages() async {
     final cursor = state.nextOutageCursor;
-    if (_userId == null || cursor == null || state.loadingMoreOutages) return;
+    if (_userId == null ||
+        cursor == null ||
+        state.loadingMoreOutages ||
+        state.isLoading) {
+      return;
+    }
     final rangeGen = _rangeGen;
     final range = state.range;
     state = state.copyWith(loadingMoreOutages: true);

@@ -278,20 +278,23 @@ final class _BmcDetailPageState extends ConsumerState<BmcDetailPage> {
             padding: const EdgeInsets.fromLTRB(17, 15, 17, 13),
             child: Row(
               children: [
-                Opacity(
-                  opacity: widget.hideMark ? 0 : 1,
-                  child: FlightAnchor(
-                    binding: widget.markAnchor,
-                    child: SharedElementHero(
-                      tag: 'bmc_mark_${target.id}',
-                      enabled: !widget.bare,
-                      fit: BoxFit.contain,
-                      child: BmcDetailPage.buildStatusOrb(
-                        context,
-                        failure: bmc.failure,
-                        hasData: bmc.hasData,
-                        isBusy: bmc.isBusy,
-                        powerState: bmc.powerState,
+                IgnorePointer(
+                  ignoring: widget.hideMark,
+                  child: Opacity(
+                    opacity: widget.hideMark ? 0 : 1,
+                    child: FlightAnchor(
+                      binding: widget.markAnchor,
+                      child: SharedElementHero(
+                        tag: 'bmc_mark_${target.id}',
+                        enabled: !widget.bare,
+                        fit: BoxFit.contain,
+                        child: BmcDetailPage.buildStatusOrb(
+                          context,
+                          failure: bmc.failure,
+                          hasData: bmc.hasData,
+                          isBusy: bmc.isBusy,
+                          powerState: bmc.powerState,
+                        ),
                       ),
                     ),
                   ),
