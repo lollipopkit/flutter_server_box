@@ -243,6 +243,10 @@ void main() {
     // Standalone BMC appears; linked BMC does NOT duplicate as a standalone card.
     expect(find.byType(ServerCard), findsOneWidget);
     expect(find.byType(BmcCard), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(BmcCard)).height,
+      moreOrLessEquals(ServerListDensity.cardBmc, epsilon: 10),
+    );
     expect(find.text('solo-oob'), findsOneWidget);
     expect(find.text('host-one-bmc'), findsNothing);
 

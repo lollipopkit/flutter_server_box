@@ -1089,11 +1089,12 @@ void main() {
         card.density,
     };
 
-    // Three columns of four: ten of them fit, where ten used to be lines.
+    // Three columns: all ten cards fit completely at 1200x900.
     expect(drawn(), {ServerListDensity.cards});
 
-    // One column, and two screens of it is nine.
-    tester.view.physicalSize = const Size(500, 900);
+    // Shrink to a single-column 500x550 viewport where fewer than 90% of cards
+    // fit completely, while >= 90% of single-line rows still fit.
+    tester.view.physicalSize = const Size(500, 550);
     await settle(tester);
     expect(drawn(), {ServerListDensity.rows});
     // The bar is a button this narrow, and wears what auto came to — which
@@ -1105,6 +1106,73 @@ void main() {
     expect(drawn(), {ServerListDensity.cards});
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'cached card heights are reused across height resizes and invalidated when state changes in rows',
+    (tester) async {
+      for (var i = 0; i < 10; i++) {
+        Stores.server.put(
+          spiFixture(
+            id: 'state-$i',
+            name: 's$i',
+            ip: 'h$i',
+            user: 'u',
+            autoConnect: false,
+          ),
+        );
+      }
+      // Keep width fixed at 500 (same colWidth=484 throughout) so
+      // `_syncCardHeightCache` never clears `_cardHeights` on width change;
+      // only `_cardHeightState` can invalidate the cached measurements.
+      await pump(tester, size: const Size(500, 800));
+      await settle(tester);
+
+      Set<ServerListDensity> drawn() => {
+        for (final card in tester.widgetList<ServerCard>(find.byType(ServerCard)))
+          card.density,
+      };
+
+      // All 10 disconnected compact cards (~58pt) fit in 500x800 and populate
+      // `_cardHeights`.
+      expect(drawn(), {ServerListDensity.cards});
+
+      // Shrink height only -> switches to rows (observer disabled; cache kept).
+      tester.view.physicalSize = const Size(500, 550);
+      await settle(tester);
+      expect(drawn(), {ServerListDensity.rows});
+
+      // While state is unchanged, growing height back reuses cached heights.
+      tester.view.physicalSize = const Size(500, 800);
+      await settle(tester);
+      expect(drawn(), {ServerListDensity.cards});
+
+      // Shrink height again to enter rows while `_cardHeights` holds ~58pt.
+      tester.view.physicalSize = const Size(500, 550);
+      await settle(tester);
+      expect(drawn(), {ServerListDensity.rows});
+
+      // While in rows, give all 10 servers a real failure error so their
+      // `cards` notice height becomes ~128pt (invalidating cached ~58pt).
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ServerPage)),
+      );
+      for (var i = 0; i < 10; i++) {
+        final notifier = container.read(serverProvider('state-$i').notifier);
+        final status = container.read(serverProvider('state-$i')).status;
+        status.err = SSHErr(type: SSHErrType.connect, message: 'conn refused');
+        notifier.updateStatus(status);
+        notifier.updateConnection(ServerConn.failed);
+      }
+      await settle(tester);
+
+      // Grow back to 500x800 (same width, no width-based clear): stale 58pt
+      // cache would falsely fit 10/10 in cards; invalidated cache uses the
+      // failed-notice height and stays in rows.
+      tester.view.physicalSize = const Size(500, 800);
+      await settle(tester);
+      expect(drawn(), {ServerListDensity.rows});
+    },
+  );
 
   testWidgets('the list is drawn at the size the system asks for, times '
       'its own setting', (tester) async {

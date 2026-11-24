@@ -9,6 +9,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status/conn.dart';
 import 'package:server_box/data/model/server/status/cpu.dart';
@@ -18,6 +19,8 @@ import 'package:server_box/data/model/server/status/net_speed.dart';
 import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/status/card_item.dart';
+import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
@@ -767,47 +770,240 @@ void main() {
     ServerListDensity auto(int count, Size viewport, {bool folded = true}) =>
         ServerListDensity.autoFor(count, viewport: viewport, folded: folded);
 
-    test('what auto means is what the window shows at once', () {
-      // The richest shape that holds all of them without scrolling. It was
-      // six and twenty-four whatever the window, which is what one desktop
-      // window holds — so a wide one went to lines with room for a dozen more
-      // cards, and a phone kept cards it could show two of.
+    test('auto picks the richest density where at least 90% of items fit completely', () {
       const desk = Size(1200, 800);
-      // Three columns of four.
+      // Three columns (height 792pt): 4 folded cards per column = 12 fit
+      // completely (684pt <= 792pt). 12/12 = 100% and 12/13 = 92.3% >= 90%,
+      // while 12/14 = 85.7% < 90% switches to rows.
+      expect(auto(0, desk), ServerListDensity.cards);
       expect(auto(1, desk), ServerListDensity.cards);
       expect(auto(12, desk), ServerListDensity.cards);
-      expect(auto(13, desk), ServerListDensity.rows);
-      // Eighteen lines.
-      expect(auto(18, desk), ServerListDensity.rows);
-      expect(auto(19, desk), ServerListDensity.grid);
+      expect(auto(13, desk), ServerListDensity.cards);
+      expect(auto(14, desk), ServerListDensity.rows);
+      // 18 lines (756pt <= 792pt): 18/20 = 90% fit in rows, 18/21 = 85.7% < 90%
+      // switches to grid.
+      expect(auto(20, desk), ServerListDensity.rows);
+      expect(auto(21, desk), ServerListDensity.grid);
 
-      // The same list in a bigger window is still cards: five columns of six.
-      expect(auto(30, const Size(2000, 1100)), ServerListDensity.cards);
-      // And in a narrower one it is not: two columns of four.
+      // Bigger window (5 cols x 6 rows = 30 visible): 30/33 = 90.9% -> cards.
+      expect(auto(33, const Size(2000, 1100)), ServerListDensity.cards);
+      expect(auto(34, const Size(2000, 1100)), ServerListDensity.grid);
+      // Narrower window (2 cols x 4 rows = 8 visible): 8/8 -> cards, 8/9 = 88.9% -> rows.
+      expect(auto(8, const Size(700, 800)), ServerListDensity.cards);
       expect(auto(9, const Size(700, 800)), ServerListDensity.rows);
-      // Nor in a shorter one, at the same width: three columns of two.
+      // Shorter window at same width (3 cols x 2 rows = 6 visible): 6/6 -> cards,
+      // 7..12 -> rows (11/12 = 91.7% >= 90%), 13 -> grid (11/13 = 84.6% < 90%).
       expect(auto(6, const Size(1200, 500)), ServerListDensity.cards);
-      expect(auto(10, const Size(1200, 500)), ServerListDensity.rows);
-      // Which has eleven lines, so a list that was cards a moment ago can be
-      // tiles after the window is made half as tall.
-      expect(auto(12, const Size(1200, 500)), ServerListDensity.grid);
+      expect(auto(7, const Size(1200, 500)), ServerListDensity.rows);
+      expect(auto(12, const Size(1200, 500)), ServerListDensity.rows);
+      expect(auto(13, const Size(1200, 500)), ServerListDensity.grid);
+    });
+
+    test('mixed card types and measured heights pack dynamically for 90% visibility', () {
+      // 4 servers + 1 BMC + 12 Uptimers (17 items total).
+      final items = <StatusCardItem>[
+        for (var i = 0; i < 4; i++)
+          ServerCardItem(spiFixture(id: 's$i', name: 'srv-$i')),
+        const BmcCardItem(
+          BmcTarget(id: 'b0', name: 'bmc-0', addr: 'https://10.0.0.2'),
+        ),
+        for (var i = 0; i < 12; i++)
+          UptimerCardItem(
+            UptimerMonitorCard(
+              id: i + 1,
+              name: 'up-$i',
+              type: UptimerMonitorType.http,
+              status: UptimerMonitorStatus.up,
+            ),
+          ),
+      ];
+
+      // With actual measured heights (1 unfolded online server, 2 disconnected,
+      // 1 failed, 1 compact BMC, 12 Uptimers), all 17/17 fit completely at 1200x680.
+      final measured = <String, double>{
+        items[0].cardKey: 330,
+        items[1].cardKey: 54,
+        items[2].cardKey: 54,
+        items[3].cardKey: 124,
+        items[4].cardKey: 54,
+        for (var i = 5; i < items.length; i++) items[i].cardKey: 101,
+      };
+      expect(
+        ServerListDensity.autoForItems(
+          items,
+          viewport: const Size(1200, 680),
+          folded: false,
+          heightOf: (item) => measured[item.cardKey],
+        ),
+        ServerListDensity.cards,
+      );
+      // Even using fallback estimates (folded servers + BMC + Uptimers), 17/17
+      // fit at 1200x750 instead of being miscounted as 17 full server cards.
+      expect(
+        ServerListDensity.autoForItems(
+          items,
+          viewport: const Size(1200, 750),
+          folded: true,
+        ),
+        ServerListDensity.cards,
+      );
+      // Active Uptimer banners increase card height and can push cards -> rows.
+      expect(
+        ServerListDensity.autoForItems(
+          items,
+          viewport: const Size(1200, 750),
+          folded: true,
+          uptimerHasBanner: (_) => true,
+        ),
+        ServerListDensity.rows,
+      );
+      // Narrow 2-col window switches to rows where 17/17 rows fit completely.
+      expect(
+        ServerListDensity.autoForItems(
+          items,
+          viewport: const Size(700, 800),
+          folded: true,
+          heightOf: (item) => measured[item.cardKey],
+        ),
+        ServerListDensity.rows,
+      );
+    });
+
+    test('never downgrades multi-column compact cards to a taller single-column rows list', () {
+      final uptimers = <StatusCardItem>[
+        for (var i = 0; i < 32; i++)
+          UptimerCardItem(
+            UptimerMonitorCard(
+              id: i + 1,
+              name: 'up-$i',
+              type: UptimerMonitorType.http,
+              status: UptimerMonitorStatus.up,
+            ),
+          ),
+      ];
+
+      // 4 columns at 1440x650: 32 Uptimers in cards show 24/32 complete cards
+      // (~836pt total), whereas single-column rows show only 15/32 (1344pt).
+      // Neither reaches 90%, so auto picks grid.
+      expect(
+        ServerListDensity.autoForItems(
+          uptimers,
+          viewport: const Size(1440, 650),
+          folded: true,
+        ),
+        ServerListDensity.grid,
+      );
+      // When large textScale rules out grid, both autoForItems and
+      // auto.resolveItems pick cards (more complete items than rows), while
+      // explicit grid still falls back to rows.
+      expect(
+        ServerListDensity.autoForItems(
+          uptimers,
+          textScale: 1.5,
+          viewport: const Size(1440, 650),
+          folded: true,
+        ),
+        ServerListDensity.cards,
+      );
+      expect(
+        ServerListDensity.auto.resolveItems(
+          uptimers,
+          textScale: 1.5,
+          viewport: const Size(1440, 650),
+          folded: true,
+        ),
+        ServerListDensity.cards,
+      );
+      expect(
+        ServerListDensity.grid.resolveItems(
+          uptimers,
+          textScale: 1.5,
+          viewport: const Size(1440, 650),
+          folded: true,
+        ),
+        ServerListDensity.rows,
+      );
+    });
+
+    test('accounts for tag group headings, empty groups, and viewport edge cases', () {
+      final groups = <List<StatusCardItem>>[
+        const [],
+        for (var g = 0; g < 6; g++)
+          [
+            for (var i = 0; i < 2; i++)
+              ServerCardItem(spiFixture(id: 'g$g-$i', name: 'g$g-$i')),
+          ],
+      ];
+      final flat = [for (final g in groups) ...g];
+      // Flat 12 folded servers fit 12/12 in 3 columns on 1200x800.
+      expect(
+        ServerListDensity.autoForItems(
+          flat,
+          viewport: const Size(1200, 800),
+          folded: true,
+        ),
+        ServerListDensity.cards,
+      );
+      // Split into 6 separate groups of 2, headings + per-group masonry breaks
+      // drop visible cards below 90%, while all 12 rows still fit completely.
+      expect(
+        ServerListDensity.autoForItems(
+          flat,
+          groups: groups,
+          viewport: const Size(1200, 800),
+          folded: true,
+        ),
+        ServerListDensity.rows,
+      );
+
+      // Edge cases: empty list, zero viewport with many items, non-finite width,
+      // textScale < 1.0, and autoFor/resolve parity at textScale > 1.0.
+      expect(
+        ServerListDensity.autoForItems(
+          const [],
+          viewport: Size.zero,
+          folded: true,
+        ),
+        ServerListDensity.cards,
+      );
+      expect(auto(10, Size.zero), ServerListDensity.grid);
+      expect(ServerListDensity.columnsFor(double.nan), 1);
+      expect(ServerListDensity.columnsFor(double.infinity), 10);
+      expect(
+        ServerListDensity.autoFor(
+          12,
+          viewport: const Size(1200, 800),
+          folded: true,
+          textScale: 0.82,
+        ),
+        ServerListDensity.cards,
+      );
+      expect(
+        ServerListDensity.autoFor(
+          40,
+          viewport: const Size(1200, 800),
+          folded: true,
+          textScale: 1.5,
+        ),
+        ServerListDensity.rows,
+      );
     });
 
     test('and how tall a card is, which is whether it rests folded', () {
-      // Unfolded, that desktop window holds the six it always did.
+      // Unfolded, that desktop window holds 6 cards completely (2 per column).
       const desk = Size(1200, 800);
       expect(auto(6, desk, folded: false), ServerListDensity.cards);
       expect(auto(7, desk, folded: false), ServerListDensity.rows);
     });
 
-    test('one column is given a second screen of cards', () {
-      // A phone, where that is a flick. Held to one screen it has room for
-      // four, or one unfolded, and would hardly ever be given cards at all.
+    test('one column follows the same 90% visibility rule dynamically', () {
+      // 390x700 (vh=692): 4 folded cards (684pt) fit completely -> cards;
+      // 5th card overflows (4/5 = 80% < 90%) -> switches to rows.
       const phone = Size(390, 700);
-      expect(auto(8, phone), ServerListDensity.cards);
-      expect(auto(9, phone), ServerListDensity.rows);
-      expect(auto(3, phone, folded: false), ServerListDensity.cards);
-      expect(auto(4, phone, folded: false), ServerListDensity.rows);
+      expect(auto(4, phone), ServerListDensity.cards);
+      expect(auto(5, phone), ServerListDensity.rows);
+      expect(auto(1, phone, folded: false), ServerListDensity.cards);
+      expect(auto(2, phone, folded: false), ServerListDensity.rows);
     });
 
     test('and one machine is a card whatever the window', () {

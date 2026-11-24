@@ -47,6 +47,7 @@ import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
@@ -225,8 +226,21 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// What [ServerListDensity.auto] last came to in the grid, for the bar over
   /// it to say.
   ///
-  /// Null until a grid has been laid out. See [_publishAuto].
+  /// Null until a grid has been laid out, or while empty/globe. See [_publishAuto].
   final _autoDensity = ValueNotifier<ServerListDensity?>(null);
+  ServerListDensity? _pendingAuto;
+  bool _autoPublishScheduled = false;
+
+  /// Actual laid-out `cards`-density height per `StatusCardItem.cardKey`,
+  /// paired with a signature of the card's height-affecting state so cached
+  /// measurements are reused only while that state is unchanged.
+  final _cardHeights = <String, ({Object state, double height})>{};
+  final _pendingCardHeights = <String, ({Object state, double height})>{};
+  int _cardHeightsEpoch = 0;
+  double? _cardHeightsTextScale;
+  double? _cardHeightsColWidth;
+  Size? _lastGridViewport;
+  Timer? _cardHeightCommitTimer;
 
   /// Bumped when the sort or the density changes, which are views over the
   /// list rather than anything the providers hold — so nothing else would
@@ -284,7 +298,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// [ServerCardExpanded] — and this tab is kept alive behind the settings
   /// page, so nothing else would tell it: the cards stayed as they were until
   /// something unrelated happened to build the grid.
-  void _uiFoldListener() => _sortVersion.notify();
+  void _uiFoldListener() {
+    _invalidateCardHeights();
+    _sortVersion.notify();
+  }
 
   /// Burn-in protection, switched: the shift starts or stops, and full screen
   /// changes colour.
@@ -444,10 +461,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   int? _startItemFlight(StatusCardItem item, {required bool opening}) {
     final density =
         _heroDensity ??
-        _resolvedDensity(
-          ServerDensityPref.of(_tag.value),
-          _lastFiltered.length,
-        );
+        _resolvedDensity(ServerDensityPref.of(_tag.value), _lastFiltered);
     return switch (item) {
       ServerCardItem() => null,
       UptimerCardItem(:final monitor) when monitor.heartbeats.isNotEmpty => () {
@@ -640,6 +654,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   void dispose() {
     _elementFlight.dispose();
     _closeTimer?.cancel();
+    _cardHeightCommitTimer?.cancel();
     _funcBarVisible.dispose();
     _keys.dispose();
     _open.dispose();
@@ -928,6 +943,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
     required bool globe,
     required StatusCardItem? openItem,
   }) {
+    if (globe || filtered.isEmpty) {
+      _lastGridViewport = null;
+      _publishAuto(null);
+    }
     return AnimatedSwitcher(
       duration: context.motion(_kViewSwapDuration),
       reverseDuration: context.motion(_kViewSwapDuration),
