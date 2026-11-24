@@ -443,7 +443,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   int? _startItemFlight(StatusCardItem item, {required bool opening}) {
     final density =
-        _heroDensity ?? _autoDensity.value ?? ServerDensityPref.of(_tag.value);
+        _heroDensity ??
+        _resolvedDensity(
+          ServerDensityPref.of(_tag.value),
+          _lastFiltered.length,
+        );
     return switch (item) {
       ServerCardItem() => null,
       UptimerCardItem(:final monitor) when monitor.heartbeats.isNotEmpty => () {

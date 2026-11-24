@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -643,6 +644,264 @@ void main() {
       expect(find.text('outages fail'), findsOneWidget);
       expect(find.text('HTTP 502 Bad Gateway'), findsOneWidget);
       expect(find.text('avg 42 ms · p95 71 ms'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'UptimerDetailPage latency chart snaps immediately when gap positions change and animates when unchanged',
+    (tester) async {
+      final user = ValueNotifier<LkcUser?>(_user);
+      addTearDown(user.dispose);
+      var phase = 0;
+
+      final api = UptimerApi(
+        call: (method, path, {query, body}) async {
+          if (method == 'GET' && path == '/api/v1/me/page') {
+            return {
+              'generated_at': 1700000000,
+              'overall_status': 'up',
+              'monitors': [
+                {
+                  'id': 1,
+                  'name': 'Prod API',
+                  'type': 'http',
+                  'display_url': 'https://api.example.com',
+                  'group_name': 'prod',
+                  'is_public': true,
+                  'status': 'up',
+                  'last_checked_at': 1700000000,
+                  'last_latency_ms': 42,
+                  'heartbeats': const [],
+                  'uptime_30d': const {},
+                  'uptime_days': const [],
+                },
+              ],
+              'active_incidents': const [],
+              'maintenance_windows': {'active': const [], 'upcoming': const []},
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/latency') {
+            return {
+              'range_start_at': 1699913600,
+              'range_end_at': 1700000000,
+              'avg_latency_ms': 42,
+              'p95_latency_ms': 71,
+              'points': switch (phase) {
+                0 => [
+                  {'checked_at': 1699950000, 'status': 'up', 'latency_ms': 38},
+                  {'checked_at': 1699960000, 'status': 'up', 'latency_ms': 44},
+                  {'checked_at': 1700000000, 'status': 'up', 'latency_ms': 46},
+                ],
+                1 => [
+                  {'checked_at': 1699950000, 'status': 'up', 'latency_ms': 50},
+                  {'checked_at': 1699960000, 'status': 'up', 'latency_ms': 55},
+                  {'checked_at': 1700000000, 'status': 'up', 'latency_ms': 60},
+                ],
+                _ => [
+                  {'checked_at': 1699950000, 'status': 'up', 'latency_ms': 50},
+                  {'checked_at': 1699960000, 'status': 'down', 'latency_ms': null},
+                  {'checked_at': 1700000000, 'status': 'up', 'latency_ms': 60},
+                ],
+              },
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/uptime') {
+            return {
+              'total_sec': 86400,
+              'downtime_sec': 0,
+              'unknown_sec': 0,
+              'uptime_sec': 86400,
+              'uptime_pct': 100.0,
+            };
+          }
+          if (path == '/api/v1/me/monitors/1/outages') {
+            return {'outages': const [], 'next_cursor': null};
+          }
+          return {};
+        },
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          user: user,
+          api: api,
+          child: const UptimerDetailPage(
+            args: UptimerDetailArgs(monitor: _monitor),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final initialKey = tester.widget<LineChart>(find.byType(LineChart)).key;
+      final initialState = tester.state<AnimatedWidgetBaseState<LineChart>>(
+        find.byType(LineChart),
+      );
+
+      // Refresh with updated values and same (empty) gap positions -> reuses
+      // the LineChart State and starts an implicit animation.
+      phase = 1;
+      await tester.tap(find.byIcon(Icons.refresh).first);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(LineChart), findsOneWidget);
+      final state1 = tester.state<AnimatedWidgetBaseState<LineChart>>(
+        find.byType(LineChart),
+      );
+      expect(
+        tester.widget<LineChart>(find.byType(LineChart)).key,
+        equals(initialKey),
+      );
+      expect(identical(state1, initialState), isTrue);
+      expect(state1.animation.status, AnimationStatus.forward);
+      await tester.pumpAndSettle();
+
+      // Refresh introducing a null latency gap -> outer AnimatedSwitcher does
+      // not crossfade (still a single LineChart), while inner LineChart mounts
+      // a fresh State at dismissed/0.0 so the gap renders on frame 1 with no
+      // stale FlSpot.lerp interpolation.
+      phase = 2;
+      await tester.tap(find.byIcon(Icons.refresh).first);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(LineChart), findsOneWidget);
+      final chartAfterGap = tester.widget<LineChart>(find.byType(LineChart));
+      final state2 = tester.state<AnimatedWidgetBaseState<LineChart>>(
+        find.byType(LineChart),
+      );
+      expect(chartAfterGap.key, isNot(equals(initialKey)));
+      expect(identical(state2, initialState), isFalse);
+      expect(state2.animation.status, AnimationStatus.dismissed);
+      expect(state2.animation.value, 0.0);
+      expect(
+        chartAfterGap.data.lineBarsData.single.spots[1],
+        equals(FlSpot.nullSpot),
+      );
+    },
+  );
+
+  testWidgets(
+    'UptimerEditPage reconciles active baseline when resumeMonitor fails after updateMonitor',
+    (tester) async {
+      final user = ValueNotifier<LkcUser?>(_user);
+      addTearDown(user.dispose);
+      final patches = <Map<String, dynamic>>[];
+      var resumeCalls = 0;
+      var pauseCalls = 0;
+      var persistedActive = false;
+      var persistedStatus = 'paused';
+
+      const initialConfig = UptimerMonitorConfig(
+        id: 1,
+        name: 'Paused API',
+        type: UptimerMonitorType.http,
+        target: 'https://api.example.com/health',
+        displayUrl: 'https://api.example.com',
+        intervalSec: 60,
+        timeoutMs: 10000,
+        httpMethod: 'GET',
+        followRedirects: true,
+        groupName: 'prod',
+        showOnStatusPage: true,
+        isActive: false,
+        status: UptimerMonitorStatus.paused,
+      );
+
+      Map<String, dynamic> monitorJson() => {
+        'id': 1,
+        'name': 'Paused API',
+        'type': 'http',
+        'target': 'https://api.example.com/health',
+        'display_url': 'https://api.example.com',
+        'interval_sec': 60,
+        'timeout_ms': 10000,
+        'http_method': 'GET',
+        'follow_redirects': true,
+        'group_name': 'prod',
+        'show_on_status_page': true,
+        'is_active': persistedActive,
+        'status': persistedStatus,
+      };
+
+      final api = UptimerApi(
+        call: (method, path, {query, body}) async {
+          if (method == 'GET' && path == '/api/v1/me/page') {
+            return {
+              'generated_at': 1700000000,
+              'overall_status': 'up',
+              'monitors': const [],
+              'active_incidents': const [],
+              'maintenance_windows': {'active': const [], 'upcoming': const []},
+            };
+          }
+          if (method == 'GET' && path == '/api/v1/me/monitors') {
+            return {'monitors': [monitorJson()]};
+          }
+          if (method == 'GET' && path == '/api/v1/me') {
+            return {
+              'quota': {'max_monitors': 20, 'min_interval_sec': 60},
+              'usage': {'monitors': 1},
+            };
+          }
+          if (method == 'PATCH' && path == '/api/v1/me/monitors/1') {
+            final map = (body as Map).cast<String, dynamic>();
+            patches.add(Map<String, dynamic>.from(map));
+            if (map.containsKey('is_active')) {
+              persistedActive = map['is_active'] as bool;
+            }
+            return {'monitor': monitorJson()};
+          }
+          if (method == 'POST' && path == '/api/v1/me/monitors/1/resume') {
+            resumeCalls++;
+            throw const LkcException(status: 500, message: 'resume failed');
+          }
+          if (method == 'POST' && path == '/api/v1/me/monitors/1/pause') {
+            pauseCalls++;
+            persistedActive = false;
+            persistedStatus = 'paused';
+            return {'monitor': monitorJson()};
+          }
+          return {};
+        },
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          user: user,
+          api: api,
+          child: const UptimerEditPage(
+            args: UptimerEditArgs(config: initialConfig),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Toggle Active ON and save: PATCH sets is_active=true, then resume fails.
+      final activeTile = find.text(app_locale.l10n.uptimerActive);
+      await tester.ensureVisible(activeTile);
+      await tester.pumpAndSettle();
+      await tester.tap(activeTile);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
+      await tester.pumpAndSettle();
+
+      expect(patches, hasLength(1));
+      expect(patches.first['is_active'], isTrue);
+      expect(resumeCalls, 1);
+      expect(persistedActive, isTrue);
+
+      // Form stayed open; toggle Active back OFF and save -> must send
+      // is_active: false against the reconciled baseline.
+      await tester.tap(activeTile);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
+      await tester.pumpAndSettle();
+
+      expect(patches, hasLength(2));
+      expect(patches.last['is_active'], isFalse);
+      expect(pauseCalls, 0);
+      expect(persistedActive, isFalse);
     },
   );
 }

@@ -424,7 +424,7 @@ class Uptimer extends _$Uptimer {
     }
   }
 
-  Future<void> pauseMonitor(int id) async {
+  Future<UptimerMonitorConfig> pauseMonitor(int id) async {
     final gen = _authGeneration;
     _setBusy(id, true);
     try {
@@ -436,28 +436,38 @@ class Uptimer extends _$Uptimer {
         state = state.copyWith(configs: UnmodifiableMapView(nextConfigs));
         await refresh(force: true);
       }
+      return updated;
     } finally {
       if (ref.mounted && gen == _authGeneration) _setBusy(id, false);
     }
   }
 
-  Future<void> resumeMonitor(int id) async {
+  Future<UptimerMonitorConfig> resumeMonitor(int id) async {
     final gen = _authGeneration;
     _setBusy(id, true);
     try {
       var updated = await _api.resumeMonitor(id);
-      // `/resume` only resets `monitor_state.status`; if the monitor was
-      // deactivated via `is_active: false`, re-enable it so it actually runs.
-      if (!updated.isActive) {
-        updated = await _api.updateMonitor(id, {'is_active': true});
-      }
       if (ref.mounted && gen == _authGeneration) {
         final nextConfigs = LinkedHashMap<int, UptimerMonitorConfig>.of(
           state.configs,
         )..[id] = updated;
         state = state.copyWith(configs: UnmodifiableMapView(nextConfigs));
+      }
+      // `/resume` only resets `monitor_state.status`; if the monitor was
+      // deactivated via `is_active: false`, re-enable it so it actually runs.
+      if (!updated.isActive) {
+        updated = await _api.updateMonitor(id, {'is_active': true});
+        if (ref.mounted && gen == _authGeneration) {
+          final nextConfigs = LinkedHashMap<int, UptimerMonitorConfig>.of(
+            state.configs,
+          )..[id] = updated;
+          state = state.copyWith(configs: UnmodifiableMapView(nextConfigs));
+        }
+      }
+      if (ref.mounted && gen == _authGeneration) {
         await refresh(force: true);
       }
+      return updated;
     } finally {
       if (ref.mounted && gen == _authGeneration) _setBusy(id, false);
     }

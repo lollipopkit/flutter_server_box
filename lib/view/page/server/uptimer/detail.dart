@@ -802,6 +802,7 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
     // the line across outages while keeping a single series (preventing
     // duplicate tooltips/indicators near gaps).
     final spots = <FlSpot>[];
+    final nullIndices = <int>[];
     final shortRunIndices = <int>{};
     var hasMeasured = false;
     var maxMeasuredY = 0.0;
@@ -826,10 +827,18 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
         if (runStart < 0) runStart = i;
       } else {
         finishRun(i);
+        nullIndices.add(i);
         spots.add(FlSpot.nullSpot);
       }
     }
     finishRun(points.length);
+    // fl_chart's FlSpot.lerp returns the old measured spot for nullSpot targets
+    // during implicit animation; key the inner LineChart by gap layout so any
+    // gap change renders immediately on frame 1 without crossfading the outer
+    // AnimatedSwitcher, while preserving animations when gaps are unchanged.
+    final gapSig = nullIndices.isEmpty
+        ? ''
+        : '${points.length}:${nullIndices.join(',')}';
 
     if (monitor.type == UptimerMonitorType.heartbeat && !hasMeasured) {
       return null;
@@ -948,11 +957,13 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                                 ),
                               ),
                       )
-                    : LineChart(
+                    : KeyedSubtree(
                         key: const ValueKey('lat_chart'),
-                        duration: context.motion(Durations.medium1),
-                        curve: Curves.easeOutCubic,
-                        LineChartData(
+                        child: LineChart(
+                          key: ValueKey('lat_chart:$gapSig'),
+                          duration: context.motion(Durations.medium1),
+                          curve: Curves.easeOutCubic,
+                          LineChartData(
                         minY: 0,
                         maxY: maxY,
                         gridData: FlGridData(
@@ -1044,6 +1055,7 @@ final class _UptimerDetailPageState extends ConsumerState<UptimerDetailPage> {
                         ],
                       ),
                     ),
+                  ),
               ),
             ),
           ],

@@ -212,10 +212,8 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
     _forbiddenKeywordCtrl.text = cfg.responseForbiddenKeyword ?? '';
     _forbiddenKeywordMode = cfg.responseForbiddenKeywordMode ?? 'contains';
     _showOnStatusPage = cfg.showOnStatusPage;
-    _initialIsActive = cfg.isActive;
-    _initialWasPaused =
-        !cfg.isActive || cfg.status == UptimerMonitorStatus.paused;
-    _isActive = !_initialWasPaused;
+    _reconcileActiveBaseline(cfg);
+    _isActive = _initialIsActive && !_initialWasPaused;
     _expandHttpReq =
         (cfg.httpMethod != null && cfg.httpMethod != 'GET') ||
         !cfg.followRedirects ||
@@ -226,6 +224,11 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
         cfg.forbiddenStatus != null ||
         cfg.responseKeyword != null ||
         cfg.responseForbiddenKeyword != null;
+  }
+
+  void _reconcileActiveBaseline(UptimerMonitorConfig persisted) {
+    _initialIsActive = persisted.isActive;
+    _initialWasPaused = persisted.status == UptimerMonitorStatus.paused;
   }
 
   @override
@@ -976,7 +979,7 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
       'show_on_status_page': _showOnStatusPage,
       if (_isEditing &&
           submittedActive != _initialIsActive &&
-          submittedActive == _initialWasPaused)
+          (submittedActive || _initialWasPaused))
         'is_active': submittedActive,
       if (_type == UptimerMonitorType.http) ...{
         'http_method': _httpMethod,
@@ -1016,11 +1019,12 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
     try {
       final notifier = ref.read(uptimerProvider.notifier);
       if (_editingId case final id?) {
-        await notifier.updateMonitor(id, payload);
+        final updated = await notifier.updateMonitor(id, payload);
+        _reconcileActiveBaseline(updated);
         if (submittedActive && _initialWasPaused) {
-          await notifier.resumeMonitor(id);
+          _reconcileActiveBaseline(await notifier.resumeMonitor(id));
         } else if (!submittedActive && !_initialWasPaused) {
-          await notifier.pauseMonitor(id);
+          _reconcileActiveBaseline(await notifier.pauseMonitor(id));
         }
         if (mounted) Navigator.of(context).pop(UptimerEditResult.saved);
       } else {
@@ -1038,9 +1042,12 @@ final class _UptimerEditPageState extends ConsumerState<UptimerEditPage> {
         if (mounted) Navigator.of(context).pop(UptimerEditResult.saved);
       }
     } catch (e) {
-      if (mounted) {
-        Toast.show(uptimerErrorMessage(e));
+      if (!mounted) return;
+      if (_editingId case final id?) {
+        final latest = ref.read(uptimerProvider).configs[id];
+        if (latest != null) _reconcileActiveBaseline(latest);
       }
+      Toast.show(uptimerErrorMessage(e));
     } finally {
       if (mounted && _saving) setState(() => _saving = false);
     }
