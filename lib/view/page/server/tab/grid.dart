@@ -248,6 +248,70 @@ extension _Grid on _ServerPageState {
     }
   }
 
+  PowerState? _linkedBmcPower(ServerState srv) {
+    if (srv.conn != ServerConn.failed) return null;
+    final linked = ref.read(bmcTargetsProvider).forServer(srv.spi.id);
+    if (linked == null || !linked.isComplete) return null;
+    final summary = ref.read(bmcSummaryProvider(linked.id));
+    return summary.failure == null && summary.hasData
+        ? summary.powerState
+        : null;
+  }
+
+  /// Value-equal signature of the height-affecting layout state of [item] in
+  /// `cards` density. Models actual rendered body dimensions (rather than
+  /// transient reconnect steps) so cached heights stay hit across normal ticks
+  /// and reconnects, while immediately invalidating on real height changes.
+  Object _cardHeightState(
+    StatusCardItem item, {
+    required bool folded,
+    required bool Function(String id) unfolded,
+    required UptimerState uptimer,
+  }) => switch (item) {
+    ServerCardItem(:final id) => () {
+      final srv = ref.read(serverProvider(id));
+      final notice = ServerNotice.onCard(
+        srv,
+        bmcPower: _linkedBmcPower(srv),
+      );
+      if (notice != null) {
+        return ('notice', notice.kind, notice.mono.isNotEmpty);
+      }
+      final hasBody = serverCardHasBody(srv);
+      if (!hasBody) return 'compact';
+      final stale = serverCardStaleSince(srv) != null;
+      final expanded = !folded && unfolded(id);
+      final foot = serverCardReadings(srv).all.any((m) => m.over);
+      return ('body', stale, expanded, foot);
+    }(),
+    BmcCardItem(:final target) => () {
+      final s = ref.read(bmcSummaryProvider(target.id));
+      if (s.failure case final failure?) {
+        final isCert = s.needsCertReview;
+        final title = isCert ? l10n.bmcCert : bmcFailureText(failure, null);
+        final detail = isCert
+            ? bmcFailureText(failure, s.failureDetail)
+            : s.failureDetail;
+        final hasDetail =
+            detail != null && detail.isNotEmpty && detail != title;
+        return ('err', isCert, hasDetail);
+      }
+      if (!s.hasData) return 'compact';
+      final model = s.topology?.system?.model?.trim();
+      final hasModel = model != null && model.isNotEmpty;
+      final health = s.topology?.system?.health;
+      final healthAlert =
+          health != null && health.isNotEmpty && health != 'OK';
+      final isOff = s.powerState == PowerState.off;
+      if (s.watts != null) {
+        return ('watts', (isOff && hasModel) || healthAlert);
+      }
+      if (hasModel || healthAlert) return ('sub', hasModel, healthAlert);
+      return 'compact';
+    }(),
+    UptimerCardItem(:final monitor) => uptimer.hasBanner(monitor.id),
+  };
+
   double? _cardHeightOf(
     StatusCardItem item, {
     required bool folded,
@@ -261,24 +325,41 @@ extension _Grid on _ServerPageState {
     final manuallyUnfolded =
         item is ServerCardItem && folded && unfolded(item.id);
     if (!manuallyUnfolded) {
-      if (_cardHeights[item.cardKey] case final measured?) return measured;
+      if (_cardHeights[item.cardKey] case final cached?) {
+        final state = _cardHeightState(
+          item,
+          folded: folded,
+          unfolded: unfolded,
+          uptimer: uptimer,
+        );
+        if (cached.state == state) return cached.height;
+      }
     }
     final base = switch (item) {
       ServerCardItem(:final id) => () {
         final srv = ref.read(serverProvider(id));
-        return switch (srv.conn) {
-          ServerConn.disconnected => ServerListDensity.cardCompact,
-          ServerConn.failed => ServerListDensity.cardServerFailed,
-          _ =>
-            (manuallyUnfolded || !unfolded(id))
-                ? ServerListDensity.cardFolded
-                : ServerListDensity.cardUnfolded,
-        };
+        if (ServerNotice.onCard(srv, bmcPower: _linkedBmcPower(srv)) != null) {
+          return ServerListDensity.cardServerFailed;
+        }
+        if (!serverCardHasBody(srv)) {
+          return ServerListDensity.cardCompact;
+        }
+        return (manuallyUnfolded || !unfolded(id))
+            ? ServerListDensity.cardFolded
+            : ServerListDensity.cardUnfolded;
       }(),
       BmcCardItem(:final target) => () {
         final s = ref.read(bmcSummaryProvider(target.id));
         if (s.failure != null) return ServerListDensity.cardBmcFailed;
         if (s.watts != null) return ServerListDensity.cardBmc;
+        if (s.hasData) {
+          final model = s.topology?.system?.model?.trim();
+          final health = s.topology?.system?.health;
+          final hasSub =
+              (model != null && model.isNotEmpty) ||
+              (health != null && health.isNotEmpty && health != 'OK');
+          if (hasSub) return ServerListDensity.cardBmc;
+        }
         return ServerListDensity.cardCompact;
       }(),
       UptimerCardItem(:final monitor) =>
@@ -289,10 +370,26 @@ extension _Grid on _ServerPageState {
     return base * factor;
   }
 
-  void _recordCardHeight(String cardKey, double height) {
-    final prev = _pendingCardHeights[cardKey] ?? _cardHeights[cardKey];
-    if (prev != null && (prev - height).abs() <= 1.5) return;
-    _pendingCardHeights[cardKey] = height;
+  void _recordCardHeight(StatusCardItem item, double height) {
+    final cardKey = item.cardKey;
+    final folded = Stores.setting.collapseUIDefault.fetch();
+    final state = _cardHeightState(
+      item,
+      folded: folded,
+      unfolded: ServerCardExpanded.reader,
+      uptimer: ref.read(uptimerProvider),
+    );
+    final pending = _pendingCardHeights[cardKey];
+    if (pending != null) {
+      if (pending.state == state && (pending.height - height).abs() <= 1.5) {
+        return;
+      }
+    } else if (_cardHeights[cardKey] case final cached?) {
+      if (cached.state == state && (cached.height - height).abs() <= 1.5) {
+        return;
+      }
+    }
+    _pendingCardHeights[cardKey] = (state: state, height: height);
     // Trailing debounce waits for `ServerCard`'s `AnimatedSize` transitions to
     // settle so intermediate heights never pollute `_cardHeights`.
     _cardHeightCommitTimer?.cancel();
@@ -305,11 +402,28 @@ extension _Grid on _ServerPageState {
   void _commitPendingCardHeights() {
     _cardHeightCommitTimer = null;
     if (!mounted || _pendingCardHeights.isEmpty) return;
-    _cardHeights.addAll(_pendingCardHeights);
+    final folded = Stores.setting.collapseUIDefault.fetch();
+    final unfolded = ServerCardExpanded.reader;
+    final uptimer = ref.read(uptimerProvider);
+    final itemsByKey = {for (final item in _lastFiltered) item.cardKey: item};
+    for (final entry in _pendingCardHeights.entries) {
+      final item = itemsByKey[entry.key];
+      if (item == null) continue;
+      final currentState = _cardHeightState(
+        item,
+        folded: folded,
+        unfolded: unfolded,
+        uptimer: uptimer,
+      );
+      // Commit only if the card's state has not moved on since the height was
+      // measured (avoids tagging an old height with a newer state).
+      if (currentState == entry.value.state) {
+        _cardHeights[entry.key] = entry.value;
+      }
+    }
     _pendingCardHeights.clear();
     if (_cardHeights.length > _lastFiltered.length * 2 + 32) {
-      final keep = {for (final i in _lastFiltered) i.cardKey};
-      _cardHeights.removeWhere((k, _) => !keep.contains(k));
+      _cardHeights.removeWhere((k, _) => !itemsByKey.containsKey(k));
     }
     if (_heroId != null) return;
     final viewport = _lastGridViewport;
@@ -319,9 +433,6 @@ extension _Grid on _ServerPageState {
               .map((g) => g.items)
               .toList()
         : null;
-    final folded = Stores.setting.collapseUIDefault.fetch();
-    final unfolded = ServerCardExpanded.reader;
-    final uptimer = ref.read(uptimerProvider);
     final textScale = _textScale;
     final next = ServerListDensity.auto.resolveItems(
       _lastFiltered,
@@ -412,7 +523,7 @@ extension _Grid on _ServerPageState {
           openness == 0 &&
           !manuallyUnfolded,
       epoch: _cardHeightsEpoch,
-      onHeight: (h) => _recordCardHeight(item.cardKey, h),
+      onHeight: (h) => _recordCardHeight(item, h),
       child: child,
     );
   }

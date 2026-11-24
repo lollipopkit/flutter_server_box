@@ -47,6 +47,7 @@ import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
@@ -230,11 +231,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   ServerListDensity? _pendingAuto;
   bool _autoPublishScheduled = false;
 
-  /// Actual laid-out `cards`-density height per `StatusCardItem.cardKey`, used
-  /// by [ServerListDensity.auto] to test whether >= 90% of cards fit completely
-  /// in the current viewport.
-  final _cardHeights = <String, double>{};
-  final _pendingCardHeights = <String, double>{};
+  /// Actual laid-out `cards`-density height per `StatusCardItem.cardKey`,
+  /// paired with a signature of the card's height-affecting state so cached
+  /// measurements are reused only while that state is unchanged.
+  final _cardHeights = <String, ({Object state, double height})>{};
+  final _pendingCardHeights = <String, ({Object state, double height})>{};
   int _cardHeightsEpoch = 0;
   double? _cardHeightsTextScale;
   double? _cardHeightsColWidth;
