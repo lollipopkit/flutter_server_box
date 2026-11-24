@@ -373,6 +373,7 @@ pub(super) fn terminate_command(child: &mut Child, tree: &Tree) {
 pub(super) fn terminate_process_group(tree: &Tree) -> bool {
     // `process_group(0)` above makes the direct child's PID its process
     // group ID. A negative PID is POSIX's "signal the group" form.
+    // SAFETY: negative PID targets the process group owned by this spawned command.
     #[cfg(unix)]
     return tree.0.is_some_and(|id| unsafe { kill_process_group(-(id as i32), 9) } == 0);
     #[cfg(windows)]

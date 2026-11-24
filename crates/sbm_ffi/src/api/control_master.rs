@@ -10,7 +10,7 @@ use flutter_rust_bridge::frb;
 use std::{
     ffi::CString,
     io::{self, Read, Write},
-    mem::{size_of, zeroed},
+    mem::{MaybeUninit, size_of},
     net::Shutdown,
     os::unix::{
         ffi::OsStrExt,
@@ -128,7 +128,8 @@ impl MuxForward {
 #[cfg(unix)]
 fn connect(path: &str, wait: Duration) -> io::Result<UnixStream> {
     let bytes = Path::new(path).as_os_str().as_bytes();
-    let mut addr: libc::sockaddr_un = unsafe { zeroed() };
+    // SAFETY: `libc::sockaddr_un` is a plain C struct; all-zero bytes are valid.
+    let mut addr = unsafe { MaybeUninit::<libc::sockaddr_un>::zeroed().assume_init() };
     if bytes.len() >= addr.sun_path.len() || CString::new(bytes).is_err() {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "socket path"));
     }
@@ -142,19 +143,22 @@ fn connect(path: &str, wait: Duration) -> io::Result<UnixStream> {
     let kind = libc::SOCK_STREAM | libc::SOCK_CLOEXEC;
     #[cfg(not(any(target_os = "linux", target_os = "android")))]
     let kind = libc::SOCK_STREAM;
+    // SAFETY: standard POSIX socket creation with constant domain/type/protocol.
     let fd: RawFd = unsafe { libc::socket(libc::AF_UNIX, kind, 0) };
     if fd < 0 {
         return Err(io::Error::last_os_error());
     }
-    // Owned from here: dropped, it is closed.
+    // SAFETY: `fd` is a newly created, non-negative Unix socket owned exclusively here.
     let stream = unsafe { UnixStream::from_raw_fd(fd) };
     // No SOCK_CLOEXEC on Apple platforms: set before anything can exec.
     #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    // SAFETY: `fd` is an open socket descriptor owned by `stream`.
     if unsafe { libc::fcntl(fd, libc::F_SETFD, libc::FD_CLOEXEC) } != 0 {
         return Err(io::Error::last_os_error());
     }
     stream.set_nonblocking(true)?;
     let len = (size_of::<libc::sa_family_t>() + bytes.len() + 1) as libc::socklen_t;
+    // SAFETY: `addr` is properly initialized and `len` is within `size_of::<libc::sockaddr_un>()`.
     let started = unsafe { libc::connect(fd, (&addr as *const libc::sockaddr_un).cast(), len) };
     if started != 0 {
         // A full backlog is EAGAIN on Linux and ECONNREFUSED on macOS, and
@@ -169,6 +173,7 @@ fn connect(path: &str, wait: Duration) -> io::Result<UnixStream> {
             revents: 0,
         };
         let ms = wait.as_millis().min(i32::MAX as u128) as libc::c_int;
+        // SAFETY: `&mut poll` points to one valid `pollfd` for the duration of the call.
         match unsafe { libc::poll(&mut poll, 1, ms) } {
             0 => return Err(io::Error::new(io::ErrorKind::TimedOut, "connect timed out")),
             n if n < 0 => return Err(io::Error::last_os_error()),
@@ -279,11 +284,13 @@ fn send_fd(control: &UnixStream, fd: libc::c_int) -> Result<(), String> {
         iov_base: (&mut byte as *mut u8).cast(),
         iov_len: 1,
     };
-    // Sized and aligned for one descriptor's control message.
+    // SAFETY: `CMSG_SPACE` is a pure size calculation for a single `c_int` payload.
     let space = unsafe { libc::CMSG_SPACE(size_of::<libc::c_int>() as u32) } as usize;
     let mut cmsg_buf = vec![0u64; space.div_ceil(size_of::<u64>())];
+    // SAFETY: `iov` and `cmsg_buf` outlive `sendmsg`, `cmsg_buf` is sized for one
+    // `SCM_RIGHTS` header + `c_int`, and `control` is an open Unix stream fd.
     let sent = unsafe {
-        let mut msg: libc::msghdr = zeroed();
+        let mut msg = MaybeUninit::<libc::msghdr>::zeroed().assume_init();
         msg.msg_iov = &mut iov;
         msg.msg_iovlen = 1;
         msg.msg_control = cmsg_buf.as_mut_ptr().cast();
@@ -367,8 +374,9 @@ mod tests {
         };
         let space = unsafe { libc::CMSG_SPACE(size_of::<libc::c_int>() as u32) } as usize;
         let mut buf = vec![0u64; space.div_ceil(8)];
+        // SAFETY: `msg` is a plain C struct initialized before `recvmsg`; `iov` and `cmsg_buf` outlive the call.
         unsafe {
-            let mut msg: libc::msghdr = zeroed();
+            let mut msg = MaybeUninit::<libc::msghdr>::zeroed().assume_init();
             msg.msg_iov = &mut iov;
             msg.msg_iovlen = 1;
             msg.msg_control = buf.as_mut_ptr().cast();

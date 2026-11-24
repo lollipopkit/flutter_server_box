@@ -225,7 +225,7 @@ void main() {
         }),
       );
       await client.stdin.flush();
-      final message = jsonDecode(await reply);
+      final message = jsonDecode(await reply) as Map<String, dynamic>;
       expect(message['id'], id);
       return message;
     }

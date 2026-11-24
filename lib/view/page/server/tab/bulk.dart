@@ -42,12 +42,12 @@ extension _Bulk on _ServerPageState {
       onClose: _endSelecting,
       onConnect: allServers
           ? () => _bulkServers((spi) {
-              ref.read(serversProvider.notifier).refresh(spi: spi);
+              ref.read(serverConnectionsProvider).refresh(spi: spi);
             })
           : null,
       onDisconnect: allServers
           ? () => _bulkServers((spi) {
-              ref.read(serversProvider.notifier).closeServer(id: spi.id);
+              ref.read(serverConnectionsProvider).closeServer(id: spi.id);
             })
           : null,
       onTag: _bulkTag,

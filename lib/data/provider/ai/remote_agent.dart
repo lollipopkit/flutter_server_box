@@ -269,7 +269,12 @@ abstract final class RemoteAgentTasks {
   }
 
   /// Shows task [ref] in the Agent's pane.
-  static void select(RemoteTaskRef? ref) => selected.value = ref;
+  static void select(RemoteTaskRef? ref) {
+    if (ref != null) {
+      AgentChats.onAppScopeSelected = () => selected.value = null;
+    }
+    selected.value = ref;
+  }
 
   @visibleForTesting
   static void reset() {
@@ -292,6 +297,7 @@ abstract final class RemoteAgentTasks {
     modes.value = const {};
     loading.value = const {};
     selected.value = null;
+    AgentChats.onAppScopeSelected = null;
   }
 }
 

@@ -11,7 +11,8 @@ import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_status.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/default.dart';
-import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/routes.dart';
+import 'package:server_box/view/page/storage/args.dart';
 
 /// Every transfer, running and finished.
 ///
@@ -153,11 +154,9 @@ class _TransferListViewState extends ConsumerState<TransferListView> {
               IconButton(tooltip: libL10n.open, 
                 onPressed: () {
                   final idx = landed.path.lastIndexOf(Pfs.seperator);
-                  LocalFilePage.route.go(
+                  AppRoutes.openLocalFiles(
                     context,
-                    args: LocalFilePageArgs(
-                      initDir: landed.path.substring(0, idx),
-                    ),
+                    LocalFilePageArgs(initDir: landed.path.substring(0, idx)),
                   );
                 },
                 icon: const Icon(Icons.file_open),

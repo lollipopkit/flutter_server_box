@@ -10,6 +10,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/db_rescue.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/rescue/scaffold.dart';
 
 /// The whole app, when the stored data was written by a newer build.
 ///
@@ -58,38 +59,15 @@ class _SchemaTooNewPageState extends State<SchemaTooNewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 27, vertical: 37),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _wipeStarted
-                    ? _doneBody(l10n)
-                    : _explainBody(l10n),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return RescueScaffold(
+      children: _wipeStarted ? _doneBody(l10n) : _explainBody(l10n),
     );
   }
 
   List<Widget> _explainBody(AppLocalizations l10n) => [
-    Icon(
-      Icons.history_toggle_off,
-      size: 57,
-      color: Theme.of(context).colorScheme.error,
-    ),
-    UIs.height13,
-    Text(
-      l10n.schemaTooNewTitle,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-      textAlign: TextAlign.center,
+    RescueHeader(
+      icon: Icons.history_toggle_off,
+      title: l10n.schemaTooNewTitle,
     ),
     UIs.height13,
     Text(

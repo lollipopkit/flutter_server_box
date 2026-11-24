@@ -41,9 +41,10 @@ cp "$root/monitor/config.example.toml" "$root/monitor/.env.example" "$pkg/"
 COPYFILE_DISABLE=1 tar --no-xattrs -C "$work" -czf "$work/pkg.tar.gz" server-box-monitor
 
 echo "==> vm: up"
-set -- $("$lab" up "$node" | tail -n 1)
-id=$1
-addr=$2
+vm_out=$("$lab" up "$node")
+read -r id addr <<EOF
+$(printf '%s\n' "$vm_out" | tail -n 1)
+EOF
 case $id in '' | *[!0-9]*) echo "the VM did not come up" >&2; exit 1 ;; esac
 cleanup() {
   if [ "${SBM_E2E_KEEP:-}" = 1 ]; then echo "==> vm $id kept at $addr"; else "$lab" down "$node" "$id" >/dev/null && echo "==> vm $id destroyed"; fi

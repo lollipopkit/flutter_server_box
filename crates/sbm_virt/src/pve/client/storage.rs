@@ -212,7 +212,14 @@ impl Client {
             }
             _ => None,
         };
-        let lock = node.map(|n| self.net_changes.lock().unwrap().entry(n).or_default().clone());
+        let lock = node.map(|n| {
+            self.net_changes
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .entry(n)
+                .or_default()
+                .clone()
+        });
         let _held = match &lock {
             Some(l) => Some(l.lock().await),
             None => None,

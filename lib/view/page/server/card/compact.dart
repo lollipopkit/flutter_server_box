@@ -12,6 +12,7 @@ import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
+import 'package:server_box/view/page/server/card/status_shell.dart';
 import 'package:server_box/view/page/server/card/title.dart';
 import 'package:server_box/view/page/server/state_ui.dart';
 
@@ -447,69 +448,25 @@ class ServerCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final focus = this.focus;
-    return SizedBox(
-      height: isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                if (selected case final selected?)
-                  ServerCardCheck(selected: selected),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isBmcOff
-                        ? StatePalette.idle
-                        : serverStateDot(srv, readings: readings),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: ServerNameHero(
-                    id: srv.spi.id,
-                    enabled: heroName,
-                    child: Text(
-                      srv.spi.name,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.2,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  focus?.value ?? _tileWord,
-                  style: TextStyle(
-                    fontSize: 10,
-                    height: 1.2,
-                    // The one word a tile has room for is also the only thing
-                    // on it that can say why: red for a machine that failed,
-                    // amber for one waiting to be let in, and for a reading
-                    // that is over its line.
-                    color: focus == null
-                        ? _tileWordColor
-                        : (focus.over ? StatePalette.warn : Colors.grey),
-                    fontFeatures: kTabularFigures,
-                  ),
-                  maxLines: 1,
-                ),
-              ],
-            ),
-            const SizedBox(height: 5),
-            PressureBar(segments: serverPressure(readings), stale: stale),
-          ],
-        ),
+    return StatusGridTileShell(
+      selected: selected,
+      dotColor: _isBmcOff
+          ? StatePalette.idle
+          : serverStateDot(srv, readings: readings),
+      title: ServerNameHero(
+        id: srv.spi.id,
+        enabled: heroName,
+        child: StatusGridTileShell.defaultTitle(srv.spi.name),
       ),
+      valueText: focus?.value ?? _tileWord,
+      // The one word a tile has room for is also the only thing on it that can
+      // say why: red for a machine that failed, amber for one waiting to be let
+      // in, and for a reading that is over its line.
+      valueColor: focus == null
+          ? _tileWordColor
+          : (focus.over ? StatePalette.warn : Colors.grey),
+      valueMaxWidth: null,
+      bottom: PressureBar(segments: serverPressure(readings), stale: stale),
     );
   }
 

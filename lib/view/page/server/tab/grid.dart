@@ -546,7 +546,7 @@ extension _Grid on _ServerPageState {
 
   Future<void> _refreshAll() async {
     final futures = <Future<void>>[
-      ref.read(serversProvider.notifier).refresh(),
+      ref.read(serverConnectionsProvider).refresh(),
       for (final item in _lastFiltered)
         if (item case BmcCardItem(:final target))
           ref.read(bmcSummaryProvider(target.id).notifier).refresh(force: true),

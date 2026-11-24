@@ -122,7 +122,7 @@ struct Session {
 
 impl Session {
     fn headers(&self) -> Vec<(String, String)> {
-        match &*self.auth.lock().unwrap() {
+        match &*self.auth.lock().unwrap_or_else(|e| e.into_inner()) {
             SessionAuth::Token(header) => vec![("Authorization".into(), header.clone())],
             SessionAuth::Ticket { ticket, csrf, .. } => {
                 let mut h = vec![("Cookie".into(), format!("PVEAuthCookie={ticket}"))];
@@ -135,7 +135,7 @@ impl Session {
     }
 
     fn ticket(&self) -> Option<(String, i64)> {
-        match &*self.auth.lock().unwrap() {
+        match &*self.auth.lock().unwrap_or_else(|e| e.into_inner()) {
             SessionAuth::Ticket { ticket, issued_at, .. } => Some((ticket.clone(), *issued_at)),
             SessionAuth::Token(_) => None,
         }
@@ -212,18 +212,22 @@ impl Client {
         }
     }
 
+    fn lock_state(&self) -> std::sync::MutexGuard<'_, State> {
+        self.state.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
     pub fn config(&self) -> Config {
-        self.state.lock().unwrap().config.clone()
+        self.lock_state().config.clone()
     }
 
     /// PVE's release, once a session has read it.
     pub fn release(&self) -> Option<String> {
-        self.state.lock().unwrap().release.clone()
+        self.lock_state().release.clone()
     }
 
     /// Replaces the configuration. Starts a new session when it changed.
     pub fn update_config(&self, config: Config) {
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         if st.config == config {
             return;
         }
@@ -235,7 +239,7 @@ impl Client {
     /// Drops any session, so the next call logs in again. Keeps what the
     /// user confirmed or typed: the pinned certificate, the credentials.
     pub fn reset(&self) {
-        Self::reset_locked(&mut self.state.lock().unwrap());
+        Self::reset_locked(&mut self.lock_state());
     }
 
     fn reset_locked(st: &mut State) {
@@ -247,7 +251,7 @@ impl Client {
 
     /// Releases everything. The client answers [`ErrorKind::Closed`] after.
     pub fn close(&self) {
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         Self::reset_locked(&mut st);
         st.http = None;
         st.closed = true;
@@ -257,7 +261,7 @@ impl Client {
     /// connection presented ([`Error::cert`]), and starts over. Answers the
     /// pin as stored, for the caller to keep with the configuration.
     pub fn confirm_cert(&self, fingerprint: &str) -> Result<String> {
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         let presented = st.presented.as_ref().map(|c| c.fingerprint.to_ascii_lowercase());
         let pin = fingerprint.trim().to_ascii_lowercase();
         if presented.as_deref() != Some(pin.as_str()) {
@@ -291,7 +295,7 @@ impl Client {
         if parsed.guests.is_empty() {
             self.ensure_auditable().await?;
         }
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         let mut stats = BTreeMap::new();
         for (id, sample) in parsed.samples {
             let rate = st.rates.add(&id, sample);
@@ -669,7 +673,7 @@ impl Client {
             return Err(Error::detail(ErrorKind::NeedTfa, Detail::OtpEmpty));
         }
         let usable = {
-            let st = self.state.lock().unwrap();
+            let st = self.lock_state();
             st.tfa.as_ref().filter(|c| self.challenge_usable(&st, c)).map(|c| {
                 (c.generation, c.http.clone(), c.ticket.clone(), c.user.clone())
             })
@@ -704,7 +708,7 @@ impl Client {
             return Ok(());
         }
         let release = self.fetch_release(&session).await?;
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         if st.generation != generation || st.tfa.as_ref().map(|c| c.ticket.as_str()) != Some(challenge.as_str()) {
             return Ok(());
         }
@@ -721,18 +725,18 @@ impl Client {
     }
 
     fn is_current_challenge(&self, generation: u64, ticket: &str) -> bool {
-        let st = self.state.lock().unwrap();
+        let st = self.lock_state();
         st.generation == generation && st.tfa.as_ref().map(|c| c.ticket.as_str()) == Some(ticket)
     }
 
     /// Logs in again for a challenge to answer. None when the login needed
     /// no second factor after all: the session is there.
     async fn new_challenge(&self) -> Result<Option<(u64, Arc<dyn Http>, String, Vec<(&'static str, String)>)>> {
-        self.state.lock().unwrap().tfa = None;
+        self.lock_state().tfa = None;
         match self.ensure_session().await {
             Ok(_) => Ok(None),
             Err(e) if e.kind == ErrorKind::NeedTfa => {
-                let st = self.state.lock().unwrap();
+                let st = self.lock_state();
                 match &st.tfa {
                     Some(c) => Ok(Some((c.generation, c.http.clone(), c.ticket.clone(), c.user.clone()))),
                     None => Err(e),
@@ -753,7 +757,7 @@ impl Client {
     async fn ensure_session(&self) -> Result<Arc<Session>> {
         loop {
             let current = {
-                let st = self.state.lock().unwrap();
+                let st = self.lock_state();
                 if st.closed {
                     return Err(Error::new(ErrorKind::Closed));
                 }
@@ -772,7 +776,7 @@ impl Client {
             }
             let _login = self.login.lock().await;
             let (generation, config, http) = {
-                let mut st = self.state.lock().unwrap();
+                let mut st = self.lock_state();
                 if st.session.as_ref().is_some_and(|s| s.generation == st.generation) {
                     continue;
                 }
@@ -790,7 +794,7 @@ impl Client {
                 Ok(()) => continue,
                 // A stale attempt's failure is not this caller's: go round
                 // again and log in for the current generation.
-                Err(e) if self.state.lock().unwrap().generation == generation => return Err(e),
+                Err(e) if self.lock_state().generation == generation => return Err(e),
                 Err(_) => continue,
             }
         }
@@ -811,7 +815,7 @@ impl Client {
     }
 
     fn is_current(&self, session: &Arc<Session>) -> bool {
-        self.state.lock().unwrap().session.as_ref().is_some_and(|s| Arc::ptr_eq(s, session))
+        self.lock_state().session.as_ref().is_some_and(|s| Arc::ptr_eq(s, session))
     }
 
     fn renew_due(&self, session: &Session) -> bool {
@@ -847,7 +851,8 @@ impl Client {
         if let Ok((ticket, csrf)) = ticket_of(&resp)
             && self.is_current(session)
         {
-            *session.auth.lock().unwrap() = SessionAuth::Ticket { ticket, csrf, issued_at: self.now() };
+            *session.auth.lock().unwrap_or_else(|e| e.into_inner()) =
+                SessionAuth::Ticket { ticket, csrf, issued_at: self.now() };
         }
     }
 
@@ -878,7 +883,7 @@ impl Client {
                 if need_tfa {
                     let ticket = resources::str_of(data.get("ticket"))
                         .ok_or_else(|| Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData))?;
-                    let mut st = self.state.lock().unwrap();
+                    let mut st = self.lock_state();
                     if st.generation == generation {
                         st.tfa = Some(Challenge { generation, http: http.clone(), ticket, issued_at: self.now(), user: user.clone() });
                     }
@@ -891,11 +896,11 @@ impl Client {
         let session = Arc::new(Session { generation, http, user, auth: Mutex::new(auth), renewing: Default::default() });
         // Stale (the configuration changed during the login): nothing more
         // is sent with its credentials.
-        if self.state.lock().unwrap().generation != generation {
+        if self.lock_state().generation != generation {
             return Ok(());
         }
         let release = self.fetch_release(&session).await?;
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         if st.generation != generation {
             return Ok(());
         }
@@ -954,7 +959,7 @@ impl Client {
     /// the login's own, or a 401 on a token is reported as it is.
     async fn call_with(&self, method: Method, path: &str, body: Option<Body>, action: bool, whole: bool) -> Result<Value> {
         let before = {
-            let st = self.state.lock().unwrap();
+            let st = self.lock_state();
             st.session.clone().filter(|s| s.generation == st.generation)
         };
         let session = self.session_now().await?;
@@ -1018,7 +1023,7 @@ impl Client {
         };
         let message = match (kind, text) {
             (_, Some(t)) => t,
-            (ErrorKind::AuthFailed, None) => match &self.state.lock().unwrap().config.auth {
+            (ErrorKind::AuthFailed, None) => match &self.lock_state().config.auth {
                 Auth::Token { id, .. } => id.clone(),
                 Auth::Password { .. } => format!("HTTP {code}"),
             },
@@ -1037,7 +1042,7 @@ impl Client {
                 });
                 err.message = Some(cert.pretty_fingerprint());
                 err.previous_fingerprint = pinned.filter(|p| !p.is_empty());
-                self.state.lock().unwrap().presented = Some(cert.clone());
+                self.lock_state().presented = Some(cert.clone());
                 err.cert = Some(Box::new(cert));
                 err
             }
@@ -1045,7 +1050,7 @@ impl Client {
     }
 
     fn drop_session(&self, session: &Arc<Session>) {
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         if st.session.as_ref().is_some_and(|s| Arc::ptr_eq(s, session)) {
             Self::reset_locked(&mut st);
         }
@@ -1126,7 +1131,7 @@ impl Client {
     /// listing reports the same status itself or the state is too old to
     /// trust.
     fn with_fresh_status(&self, raw: Vec<Value>, now: i64) -> Vec<Value> {
-        let mut st = self.state.lock().unwrap();
+        let mut st = self.lock_state();
         if st.fresh.is_empty() {
             return raw;
         }

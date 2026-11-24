@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
-import 'package:server_box/data/provider/bmc/bmc_credential.dart';
+import 'package:server_box/data/provider/bmc/endpoint.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
@@ -144,39 +142,21 @@ class BmcSummaryNotifier extends _$BmcSummaryNotifier {
       _lifecycle = null;
     });
 
-    // Watch only connection fields so renaming, tagging, or linking/unlinking
-    // never drops cached summary state or triggers an extra discovery poll.
-    final endpoint = ref.watch(
-      bmcTargetsProvider.select((s) {
-        final t = s.targets[targetId];
-        if (t == null) return null;
-        return (
-          addr: t.addr,
-          credId: t.credId,
-          certSha256: t.certSha256,
-          incompleteFailure: t.incompleteFailure,
-        );
-      }),
-    );
-    if (endpoint == null) return const BmcSummaryState();
-    if (endpoint.incompleteFailure case final failure?) {
-      return BmcSummaryState(failure: failure);
-    }
-
-    final credId = endpoint.credId!;
-    final cred = ref.watch(
-      bmcCredentialProvider.select(
-        (state) => state.creds.firstWhereOrNull((e) => e.id == credId),
-      ),
-    );
-    if (cred == null || !cred.isComplete) {
-      return const BmcSummaryState(failure: RedfishFailure.noCredential);
+    final resolved = watchBmcEndpoint(ref, targetId);
+    final BmcEndpointReady endpoint;
+    switch (resolved) {
+      case BmcEndpointMissing():
+        return const BmcSummaryState();
+      case BmcEndpointFailed(:final failure):
+        return BmcSummaryState(failure: failure);
+      case BmcEndpointReady():
+        endpoint = resolved;
     }
 
     _addr = endpoint.addr;
     _certSha256 = endpoint.certSha256;
-    _user = cred.user;
-    _password = cred.pwd;
+    _user = endpoint.user;
+    _password = endpoint.password;
 
     final binding = WidgetsBinding.instance;
     if (binding.lifecycleState == AppLifecycleState.paused ||

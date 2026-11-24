@@ -272,11 +272,11 @@ abstract final class HiveImport {
             // launch. A destination write failure is different and rolls the
             // box back for a clean retry.
             try {
-              final raw = legacy.box.get(key);
+              final Object? raw = legacy.box.get(key);
               if (raw == null) continue;
 
               final value = _fromLegacy(raw) ?? raw;
-              final safe = _jsonSafe(value as Object);
+              final safe = _jsonSafe(value);
               json.encode(safe);
               final ok = into(key, safe);
               if (!ok) {

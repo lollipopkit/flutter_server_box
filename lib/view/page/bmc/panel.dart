@@ -136,17 +136,9 @@ final class BmcPowerActions extends ConsumerWidget {
       return;
     }
 
-    final result = await liveNotifier.power(intent, expectedRequest: request);
-    switch (result) {
-      case BmcPowerResult.confirmed:
-        Toast.success(l10n.bmcPowerDone);
-      case BmcPowerResult.accepted:
-        Toast.warn(l10n.bmcPowerAccepted);
-      case BmcPowerResult.notSupported:
-        Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
-      case BmcPowerResult.failed:
-        Toast.error(libL10n.fail);
-    }
+    toastBmcPowerResult(
+      await liveNotifier.power(intent, expectedRequest: request),
+    );
   }
 }
 

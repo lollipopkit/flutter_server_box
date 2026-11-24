@@ -67,92 +67,27 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
                 onTap: () => _run(widget.args.onEdit),
               ),
             if (UserManager.groupDeletable(_group))
-              ContextMenuButton(
-                tooltip: libL10n.more,
-                actions: () => [
-                  ContextMenuAction(
-                    text: libL10n.delete,
-                    icon: Icons.delete_outline,
-                    destructive: true,
-                    onTap: () => _run(widget.args.onDelete),
-                  ),
-                ],
-                child: const Padding(
-                  padding: EdgeInsets.all(7),
-                  child: Icon(Icons.more_vert, size: 18),
-                ),
-              ),
+              DeleteOverflowButton(onDelete: () => _run(widget.args.onDelete)),
           ],
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(13, 13, 13, 40),
         children: [
-          _buildIdentity(catalog),
+          UserIdentityHeader(
+            name: _group.name,
+            subtitle: [
+              if (_group.isSystem(catalog.gidMin) && !_group.isRoot)
+                libL10n.system,
+              '${l10n.userGid} ${_group.gid}',
+            ].join(' · '),
+            isRoot: _group.isRoot,
+          ),
           UIs.height13,
           _buildGroupCard(),
           if (_group.isRoot) ...[UIs.height13, const RootChangesWarning()],
         ],
       ),
-    );
-  }
-
-  Widget _buildIdentity(UserCatalog catalog) {
-    final scheme = Theme.of(context).colorScheme;
-    final root = _group.isRoot;
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: root
-              ? scheme.errorContainer
-              : scheme.primaryContainer,
-          child: Text(
-            _group.name.isEmpty ? '?' : _group.name[0].toUpperCase(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: root ? scheme.onErrorContainer : scheme.onPrimaryContainer,
-            ),
-          ),
-        ),
-        UIs.width13,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      _group.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (root) ...[
-                    UIs.width7,
-                    UserTag('root', foreground: scheme.onErrorContainer, background: scheme.errorContainer),
-                  ],
-                ],
-              ),
-              Text(
-                [
-                  if (_group.isSystem(catalog.gidMin) && !root) libL10n.system,
-                  '${l10n.userGid} ${_group.gid}',
-                ].join(' · '),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: UIs.text12Grey,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

@@ -514,11 +514,8 @@ class _GuestRow extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  static final _radius = BorderRadius.circular(9);
-
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final cpu = stats?.cpu;
     // A running guest's load is the thing worth a glance; anything else says
     // what it is doing instead.
@@ -535,64 +532,16 @@ class _GuestRow extends StatelessWidget {
       if (guest.memBytes case final m?) m.bytes2Str,
       if (cluster) ?guest.node,
     ].join(' · ');
-    final fg = selected ? scheme.onSecondaryContainer : scheme.onSurface;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Material(
-        color: selected ? scheme.secondaryContainer : Colors.transparent,
-        borderRadius: _radius,
-        child: InkWell(
-          borderRadius: _radius,
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(13, 8, 11, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    VirtStateDot(state),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        guest.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: fg,
-                        ),
-                      ),
-                    ),
-                    UIs.width7,
-                    Text(
-                      meta,
-                      maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        fontFeatures: [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                if (sub.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, top: 2),
-                    child: Text(
-                      sub,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: UIs.text11Grey,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return VirtListTile(
+      leading: VirtStateDot(state),
+      leadingGap: 9,
+      subIndent: 16,
+      name: guest.name,
+      meta: meta,
+      sub: sub,
+      selected: selected,
+      onTap: onTap,
     );
   }
 }

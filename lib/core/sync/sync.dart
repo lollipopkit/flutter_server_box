@@ -23,10 +23,6 @@ import 'package:server_box/data/store/sync_recorder.dart';
 
 final bakSync = BakSyncer._();
 
-final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
-
-bool get isICloudSupported => isMacOS || isIOS;
-
 final class BakSyncer extends SyncIface {
   BakSyncer._() : super();
 
@@ -453,11 +449,7 @@ final class BakSyncer extends SyncIface {
 
   @override
   RemoteStorage? get remoteStorage {
-    final icloudEnabled = PrefProps.icloudSync.get();
-    if (icloudEnabled && isICloudSupported) return icloud;
-
-    final webdavEnabled = PrefProps.webdavSync.get();
-    if (webdavEnabled) return SyncRemotes.webdav;
+    if (SyncRemotes.fileRemote case final rs?) return rs;
 
     if (Lkc.enabled && LkcSyncPrefs.enabled.get() && Lkc.client.signedIn && Lkc.client.user.value != null) {
       return LkcSyncPrefs.storage;

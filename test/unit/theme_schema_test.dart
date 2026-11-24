@@ -20,7 +20,7 @@ void main() {
   Set<String> keysOf(dynamic node) => _map(_map(node)['properties']).keys.toSet();
 
   Set<String> enumOf(dynamic node) =>
-      (node as Map<String, dynamic>)['enum']!.cast<String>().toSet();
+      ((node as Map<String, dynamic>)['enum'] as List).cast<String>().toSet();
 
   num bound(dynamic node, String key) =>
       (node as Map<String, dynamic>)[key] as num;

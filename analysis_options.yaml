@@ -21,6 +21,10 @@ analyzer:
     # `flutter gen-l10n`'s output: its template still names flutter_localizations'
     # deprecated delegates (flutter/flutter#191072).
     - lib/generated/**
+    # `flutter_rust_bridge`'s generated bindings.
+    - lib/src/rust/**
+    # Independent git submodules with their own analysis configs.
+    - packages/**
     - build/**
     - android/**
     - ios/**
@@ -29,7 +33,7 @@ analyzer:
     - macos/**
     - linux/**
   language:
-    # strict-casts: true
+    strict-casts: true
     # strict-inference: true
     # strict-raw-types: true
   errors:

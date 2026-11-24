@@ -5,6 +5,7 @@ import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/shared_hero.dart';
+import 'package:server_box/view/page/server/card/status_shell.dart';
 
 /// Outcome returned by [UptimerEditPage] so callers avoid refreshing a deleted
 /// monitor.
@@ -273,15 +274,9 @@ final class UptimerSyncErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(11, 6, 11, 2),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(9),
-        ),
+      child: StatusNoticeBanner(
         child: Row(
           children: [
             Icon(

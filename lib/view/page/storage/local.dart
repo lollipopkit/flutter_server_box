@@ -8,34 +8,12 @@ import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/view/page/storage/args.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 
-final class LocalFilePageArgs {
-  final bool? isPickFile;
-
-  /// Returning a directory rather than browsing one, for "send to where?".
-  final bool isPickDir;
-
-  /// Where to open. Was the *root* until the browser told the two apart, which
-  /// is why a tab reopened deep in a tree could not go up.
-  final String? initDir;
-
-  /// Where to put this page's toolbar, for a host that draws a bar of its own.
-  final ValueNotifier<List<BarAction>>? actionsSink;
-
-  /// Told which directory is being shown, as it changes.
-  final void Function(String path)? onPathChanged;
-
-  const LocalFilePageArgs({
-    this.isPickFile,
-    this.isPickDir = false,
-    this.initDir,
-    this.actionsSink,
-    this.onPathChanged,
-  });
-}
+export 'package:server_box/view/page/storage/args.dart' show LocalFilePageArgs;
 
 /// This device's files.
 ///

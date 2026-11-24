@@ -1,5 +1,8 @@
+import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/wol_cfg.dart';
 
 /// Builds a [Spi] from flat SSH arguments.
 ///
@@ -26,10 +29,10 @@ Spi spiFixture({
   String? proxyCommand,
   List<String>? tags,
   bool autoConnect = true,
-  Object? custom,
-  Object? wolCfg,
+  ServerCustom? custom,
+  WakeOnLanCfg? wolCfg,
   Map<String, String>? envs,
-  Object? customSystemType,
+  SystemType? customSystemType,
   List<String>? disabledCmdTypes,
 }) {
   return Spi(
@@ -51,10 +54,10 @@ Spi spiFixture({
           ),
     tags: tags,
     autoConnect: autoConnect,
-    custom: custom as dynamic,
-    wolCfg: wolCfg as dynamic,
+    custom: custom,
+    wolCfg: wolCfg,
     envs: envs,
-    customSystemType: customSystemType as dynamic,
+    customSystemType: customSystemType,
     disabledCmdTypes: disabledCmdTypes,
   );
 }

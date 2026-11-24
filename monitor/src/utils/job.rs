@@ -80,8 +80,9 @@ fn resume(pid: u32) -> io::Result<()> {
         return Err(io::Error::last_os_error());
     }
     let snapshot = Owned(snapshot);
-    // SAFETY: zeroed is a valid THREADENTRY32 once its size is set.
-    let mut entry: THREADENTRY32 = unsafe { std::mem::zeroed() };
+    // SAFETY: `THREADENTRY32` is a plain Win32 C struct; zero-initializing
+    // via `MaybeUninit` and populating `dwSize` produces a valid instance.
+    let mut entry = unsafe { std::mem::MaybeUninit::<THREADENTRY32>::zeroed().assume_init() };
     entry.dwSize = std::mem::size_of::<THREADENTRY32>() as u32;
     // SAFETY: the snapshot is open and [entry] sized.
     let mut more = unsafe { Thread32First(snapshot.0, &mut entry) } != 0;

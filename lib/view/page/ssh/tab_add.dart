@@ -72,7 +72,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _sshSortPref.read().apply(state.serverOrder, state.servers);
 
     // What is typed in the bar, applied to the servers here. The systems on
     // this device are left alone: they are two rows with fixed names, and a
@@ -315,7 +315,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(serversProvider);
-    var order = _SortOrder.stored.apply(state.serverOrder, state.servers);
+    var order = _sshSortPref.read().apply(state.serverOrder, state.servers);
 
     // The same narrowing the picker does, on the same query — see `_AddPage`.
     final needle = widget.search.needle;

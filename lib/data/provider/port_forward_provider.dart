@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/lifecycle.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -79,7 +80,15 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   @override
   PortForwardState build(String serverId) {
-    ref.onDispose(() => dispose());
+    final unregisterDelete = ref.read(serverLifecycleProvider).onBeforeDelete((
+      id,
+    ) async {
+      if (id == serverId) await clear();
+    });
+    ref.onDispose(() {
+      unregisterDelete();
+      dispose();
+    });
     ref.listen(serverProvider(serverId), (prev, next) {
       if (next.client == null && prev?.client != null) {
         // Only what SSH carried. A forward through the agent never used the

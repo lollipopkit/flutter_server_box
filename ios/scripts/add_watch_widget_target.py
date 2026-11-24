@@ -513,7 +513,9 @@ def main() -> None:
     if UTILS_IN_WATCH_APP in text:
         fail("Utils.swift is still referenced by the WatchApp target")
 
-    PBX.write_text(text)
+    tmp = PBX.with_suffix(PBX.suffix + ".tmp")
+    tmp.write_text(text)
+    tmp.replace(PBX)
     print("ok: project.pbxproj updated")
 
 

@@ -7,7 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
@@ -228,18 +228,18 @@ class ServerCardConnAction extends ConsumerWidget {
           // The user asking again *is* the new information: without this the
           // request is dropped by the backoff the previous failures installed.
           TryLimiter.reset(srv.spi.id);
-          ref.read(serversProvider.notifier).refresh(spi: srv.spi);
+          ref.read(serverConnectionsProvider).refresh(spi: srv.spi);
         },
         srv.needsInteractiveAuth ? libL10n.login : libL10n.retry,
       ),
       ServerConn.disconnected => (
         const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
-        () => ref.read(serversProvider.notifier).refresh(spi: srv.spi),
+        () => ref.read(serverConnectionsProvider).refresh(spi: srv.spi),
         l10n.connect,
       ),
       ServerConn.finished => (
         const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
-        () => ref.read(serversProvider.notifier).closeServer(id: srv.spi.id),
+        () => ref.read(serverConnectionsProvider).closeServer(id: srv.spi.id),
         l10n.disconnect,
       ),
     };

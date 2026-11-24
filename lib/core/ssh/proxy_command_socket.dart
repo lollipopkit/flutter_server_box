@@ -158,7 +158,7 @@ class ProxyCommandSocket implements SSHSocket {
         final chunk = Uint8List.fromList(data);
         stdoutController.add(chunk);
       },
-      onError: (error, stackTrace) {
+      onError: (Object error, StackTrace stackTrace) {
         stdoutController.addError(error, stackTrace);
       },
       onDone: () {
@@ -176,7 +176,7 @@ class ProxyCommandSocket implements SSHSocket {
         final suffix = data.length > maxLoggedBytes ? ' [truncated]' : '';
         Loggers.app.warning('ProxyCommand stderr: $message$suffix');
       },
-      onError: (error, stackTrace) {
+      onError: (Object error, StackTrace stackTrace) {
         Loggers.app.warning(
           'ProxyCommand stderr stream error',
           error,

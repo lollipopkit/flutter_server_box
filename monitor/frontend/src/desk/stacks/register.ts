@@ -11,11 +11,9 @@ import { pick } from '../../components/stack/text'
 import { locale } from '../../i18n/i18n-svelte'
 import { api } from '../../lib/api'
 import type { StackApp } from '../../types'
-import type { IconTone } from '../lk/AppIcon.svelte'
+import { parseIconTone } from '../lk/iconTone'
 import { registry } from '../registry.svelte'
 import { defineApp, type AppSpec } from '../sys/manifest'
-
-const TONES: IconTone[] = ['berry', 'soft', 'ink', 'sky', 'teal', 'violet', 'amber', 'leaf', 'pale', 'bright', 'mist']
 
 /// [app] as the shell reads it.
 export function stackAppSpec(app: StackApp): AppSpec {
@@ -27,7 +25,7 @@ export function stackAppSpec(app: StackApp): AppSpec {
     title: () => pick(m.title, get(locale)),
     keywords: () => [m.project, ...m.categories],
     glyph: m.glyph,
-    tone: TONES.includes(m.tone as IconTone) ? (m.tone as IconTone) : 'mist',
+    tone: parseIconTone(m.tone),
     available: (caps) => stackDeployed(caps, id),
     size: { width: 1180, height: 780 },
     minSize: { width: 480, height: 360 },

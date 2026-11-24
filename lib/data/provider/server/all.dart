@@ -9,19 +9,13 @@ import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/sync/sync.dart';
-import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
-import 'package:server_box/data/provider/port_forward_provider.dart';
-import 'package:server_box/data/provider/remote_desktop.dart';
-import 'package:server_box/data/provider/server/refresh_scheduler.dart';
+import 'package:server_box/data/provider/server/lifecycle.dart';
 import 'package:server_box/data/provider/server/selection.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -37,6 +31,7 @@ abstract class ServersState with _$ServersState {
     @Default([]) List<String> serverOrder,
     @Default(<String>{}) Set<String> tags,
     @Default(<String>{}) Set<String> manualDisconnectedIds,
+    // TODO: remove unused field next time freezed codegen is run on all.dart.
     Timer? autoRefreshTimer,
   }) = _ServersState;
 }
@@ -51,17 +46,7 @@ class ServerChangedConcurrently implements Exception {
 
 @Riverpod(keepAlive: true)
 class ServersNotifier extends _$ServersNotifier {
-  static const _maxConcurrentRefreshes = 4;
-  int _autoRefreshGeneration = 0;
   Future<void> _mutationTail = Future.value();
-  ServerRefreshScheduler? _refreshScheduler;
-
-  ServerRefreshScheduler get _refreshes =>
-      _refreshScheduler ??= ServerRefreshScheduler(
-        maxConcurrent: _maxConcurrentRefreshes,
-        refresh: (serverId) =>
-            ref.read(serverProvider(serverId).notifier).refresh(),
-      );
 
   Future<T> _mutate<T>(Future<T> Function() action) async {
     final previous = _mutationTail;
@@ -88,21 +73,10 @@ class ServersNotifier extends _$ServersNotifier {
       ref.read(serverSelectionProvider.notifier).select(null);
     }
     if (newState == state) return;
-    final previousServers = state.servers;
     state = newState;
-    for (final entry in previousServers.entries) {
-      if (newState.servers.containsKey(entry.key)) continue;
-      final provider = serverProvider(entry.key);
-      if (ref.read(provider.exists)) ref.invalidate(provider);
+    if (refreshConnections) {
+      await ref.read(serverLifecycleProvider).requestRefresh();
     }
-    for (final entry in newState.servers.entries) {
-      if (previousServers[entry.key] == entry.value) continue;
-      final provider = serverProvider(entry.key);
-      if (ref.read(provider.exists)) {
-        ref.read(provider.notifier).updateSpi(entry.value);
-      }
-    }
-    if (refreshConnections) await refresh();
   }
 
   ServersState _load() {
@@ -179,149 +153,22 @@ class ServersNotifier extends _$ServersNotifier {
     return null;
   }
 
-  /// if [spi] is specificed then only refresh this server
-  /// [onlyFailed] only refresh failed servers
-  Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
-    if (spi != null) {
-      final newManualDisconnected = Set<String>.from(
-        state.manualDisconnectedIds,
-      )..remove(spi.id);
-      state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
-      final serverNotifier = ref.read(serverProvider(spi.id).notifier);
-      await serverNotifier.refresh(interactive: true);
-      return;
-    }
-
-    final serversToRefresh = <MapEntry<String, Spi>>[];
-    final idsToResetLimiter = <String>[];
-
-    for (final entry in state.servers.entries) {
-      final serverId = entry.key;
-      final spi = entry.value;
-
-      if (state.manualDisconnectedIds.contains(serverId)) continue;
-
-      final serverState = ref.read(serverProvider(serverId));
-
-      final error = serverState.status.err;
-      if (error is SSHErr && error.type == SSHErrType.interactiveAuth) {
-        continue;
-      }
-
-      if (onlyFailed) {
-        if (serverState.conn != ServerConn.failed) {
-          continue;
-        }
-        idsToResetLimiter.add(serverId);
-      }
-
-      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
-        continue;
-      }
-
-      serversToRefresh.add(entry);
-    }
-
-    for (final id in idsToResetLimiter) {
-      TryLimiter.reset(id);
-    }
-
-    await _refreshEach(serversToRefresh.map((e) => e.key).toList());
+  void markManualDisconnected(String id) {
+    if (state.manualDisconnectedIds.contains(id)) return;
+    state = state.copyWith(
+      manualDisconnectedIds: {...state.manualDisconnectedIds, id},
+    );
   }
 
-  /// Connects every server, the ones taken down by hand included.
-  ///
-  /// [refresh] passes over those on purpose — a poll on a timer is not allowed
-  /// to undo a disconnect the user asked for — and it also passes over a
-  /// server whose `autoConnect` is off. Asking for all of them is the one case
-  /// where both of those are the point, so this forgets what was closed by
-  /// hand and connects the lot.
-  ///
-  /// Non-interactive, like the timer's refresh and unlike opening one server:
-  /// a keyboard-interactive prompt per machine would be a stack of dialogs
-  /// nobody asked for. Those servers keep the lock on their card, which is
-  /// where answering one at a time belongs.
-  Future<void> connectAll() async {
-    final ids = state.servers.keys.toList();
-    if (ids.isEmpty) return;
+  void clearManualDisconnected(String id) {
+    if (!state.manualDisconnectedIds.contains(id)) return;
+    final next = Set<String>.from(state.manualDisconnectedIds)..remove(id);
+    state = state.copyWith(manualDisconnectedIds: next);
+  }
+
+  void clearAllManualDisconnected() {
+    if (state.manualDisconnectedIds.isEmpty) return;
     state = state.copyWith(manualDisconnectedIds: const <String>{});
-    for (final id in ids) {
-      TryLimiter.reset(id);
-    }
-    await _refreshEach(ids);
-  }
-
-  /// Refreshes [ids] through the app-wide queue.
-  ///
-  /// The scheduler is shared by startup, lifecycle, timer and explicit bulk
-  /// requests, so overlapping calls cannot each create their own set of four
-  /// workers. It also coalesces a server already queued or in flight.
-  Future<void> _refreshEach(List<String> ids) => _refreshes.refresh(ids);
-
-  Future<void> startAutoRefresh() async {
-    stopAutoRefresh();
-    final rawDuration = Stores.setting.serverStatusUpdateInterval.fetch();
-    final duration = normalizeServerStatusRefreshSeconds(rawDuration);
-    if (duration == null) {
-      return;
-    }
-    if (duration != rawDuration) {
-      Loggers.app.warning(
-        'Invalid duration: $rawDuration, use default $duration',
-      );
-    }
-    final generation = ++_autoRefreshGeneration;
-    void schedule() {
-      if (generation != _autoRefreshGeneration) return;
-      final timer = Timer(Duration(seconds: duration), () async {
-        try {
-          await refresh();
-        } catch (e, s) {
-          Loggers.app.warning('Auto refresh failed', e, s);
-        } finally {
-          if (generation == _autoRefreshGeneration) schedule();
-        }
-      });
-      state = state.copyWith(autoRefreshTimer: timer);
-    }
-
-    schedule();
-  }
-
-  void stopAutoRefresh() {
-    _autoRefreshGeneration++;
-    final timer = state.autoRefreshTimer;
-    if (timer != null) {
-      timer.cancel();
-    }
-    state = state.copyWith(autoRefreshTimer: null);
-  }
-
-  void closeServer({String? id}) {
-    if (id == null) {
-      for (final serverId in state.servers.keys) {
-        closeOneServer(serverId);
-      }
-      return;
-    }
-    closeOneServer(id);
-  }
-
-  void closeOneServer(String id) {
-    final spi = state.servers[id];
-    if (spi == null) {
-      Loggers.app.warning('Server with id $id not found');
-      return;
-    }
-
-    final serverNotifier = ref.read(serverProvider(id).notifier);
-    serverNotifier.closeConnection();
-
-    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
-      ..add(id);
-    state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
-
-    TermSessionManager.remove(TermSessionManager.statusSessionId(id));
   }
 
   Future<void> addServer(Spi spi) => _mutate(() => _addServer(spi));
@@ -353,17 +200,7 @@ class ServersNotifier extends _$ServersNotifier {
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
-    // If the server already had a live notifier, refresh its Spi rather than
-    // leaving it stale with the old credentials.
-    if (exists) {
-      try {
-        ref.read(serverProvider(spi.id).notifier).updateSpi(spi);
-      } catch (_) {
-        // Provider may not have been created yet (keepAlive not yet built)
-        ref.invalidate(serverProvider(spi.id));
-      }
-    }
-    unawaited(refresh(spi: spi));
+    unawaited(ref.read(serverLifecycleProvider).requestRefresh(spi: spi));
     bakSync.syncSoon();
   }
 
@@ -377,7 +214,7 @@ class ServersNotifier extends _$ServersNotifier {
     final finishWidgetDeletion = WidgetSync.instance.beginServerDeletion(deleting);
     final List<String> newOrder;
     try {
-      await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
+      await ref.read(serverLifecycleProvider).beforeDelete(id);
       ref.read(workspacesProvider.notifier).removeServer(id);
       await _clearServerData(id);
       newOrder = List<String>.from(state.serverOrder)..remove(id);
@@ -414,12 +251,11 @@ class ServersNotifier extends _$ServersNotifier {
     unawaited(WatchSync.instance.push());
     unawaited(WidgetSync.instance.push());
 
-    // Deselect if the deleted server was selected, and invalidate its provider
-    // so the keepAlive notifier (PersistentShell, Pve socket) is disposed.
+    // Deselect if the deleted server was selected; live `serverProvider(id)`
+    // notifiers dispose themselves via their `serversProvider` listener.
     if (ref.read(serverSelectionProvider) == id) {
       ref.read(serverSelectionProvider.notifier).select(null);
     }
-    ref.invalidate(serverProvider(id));
     await forgetHostKeyFingerprints(id);
 
     TermSessionManager.remove(TermSessionManager.statusSessionId(id));
@@ -428,7 +264,7 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> _clearServerData(String id) async {
-    await ref.read(portForwardProvider(id).notifier).clear();
+    Stores.portForward.clearServer(id);
     await AgentChats.clearScope(AgentScope.terminal(id));
     Stores.connectionStats.clearServerStats(id);
     Stores.selfAddr.forget(id);
@@ -483,9 +319,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     if (old != newSpi) {
       if (newSpi.id != old.id) {
-        await ref
-            .read(remoteDesktopSessionsProvider.notifier)
-            .closeForServer(old.id);
+        await ref.read(serverLifecycleProvider).beforeRename(old.id, newSpi.id);
         // `EntityStore.update` explicitly rejects id changes; renaming must
         // move dependent rows and handle sync metadata itself.
         if (state.servers.containsKey(newSpi.id)) {
@@ -547,13 +381,10 @@ class ServersNotifier extends _$ServersNotifier {
         if (ref.read(serverSelectionProvider) == old.id) {
           ref.read(serverSelectionProvider.notifier).select(newSpi.id);
         }
-        ref.invalidate(serverProvider(old.id));
 
         TermSessionManager.remove(TermSessionManager.statusSessionId(old.id));
         await _clearSudoPasswordOverrideBestEffort(old.id);
       } else {
-        final serverNotifier = ref.read(serverProvider(old.id).notifier);
-        serverNotifier.updateSpi(newSpi);
         // The login may be another account now, whose sudo password the one
         // typed this session is not.
         SudoPassword.forget(old.id);
@@ -563,7 +394,9 @@ class ServersNotifier extends _$ServersNotifier {
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        unawaited(refresh(spi: newSpi));
+        unawaited(
+          ref.read(serverLifecycleProvider).requestRefresh(spi: newSpi),
+        );
       }
     }
     bakSync.syncSoon();

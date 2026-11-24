@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' as llm;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/view/agent/host.dart';
+import 'package:server_box/view/agent/redact_source.dart';
 
 /// The Agent's providers — their keys, models and the default one — as a page
 /// of its own: fl_pi_llm_ui draws the body, which it leaves to the app to put

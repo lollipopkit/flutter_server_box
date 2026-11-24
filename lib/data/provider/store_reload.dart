@@ -6,6 +6,7 @@ import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/store_reload.dart';
 
@@ -23,6 +24,7 @@ void _reload(Set<ReloadedStore> rewritten) {
       // Not awaited: the reload reconnects every server, which a merge has no
       // reason to wait for.
       case ReloadedStore.servers:
+        providers.read(serverConnectionsProvider);
         unawaited(providers.read(serversProvider.notifier).reload());
       case ReloadedStore.snippets:
         providers.read(snippetProvider.notifier).reload();

@@ -23,45 +23,17 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
-import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/page/routes.dart';
+import 'package:server_box/view/page/ssh/page/args.dart';
+import 'package:server_box/view/page/storage/args.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/file_edit.dart';
-import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 
+export 'package:server_box/view/page/storage/args.dart' show SftpPageArgs;
+
 part 'sftp_helpers.dart';
-
-final class SftpPageArgs {
-  final Spi spi;
-
-  /// Returning a directory rather than browsing one, for "upload to where?".
-  final bool isSelect;
-
-  final String? initPath;
-
-  /// Where this page publishes its toolbar instead of drawing one.
-  ///
-  /// A host that already has a bar of its own — the file tab's strip of
-  /// sessions — takes them so the screen does not carry two. Null means draw
-  /// the usual app bar, which is what a pushed page does.
-  final ValueNotifier<List<BarAction>>? actionsSink;
-
-  /// Told where the browser has moved to, after each successful listing.
-  ///
-  /// For a host that outlives the page — the file tab, which remembers where
-  /// each of its sessions was so a relaunch reopens them there rather than at
-  /// the home directory.
-  final void Function(String path)? onPathChanged;
-
-  const SftpPageArgs({
-    required this.spi,
-    this.isSelect = false,
-    this.initPath,
-    this.onPathChanged,
-    this.actionsSink,
-  });
-}
 
 /// A server's files.
 ///
@@ -495,9 +467,9 @@ extension _Actions on _SftpPageState {
     );
     if (!mounted) return;
     final local = switch (from) {
-      0 => await LocalFilePage.route.go(
+      0 => await AppRoutes.openLocalFiles(
         context,
-        args: const LocalFilePageArgs(isPickFile: true),
+        const LocalFilePageArgs(isPickFile: true),
       ),
       1 => await Pfs.pickFilePath(),
       _ => null,
@@ -601,7 +573,7 @@ extension _Actions on _SftpPageState {
 
     // In a terminal rather than silently: unpacking can take a while, can ask
     // about overwriting, and can fail in ways only its own output explains.
-    await SSHPage.route.go(
+    await AppRoutes.openSsh(
       context,
       SshPageArgs(
         source: ServerSource(_spi),
@@ -633,7 +605,7 @@ extension _Edit on _SftpPageState {
         path: remotePath,
         sudo: useSudo,
       );
-      await SSHPage.route.go(
+      await AppRoutes.openSsh(
         context,
         SshPageArgs(source: ServerSource(_spi), initCmd: cmd),
       );

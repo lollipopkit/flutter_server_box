@@ -47,9 +47,10 @@ echo "==> build: panel"
 (cd "$root/monitor/frontend" && npm run build >/dev/null)
 
 echo "==> vm: up"
-set -- $("$lab" up "$node" 4 | tail -n 1)
-id=$1
-addr=$2
+vm_out=$("$lab" up "$node" 4)
+read -r id addr <<EOF
+$(printf '%s\n' "$vm_out" | tail -n 1)
+EOF
 case $id in '' | *[!0-9]*) echo "the VM did not come up" >&2; exit 1 ;; esac
 tunnel="$work/tunnel"
 cleanup() {

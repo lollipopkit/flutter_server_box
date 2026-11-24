@@ -7,6 +7,7 @@ import 'package:server_box/data/model/app/app_link.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/card.dart';
@@ -84,13 +85,13 @@ List<ContextMenuAction> serverActions(
         icon: Icons.link_off,
         text: l10n.disconnect,
         onTap: () =>
-            ref.read(serversProvider.notifier).closeServer(id: spi.id),
+            ref.read(serverConnectionsProvider).closeServer(id: spi.id),
       )
     else
       ContextMenuAction(
         icon: Icons.link,
         text: l10n.connect,
-        onTap: () => ref.read(serversProvider.notifier).refresh(spi: spi),
+        onTap: () => ref.read(serverConnectionsProvider).refresh(spi: spi),
       ),
     // Power controls require an active connection.
     if (connected)

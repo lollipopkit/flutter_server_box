@@ -1,15 +1,11 @@
 import 'dart:async';
 
-// `select` is an extension on ProviderListenable, which riverpod_annotation
-// does not re-export.
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/bmc.dart';
-import 'package:server_box/data/provider/bmc/bmc_credential.dart';
-import 'package:server_box/data/provider/bmc/targets.dart';
+import 'package:server_box/data/provider/bmc/endpoint.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 part 'bmc.freezed.dart';
@@ -152,41 +148,15 @@ class BmcNotifier extends _$BmcNotifier {
       }
     });
 
-    // Watch only connection fields so renaming, tagging, or linking/unlinking
-    // never tears down the Redfish session or triggers a full re-discovery.
-    final endpoint = ref.watch(
-      bmcTargetsProvider.select((s) {
-        final t = s.targets[targetId];
-        if (t == null) return null;
-        return (
-          addr: t.addr,
-          credId: t.credId,
-          certSha256: t.certSha256,
-          incompleteFailure: t.incompleteFailure,
-        );
-      }),
-    );
-    if (endpoint == null) return const BmcState();
-    if (endpoint.incompleteFailure case final failure?) {
-      return BmcState(failure: failure);
-    }
-
-    // The account may have been deleted since this target was configured: the
-    // foreign key sets `cred_id` to null rather than taking the target with it,
-    // so `incompleteFailure` above is about the id being *named*, and this is
-    // about the record still being there.
-    //
-    // Watched rather than read once. An account is a record several BMCs share,
-    // so rotating its password from the account page has to reach a detail page
-    // that is already open.
-    final credId = endpoint.credId!;
-    final cred = ref.watch(
-      bmcCredentialProvider.select(
-        (state) => state.creds.firstWhereOrNull((e) => e.id == credId),
-      ),
-    );
-    if (cred == null || !cred.isComplete) {
-      return const BmcState(failure: RedfishFailure.noCredential);
+    final resolved = watchBmcEndpoint(ref, targetId);
+    final BmcEndpointReady endpoint;
+    switch (resolved) {
+      case BmcEndpointMissing():
+        return const BmcState();
+      case BmcEndpointFailed(:final failure):
+        return BmcState(failure: failure);
+      case BmcEndpointReady():
+        endpoint = resolved;
     }
 
     // Plain values, not this app's records: the client is `sbm_redfish` and
@@ -196,8 +166,8 @@ class BmcNotifier extends _$BmcNotifier {
     try {
       _client = BmcClient(
         baseUrl: endpoint.addr,
-        user: cred.user,
-        password: cred.pwd,
+        user: endpoint.user,
+        password: endpoint.password,
         pinnedSha256: endpoint.certSha256,
       );
     } on BmcError catch (e) {

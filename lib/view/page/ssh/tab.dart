@@ -26,9 +26,14 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/server_picker_sort.dart';
 
 part 'tab_add.dart';
-part 'tab_sort.dart';
+
+ServerPickerSortPref get _sshSortPref => ServerPickerSortPref(
+  sortBy: Stores.setting.sshPageSortBy,
+  sortAsc: Stores.setting.sshPageSortAsc,
+);
 
 /// Every open terminal, one tab each, plus a picker at the head of the strip.
 class SSHTabPage extends ConsumerStatefulWidget {
@@ -738,7 +743,7 @@ extension _Actions on _SSHTabPageState {
       _sessions.current?.data.pageKey.currentState?.openTextView();
 
   BarAction get _sortAction => BarAction(
-    icon: _SortOrder.stored.icon,
+    icon: _sshSortPref.read().icon,
     label: libL10n.sort,
     onTap: _showSortMenu,
   );
@@ -765,16 +770,17 @@ extension _Actions on _SSHTabPageState {
   /// the middle of the screen over the list it was about, and was raised from
   /// a button in the top corner, as far from it as the window allows.
   Future<void> _showSortMenu() async {
+    final current = _sshSortPref.read();
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [
-        for (final order in _SortOrder.all)
+        for (final order in ServerPickerSortOrder.all)
           SheetChoiceTile(
             icon: order.icon,
             title: order.label,
-            selected: order.isCurrent,
+            selected: order == current,
             onTap: () {
-              order.save();
+              _sshSortPref.write(order);
               Navigator.of(ctx).pop();
               _sortVersion.notify();
             },

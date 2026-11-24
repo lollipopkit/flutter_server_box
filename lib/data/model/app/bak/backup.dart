@@ -158,8 +158,9 @@ class BackupV1 implements Mergeable {
     ];
   }
 
-  factory BackupV1.fromJsonString(String raw) =>
-      BackupV1.fromJson(json.decode(_diyDecrypt(raw)));
+  factory BackupV1.fromJsonString(String raw) => BackupV1.fromJson(
+    Map<String, dynamic>.from(json.decode(_diyDecrypt(raw)) as Map),
+  );
 }
 
 /// Writes one section of a backup into the key-value store it came from.
@@ -202,10 +203,10 @@ void _restoreInto(SqliteStore store, Map<String, Object?> incoming) {
 
 String _diyDecrypt(String raw) {
   try {
-    final list = json.decode(raw);
+    final list = json.decode(raw) as List;
     final sb = StringBuffer();
     for (final e in list) {
-      sb.writeCharCode((e - 1) ~/ 2);
+      sb.writeCharCode(((e as num).toInt() - 1) ~/ 2);
     }
     return sb.toString();
   } catch (e, trace) {

@@ -58,7 +58,7 @@ call() { # method path [body]
 }
 until_done() { # id
     i=0
-    until [ "$(call GET "/agent/flows/$1" | json 'v["flow"]["status"]')" = done ]; do
+    until [ "$(call GET "/agent/flows/$1" | json 'v["flow"]["status"]')" = "done" ]; do
         i=$((i + 1)); [ "$i" -lt 300 ] || fail "task $1 never finished"
         sleep 0.1
     done

@@ -64,7 +64,7 @@ export class AppData {
         delete rest[key]
         this.#items.set(app, Promise.resolve(rest))
       },
-      keys: async () => Object.keys(await items()).sort(),
+      keys: async () => Object.keys(await items()).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
     }
   }
 }

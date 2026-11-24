@@ -386,12 +386,13 @@ class VirtErrCard extends StatelessWidget {
   }
 }
 
-/// A pool or a network in the list column, drawn like a guest row.
-class VirtResourceRow extends StatelessWidget {
-  const VirtResourceRow({
+/// Selectable list row shared by guests, storage pools, and networks.
+class VirtListTile extends StatelessWidget {
+  const VirtListTile({
     super.key,
-    required this.icon,
-    required this.active,
+    required this.leading,
+    required this.leadingGap,
+    required this.subIndent,
     required this.name,
     required this.meta,
     required this.sub,
@@ -400,8 +401,9 @@ class VirtResourceRow extends StatelessWidget {
     this.metaIcon,
   });
 
-  final IconData icon;
-  final bool active;
+  final Widget leading;
+  final double leadingGap;
+  final double subIndent;
   final String name;
   final String meta;
   final IconData? metaIcon;
@@ -430,12 +432,8 @@ class VirtResourceRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      icon,
-                      size: 15,
-                      color: active ? StatePalette.running : StatePalette.idle,
-                    ),
-                    const SizedBox(width: 8),
+                    leading,
+                    SizedBox(width: leadingGap),
                     Expanded(
                       child: Text(
                         name,
@@ -466,7 +464,7 @@ class VirtResourceRow extends StatelessWidget {
                 ),
                 if (sub.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(left: 23, top: 2),
+                    padding: EdgeInsets.only(left: subIndent, top: 2),
                     child: Text(
                       sub,
                       maxLines: 1,
@@ -479,6 +477,49 @@ class VirtResourceRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A pool or a network in the list column, drawn like a guest row.
+class VirtResourceRow extends StatelessWidget {
+  const VirtResourceRow({
+    super.key,
+    required this.icon,
+    required this.active,
+    required this.name,
+    required this.meta,
+    required this.sub,
+    required this.selected,
+    required this.onTap,
+    this.metaIcon,
+  });
+
+  final IconData icon;
+  final bool active;
+  final String name;
+  final String meta;
+  final IconData? metaIcon;
+  final String sub;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return VirtListTile(
+      leading: Icon(
+        icon,
+        size: 15,
+        color: active ? StatePalette.running : StatePalette.idle,
+      ),
+      leadingGap: 8,
+      subIndent: 23,
+      name: name,
+      meta: meta,
+      metaIcon: metaIcon,
+      sub: sub,
+      selected: selected,
+      onTap: onTap,
     );
   }
 }

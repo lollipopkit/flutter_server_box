@@ -144,6 +144,25 @@ Future<bool> trustBmcTargetCert(
   return true;
 }
 
+/// Shows a toast for a [BmcPowerResult] and returns whether the command
+/// succeeded (`confirmed` or `accepted`).
+bool toastBmcPowerResult(BmcPowerResult result, {String? confirmedText}) {
+  switch (result) {
+    case BmcPowerResult.confirmed:
+      Toast.success(confirmedText ?? l10n.bmcPowerDone);
+      return true;
+    case BmcPowerResult.accepted:
+      Toast.warn(l10n.bmcPowerAccepted);
+      return true;
+    case BmcPowerResult.notSupported:
+      Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
+      return false;
+    case BmcPowerResult.failed:
+      Toast.error(libL10n.fail);
+      return false;
+  }
+}
+
 /// Asks for confirmation before sending Power On to [target], runs [run], and
 /// surfaces the outcome via toast.
 ///
@@ -170,17 +189,7 @@ Future<void> confirmAndRunBmcPowerOn({
     Toast.error(libL10n.fail, body: l10n.bmcStaleWrite);
     return;
   }
-  final result = await run();
-  switch (result) {
-    case BmcPowerResult.confirmed:
-      Toast.success(l10n.bmcPowerDone);
-    case BmcPowerResult.accepted:
-      Toast.warn(l10n.bmcPowerAccepted);
-    case BmcPowerResult.notSupported:
-      Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
-    case BmcPowerResult.failed:
-      Toast.error(libL10n.fail);
-  }
+  toastBmcPowerResult(await run());
 }
 
 extension BmcRun on BuildContext {
@@ -204,20 +213,7 @@ extension BmcRun on BuildContext {
       return false;
     }
     if (result is BmcPowerResult) {
-      switch (result) {
-        case BmcPowerResult.confirmed:
-          Toast.success(libL10n.success);
-          return true;
-        case BmcPowerResult.accepted:
-          Toast.warn(l10n.bmcPowerAccepted);
-          return true;
-        case BmcPowerResult.notSupported:
-          Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
-          return false;
-        case BmcPowerResult.failed:
-          Toast.error(libL10n.fail);
-          return false;
-      }
+      return toastBmcPowerResult(result, confirmedText: libL10n.success);
     }
     Toast.success(libL10n.success);
     return true;

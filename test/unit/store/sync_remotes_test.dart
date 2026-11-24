@@ -100,4 +100,22 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(Stores.syncRemote.get<String>('githubToken'), isNull);
   });
+
+  test('fileRemote returns the enabled file-backed remote', () async {
+    expect(SyncRemotes.fileRemote, isNull);
+
+    await PrefProps.webdavSync.set(true);
+    expect(SyncRemotes.fileRemote, same(SyncRemotes.webdav));
+
+    await PrefProps.icloudSync.set(true);
+    if (isICloudSupported) {
+      expect(SyncRemotes.fileRemote, same(icloud));
+    } else {
+      expect(SyncRemotes.fileRemote, same(SyncRemotes.webdav));
+    }
+
+    await PrefProps.icloudSync.set(false);
+    await PrefProps.webdavSync.set(false);
+    expect(SyncRemotes.fileRemote, isNull);
+  });
 }

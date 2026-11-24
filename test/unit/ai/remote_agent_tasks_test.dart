@@ -193,7 +193,10 @@ void main() {
     }
   }
 
-  List<String> ids(String server) => [for (final f in RemoteAgentTasks.tasks.value[server] ?? const []) f.id];
+  List<String> ids(String server) => [
+    if (RemoteAgentTasks.tasks.value[server] case final list?)
+      for (final f in list) f.id,
+  ];
 
   test('lists the servers whose agent offers Agent mode, in order', () {
     serve(['a', 'b', 'c', 'd'], offering: {'a', 'c', 'd'}, ssh: {'d'});
