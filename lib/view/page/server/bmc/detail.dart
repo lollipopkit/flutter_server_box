@@ -16,6 +16,9 @@ import 'package:server_box/view/page/server/bmc/drives.dart';
 import 'package:server_box/view/page/server/bmc/edit.dart';
 import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/bmc/panel.dart';
+import 'package:server_box/view/page/server/card/shared_hero.dart';
+import 'package:server_box/view/page/server/detail/focus_parts.dart';
+import 'package:server_box/view/page/server/tab/element_flight.dart';
 
 /// Full detail view for a standalone [BmcTarget].
 ///
@@ -24,8 +27,82 @@ import 'package:server_box/view/page/server/bmc/panel.dart';
 final class BmcDetailPage extends ConsumerStatefulWidget {
   final BmcTargetRequiredArgs args;
   final bool bare;
+  final FlightAnchorBinding? markAnchor;
+  final bool hideMark;
 
-  const BmcDetailPage({super.key, required this.args, this.bare = false});
+  const BmcDetailPage({
+    super.key,
+    required this.args,
+    this.bare = false,
+    this.markAnchor,
+    this.hideMark = false,
+  });
+
+  /// Renders the 38×38 status orb shown at the top-left of [BmcDetailPage],
+  /// shared with the in-place overlay flight proxy so opening and closing
+  /// transitions match the live BMC state (cert review, failure, loading, or
+  /// power state) identically.
+  static Widget buildStatusOrb(
+    BuildContext context, {
+    required RedfishFailure? failure,
+    required bool hasData,
+    required bool isBusy,
+    required PowerState powerState,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final needsCert =
+        failure == RedfishFailure.certificateRejected ||
+        failure == RedfishFailure.certNotReviewed;
+    final (orbIcon, orbFg, orbBg) = switch ((failure, hasData, isBusy, powerState)) {
+      (final RedfishFailure _, _, _, _) when needsCert => (
+        Icons.verified_user_outlined,
+        StatePalette.warn,
+        StatePalette.warn.withValues(alpha: 0.16),
+      ),
+      (final RedfishFailure _, _, _, _) => (
+        Icons.link_off,
+        StatePalette.failed,
+        StatePalette.failed.withValues(alpha: 0.16),
+      ),
+      (null, false, true, _) => (
+        Icons.developer_board,
+        scheme.onSurfaceVariant,
+        scheme.surfaceContainerHighest,
+      ),
+      (null, _, _, PowerState.on_) => (
+        Icons.power_settings_new,
+        StatePalette.running,
+        StatePalette.running.withValues(alpha: 0.16),
+      ),
+      (null, _, _, PowerState.poweringOn || PowerState.poweringOff) => (
+        Icons.power_settings_new,
+        StatePalette.warn,
+        StatePalette.warn.withValues(alpha: 0.16),
+      ),
+      _ => (
+        Icons.power_settings_new,
+        StatePalette.idle,
+        scheme.surfaceContainerHighest,
+      ),
+    };
+
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: orbBg,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: failure == null && isBusy && !hasData
+          ? const Center(
+              child: SizedBox.square(
+                dimension: 18,
+                child: SizedLoading(18, padding: 2),
+              ),
+            )
+          : Icon(orbIcon, size: 20, color: orbFg),
+    );
+  }
 
   static const route = AppRouteArg<void, BmcTargetRequiredArgs>(
     page: BmcDetailPage.new,
@@ -127,14 +204,24 @@ final class _BmcDetailPageState extends ConsumerState<BmcDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildStatusCard(context, target, bmc),
-                  if (manageCard != null) ...[
-                    UIs.height13,
-                    manageCard,
-                  ],
-                  if (sensorsSection != null) ...[
-                    UIs.height13,
-                    sensorsSection,
-                  ],
+                  ServerDetailSwap(
+                    child: manageCard == null
+                        ? const SizedBox.shrink(key: ValueKey('no_manage'))
+                        : Padding(
+                            key: const ValueKey('manage'),
+                            padding: const EdgeInsets.only(top: 13),
+                            child: manageCard,
+                          ),
+                  ),
+                  ServerDetailSwap(
+                    child: sensorsSection == null
+                        ? const SizedBox.shrink(key: ValueKey('no_sensors'))
+                        : Padding(
+                            key: const ValueKey('sensors'),
+                            padding: const EdgeInsets.only(top: 13),
+                            child: sensorsSection,
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -154,43 +241,14 @@ final class _BmcDetailPageState extends ConsumerState<BmcDetailPage> {
     final needsCert =
         bmc.failure == RedfishFailure.certificateRejected ||
         bmc.failure == RedfishFailure.certNotReviewed;
-    final (orbIcon, orbFg, orbBg, primaryTitle) = switch (bmc) {
-      BmcState(failure: final failure?) when needsCert => (
-        Icons.verified_user_outlined,
-        StatePalette.warn,
-        StatePalette.warn.withValues(alpha: 0.16),
-        bmcFailureText(failure, bmc.failureDetail),
+    final primaryTitle = switch (bmc) {
+      BmcState(failure: final failure?) => bmcFailureText(
+        failure,
+        bmc.failureDetail,
       ),
-      BmcState(failure: final failure?) => (
-        Icons.link_off,
-        StatePalette.failed,
-        StatePalette.failed.withValues(alpha: 0.16),
-        bmcFailureText(failure, bmc.failureDetail),
-      ),
-      BmcState(hasData: false, isBusy: true) => (
-        Icons.developer_board,
-        scheme.onSurfaceVariant,
-        scheme.surfaceContainerHighest,
-        libL10n.loadingEllipsis,
-      ),
-      BmcState(powerState: PowerState.on_) => (
-        Icons.power_settings_new,
-        StatePalette.running,
-        StatePalette.running.withValues(alpha: 0.16),
-        l10n.bmcPowerOn,
-      ),
-      BmcState(powerState: PowerState.poweringOn || PowerState.poweringOff) => (
-        Icons.power_settings_new,
-        StatePalette.warn,
-        StatePalette.warn.withValues(alpha: 0.16),
-        bmcPowerText(bmc.powerState),
-      ),
-      _ => (
-        Icons.power_settings_new,
-        StatePalette.idle,
-        scheme.surfaceContainerHighest,
-        bmcPowerText(bmc.powerState),
-      ),
+      BmcState(hasData: false, isBusy: true) => libL10n.loadingEllipsis,
+      BmcState(powerState: PowerState.on_) => l10n.bmcPowerOn,
+      _ => bmcPowerText(bmc.powerState),
     };
 
     final facts = <(String, String)>[
@@ -220,21 +278,26 @@ final class _BmcDetailPageState extends ConsumerState<BmcDetailPage> {
             padding: const EdgeInsets.fromLTRB(17, 15, 17, 13),
             child: Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: orbBg,
-                    borderRadius: BorderRadius.circular(11),
+                IgnorePointer(
+                  ignoring: widget.hideMark,
+                  child: Opacity(
+                    opacity: widget.hideMark ? 0 : 1,
+                    child: FlightAnchor(
+                      binding: widget.markAnchor,
+                      child: SharedElementHero(
+                        tag: 'bmc_mark_${target.id}',
+                        enabled: !widget.bare,
+                        fit: BoxFit.contain,
+                        child: BmcDetailPage.buildStatusOrb(
+                          context,
+                          failure: bmc.failure,
+                          hasData: bmc.hasData,
+                          isBusy: bmc.isBusy,
+                          powerState: bmc.powerState,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: bmc.isBusy && !bmc.hasData
-                      ? const Center(
-                          child: SizedBox.square(
-                            dimension: 18,
-                            child: SizedLoading(18, padding: 2),
-                          ),
-                        )
-                      : Icon(orbIcon, size: 20, color: orbFg),
                 ),
                 const SizedBox(width: 13),
                 Expanded(

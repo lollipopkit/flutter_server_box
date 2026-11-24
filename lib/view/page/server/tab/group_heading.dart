@@ -7,6 +7,7 @@ import 'package:server_box/data/model/status/card_item.dart';
 import 'package:server_box/data/provider/bmc/summary.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 
 /// One section's heading: what these items have in common, how many of them
@@ -41,6 +42,9 @@ class ServerGroupHeading extends ConsumerWidget {
             final health = s.topology?.system?.health;
             return health == 'Critical' || health == 'Warning';
           }),
+        ),
+        UptimerCardItem(:final monitor) => ref.watch(
+          uptimerProvider.select((s) => s.hasAlert(monitor.id)),
         ),
       };
       if (isOver) over++;

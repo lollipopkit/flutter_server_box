@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/bmc/selection.dart';
 import 'package:server_box/data/provider/server/selection.dart';
+import 'package:server_box/data/provider/uptimer/selection.dart';
 
 /// One entry rendered on the Status tab grid, search, grouping, sorting, and
 /// bulk selection.
@@ -90,17 +92,53 @@ final class BmcCardItem extends StatusCardItem {
   int get hashCode => target.hashCode;
 }
 
+final class UptimerCardItem extends StatusCardItem {
+  const UptimerCardItem(this.monitor);
+
+  final UptimerMonitorCard monitor;
+
+  static String keyOf(int id) => 'up:$id';
+
+  @override
+  String get cardKey => keyOf(monitor.id);
+
+  @override
+  String get id => '${monitor.id}';
+
+  @override
+  String get name => monitor.name;
+
+  @override
+  String get displayAddr => monitor.displayAddr;
+
+  @override
+  List<String> get tags =>
+      monitor.groupName != null && monitor.groupName!.isNotEmpty
+      ? [monitor.groupName!]
+      : const [];
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UptimerCardItem && other.monitor == monitor);
+
+  @override
+  int get hashCode => monitor.hashCode;
+}
+
 /// Which Status tab item is open in the wide two-pane detail host.
 ///
 /// Backed by `serverSelectionProvider` (kept untouched for existing deep links,
-/// tray, Agent screen awareness, and tests) plus `bmcSelectionProvider`,
-/// mutually exclusive.
+/// tray, Agent screen awareness, and tests), `bmcSelectionProvider`, and
+/// `uptimerSelectionProvider`, mutually exclusive.
 abstract final class StatusSelection {
   static String? watchCardKey(WidgetRef ref) {
     final serverId = ref.watch(serverSelectionProvider);
     final bmcId = ref.watch(bmcSelectionProvider);
+    final uptimerId = ref.watch(uptimerSelectionProvider);
     if (serverId != null) return ServerCardItem.keyOf(serverId);
     if (bmcId != null) return BmcCardItem.keyOf(bmcId);
+    if (uptimerId != null) return UptimerCardItem.keyOf(uptimerId);
     return null;
   }
 
@@ -109,12 +147,19 @@ abstract final class StatusSelection {
       case null:
         ref.read(serverSelectionProvider.notifier).select(null);
         ref.read(bmcSelectionProvider.notifier).select(null);
+        ref.read(uptimerSelectionProvider.notifier).select(null);
       case ServerCardItem(:final spi):
         ref.read(bmcSelectionProvider.notifier).select(null);
+        ref.read(uptimerSelectionProvider.notifier).select(null);
         ref.read(serverSelectionProvider.notifier).select(spi.id);
       case BmcCardItem(:final target):
         ref.read(serverSelectionProvider.notifier).select(null);
+        ref.read(uptimerSelectionProvider.notifier).select(null);
         ref.read(bmcSelectionProvider.notifier).select(target.id);
+      case UptimerCardItem(:final monitor):
+        ref.read(serverSelectionProvider.notifier).select(null);
+        ref.read(bmcSelectionProvider.notifier).select(null);
+        ref.read(uptimerSelectionProvider.notifier).select(monitor.id);
     }
   }
 }

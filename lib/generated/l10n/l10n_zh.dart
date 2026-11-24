@@ -7040,6 +7040,145 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get appMcpInvalidAddress =>
       '请输入 IP 地址和端口，例如 0.0.0.0:49762 或 [::]:49762。';
+
+  @override
+  String get uptimer => 'Uptimer';
+
+  @override
+  String get uptimerStatusUp => '正常';
+
+  @override
+  String get uptimerStatusDown => '离线';
+
+  @override
+  String get uptimerStatusMaintenance => '维护中';
+
+  @override
+  String get uptimerStatusPaused => '已暂停';
+
+  @override
+  String get uptimerStatusUnknown => '未知';
+
+  @override
+  String get uptimerTest => '测试';
+
+  @override
+  String get uptimerPause => '暂停';
+
+  @override
+  String get uptimerResume => '恢复';
+
+  @override
+  String get uptimerLatency => '延迟';
+
+  @override
+  String get uptimerOutages => '故障记录';
+
+  @override
+  String get uptimerNoOutages => '无故障记录';
+
+  @override
+  String get uptimerOngoing => '进行中';
+
+  @override
+  String get uptimerIncidents => '事件';
+
+  @override
+  String get uptimerMaintenance => '维护窗口';
+
+  @override
+  String get uptimerUpcoming => '计划维护';
+
+  @override
+  String get uptimerInterval => '检查间隔';
+
+  @override
+  String get uptimerTimeout => '超时';
+
+  @override
+  String get uptimerGracePeriod => '宽限期';
+
+  @override
+  String get uptimerGroup => '分组';
+
+  @override
+  String get uptimerDisplayUrl => '展示链接';
+
+  @override
+  String get uptimerTarget => '目标';
+
+  @override
+  String get uptimerType => '类型';
+
+  @override
+  String get uptimerPublic => '公开状态页';
+
+  @override
+  String get uptimerActive => '启用';
+
+  @override
+  String get uptimerMethod => '请求方法';
+
+  @override
+  String get uptimerFollowRedirects => '跟随重定向';
+
+  @override
+  String get uptimerExpectedStatus => '期望状态码';
+
+  @override
+  String get uptimerForbiddenStatus => '禁止状态码';
+
+  @override
+  String get uptimerHeaders => '请求头';
+
+  @override
+  String get uptimerBody => '请求体';
+
+  @override
+  String get uptimerKeyword => '包含关键词';
+
+  @override
+  String get uptimerForbiddenKeyword => '禁止关键词';
+
+  @override
+  String get uptimerMatchContains => '包含';
+
+  @override
+  String get uptimerMatchRegex => '正则';
+
+  @override
+  String get uptimerPushUrl => '推送地址';
+
+  @override
+  String get uptimerRotatePushUrl => '轮换推送地址';
+
+  @override
+  String uptimerRotatePushUrlConfirm(String name) {
+    return '轮换 $name 的推送地址？旧地址会立即失效。';
+  }
+
+  @override
+  String get uptimerPushUrlOnce => '仅展示一次，关闭前请妥善保存。';
+
+  @override
+  String get uptimerDowntime => '停机时长';
+
+  @override
+  String get uptimerLoadMore => '加载更多';
+
+  @override
+  String uptimerMinIntervalHint(int sec) {
+    return '最小 ${sec}s';
+  }
+
+  @override
+  String get uptimerSchedule => '检查计划';
+
+  @override
+  String get uptimerHttpRequest => 'HTTP 请求';
+
+  @override
+  String get uptimerResponseValidation => '响应校验';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

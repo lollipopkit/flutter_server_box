@@ -115,6 +115,7 @@ extension _Sheets on _ServerPageState {
             icon: switch (item) {
               ServerCardItem() => BoxIcons.bx_server,
               BmcCardItem() => Icons.developer_board,
+              UptimerCardItem(:final monitor) => uptimerTypeIcon(monitor.type),
             },
             title: item.name,
             subtitle: item.displayAddr,

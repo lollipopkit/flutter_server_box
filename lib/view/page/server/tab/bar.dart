@@ -25,9 +25,16 @@ extension _Bar on _ServerPageState {
       builder: () {
         if (narrow) {
           return SwitcherBar(
-            search: _search,
-            switcher: _buildTagSwitcher(),
-            actions: [_densityAction(filtered.length), ..._listActions()],
+            leading: openItem == null
+                ? null
+                : SwitcherBar.back(onTap: _closeDetail),
+            search: openItem == null ? _search : null,
+            switcher: openItem == null
+                ? _buildTagSwitcher()
+                : _buildItemSwitcher(openItem, filtered),
+            actions: openItem == null
+                ? [_densityAction(filtered.length), ..._listActions()]
+                : _openItemActions(openItem),
           );
         }
         return WindowControlsInset(
@@ -91,6 +98,33 @@ extension _Bar on _ServerPageState {
         icon: Icons.delete_outline,
         label: libL10n.delete,
         onTap: () => unawaited(_deleteBmcTarget(target)),
+      ),
+    ],
+    UptimerCardItem(:final monitor) => [
+      BarAction(
+        icon: Icons.refresh,
+        label: libL10n.refresh,
+        onTap: () => unawaited(
+          ref.read(uptimerDetailProvider(monitor.id).notifier).refresh(),
+        ),
+      ),
+      BarAction(
+        icon: Icons.edit_outlined,
+        label: libL10n.edit,
+        onTap: () => unawaited(
+          UptimerEditPage.route.go(
+            context,
+            args: UptimerEditArgs(
+              config: ref.read(uptimerProvider).configs[monitor.id],
+              card: monitor,
+            ),
+          ),
+        ),
+      ),
+      BarAction(
+        icon: Icons.delete_outline,
+        label: libL10n.delete,
+        onTap: () => unawaited(_deleteUptimerMonitor(monitor)),
       ),
     ],
   };
@@ -225,6 +259,7 @@ extension _Bar on _ServerPageState {
       icon: switch (openItem) {
         ServerCardItem() => BoxIcons.bx_server,
         BmcCardItem() => Icons.developer_board,
+        UptimerCardItem(:final monitor) => uptimerTypeIcon(monitor.type),
       },
       onTap: () => _showItemSheet(filtered, openItem),
     );

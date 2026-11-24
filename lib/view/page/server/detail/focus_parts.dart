@@ -16,16 +16,59 @@ import 'package:server_box/view/page/server/detail/metric_model.dart';
 /// The page's own cards open and close at this pace — see
 /// `ServerDetailReadoutCard`.
 class ServerDetailEased extends StatelessWidget {
-  const ServerDetailEased({super.key, required this.child});
+  const ServerDetailEased({
+    super.key,
+    required this.child,
+    this.duration = Durations.short4,
+  });
 
   final Widget child;
+  final Duration duration;
 
   @override
   Widget build(BuildContext context) => AnimatedSize(
-    duration: context.motion(Durations.short4),
+    duration: context.motion(duration),
     curve: Curves.easeOutCubic,
     alignment: Alignment.topCenter,
     child: child,
+  );
+}
+
+/// Crossfades [child] while easing height changes from the top edge, reused
+/// across Server / BMC / Uptimer detail sections for async loading and reveal.
+class ServerDetailSwap extends StatelessWidget {
+  const ServerDetailSwap({
+    super.key,
+    required this.child,
+    this.duration = Durations.medium1,
+  });
+
+  final Widget child;
+  final Duration duration;
+
+  static Widget _topAlignedLayout(
+    Widget? currentChild,
+    List<Widget> previousChildren,
+  ) => Stack(
+    alignment: AlignmentDirectional.topStart,
+    fit: StackFit.passthrough,
+    children: [
+      for (final prev in previousChildren)
+        Positioned(top: 0, left: 0, right: 0, child: prev),
+      ?currentChild,
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) => ServerDetailEased(
+    duration: duration,
+    child: AnimatedSwitcher(
+      duration: context.motion(duration),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: _topAlignedLayout,
+      child: child,
+    ),
   );
 }
 

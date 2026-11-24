@@ -14,6 +14,10 @@ extension _Grid on _ServerPageState {
         ? null
         : filtered.firstWhereOrNull((i) => i.cardKey == heroKey);
     final hero = heroItem != null;
+    // Only [ServerCardItem] implements the pixel-matched in-place card morph
+    // (`openness: 0..1`). Other resource cards (BMC, Uptimer) crossfade cleanly
+    // in `_buildPanes` without stretching their card geometry.
+    final morphHero = heroItem is ServerCardItem;
     final stored = ServerDensityPref.of(_tag.value);
     final textScale = _textScale;
     final folded = Stores.setting.collapseUIDefault.fetch();
@@ -34,10 +38,10 @@ extension _Grid on _ServerPageState {
         (cons.maxWidth, density),
         () => {
           for (final item in filtered)
-            if (item.cardKey != heroKey)
+            if (!morphHero || item.cardKey != heroKey)
               item.cardKey: _buildItemConsumer(
                 item,
-                fade: hero ? _othersOpacity : null,
+                fade: morphHero ? _othersOpacity : null,
                 density: density,
                 pageWidth: cons.maxWidth,
                 expanded: unfolded(item.id),
@@ -49,7 +53,7 @@ extension _Grid on _ServerPageState {
           rest[item.cardKey] ??
           _buildItemConsumer(
             item,
-            openness: _open.value,
+            openness: morphHero ? _open.value : 0,
             density: density,
             pageWidth: cons.maxWidth - pageInset,
             expanded: unfolded(item.id),
@@ -75,25 +79,20 @@ extension _Grid on _ServerPageState {
           _ => MasonryList.kSpacing,
         },
         expandedKey:
-            heroItem != null && items.any((i) => i.cardKey == heroItem.cardKey)
+            morphHero && items.any((i) => i.cardKey == heroItem.cardKey)
                 ? ValueKey(heroItem.cardKey)
                 : null,
-        expansion: _open.value,
+        expansion: morphHero ? _open.value : 0,
         expandedInset: EdgeInsets.only(left: pageInset),
         memory: _gridMemory,
         children: [for (final item in items) cardOf(item)],
       );
 
-      if (groups == null) {
-        return AnimatedBuilder(
-          animation: _open,
-          builder: (_, _) => masonry(filtered, scrollable: true),
-        );
-      }
-
-      return AnimatedBuilder(
-        animation: _open,
-        builder: (_, _) => SingleChildScrollView(
+      Widget buildBody() {
+        if (groups == null) {
+          return masonry(filtered, scrollable: true);
+        }
+        return SingleChildScrollView(
           controller: _scrollController,
           padding: _scrollPadding(context),
           physics: const AlwaysScrollableScrollPhysics(),
@@ -111,8 +110,14 @@ extension _Grid on _ServerPageState {
               ],
             ],
           ),
-        ),
-      );
+        );
+      }
+
+      // `AdaptivePanes.surface` already rebuilds `surfaceBuilder` on every
+      // tick of `_open` when a Server card is morphing; avoid a redundant
+      // inner `AnimatedBuilder` (and never rebuild the grid during BMC/Uptimer
+      // GPU crossfades).
+      return buildBody();
     }
 
     Widget grid(double pageInset) => LayoutBuilder(
@@ -144,6 +149,9 @@ extension _Grid on _ServerPageState {
       for (final item in filtered)
         if (item is ServerCardItem) item.id,
     ];
+    final uptimer = ref.watch(uptimerProvider);
+    final showUptimerErr =
+        openItem == null && uptimer.signedIn && uptimer.error != null;
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -158,6 +166,14 @@ extension _Grid on _ServerPageState {
                     open: _open,
                   )
                 : UIs.placeholder,
+          ),
+        if (showUptimerErr)
+          UptimerSyncErrorBanner(
+            error: uptimer.error!,
+            loading: uptimer.isLoading,
+            onRetry: () => unawaited(
+              ref.read(uptimerProvider.notifier).refresh(force: true),
+            ),
           ),
         Expanded(
           child: _buildPanes(
@@ -228,6 +244,11 @@ extension _Grid on _ServerPageState {
       fade: fade,
       density: density,
     ),
+    UptimerCardItem(:final monitor) => _buildEachUptimerCard(
+      monitor,
+      fade: fade,
+      density: density,
+    ),
   };
 
   Future<void> _onTapLinkedBmcPowerOn(String serverId) async {
@@ -252,6 +273,8 @@ extension _Grid on _ServerPageState {
       for (final item in _lastFiltered)
         if (item case BmcCardItem(:final target))
           ref.read(bmcSummaryProvider(target.id).notifier).refresh(force: true),
+      if (ref.read(uptimerProvider).signedIn)
+        ref.read(uptimerProvider.notifier).refresh(force: true),
     ];
     await Future.wait(futures);
   }
@@ -323,7 +346,47 @@ extension _Grid on _ServerPageState {
           onLongPress: () => _onLongPressBmcCard(context, target),
           selected: _selecting ? _selected.contains(cardKey) : null,
           highlighted: cardKey == _menuId,
+          markAnchor: _elementFlight.cardBinding(cardKey),
+          hideMark: _elementFlight.isFlying(cardKey),
+          opensInPlace: _opensInPlace(context),
         ).onSecondary((at) => _onLongPressBmcCard(context, target, at: at));
+      },
+    );
+
+    return IgnorePointer(
+      key: ValueKey(cardKey),
+      ignoring: fade != null,
+      child: FadeTransition(
+        opacity: fade ?? kAlwaysCompleteAnimation,
+        child: RepaintBoundary(child: card),
+      ),
+    );
+  }
+
+  Widget _buildEachUptimerCard(
+    UptimerMonitorCard monitor, {
+    Animation<double>? fade,
+    ServerListDensity density = ServerListDensity.cards,
+  }) {
+    final cardKey = UptimerCardItem.keyOf(monitor.id);
+    final card = Builder(
+      builder: (context) {
+        return UptimerCard(
+          key: ValueKey(cardKey),
+          monitor: monitor,
+          density: density,
+          onTap: () => _selecting
+              ? _toggleSelected(cardKey)
+              : _onTapUptimerCard(context, monitor),
+          onLongPress: () => _onLongPressUptimerCard(context, monitor),
+          selected: _selecting ? _selected.contains(cardKey) : null,
+          highlighted: cardKey == _menuId,
+          stripAnchor: _elementFlight.cardBinding(cardKey),
+          hideStrip: _elementFlight.isFlying(cardKey),
+          opensInPlace: _opensInPlace(context),
+        ).onSecondary(
+          (at) => _onLongPressUptimerCard(context, monitor, at: at),
+        );
       },
     );
 

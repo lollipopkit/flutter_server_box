@@ -19,6 +19,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/model/status/card_item.dart';
+import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -31,6 +32,9 @@ import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/sort.dart';
+import 'package:server_box/data/provider/uptimer/detail.dart';
+import 'package:server_box/data/provider/uptimer/selection.dart';
+import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/add_menu.dart';
@@ -51,12 +55,17 @@ import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/full_screen.dart';
 import 'package:server_box/view/page/server/state_ui.dart';
+import 'package:server_box/view/page/server/tab/element_flight.dart';
 import 'package:server_box/view/page/server/tab/empty.dart';
 import 'package:server_box/view/page/server/tab/func_bar.dart';
 import 'package:server_box/view/page/server/tab/group_heading.dart';
 import 'package:server_box/view/page/server/tab/selection_bar.dart';
 import 'package:server_box/view/page/server/tab/strip.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
+import 'package:server_box/view/page/server/uptimer/card.dart';
+import 'package:server_box/view/page/server/uptimer/common.dart';
+import 'package:server_box/view/page/server/uptimer/detail.dart';
+import 'package:server_box/view/page/server/uptimer/edit.dart';
 import 'package:server_box/view/page/server/widget/server_globe.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -125,30 +134,49 @@ const _kViewSwapDuration = Durations.medium2;
 /// land — which is not knowable when the transition has to start, because
 /// nothing is placed until the lookups come back. Converging on the sphere
 /// needs none of that. See TODOS for the full argument.
-Widget _viewSwapTransition(Widget child, Animation<double> animation) {
-  return FadeTransition(
-    opacity: animation,
-    // `drive` rather than a `CurvedAnimation`, which owns resources and would
-    // be built and dropped on every frame of the transition.
-    child: ScaleTransition(
-      scale: animation.drive(
-        Tween(
-          begin: 0.9,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+Widget _viewSwapTransition(Widget child, Animation<double> animation) =>
+    FadeTransition(
+      opacity: animation,
+      // `drive` rather than a `CurvedAnimation`, which owns resources and would
+      // be built and dropped on every frame of the transition.
+      child: ScaleTransition(
+        scale: animation.drive(
+          Tween(
+            begin: 0.9,
+            end: 1.0,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        ),
+        child: child,
       ),
-      child: child,
-    ),
-  );
-}
+    );
 
 /// Both children in the same box, which is what makes the anchor above right.
 ///
 /// Also what keeps a scrolling child full height: the default `Stack` sizes to
 /// its child and hands it loose constraints, under which a
 /// `SingleChildScrollView` takes the height of its contents.
-Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
-    Stack(fit: StackFit.expand, children: [...previous, ?current]);
+///
+/// Exiting children (`previous`) have pointer hits and [HeroMode] disabled on
+/// the exact frame they start leaving (preserving each entry's [KeyedSubtree]
+/// key so state is never remounted), preventing duplicate [SharedElementHero]
+/// tags if a route push begins mid-transition.
+Widget _viewSwapLayout(Widget? current, List<Widget> previous) => Stack(
+  fit: StackFit.expand,
+  children: [
+    for (final p in previous)
+      IgnorePointer(
+        key: p.key,
+        ignoring: true,
+        child: HeroMode(enabled: false, child: p),
+      ),
+    if (current != null)
+      IgnorePointer(
+        key: current.key,
+        ignoring: false,
+        child: HeroMode(enabled: true, child: current),
+      ),
+  ],
+);
 
 /// How far burn-in protection moves full screen's content, each way.
 const _kBurnInShift = 7.0;
@@ -305,9 +333,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     duration: _kOpenDuration,
   );
 
-  /// The design's curve for this movement, at both ends of it: the card leaves
-  /// fast and arrives slowly, which is what makes a resize read as one
-  /// movement rather than as a jump followed by a settle.
+  /// The design's curve for this movement, at both ends of it: slow to leave
+  /// the grid and slow to come to rest in it, which pairs with [ShapeCross]
+  /// (`_kShapeCross`) and keeps a resize reading as one continuous movement.
   late final _open = CurvedAnimation(
     parent: _openCtrl,
     curve: Curves.easeInOutCubic,
@@ -320,6 +348,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// the same widgets on every frame of the movement and are not rebuilt.
   late final Animation<double> _othersOpacity = _open.drive(
     Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: _kOthersGone)),
+  );
+
+  /// Crossfade curves for non-morphing resource cards (BMC, Uptimer), derived
+  /// once so [FadeTransition] composites on the GPU with zero widget rebuilds.
+  late final Animation<double> _cardsFadeOut = _open.drive(
+    Tween(begin: 1.0, end: 0.0).chain(
+      CurveTween(curve: const Interval(0.0, 0.45, curve: Curves.easeOut)),
+    ),
+  );
+  late final Animation<double> _detailFadeIn = _open.drive(
+    Tween(begin: 0.0, end: 1.0).chain(
+      CurveTween(curve: const Interval(0.15, 1.0, curve: Curves.easeOutCubic)),
+    ),
   );
 
   /// Which way through the list the last change of machine went: +1 for the
@@ -363,6 +404,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Holds the gap between the chrome going and the card starting back.
   Timer? _closeTimer;
 
+  /// Invalidates pending close callbacks if another item is opened first.
+  int _closeSeq = 0;
+
   /// ID of the server whose context menu is open.
   ///
   String? _menuId;
@@ -390,6 +434,83 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Card keys (`StatusCardItem.cardKey`) being acted on together.
   final _selected = <String>{};
 
+  late final _elementFlight = StatusElementFlight(
+    progress: _open,
+    onChanged: () {
+      if (mounted) setState(() {});
+    },
+  );
+
+  int? _startItemFlight(StatusCardItem item, {required bool opening}) {
+    final density =
+        _heroDensity ??
+        _resolvedDensity(
+          ServerDensityPref.of(_tag.value),
+          _lastFiltered.length,
+        );
+    return switch (item) {
+      ServerCardItem() => null,
+      UptimerCardItem(:final monitor) when monitor.heartbeats.isNotEmpty => () {
+        final spec = UptimerCard.stripSpecFor(density);
+        return _elementFlight.start(
+          context: context,
+          cardKey: item.cardKey,
+          opening: opening,
+          departing: UptimerHeartbeatStrip(
+            heartbeats: monitor.heartbeats,
+            count: spec.count,
+            height: spec.height,
+            gap: spec.gap,
+            radius: spec.radius,
+          ),
+          arriving: UptimerHeartbeatStrip(
+            heartbeats: monitor.heartbeats,
+            count: 45,
+            height: 22,
+            gap: 2,
+            radius: 2.5,
+          ),
+          arrivingSize: const Size(530, 22),
+          fit: BoxFit.fill,
+        );
+      }(),
+      UptimerCardItem() => null,
+      BmcCardItem(:final target) => () {
+        final summary = ref.read(bmcSummaryProvider(target.id));
+        final live = ref.read(bmcProvider(target.id));
+        final useLive = !opening || live.hasData || live.failure != null;
+        final dotColor = useLive
+            ? BmcCard.statusDotColorFromBmc(live)
+            : BmcCard.statusDotColor(summary);
+        final arrivingOrb = useLive
+            ? BmcDetailPage.buildStatusOrb(
+                context,
+                failure: live.failure,
+                hasData: live.hasData,
+                isBusy: live.isBusy,
+                powerState: live.powerState,
+              )
+            : BmcDetailPage.buildStatusOrb(
+                context,
+                failure: summary.failure,
+                hasData: summary.hasData,
+                isBusy: summary.isBusy,
+                powerState: summary.powerState,
+              );
+        return _elementFlight.start(
+          context: context,
+          cardKey: item.cardKey,
+          opening: opening,
+          departing: BmcCard.buildMarkBadge(context, dotColor: dotColor),
+          arriving: arrivingOrb,
+          departingSize: const Size.square(kSideMarkSize),
+          arrivingSize: const Size.square(38),
+          fit: BoxFit.contain,
+        );
+      }(),
+    };
+  }
+
   bool get _selecting => _selected.isNotEmpty;
 
   String? _currentOpenKey() {
@@ -397,6 +518,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     if (serverId != null) return ServerCardItem.keyOf(serverId);
     final bmcId = ref.read(bmcSelectionProvider);
     if (bmcId != null) return BmcCardItem.keyOf(bmcId);
+    final uptimerId = ref.read(uptimerSelectionProvider);
+    if (uptimerId != null) return UptimerCardItem.keyOf(uptimerId);
     return null;
   }
 
@@ -416,34 +539,83 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _funcBarVisible.value = true;
     _heroId = item.cardKey;
     StatusSelection.selectItem(ref, item);
+    _closeSeq++;
     _closeTimer?.cancel();
     if (_openCtrl.isCompleted && !_detailShowing) {
       setState(() => _detailShowing = true);
     }
-    if (wasKey != null) return;
-    _openCtrl.forward();
-    if (_scrollController.hasClients && _scrollController.offset > 0) {
+    _elementFlight.end();
+    if (wasKey != null) {
+      return;
+    }
+    final flightGen = _startItemFlight(item, opening: true);
+    final future = _openCtrl.forward();
+    if (flightGen != null) {
+      future.whenCompleteOrCancel(() => _elementFlight.end(flightGen));
+    }
+    if (item is ServerCardItem &&
+        _scrollController.hasClients &&
+        _scrollController.offset > 0) {
       _scrollController.animateTo(
         0,
         duration: _openCtrl.duration ?? _kOpenDuration,
-        curve: Curves.fastEaseInToSlowEaseOut,
+        curve: Curves.easeInOutCubic,
       );
     }
   }
 
-  /// Puts the page back to the grid, chrome first.
+  /// Puts the page back to the grid, chrome first for Server cards and
+  /// immediately for non-morphing cards or interrupted opens.
   void _closeDetail() {
     if (_currentOpenKey() == null && _openCtrl.isDismissed) {
+      return;
+    }
+    final closingKey = _currentOpenKey();
+    final closingItem = closingKey == null
+        ? null
+        : _lastFiltered.firstWhereOrNull((i) => i.cardKey == closingKey);
+    final wasDetailShowing = _detailShowing;
+    final wasWaitingChrome = _closeTimer?.isActive ?? false;
+    // If a Server detail is already waiting out its chrome-exit timer, let the
+    // scheduled reverse finish on time instead of resetting or bypassing it.
+    if (closingItem is ServerCardItem && wasWaitingChrome) {
       return;
     }
     if (_detailShowing) setState(() => _detailShowing = false);
     _openCtrl.duration = context.motion(_kOpenDuration);
     _closeTimer?.cancel();
-    _closeTimer = Timer(context.motion(_kChromeDuration), () {
-      if (!mounted) return;
+    final seq = ++_closeSeq;
+
+    void reverseNow() {
+      if (!mounted || seq != _closeSeq) return;
+      final latestItem = closingKey == null
+          ? null
+          : _lastFiltered.firstWhereOrNull((i) => i.cardKey == closingKey) ??
+                closingItem;
+      final flightGen = latestItem != null
+          ? _startItemFlight(latestItem, opening: false)
+          : null;
       StatusSelection.selectItem(ref, null);
-      _openCtrl.reverse();
-    });
+      final future = _openCtrl.reverse();
+      if (flightGen != null) {
+        future.whenCompleteOrCancel(() => _elementFlight.end(flightGen));
+      }
+    }
+
+    // Server detail waits for its chrome to leave before shrinking back.
+    if (closingItem is ServerCardItem && wasDetailShowing) {
+      _closeTimer = Timer(context.motion(_kChromeDuration), reverseNow);
+      return;
+    }
+
+    // For BMC/Uptimer, wait one frame only if the grid was unmounted while
+    // `_detailShowing` was true so the card's [FlightAnchor] mounts first;
+    // when interrupting an in-flight open, reverse immediately.
+    if (wasDetailShowing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => reverseNow());
+    } else {
+      reverseNow();
+    }
   }
 
   /// Drops stale in-place detail state when the open item disappears from the
@@ -452,7 +624,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _heroId == null) return;
       if (_lastFiltered.any((i) => i.cardKey == _heroId)) return;
+      _closeSeq++;
       _closeTimer?.cancel();
+      _elementFlight.end();
       _openCtrl.value = 0;
       setState(() {
         _heroId = null;
@@ -464,6 +638,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   void dispose() {
+    _elementFlight.dispose();
     _closeTimer?.cancel();
     _funcBarVisible.dispose();
     _keys.dispose();
@@ -505,10 +680,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _tags = ValueNotifier({
       ...ref.read(serversProvider).tags,
       ...ref.read(bmcTargetsProvider).tags,
+      ...ref.read(uptimerProvider).tags,
     });
     // The chrome follows the card rather than being timed against it: what
     // says the growth has finished is the growth finishing.
     _openCtrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        _elementFlight.end();
+      }
       // The card is back in its column, so it is a card again.
       if (status == AnimationStatus.dismissed && _heroId != null) {
         setState(() => _heroId = null);
@@ -536,6 +716,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _inactive = true;
     _timer?.cancel();
     _timer = null;
+    _elementFlight.end(null, false);
     super.deactivate();
   }
 
@@ -550,6 +731,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final next = {
       ...ref.read(serversProvider).tags,
       ...ref.read(bmcTargetsProvider).tags,
+      ...ref.read(uptimerProvider).tags,
     };
     if (_tags.value.length == next.length && _tags.value.containsAll(next)) {
       return;
@@ -562,6 +744,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     super.build(context);
     ref.listen(serversProvider, (_, _) => _syncTags());
     ref.listen(bmcTargetsProvider, (_, _) => _syncTags());
+    ref.listen(uptimerProvider, (_, _) => _syncTags());
     return OrientationBuilder(
       builder: (_, orientation) => ValueListenableBuilder(
         valueListenable: _fsManual,
@@ -601,6 +784,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     final servers = ref.watch(serversProvider.select((s) => s.servers));
     final bmcState = ref.watch(bmcTargetsProvider);
+    final uptimerState = ref.watch(uptimerProvider);
     final openKey = StatusSelection.watchCardKey(ref);
 
     final standaloneBmcs = bmcState.standalone(servers.keys.toSet());
@@ -608,6 +792,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
       for (final id in serverOrder)
         if (servers[id] case final spi?) ServerCardItem(spi),
       for (final target in standaloneBmcs) BmcCardItem(target),
+      for (final monitor in uptimerState.monitorList) UptimerCardItem(monitor),
     ];
 
     return _ServerOpenRequest(
@@ -641,6 +826,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   bmcStateOf: (target) =>
                       bmcStates[target.id] ??
                       ref.read(bmcSummaryProvider(target.id)),
+                  uptimerHasAlertOf: (m) => uptimerState.hasAlert(m.id),
                 );
                 final filtered = _filterItems(ordered);
                 _lastFiltered = filtered;
@@ -751,18 +937,42 @@ class _ServerPageState extends ConsumerState<ServerPage>
       layoutBuilder: _viewSwapLayout,
       child: switch (true) {
         _ when globe => _buildGlobe(filtered, immersive: true),
-        _ when filtered.isEmpty => ServerListEmpty(
-          query: _search.needle,
-          tag: _tag.value,
-          onClearSearch: _search.end,
-          onClearTag: () => _tag.value = TagSwitcher.kDefaultTag,
-          onAdd: _onTapAddServer,
-        ),
+        _ when filtered.isEmpty => _buildEmptyWithNotice(),
         _ => KeyedSubtree(
           key: const ValueKey('grid'),
           child: _buildGrid(filtered, openItem),
         ),
       },
+    );
+  }
+
+  Widget _buildEmptyWithNotice() {
+    final uptimer = ref.watch(uptimerProvider);
+    final empty = ServerListEmpty(
+      query: _search.needle,
+      tag: _tag.value,
+      onClearSearch: _search.end,
+      onClearTag: () => _tag.value = TagSwitcher.kDefaultTag,
+      onAdd: _onTapAddServer,
+    );
+    if (!uptimer.signedIn || uptimer.error == null) {
+      return empty;
+    }
+    return KeyedSubtree(
+      key: const ValueKey('empty-uptimer-err'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          UptimerSyncErrorBanner(
+            error: uptimer.error!,
+            loading: uptimer.isLoading,
+            onRetry: () => unawaited(
+              ref.read(uptimerProvider.notifier).refresh(force: true),
+            ),
+          ),
+          Expanded(child: empty),
+        ],
+      ),
     );
   }
 

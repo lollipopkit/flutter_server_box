@@ -4,8 +4,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/view/page/server/bmc/edit.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/uptimer/edit.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 
 /// The ways a server gets onto this device.
@@ -50,7 +52,7 @@ List<ContextMenuAction> addServerMenu(BuildContext context, WidgetRef ref) => [
 ];
 
 /// The "+" menu for the Status tab, offering host additions plus standalone
-/// resource types such as Redfish BMCs.
+/// resource types such as Redfish BMCs and Uptimer monitors.
 List<ContextMenuAction> addStatusItemMenu(
   BuildContext context,
   WidgetRef ref,
@@ -61,6 +63,12 @@ List<ContextMenuAction> addStatusItemMenu(
     icon: Icons.developer_board,
     onTap: () => unawaited(BmcTargetEditPage.route.go(context)),
   ),
+  if (ref.read(uptimerProvider).signedIn)
+    ContextMenuAction(
+      text: l10n.uptimer,
+      icon: Icons.monitor_heart_outlined,
+      onTap: () => unawaited(UptimerEditPage.route.go(context)),
+    ),
 ];
 
 Future<void> addServer(BuildContext context, WidgetRef ref, AddServerWay way) async {

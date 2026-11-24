@@ -18,7 +18,10 @@ import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/uptimer/client.dart';
+import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/bmc_target.dart';
@@ -65,6 +68,9 @@ import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
 import 'package:server_box/view/page/server/share_status/page.dart';
+import 'package:server_box/view/page/server/uptimer/common.dart';
+import 'package:server_box/view/page/server/uptimer/detail.dart';
+import 'package:server_box/view/page/server/uptimer/edit.dart';
 import 'package:server_box/view/page/services/detail.dart';
 import 'package:server_box/view/page/services/services.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
@@ -326,6 +332,17 @@ void main() {
     'TerminalTextPage': (c) =>
         TerminalTextPage.route.go(c, Terminal()..write('text')),
     'TransferListPage': (c) => TransferListPage.route.go(c),
+    'UptimerDetailPage': (c) => UptimerDetailPage.route.go(
+      c,
+      const UptimerDetailArgs(
+        monitor: UptimerMonitorCard(
+          id: 1,
+          name: 'API',
+          type: UptimerMonitorType.http,
+        ),
+      ),
+    ),
+    'UptimerEditPage': (c) => UptimerEditPage.route.go(c),
     'UserDetailPage': (c) => UserDetailPage.route.go(
       c,
       UserDetailPageArgs(
@@ -440,9 +457,20 @@ void main() {
     addTearDown(tester.view.reset);
     // A fresh app, or the last one's navigator keeps its pushed page.
     await tester.pumpWidget(const SizedBox.shrink());
+    final uptimerUser = ValueNotifier<LkcUser?>(null);
+    addTearDown(uptimerUser.dispose);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [serverProvider(spi.id).overrideWith(_OfflineServer.new)],
+        overrides: [
+          serverProvider(spi.id).overrideWith(_OfflineServer.new),
+          uptimerAuthSourceProvider.overrideWithValue((
+            enabled: false,
+            user: uptimerUser,
+          )),
+          uptimerApiProvider.overrideWithValue(
+            UptimerApi(call: (_, _, {query, body}) async => const {}),
+          ),
+        ],
         child: MaterialApp(
           localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
