@@ -9,14 +9,19 @@ void main() {
         'flow': {
           'id': 'f1',
           'title': 'Check disk',
-          'state': 'running',
-          'mode': 'default',
-          'createdAt': 1,
-          'updatedAt': 2,
+          'status': 'running',
+          'mode': 'auto',
+          'createdAt': '2026-01-01T00:00:00Z',
+          'updatedAt': '2026-01-01T00:00:01Z',
+          'model': {'provider': 'openai', 'id': 'gpt-5', 'name': 'GPT-5'},
         },
       });
       expect(flow, isA<MonitorAgentFlowEvent>());
-      expect((flow! as MonitorAgentFlowEvent).flow.id, 'f1');
+      final decodedFlow = (flow! as MonitorAgentFlowEvent).flow;
+      expect(decodedFlow.id, 'f1');
+      expect(decodedFlow.title, 'Check disk');
+      expect(decodedFlow.status, MonitorAgentStatus.running);
+      expect(decodedFlow.model?.name, 'GPT-5');
 
       final removed = MonitorAgentEvent.fromJson({
         'type': 'removed',
@@ -70,6 +75,23 @@ void main() {
       );
       expect(
         MonitorAgentEvent.fromJson({'type': 'flow', 'flow': <String, dynamic>{}}),
+        isNull,
+      );
+      expect(
+        MonitorAgentEvent.fromJson({
+          'type': 'flow',
+          'flow': {'id': 'f1', 'title': 123},
+        }),
+        isNull,
+      );
+      expect(
+        MonitorAgentEvent.fromJson({
+          'type': 'flow',
+          'flow': {
+            'id': 'f1',
+            'model': {'provider': 'openai', 'id': 'gpt-5', 'name': 42},
+          },
+        }),
         isNull,
       );
       expect(MonitorAgentEvent.fromJson({'type': 'removed'}), isNull);

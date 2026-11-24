@@ -271,11 +271,7 @@ sealed class MonitorAgentEvent {
   /// Decodes a raw SSE JSON object into a typed event, or returns null for
   /// unrecognized or malformed frames.
   static MonitorAgentEvent? fromJson(Map<String, dynamic> j) => switch (j['type']) {
-    'flow' => switch (j['flow']) {
-      final Map<String, dynamic> flow when flow['id'] is String =>
-        MonitorAgentFlowEvent(MonitorAgentFlow.fromJson(flow)),
-      _ => null,
-    },
+    'flow' => _decodeFlow(j['flow']),
     'removed' when j['id'] is String => MonitorAgentRemovedEvent(j['id'] as String),
     'pending' when j['id'] is String => MonitorAgentPendingEvent(
       id: j['id'] as String,
@@ -299,6 +295,15 @@ sealed class MonitorAgentEvent {
     'resync' => const MonitorAgentResyncEvent(),
     _ => null,
   };
+
+  static MonitorAgentFlowEvent? _decodeFlow(Object? raw) {
+    if (raw is! Map<String, dynamic> || raw['id'] is! String) return null;
+    try {
+      return MonitorAgentFlowEvent(MonitorAgentFlow.fromJson(raw));
+    } on TypeError {
+      return null;
+    }
+  }
 }
 
 final class MonitorAgentFlowEvent extends MonitorAgentEvent {

@@ -7,8 +7,11 @@ void main() {
   const credB = MonitorHttpCredential(addr: 'http://127.0.0.1:41002', pwd: 'p2');
 
   test('shares one MonitorHttpClient across leases with equal credentials', () {
+    final credACopy = MonitorHttpCredential(addr: credA.addr, pwd: credA.pwd);
+    expect(identical(credA, credACopy), isFalse);
+
     final first = MonitorClientLease(credA);
-    final second = MonitorClientLease(credA);
+    final second = MonitorClientLease(credACopy);
     addTearDown(() {
       first.release();
       second.release();

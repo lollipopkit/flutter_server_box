@@ -12,6 +12,8 @@ use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::{Config, ServerConfig};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpStream;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
@@ -567,10 +569,43 @@ async fn the_transport_contract_is_answered_before_the_body() {
     let (status, _) = Mcp::new(&srv, token.clone()).post(b"{".to_vec()).await;
     assert_eq!(status, 400);
 
+    // Write the oversized request concurrently while reading the status line so
+    // an early 413 + socket close from the server cannot fail with WSAECONNRESET
+    // on Windows while the client is still pushing the 5 MiB body.
+    let stream = TcpStream::connect(srv.addr()).await.unwrap();
+    let (read_half, mut write_half) = stream.into_split();
     let mut big = initialize();
     big["params"]["padding"] = json!("x".repeat(5 * 1024 * 1024));
-    let (status, _) = Mcp::new(&srv, token.clone()).post(big).await;
-    assert_eq!(status, 413);
+    let body = serde_json::to_vec(&big).unwrap();
+    let headers = format!(
+        "POST /api/v1/mcp HTTP/1.1\r\n\
+         Host: {}\r\n\
+         Authorization: Bearer {}\r\n\
+         Accept: application/json, text/event-stream\r\n\
+         Content-Type: application/json\r\n\
+         Content-Length: {}\r\n\
+         Connection: close\r\n\r\n",
+        srv.addr(),
+        token.as_deref().unwrap(),
+        body.len(),
+    );
+    let writer = tokio::spawn(async move {
+        let _ = write_half.write_all(headers.as_bytes()).await;
+        let _ = write_half.write_all(&body).await;
+    });
+    let mut status_line = String::new();
+    tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        BufReader::new(read_half).read_line(&mut status_line),
+    )
+    .await
+    .expect("server did not answer 413 within 5s")
+    .unwrap();
+    writer.abort();
+    assert!(
+        status_line.starts_with("HTTP/1.1 413 "),
+        "expected 413, got: {status_line}"
+    );
 
     let mut mcp = Mcp::new(&srv, token.clone());
     mcp.origin = Some("https://evil.example".into());
