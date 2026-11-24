@@ -384,7 +384,9 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         final errs = <String>[];
         for (final item in list) {
           try {
-            final snippet = Snippet.fromJson(item);
+            final snippet = Snippet.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            );
             snippets.add(snippet);
           } catch (e) {
             errs.add(e.toString());
@@ -653,7 +655,10 @@ extension on _BackupPageState {
           final list = json.decode(val) as List;
           return [
             for (final e in list)
-              (spi: Spi.fromJson(e), pve: PveConfig.fromServerRecord(e)),
+              (
+                spi: Spi.fromJson(Map<String, dynamic>.from(e as Map)),
+                pve: PveConfig.fromServerRecord(e),
+              ),
           ];
         }, text),
       );

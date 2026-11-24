@@ -142,6 +142,7 @@ fn run_command_with_timeout(
         // Limit writes in the child rather than reading an unbounded pipe into
         // the monitor process. The parent below terminates the whole group as
         // soon as the file reaches that hard limit.
+        // SAFETY: `limit_output_size` only invokes async-signal-safe `setrlimit`.
         unsafe { command.pre_exec(limit_output_size) };
     }
     let Some((output, file)) = output_file() else {
@@ -194,6 +195,8 @@ fn limit_output_size() -> std::io::Result<()> {
     };
     // This runs only in the child after fork and before exec, so lowering its
     // file-size limit cannot affect the monitor process.
+    // SAFETY: `limit` is a valid initialized `libc::rlimit` struct; `setrlimit` is
+    // async-signal-safe and runs only in the forked child before `exec`.
     if unsafe { libc::setrlimit(libc::RLIMIT_FSIZE, &limit) } == 0 {
         Ok(())
     } else {
@@ -227,6 +230,7 @@ fn output_file() -> Option<(std::fs::File, PathBuf)> {
 
 fn terminate(child: &mut std::process::Child) {
     #[cfg(unix)]
+    // SAFETY: sending SIGKILL to the negative PID targets this child's process group.
     if unsafe { kill_process_group(-(child.id() as i32), 9) } == 0 {
         return;
     }

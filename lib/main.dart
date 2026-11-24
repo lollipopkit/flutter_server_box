@@ -38,6 +38,7 @@ import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -189,6 +190,8 @@ Future<void> _initApp(ProviderContainer container) async {
   // on LK Cloud are fetched from there.
   installStoreReload();
   installThemeBlobs();
+  installAppRoutes();
+  container.read(serverConnectionsProvider);
 
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the

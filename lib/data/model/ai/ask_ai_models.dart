@@ -32,43 +32,6 @@ class AskAiToolDefinition {
     required this.parameters,
   });
 
-  static const runShellCommand = AskAiToolDefinition(
-    name: 'run_shell_command',
-    description:
-        'Propose one non-interactive shell command to run on the current SSH server.',
-    parameters: {
-      'type': 'object',
-      'additionalProperties': false,
-      'required': ['command', 'description', 'safe_to_run', 'destructive'],
-      'properties': {
-        'command': {
-          'type': 'string',
-          'description': 'A complete, non-interactive shell command.',
-        },
-        'description': {
-          'type': 'string',
-          'description':
-              'A concise explanation of the command and any relevant risk.',
-        },
-        'safe_to_run': {
-          'type': 'boolean',
-          'description':
-              'True only for clearly read-only, idempotent, non-destructive commands.',
-        },
-        'destructive': {
-          'type': 'boolean',
-          'description':
-              'True when running this could lose data or take a service down: '
-              'deleting, overwriting, formatting, killing, rebooting, or '
-              'anything else that cannot simply be undone. The app has its own '
-              'list of such commands and asks when either of you says so, so '
-              'say so for what a list cannot see — a path that matters, a '
-              'script whose name says nothing about what it does.',
-        },
-      },
-    },
-  );
-
   final String name;
   final String description;
   final Map<String, dynamic> parameters;

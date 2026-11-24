@@ -11,7 +11,7 @@ import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/script.dart' as rust;
@@ -385,7 +385,7 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
     // The server reconnects now rather than when its back-off allows: its
     // agent is a new one.
     TryLimiter.reset(widget.spi.id);
-    unawaited(ref.read(serversProvider.notifier).refresh(spi: widget.spi));
+    unawaited(ref.read(serverConnectionsProvider).refresh(spi: widget.spi));
   }
 }
 

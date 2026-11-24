@@ -82,28 +82,18 @@ final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
               onTap: () => _run(widget.args.onEdit),
             ),
             if (UserManager.userDeletable(_user, current: widget.args.catalog.currentUser))
-              ContextMenuButton(
-                tooltip: libL10n.more,
-                actions: () => [
-                  ContextMenuAction(
-                    text: libL10n.delete,
-                    icon: Icons.delete_outline,
-                    destructive: true,
-                    onTap: () => _run(widget.args.onDelete),
-                  ),
-                ],
-                child: const Padding(
-                  padding: EdgeInsets.all(7),
-                  child: Icon(Icons.more_vert, size: 18),
-                ),
-              ),
+              DeleteOverflowButton(onDelete: () => _run(widget.args.onDelete)),
           ],
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(13, 13, 13, 40),
         children: [
-          _buildIdentity(),
+          UserIdentityHeader(
+            name: _user.name,
+            subtitle: _subtitle(),
+            isRoot: _user.isRoot,
+          ),
           UIs.height13,
           _buildActions(),
           UIs.height13,
@@ -120,61 +110,6 @@ final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
 // --- Widget builders ---
 
 extension on _UserDetailPageState {
-  Widget _buildIdentity() {
-    final scheme = Theme.of(context).colorScheme;
-    final root = _user.isRoot;
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: root
-              ? scheme.errorContainer
-              : scheme.primaryContainer,
-          child: Text(
-            _user.name.isEmpty ? '?' : _user.name[0].toUpperCase(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: root ? scheme.onErrorContainer : scheme.onPrimaryContainer,
-            ),
-          ),
-        ),
-        UIs.width13,
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      _user.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (root) ...[
-                    UIs.width7,
-                    UserTag('root', foreground: scheme.onErrorContainer, background: scheme.errorContainer),
-                  ],
-                ],
-              ),
-              Text(
-                _subtitle(),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: UIs.text12Grey,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   /// Only the shell. The design also offers an SSH-keys button, which is not
   /// here: what it would show is the count already in Security below, and what

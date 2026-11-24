@@ -18,6 +18,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/url.dart';
@@ -95,7 +96,7 @@ class _HomePageState extends ConsumerState<HomePage>
   /// The lock screen currently up, if any. See where it is assigned.
   Future<void>? _authed;
 
-  late final _notifier = ref.read(serversProvider.notifier);
+  late final _notifier = ref.read(serverConnectionsProvider);
   late final _androidSystem = AndroidSystemSync(ref);
 
   /// What the user arranged: the bar, and the rail.

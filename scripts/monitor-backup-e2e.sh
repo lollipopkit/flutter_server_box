@@ -124,7 +124,13 @@ mkdir -p "$B"
 
 echo "== Opened with Go's age"
 NEWEST=$(head -n1 "$WORK/list2" | cut -f1)
-KEY=$(ls "$WORK/rclone/panel-box" | grep '^serverbox-monitor-key-')
+KEY=""
+for f in "$WORK/rclone/panel-box"/serverbox-monitor-key-*; do
+    [ -e "$f" ] || continue
+    KEY=${f##*/}
+    break
+done
+[ -n "$KEY" ]
 (cd scripts/monitor-backup-e2e && SBM_BACKUP_PASSPHRASE=$SBM_E2E_BACKUP_PASSPHRASE go run . "$WORK/rclone/panel-box/$KEY" "$WORK/rclone/panel-box/$NEWEST" "$WORK/opened.tar.gz")
 mkdir "$WORK/opened"
 tar -xzf "$WORK/opened.tar.gz" -C "$WORK/opened"

@@ -10,8 +10,8 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
-import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/page/ssh/page/args.dart';
+import 'package:server_box/view/page/storage/args.dart';
 
 /// What the user has on screen, said to the Agent before their next message
 /// whenever it changed (`LlmUi.appContext`): "this server" means the one they

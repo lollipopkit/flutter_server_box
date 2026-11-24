@@ -8,9 +8,8 @@ import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/view/page/storage/local.dart';
-import 'package:server_box/view/page/storage/server_file.dart';
-import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/page/routes.dart';
+import 'package:server_box/view/page/storage/args.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/server_picker.dart';
 
@@ -190,13 +189,13 @@ Future<_Place?> _pickPlace(BuildContext context) async {
 
 /// Which directory there, in that place's own browser.
 Future<String?> _pickDir(BuildContext context, _Place place) => switch (place) {
-  _Device() => LocalFilePage.route.go(
+  _Device() => AppRoutes.openLocalFiles(
     context,
-    args: const LocalFilePageArgs(isPickDir: true),
+    const LocalFilePageArgs(isPickDir: true),
   ),
   // The resolving page, not the SFTP one: a destination reached through its
   // agent's file API is still a place a file can be sent to.
-  _Server(:final spi) => ServerFilePage.route.go(
+  _Server(:final spi) => AppRoutes.openServerFiles(
     context,
     SftpPageArgs(spi: spi, isSelect: true),
   ),

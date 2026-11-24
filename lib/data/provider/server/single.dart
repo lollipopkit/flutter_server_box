@@ -163,6 +163,7 @@ mixin _ServerCore on _$ServerNotifier {
     return client;
   }
   void _setFailedState(ServerStatus status, {bool closeClient = false});
+  void _disconnectStatusSession(String serverId);
   Future<CommandExec> ensureScriptExec({VoidCallback? onSshDial, bool unattended = false});
 }
 
@@ -231,6 +232,7 @@ class ServerNotifier extends _$ServerNotifier
       if (last == null) {
         throw StateError('Server $serverId not found');
       }
+      _watchServerInventory(serverId);
       return last.copyWith(
         conn: ServerConn.disconnected,
         client: null,
@@ -238,7 +240,38 @@ class ServerNotifier extends _$ServerNotifier
       );
     }
 
+    _watchServerInventory(serverId);
     return ServerState(spi: spi, status: InitStatus.status);
+  }
+
+  void _watchServerInventory(String serverId) {
+    ref.listen(serversProvider, (prev, next) {
+      final prevSpi = prev?.servers[serverId];
+      final nextSpi = next.servers[serverId];
+      if (nextSpi == null) {
+        if (prevSpi != null) {
+          closeConnection();
+          ref.invalidateSelf();
+        }
+        return;
+      }
+      if (prevSpi != nextSpi) {
+        updateSpi(nextSpi);
+      }
+    });
+  }
+
+  @override
+  void _disconnectStatusSession(String serverId) {
+    final sessionId = TermSessionManager.statusSessionId(serverId);
+    if (!ref.mounted ||
+        !ref.read(serversProvider).servers.containsKey(serverId)) {
+      TermSessionManager.remove(sessionId);
+      return;
+    }
+    closeConnection();
+    ref.read(serversProvider.notifier).markManualDisconnected(serverId);
+    TermSessionManager.remove(sessionId);
   }
 
   @override

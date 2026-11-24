@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/lifecycle.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -79,7 +80,15 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   @override
   PortForwardState build(String serverId) {
-    ref.onDispose(() => dispose());
+    final unregisterDelete = ref.read(serverLifecycleProvider).onBeforeDelete((
+      id,
+    ) async {
+      if (id == serverId) await clear();
+    });
+    ref.onDispose(() {
+      unregisterDelete();
+      dispose();
+    });
     ref.listen(serverProvider(serverId), (prev, next) {
       if (next.client == null && prev?.client != null) {
         // Only what SSH carried. A forward through the agent never used the
@@ -225,7 +234,14 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
   }
 
+  bool get _isInactive =>
+      _disposed ||
+      _clearing ||
+      !ref.mounted ||
+      ref.read(serverLifecycleProvider).isDeleting(_serverId);
+
   Future<void> addConfig(PortForwardConfig config) async {
+    if (_isInactive) return;
     final configWithServerId = config.copyWith(serverId: _serverId);
     Stores.portForward.put(configWithServerId);
     final configs = [...state.configs, configWithServerId];
@@ -236,7 +252,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     PortForwardConfig oldConfig,
     PortForwardConfig newConfig,
   ) async {
+    if (_isInactive) return;
     await stopForward(oldConfig.id);
+    if (_isInactive) return;
     final configWithServerId = newConfig.copyWith(serverId: _serverId);
     Stores.portForward.delete(oldConfig);
     Stores.portForward.put(configWithServerId);
@@ -248,6 +266,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<void> removeConfig(String id) async {
     await stopForward(id);
+    if (!ref.mounted) return;
     final config = state.configs.firstWhereOrNull((c) => c.id == id);
     if (config != null) {
       Stores.portForward.delete(config);
@@ -260,7 +279,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> startForward(String id) {
-    if (_disposed || _clearing) return Future.value();
+    if (_isInactive) return Future.value();
     // A second tap while starting joins that start instead of restarting it.
     if (_starts[id] case final start?
         when _isCurrent(id, start.scope)) {

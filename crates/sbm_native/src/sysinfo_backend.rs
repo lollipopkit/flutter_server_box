@@ -86,12 +86,14 @@ fn device_for_mount(mount: &str) -> Option<String> {
     use std::ffi::{CStr, CString};
 
     let path = CString::new(mount).ok()?;
-    let mut buf: libc::statfs = unsafe { std::mem::zeroed() };
+    let mut buf = std::mem::MaybeUninit::<libc::statfs>::zeroed();
     // SAFETY: `path` is a valid NUL-terminated C string that outlives the call,
-    // and `buf` is a correctly sized, owned `statfs` the call only writes into.
-    if unsafe { libc::statfs(path.as_ptr(), &mut buf) } != 0 {
+    // and `buf` is a correctly sized, owned `statfs` the call writes into.
+    if unsafe { libc::statfs(path.as_ptr(), buf.as_mut_ptr()) } != 0 {
         return None;
     }
+    // SAFETY: `libc::statfs` succeeded and initialized `buf`.
+    let buf = unsafe { buf.assume_init() };
     // SAFETY: on success statfs leaves `f_mntfromname` NUL-terminated within
     // its own bounds.
     let raw = unsafe { CStr::from_ptr(buf.f_mntfromname.as_ptr()) }.to_string_lossy();

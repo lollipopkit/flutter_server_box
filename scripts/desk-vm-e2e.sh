@@ -56,12 +56,13 @@ out=$(cd "$root/monitor/frontend" && npm run build 2>&1) || { printf '%s\n' "$ou
 echo "==> vm: up"
 # The catalog's web apps want room for their images and memory to run.
 if [ "$spec" = catalog_apps ]; then
-  set -- $(SBM_E2E_VM_MEMORY=6144 SBM_E2E_VM_ROOT_GIB=64 "$lab" up "$node" | tail -n 1)
+  vm_out=$(SBM_E2E_VM_MEMORY=6144 SBM_E2E_VM_ROOT_GIB=64 "$lab" up "$node")
 else
-  set -- $("$lab" up "$node" | tail -n 1)
+  vm_out=$("$lab" up "$node")
 fi
-id=$1
-addr=$2
+read -r id addr <<EOF
+$(printf '%s\n' "$vm_out" | tail -n 1)
+EOF
 case $id in '' | *[!0-9]*) echo "the VM did not come up" >&2; exit 1 ;; esac
 cleanup() {
   if [ "${SBM_E2E_KEEP:-}" = 1 ]; then echo "==> vm $id kept at $addr"; else "$lab" down "$node" "$id" >/dev/null && echo "==> vm $id destroyed"; fi

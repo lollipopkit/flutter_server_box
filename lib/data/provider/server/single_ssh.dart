@@ -150,7 +150,7 @@ mixin _SshStatus on _ScriptStatus {
         subtitle: spi.oldId,
         serverId: spi.id,
         startTimeMs: startedAt.millisecondsSinceEpoch,
-        disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
+        disconnect: () => _disconnectStatusSession(spi.id),
         status: TermSessionStatus.connecting,
         hasTerminal: false,
       );

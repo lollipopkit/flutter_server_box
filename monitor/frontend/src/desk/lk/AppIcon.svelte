@@ -1,18 +1,6 @@
 <script lang="ts" module>
-  /// The icon tones: berry-palette tones for the system's own apps, soft
-  /// hues for the rest.
-  export type IconTone =
-    | 'berry'
-    | 'soft'
-    | 'bright'
-    | 'pale'
-    | 'mist'
-    | 'ink'
-    | 'sky'
-    | 'violet'
-    | 'teal'
-    | 'leaf'
-    | 'amber'
+  import type { IconTone as _IconTone } from './iconTone'
+  export type IconTone = _IconTone
 </script>
 
 <script lang="ts">

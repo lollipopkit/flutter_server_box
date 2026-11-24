@@ -2,10 +2,21 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
+final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
+
+bool get isICloudSupported => isMacOS || isIOS;
+
 /// The WebDAV the backup syncs to, kept in `Stores.syncRemote` and synced
 /// with the secrets: set up on one device, set up on every one. Whether it
 /// syncs stays each device's own (`PrefProps.webdavSync`).
 abstract final class SyncRemotes {
+  /// The active file-backed sync remote (iCloud or WebDAV), or null when
+  /// neither is enabled.
+  static RemoteStorage? get fileRemote {
+    if (PrefProps.icloudSync.get() && isICloudSupported) return icloud;
+    if (PrefProps.webdavSync.get()) return webdav;
+    return null;
+  }
   static const _url = 'webdavUrl';
   static const _user = 'webdavUser';
   static const _pwd = 'webdavPwd';

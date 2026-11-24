@@ -326,8 +326,9 @@ Future<void> _handle(
       settings: (name, arguments) => _settings(container, name, arguments),
     );
     if (response.call case final call?) {
-      // Opaque identifiers only: arguments and output can hold credentials.
-      _log.info('${call.tool} token=${call.token} host=${call.host ?? '-'}');
+      // Opaque digest prefix only: arguments and output can hold credentials.
+      final callerId = call.token;
+      _log.info('${call.tool} caller=$callerId host=${call.host ?? '-'}');
     }
     await answer(response.status, response.body);
   } catch (_) {

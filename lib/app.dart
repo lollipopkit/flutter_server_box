@@ -20,16 +20,30 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/page/routes.dart';
 import 'package:server_box/view/page/server/full_screen.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/tiles.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/widget/session_keep_alive_notice.dart';
+import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/widget/column_inset.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'intro.dart';
+
+/// Registers peer-page route delegates so mutually reachable pages stay acyclic.
+void installAppRoutes() {
+  AppRoutes.register(
+    openSsh: (context, args) => SSHPage.route.go(context, args),
+    openLocalFiles: (context, args) =>
+        LocalFilePage.route.go(context, args: args),
+    openServerFiles: (context, args) => ServerFilePage.route.go(context, args),
+  );
+}
 
 Widget _buildHomeWithWindowFrame() {
   return VirtualWindowFrame(title: BuildData.name, child: const HomePage());
@@ -51,6 +65,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
   bool _transparentNavBarConfigured = false;
+
+  @override
+  void initState() {
+    super.initState();
+    installAppRoutes();
+  }
 
   @override
   void didChangeDependencies() {

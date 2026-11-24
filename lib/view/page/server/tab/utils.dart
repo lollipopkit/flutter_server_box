@@ -10,7 +10,7 @@ extension _Actions on _ServerPageState {
     }
     if (srv.needsInteractiveAuth) {
       TryLimiter.reset(srv.spi.id);
-      ref.read(serversProvider.notifier).refresh(spi: srv.spi);
+      ref.read(serverConnectionsProvider).refresh(spi: srv.spi);
       return;
     }
     if (inPlace ?? _opensInPlace(context)) {

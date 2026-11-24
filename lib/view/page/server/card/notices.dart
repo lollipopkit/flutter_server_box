@@ -8,7 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -650,7 +650,7 @@ class _StaleRefresh extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       onTap: () {
         TryLimiter.reset(spi.id);
-        ref.read(serversProvider.notifier).refresh(spi: spi);
+        ref.read(serverConnectionsProvider).refresh(spi: spi);
       },
     );
   }

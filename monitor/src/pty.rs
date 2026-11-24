@@ -69,6 +69,7 @@ fn passwd_account() -> Option<Account> {
         if ptr.is_null() {
             return String::new();
         }
+        // SAFETY: `ptr` is non-null and comes from a valid `passwd` entry.
         unsafe { CStr::from_ptr(ptr) }.to_string_lossy().into_owned()
     };
     // SAFETY: as above; each field is a NUL-terminated string or null.

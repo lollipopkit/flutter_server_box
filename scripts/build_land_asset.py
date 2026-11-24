@@ -116,7 +116,9 @@ def main() -> None:
             out += struct.pack(">hh", lat, lon)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_bytes(bytes(out))
+    tmp = OUT.with_suffix(OUT.suffix + ".tmp")
+    tmp.write_bytes(bytes(out))
+    tmp.replace(OUT)
     points = sum(len(ring) for ring in rings)
     print(
         f"wrote {OUT.relative_to(Path.cwd()) if OUT.is_relative_to(Path.cwd()) else OUT}"

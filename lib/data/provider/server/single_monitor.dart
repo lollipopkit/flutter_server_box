@@ -120,7 +120,7 @@ mixin _MonitorStatus on _ScriptStatus {
       subtitle: monitor.addr,
       serverId: spi.id,
       startTimeMs: DateTime.now().millisecondsSinceEpoch,
-      disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
+      disconnect: () => _disconnectStatusSession(spi.id),
       status: TermSessionStatus.connected,
       hasTerminal: false,
     );

@@ -30,6 +30,7 @@ import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/ai/agent_target.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
@@ -1613,7 +1614,7 @@ class GlobalAgentToolService {
         // key, and the question needs something on screen to have come from.
         _ref.read(agentShellProvider.notifier).show();
         await _ref
-            .read(serversProvider.notifier)
+            .read(serverConnectionsProvider)
             .refresh(spi: state.spi)
             .timeout(_operationTimeout);
         final refreshed = _ref.read(serverProvider(state.spi.id));
@@ -1650,7 +1651,7 @@ class GlobalAgentToolService {
         return await _addServer(proposal, watch);
       case 'disconnect':
         final state = _server(proposal.serverId);
-        _ref.read(serversProvider.notifier).closeOneServer(state.spi.id);
+        _ref.read(serverConnectionsProvider).closeOneServer(state.spi.id);
         final disconnected = _ref.read(serverProvider(state.spi.id));
         return AgentToolExecutionResult(
           toolName: proposal.toolName,

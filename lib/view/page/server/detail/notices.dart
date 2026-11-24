@@ -259,7 +259,7 @@ ${err.message ?? 'null'}
   /// the previous failures installed.
   void _reconnect(ServerState srv) {
     TryLimiter.reset(srv.spi.id);
-    ref.read(serversProvider.notifier).refresh(spi: srv.spi);
+    ref.read(serverConnectionsProvider).refresh(spi: srv.spi);
   }
 
   /// That every figure on this page was taken a while ago, and the way to ask

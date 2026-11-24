@@ -11,6 +11,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/lifecycle.dart';
 import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -326,6 +327,11 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       sessionKeepAliveProvider.notifier,
     );
     final owner = _keepAliveOwner = Object();
+    final serverLifecycle = ref.read(serverLifecycleProvider);
+    final unregisterDelete = serverLifecycle.onBeforeDelete(closeForServer);
+    final unregisterRename = serverLifecycle.onBeforeRename(
+      (oldId, _) => closeForServer(oldId),
+    );
     final lifecycle = AppLifecycleListener(
       onResume: _resume,
       onPause: _pause,
@@ -334,6 +340,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     );
     ref.onDispose(() {
       _disposed = true;
+      unregisterDelete();
+      unregisterRename();
       lifecycle.dispose();
       final ids = _entries.keys.toList();
       for (final entry in _entries.values.toList()) {

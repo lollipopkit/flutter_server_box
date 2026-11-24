@@ -9,7 +9,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
-import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/workspace.dart';
@@ -245,7 +245,7 @@ class _Dormant extends ConsumerWidget {
   void _wake(WidgetRef ref) {
     ref.read(workspacesProvider.notifier).wake(tab.serverId);
     TryLimiter.reset(spi.id);
-    ref.read(serversProvider.notifier).refresh(spi: spi);
+    ref.read(serverConnectionsProvider).refresh(spi: spi);
   }
 
   @override

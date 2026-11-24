@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
@@ -14,11 +13,14 @@ import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/redact_source.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/agent/tools.dart';
 import 'package:server_box/view/page/agent/settings.dart';
+
+export 'package:server_box/view/agent/redact_source.dart'
+    show LocalRedactSource;
 
 /// The Agent on fl_pi_llm: what this app tells fl_pi_llm_ui about itself, and
 /// starting the runtime.
@@ -204,58 +206,7 @@ Keep explanations concise and make risks explicit. Reply in the language the use
   /// What `Llm` is told to keep out, null while the switch is off. `Llm` adds
   /// its own `sec_` handles.
   static String? _redact() =>
-      Stores.setting.agentRedact.fetch() ? _rules() : null;
-
-  /// The stored rules as `fl_pi_llm::redact::Settings` JSON, the switch aside.
-  static String _rules({
-    List<String>? off,
-    List<String>? allow,
-    List<Map<String, Object?>>? custom,
-  }) => jsonEncode({
-    'enabled': true,
-    'off': off ?? Stores.setting.agentRedactOff.fetch(),
-    'allow': allow ?? Stores.setting.agentRedactAllow.fetch(),
-    'custom': custom ?? Stores.setting.agentRedactRules.fetch(),
-  });
-}
-
-/// This app's redaction rules, as [RedactPage] reads and writes them. The
-/// switch is its own setting (`agentRedact`), so the page shows the rules
-/// while it is off.
-final class LocalRedactSource implements RedactSource {
-  @override
-  Future<String?> load() async => LlmHost._rules();
-
-  @override
-  Future<String?> save(String? settings) async {
-    final s = settings == null
-        ? const <String, Object?>{}
-        : (jsonDecode(settings) as Map).cast<String, Object?>();
-    final off = SettingStore.stringList(s['off']);
-    final allow = SettingStore.stringList(s['allow']);
-    final custom = [
-      for (final r in (s['custom'] as List?) ?? const [])
-        if (r is Map) r.map((k, v) => MapEntry(k.toString(), v)),
-    ];
-    // Checked with the switch off too: what is stored runs once it is on.
-    final err = await Llm.redactError(
-      LlmHost._rules(off: off, allow: allow, custom: custom),
-    );
-    if (err != null) return err;
-    await Stores.setting.agentRedactOff.set(off);
-    await Stores.setting.agentRedactAllow.set(allow);
-    // Each reaches the engine through its listener.
-    await Stores.setting.agentRedactRules.set(custom);
-    return null;
-  }
-
-  @override
-  bool get enabled => Stores.setting.agentRedact.fetch();
-
-  @override
-  Future<void> setEnabled(bool on) async {
-    await Stores.setting.agentRedact.set(on);
-  }
+      Stores.setting.agentRedact.fetch() ? redactRulesJson() : null;
 }
 
 /// The Agent's settings from before fl_pi_llm: one OpenAI-compatible

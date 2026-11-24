@@ -7,11 +7,9 @@ import { locale } from '../../i18n/i18n-svelte'
 import type { ServerEntry } from '../../lib/servers.svelte'
 import type { InstalledApp } from '../../types'
 import { deskApi } from '../deskApi'
-import type { IconTone } from '../lk/AppIcon.svelte'
+import { parseIconTone } from '../lk/iconTone'
 import { registry } from '../registry.svelte'
 import { defineApp, type AppSpec } from '../sys/manifest'
-
-const TONES: IconTone[] = ['berry', 'soft', 'ink', 'sky', 'teal', 'violet', 'amber', 'leaf', 'pale', 'bright', 'mist']
 
 /// The title in the panel's language, else English.
 function title(t: InstalledApp['manifest']['title']): () => string {
@@ -31,7 +29,7 @@ export function webAppSpec(app: InstalledApp): AppSpec {
     title: title(m.title),
     keywords: () => m.keywords ?? [],
     glyph: m.glyph,
-    tone: TONES.includes(m.tone as IconTone) ? (m.tone as IconTone) : 'mist',
+    tone: parseIconTone(m.tone),
     instances: m.instances,
     size: m.size,
     minSize: m.min_size,

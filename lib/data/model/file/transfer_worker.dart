@@ -278,7 +278,7 @@ class FileTransferWorker {
         );
         return;
       default:
-        onNotify(data);
+        if (data != null) onNotify(data as Object);
     }
   }
 }

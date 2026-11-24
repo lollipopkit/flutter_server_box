@@ -20,8 +20,7 @@ import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-
-part 'sort.dart';
+import 'package:server_box/view/widget/server_picker_sort.dart';
 
 class RemoteDesktopTabPage extends ConsumerStatefulWidget {
   const RemoteDesktopTabPage({super.key});
@@ -36,6 +35,10 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   String? _selectedServerId;
   bool _showPicker = false;
   String? _testingSessionId;
+  late final _sortPref = ServerPickerSortPref(
+    sortBy: Stores.setting.remoteDesktopSortBy,
+    sortAsc: Stores.setting.remoteDesktopSortAsc,
+  );
   late final _sortBySetting = Stores.setting.remoteDesktopSortBy.listenable();
   late final _sortAscSetting = Stores.setting.remoteDesktopSortAsc.listenable();
 
@@ -91,7 +94,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(remoteDesktopSessionsProvider);
     final servers = ref.watch(serversProvider);
-    final order = _SortOrder.stored.apply(servers.serverOrder, servers.servers);
+    final order = _sortPref.read().apply(servers.serverOrder, servers.servers);
     final groups = groupByTag(order, (id) => servers.servers[id]?.tags);
     ref.listen(
       remoteDesktopServerRequestProvider,
@@ -256,7 +259,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   }
 
   BarAction get _sortAction => BarAction(
-    icon: _SortOrder.stored.icon,
+    icon: _sortPref.read().icon,
     label: libL10n.sort,
     onTap: _showSortSheet,
   );
@@ -328,16 +331,17 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   }
 
   Future<void> _showSortSheet() async {
+    final current = _sortPref.read();
     await showRowsSheet<void>(
       context,
       rows: (sheetContext) => [
-        for (final order in _SortOrder.all)
+        for (final order in ServerPickerSortOrder.all)
           SheetChoiceTile(
             icon: order.icon,
             title: order.label,
-            selected: order.isCurrent,
+            selected: order == current,
             onTap: () {
-              order.save();
+              _sortPref.write(order);
               Navigator.of(sheetContext).pop();
             },
           ),

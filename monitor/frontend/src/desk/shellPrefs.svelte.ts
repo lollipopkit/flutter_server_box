@@ -2,6 +2,8 @@
 /// it hides, its icon size, and the apps' icon shape. Per browser (a phone and a desktop want different docks), kept in
 /// localStorage; what follows the account lives in `prefs.svelte.ts`.
 
+import { readLocalJson, writeLocalJson } from '../lib/localJson'
+
 export type DockPosition = 'left' | 'bottom' | 'right'
 /// An app icon's outline: a circle, or the design system's squircle.
 export type IconShape = 'circle' | 'squircle'
@@ -23,17 +25,13 @@ const KEY = 'desk.shell'
 const DEFAULTS: Stored = { dockPosition: 'left', dockAutoHide: false, dockSize: 44, dockRunDots: true, iconShape: 'circle' }
 
 function load(): Stored {
-  try {
-    const raw = JSON.parse(window.localStorage.getItem(KEY) ?? '{}') as Partial<Stored>
-    return {
-      dockPosition: (['left', 'bottom', 'right'] as const).find((p) => p === raw.dockPosition) ?? DEFAULTS.dockPosition,
-      dockAutoHide: raw.dockAutoHide === true,
-      dockSize: DOCK_SIZES.find((s) => s === raw.dockSize) ?? DEFAULTS.dockSize,
-      dockRunDots: raw.dockRunDots !== false,
-      iconShape: raw.iconShape === 'squircle' ? 'squircle' : 'circle',
-    }
-  } catch {
-    return { ...DEFAULTS }
+  const raw = readLocalJson<Stored>(KEY)
+  return {
+    dockPosition: (['left', 'bottom', 'right'] as const).find((p) => p === raw.dockPosition) ?? DEFAULTS.dockPosition,
+    dockAutoHide: raw.dockAutoHide === true,
+    dockSize: DOCK_SIZES.find((s) => s === raw.dockSize) ?? DEFAULTS.dockSize,
+    dockRunDots: raw.dockRunDots !== false,
+    iconShape: raw.iconShape === 'squircle' ? 'squircle' : 'circle',
   }
 }
 
@@ -71,11 +69,7 @@ class ShellPrefs {
 
   set(patch: Partial<Stored>) {
     this.#value = { ...this.#value, ...patch }
-    try {
-      window.localStorage.setItem(KEY, JSON.stringify(this.#value))
-    } catch {
-      // Private mode: it lasts the tab.
-    }
+    writeLocalJson(KEY, this.#value)
   }
 }
 

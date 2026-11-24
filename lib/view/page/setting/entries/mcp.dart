@@ -136,10 +136,12 @@ class _McpEndpoints extends StatelessWidget {
       future: appMcpInterfaces(),
       builder: (context, snapshot) {
         final ipv6 = bound.host == '::';
+        final items = snapshot.data;
         final urls = [
-          for (final item in snapshot.data ?? const [])
-            if (ipv6 || item.address.type == InternetAddressType.IPv4)
-              bound.replace(host: item.address.address),
+          if (items != null)
+            for (final item in items)
+              if (ipv6 || item.address.type == InternetAddressType.IPv4)
+                bound.replace(host: item.address.address),
         ];
         if (urls.isEmpty) return _tile(context, null);
         return Column(children: [for (final url in urls) _tile(context, url)]);

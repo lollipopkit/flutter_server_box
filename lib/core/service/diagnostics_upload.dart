@@ -139,7 +139,7 @@ abstract final class DiagnosticsUpload {
         // Transactions fall through to this too, as `beforeSendTransaction` is
         // unset; nothing in the app starts one.
         options.beforeSend = (event, hint) {
-          final error = event.throwable;
+          final Object? error = event.throwable;
           if (error != null && !ReportFilter.isDefect(error)) return null;
           final scrubbed = scrubWithStoredIdentifiers(event);
           return scrubbed == null ? null : groupByCallSite(scrubbed);

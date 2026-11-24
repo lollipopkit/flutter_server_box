@@ -136,17 +136,9 @@ final class BmcPowerActions extends ConsumerWidget {
       return;
     }
 
-    final result = await liveNotifier.power(intent, expectedRequest: request);
-    switch (result) {
-      case BmcPowerResult.confirmed:
-        Toast.success(l10n.bmcPowerDone);
-      case BmcPowerResult.accepted:
-        Toast.warn(l10n.bmcPowerAccepted);
-      case BmcPowerResult.notSupported:
-        Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
-      case BmcPowerResult.failed:
-        Toast.error(libL10n.fail);
-    }
+    toastBmcPowerResult(
+      await liveNotifier.power(intent, expectedRequest: request),
+    );
   }
 }
 
@@ -295,35 +287,37 @@ final class BmcManageActions extends ConsumerWidget {
     }
     await context.showSheet<void>(
       title: l10n.bmcVirtualMedia,
-      childBuilder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final slot in slots)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                slot.inserted ? Icons.album : Icons.radio_button_unchecked,
+      childBuilder: (_) => Consumer(
+        builder: (ctx, sheetRef, _) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final slot in slots)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  slot.inserted ? Icons.album : Icons.radio_button_unchecked,
+                ),
+                title: Text(slot.name ?? slot.id ?? slot.path),
+                subtitle: Text(
+                  slot.image ?? slot.mediaTypes.join(', '),
+                  style: UIs.text12Grey,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: slot.inserted
+                    ? TextButton(
+                        onPressed: () =>
+                            _eject(ctx, sheetRef, target.id, slot, expectedGen),
+                        child: Text(l10n.bmcEjectMedia),
+                      )
+                    : TextButton(
+                        onPressed: () =>
+                            _insert(ctx, sheetRef, target.id, slot, expectedGen),
+                        child: Text(l10n.bmcInsertMedia),
+                      ),
               ),
-              title: Text(slot.name ?? slot.id ?? slot.path),
-              subtitle: Text(
-                slot.image ?? slot.mediaTypes.join(', '),
-                style: UIs.text12Grey,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: slot.inserted
-                  ? TextButton(
-                      onPressed: () =>
-                          _eject(ctx, ref, target.id, slot, expectedGen),
-                      child: Text(l10n.bmcEjectMedia),
-                    )
-                  : TextButton(
-                      onPressed: () =>
-                          _insert(ctx, ref, target.id, slot, expectedGen),
-                      child: Text(l10n.bmcInsertMedia),
-                    ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

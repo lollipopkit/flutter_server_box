@@ -3,19 +3,12 @@
 
 import { getContext, untrack } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
-import type { AppIconChrome, AppMenu, WindowChrome } from '../window/chrome.svelte'
+import type { AppIconChrome, AppMenu, LifecycleState, WindowChrome } from '../window/chrome.svelte'
 import type { AppStorage } from '../appData'
 import type { AppNotice } from '../notifications.svelte'
 import type { Intent, OpenOptions } from '../windows.svelte'
 
-/// Where a window's process is in its life.
-/// - `active`: the front window.
-/// - `visible`: on screen behind it.
-/// - `background`: hidden (minimised, the desk locked, the browser tab
-///   hidden). Not drawn; the app should stop work done only for the eye.
-/// - `suspended`: hidden while background running is not allowed. The app's
-///   content is unmounted and mounted again when the window comes back.
-export type LifecycleState = 'active' | 'visible' | 'background' | 'suspended'
+export type { LifecycleState }
 
 export interface WindowHandle {
   readonly id: string

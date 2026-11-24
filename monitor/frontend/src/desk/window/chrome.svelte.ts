@@ -10,8 +10,16 @@
 import { untrack, type Snippet } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { IconTone } from '../lk/AppIcon.svelte'
-import type { LifecycleState } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
+
+/// Where a window's process is in its life.
+/// - `active`: the front window.
+/// - `visible`: on screen behind it.
+/// - `background`: hidden (minimised, the desk locked, the browser tab
+///   hidden). Not drawn; the app should stop work done only for the eye.
+/// - `suspended`: hidden while background running is not allowed. The app's
+///   content is unmounted and mounted again when the window comes back.
+export type LifecycleState = 'active' | 'visible' | 'background' | 'suspended'
 
 export interface ToolbarChrome {
   title?: string

@@ -262,7 +262,7 @@ struct Loopback(RwLock<LoopbackDial>);
 
 impl Dial for Loopback {
     fn dial(&self, host: String, port: u16) -> BoxFuture<'static, std::io::Result<Box<dyn Stream>>> {
-        self.0.read().unwrap().dial(host, port)
+        self.0.read().unwrap_or_else(|e| e.into_inner()).dial(host, port)
     }
 }
 
@@ -299,7 +299,7 @@ impl PveSession {
     /// one fail and are made again.
     #[flutter_rust_bridge::frb(sync)]
     pub fn set_loopback(&self, port: u16, token: Vec<u8>) {
-        *self.loopback.0.write().unwrap() = LoopbackDial { port, token };
+        *self.loopback.0.write().unwrap_or_else(|e| e.into_inner()) = LoopbackDial { port, token };
     }
 
     /// Replaces the login (an edit, or a pin confirmed elsewhere). A new
