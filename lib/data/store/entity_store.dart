@@ -154,11 +154,22 @@ abstract class EntityStore<T extends Object> {
   /// [item] as a backup carries it.
   Map<String, dynamic> toJson(T item);
 
+  /// Decodes one record from backup/sync JSON. May throw on malformed input;
+  /// callers go through [fromJson] so failures are logged and skipped cleanly.
+  T decodeJson(Map<String, dynamic> json);
+
   /// Rebuilds one record from what a backup carried.
   ///
   /// Returns null for anything unreadable — a restore skips that record rather
-  /// than failing over it.
-  T? fromJson(Map<String, dynamic> json);
+  /// than failing over it, and logs a warning in both debug and release builds.
+  T? fromJson(Map<String, dynamic> json) {
+    try {
+      return decodeJson(json);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to parse $table record from JSON', e, s);
+      return null;
+    }
+  }
 
   /// The incoming record, given the id it should be written under.
   ///

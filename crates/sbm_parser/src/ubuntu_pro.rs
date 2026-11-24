@@ -63,21 +63,7 @@ pub struct ProView {
     pub livepatch: Option<Livepatch>,
 }
 
-fn sections(out: &str) -> std::collections::HashMap<&str, String> {
-    let mut map: std::collections::HashMap<&str, String> = std::collections::HashMap::new();
-    let mut current = "";
-    for line in out.lines() {
-        if let Some(name) = line.strip_prefix("### ") {
-            current = name.trim();
-            map.entry(current).or_default();
-        } else if !line.trim().is_empty() {
-            let s = map.entry(current).or_default();
-            s.push_str(line);
-            s.push('\n');
-        }
-    }
-    map
-}
+use crate::common::parse_sections as sections;
 
 fn text(v: &Value) -> Option<String> {
     v.as_str().map(str::trim).filter(|s| !s.is_empty()).map(str::to_string)

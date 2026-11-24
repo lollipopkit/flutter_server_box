@@ -360,7 +360,7 @@ const _kAlwaysShown = {
 /// machine reporting nothing else got it twice and a `more` of -1 — every
 /// swapless machine on its first poll, before disk I/O has a second sample.
 ServerCardReadings serverCardReadings(ServerState srv) {
-  final all = _readings(srv);
+  final all = serverMetrics(srv);
   final kinds = {
     for (final m in all)
       if (_kAlwaysShown.contains(m.kind)) m.kind,
@@ -494,102 +494,148 @@ ServerMetric? _extra(List<ServerMetric> all, Set<ServerMetricKind> taken) {
   return free.first;
 }
 
-List<ServerMetric> _readings(ServerState srv) {
+/// Canonical label and icon for a [ServerMetricKind], shared by cards and
+/// detail rows so both always name each reading identically.
+({String label, IconData icon}) serverMetricDescriptor(ServerMetricKind kind) =>
+    switch (kind) {
+      ServerMetricKind.cpu => (label: 'CPU', icon: ServerDetailCards.cpu.icon),
+      ServerMetricKind.mem => (
+        label: libL10n.memory,
+        icon: ServerDetailCards.mem.icon,
+      ),
+      ServerMetricKind.swap => (
+        label: 'Swap',
+        icon: ServerDetailCards.swap.icon,
+      ),
+      ServerMetricKind.disk => (
+        label: libL10n.disk,
+        icon: ServerDetailCards.disk.icon,
+      ),
+      ServerMetricKind.diskIo => (
+        label: l10n.diskIo,
+        icon: MingCute.transfer_3_line,
+      ),
+      ServerMetricKind.netSpeed => (
+        label: l10n.netSpeed,
+        icon: ServerDetailCards.net.icon,
+      ),
+      ServerMetricKind.netTraffic => (
+        label: libL10n.traffic,
+        icon: kNetTrafficIcon,
+      ),
+      ServerMetricKind.gpu => (label: 'GPU', icon: ServerDetailCards.gpu.icon),
+      ServerMetricKind.temp => (
+        label: libL10n.temperature,
+        icon: ServerDetailCards.temp.icon,
+      ),
+      ServerMetricKind.battery => (
+        label: libL10n.battery,
+        icon: ServerDetailCards.battery.icon,
+      ),
+    };
+
+/// Every reading [srv] currently reports, in display order.
+List<ServerMetric> serverMetrics(ServerState srv) {
   final ss = srv.status;
   final h = ss.history;
   final times = h.time.toList();
   final out = <ServerMetric>[];
 
+  void addMetric(
+    ServerMetricKind kind, {
+    required String value,
+    required String note,
+    required String bigNote,
+    required List<double?> samples,
+    required String Function(double) format,
+    double? percent,
+    bool binary = false,
+    bool? over,
+  }) {
+    final desc = serverMetricDescriptor(kind);
+    out.add(
+      ServerMetric(
+        kind: kind,
+        label: desc.label,
+        icon: desc.icon,
+        value: value,
+        note: note,
+        bigNote: bigNote,
+        percent: percent,
+        samples: samples,
+        times: times,
+        format: format,
+        binary: binary,
+        over: over,
+      ),
+    );
+  }
+
   // Always present, even before the first sample: every machine has a CPU, so
   // an absent row would say this one does not rather than that nothing has
   // been measured yet — which is what the dash says.
   final cpu = ss.cpu.usedPercent(coreIdx: 0);
-  out.add(
-    ServerMetric(
-      kind: ServerMetricKind.cpu,
-      label: 'CPU',
-      icon: ServerDetailCards.cpu.icon,
-      value: ReadingFmt.pct(cpu),
-      note: cpuNote(ss),
-      bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
-      percent: cpu == null ? null : cpu / 100,
-      samples: h.cpu.toList(),
-      times: times,
-      format: ReadingFmt.pct,
-    ),
+  addMetric(
+    ServerMetricKind.cpu,
+    value: ReadingFmt.pct(cpu),
+    note: cpuNote(ss),
+    bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
+    percent: cpu == null ? null : cpu / 100,
+    samples: h.cpu.toList(),
+    format: ReadingFmt.pct,
   );
 
   if (ss.mem.usedPercent case final ratio?) {
     final used = ratio * 100;
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.mem,
-        label: libL10n.memory,
-        icon: ServerDetailCards.mem.icon,
-        value: ReadingFmt.pct(used),
-        note:
-            '${(ss.mem.used * 1024).bytes2Str} / '
-            '${(ss.mem.total * 1024).bytes2Str}',
-        bigNote: l10n.ofFmt((ss.mem.total * 1024).bytes2Str),
-        percent: used / 100,
-        samples: h.mem.toList(),
-        times: times,
-        format: ReadingFmt.pct,
-      ),
+    addMetric(
+      ServerMetricKind.mem,
+      value: ReadingFmt.pct(used),
+      note:
+          '${(ss.mem.used * 1024).bytes2Str} / '
+          '${(ss.mem.total * 1024).bytes2Str}',
+      bigNote: l10n.ofFmt((ss.mem.total * 1024).bytes2Str),
+      percent: used / 100,
+      samples: h.mem.toList(),
+      format: ReadingFmt.pct,
     );
   }
 
   if (ss.swap.total > 0) {
     final used = ss.swap.usedPercent * 100;
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.swap,
-        label: 'Swap',
-        icon: ServerDetailCards.swap.icon,
-        value: ReadingFmt.pct(used),
-        note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
-        bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
-        percent: used / 100,
-        samples: h.swap.toList(),
-        times: times,
-        format: ReadingFmt.pct,
-      ),
+    addMetric(
+      ServerMetricKind.swap,
+      value: ReadingFmt.pct(used),
+      note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
+      bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
+      percent: used / 100,
+      samples: h.swap.toList(),
+      format: ReadingFmt.pct,
     );
   }
 
   if (ss.diskUsage case final usage?) {
     final used = usage.usedPercent;
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.disk,
-        label: libL10n.disk,
-        icon: ServerDetailCards.disk.icon,
-        value: ReadingFmt.pct(used),
-        note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
-        bigNote: l10n.ofFmt(usage.size.kb2Str),
-        percent: used / 100,
-        samples: h.disk.toList(),
-        times: times,
-        format: ReadingFmt.pct,
-      ),
+    addMetric(
+      ServerMetricKind.disk,
+      value: ReadingFmt.pct(used),
+      note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
+      bigNote: l10n.ofFmt(usage.size.kb2Str),
+      percent: used / 100,
+      samples: h.disk.toList(),
+      format: ReadingFmt.pct,
     );
   }
 
   final (read, write) = ss.diskIO.allSpeedBytes;
   if (read != null || write != null) {
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.diskIo,
-        label: l10n.diskIo,
-        icon: MingCute.transfer_3_line,
-        value: ReadingFmt.rate(write),
-        note: '${ReadingFmt.rate(read)} ${l10n.read}',
-        bigNote: '${l10n.write} · ${ReadingFmt.rate(read)} ${l10n.read}',
-        samples: h.diskWrite.toList(),
-        times: times,
-        format: ReadingFmt.rateAxis,
-        binary: true,
-      ),
+    addMetric(
+      ServerMetricKind.diskIo,
+      value: ReadingFmt.rate(write),
+      note: '${ReadingFmt.rate(read)} ${l10n.read}',
+      bigNote: '${l10n.write} · ${ReadingFmt.rate(read)} ${l10n.read}',
+      samples: h.diskWrite.toList(),
+      format: ReadingFmt.rateAxis,
+      binary: true,
     );
   }
 
@@ -597,70 +643,50 @@ List<ServerMetric> _readings(ServerState srv) {
   if (ns.devices.isNotEmpty) {
     final rx = ns.speedInBytesOf();
     final tx = ns.speedOutBytesOf();
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.netSpeed,
-        label: l10n.netSpeed,
-        icon: ServerDetailCards.net.icon,
-        value: '↑ ${ReadingFmt.rate(tx)}',
-        note: '↑ ${ReadingFmt.rate(tx)} · ↓ ${ReadingFmt.rate(rx)}',
-        bigNote: '↓ ${ReadingFmt.rate(rx)}',
-        samples: h.netTx.toList(),
-        times: times,
-        format: ReadingFmt.rateAxis,
-        binary: true,
-      ),
+    addMetric(
+      ServerMetricKind.netSpeed,
+      value: '↑ ${ReadingFmt.rate(tx)}',
+      note: '↑ ${ReadingFmt.rate(tx)} · ↓ ${ReadingFmt.rate(rx)}',
+      bigNote: '↓ ${ReadingFmt.rate(rx)}',
+      samples: h.netTx.toList(),
+      format: ReadingFmt.rateAxis,
+      binary: true,
     );
 
     final rxTotal = ns.sizeInBytesOf()?.toDouble();
     final txTotal = ns.sizeOutBytesOf()?.toDouble();
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.netTraffic,
-        label: libL10n.traffic,
-        icon: kNetTrafficIcon,
-        value: '↑ ${ReadingFmt.size(txTotal)}',
-        note: '↑ ${ReadingFmt.size(txTotal)} · ↓ ${ReadingFmt.size(rxTotal)}',
-        bigNote: '↓ ${ReadingFmt.size(rxTotal)}',
-        samples: cumulativeBytes(times, h.netTx.toList()),
-        times: times,
-        format: ReadingFmt.sizeAxis,
-        binary: true,
-      ),
+    addMetric(
+      ServerMetricKind.netTraffic,
+      value: '↑ ${ReadingFmt.size(txTotal)}',
+      note: '↑ ${ReadingFmt.size(txTotal)} · ↓ ${ReadingFmt.size(rxTotal)}',
+      bigNote: '↓ ${ReadingFmt.size(rxTotal)}',
+      samples: cumulativeBytes(times, h.netTx.toList()),
+      format: ReadingFmt.sizeAxis,
+      binary: true,
     );
   }
 
   if (busiestGpu(ss) case final gpu?) {
     final used = gpu.utilization;
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.gpu,
-        label: 'GPU',
-        icon: ServerDetailCards.gpu.icon,
-        value: ReadingFmt.pct(used),
-        note: gpu.name,
-        bigNote: gpu.name,
-        percent: used == null ? null : used / 100,
-        samples: h.gpu.toList(),
-        times: times,
-        format: ReadingFmt.pct,
-      ),
+    addMetric(
+      ServerMetricKind.gpu,
+      value: ReadingFmt.pct(used),
+      note: gpu.name,
+      bigNote: gpu.name,
+      percent: used == null ? null : used / 100,
+      samples: h.gpu.toList(),
+      format: ReadingFmt.pct,
     );
   }
 
   if (hottestSensor(ss) case (final sensor, final celsius)) {
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.temp,
-        label: libL10n.temperature,
-        icon: ServerDetailCards.temp.icon,
-        value: ReadingFmt.temp(celsius),
-        note: sensor,
-        bigNote: sensor,
-        samples: h.temp.toList(),
-        times: times,
-        format: ReadingFmt.temp,
-      ),
+    addMetric(
+      ServerMetricKind.temp,
+      value: ReadingFmt.temp(celsius),
+      note: sensor,
+      bigNote: sensor,
+      samples: h.temp.toList(),
+      format: ReadingFmt.temp,
     );
   }
 
@@ -668,25 +694,20 @@ List<ServerMetric> _readings(ServerState srv) {
   // several is reporting its mouse and its keyboard.
   if (ss.batteries.firstOrNull case final battery?) {
     final percent = battery.percent?.toDouble();
-    out.add(
-      ServerMetric(
-        kind: ServerMetricKind.battery,
-        label: libL10n.battery,
-        icon: ServerDetailCards.battery.icon,
-        value: ReadingFmt.pct(percent),
-        note: [battery.status.name, ?battery.name].join(' · '),
-        bigNote: battery.status.name,
-        percent: percent == null ? null : percent / 100,
-        // Full is where a battery should be. Low is only trouble while it is
-        // what the machine runs on.
-        over:
-            percent != null &&
-            percent <= kServerBatteryLowPercent &&
-            battery.status == BatteryStatus.discharging,
-        samples: h.battery.toList(),
-        times: times,
-        format: ReadingFmt.pct,
-      ),
+    addMetric(
+      ServerMetricKind.battery,
+      value: ReadingFmt.pct(percent),
+      note: [battery.status.name, ?battery.name].join(' · '),
+      bigNote: battery.status.name,
+      percent: percent == null ? null : percent / 100,
+      // Full is where a battery should be. Low is only trouble while it is
+      // what the machine runs on.
+      over:
+          percent != null &&
+          percent <= kServerBatteryLowPercent &&
+          battery.status == BatteryStatus.discharging,
+      samples: h.battery.toList(),
+      format: ReadingFmt.pct,
     );
   }
 

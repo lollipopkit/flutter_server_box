@@ -285,6 +285,59 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     ];
   }
 
+  List<Widget> desktopRefreshAction() {
+    if (!isDesktop) return const [];
+    return [
+      Btn.icon(
+        text: libL10n.refresh,
+        icon: const Icon(Icons.refresh, size: 18),
+        onTap: busy ? null : refresh,
+      ),
+    ];
+  }
+
+  Widget firewallScaffold({
+    required List<Widget> actions,
+    required Widget body,
+    Widget? floatingActionButton,
+  }) => Scaffold(
+    appBar: CustomAppBar(
+      title: TwoLineText(up: l10n.firewall, down: host.spi.name),
+      actions: actions,
+    ),
+    body: RefreshIndicator(onRefresh: refresh, child: body),
+    floatingActionButton: floatingActionButton,
+  );
+
+  Widget statusHeader({
+    required bool active,
+    required String title,
+    required String subtitle,
+    required ValueChanged<bool>? onToggle,
+  }) => Padding(
+    padding: const EdgeInsets.fromLTRB(13, 11, 7, 11),
+    child: Row(
+      children: [
+        Icon(
+          active ? Icons.shield : Icons.shield_outlined,
+          size: 26,
+          color: active ? Colors.green : UIs.textGrey.color,
+        ),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(subtitle, style: UIs.text12Grey),
+            ],
+          ),
+        ),
+        Switch(value: active, onChanged: onToggle),
+      ],
+    ),
+  );
+
   /// Said above everything else while both firewalls are on: [self] as
   /// it was just read — it may have been switched on or off here since the
   /// probe — and the other as the probe found it.

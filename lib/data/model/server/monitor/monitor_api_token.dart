@@ -123,7 +123,7 @@ class MonitorApiToken {
   );
 
   static List<MonitorApiToken> listFrom(Object? data) => [
-    for (final row in (data as List? ?? const []).whereType<Map>())
+    for (final row in (data as List? ?? const []).whereType<Map<Object?, Object?>>())
       MonitorApiToken.fromJson(row.cast<String, dynamic>()),
   ];
 }

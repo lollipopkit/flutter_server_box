@@ -95,7 +95,7 @@ impl RateTracker {
                 Some(last) => diff(last, &sample, plain),
             }
         } else {
-            match self.base.get(id) {
+            match self.base.get_mut(id) {
                 None => {
                     self.base.insert(id.to_owned(), sample);
                     plain
@@ -119,14 +119,14 @@ impl RateTracker {
                         // step after it is divided by at most the hold more,
                         // not by the whole idle stretch.
                         None => {
-                            let base = self.base.insert(id.to_owned(), sample.clone()).unwrap();
-                            diff(&base, &sample, plain)
+                            let prev = std::mem::replace(base, sample.clone());
+                            diff(&prev, &sample, plain)
                         }
                     }
                 }
-                Some(_) => {
-                    let base = self.base.insert(id.to_owned(), sample.clone()).unwrap();
-                    diff(&base, &sample, plain)
+                Some(base) => {
+                    let prev = std::mem::replace(base, sample.clone());
+                    diff(&prev, &sample, plain)
                 }
             }
         };

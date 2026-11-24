@@ -53,8 +53,8 @@ void main() {
     return WidgetSync.payloadFrom(servers: servers, tokens: tokens);
   }
 
-  List<Map> entries(Map<String, dynamic> p) =>
-      (p['servers'] as List).cast<Map>();
+  List<Map<String, Object?>> entries(Map<String, dynamic> p) =>
+      (p['servers'] as List).cast<Map<String, Object?>>();
 
   test('deletion blocks stale snapshot mints and revokes an in-flight mint',
       () async {

@@ -300,23 +300,32 @@ void main() {
     final http = HttpClient();
     addTearDown(() => http.close(force: true));
     var id = 0;
-    Future<Map> rpc(String method, Map params, {String? as}) async {
+    Future<Map<String, dynamic>> rpc(
+      String method,
+      Map<String, Object?> params, {
+      String? as,
+    }) async {
       final res = await send(http, server.port, as ?? token, {
         'id': ++id,
         'method': method,
         'params': params,
       });
       expect(res.statusCode, 200);
-      return jsonDecode(await utf8.decoder.bind(res).join()) as Map;
+      return jsonDecode(await utf8.decoder.bind(res).join())
+          as Map<String, dynamic>;
     }
 
-    Future<Map> call(String name, [Map args = const {}, String? as]) async =>
+    Future<Map<String, dynamic>> call(
+      String name, [
+      Map<String, Object?> args = const {},
+      String? as,
+    ]) async =>
         (await rpc('tools/call', {'name': name, 'arguments': args}, as: as))['result']
-            as Map;
-    Future<List> names(String as) async => [
+            as Map<String, dynamic>;
+    Future<List<Object?>> names(String as) async => [
       for (final tool in (await rpc('tools/list', {}, as: as))['result']['tools']
           as List)
-        tool['name'],
+        (tool as Map<String, dynamic>)['name'],
     ];
 
     expect(
@@ -379,6 +388,25 @@ void main() {
     expect(Stores.setting.editorSoftWrap.fetch(), true);
     final prefs = (await call('app_settings'))['structuredContent'] as Map;
     expect(prefs['editorSoftWrap'], true);
+    expect(prefs['termTheme'], 'followApp');
+    expect(
+      (await call('app_setting_set', {
+        'key': 'termTheme',
+        'value': 'dark',
+      }))['isError'],
+      false,
+    );
+    expect(
+      (await call('app_setting_set', {
+        'key': 'termTheme',
+        'value': 2,
+      }))['isError'],
+      true,
+    );
+    expect(
+      ((await call('app_settings'))['structuredContent'] as Map)['termTheme'],
+      'dark',
+    );
     expect(
       (await call('app_setting_set', {
         'key': 'agentLocalExec',

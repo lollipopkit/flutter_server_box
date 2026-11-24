@@ -92,11 +92,11 @@ void main() {
       final encoded = backup.toJsonString();
       final decoded = json.decode(encoded) as Map<String, dynamic>;
 
-      expect(decoded['spis']['server'], isA<Map>());
+      expect(decoded['spis']['server'], isA<Map<Object?, Object?>>());
       expect(decoded['spis']['server']['name'], Spix.example.name);
-      expect(decoded['snippets']['snippet'], isA<Map>());
+      expect(decoded['snippets']['snippet'], isA<Map<Object?, Object?>>());
       expect(decoded['snippets']['snippet']['script'], Snippet.example.script);
-      expect(decoded['keys']['key'], isA<Map>());
+      expect(decoded['keys']['key'], isA<Map<Object?, Object?>>());
       expect(decoded['keys']['key']['private_key'], contains('OPENSSH'));
     });
 
@@ -134,7 +134,7 @@ void main() {
       final spi = decoded['spis']['srv-1'] as Map<String, dynamic>;
       final bmc = decoded['bmcTargets']['bmc-1'] as Map<String, dynamic>;
 
-      expect(spi['ssh'], isA<Map>());
+      expect(spi['ssh'], isA<Map<Object?, Object?>>());
       expect(spi['ssh']['ip'], '10.0.0.1');
       expect(bmc['addr'], 'https://10.0.0.9');
       expect(bmc['credId'], 'cred-1');
@@ -414,7 +414,7 @@ void main() {
         final backup = BackupV2.fromJsonString(
           (await BackupV2.loadFromStore()).toJsonString(),
         );
-        expect(backup.pve[server.id], isA<Map>());
+        expect(backup.pve[server.id], isA<Map<Object?, Object?>>());
         Stores.pve.remove(server.id);
         await backup.merge(force: true);
 
@@ -498,7 +498,7 @@ void main() {
           if (value is! Map) continue;
           expect((value['custom'] as Map?)?['pveAddr'], isNull, reason: '$key');
         }
-        expect(raw['pve'][server.id], isA<Map>());
+        expect(raw['pve'][server.id], isA<Map<Object?, Object?>>());
       });
 
       test('the committed v33 backup restores without inventing PVE', () async {
@@ -950,7 +950,7 @@ void main() {
           Stores.container.fetch(local.id, ContainerType.docker),
           'tcp://10.0.0.2:2375',
         );
-        expect(Stores.history.get<List>('sshServerHistory'), isNull);
+        expect(Stores.history.get<List<Object?>>('sshServerHistory'), isNull);
         expect(Stores.history.get<String>('sshTabs'), isNull);
       },
     );

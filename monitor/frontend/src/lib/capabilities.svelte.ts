@@ -14,13 +14,7 @@ class CapabilitiesStore {
 
   async ensure(id: string) {
     if (this.byServer[id] !== undefined) return
-    const entry = servers.list.find((s) => s.id === id)
-    if (!entry?.token) return
-    try {
-      this.byServer[id] = await getCapabilitiesFor(entry)
-    } catch {
-      // Left undefined: caller sees "unknown" and can retry later
-    }
+    await this.refresh(id)
   }
 
   /// Reads them again, keeping the cached answer until the new one arrives —
@@ -31,7 +25,7 @@ class CapabilitiesStore {
     try {
       this.byServer[id] = await getCapabilitiesFor(entry)
     } catch {
-      // The cached answer stands.
+      // Keeps any cached value (or undefined on first fetch) so callers can retry.
     }
   }
 

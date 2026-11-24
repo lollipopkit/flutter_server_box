@@ -5,9 +5,11 @@ a streamed pull and delete, the models kept in memory. Listens on
 127.0.0.1:11434, where Ollama's own install does."""
 
 import json
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+models_lock = threading.Lock()
 models = {'tiny:latest': 1_000_000}
 
 
@@ -21,13 +23,20 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self):
-        return json.loads(self.rfile.read(int(self.headers.get('content-length') or 0)) or b'{}')
+        try:
+            length = max(0, int(self.headers.get('content-length') or 0))
+        except ValueError:
+            length = 0
+        raw = self.rfile.read(length) if length else b'{}'
+        return json.loads(raw or b'{}')
 
     def do_GET(self):
         if self.path == '/api/version':
             return self._json({'version': '0.12.0'})
         if self.path == '/api/tags':
-            return self._json({'models': [{'name': n, 'size': s, 'details': {'parameter_size': '1M', 'quantization_level': 'Q4_0'}} for n, s in models.items()]})
+            with models_lock:
+                snapshot = list(models.items())
+            return self._json({'models': [{'name': n, 'size': s, 'details': {'parameter_size': '1M', 'quantization_level': 'Q4_0'}} for n, s in snapshot]})
         if self.path == '/api/ps':
             return self._json({'models': [{'name': 'tiny:latest'}]})
         self._json({'error': 'not found'}, 404)
@@ -44,13 +53,17 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(s).encode() + b'\n')
             self.wfile.flush()
             time.sleep(0.3)
-        models[name] = 2_000_000
+        with models_lock:
+            models[name] = 2_000_000
 
     def do_DELETE(self):
         name = self._body().get('model', '')
-        if models.pop(name, None) is None:
+        with models_lock:
+            removed = models.pop(name, None)
+        if removed is None:
             return self._json({'error': 'not found'}, 404)
         self._json({})
 
 
-ThreadingHTTPServer(('127.0.0.1', 11434), Handler).serve_forever()
+if __name__ == '__main__':
+    ThreadingHTTPServer(('127.0.0.1', 11434), Handler).serve_forever()

@@ -38,21 +38,18 @@ use std::time::{Duration, Instant};
 
 use ntex::rt::spawn;
 use ntex::service::{Ctx, Service};
-use ntex::util::ByteString;
-use ntex::web::ws::{self, CloseCode, Frame, Message};
+use ntex::web::ws::{CloseCode, Frame, Message};
 use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::net::{TcpListener, TcpStream};
 
-use super::audit::{self, Action, Event, Kind, Outcome};
+use super::audit::{Action, Event, Kind, Outcome};
 use super::live::{Ending, LiveKind};
 use super::ticket::Purpose;
 use super::upgrade::WsSink;
-use crate::api::authz;
+use super::WsCallerCtx;
 use crate::api::server::AppState;
 use crate::utils::secrets::random_hex;
-
-const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 
 /// How long an accepted connection waits for the app to take it.
 ///
@@ -204,8 +201,7 @@ enum ServerMsg<'a> {
 
 impl ServerMsg<'_> {
     fn frame(&self) -> Message {
-        let json = serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string());
-        Message::Text(ByteString::from(json))
+        super::json_frame(self)
     }
 }
 
@@ -217,94 +213,28 @@ pub async fn listen_ws(
     req: HttpRequest,
     app_state: Arc<AppState>,
 ) -> Result<HttpResponse, WebError> {
-    let remote_ip = audit::peer_ip(&req);
-
-    let deny = async |reason: &'static str, status: HttpResponse| {
-        Event::new(Kind::Listen, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip.clone())
-            .detail(reason)
-            .record(&app_state.db)
-            .await;
-        Ok(status)
-    };
-
-    // The same admission as `stream`, for the same reasons — see there.
-    let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().build()).await;
-    }
-
-    let Some(protocol) = ws::subprotocols(&req)
-        .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
-        .map(str::to_owned)
-    else {
-        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
-    };
-    let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
-    let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Listen) else {
-        return deny("ticket", HttpResponse::Unauthorized().build()).await;
+    let admitted = match super::admit_ws(&req, &app_state, Purpose::Listen, Kind::Listen, None).await {
+        Ok(a) => a,
+        Err(resp) => return Ok(resp),
     };
     let tickets = app_state.tickets.clone();
-
-    let admitted = authz::caller(&app_state)
-        .await
-        .filter(|caller| caller.check(&app_state, secure).is_ok());
-    let Some(admitted) = admitted else {
-        tickets.rollback(reservation);
-        return deny("not admitted", HttpResponse::Forbidden().build()).await;
-    };
-
-    let ctx = Rc::new(ListenCtx {
+    let protocol = admitted.protocol.clone();
+    let reservation = admitted.reservation;
+    let ctx = Rc::new(WsCallerCtx {
         state: app_state,
-        remote_ip,
-        secure,
+        remote_ip: admitted.remote_ip,
+        secure: admitted.secure,
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start(
-        &req,
-        Some(&protocol),
-        move |sink: WsSink| Control {
+    super::upgrade_with_ticket(&req, &tickets, &protocol, reservation, move |sink: WsSink| {
+        Control {
             ctx,
             sink,
             phase: Rc::new(RefCell::new(Phase::Idle)),
-        },
-    )
-    .await;
-    if upgraded.is_ok() {
-        tickets.commit(reservation);
-    } else {
-        tickets.rollback(reservation);
-    }
-    upgraded
-}
-
-struct ListenCtx {
-    state: Arc<AppState>,
-    /// Where the upgrade came from, for the audit log.
-    remote_ip: Option<String>,
-    secure: bool,
-    /// The account's password as of the upgrade — see `stream::ConnCtx`.
-    since: i64,
-}
-
-impl ListenCtx {
-    /// This socket's account, read again — none once its password has
-    /// changed since the upgrade.
-    async fn caller(&self) -> Option<authz::Caller> {
-        authz::caller(&self.state)
-            .await
-            .filter(|caller| caller.since == self.since)
-    }
-
-    /// Whether the port may still be held: the password unchanged, the link
-    /// still one the machine may be acted on over.
-    async fn may_hold(&self) -> bool {
-        let Some(caller) = self.caller().await else {
-            return false;
-        };
-        caller.check(&self.state, self.secure).is_ok()
-    }
+        }
+    })
+    .await
 }
 
 /// One `listen` per socket, like `stream`'s one `open`: a listener that could
@@ -315,7 +245,7 @@ enum Phase {
 }
 
 struct Control {
-    ctx: Rc<ListenCtx>,
+    ctx: Rc<WsCallerCtx>,
     sink: WsSink,
     phase: Rc<RefCell<Phase>>,
 }
@@ -346,7 +276,7 @@ impl Control {
             return Some(error_frame("bad_request", "Unrecognised control message"));
         };
         match msg {
-            ClientMsg::Ping => Some(Message::Text(ByteString::from("{\"type\":\"pong\"}"))),
+            ClientMsg::Ping => Some(super::pong_frame()),
             ClientMsg::Listen { host, port } => {
                 if !matches!(
                     std::mem::replace(&mut *self.phase.borrow_mut(), Phase::Listening),
@@ -422,7 +352,7 @@ impl Control {
 /// the port, then closes it and everything of its own still waiting.
 #[allow(clippy::too_many_arguments)]
 async fn accept_loop(
-    ctx: Rc<ListenCtx>,
+    ctx: Rc<WsCallerCtx>,
     sink: WsSink,
     listener: TcpListener,
     slot: Listener,
@@ -435,7 +365,7 @@ async fn accept_loop(
         tokio::select! {
             _ = &mut disconnect => break,
             signal = ending.next() => {
-                if signal.rechecks() && ctx.may_hold().await {
+                if signal.rechecks() && ctx.still_admitted().await {
                     continue;
                 }
                 let _ = sink
@@ -481,7 +411,7 @@ async fn accept_loop(
     audit_listen(&ctx, Action::Close, Outcome::Ok, &bound.to_string()).await;
 }
 
-async fn audit_listen(ctx: &ListenCtx, action: Action, outcome: Outcome, detail: &str) {
+async fn audit_listen(ctx: &WsCallerCtx, action: Action, outcome: Outcome, detail: &str) {
     Event::new(Kind::Listen, action, outcome)
         .remote_ip(ctx.remote_ip.clone())
         .detail(detail)

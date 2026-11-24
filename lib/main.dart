@@ -38,6 +38,7 @@ import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/server/connections.dart';
 import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -176,6 +177,9 @@ String? _logDir() {
 }
 
 Future<void> _initApp(ProviderContainer container) async {
+  // Publish the app-wide container before any startup hook (such as
+  // `StoreReload`) can fire.
+  AppContainer.container = container;
   // The app's own, which is what lets its motion setting reach the
   // framework's animations — see [AppBinding].
   AppBinding();

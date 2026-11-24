@@ -239,15 +239,16 @@ fn oneline(name: &x509_cert::name::Name) -> String {
 /// unknown, and the caller has to be able to say which.
 pub async fn fetch_server_cert(host: &str, port: u16, timeout: Duration) -> Result<CertInfo, Error> {
     let provider = rustls::crypto::ring::default_provider();
-    let verifier = Arc::new(CapturingVerifier {
-        seen: Mutex::new(None),
-        algorithms: provider.signature_verification_algorithms,
-    });
+    let seen = Arc::new(Mutex::new(None));
+    let verifier = Arc::new(PinnedCertVerifier::capturing(
+        seen.clone(),
+        provider.signature_verification_algorithms,
+    ));
     let config = rustls::ClientConfig::builder_with_provider(Arc::new(provider))
         .with_safe_default_protocol_versions()
         .map_err(|e| Error::with(Failure::Unreachable, format!("TLS setup: {e}")))?
         .dangerous()
-        .with_custom_certificate_verifier(verifier.clone())
+        .with_custom_certificate_verifier(verifier)
         .with_no_client_auth();
     let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
     // A bracketed IPv6 literal, as it appears in a URL, is still an address.
@@ -267,99 +268,93 @@ pub async fn fetch_server_cert(host: &str, port: u16, timeout: Duration) -> Resu
         .await
         .map_err(|_| Error::with(Failure::Unreachable, "timed out"))??;
 
-    let der = verifier
+    let der = seen
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
         .take()
         .ok_or_else(|| Error::with(Failure::Unreachable, "the server presented no certificate"))?;
     CertInfo::from_der(&der).ok_or_else(|| Error::with(Failure::Unreachable, "the certificate does not parse"))
 }
 
-/// Records the certificate it was shown, then refuses it.
+/// Custom rustls verifier for pin-only, capture-only, or pin-with-CA-fallback
+/// policies.
+///
+/// Always verifies TLS 1.2/1.3 handshake signatures against `algorithms` so an
+/// accepted certificate must still prove possession of its private key. When
+/// rejected and `captured` is provided, stores the presented leaf DER for the
+/// caller to surface in certificate-review flows.
 #[derive(Debug)]
-struct CapturingVerifier {
-    seen: Mutex<Option<Vec<u8>>>,
+pub struct PinnedCertVerifier {
+    pin: PinnedCert,
+    fallback: Option<Arc<dyn ServerCertVerifier>>,
+    captured: Option<Arc<Mutex<Option<Vec<u8>>>>>,
     algorithms: WebPkiSupportedAlgorithms,
 }
 
-impl CapturingVerifier {
-    fn take(&self) -> Option<Vec<u8>> {
-        self.seen.lock().ok().and_then(|mut slot| slot.take())
+impl PinnedCertVerifier {
+    /// Accepts only the pinned leaf certificate.
+    pub fn pinned(pin: PinnedCert, algorithms: WebPkiSupportedAlgorithms) -> Self {
+        Self {
+            pin,
+            fallback: None,
+            captured: None,
+            algorithms,
+        }
+    }
+
+    /// Records the presented leaf into `captured` and always refuses the handshake.
+    pub fn capturing(
+        captured: Arc<Mutex<Option<Vec<u8>>>>,
+        algorithms: WebPkiSupportedAlgorithms,
+    ) -> Self {
+        Self {
+            pin: PinnedCert::new(None),
+            fallback: None,
+            captured: Some(captured),
+            algorithms,
+        }
+    }
+
+    /// Accepts either the pinned leaf or anything `fallback` verifies; records
+    /// any refused leaf into `captured`.
+    pub fn with_fallback(
+        pin: PinnedCert,
+        fallback: Option<Arc<dyn ServerCertVerifier>>,
+        captured: Arc<Mutex<Option<Vec<u8>>>>,
+        algorithms: WebPkiSupportedAlgorithms,
+    ) -> Self {
+        Self {
+            pin,
+            fallback,
+            captured: Some(captured),
+            algorithms,
+        }
     }
 }
 
-impl ServerCertVerifier for CapturingVerifier {
+impl ServerCertVerifier for PinnedCertVerifier {
     fn verify_server_cert(
         &self,
         end_entity: &CertificateDer<'_>,
-        _intermediates: &[CertificateDer<'_>],
-        _server_name: &ServerName<'_>,
-        _ocsp_response: &[u8],
-        _now: UnixTime,
+        intermediates: &[CertificateDer<'_>],
+        server_name: &ServerName<'_>,
+        ocsp_response: &[u8],
+        now: UnixTime,
     ) -> Result<ServerCertVerified, rustls::Error> {
-        if let Ok(mut slot) = self.seen.lock() {
-            *slot = Some(end_entity.as_ref().to_vec());
+        if self.pin.accepts(Some(end_entity.as_ref()))
+            || self.fallback.as_ref().is_some_and(|v| {
+                v.verify_server_cert(end_entity, intermediates, server_name, ocsp_response, now)
+                    .is_ok()
+            })
+        {
+            return Ok(ServerCertVerified::assertion());
+        }
+        if let Some(captured) = &self.captured {
+            *captured.lock().unwrap_or_else(|e| e.into_inner()) = Some(end_entity.as_ref().to_vec());
         }
         Err(rustls::Error::InvalidCertificate(
             CertificateError::ApplicationVerificationFailure,
         ))
-    }
-
-    // Never reached: the certificate is refused above, and that ends the
-    // handshake before any signature is checked. Verified anyway, so nothing
-    // in this type ever answers "valid" without having looked.
-    fn verify_tls12_signature(
-        &self,
-        message: &[u8],
-        cert: &CertificateDer<'_>,
-        dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        rustls::crypto::verify_tls12_signature(message, cert, dss, &self.algorithms)
-    }
-
-    fn verify_tls13_signature(
-        &self,
-        message: &[u8],
-        cert: &CertificateDer<'_>,
-        dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        rustls::crypto::verify_tls13_signature(message, cert, dss, &self.algorithms)
-    }
-
-    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
-        self.algorithms.supported_schemes()
-    }
-}
-
-/// Accepts exactly the pinned leaf, and nothing else — the client's verifier.
-///
-/// No chain is walked and no validity date is read: a BMC's certificate is
-/// expired as often as not, and what is trusted is that this is the
-/// certificate that was reviewed. A CA-signed chain is not accepted either
-/// unless it is that certificate; the Dart client let one through the
-/// handshake and refused it only after the response, by which time a login
-/// had already carried the password. The handshake signatures are still
-/// checked, so a certificate this accepts must also be proven by its key.
-#[derive(Debug)]
-pub(crate) struct PinnedVerifier {
-    pub(crate) pin: PinnedCert,
-    pub(crate) algorithms: WebPkiSupportedAlgorithms,
-}
-
-impl ServerCertVerifier for PinnedVerifier {
-    fn verify_server_cert(
-        &self,
-        end_entity: &CertificateDer<'_>,
-        _intermediates: &[CertificateDer<'_>],
-        _server_name: &ServerName<'_>,
-        _ocsp_response: &[u8],
-        _now: UnixTime,
-    ) -> Result<ServerCertVerified, rustls::Error> {
-        if self.pin.accepts(Some(end_entity.as_ref())) {
-            Ok(ServerCertVerified::assertion())
-        } else {
-            Err(rustls::Error::InvalidCertificate(
-                CertificateError::ApplicationVerificationFailure,
-            ))
-        }
     }
 
     fn verify_tls12_signature(

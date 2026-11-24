@@ -11,6 +11,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
+import 'package:server_box/data/model/terminal/theme_mode.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -384,9 +385,11 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// The default is `defaultDiagnosticsLevel`, `none`: nothing is uploaded
   /// until the user picks a level that uploads, in the intro or in Settings.
   /// A value is stored only by such a pick.
-  late final diagnosticsLevel = propertyDefault(
+  late final diagnosticsLevel = propertyDefault<DiagnosticsLevel>(
     'diagnosticsLevel',
-    defaultDiagnosticsLevel.name,
+    defaultDiagnosticsLevel,
+    fromObj: (v) => v is String ? DiagnosticsLevel.fromName(v) : null,
+    toObj: (v) => v?.name,
   );
 
   /// The revision of the crash-collection notice this install has seen.
@@ -400,12 +403,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'diagnosticsConsentVer',
     0,
   );
-
-  /// The revision of the intro's feature pages this install has seen.
-  ///
-  /// TODO: remove with the key; the intro has had no feature pages since its
-  /// redesign, and nothing reads this.
-  late final featureIntroVer = propertyDefault('featureIntroVer', 0);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
@@ -702,9 +699,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Used for [SheetX.showPwdSheet]
   late final rememberPwdInMem = propertyDefault('rememberPwdInMem', true);
 
-  /// SSH Term Theme
-  /// 0: follow app theme, 1: light, 2: dark
-  late final termTheme = propertyDefault('termTheme', 0);
+  /// SSH terminal theme mode (followApp / light / dark).
+  late final termTheme = propertyDefault<TerminalThemeMode>(
+    'termTheme',
+    TerminalThemeMode.followApp,
+    fromObj: TerminalThemeMode.fromStored,
+    toObj: (v) => v?.name,
+  );
 
   late final lastVer = propertyDefault('lastVer', 0);
 
@@ -816,7 +817,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
       final String s => WindowState.fromJson(
         jsonDecode(s) as Map<String, dynamic>,
       ),
-      final Map m => WindowState.fromJson(Map<String, dynamic>.from(m)),
+      final Map<Object?, Object?> m => WindowState.fromJson(
+        Map<String, dynamic>.from(m),
+      ),
       _ => null,
     },
     toObj: (state) => state?.toJson(),
@@ -829,15 +832,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Remote editor command used in the SSH terminal, such as `$EDITOR` or
   /// `vim`. Leave empty to use the local GUI editor.
   late final sftpEditor = propertyDefault('sftpEditor', '');
-
-  // `fgService` was here: a second switch for the Android foreground service,
-  // whose tile was commented out of the settings page long before that page
-  // was deleted. It defaulted to false, nothing could turn it on, and it gated
-  // Android service updates — so the app never asked for the service it needs
-  // to survive being backgrounded. [bgRun] is the one switch now.
-  //
-  // TODO: the stale `fgService` row in `kv` is harmless and is left to be swept
-  // with the next settings migration.
 
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
@@ -1168,6 +1162,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
       // These settings were removed without a schema step. They have no
       // reader now, so keeping them only inflates backups and raw dumps.
       'fgService',
+      'featureIntroVer',
       'noNotiPerm',
       'showDistIcon',
       // The platform now selects launcher icon appearances automatically.

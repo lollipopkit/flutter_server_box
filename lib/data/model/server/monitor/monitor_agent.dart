@@ -258,7 +258,82 @@ final class MonitorAgentOutput {
 
   /// The text of `[[stream, text], …]`, as `output` events carry it too.
   static List<String> linesOf(Object? raw) => [
-    for (final l in raw as List? ?? const [])
-      if (l is List && l.length == 2 && l[1] is String) l[1] as String,
+    if (raw is List)
+      for (final l in raw)
+        if (l is List && l.length == 2 && l[1] is String) l[1] as String,
   ];
+}
+
+/// Decoded SSE event from `GET /api/v1/agent/events`.
+sealed class MonitorAgentEvent {
+  const MonitorAgentEvent();
+
+  /// Decodes a raw SSE JSON object into a typed event, or returns null for
+  /// unrecognized or malformed frames.
+  static MonitorAgentEvent? fromJson(Map<String, dynamic> j) => switch (j['type']) {
+    'flow' => _decodeFlow(j['flow']),
+    'removed' when j['id'] is String => MonitorAgentRemovedEvent(j['id'] as String),
+    'pending' when j['id'] is String => MonitorAgentPendingEvent(
+      id: j['id'] as String,
+      pending: switch (j['pending']) {
+        final Map<String, dynamic> p when p['id'] is String =>
+          MonitorAgentPending.fromJson(p),
+        _ => null,
+      },
+    ),
+    'output' when j['id'] is String => MonitorAgentOutputEvent(
+      id: j['id'] as String,
+      lines: MonitorAgentOutput.linesOf(j['lines']),
+    ),
+    'event' when j['id'] is String => MonitorAgentPiEvent(
+      id: j['id'] as String,
+      event: switch (j['event']) {
+        final Map<String, dynamic> ev => ev,
+        _ => const {},
+      },
+    ),
+    'resync' => const MonitorAgentResyncEvent(),
+    _ => null,
+  };
+
+  static MonitorAgentFlowEvent? _decodeFlow(Object? raw) {
+    if (raw is! Map<String, dynamic> || raw['id'] is! String) return null;
+    try {
+      return MonitorAgentFlowEvent(MonitorAgentFlow.fromJson(raw));
+    } on TypeError {
+      return null;
+    }
+  }
+}
+
+final class MonitorAgentFlowEvent extends MonitorAgentEvent {
+  const MonitorAgentFlowEvent(this.flow);
+  final MonitorAgentFlow flow;
+}
+
+final class MonitorAgentRemovedEvent extends MonitorAgentEvent {
+  const MonitorAgentRemovedEvent(this.id);
+  final String id;
+}
+
+final class MonitorAgentPendingEvent extends MonitorAgentEvent {
+  const MonitorAgentPendingEvent({required this.id, required this.pending});
+  final String id;
+  final MonitorAgentPending? pending;
+}
+
+final class MonitorAgentOutputEvent extends MonitorAgentEvent {
+  const MonitorAgentOutputEvent({required this.id, required this.lines});
+  final String id;
+  final List<String> lines;
+}
+
+final class MonitorAgentPiEvent extends MonitorAgentEvent {
+  const MonitorAgentPiEvent({required this.id, required this.event});
+  final String id;
+  final Map<String, dynamic> event;
+}
+
+final class MonitorAgentResyncEvent extends MonitorAgentEvent {
+  const MonitorAgentResyncEvent();
 }

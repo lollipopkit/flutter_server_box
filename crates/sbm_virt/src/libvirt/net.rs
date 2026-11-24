@@ -534,9 +534,9 @@ fn ip_element<'a, 'i>(
     if let (Some(s), Some(end)) = (&edit.dhcp_start, &edit.dhcp_end) {
         let bounds = format!("start='{}' end='{}'", e(s), e(end));
         // The first range keeps what is under it (a `<lease>`).
-        match old_ranges.first().filter(|r| r.has_children()) {
-            Some(r) => {
-                let inner = &xml[r.first_child().unwrap().range().start..r.last_child().unwrap().range().end];
+        match old_ranges.first().and_then(|r| Some((r.first_child()?, r.last_child()?))) {
+            Some((first, last)) => {
+                let inner = &xml[first.range().start..last.range().end];
                 dhcp_lines.push(format!("<range {bounds}>{inner}</range>"));
             }
             None => dhcp_lines.push(format!("<range {bounds}/>")),

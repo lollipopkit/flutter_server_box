@@ -35,7 +35,7 @@ use sbm_virt::resource::{Network, Pool, Volume};
 
 use super::machine;
 use super::server::AppState;
-use super::virt::{Backend, PowerResponse, backend, guest_of, run_libvirt};
+use super::virt::{Backend, PowerResponse, answer, backend, guest_of, run_libvirt};
 use super::virt_guests::Audit;
 use super::virt_resources::{libvirt_networks, libvirt_storage, password, read_volumes};
 
@@ -71,10 +71,6 @@ pub struct CloudInitBody {
     edit: CloudInitEdit,
     #[serde(default)]
     password: Option<String>,
-}
-
-fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
-    Ok(HttpResponse::Ok().json(&value))
 }
 
 /// Gated by `virt`, the backend found and the guest read: what every read

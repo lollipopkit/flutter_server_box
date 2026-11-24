@@ -9,6 +9,7 @@ library;
 
 import 'package:fl_lib/fl_lib.dart' as lib show isMacOS;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/terminal/theme_mode.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/setting.dart';
 import '../../helpers/test_db.dart';
@@ -37,7 +38,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), [
+      expect(store.get<List<Object?>>('homeTabs'), [
         'server',
         'ssh',
         'file',
@@ -51,7 +52,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), ['server', 'ssh']);
+      expect(store.get<List<Object?>>('homeTabs'), ['server', 'ssh']);
     });
 
     test('leaves a set that already contains Agent alone', () async {
@@ -59,7 +60,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), [
+      expect(store.get<List<Object?>>('homeTabs'), [
         'server',
         'ssh',
         'file',
@@ -77,7 +78,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), ['server', 'ssh', 'file', 'snippet']);
+      expect(store.get<List<Object?>>('homeTabs'), ['server', 'ssh', 'file', 'snippet']);
     });
 
     test('and running the step twice is the same as running it once', () async {
@@ -89,7 +90,7 @@ void main() {
 
       await migration.apply();
 
-      expect(store.get<List>('homeTabs'), [
+      expect(store.get<List<Object?>>('homeTabs'), [
         'server',
         'ssh',
         'file',
@@ -241,6 +242,7 @@ void main() {
         'fgService': true,
         'noNotiPerm': true,
         'showDistIcon': true,
+        'featureIntroVer': 1,
         'detailCardOrder': ['about', 'cpu'],
         'recordHistory': false,
       });
@@ -252,8 +254,28 @@ void main() {
       expect(store.get<bool>('fgService'), isNull);
       expect(store.get<bool>('noNotiPerm'), isNull);
       expect(store.get<bool>('showDistIcon'), isNull);
+      expect(store.get<int>('featureIntroVer'), isNull);
       expect(store.get<List<dynamic>>('detailCardOrder'), isNull);
       expect(store.get<bool>('recordHistory'), isFalse);
     },
   );
+
+  test('termTheme reads legacy ints, writes enum names, and falls back on invalid values', () {
+    expect(store.termTheme.get(), TerminalThemeMode.followApp);
+
+    store.set('termTheme', 0);
+    expect(store.termTheme.get(), TerminalThemeMode.followApp);
+    store.set('termTheme', 1);
+    expect(store.termTheme.get(), TerminalThemeMode.light);
+    store.set('termTheme', 2);
+    expect(store.termTheme.get(), TerminalThemeMode.dark);
+    store.set('termTheme', 99);
+    expect(store.termTheme.get(), TerminalThemeMode.followApp);
+    store.set('termTheme', 'invalid');
+    expect(store.termTheme.get(), TerminalThemeMode.followApp);
+
+    store.termTheme.put(TerminalThemeMode.dark);
+    expect(store.get<String>('termTheme'), 'dark');
+    expect(store.termTheme.get(), TerminalThemeMode.dark);
+  });
 }

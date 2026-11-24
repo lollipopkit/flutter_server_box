@@ -265,18 +265,11 @@ extension _SSH on _AppSettingsPageState {
   }
 
   SettingsRow _buildTermTheme() {
-    String index2Str(int index) {
-      switch (index) {
-        case 0:
-          return libL10n.auto;
-        case 1:
-          return libL10n.bright;
-        case 2:
-          return libL10n.dark;
-        default:
-          return libL10n.error;
-      }
-    }
+    String modeLabel(TerminalThemeMode mode) => switch (mode) {
+      TerminalThemeMode.followApp => libL10n.auto,
+      TerminalThemeMode.light => libL10n.bright,
+      TerminalThemeMode.dark => libL10n.dark,
+    };
 
     return SettingsRow(
       libL10n.theme,
@@ -285,13 +278,13 @@ extension _SSH on _AppSettingsPageState {
         title: Text(libL10n.theme),
         trailing: ValBuilder(
           listenable: _setting.termTheme.listenable(),
-          builder: (val) => Text(index2Str(val), style: UIs.text15),
+          builder: (val) => Text(modeLabel(val), style: UIs.text15),
         ),
         onTap: () async {
           final selected = await context.showPickSingleSheet(
             title: libL10n.theme,
-            items: List.generate(3, (index) => index),
-            display: (p0) => index2Str(p0),
+            items: TerminalThemeMode.values,
+            display: modeLabel,
             initial: _setting.termTheme.fetch(),
           );
           if (selected != null) {

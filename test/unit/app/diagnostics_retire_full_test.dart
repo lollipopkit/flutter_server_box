@@ -28,20 +28,24 @@ void main() {
   });
 
   test('full becomes basic and its profile id is deleted', () async {
-    Stores.setting.diagnosticsLevel.put('full');
+    Stores.setting.set('diagnosticsLevel', 'full');
     await PrefStore.shared.set('openpanel_profile_id', 'deadbeef');
 
     await DiagnosticsUpload.retireFullLevel();
 
-    expect(Stores.setting.diagnosticsLevel.fetch(), DiagnosticsLevel.basic.name);
+    expect(Stores.setting.diagnosticsLevel.fetch(), DiagnosticsLevel.basic);
+    expect(
+      Stores.setting.get<Object>('diagnosticsLevel'),
+      DiagnosticsLevel.basic.name,
+    );
     expect(PrefStore.shared.get<String>('openpanel_profile_id'), isNull);
   });
 
   test('any other choice is left as it was', () async {
-    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none.name);
+    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none);
 
     await DiagnosticsUpload.retireFullLevel();
 
-    expect(Stores.setting.diagnosticsLevel.fetch(), DiagnosticsLevel.none.name);
+    expect(Stores.setting.diagnosticsLevel.fetch(), DiagnosticsLevel.none);
   });
 }

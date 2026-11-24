@@ -7,8 +7,9 @@ use crate::{
     utils::error::Result,
 };
 use ntex::web::{self, HttpRequest, HttpResponse};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use super::*;
 
 /// Whitelisted, writable subset of `Config` the settings page exposes.
@@ -86,7 +87,11 @@ pub(super) async fn get_settings(req: HttpRequest, app_state: Arc<AppState>) -> 
 
 /// Kept beside the settings endpoint so file and API validation cannot drift.
 pub(super) fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String> {
-    let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$").unwrap();
+    static THRESHOLD_RE: OnceLock<Regex> = OnceLock::new();
+    let re = THRESHOLD_RE.get_or_init(|| {
+        Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$")
+            .expect("static threshold regex must be valid")
+    });
     if re.is_match(threshold) {
         Ok(())
     } else {

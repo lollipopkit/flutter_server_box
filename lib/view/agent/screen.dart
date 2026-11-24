@@ -4,8 +4,8 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
-import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/workspace.dart';
@@ -72,7 +72,7 @@ abstract final class AgentScreen {
   }
 
   static String? describe(ChatMeta? meta) {
-    final tab = AgentScope.container.read(currentHomeTabProvider);
+    final tab = AppContainer.container.read(currentHomeTabProvider);
     if (tab == null) return null;
     final at = switch (tab) {
       _ when _root.above != null => _page(_root.above!),
@@ -89,7 +89,7 @@ abstract final class AgentScreen {
 
   /// What [tab] shows when nothing is pushed over it.
   static String? _tabRoot(AppTab tab) {
-    final c = AgentScope.container;
+    final c = AppContainer.container;
     return switch (tab) {
       // The Agent's own tab shows the chat, which says nothing about a
       // server; the last place it was told of still stands.
@@ -181,7 +181,7 @@ abstract final class AgentScreen {
   /// Named as the server is now: a page keeps the `Spi` it was opened with,
   /// and the name may have changed since.
   static String _server(String id) {
-    final name = AgentScope.container.read(serversProvider).servers[id]?.name;
+    final name = AppContainer.container.read(serversProvider).servers[id]?.name;
     return 'server "${name ?? id}" (server_id: $id)';
   }
 }

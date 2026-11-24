@@ -70,7 +70,7 @@ void main() {
       final encoded =
           jsonDecode(jsonEncode(original.toJson())) as Map<String, dynamic>;
       expect(encoded.containsKey('ip'), isFalse);
-      expect(encoded['ssh'], isA<Map>());
+      expect(encoded['ssh'], isA<Map<Object?, Object?>>());
       expect(Spi.fromJson(encoded), original);
     });
   });

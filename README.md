@@ -59,7 +59,8 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
 | macOS | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (architecture-specific `.dmg`) / `brew install --cask server-box` |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
+| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.exe` installer & portable `.zip`) / `winget install lollipopkit.serverbox` |
+| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
 
 Download packages only from sources you trust.
 
@@ -67,30 +68,37 @@ Download packages only from sources you trust.
 
 **Connecting**
 
-- Connect directly over SSH, through a jump host or with a `ProxyCommand`. You can also connect over HTTP through the [Monitor](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/) when you do not want to expose a host's SSH port. A server can use both methods, with automatic fallback if one is unavailable.
+- Connect directly over SSH, through a jump host or with a `ProxyCommand`, with [SSH host key and CA certificate verification](https://serverbox.lollipopkit.com/docs/advanced/host-keys/), private key management, LAN SSH discovery, Wake-on-LAN and [bulk JSON import](https://serverbox.lollipopkit.com/docs/advanced/bulk-import/).
+- Connect over HTTP through the [Monitor](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/) when you do not want to expose a host's SSH port. A server can use both SSH and Monitor, with automatic fallback if one is unavailable.
 - Open a shell on this device or install a Linux userland ([local terminal](https://serverbox.lollipopkit.com/docs/advanced/local-terminal/)) on supported platforms.
 
 **Watching**
 
-- Live and historical charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs (NVIDIA, AMD), batteries and disk S.M.A.R.T.
+- Live and historical charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs (NVIDIA, AMD), batteries, disk S.M.A.R.T. and [custom commands](https://serverbox.lollipopkit.com/docs/advanced/custom-commands/).
 - See all servers at a glance, filter them by tag or view them on a [globe](https://serverbox.lollipopkit.com/docs/advanced/globe/).
-- Push alerts, [home-screen widgets](https://serverbox.lollipopkit.com/docs/advanced/widgets/) and a watchOS app. The Monitor keeps these features working while the app is closed.
+- Push alerts (with custom threshold rules and notification channels), [home-screen widgets](https://serverbox.lollipopkit.com/docs/advanced/widgets/), a watchOS app and a macOS menu bar tray. The Monitor keeps alerts, widgets and the watch app working while the app is closed.
 
 **Working on a server**
 
-- A full terminal with virtual keys on phones, plus a [workspace](https://serverbox.lollipopkit.com/docs/advanced/workspace/) with split panes that can send input to several terminals at once.
-- Browse, upload, download and edit files over SFTP or SCP. Markdown files open in a rendered preview.
+- A full terminal with virtual keys on phones, tmux integration, [program status](https://serverbox.lollipopkit.com/docs/advanced/program-status/) indicators and notifications, plus a [workspace](https://serverbox.lollipopkit.com/docs/advanced/workspace/) with split panes that can send input to several terminals at once.
+- Browse, upload, download and edit files over SFTP, SCP or the Monitor file API. Markdown files open in a rendered preview.
 - [RDP and VNC](https://serverbox.lollipopkit.com/docs/advanced/remote-desktop/), to the server itself or to a desktop it can reach.
-- Docker and Podman, processes, systemd services, users and groups, firewall rules (ufw, firewalld), scheduled tasks, port forwards and snippets.
-- Virtual machines and containers on libvirt and Proxmox VE, and a server's BMC over Redfish ([BMC](https://serverbox.lollipopkit.com/docs/advanced/bmc/)).
-- Benchmarks (YABS) and iperf.
-- An [AI Agent](https://serverbox.lollipopkit.com/docs/advanced/agent/) that works with your servers and the model providers, MCP servers and skills you choose.
+- Docker and Podman, processes, systemd services, users and groups, firewall rules (`ufw`, `firewalld`), storage management (disks, RAID, ZFS), network shares (SMB, NFS), scheduled tasks, power actions, port forwards and snippets.
+- Virtual machines and containers on libvirt and Proxmox VE (snapshots, hardware, backups, VNC and serial consoles), and a server's hardware over Redfish ([BMC](https://serverbox.lollipopkit.com/docs/advanced/bmc/)).
+- Benchmarks (YABS) and `iperf`.
+- **Monitor web panel:** a desktop-style web UI served by the Monitor with built-in server tools, Docker Compose [Monitor Apps](https://serverbox.lollipopkit.com/docs/advanced/monitor-apps/), sandboxed third-party [Desk Apps](https://serverbox.lollipopkit.com/docs/advanced/monitor-desk-apps/) (`.fsba`), encrypted [Monitor settings backup](https://serverbox.lollipopkit.com/docs/advanced/monitor-backup/) and [Monitor Agent Mode](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent-mode/).
+
+**AI & Automation**
+
+- A built-in [AI Agent](https://serverbox.lollipopkit.com/docs/advanced/agent/) that works with your servers and the model providers, MCP servers and skills you choose.
+- A built-in [App MCP server](https://serverbox.lollipopkit.com/docs/advanced/app-mcp/) (HTTP and stdio bridge) with scoped tokens so external MCP clients can reach every server ServerBox manages.
+- [`serverbox://` links](https://serverbox.lollipopkit.com/docs/advanced/url-scheme/) to open a server, tool or snippet from Shortcuts, launchers and scripts.
 
 **Making it yours**
 
 - Install [themes and icon packs](https://serverbox.lollipopkit.com/docs/advanced/theme-packages/) from the built-in store, or make your own.
-- Biometric app lock, and backups to iCloud or WebDAV, encrypted with a password you choose.
-- iOS, Android, macOS, Linux and Windows, in 17 languages.
+- Biometric app lock, and encrypted backups and sync via iCloud or WebDAV with a password you choose.
+- iOS, watchOS, Android, macOS, Linux and Windows, in 17 languages.
 
 ## Help
 

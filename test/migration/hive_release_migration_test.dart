@@ -275,7 +275,7 @@ void main() {
           // The stored names rather than the parsed tabs: m030 appends `virt`
           // for this fixture's PVE server, and whether the parser knows that
           // name depends on whether `AppTab.virt` exists yet.
-          expect(Stores.setting.get<List>('homeTabs'), [
+          expect(Stores.setting.get<List<Object?>>('homeTabs'), [
             'server',
             'ssh',
             'snippet',
@@ -475,7 +475,7 @@ void main() {
             .toList();
         final bare = decoded.firstWhere((e) => e['name'] == 'bare');
         expect(bare['id'], '');
-        expect(bare['ssh'], isA<Map>());
+        expect(bare['ssh'], isA<Map<Object?, Object?>>());
         // And every other record does have one, so an empty id is the
         // exception the remapping exists for rather than the norm.
         expect(decoded.where((e) => (e['id'] as String).isEmpty), hasLength(1));

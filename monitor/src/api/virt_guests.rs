@@ -36,7 +36,7 @@ use sbm_virt::resource::{Pool, Volume};
 
 use super::machine;
 use super::server::AppState;
-use super::virt::{Backend, PowerResponse, backend, guest_of, libvirt_chain, run_libvirt};
+use super::virt::{Backend, PowerResponse, answer, backend, guest_of, libvirt_chain, run_libvirt};
 use super::virt_resources::{libvirt_networks, libvirt_storage, password, read_volumes};
 use super::ws::audit::{Action, Event, Kind, Outcome};
 
@@ -85,10 +85,6 @@ pub struct GuestBody {
     guest: String,
     #[serde(default)]
     password: Option<String>,
-}
-
-fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
-    Ok(HttpResponse::Ok().json(&value))
 }
 
 /// A change to the machine's guests, gated by `virt` and recorded before

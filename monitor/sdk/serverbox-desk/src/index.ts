@@ -255,8 +255,7 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
     close: () => call('close'),
     call: (fn, args, options) => call('backend.call', { function: fn, args: args ?? {}, sudo: options?.sudo }),
     async job(fn, args, options = {}) {
-      const started = await call<JobView>('backend.job', { function: fn, args: args ?? {}, sudo: options.sudo })
-      void started
+      await call<JobView>('backend.job', { function: fn, args: args ?? {}, sudo: options.sudo })
       return follow(options)
     },
     jobView: (since = 0) => call('backend.jobView', { since }),

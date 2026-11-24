@@ -386,6 +386,10 @@ pub(crate) async fn power_guest(
     Ok(PowerResponse { error: result.err() })
 }
 
+pub(crate) fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
+    Ok(HttpResponse::Ok().json(&value))
+}
+
 /// Where a guest lives: the PVE session, or libvirt on this machine.
 pub(crate) enum Backend {
     Pve(Arc<Client>),

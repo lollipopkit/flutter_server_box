@@ -76,21 +76,20 @@ void main() {
       await request.response.close();
     });
     final client = MonitorHttpClient(_credential(server));
-    var replays = 0;
+    var opens = 0;
 
     try {
       await client.fsWrite(
         '/srv/file',
-        Stream.value(const [1, 2, 3]),
-        size: 3,
-        replayData: () {
-          replays++;
+        () {
+          opens++;
           return Stream.value(const [1, 2, 3]);
         },
+        size: 3,
       );
 
       expect(logins, 2);
-      expect(replays, 1);
+      expect(opens, 2);
       expect(uploaded, [
         [1, 2, 3],
         [1, 2, 3],

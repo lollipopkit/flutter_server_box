@@ -422,14 +422,7 @@ class ServerStore extends EntityStore<Spi> {
   Map<String, dynamic> toJson(Spi item) => item.toJson();
 
   @override
-  Spi? fromJson(Map<String, dynamic> json) {
-    try {
-      return Spi.fromJson(json);
-    } catch (e) {
-      dprint('Parsing Spi from JSON', e);
-      return null;
-    }
-  }
+  Spi decodeJson(Map<String, dynamic> json) => Spi.fromJson(json);
 
   /// Every tag in use, for the filter bar.
   List<String> allTags() => db

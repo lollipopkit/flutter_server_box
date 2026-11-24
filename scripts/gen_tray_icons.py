@@ -11,6 +11,8 @@ separate black-and-alpha vector because the system treats menu-bar artwork as a
 template and rasterises it at the size of the current display.
 """
 
+import os
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,7 +94,17 @@ def pdf(size: int) -> bytes:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     output = OUT / "mac.pdf"
-    output.write_bytes(pdf(18))
+    data = pdf(18)
+    tmp = tempfile.NamedTemporaryFile(dir=OUT, delete=False)
+    tmp_path = Path(tmp.name)
+    try:
+        with tmp:
+            tmp.write(data)
+        os.chmod(tmp_path, 0o644)
+        os.replace(tmp_path, output)
+    except BaseException:
+        tmp_path.unlink(missing_ok=True)
+        raise
     print(f"{output.relative_to(ROOT)}  {output.stat().st_size} bytes")
 
 

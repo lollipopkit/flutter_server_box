@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/bmc/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/container.dart';
@@ -12,12 +12,12 @@ import 'package:server_box/data/store/store_reload.dart';
 
 /// The providers reading stores a restore or a sync just rewrote, told to
 /// read them again. One place for both, through the app's own container
-/// ([AgentScope.container]) rather than a page's: the reload happens whether
+/// ([AppContainer.container]) rather than a page's: the reload happens whether
 /// or not the home page is mounted.
 void installStoreReload() => StoreReload.reload = _reload;
 
 void _reload(Set<ReloadedStore> rewritten) {
-  final providers = AgentScope.maybeContainer;
+  final providers = AppContainer.maybeContainer;
   if (providers == null) return;
   for (final store in rewritten) {
     switch (store) {

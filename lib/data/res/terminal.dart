@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/model/terminal/theme_mode.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:xterm/ui.dart';
 
@@ -155,9 +156,9 @@ abstract final class TerminalLook {
   /// what the system asked for.
   static bool isDark(BuildContext context) =>
       switch (Stores.setting.termTheme.fetch()) {
-        1 => false,
-        2 => true,
-        _ => context.isDark,
+        TerminalThemeMode.light => false,
+        TerminalThemeMode.dark => true,
+        TerminalThemeMode.followApp => context.isDark,
       };
 
   static TerminalTheme themeOf(BuildContext context) {

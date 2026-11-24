@@ -39,7 +39,13 @@ Mac App Store 版本已不再更新。直接安装 DMG 版本即可，首次启�
 
 ### Windows
 
-从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载安装程序(`ServerBox_v1.0.N_windows_amd64.exe`)。它为当前用户安装到 `%LOCALAPPDATA%\Programs\ServerBox`,不需要管理员权限,并添加开始菜单项和卸载程序。新版本直接覆盖安装旧版本,设置和服务器会保留。
+从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载安装程序（`ServerBox_v1.0.N_windows_amd64.exe`），或使用 WinGet 安装：
+
+```sh
+winget install lollipopkit.serverbox
+```
+
+安装程序会为当前用户安装到 `%LOCALAPPDATA%\Programs\ServerBox`，不需要管理员权限，并添加开始菜单项和卸载程序。新版本会直接覆盖安装旧版本，设置和服务器数据会保留。
 
 安装程序没有代码签名,SmartScreen 可能提示"未知发布者"。目前仍会同时发布便携版 zip。
 

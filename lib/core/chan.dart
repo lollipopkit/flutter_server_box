@@ -11,6 +11,35 @@ import 'package:xterm/xterm.dart' show CustomTextEditState;
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
 
+  static Future<T?> _invoke<T>(
+    String method, {
+    required bool supported,
+    required String label,
+    Object? args,
+  }) async {
+    if (!supported) return null;
+    try {
+      return await _channel.invokeMethod<T>(method, args);
+    } catch (e, s) {
+      Loggers.app.warning(label, e, s);
+      return null;
+    }
+  }
+
+  static Future<void> _invokeVoid(
+    String method, {
+    required bool supported,
+    required String label,
+    Object? args,
+  }) async {
+    if (!supported) return;
+    try {
+      await _channel.invokeMethod<void>(method, args);
+    } catch (e, s) {
+      Loggers.app.warning(label, e, s);
+    }
+  }
+
   /// iOS tells of every paste, and what it holds, before the text view
   /// inserts it (the app's `sendAction`), so the terminal sends it as one.
   static void listenPastes() {
@@ -27,47 +56,35 @@ abstract final class MethodChans {
   /// Tells the system file picker the installed Linux systems changed, so the
   /// roots it lists for them follow (`LinuxDocumentsProvider`, and the Files
   /// app's `ios/LinuxFiles`).
-  static Future<void> linuxSystemsChanged() async {
-    if (!isAndroid && !isIOS) return;
-    try {
-      await _channel.invokeMethod('linuxSystemsChanged');
-    } catch (e, s) {
-      Loggers.app.warning('linuxSystemsChanged', e, s);
-    }
-  }
+  static Future<void> linuxSystemsChanged() => _invokeVoid(
+    'linuxSystemsChanged',
+    supported: isAndroid || isIOS,
+    label: 'linuxSystemsChanged',
+  );
 
   /// Stops Android's terminal foreground service after its queued starts have
   /// been handled.
-  static Future<void> stopService() async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('stopService');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to stop Android terminal service', e, s);
-    }
-  }
+  static Future<void> stopService() => _invokeVoid(
+    'stopService',
+    supported: isAndroid,
+    label: 'Failed to stop Android terminal service',
+  );
 
   /// Whether leaving the app should start the keep-alive service. Started by
   /// the activity's own `onPause`, since a request from here can arrive after
   /// the app is background and be refused.
-  static Future<void> setKeepAliveInBackground(bool value) async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('setKeepAliveInBackground', value);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set keep-alive', e, s);
-    }
-  }
+  static Future<void> setKeepAliveInBackground(bool value) => _invokeVoid(
+    'setKeepAliveInBackground',
+    supported: isAndroid,
+    args: value,
+    label: 'Failed to set keep-alive',
+  );
 
-  static Future<void> updateHomeWidget() async {
-    if (!isIOS && !isAndroid) return;
-    if (!Stores.setting.autoUpdateHomeWidget.fetch()) return;
-    try {
-      await _channel.invokeMethod('updateHomeWidget');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to update home widget', e, s);
-    }
-  }
+  static Future<void> updateHomeWidget() => _invokeVoid(
+    'updateHomeWidget',
+    supported: (isIOS || isAndroid) && Stores.setting.autoUpdateHomeWidget.fetch(),
+    label: 'Failed to update home widget',
+  );
 
   /// Hand the home-screen widgets the current monitor server list and a
   /// read-only credential for each.
@@ -150,14 +167,12 @@ abstract final class MethodChans {
 
   /// Tells iOS whether work is in flight that suspension would cut off, so it
   /// asks for background time to finish it. See [InFlightWork].
-  static Future<void> setInFlightWork(bool inFlight) async {
-    if (!isIOS) return;
-    try {
-      await _channel.invokeMethod('setInFlightWork', inFlight);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set in-flight work', e, s);
-    }
-  }
+  static Future<void> setInFlightWork(bool inFlight) => _invokeVoid(
+    'setInFlightWork',
+    supported: isIOS,
+    args: inFlight,
+    label: 'Failed to set in-flight work',
+  );
 
   /// Hold the cover in place after the app comes forward, until Flutter has
   /// decided whether a biometric lock is coming.
@@ -225,14 +240,11 @@ abstract final class MethodChans {
   }
 
   /// Opens this app's notification settings, for the case above.
-  static Future<void> openNotificationSettings() async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('openNotificationSettings');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to open the notification settings', e, s);
-    }
-  }
+  static Future<void> openNotificationSettings() => _invokeVoid(
+    'openNotificationSettings',
+    supported: isAndroid,
+    label: 'Failed to open the notification settings',
+  );
 
   /// Query whether the Android foreground service is currently running.
   /// How the process ended last time, as Android recorded it.
@@ -290,33 +302,24 @@ abstract final class MethodChans {
     }
   }
 
-  static Future<bool> isServiceRunning() async {
-    if (!isAndroid) return false;
-    try {
-      final res = await _channel.invokeMethod('isServiceRunning');
-      return res == true;
-    } catch (e, s) {
-      Loggers.app.warning(
-        'Failed to check if Android service is running',
-        e,
-        s,
-      );
-      return false;
-    }
-  }
+  static Future<bool> isServiceRunning() async =>
+      await _invoke<Object?>(
+        'isServiceRunning',
+        supported: isAndroid,
+        label: 'Failed to check if Android service is running',
+      ) ==
+      true;
 
   /// Whether this build's APNs tokens are for the development environment,
   /// read from the provisioning profile it was signed with. Null off iOS, or
   /// when the native side cannot say.
   static Future<bool?> apnsSandbox() async {
-    if (!isIOS) return null;
-    try {
-      final env = await _channel.invokeMethod<String>('apsEnvironment');
-      return env == null ? null : env == 'development';
-    } catch (e, s) {
-      Loggers.app.warning('Failed to read the APNs environment', e, s);
-      return null;
-    }
+    final env = await _invoke<String>(
+      'apsEnvironment',
+      supported: isIOS,
+      label: 'Failed to read the APNs environment',
+    );
+    return env == null ? null : env == 'development';
   }
 
   // iOS Live Activities controls
@@ -331,35 +334,33 @@ abstract final class MethodChans {
   ///
   /// False off iOS and on anything before 16.2, which is where
   /// `LiveActivityManager` starts.
-  static Future<bool> liveActivityAvailable() async {
-    if (!isIOS) return false;
-    try {
-      return await _channel.invokeMethod<bool>('liveActivityAvailable') ??
-          false;
-    } catch (e, s) {
-      Loggers.app.warning('Failed to query iOS Live Activity availability', e, s);
-      return false;
-    }
-  }
+  static Future<bool> liveActivityAvailable() async =>
+      await _invoke<bool>(
+        'liveActivityAvailable',
+        supported: isIOS,
+        label: 'Failed to query iOS Live Activity availability',
+      ) ??
+      false;
 
   static Future<void> updateLiveActivity(String payload) async {
     if (!isIOS) return;
-    try {
-      Loggers.app.info('Updating iOS Live Activity: $payload');
-      await _channel.invokeMethod('updateLiveActivity', payload);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to update iOS Live Activity', e, s);
-    }
+    Loggers.app.info('Updating iOS Live Activity: $payload');
+    await _invokeVoid(
+      'updateLiveActivity',
+      supported: true,
+      args: payload,
+      label: 'Failed to update iOS Live Activity',
+    );
   }
 
   static Future<void> stopLiveActivity() async {
     if (!isIOS) return;
-    try {
-      Loggers.app.info('Stopping iOS Live Activity');
-      await _channel.invokeMethod('stopLiveActivity');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to stop iOS Live Activity', e, s);
-    }
+    Loggers.app.info('Stopping iOS Live Activity');
+    await _invokeVoid(
+      'stopLiveActivity',
+      supported: true,
+      label: 'Failed to stop iOS Live Activity',
+    );
   }
 
   /// The contents of a share file the platform handed this app, and clears it.
@@ -383,15 +384,11 @@ abstract final class MethodChans {
   ///
   /// Cleared by the read, so a second resume does not raise the same file
   /// again.
-  static Future<String?> takeOpenedShare() async {
-    if (!isIOS && !isMacOS) return null;
-    try {
-      return await _channel.invokeMethod<String>('takeOpenedShare');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to read the opened share', e, s);
-      return null;
-    }
-  }
+  static Future<String?> takeOpenedShare() => _invoke<String>(
+    'takeOpenedShare',
+    supported: isIOS || isMacOS,
+    label: 'Failed to read the opened share',
+  );
 
   /// The `serverbox://` link this app was last opened with, if one is waiting.
   ///
@@ -400,15 +397,11 @@ abstract final class MethodChans {
   /// link is an ordinary VIEW intent and needs none of the file handling above.
   ///
   /// Cleared by the read.
-  static Future<String?> takeOpenedLink() async {
-    if (!isIOS && !isMacOS && !isAndroid) return null;
-    try {
-      return await _channel.invokeMethod<String>('takeOpenedLink');
-    } catch (e, s) {
-      Loggers.app.warning('Failed to read the opened link', e, s);
-      return null;
-    }
-  }
+  static Future<String?> takeOpenedLink() => _invoke<String>(
+    'takeOpenedLink',
+    supported: isIOS || isMacOS || isAndroid,
+    label: 'Failed to read the opened link',
+  );
 
   /// What another app shared, or sent from its text selection, as the JSON
   /// `{"kind":"text","text"}` or `{"kind":"files","paths"}`. Android only;
@@ -427,66 +420,52 @@ abstract final class MethodChans {
 
   /// Deletes the batches holding [paths], which `IncomingFiles` copied in.
   /// The native side decides what is a batch; anything else is left alone.
-  static Future<void> discardIncoming(List<String> paths) async {
-    if (!isAndroid || paths.isEmpty) return;
-    try {
-      await _channel.invokeMethod('discardIncoming', paths);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to discard incoming files', e, s);
-    }
-  }
+  static Future<void> discardIncoming(List<String> paths) => _invokeVoid(
+    'discardIncoming',
+    supported: isAndroid && paths.isNotEmpty,
+    args: paths,
+    label: 'Failed to discard incoming files',
+  );
 
   /// The launcher's long-press list: `[{"id","label","uri"}]`, in order.
-  static Future<void> setShortcuts(String payload) async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('setShortcuts', payload);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set launcher shortcuts', e, s);
-    }
-  }
+  static Future<void> setShortcuts(String payload) => _invokeVoid(
+    'setShortcuts',
+    supported: isAndroid,
+    args: payload,
+    label: 'Failed to set launcher shortcuts',
+  );
 
   /// Asks the launcher to pin a shortcut; false when it cannot.
   static Future<bool> pinShortcut({
     required String id,
     required String label,
     required String uri,
-  }) async {
-    if (!isAndroid) return false;
-    try {
-      return await _channel.invokeMethod<bool>('pinShortcut', {
-            'id': id,
-            'label': label,
-            'uri': uri,
-          }) ??
-          false;
-    } catch (e, s) {
-      Loggers.app.warning('Failed to pin a shortcut', e, s);
-      return false;
-    }
-  }
+  }) async =>
+      await _invoke<bool>(
+        'pinShortcut',
+        supported: isAndroid,
+        args: {'id': id, 'label': label, 'uri': uri},
+        label: 'Failed to pin a shortcut',
+      ) ??
+      false;
 
   /// The transfer notification: `{"title","text","progress","chip"}`, or null
   /// to take it down.
-  static Future<void> updateTransfers(String? payload) async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('updateTransfers', payload);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to update the transfer notification', e, s);
-    }
-  }
+  static Future<void> updateTransfers(String? payload) => _invokeVoid(
+    'updateTransfers',
+    supported: isAndroid,
+    args: payload,
+    label: 'Failed to update the transfer notification',
+  );
 
   /// The keys listed by the system's shortcut list (Meta+/):
   /// `[{"label","items":[{"label","chord"}]}]`.
-  static Future<void> setKeyboardShortcuts(String payload) async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('setKeyboardShortcuts', payload);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set keyboard shortcuts', e, s);
-    }
-  }
+  static Future<void> setKeyboardShortcuts(String payload) => _invokeVoid(
+    'setKeyboardShortcuts',
+    supported: isAndroid,
+    args: payload,
+    label: 'Failed to set keyboard shortcuts',
+  );
 
   /// The per-app language of Android 13+: `current`, the system's tags
   /// (empty for the system language), and `agreed`, what it held right after
@@ -505,14 +484,12 @@ abstract final class MethodChans {
 
   /// Sets the per-app language, and records what the system then holds as
   /// `agreed`.
-  static Future<void> setAppLocale(String tag) async {
-    if (!isAndroid) return;
-    try {
-      await _channel.invokeMethod('setAppLocale', tag);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to set the app locale', e, s);
-    }
-  }
+  static Future<void> setAppLocale(String tag) => _invokeVoid(
+    'setAppLocale',
+    supported: isAndroid,
+    args: tag,
+    label: 'Failed to set the app locale',
+  );
 
   /// Its own channel, deliberately.
   ///

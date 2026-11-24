@@ -27,7 +27,7 @@ class RemoteTaskView extends StatefulWidget {
 }
 
 class _RemoteTaskViewState extends State<RemoteTaskView> {
-  StreamSubscription<Map<String, dynamic>>? _events;
+  StreamSubscription<MonitorAgentEvent>? _events;
   MonitorAgentFlow? _flow;
   List<Map<String, dynamic>> _entries = const [];
   MonitorAgentPending? _pending;
@@ -77,25 +77,31 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
     }
   }
 
-  void _onEvent(Map<String, dynamic> e) {
-    final id = e['id'] ?? (e['flow'] as Map?)?['id'];
-    if (e['type'] == 'resync') return unawaited(_load());
+  void _onEvent(MonitorAgentEvent e) {
+    if (e is MonitorAgentResyncEvent) return unawaited(_load());
+    final id = switch (e) {
+      MonitorAgentFlowEvent(:final flow) => flow.id,
+      MonitorAgentRemovedEvent(:final id) => id,
+      MonitorAgentPendingEvent(:final id) => id,
+      MonitorAgentOutputEvent(:final id) => id,
+      MonitorAgentPiEvent(:final id) => id,
+      MonitorAgentResyncEvent() => null,
+    };
     if (id != _task.flowId) return;
     setState(() {
-      switch (e['type']) {
-        case 'flow':
-          _flow = MonitorAgentFlow.fromJson(e['flow'] as Map<String, dynamic>);
-          if (!_flow!.status.active) _streaming = null;
-        case 'pending':
-          _pending = switch (e['pending']) {
-            final Map<String, dynamic> p => MonitorAgentPending.fromJson(p),
-            _ => null,
-          };
-        case 'output':
-          final lines = [..._output, ...MonitorAgentOutput.linesOf(e['lines'])];
-          _output = lines.length > _outputLines ? lines.sublist(lines.length - _outputLines) : lines;
-        case 'event':
-          _onPiEvent(e['event'] as Map<String, dynamic>? ?? const {});
+      switch (e) {
+        case MonitorAgentFlowEvent(:final flow):
+          _flow = flow;
+          if (!flow.status.active) _streaming = null;
+        case MonitorAgentPendingEvent(:final pending):
+          _pending = pending;
+        case MonitorAgentOutputEvent(:final lines):
+          final merged = [..._output, ...lines];
+          _output = merged.length > _outputLines ? merged.sublist(merged.length - _outputLines) : merged;
+        case MonitorAgentPiEvent(:final event):
+          _onPiEvent(event);
+        case MonitorAgentRemovedEvent() || MonitorAgentResyncEvent():
+          break;
       }
     });
   }

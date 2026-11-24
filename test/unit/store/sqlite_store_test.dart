@@ -117,8 +117,8 @@ void main() {
       expect(store.get<String>('s'), 'txt');
       expect(store.get<int>('i'), 42);
       expect(store.get<bool>('b'), true);
-      expect(store.get<Map>('m'), {'x': 1});
-      expect(store.get<List>('l'), [1, 2, 3]);
+      expect(store.get<Map<Object?, Object?>>('m'), {'x': 1});
+      expect(store.get<List<Object?>>('l'), [1, 2, 3]);
     });
 
     test('an absent key is null, not a throw', () {
@@ -186,7 +186,7 @@ void main() {
 
     test('an object is stored through toJson', () {
       store.set('o', _Point(1, 2));
-      expect(store.get<Map>('o'), {'x': 1, 'y': 2});
+      expect(store.get<Map<Object?, Object?>>('o'), {'x': 1, 'y': 2});
     });
 
     test('a value that cannot be encoded fails loudly, not silently', () {

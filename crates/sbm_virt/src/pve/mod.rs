@@ -70,8 +70,8 @@ impl Config {
         let invalid = || Error::msg(ErrorKind::NotConfigured, format!("not an http(s) address: {addr}"));
         let uri: hyper::Uri = addr.parse().map_err(|_| invalid())?;
         match (uri.scheme_str(), uri.authority()) {
-            (Some("https" | "http"), Some(authority)) => {
-                format!("{}://{}", uri.scheme_str().unwrap(), authority).parse().map_err(|_| invalid())
+            (Some(scheme @ ("https" | "http")), Some(authority)) => {
+                format!("{scheme}://{authority}").parse().map_err(|_| invalid())
             }
             _ => Err(invalid()),
         }

@@ -34,6 +34,7 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read;
 use std::sync::Arc;
 
+use ntex::http::StatusCode;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -587,8 +588,12 @@ pub async fn install(
     let package = match tokio::task::spawn_blocking(move || read_package(&body)).await {
         Ok(Ok(p)) => p,
         Ok(Err(refusal)) => {
-            let status = if refusal.error == "tooLarge" { 413 } else { 400 };
-            return Ok(HttpResponse::builder(ntex::http::StatusCode::from_u16(status).unwrap()).json(&refusal));
+            let status = if refusal.error == "tooLarge" {
+                StatusCode::PAYLOAD_TOO_LARGE
+            } else {
+                StatusCode::BAD_REQUEST
+            };
+            return Ok(HttpResponse::builder(status).json(&refusal));
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };

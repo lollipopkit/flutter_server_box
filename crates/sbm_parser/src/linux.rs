@@ -627,13 +627,17 @@ fn parse_battery_block(lines: &[&str]) -> Option<Battery> {
 /// `sensors` output (Dart `SensorItem.parse`): blocks separated by blank lines,
 /// each block at least 3 lines [device, adapter, detail...]
 pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
-    let mut groups: Vec<Vec<&str>> = vec![Vec::new()];
+    let mut groups: Vec<Vec<&str>> = Vec::new();
+    let mut current: Vec<&str> = Vec::new();
     for line in raw.lines() {
         if line.is_empty() {
-            groups.push(Vec::new());
+            groups.push(std::mem::take(&mut current));
         } else {
-            groups.last_mut().unwrap().push(line);
+            current.push(line);
         }
+    }
+    if !current.is_empty() {
+        groups.push(current);
     }
 
     groups

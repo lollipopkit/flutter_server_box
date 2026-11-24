@@ -17,18 +17,18 @@ void main() {
   });
 
   tearDown(() async {
-    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none.name);
+    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none);
     await DiagnosticsUpload.sync();
     await getIt.reset();
     await SqliteDb.close();
   });
 
   test('turned off while starting, it ends off', () async {
-    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
     // Not awaited: the start is still inside `Sentry.init` when Settings
     // asks for it to stop.
     final starting = DiagnosticsUpload.sync();
-    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none.name);
+    Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none);
     final stopping = DiagnosticsUpload.sync();
     await Future.wait([starting, stopping]);
 

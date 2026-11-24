@@ -13,8 +13,8 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -113,8 +113,8 @@ final class SnippetTool extends ToolFunc {
     return CommandPreview(text: script);
   }
 
-  static SnippetNotifier get _notifier => AgentScope.container.read(snippetProvider.notifier);
-  static List<Snippet> get _all => AgentScope.container.read(snippetProvider).snippets;
+  static SnippetNotifier get _notifier => AppContainer.container.read(snippetProvider.notifier);
+  static List<Snippet> get _all => AppContainer.container.read(snippetProvider).snippets;
 
   static Map<String, Object?> _json(Snippet s) => {
     'id': s.id,
@@ -125,7 +125,7 @@ final class SnippetTool extends ToolFunc {
   };
 
   static List<String>? _tags(Map<String, Object?> a) => switch (a['tags']) {
-    final List l => [for (final t in l) if (t is String && t.trim().isNotEmpty) t.trim()],
+    final List<Object?> l => [for (final t in l) if (t is String && t.trim().isNotEmpty) t.trim()],
     _ => null,
   };
 
@@ -215,7 +215,7 @@ final class VirtReadTool extends ToolFunc {
 
   @override
   Future<LlmToolResult> run(Map<String, Object?> args, ToolCtx ctx) async {
-    final c = AgentScope.container;
+    final c = AppContainer.container;
     final hosts = c.read(virtHostsProvider).hosts;
     final servers = c.read(serversProvider).servers;
     final only = _str(args, 'server_id');
@@ -354,7 +354,7 @@ final class BenchmarkTool extends ToolFunc {
 
   static String _server(Map<String, Object?> a) {
     final id = _str(a, 'server_id') ?? (throw const LlmException('server_id is required'));
-    if (AgentScope.container.read(serversProvider).servers[id] == null) {
+    if (AppContainer.container.read(serversProvider).servers[id] == null) {
       throw LlmException('No server $id. List them with the serverbox tool.');
     }
     return id;
@@ -370,7 +370,7 @@ final class BenchmarkTool extends ToolFunc {
 
   @override
   Future<LlmToolResult> run(Map<String, Object?> args, ToolCtx ctx) async {
-    final c = AgentScope.container;
+    final c = AppContainer.container;
     final id = _server(args);
     final store = Stores.benchmark;
     switch (args['action']) {
@@ -521,7 +521,7 @@ final class RemoteDesktopTool extends ToolFunc {
 
   @override
   Future<LlmToolResult> run(Map<String, Object?> args, ToolCtx ctx) async {
-    final c = AgentScope.container;
+    final c = AppContainer.container;
     switch (args['action']) {
       case 'list':
         final servers = c.read(serversProvider).servers;

@@ -266,7 +266,7 @@ class _Scanner {
 
   Future<_ScanResult?> _probeSsh(InternetAddress ip) async {
     Socket? socket;
-    StreamSubscription? sub;
+    StreamSubscription<List<int>>? sub;
     try {
       socket = await Socket.connect(
         ip,

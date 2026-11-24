@@ -81,3 +81,9 @@ class SystemPrefs {
 }
 
 export const systemPrefs = new SystemPrefs()
+
+/// Whether animations should be reduced, either by explicit preference or OS setting.
+export function isReducedMotion(): boolean {
+  if (systemPrefs.value.reduceMotion) return true
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}

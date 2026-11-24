@@ -13,6 +13,7 @@ import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
@@ -53,7 +54,7 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
         jsonDecode(await utf8.decodeStream(req)) as Map<String, Object?>;
     seen.add(body);
     _keys.add(req.headers.value('authorization') ?? '');
-    final msgs = (body['messages'] as List).cast<Map>();
+    final msgs = (body['messages'] as List).cast<Map<String, Object?>>();
     final res = req.response
       ..headers.contentType = ContentType('text', 'event-stream')
       ..bufferOutput = false;
@@ -144,7 +145,7 @@ final _keys = <String>[];
 
 /// The names of the tools a request offered.
 Set<String> _tools(Map<String, Object?> request) => {
-  for (final t in (request['tools'] as List? ?? const []).cast<Map>())
+  for (final t in (request['tools'] as List? ?? const []).cast<Map<String, Object?>>())
     (t['function'] as Map)['name'] as String,
 };
 
@@ -361,13 +362,13 @@ void main() {
       // database has, which the setting points at.
       Stores.server.put(spiFixture(name: 'web', id: 'srv-1', ip: '10.0.0.1'));
       addTearDown(() => Stores.server.deleteById('srv-1'));
-      AgentScope.container.read(snippetProvider.notifier).add(
+      AppContainer.container.read(snippetProvider.notifier).add(
         const Snippet(id: 'sn-1', name: 'uptime', script: 'uptime', autoRunOn: ['srv-1']),
       );
       expect(text(await snippet.run({'action': 'list'}, ctx)), isNot(contains('autoRunOn')));
 
       await snippet.run({'action': 'update', 'id': 'sn-1', 'script': 'uptime -p'}, ctx);
-      final updated = AgentScope.container.read(snippetProvider).snippets.singleWhere((s) => s.id == 'sn-1');
+      final updated = AppContainer.container.read(snippetProvider).snippets.singleWhere((s) => s.id == 'sn-1');
       expect(updated.script, 'uptime -p');
       expect(updated.autoRunOn, ['srv-1'], reason: 'the model does not touch it');
 

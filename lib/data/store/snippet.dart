@@ -92,14 +92,7 @@ class SnippetStore extends EntityStore<Snippet> {
   Map<String, dynamic> toJson(Snippet item) => item.toJson();
 
   @override
-  Snippet? fromJson(Map<String, dynamic> json) {
-    try {
-      return Snippet.fromJson(json);
-    } catch (e) {
-      dprint('Parsing Snippet from JSON', e);
-      return null;
-    }
-  }
+  Snippet decodeJson(Map<String, dynamic> json) => Snippet.fromJson(json);
 
   /// A snippet from a backup written before ids existed gets a fresh one from
   /// `Snippet.fromJson` on every decode, so the name is what identifies it.

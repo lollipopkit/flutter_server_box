@@ -60,12 +60,9 @@ final class _UfwViewState extends ConsumerState<_UfwView>
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
     final ready = snapshot != null && !needsRoot && failure == null;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.firewall, down: host.spi.name),
-        actions: _buildActions(ready ? snapshot : null),
-      ),
-      body: RefreshIndicator(onRefresh: refresh, child: _buildBody()),
+    return firewallScaffold(
+      actions: _buildActions(ready ? snapshot : null),
+      body: _buildBody(),
       floatingActionButton: ready
           ? FloatingActionButton(
               tooltip: l10n.firewallAddRule,
@@ -83,12 +80,7 @@ extension on _UfwViewState {
   List<Widget> _buildActions(UfwSnapshot? snapshot) {
     return [
       ...switchAction(FirewallKind.ufw),
-      if (isDesktop)
-        Btn.icon(
-          text: libL10n.refresh,
-          icon: const Icon(Icons.refresh, size: 18),
-          onTap: busy ? null : refresh,
-        ),
+      ...desktopRefreshAction(),
       ContextMenuButton(
         tooltip: libL10n.more,
         enabled: snapshot?.active == true && !busy,
@@ -136,39 +128,13 @@ extension on _UfwViewState {
     return card(
       Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(13, 11, 7, 11),
-            child: Row(
-              children: [
-                Icon(
-                  active == true ? Icons.shield : Icons.shield_outlined,
-                  size: 26,
-                  color: active == true ? Colors.green : UIs.textGrey.color,
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        status,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        ['ufw', ?snapshot.version].join(' '),
-                        style: UIs.text12Grey,
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: active == true,
-                  onChanged: busy || active == null
-                      ? null
-                      : (on) => _setEnabled(snapshot, on),
-                ),
-              ],
-            ),
+          statusHeader(
+            active: active == true,
+            title: status,
+            subtitle: ['ufw', ?snapshot.version].join(' '),
+            onToggle: busy || active == null
+                ? null
+                : (on) => _setEnabled(snapshot, on),
           ),
           if (!snapshot.ipv6)
             row(

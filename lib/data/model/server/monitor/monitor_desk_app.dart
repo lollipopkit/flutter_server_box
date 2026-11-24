@@ -28,7 +28,7 @@ class MonitorDeskApp {
       id: id,
       title: switch (manifest['title']) {
         final String t => {'en': t},
-        final Map t => {
+        final Map<Object?, Object?> t => {
           for (final MapEntry(:key, :value) in t.entries)
             if (key is String && value is String) key: value,
         },
