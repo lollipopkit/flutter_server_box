@@ -4,7 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/status/card_item.dart';
@@ -17,8 +17,8 @@ import 'package:server_box/data/provider/uptimer/detail.dart';
 import 'package:server_box/data/provider/uptimer/selection.dart';
 import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/view/page/server/uptimer/common.dart';
-import 'package:server_box/view/page/server/uptimer/edit.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
+import 'package:server_box/view/page/uptimer/edit.dart';
 
 import '../../helpers/spi_fixture.dart';
 

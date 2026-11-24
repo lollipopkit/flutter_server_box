@@ -7,10 +7,10 @@ import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
-import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 part 'summary.freezed.dart';

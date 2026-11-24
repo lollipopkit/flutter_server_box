@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/view/page/server/bmc/common.dart';
-import 'package:server_box/view/page/server/bmc/drives.dart';
-import 'package:server_box/view/page/server/bmc/logs.dart';
-import 'package:server_box/view/page/server/bmc/panel.dart';
+import 'package:server_box/view/page/bmc/common.dart';
+import 'package:server_box/view/page/bmc/drives.dart';
+import 'package:server_box/view/page/bmc/logs.dart';
+import 'package:server_box/view/page/bmc/panel.dart';
 
 const _event = LogService(
   path: '/redfish/v1/Systems/1/LogServices/EventLog',

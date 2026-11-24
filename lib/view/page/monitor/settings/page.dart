@@ -2,8 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
-import 'package:server_box/view/page/server/monitor_settings/view.dart';
-import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
+import 'package:server_box/view/page/monitor/settings/view.dart';
+import 'package:server_box/view/page/monitor/settings/widgets.dart';
 
 final class MonitorSettingsArgs {
   final MonitorHttpCredential monitor;

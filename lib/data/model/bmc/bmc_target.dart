@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/bmc/bmc_cfg.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 part 'bmc_target.freezed.dart';

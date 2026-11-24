@@ -9,7 +9,7 @@ import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/uptimer/client.dart';
 import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/uptimer/common.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
 import 'package:server_box/view/widget/group_title.dart';
 
 /// Create / edit page for an Uptimer monitor, following [ServerEditPage]'s

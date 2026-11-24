@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/provider/uptimer/uptimer.dart';
-import 'package:server_box/view/page/server/bmc/edit.dart';
+import 'package:server_box/view/page/bmc/edit.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
-import 'package:server_box/view/page/server/uptimer/edit.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
+import 'package:server_box/view/page/uptimer/edit.dart';
 
 /// The ways a server gets onto this device.
 ///

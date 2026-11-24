@@ -11,7 +11,7 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
+import 'package:server_box/view/page/monitor/settings/push_edit.dart';
 
 void main() {
   const entry = MonitorPushEntry(

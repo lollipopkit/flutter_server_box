@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/bmc_credential.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_credential.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
 import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/entity_store.dart';

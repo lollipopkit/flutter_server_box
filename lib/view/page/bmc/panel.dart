@@ -2,14 +2,14 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/view/page/server/bmc/common.dart';
-import 'package:server_box/view/page/server/bmc/drives.dart';
-import 'package:server_box/view/page/server/bmc/logs.dart';
+import 'package:server_box/view/page/bmc/common.dart';
+import 'package:server_box/view/page/bmc/drives.dart';
+import 'package:server_box/view/page/bmc/logs.dart';
 
 /// Power action buttons offered for a BMC target, filtered to the actions the
 /// Redfish service actually advertises.

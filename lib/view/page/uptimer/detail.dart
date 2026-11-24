@@ -15,8 +15,8 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/detail/focus_parts.dart';
 import 'package:server_box/view/page/server/tab/element_flight.dart';
-import 'package:server_box/view/page/server/uptimer/common.dart';
-import 'package:server_box/view/page/server/uptimer/edit.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
+import 'package:server_box/view/page/uptimer/edit.dart';
 
 /// Full detail view for an Uptimer monitor.
 ///

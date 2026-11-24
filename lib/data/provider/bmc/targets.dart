@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/selection.dart';
 import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/stores.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/bmc/bmc_cfg.dart';
 
 /// The app's own BMC config: how an address is parsed and when a record counts
 /// as usable. The protocol side is `crates/sbm_redfish` (over FFI, see
