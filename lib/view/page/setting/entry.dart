@@ -42,7 +42,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/backup.dart';
-import 'package:server_box/view/page/bmc_credential/list.dart';
+import 'package:server_box/view/page/bmc/credential/list.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';

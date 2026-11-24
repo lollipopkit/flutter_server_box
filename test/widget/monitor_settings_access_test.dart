@@ -14,7 +14,7 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/server/monitor_settings/view.dart';
+import 'package:server_box/view/page/monitor/settings/view.dart';
 
 import '../helpers/fake_agent_health.dart';
 import '../helpers/rust_lib_helper.dart';

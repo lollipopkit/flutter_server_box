@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/app_auth.dart';
-import 'package:server_box/data/model/server/bmc_credential.dart';
-import 'package:server_box/data/provider/bmc_credential.dart';
+import 'package:server_box/data/model/bmc/bmc_credential.dart';
+import 'package:server_box/data/provider/bmc/bmc_credential.dart';
 import 'package:server_box/data/store/entity_store.dart';
 
 final class BmcCredentialEditPageArgs {

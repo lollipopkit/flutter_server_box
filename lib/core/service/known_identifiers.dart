@@ -1,4 +1,4 @@
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// Every string this install knows to be the user's, and what replaces it.

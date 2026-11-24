@@ -11,10 +11,10 @@ import 'package:server_box/data/provider/uptimer/uptimer.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/tab/element_flight.dart';
-import 'package:server_box/view/page/server/uptimer/card.dart';
-import 'package:server_box/view/page/server/uptimer/common.dart';
-import 'package:server_box/view/page/server/uptimer/detail.dart';
-import 'package:server_box/view/page/server/uptimer/edit.dart';
+import 'package:server_box/view/page/uptimer/card.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
+import 'package:server_box/view/page/uptimer/detail.dart';
+import 'package:server_box/view/page/uptimer/edit.dart';
 
 final _user = LkcUser(
   id: 'u1',

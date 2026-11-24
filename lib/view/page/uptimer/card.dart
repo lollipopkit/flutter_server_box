@@ -12,8 +12,8 @@ import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/title.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/element_flight.dart';
-import 'package:server_box/view/page/server/uptimer/common.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
+import 'package:server_box/view/page/uptimer/common.dart';
 
 /// Status-tab card for an Uptimer monitor, matching [ServerCard] and [BmcCard]
 /// across all three density modes (`cards`, `rows`, `grid`).

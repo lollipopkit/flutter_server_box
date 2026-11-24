@@ -8,11 +8,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:server_box/data/model/server/bmc_credential.dart';
-import 'package:server_box/data/model/server/bmc_target.dart';
+import 'package:server_box/data/model/bmc/bmc_credential.dart';
+import 'package:server_box/data/model/bmc/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
-import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 import '../../helpers/rust_lib_helper.dart';

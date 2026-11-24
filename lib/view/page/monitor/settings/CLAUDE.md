@@ -1,6 +1,6 @@
 # Editing the agent's own settings
 
-`MonitorSettingsPage` (`lib/view/page/server/monitor_settings/`) edits a monitor agent's `config.toml` — intervals, alert rules, data retention, CORS origins, notification channels — through `GET/PUT /api/v1/settings` and `GET/PUT /api/v1/push`. The panel edits the same two endpoints, so the two UIs are peers over one contract; `monitor/CLAUDE.md`'s "Editing it over the API" is the authority on what they are allowed to do.
+`MonitorSettingsPage` (`lib/view/page/monitor/settings/`) edits a monitor agent's `config.toml` — intervals, alert rules, data retention, CORS origins, notification channels — through `GET/PUT /api/v1/settings` and `GET/PUT /api/v1/push`. The panel edits the same two endpoints, so the two UIs are peers over one contract; `monitor/CLAUDE.md`'s "Editing it over the API" is the authority on what they are allowed to do.
 
 **One way in: the button in a server's app bar**, beside Edit, which opens `MonitorSettingsPage` — the route, with the bar the save button sits in. Edit is this app's record of the server and this is the agent's own configuration, which is why the two are neighbours and why this is not in the function bar below the cards (that row is things done *to* the machine).
 

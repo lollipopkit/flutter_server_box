@@ -11,10 +11,10 @@ import 'package:server_box/data/model/server/monitor/monitor_http_credential.dar
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/view/page/agent/permissions.dart';
-import 'package:server_box/view/page/server/monitor_settings/api_tokens.dart';
-import 'package:server_box/view/page/server/monitor_settings/lists.dart';
-import 'package:server_box/view/page/server/monitor_settings/password.dart';
-import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
+import 'package:server_box/view/page/monitor/settings/api_tokens.dart';
+import 'package:server_box/view/page/monitor/settings/lists.dart';
+import 'package:server_box/view/page/monitor/settings/password.dart';
+import 'package:server_box/view/page/monitor/settings/widgets.dart';
 
 /// The bar's half of [MonitorSettingsView].
 ///

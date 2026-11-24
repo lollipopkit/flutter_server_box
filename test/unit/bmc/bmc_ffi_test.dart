@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/bmc/bmc_cfg.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 import '../../helpers/rust_lib_helper.dart';

@@ -20,8 +20,8 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
-import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
+import 'package:server_box/view/page/monitor/settings/push_edit.dart';
+import 'package:server_box/view/page/monitor/settings/widgets.dart';
 
 
 /// What a rule's `monitor_type` may be, in the spellings the agent's

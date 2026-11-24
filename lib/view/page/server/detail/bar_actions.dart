@@ -6,8 +6,8 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/view/page/monitor/settings/page.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
-import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/share_status/page.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 

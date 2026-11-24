@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/model/bmc/bmc_credential.dart';
 import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/store/stores.dart';
