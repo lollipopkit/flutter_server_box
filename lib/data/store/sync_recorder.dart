@@ -31,6 +31,7 @@ abstract final class SyncedStores {
     'server',
     'private_key',
     'bmc_credential',
+    'bmc_target',
     'snippet',
     'port_forward',
     'remote_desktop_profile',
@@ -44,7 +45,12 @@ abstract final class SyncedStores {
   /// stamps. A record already there keeps its stamp.
   static void seed() {
     final db = SqliteDb.instance;
+    final existingTables = {
+      for (final row in db.select("SELECT name FROM sqlite_master WHERE type = 'table';"))
+        row['name'] as String,
+    };
     for (final table in roots) {
+      if (!existingTables.contains(table)) continue;
       SyncRecorder.seedRecords(table, [
         for (final row in db.select('SELECT id, updated_at FROM $table;')) (row['id'] as String, row['updated_at'] as int),
         for (final row in db.select('SELECT row_id, deleted_at FROM tombstone WHERE tbl = ?;', [table]))

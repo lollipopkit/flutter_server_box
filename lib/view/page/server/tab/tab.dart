@@ -13,12 +13,18 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/model/status/card_item.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/selection.dart';
+import 'package:server_box/data/provider/bmc/summary.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
@@ -26,7 +32,14 @@ import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/sort.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/add_menu.dart';
+import 'package:server_box/view/page/server/bmc/card.dart';
+import 'package:server_box/view/page/server/bmc/common.dart';
+import 'package:server_box/view/page/server/bmc/detail.dart';
+import 'package:server_box/view/page/server/bmc/drives.dart';
+import 'package:server_box/view/page/server/bmc/edit.dart';
+import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
@@ -370,57 +383,45 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   /// The list as it was last drawn, for the bindings that step through it.
   ///
-  /// A key is pressed between builds, so what "the next machine" is has to be
+  /// A key is pressed between builds, so what "the next item" is has to be
   /// something the last build left behind.
-  List<String> _lastFiltered = const [];
+  List<StatusCardItem> _lastFiltered = const [];
 
-  /// The machines being acted on together, or empty when none are.
-  ///
-  /// Empty is the ordinary list — no boxes beside the names, taps open — and
-  /// anything else turns the bar into what is being done to them. Kept here
-  /// rather than in a provider because it is a state of *this page*: leaving
-  /// it and coming back is finishing, not resuming.
+  /// Card keys (`StatusCardItem.cardKey`) being acted on together.
   final _selected = <String>{};
 
   bool get _selecting => _selected.isNotEmpty;
 
-  /// Opens [id] in place: the card grows to the width of the page and the rest
-  /// of the grid makes way.
-  ///
-  /// The selection is the app's, not this page's — the tray opens a server,
-  /// and deleting one clears it — so this is the one thing that changes. What
-  /// the card looks like at each point between is the card's own business.
-  void _openDetail(String id) {
+  String? _currentOpenKey() {
+    final serverId = ref.read(serverSelectionProvider);
+    if (serverId != null) return ServerCardItem.keyOf(serverId);
+    final bmcId = ref.read(bmcSelectionProvider);
+    if (bmcId != null) return BmcCardItem.keyOf(bmcId);
+    return null;
+  }
+
+  /// Opens [item] in place: the card grows to the width of the page and the
+  /// rest of the grid makes way.
+  void _openDetail(StatusCardItem item) {
     _keys.requestFocus();
-    // Which way through the list this is, so the page it becomes knows which
-    // side to come in from.
-    final from = _lastFiltered.indexOf(ref.read(serverSelectionProvider) ?? '');
-    final to = _lastFiltered.indexOf(id);
+    final wasKey = _currentOpenKey();
+    final from = wasKey == null
+        ? -1
+        : _lastFiltered.indexWhere((i) => i.cardKey == wasKey);
+    final to = _lastFiltered.indexWhere((i) => i.cardKey == item.cardKey);
     if (from >= 0 && to >= 0 && to != from) {
       _swapDirection = to > from ? 1 : -1;
     }
-    // Asked each time rather than once: the switch can be turned on while the
-    // app is open, and what it asks for is that this movement stop being one.
     _openCtrl.duration = context.motion(_kOpenDuration);
-    final was = ref.read(serverSelectionProvider);
-    // Whatever the last machine's page was scrolled to, this one opens at its
-    // top — so the row that floats over it is there to be used.
     _funcBarVisible.value = true;
-    _heroId = id;
-    ref.read(serverSelectionProvider.notifier).select(id);
+    _heroId = item.cardKey;
+    StatusSelection.selectItem(ref, item);
     _closeTimer?.cancel();
-    // Opened again in the gap between the chrome leaving and the card starting
-    // back — from the column, which is still there. The card never moved, so
-    // nothing will say it has finished growing: the chrome is put back here.
     if (_openCtrl.isCompleted && !_detailShowing) {
       setState(() => _detailShowing = true);
     }
-    // Switching from one open server to another is not a second opening: the
-    // page is already the detail, and only which card is in it changes.
-    if (was != null) return;
+    if (wasKey != null) return;
     _openCtrl.forward();
-    // The card is on its way to the top of the grid, and a viewport scrolled
-    // past it would have it grow off screen — so the two travel together.
     if (_scrollController.hasClients && _scrollController.offset > 0) {
       _scrollController.animateTo(
         0,
@@ -431,15 +432,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   /// Puts the page back to the grid, chrome first.
-  ///
-  /// The reverse of opening in order as well as in direction: what came last
-  /// goes first, so the card is the only thing moving while it shrinks.
-  ///
-  /// Also when the selection is already gone but the page is still open:
-  /// deleting the open server clears the selection itself, before the edit
-  /// page it was deleted from returns.
   void _closeDetail() {
-    if (ref.read(serverSelectionProvider) == null && _openCtrl.isDismissed) {
+    if (_currentOpenKey() == null && _openCtrl.isDismissed) {
       return;
     }
     if (_detailShowing) setState(() => _detailShowing = false);
@@ -447,8 +441,24 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _closeTimer?.cancel();
     _closeTimer = Timer(context.motion(_kChromeDuration), () {
       if (!mounted) return;
-      ref.read(serverSelectionProvider.notifier).select(null);
+      StatusSelection.selectItem(ref, null);
       _openCtrl.reverse();
+    });
+  }
+
+  /// Drops stale in-place detail state when the open item disappears from the
+  /// visible list (e.g. a standalone BMC deleted or linked to a server).
+  void _resetMissingHero() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _heroId == null) return;
+      if (_lastFiltered.any((i) => i.cardKey == _heroId)) return;
+      _closeTimer?.cancel();
+      _openCtrl.value = 0;
+      setState(() {
+        _heroId = null;
+        _detailShowing = false;
+      });
+      StatusSelection.selectItem(ref, null);
     });
   }
 
@@ -492,7 +502,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void initState() {
     super.initState();
-    _tags = ValueNotifier(ref.read(serversProvider).tags);
+    _tags = ValueNotifier({
+      ...ref.read(serversProvider).tags,
+      ...ref.read(bmcTargetsProvider).tags,
+    });
     // The chrome follows the card rather than being timed against it: what
     // says the growth has finished is the growth finishing.
     _openCtrl.addStatusListener((status) {
@@ -533,11 +546,22 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _startAvoidJitterTimer();
   }
 
+  void _syncTags() {
+    final next = {
+      ...ref.read(serversProvider).tags,
+      ...ref.read(bmcTargetsProvider).tags,
+    };
+    if (_tags.value.length == next.length && _tags.value.containsAll(next)) {
+      return;
+    }
+    _tags.value = next;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // Listen to provider changes and update the ValueNotifier
-    ref.listen(serversProvider, (previous, next) => _tags.value = next.tags);
+    ref.listen(serversProvider, (_, _) => _syncTags());
+    ref.listen(bmcTargetsProvider, (_, _) => _syncTags());
     return OrientationBuilder(
       builder: (_, orientation) => ValueListenableBuilder(
         valueListenable: _fsManual,
@@ -562,30 +586,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildScaffold(
     Widget child, {
     bool bare = false,
-    String? openId,
-    List<String> filtered = const [],
+    StatusCardItem? openItem,
+    List<StatusCardItem> filtered = const [],
   }) {
     return Scaffold(
-      // No bar at any width. A phone used to get the app's name and a cog here
-      // because this was the one layout with no other way into the settings
-      // (#657) — the wider ones have the nav rail, which carries its own. The
-      // bottom bar's "more" is that way now, on every phone and every tab, so
-      // what was left up here was a title naming the app on the app's own
-      // first screen.
-      appBar: bare ? null : _buildTagBar(openId, filtered),
-      // The whole list, not a handful of labels inside it. The setting says
-      // how big this page's text is, and it used to reach only the two lines
-      // under a card's rings — so turning it up left every other word on the
-      // page the size it was.
+      appBar: bare ? null : _buildTagBar(openItem, filtered),
       body: ServerTextScale(
-        // The bar above spends the top inset, as an app bar does, and these
-        // the sides. Not the bottom: under a rail rather than a bottom bar
-        // the home indicator's inset reaches here, and taken as a margin it
-        // cut both panes short of the window's edge — a column and a page
-        // stopping a band above the screen's foot, a seam ending in the air.
-        // What scrolls runs under it and keeps its last row clear, and what
-        // floats sits above it (the grid, the column, the readings, and
-        // [ServerFuncBar]).
         child: SafeArea(top: false, bottom: false, child: child),
       ),
     );
@@ -594,66 +600,76 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildPortrait() {
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     final servers = ref.watch(serversProvider.select((s) => s.servers));
-    // Which server has grown into the page, or null for the grid. Read here
-    // rather than inside the builder below, which is a listener's callback and
-    // not a build of this element.
-    final openId = ref.watch(serverSelectionProvider);
+    final bmcState = ref.watch(bmcTargetsProvider);
+    final openKey = StatusSelection.watchCardKey(ref);
 
-    // Watched only for the order that depends on them, and only in this
-    // method — which is a `build`, where `ref.watch` belongs. The sort runs
-    // inside a `ListenableBuilder` below, and watching from that callback
-    // would be a dependency registered outside the build that owns it.
-    //
-    // Every field but the two that read nothing about a machine needs its
-    // state, so the whole thing is read for those: `select` cannot narrow "a
-    // reading changed".
-    final needsState = ServerSortOrder.of(_tag.value).field.readsStatus;
-    final states = !needsState
-        ? const <String, ServerState>{}
-        : {for (final id in serverOrder) id: ref.watch(serverProvider(id))};
+    final standaloneBmcs = bmcState.standalone(servers.keys.toSet());
+    final rawItems = <StatusCardItem>[
+      for (final id in serverOrder)
+        if (servers[id] case final spi?) ServerCardItem(spi),
+      for (final target in standaloneBmcs) BmcCardItem(target),
+    ];
 
     return _ServerOpenRequest(
       split: _opensInPlace(context),
       onOpen: _openRequestedServer,
       child: ListenableBuilder(
-        // The four ways of viewing the list, and nothing else: a tag, a
-        // search, an order, and whether it is a globe.
-        listenable: Listenable.merge([_tag, _sortVersion, _search, _globe]),
-        builder: (_, _) {
-          // The settings arrangement, viewed however the sort button says —
-          // see [ServerSortOrder], whose first option is that arrangement
-          // unchanged.
-          final ordered = ServerSortOrder.of(_tag.value).apply(
-            serverOrder,
-            servers,
-            (id) => states[id] ?? ref.read(serverProvider(id)),
-          );
-          final filtered = _filterServers(ordered);
-          _lastFiltered = filtered;
-          // The empty states win over the globe — see [_buildBodySmall] — so
-          // an empty one is not the globe having the window, and the bar with
-          // the control that undoes the filter has to stay.
-          //
-          // And an open server wins over both: tapping a dot on the sphere is
-          // how a server is opened from there, so the globe has to give way to
-          // what it was asked to open — and it is still what the page goes
-          // back to when that is closed.
-          final globe =
-              _globe.value && filtered.isNotEmpty && openId == null;
-          _publishImmersive(globe);
-          return _bound(
-            _buildScaffold(
-              _buildBodySmall(
-                filtered: filtered,
-                globe: globe,
-                openId: openId,
-              ),
-              bare: globe,
-              openId: openId,
-              filtered: filtered,
-            ),
-          );
-        },
+        listenable: Listenable.merge([_tag, _sortVersion]),
+        builder: (_, _) => Consumer(
+          builder: (_, ref, _) {
+            final sortOrder = ServerSortOrder.of(_tag.value);
+            final needsState = sortOrder.field.readsStatus;
+            final serverStates = !needsState
+                ? const <String, ServerState>{}
+                : {
+                    for (final id in serverOrder) id: ref.watch(serverProvider(id)),
+                  };
+            final bmcStates = !needsState
+                ? const <String, BmcSummaryState>{}
+                : {
+                    for (final target in standaloneBmcs)
+                      target.id: ref.watch(bmcSummaryProvider(target.id)),
+                  };
+
+            return ListenableBuilder(
+              listenable: Listenable.merge([_search, _globe]),
+              builder: (_, _) {
+                final ordered = sortOrder.applyItems(
+                  rawItems,
+                  serverStateOf: (id) =>
+                      serverStates[id] ?? ref.read(serverProvider(id)),
+                  bmcStateOf: (target) =>
+                      bmcStates[target.id] ??
+                      ref.read(bmcSummaryProvider(target.id)),
+                );
+                final filtered = _filterItems(ordered);
+                _lastFiltered = filtered;
+                if (_heroId != null &&
+                    !filtered.any((i) => i.cardKey == _heroId)) {
+                  _resetMissingHero();
+                }
+                final openItem = openKey == null
+                    ? null
+                    : filtered.firstWhereOrNull((i) => i.cardKey == openKey);
+                final hasServers = filtered.any((i) => i is ServerCardItem);
+                final globe = _globe.value && hasServers && openItem == null;
+                _publishImmersive(globe);
+                return _bound(
+                  _buildScaffold(
+                    _buildBodySmall(
+                      filtered: filtered,
+                      globe: globe,
+                      openItem: openItem,
+                    ),
+                    bare: globe,
+                    openItem: openItem,
+                    filtered: filtered,
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -695,8 +711,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // The list, from inside one of its machines. Nothing when the list is
     // already the page — the bar's own search is what that wants.
     bind(bindings, KbCommand.serverList, () {
-      final openId = ref.read(serverSelectionProvider);
-      if (openId != null) _showServerSheet(_lastFiltered, openId);
+      final key = _currentOpenKey();
+      final item = key == null
+          ? null
+          : _lastFiltered.firstWhereOrNull((i) => i.cardKey == key);
+      if (item != null) _showItemSheet(_lastFiltered, item);
     });
 
     return CallbackShortcuts(
@@ -705,59 +724,32 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  /// The machine before or after the open one, wrapping at the ends.
-  ///
-  /// Wrapping because the list is short and the alternative is a key that
-  /// silently does nothing at one end of it.
+  /// The item before or after the open one, wrapping at the ends.
   void _stepServer(int delta) {
-    final openId = ref.read(serverSelectionProvider);
-    if (openId == null || _lastFiltered.length < 2) return;
-    final at = _lastFiltered.indexOf(openId);
+    final key = _currentOpenKey();
+    if (key == null || _lastFiltered.length < 2) return;
+    final at = _lastFiltered.indexWhere((i) => i.cardKey == key);
     if (at < 0) return;
     final next = (at + delta) % _lastFiltered.length;
     _openDetail(_lastFiltered[next]);
   }
 
-  /// Whether a server opens where its card is, or as a page of its own.
-  ///
-  /// One column has no room to grow a card into: the card already has the
-  /// width, so growing it would only make it taller, and what a phone can
-  /// afford is one thing at a time. Above that the card grows in place and the
-  /// list makes way for it, which is what keeps the list one page.
   bool _opensInPlace(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= AdaptivePanes.kSplitWidth;
 
   Widget _buildBodySmall({
-    required List<String> filtered,
+    required List<StatusCardItem> filtered,
     required bool globe,
-    required String? openId,
+    required StatusCardItem? openItem,
   }) {
-    // Crossed rather than swapped. The list emptying under a search and
-    // filling again as it is deleted are the two halves of one movement, and
-    // an instant cut reads as the page having been replaced rather than as
-    // what was typed taking effect.
-    //
-    // Keyed, because both states are sometimes the same widget type: the
-    // grid keeps one key throughout — its own contents animate, and a switch
-    // here would fight that — and each empty state has its own, so going from
-    // a filtered-out tag to no servers at all is also a crossing.
     return AnimatedSwitcher(
       duration: context.motion(_kViewSwapDuration),
       reverseDuration: context.motion(_kViewSwapDuration),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
-      // Scale and fade rather than fade alone — see [_viewSwapTransition] for
-      // why the anchor is the sphere and not merely the middle. It applies to
-      // the empty states too, where the same contraction reads as the list
-      // being taken away rather than blinking out.
       transitionBuilder: _viewSwapTransition,
       layoutBuilder: _viewSwapLayout,
       child: switch (true) {
-        // The empty states win over the globe, and each of the three is worth
-        // more than an empty sphere: no servers at all is a new install that
-        // needs telling how to add one, and a tag or a search with no hits is
-        // a filter to undo — with the control to undo it right there. None of
-        // that can be said by a globe with nothing on it.
         _ when globe => _buildGlobe(filtered, immersive: true),
         _ when filtered.isEmpty => ServerListEmpty(
           query: _search.needle,
@@ -768,7 +760,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         ),
         _ => KeyedSubtree(
           key: const ValueKey('grid'),
-          child: _buildGrid(filtered, openId),
+          child: _buildGrid(filtered, openItem),
         ),
       },
     );

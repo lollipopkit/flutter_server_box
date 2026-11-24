@@ -23,6 +23,7 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
@@ -32,10 +33,12 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
@@ -149,6 +152,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// step, which reads what the BMC actually presents — see `cert_pin.dart`
   /// for why that has to be a separate step from enforcing it.
   final _bmcCert = ValueNotifier<String?>(null);
+  String? _bmcCertAddr;
 
   final _wolMacCtrl = TextEditingController();
   final _wolIpCtrl = TextEditingController();

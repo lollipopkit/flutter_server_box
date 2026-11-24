@@ -128,7 +128,8 @@ abstract final class SchemaVersion {
   /// v41: `server.ssh_forward_agent`
   /// v42: `server.ssh_control_path`
   /// v43: `server.monitor_fallback_addr`
-  static const current = 43;
+  /// v44: `bmc_target` and `bmc_target_tag` replace `server.bmc_*`
+  static const current = 44;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

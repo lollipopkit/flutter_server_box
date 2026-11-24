@@ -11,6 +11,7 @@ import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
@@ -20,6 +21,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
@@ -49,7 +51,10 @@ import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/private_key/generate.dart';
 import 'package:server_box/view/page/process/process.dart';
 import 'package:server_box/view/page/scheduled_tasks/scheduled_tasks.dart';
+import 'package:server_box/view/page/server/bmc/common.dart';
+import 'package:server_box/view/page/server/bmc/detail.dart';
 import 'package:server_box/view/page/server/bmc/drives.dart';
+import 'package:server_box/view/page/server/bmc/edit.dart';
 import 'package:server_box/view/page/server/bmc/logs.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
@@ -177,12 +182,29 @@ void main() {
       ),
     ),
     'BmcCredentialEditPage': (c) => BmcCredentialEditPage.route.go(c),
+    'BmcTargetEditPage': (c) => BmcTargetEditPage.route.go(c),
+    'BmcDetailPage': (c) => BmcDetailPage.route.go(
+      c,
+      const BmcTargetRequiredArgs(
+        BmcTarget(id: 'bmc', name: 'bmc', addr: 'https://10.0.0.9'),
+      ),
+    ),
     'ConnectionStatsPage': (c) => ConnectionStatsPage.route.go(c),
     'ContainerPage': (c) => ContainerPage.route.go(c, onServer()),
     'CustomCmdsPage': (c) => CustomCmdsPage.route.go(c, onServer()),
     'ServerStatusSharePage': (c) => ServerStatusSharePage.route.go(c, onServer()),
-    'BmcDrivesPage': (c) => BmcDrivesPage.route.go(c, onServer()),
-    'BmcLogsPage': (c) => BmcLogsPage.route.go(c, onServer()),
+    'BmcDrivesPage': (c) => BmcDrivesPage.route.go(
+      c,
+      const BmcTargetRequiredArgs(
+        BmcTarget(id: 'bmc', name: 'bmc', addr: 'https://10.0.0.9'),
+      ),
+    ),
+    'BmcLogsPage': (c) => BmcLogsPage.route.go(
+      c,
+      const BmcTargetRequiredArgs(
+        BmcTarget(id: 'bmc', name: 'bmc', addr: 'https://10.0.0.9'),
+      ),
+    ),
     'DesktopSettingsPage': (c) => DesktopSettingsPage.route.go(c),
     'FirewallPage': (c) => FirewallPage.route.go(c, onServer()),
     'GroupDetailPage': (c) => GroupDetailPage.route.go(
@@ -379,6 +401,7 @@ void main() {
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     getIt.registerSingleton<SnippetStore>(SnippetStore());
     getIt.registerSingleton<BmcCredentialStore>(BmcCredentialStore());
+    getIt.registerSingleton<BmcTargetStore>(BmcTargetStore());
     getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
     getIt.registerSingleton<SelfAddrStore>(SelfAddrStore('self_addr_test'));
     getIt.registerSingleton<PortForwardStore>(PortForwardStore());

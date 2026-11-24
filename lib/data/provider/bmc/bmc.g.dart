@@ -31,7 +31,7 @@ final class BmcNotifierProvider
   /// is the only thing that gives the session back.
   BmcNotifierProvider._({
     required BmcNotifierFamily super.from,
-    required Spi super.argument,
+    required String super.argument,
   }) : super(
          retry: null,
          name: r'bmcProvider',
@@ -73,7 +73,7 @@ final class BmcNotifierProvider
   }
 }
 
-String _$bmcNotifierHash() => r'9f985754e5c69a8046390961c2db5f02a173c371';
+String _$bmcNotifierHash() => r'41df14d8358b5ae0701140da1192e8dcf439016c';
 
 /// One server's BMC.
 ///
@@ -82,7 +82,14 @@ String _$bmcNotifierHash() => r'9f985754e5c69a8046390961c2db5f02a173c371';
 /// is the only thing that gives the session back.
 
 final class BmcNotifierFamily extends $Family
-    with $ClassFamilyOverride<BmcNotifier, BmcState, BmcState, BmcState, Spi> {
+    with
+        $ClassFamilyOverride<
+          BmcNotifier,
+          BmcState,
+          BmcState,
+          BmcState,
+          String
+        > {
   BmcNotifierFamily._()
     : super(
         retry: null,
@@ -98,8 +105,8 @@ final class BmcNotifierFamily extends $Family
   /// device that allows few of them — so the client is closed on dispose, which
   /// is the only thing that gives the session back.
 
-  BmcNotifierProvider call(Spi spi) =>
-      BmcNotifierProvider._(argument: spi, from: this);
+  BmcNotifierProvider call(String targetId) =>
+      BmcNotifierProvider._(argument: targetId, from: this);
 
   @override
   String toString() => r'bmcProvider';
@@ -112,10 +119,10 @@ final class BmcNotifierFamily extends $Family
 /// is the only thing that gives the session back.
 
 abstract class _$BmcNotifier extends $Notifier<BmcState> {
-  late final _$args = ref.$arg as Spi;
-  Spi get spi => _$args;
+  late final _$args = ref.$arg as String;
+  String get targetId => _$args;
 
-  BmcState build(Spi spi);
+  BmcState build(String targetId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {

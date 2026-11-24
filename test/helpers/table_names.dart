@@ -36,6 +36,7 @@ abstract final class Tables {
   static const syncRoots = [
     'private_key',
     'bmc_credential',
+    'bmc_target',
     'server',
     'snippet',
     'port_forward',
@@ -50,6 +51,8 @@ abstract final class Tables {
     'private_key',
     'bmc_credential',
     'server',
+    'bmc_target',
+    'bmc_target_tag',
     'server_tag',
     'server_env',
     'server_jump',

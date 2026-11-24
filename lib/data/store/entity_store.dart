@@ -254,7 +254,7 @@ abstract class EntityStore<T extends Object> {
 
   void delete(T item) => deleteById(idOf(item));
 
-  void deleteById(String id) {
+  void deleteById(String id, {bool notify = true}) {
     SqliteStore.transact(() {
       // Children go with it: every child table declares ON DELETE CASCADE, so
       // this is one statement rather than the six the old code hand-wrote —
@@ -262,7 +262,7 @@ abstract class EntityStore<T extends Object> {
       db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
       synced.tombstone(id);
     });
-    invalidate();
+    if (notify) invalidate();
   }
 
   /// `Future<bool>` to match `SqliteStore.clear`, which callers guard on: a
@@ -380,6 +380,16 @@ abstract class EntityStore<T extends Object> {
                 )
                 .map((row) => row['id'] as String)
                 .toSet();
+            final linkedBmcs = [
+              for (final row in db.select(
+                'SELECT id, updated_at FROM bmc_target WHERE server_id = ?;',
+                [id],
+              ))
+                (
+                  id: row['id'] as String,
+                  updatedAt: (row['updated_at'] as int?) ?? 0,
+                ),
+            ];
             for (final row in db.select(
               'SELECT id FROM port_forward WHERE server_id = ?;',
               [id],
@@ -396,6 +406,15 @@ abstract class EntityStore<T extends Object> {
             }
             for (final ownerId in jumpOwnerIds) {
               if (ownerId != id) synced.stamp(ownerId, at: at);
+            }
+            if (linkedBmcs.isNotEmpty) {
+              final bmcSync = SyncedTable('bmc_target');
+              for (final bmc in linkedBmcs) {
+                final stampAt = !force && bmc.updatedAt > at
+                    ? bmc.updatedAt
+                    : at;
+                bmcSync.stamp(bmc.id, at: stampAt);
+              }
             }
           }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);

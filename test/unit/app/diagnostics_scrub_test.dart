@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sentry/sentry.dart' as sentry;
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/server.dart';
@@ -23,14 +23,21 @@ import '../../helpers/test_db.dart';
 void main() {
   final servers = [
     spiFixture(name: 'prod-db', id: 'a', ip: '198.51.100.24', user: 'deploy'),
-    Spi(
+    const Spi(
       name: 'agent-box',
       id: 'b',
-      monitorHttp: const MonitorHttpCredential(addr: 'https://10.0.0.7:3770'),
-      bmc: const BmcCfg(addr: 'https://10.0.0.9'),
+      monitorHttp: MonitorHttpCredential(addr: 'https://10.0.0.7:3770'),
     ),
   ];
-  final identifiers = KnownIdentifiers.of(servers);
+  final bmcTargets = const [
+    BmcTarget(
+      id: 'bmc-1',
+      name: 'bmc-box',
+      addr: 'https://10.0.0.9',
+      serverId: 'b',
+    ),
+  ];
+  final identifiers = KnownIdentifiers.of(servers, bmcTargets: bmcTargets);
 
   sentry.SentryEvent scrubbed(sentry.SentryEvent event) =>
       DiagnosticsUpload.scrub(event, identifiers);

@@ -550,6 +550,13 @@ pub struct BmcSnapshot {
     pub sensors_truncated: bool,
 }
 
+/// Lightweight read for a status list card (mirrors sbm_redfish::Summary).
+#[derive(Debug, Clone, PartialEq)]
+pub struct BmcSummary {
+    pub topology: RedfishTopology,
+    pub watts: Option<f64>,
+}
+
 /// What a modifying request produced (mirrors sbm_redfish::Outcome): the
 /// request being taken, never the machine having done it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -827,6 +834,16 @@ impl BmcClient {
             topology: snapshot.topology.into(),
             sensors: snapshot.sensors.into(),
             sensors_truncated: snapshot.sensors_truncated,
+        })
+    }
+
+    /// Reads the system state and chassis watts without sweeping temperatures or fans.
+    pub async fn summary(&self, known: Option<RedfishTopology>) -> Result<BmcSummary, BmcError> {
+        let known = known.map(model::Topology::from);
+        let summary = sbm_redfish::summary(&self.0, known.as_ref()).await?;
+        Ok(BmcSummary {
+            topology: summary.topology.into(),
+            watts: summary.watts,
         })
     }
 

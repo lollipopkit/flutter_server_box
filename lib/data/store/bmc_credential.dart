@@ -70,13 +70,13 @@ class BmcCredentialStore extends EntityStore<BmcCredential> {
 
   BmcCredential? fetchOne(String? id) => id == null ? null : fetchOneRaw(id);
 
-  /// How many servers point at [id], for a delete that would orphan them.
+  /// How many BMC targets point at [id], for a delete that would orphan them.
   ///
   /// The foreign key is `ON DELETE SET NULL`, so deleting an account in use
-  /// does not fail — it quietly leaves those servers with an address and
+  /// does not fail — it quietly leaves those targets with an address and
   /// nothing to log in with. Asking first is what lets the UI say so.
   int serversUsing(String id) =>
-      db.select('SELECT COUNT(*) AS n FROM server WHERE bmc_cred_id = ?;', [
+      db.select('SELECT COUNT(*) AS n FROM bmc_target WHERE cred_id = ?;', [
             id,
           ]).single['n']
           as int;

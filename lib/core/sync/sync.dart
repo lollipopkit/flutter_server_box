@@ -213,6 +213,7 @@ final class BakSyncer extends SyncIface {
         portForwards: const {},
         remoteDesktopProfiles: const {},
         bmcCredentials: const {},
+        bmcTargets: const {},
         pve: const {},
       );
     }

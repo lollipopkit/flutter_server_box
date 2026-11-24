@@ -20,26 +20,26 @@ class ServerSelectionBar extends StatelessWidget
     required this.count,
     required this.total,
     required this.onClose,
-    required this.onConnect,
-    required this.onDisconnect,
+    this.onConnect,
+    this.onDisconnect,
     required this.onTag,
-    required this.onMove,
+    this.onMove,
     required this.onDelete,
   });
 
-  /// How many machines are in the set.
+  /// How many items are in the set.
   final int count;
 
-  /// How many machines the list shows, which is what [count] is out of.
+  /// How many items the list shows, which is what [count] is out of.
   final int total;
 
-  /// Stops choosing, leaving the machines as they were.
+  /// Stops choosing, leaving the items as they were.
   final VoidCallback onClose;
 
-  final VoidCallback onConnect;
-  final VoidCallback onDisconnect;
+  final VoidCallback? onConnect;
+  final VoidCallback? onDisconnect;
   final VoidCallback onTag;
-  final VoidCallback onMove;
+  final VoidCallback? onMove;
   final VoidCallback onDelete;
 
   @override
@@ -79,21 +79,21 @@ class ServerSelectionBar extends StatelessWidget
         ],
       ),
       actions: [
-        BarAction(icon: Icons.link, label: l10n.connect, onTap: onConnect),
-        BarAction(
-          icon: Icons.link_off,
-          label: l10n.disconnect,
-          onTap: onDisconnect,
-        ),
+        if (onConnect case final connect?)
+          BarAction(icon: Icons.link, label: l10n.connect, onTap: connect),
+        if (onDisconnect case final disconnect?)
+          BarAction(
+            icon: Icons.link_off,
+            label: l10n.disconnect,
+            onTap: disconnect,
+          ),
         BarAction(
           icon: MingCute.hashtag_line,
           label: libL10n.tag,
           onTap: onTag,
         ),
-        // The one action here that is about the list rather than about the
-        // machines. Dragging is how one server is moved, and forty is exactly
-        // where dragging stops being a way to do anything.
-        BarAction(icon: Icons.swap_vert, label: l10n.move, onTap: onMove),
+        if (onMove case final move?)
+          BarAction(icon: Icons.swap_vert, label: l10n.move, onTap: move),
         BarAction(icon: Icons.delete, label: libL10n.delete, onTap: onDelete),
       ],
     );

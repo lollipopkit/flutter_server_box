@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/data/provider/bmc_credential.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -29,6 +30,8 @@ void _reload(Set<ReloadedStore> rewritten) {
         providers.read(privateKeyProvider.notifier).reload();
       case ReloadedStore.bmcCredentials:
         providers.read(bmcCredentialProvider.notifier).reload();
+      case ReloadedStore.bmcTargets:
+        providers.read(bmcTargetsProvider.notifier).reload();
       case ReloadedStore.containers:
         providers.invalidate(containerProvider);
     }

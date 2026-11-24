@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/page/server/bmc/edit.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 
@@ -46,6 +47,20 @@ List<ContextMenuAction> addServerMenu(BuildContext context, WidgetRef ref) => [
         icon: way.icon,
         onTap: () => unawaited(addServer(context, ref, way)),
       ),
+];
+
+/// The "+" menu for the Status tab, offering host additions plus standalone
+/// resource types such as Redfish BMCs.
+List<ContextMenuAction> addStatusItemMenu(
+  BuildContext context,
+  WidgetRef ref,
+) => [
+  ...addServerMenu(context, ref),
+  ContextMenuAction(
+    text: 'BMC (Redfish)',
+    icon: Icons.developer_board,
+    onTap: () => unawaited(BmcTargetEditPage.route.go(context)),
+  ),
 ];
 
 Future<void> addServer(BuildContext context, WidgetRef ref, AddServerWay way) async {

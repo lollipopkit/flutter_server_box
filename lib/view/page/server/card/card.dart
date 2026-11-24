@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
 import 'package:server_box/view/page/server/card/compact.dart';
 import 'package:server_box/view/page/server/card/density.dart';
@@ -60,9 +61,15 @@ class ServerCard extends StatelessWidget {
     this.highlighted = false,
     this.pageWidth = 0,
     this.opensInPlace = false,
+    this.bmcPower,
+    this.bmcPowering = false,
+    this.onBmcPowerOn,
   });
 
   final ServerState srv;
+  final PowerState? bmcPower;
+  final bool bmcPowering;
+  final VoidCallback? onBmcPowerOn;
 
   /// Which reading is drawn in full. Null takes the first one the machine
   /// reports, which is always the CPU.
@@ -280,7 +287,7 @@ class ServerCard extends StatelessWidget {
     // What the card says about a machine with nothing to show, and which of
     // the page's two shapes it is on its way to — see [ServerNoticeForm].
     // Decided from where the card is going, like [twoColumns] below.
-    final notice = ServerNotice.onCard(srv);
+    final notice = ServerNotice.onCard(srv, bmcPower: bmcPower);
     final hasContent = serverDetailHasContent(srv);
     // Only what has been sampled is drawn. A machine that failed keeps its
     // last numbers on its own page, where there is room to say how old they
@@ -343,6 +350,9 @@ class ServerCard extends StatelessWidget {
           openness: t,
           selected: selected,
           heroName: !opensInPlace,
+          bmcPower: bmcPower,
+          bmcPowering: bmcPowering,
+          onBmcPowerOn: onBmcPowerOn,
         ),
         if (notice != null)
           ServerCardNotice(
@@ -597,6 +607,7 @@ class ServerCard extends StatelessWidget {
             stale: stale != null,
             selected: selected,
             heroName: !opensInPlace,
+            bmcPower: bmcPower,
           )
         : ServerCardLine(
             srv: srv,
@@ -605,6 +616,9 @@ class ServerCard extends StatelessWidget {
             stale: stale,
             selected: selected,
             heroName: !opensInPlace,
+            bmcPower: bmcPower,
+            bmcPowering: bmcPowering,
+            onBmcPowerOn: onBmcPowerOn,
           );
   }
 

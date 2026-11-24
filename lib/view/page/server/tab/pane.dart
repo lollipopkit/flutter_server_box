@@ -1,32 +1,18 @@
 part of 'tab.dart';
 
 extension _Pane on _ServerPageState {
-  /// The list as a column beside the open machine, and the surface that
-  /// machine is grown into.
-  ///
-  /// The column is the list making way: it arrives as the card grows and
-  /// leaves as the card shrinks back, on the card's own movement rather than
-  /// a clock of its own — see [AdaptivePanes.presence]. With nothing open it
-  /// is not there at all, and the grid has the width.
-  ///
-  /// [heroId] is the card out of the grid, or on its way back into it — not
-  /// the selection, which is cleared before the way back starts.
   Widget _buildPanes({
-    required List<String> filtered,
-    required String? openId,
-    required String? heroId,
+    required List<StatusCardItem> filtered,
+    required StatusCardItem? openItem,
+    required StatusCardItem? heroItem,
     required Widget Function(double pageInset) grid,
   }) {
-    // Built once out here: the panes rebuild the column on every frame of the
-    // movement, and the same widget is one Flutter skips.
-    final column = _buildServerColumn(filtered, openId);
+    final column = _buildServerColumn(filtered, openItem);
 
     return LayoutBuilder(
       builder: (_, outer) => PaneSettings.listenAll(
         (width, collapsed) => AdaptivePanes.surface(
-          // Not when a card opening in place has no room for a column beside
-          // it: the bar's switcher still reaches every machine.
-          enabled: heroId != null && _opensInPlace(context),
+          enabled: heroItem != null && _opensInPlace(context),
           presence: _open,
           listWidth: width,
           onListWidthChanged: PaneSettings.saveWidth,
@@ -37,11 +23,6 @@ extension _Pane on _ServerPageState {
           listBuilder: (_, _) => column,
           surfaceBuilder: (_, _) => LayoutBuilder(
             builder: (_, inner) {
-              // Where the column will end, from where it is now: the panes
-              // grow it by the same [_open] this reads, so what it has taken
-              // so far divided by how far along that is, is all of it. The
-              // card grows to that edge rather than to the column's current
-              // one, so it is never under the column on the way.
               final t = _open.value;
               final pageInset = t > 0
                   ? (outer.maxWidth - inner.maxWidth) / t
@@ -49,21 +30,10 @@ extension _Pane on _ServerPageState {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (heroId != null) _buildOpenDetail(heroId),
-                  // Dropped the moment the page takes the readings over
-                  // rather than crossed with it: at that point both are
-                  // drawing the same widgets in the same places, so a
-                  // crossing would have nothing to carry and 200ms to carry
-                  // it in.
-                  if (!_detailShowing)
+                  if (heroItem != null) _buildOpenDetail(heroItem),
+                  if (!_detailShowing || heroItem == null)
                     KeyedSubtree(
                       key: const ValueKey('cards'),
-                      // Laid out at the whole width and anchored to the right,
-                      // so the column slides in over the grid instead of
-                      // narrowing it: a grid laid out narrower on every frame
-                      // re-flows its columns under the card that is leaving
-                      // it. What is under the column is cut off, and is the
-                      // cards that are fading out anyway.
                       child: ClipRect(
                         child: OverflowBox(
                           alignment: Alignment.centerRight,
@@ -73,15 +43,13 @@ extension _Pane on _ServerPageState {
                         ),
                       ),
                     ),
-                  // Above both, and the tab's rather than the page's — see
-                  // [ServerOpenFuncBar].
-                  if (heroId != null)
+                  if (heroItem case ServerCardItem(:final id))
                     Positioned(
                       left: 0,
                       right: 0,
                       bottom: 0,
                       child: ServerOpenFuncBar(
-                        id: heroId,
+                        id: id,
                         open: _open,
                         visible: _funcBarVisible,
                       ),
@@ -95,39 +63,55 @@ extension _Pane on _ServerPageState {
     );
   }
 
-  /// The list, as an index beside the open machine, laid out as the file
-  /// tab's rail is: the machines under their tags.
-  ///
-  /// Grouped whatever the grid is set to. The grid's grouping is a way of
-  /// reading a page of cards; a column of names is found by its headings, and
-  /// without them it is as long as the list and says nothing about it.
-  ///
-  /// No search of its own: the bar's switcher over the open machine is one,
-  /// and it searches the tags as well.
-  Widget _buildServerColumn(List<String> filtered, String? openId) {
-    final servers = ref.read(serversProvider).servers;
-    Widget tile(String id) => Consumer(
-      key: ValueKey(id),
-      builder: (_, ref, _) {
-        final srv = ref.watch(serverProvider(id));
-        return ServerSideTile(
-          spi: srv.spi,
-          // Whether it answers, which the grid said with the card and this
-          // says on its mark, or with the bar where it has none.
-          state: serverStateDot(srv),
-          selected: id == openId,
-          onTap: id == openId ? null : () => _openDetail(id),
-        );
-      },
-    );
+  Widget _buildServerColumn(
+    List<StatusCardItem> filtered,
+    StatusCardItem? openItem,
+  ) {
+    Widget tile(StatusCardItem item) => switch (item) {
+      ServerCardItem(:final id) => Consumer(
+        key: ValueKey(item.cardKey),
+        builder: (_, ref, _) {
+          final srv = ref.watch(serverProvider(id));
+          final isOpen = item.cardKey == openItem?.cardKey;
+          return ServerSideTile(
+            spi: srv.spi,
+            state: serverStateDot(srv),
+            selected: isOpen,
+            onTap: isOpen ? null : () => _openDetail(item),
+          );
+        },
+      ),
+      BmcCardItem(:final target) => Consumer(
+        key: ValueKey(item.cardKey),
+        builder: (_, ref, _) {
+          final isOpen = item.cardKey == openItem?.cardKey;
+          // Reuse the open detail page's session instead of polling the same
+          // BMC concurrently via `bmcSummaryProvider`.
+          final dotColor = isOpen
+              ? BmcCard.statusDotColorFromBmc(ref.watch(bmcProvider(target.id)))
+              : BmcCard.statusDotColor(
+                  ref.watch(bmcSummaryProvider(target.id)),
+                );
+          return SideBarTile(
+            title: target.name,
+            live: true,
+            liveColor: dotColor,
+            selected: isOpen,
+            onTap: isOpen ? null : () => _openDetail(item),
+          );
+        },
+      ),
+    };
 
     return ListView(
-      // Down to the window's foot, its last row clear of the home indicator.
-      padding: EdgeInsets.only(top: 4, bottom: 4 + MediaQuery.paddingOf(context).bottom),
+      padding: EdgeInsets.only(
+        top: 4,
+        bottom: 4 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
-        for (final group in groupByTag(filtered, (id) => servers[id]?.tags)) ...[
+        for (final group in groupByTag(filtered, (i) => i.tags)) ...[
           if (group.label case final label?) SideBarSection(label),
-          for (final id in group.items) tile(id),
+          for (final item in group.items) tile(item),
         ],
       ],
     );

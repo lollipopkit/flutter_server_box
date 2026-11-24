@@ -1115,42 +1115,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _bmcAddrMeta = const VerificationMeta(
-    'bmcAddr',
-  );
-  @override
-  late final GeneratedColumn<String> bmcAddr = GeneratedColumn<String>(
-    'bmc_addr',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _bmcCertSha256Meta = const VerificationMeta(
-    'bmcCertSha256',
-  );
-  @override
-  late final GeneratedColumn<String> bmcCertSha256 = GeneratedColumn<String>(
-    'bmc_cert_sha256',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _bmcCredIdMeta = const VerificationMeta(
-    'bmcCredId',
-  );
-  @override
-  late final GeneratedColumn<String> bmcCredId = GeneratedColumn<String>(
-    'bmc_cred_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES bmc_credential (id) ON DELETE SET NULL',
-    ),
-  );
   static const VerificationMeta _preferTempDevMeta = const VerificationMeta(
     'preferTempDev',
   );
@@ -1319,9 +1283,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
-    bmcAddr,
-    bmcCertSha256,
-    bmcCredId,
     preferTempDev,
     tempIsCelsius,
     logoUrl,
@@ -1552,27 +1513,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         wolPwd.isAcceptableOrUnknown(data['wol_pwd']!, _wolPwdMeta),
       );
     }
-    if (data.containsKey('bmc_addr')) {
-      context.handle(
-        _bmcAddrMeta,
-        bmcAddr.isAcceptableOrUnknown(data['bmc_addr']!, _bmcAddrMeta),
-      );
-    }
-    if (data.containsKey('bmc_cert_sha256')) {
-      context.handle(
-        _bmcCertSha256Meta,
-        bmcCertSha256.isAcceptableOrUnknown(
-          data['bmc_cert_sha256']!,
-          _bmcCertSha256Meta,
-        ),
-      );
-    }
-    if (data.containsKey('bmc_cred_id')) {
-      context.handle(
-        _bmcCredIdMeta,
-        bmcCredId.isAcceptableOrUnknown(data['bmc_cred_id']!, _bmcCredIdMeta),
-      );
-    }
     if (data.containsKey('prefer_temp_dev')) {
       context.handle(
         _preferTempDevMeta,
@@ -1787,18 +1727,6 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}wol_pwd'],
       ),
-      bmcAddr: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}bmc_addr'],
-      ),
-      bmcCertSha256: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}bmc_cert_sha256'],
-      ),
-      bmcCredId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}bmc_cred_id'],
-      ),
       preferTempDev: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}prefer_temp_dev'],
@@ -1923,24 +1851,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? wolMac;
   final String? wolIp;
   final String? wolPwd;
-
-  /// The BMC, a side channel beside the Wake-on-LAN fields above.
-  ///
-  /// Deliberately outside the SSH/monitor constraint below: a BMC is not a way
-  /// of reaching the host, so it neither satisfies that requirement nor
-  /// conflicts with either side of it. A server may carry one alongside SSH or
-  /// alongside a monitor agent.
-  ///
-  /// [bmcCertSha256] is what the user reviewed, not what a CA said — see
-  /// `BmcCfg.certSha256`. Null means nothing has been reviewed and a
-  /// connection is refused rather than trusted.
-  final String? bmcAddr;
-  final String? bmcCertSha256;
-
-  /// Deleting an account must not delete the servers that used it; it must
-  /// leave them with an address and nothing to log in with, which the editor
-  /// can then say. Same rule as [sshKeyId].
-  final String? bmcCredId;
   final String? preferTempDev;
   final bool tempIsCelsius;
   final String? logoUrl;
@@ -2009,9 +1919,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.wolMac,
     this.wolIp,
     this.wolPwd,
-    this.bmcAddr,
-    this.bmcCertSha256,
-    this.bmcCredId,
     this.preferTempDev,
     required this.tempIsCelsius,
     this.logoUrl,
@@ -2095,15 +2002,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     if (!nullToAbsent || wolPwd != null) {
       map['wol_pwd'] = Variable<String>(wolPwd);
-    }
-    if (!nullToAbsent || bmcAddr != null) {
-      map['bmc_addr'] = Variable<String>(bmcAddr);
-    }
-    if (!nullToAbsent || bmcCertSha256 != null) {
-      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256);
-    }
-    if (!nullToAbsent || bmcCredId != null) {
-      map['bmc_cred_id'] = Variable<String>(bmcCredId);
     }
     if (!nullToAbsent || preferTempDev != null) {
       map['prefer_temp_dev'] = Variable<String>(preferTempDev);
@@ -2206,15 +2104,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolPwd: wolPwd == null && nullToAbsent
           ? const Value.absent()
           : Value(wolPwd),
-      bmcAddr: bmcAddr == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bmcAddr),
-      bmcCertSha256: bmcCertSha256 == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bmcCertSha256),
-      bmcCredId: bmcCredId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bmcCredId),
       preferTempDev: preferTempDev == null && nullToAbsent
           ? const Value.absent()
           : Value(preferTempDev),
@@ -2290,9 +2179,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: serializer.fromJson<String?>(json['wolMac']),
       wolIp: serializer.fromJson<String?>(json['wolIp']),
       wolPwd: serializer.fromJson<String?>(json['wolPwd']),
-      bmcAddr: serializer.fromJson<String?>(json['bmcAddr']),
-      bmcCertSha256: serializer.fromJson<String?>(json['bmcCertSha256']),
-      bmcCredId: serializer.fromJson<String?>(json['bmcCredId']),
       preferTempDev: serializer.fromJson<String?>(json['preferTempDev']),
       tempIsCelsius: serializer.fromJson<bool>(json['tempIsCelsius']),
       logoUrl: serializer.fromJson<String?>(json['logoUrl']),
@@ -2343,9 +2229,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
       'wolPwd': serializer.toJson<String?>(wolPwd),
-      'bmcAddr': serializer.toJson<String?>(bmcAddr),
-      'bmcCertSha256': serializer.toJson<String?>(bmcCertSha256),
-      'bmcCredId': serializer.toJson<String?>(bmcCredId),
       'preferTempDev': serializer.toJson<String?>(preferTempDev),
       'tempIsCelsius': serializer.toJson<bool>(tempIsCelsius),
       'logoUrl': serializer.toJson<String?>(logoUrl),
@@ -2390,9 +2273,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
     Value<String?> wolPwd = const Value.absent(),
-    Value<String?> bmcAddr = const Value.absent(),
-    Value<String?> bmcCertSha256 = const Value.absent(),
-    Value<String?> bmcCredId = const Value.absent(),
     Value<String?> preferTempDev = const Value.absent(),
     bool? tempIsCelsius,
     Value<String?> logoUrl = const Value.absent(),
@@ -2445,11 +2325,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac: wolMac.present ? wolMac.value : this.wolMac,
     wolIp: wolIp.present ? wolIp.value : this.wolIp,
     wolPwd: wolPwd.present ? wolPwd.value : this.wolPwd,
-    bmcAddr: bmcAddr.present ? bmcAddr.value : this.bmcAddr,
-    bmcCertSha256: bmcCertSha256.present
-        ? bmcCertSha256.value
-        : this.bmcCertSha256,
-    bmcCredId: bmcCredId.present ? bmcCredId.value : this.bmcCredId,
     preferTempDev: preferTempDev.present
         ? preferTempDev.value
         : this.preferTempDev,
@@ -2531,11 +2406,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       wolMac: data.wolMac.present ? data.wolMac.value : this.wolMac,
       wolIp: data.wolIp.present ? data.wolIp.value : this.wolIp,
       wolPwd: data.wolPwd.present ? data.wolPwd.value : this.wolPwd,
-      bmcAddr: data.bmcAddr.present ? data.bmcAddr.value : this.bmcAddr,
-      bmcCertSha256: data.bmcCertSha256.present
-          ? data.bmcCertSha256.value
-          : this.bmcCertSha256,
-      bmcCredId: data.bmcCredId.present ? data.bmcCredId.value : this.bmcCredId,
       preferTempDev: data.preferTempDev.present
           ? data.preferTempDev.value
           : this.preferTempDev,
@@ -2596,9 +2466,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
-          ..write('bmcAddr: $bmcAddr, ')
-          ..write('bmcCertSha256: $bmcCertSha256, ')
-          ..write('bmcCredId: $bmcCredId, ')
           ..write('preferTempDev: $preferTempDev, ')
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
@@ -2645,9 +2512,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     wolMac,
     wolIp,
     wolPwd,
-    bmcAddr,
-    bmcCertSha256,
-    bmcCredId,
     preferTempDev,
     tempIsCelsius,
     logoUrl,
@@ -2693,9 +2557,6 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
           other.wolPwd == this.wolPwd &&
-          other.bmcAddr == this.bmcAddr &&
-          other.bmcCertSha256 == this.bmcCertSha256 &&
-          other.bmcCredId == this.bmcCredId &&
           other.preferTempDev == this.preferTempDev &&
           other.tempIsCelsius == this.tempIsCelsius &&
           other.logoUrl == this.logoUrl &&
@@ -2739,9 +2600,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> wolMac;
   final Value<String?> wolIp;
   final Value<String?> wolPwd;
-  final Value<String?> bmcAddr;
-  final Value<String?> bmcCertSha256;
-  final Value<String?> bmcCredId;
   final Value<String?> preferTempDev;
   final Value<bool> tempIsCelsius;
   final Value<String?> logoUrl;
@@ -2783,9 +2641,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
-    this.bmcAddr = const Value.absent(),
-    this.bmcCertSha256 = const Value.absent(),
-    this.bmcCredId = const Value.absent(),
     this.preferTempDev = const Value.absent(),
     this.tempIsCelsius = const Value.absent(),
     this.logoUrl = const Value.absent(),
@@ -2828,9 +2683,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
     this.wolPwd = const Value.absent(),
-    this.bmcAddr = const Value.absent(),
-    this.bmcCertSha256 = const Value.absent(),
-    this.bmcCredId = const Value.absent(),
     this.preferTempDev = const Value.absent(),
     this.tempIsCelsius = const Value.absent(),
     this.logoUrl = const Value.absent(),
@@ -2874,9 +2726,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? wolMac,
     Expression<String>? wolIp,
     Expression<String>? wolPwd,
-    Expression<String>? bmcAddr,
-    Expression<String>? bmcCertSha256,
-    Expression<String>? bmcCredId,
     Expression<String>? preferTempDev,
     Expression<bool>? tempIsCelsius,
     Expression<String>? logoUrl,
@@ -2921,9 +2770,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (wolMac != null) 'wol_mac': wolMac,
       if (wolIp != null) 'wol_ip': wolIp,
       if (wolPwd != null) 'wol_pwd': wolPwd,
-      if (bmcAddr != null) 'bmc_addr': bmcAddr,
-      if (bmcCertSha256 != null) 'bmc_cert_sha256': bmcCertSha256,
-      if (bmcCredId != null) 'bmc_cred_id': bmcCredId,
       if (preferTempDev != null) 'prefer_temp_dev': preferTempDev,
       if (tempIsCelsius != null) 'temp_is_celsius': tempIsCelsius,
       if (logoUrl != null) 'logo_url': logoUrl,
@@ -2969,9 +2815,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? wolMac,
     Value<String?>? wolIp,
     Value<String?>? wolPwd,
-    Value<String?>? bmcAddr,
-    Value<String?>? bmcCertSha256,
-    Value<String?>? bmcCredId,
     Value<String?>? preferTempDev,
     Value<bool>? tempIsCelsius,
     Value<String?>? logoUrl,
@@ -3015,9 +2858,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
       wolPwd: wolPwd ?? this.wolPwd,
-      bmcAddr: bmcAddr ?? this.bmcAddr,
-      bmcCertSha256: bmcCertSha256 ?? this.bmcCertSha256,
-      bmcCredId: bmcCredId ?? this.bmcCredId,
       preferTempDev: preferTempDev ?? this.preferTempDev,
       tempIsCelsius: tempIsCelsius ?? this.tempIsCelsius,
       logoUrl: logoUrl ?? this.logoUrl,
@@ -3124,15 +2964,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (wolPwd.present) {
       map['wol_pwd'] = Variable<String>(wolPwd.value);
     }
-    if (bmcAddr.present) {
-      map['bmc_addr'] = Variable<String>(bmcAddr.value);
-    }
-    if (bmcCertSha256.present) {
-      map['bmc_cert_sha256'] = Variable<String>(bmcCertSha256.value);
-    }
-    if (bmcCredId.present) {
-      map['bmc_cred_id'] = Variable<String>(bmcCredId.value);
-    }
     if (preferTempDev.present) {
       map['prefer_temp_dev'] = Variable<String>(preferTempDev.value);
     }
@@ -3205,9 +3036,6 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
           ..write('wolPwd: $wolPwd, ')
-          ..write('bmcAddr: $bmcAddr, ')
-          ..write('bmcCertSha256: $bmcCertSha256, ')
-          ..write('bmcCredId: $bmcCredId, ')
           ..write('preferTempDev: $preferTempDev, ')
           ..write('tempIsCelsius: $tempIsCelsius, ')
           ..write('logoUrl: $logoUrl, ')
@@ -4411,6 +4239,706 @@ class ServerDisabledCmdsCompanion
     return (StringBuffer('ServerDisabledCmdsCompanion(')
           ..write('serverId: $serverId, ')
           ..write('cmdType: $cmdType')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BmcTargetsTable extends BmcTargets
+    with TableInfo<$BmcTargetsTable, BmcTargetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BmcTargetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _revMeta = const VerificationMeta('rev');
+  @override
+  late final GeneratedColumn<int> rev = GeneratedColumn<int>(
+    'rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addrMeta = const VerificationMeta('addr');
+  @override
+  late final GeneratedColumn<String> addr = GeneratedColumn<String>(
+    'addr',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _credIdMeta = const VerificationMeta('credId');
+  @override
+  late final GeneratedColumn<String> credId = GeneratedColumn<String>(
+    'cred_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bmc_credential (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _certSha256Meta = const VerificationMeta(
+    'certSha256',
+  );
+  @override
+  late final GeneratedColumn<String> certSha256 = GeneratedColumn<String>(
+    'cert_sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE SET NULL',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    updatedAt,
+    rev,
+    id,
+    name,
+    addr,
+    credId,
+    certSha256,
+    serverId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bmc_target';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BmcTargetRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('rev')) {
+      context.handle(
+        _revMeta,
+        rev.isAcceptableOrUnknown(data['rev']!, _revMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('addr')) {
+      context.handle(
+        _addrMeta,
+        addr.isAcceptableOrUnknown(data['addr']!, _addrMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addrMeta);
+    }
+    if (data.containsKey('cred_id')) {
+      context.handle(
+        _credIdMeta,
+        credId.isAcceptableOrUnknown(data['cred_id']!, _credIdMeta),
+      );
+    }
+    if (data.containsKey('cert_sha256')) {
+      context.handle(
+        _certSha256Meta,
+        certSha256.isAcceptableOrUnknown(data['cert_sha256']!, _certSha256Meta),
+      );
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BmcTargetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BmcTargetRow(
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      rev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rev'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      addr: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}addr'],
+      )!,
+      credId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cred_id'],
+      ),
+      certSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cert_sha256'],
+      ),
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      ),
+    );
+  }
+
+  @override
+  $BmcTargetsTable createAlias(String alias) {
+    return $BmcTargetsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class BmcTargetRow extends DataClass implements Insertable<BmcTargetRow> {
+  final int updatedAt;
+  final int rev;
+  final String id;
+  final String name;
+  final String addr;
+  final String? credId;
+  final String? certSha256;
+  final String? serverId;
+  const BmcTargetRow({
+    required this.updatedAt,
+    required this.rev,
+    required this.id,
+    required this.name,
+    required this.addr,
+    this.credId,
+    this.certSha256,
+    this.serverId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['rev'] = Variable<int>(rev);
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['addr'] = Variable<String>(addr);
+    if (!nullToAbsent || credId != null) {
+      map['cred_id'] = Variable<String>(credId);
+    }
+    if (!nullToAbsent || certSha256 != null) {
+      map['cert_sha256'] = Variable<String>(certSha256);
+    }
+    if (!nullToAbsent || serverId != null) {
+      map['server_id'] = Variable<String>(serverId);
+    }
+    return map;
+  }
+
+  BmcTargetsCompanion toCompanion(bool nullToAbsent) {
+    return BmcTargetsCompanion(
+      updatedAt: Value(updatedAt),
+      rev: Value(rev),
+      id: Value(id),
+      name: Value(name),
+      addr: Value(addr),
+      credId: credId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(credId),
+      certSha256: certSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(certSha256),
+      serverId: serverId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverId),
+    );
+  }
+
+  factory BmcTargetRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BmcTargetRow(
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      rev: serializer.fromJson<int>(json['rev']),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      addr: serializer.fromJson<String>(json['addr']),
+      credId: serializer.fromJson<String?>(json['credId']),
+      certSha256: serializer.fromJson<String?>(json['certSha256']),
+      serverId: serializer.fromJson<String?>(json['serverId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'rev': serializer.toJson<int>(rev),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'addr': serializer.toJson<String>(addr),
+      'credId': serializer.toJson<String?>(credId),
+      'certSha256': serializer.toJson<String?>(certSha256),
+      'serverId': serializer.toJson<String?>(serverId),
+    };
+  }
+
+  BmcTargetRow copyWith({
+    int? updatedAt,
+    int? rev,
+    String? id,
+    String? name,
+    String? addr,
+    Value<String?> credId = const Value.absent(),
+    Value<String?> certSha256 = const Value.absent(),
+    Value<String?> serverId = const Value.absent(),
+  }) => BmcTargetRow(
+    updatedAt: updatedAt ?? this.updatedAt,
+    rev: rev ?? this.rev,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    addr: addr ?? this.addr,
+    credId: credId.present ? credId.value : this.credId,
+    certSha256: certSha256.present ? certSha256.value : this.certSha256,
+    serverId: serverId.present ? serverId.value : this.serverId,
+  );
+  BmcTargetRow copyWithCompanion(BmcTargetsCompanion data) {
+    return BmcTargetRow(
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      rev: data.rev.present ? data.rev.value : this.rev,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      addr: data.addr.present ? data.addr.value : this.addr,
+      credId: data.credId.present ? data.credId.value : this.credId,
+      certSha256: data.certSha256.present
+          ? data.certSha256.value
+          : this.certSha256,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcTargetRow(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('addr: $addr, ')
+          ..write('credId: $credId, ')
+          ..write('certSha256: $certSha256, ')
+          ..write('serverId: $serverId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(updatedAt, rev, id, name, addr, credId, certSha256, serverId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BmcTargetRow &&
+          other.updatedAt == this.updatedAt &&
+          other.rev == this.rev &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.addr == this.addr &&
+          other.credId == this.credId &&
+          other.certSha256 == this.certSha256 &&
+          other.serverId == this.serverId);
+}
+
+class BmcTargetsCompanion extends UpdateCompanion<BmcTargetRow> {
+  final Value<int> updatedAt;
+  final Value<int> rev;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> addr;
+  final Value<String?> credId;
+  final Value<String?> certSha256;
+  final Value<String?> serverId;
+  const BmcTargetsCompanion({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.addr = const Value.absent(),
+    this.credId = const Value.absent(),
+    this.certSha256 = const Value.absent(),
+    this.serverId = const Value.absent(),
+  });
+  BmcTargetsCompanion.insert({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    required String id,
+    required String name,
+    required String addr,
+    this.credId = const Value.absent(),
+    this.certSha256 = const Value.absent(),
+    this.serverId = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       addr = Value(addr);
+  static Insertable<BmcTargetRow> custom({
+    Expression<int>? updatedAt,
+    Expression<int>? rev,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? addr,
+    Expression<String>? credId,
+    Expression<String>? certSha256,
+    Expression<String>? serverId,
+  }) {
+    return RawValuesInsertable({
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rev != null) 'rev': rev,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (addr != null) 'addr': addr,
+      if (credId != null) 'cred_id': credId,
+      if (certSha256 != null) 'cert_sha256': certSha256,
+      if (serverId != null) 'server_id': serverId,
+    });
+  }
+
+  BmcTargetsCompanion copyWith({
+    Value<int>? updatedAt,
+    Value<int>? rev,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? addr,
+    Value<String?>? credId,
+    Value<String?>? certSha256,
+    Value<String?>? serverId,
+  }) {
+    return BmcTargetsCompanion(
+      updatedAt: updatedAt ?? this.updatedAt,
+      rev: rev ?? this.rev,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      addr: addr ?? this.addr,
+      credId: credId ?? this.credId,
+      certSha256: certSha256 ?? this.certSha256,
+      serverId: serverId ?? this.serverId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rev.present) {
+      map['rev'] = Variable<int>(rev.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (addr.present) {
+      map['addr'] = Variable<String>(addr.value);
+    }
+    if (credId.present) {
+      map['cred_id'] = Variable<String>(credId.value);
+    }
+    if (certSha256.present) {
+      map['cert_sha256'] = Variable<String>(certSha256.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcTargetsCompanion(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('addr: $addr, ')
+          ..write('credId: $credId, ')
+          ..write('certSha256: $certSha256, ')
+          ..write('serverId: $serverId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BmcTargetTagsTable extends BmcTargetTags
+    with TableInfo<$BmcTargetTagsTable, BmcTargetTagRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BmcTargetTagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _targetIdMeta = const VerificationMeta(
+    'targetId',
+  );
+  @override
+  late final GeneratedColumn<String> targetId = GeneratedColumn<String>(
+    'target_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES bmc_target (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _tagMeta = const VerificationMeta('tag');
+  @override
+  late final GeneratedColumn<String> tag = GeneratedColumn<String>(
+    'tag',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [targetId, tag];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bmc_target_tag';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BmcTargetTagRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('target_id')) {
+      context.handle(
+        _targetIdMeta,
+        targetId.isAcceptableOrUnknown(data['target_id']!, _targetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetIdMeta);
+    }
+    if (data.containsKey('tag')) {
+      context.handle(
+        _tagMeta,
+        tag.isAcceptableOrUnknown(data['tag']!, _tagMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tagMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {targetId, tag};
+  @override
+  BmcTargetTagRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BmcTargetTagRow(
+      targetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_id'],
+      )!,
+      tag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tag'],
+      )!,
+    );
+  }
+
+  @override
+  $BmcTargetTagsTable createAlias(String alias) {
+    return $BmcTargetTagsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class BmcTargetTagRow extends DataClass implements Insertable<BmcTargetTagRow> {
+  final String targetId;
+  final String tag;
+  const BmcTargetTagRow({required this.targetId, required this.tag});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['target_id'] = Variable<String>(targetId);
+    map['tag'] = Variable<String>(tag);
+    return map;
+  }
+
+  BmcTargetTagsCompanion toCompanion(bool nullToAbsent) {
+    return BmcTargetTagsCompanion(targetId: Value(targetId), tag: Value(tag));
+  }
+
+  factory BmcTargetTagRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BmcTargetTagRow(
+      targetId: serializer.fromJson<String>(json['targetId']),
+      tag: serializer.fromJson<String>(json['tag']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'targetId': serializer.toJson<String>(targetId),
+      'tag': serializer.toJson<String>(tag),
+    };
+  }
+
+  BmcTargetTagRow copyWith({String? targetId, String? tag}) => BmcTargetTagRow(
+    targetId: targetId ?? this.targetId,
+    tag: tag ?? this.tag,
+  );
+  BmcTargetTagRow copyWithCompanion(BmcTargetTagsCompanion data) {
+    return BmcTargetTagRow(
+      targetId: data.targetId.present ? data.targetId.value : this.targetId,
+      tag: data.tag.present ? data.tag.value : this.tag,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcTargetTagRow(')
+          ..write('targetId: $targetId, ')
+          ..write('tag: $tag')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(targetId, tag);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BmcTargetTagRow &&
+          other.targetId == this.targetId &&
+          other.tag == this.tag);
+}
+
+class BmcTargetTagsCompanion extends UpdateCompanion<BmcTargetTagRow> {
+  final Value<String> targetId;
+  final Value<String> tag;
+  const BmcTargetTagsCompanion({
+    this.targetId = const Value.absent(),
+    this.tag = const Value.absent(),
+  });
+  BmcTargetTagsCompanion.insert({required String targetId, required String tag})
+    : targetId = Value(targetId),
+      tag = Value(tag);
+  static Insertable<BmcTargetTagRow> custom({
+    Expression<String>? targetId,
+    Expression<String>? tag,
+  }) {
+    return RawValuesInsertable({
+      if (targetId != null) 'target_id': targetId,
+      if (tag != null) 'tag': tag,
+    });
+  }
+
+  BmcTargetTagsCompanion copyWith({
+    Value<String>? targetId,
+    Value<String>? tag,
+  }) {
+    return BmcTargetTagsCompanion(
+      targetId: targetId ?? this.targetId,
+      tag: tag ?? this.tag,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (targetId.present) {
+      map['target_id'] = Variable<String>(targetId.value);
+    }
+    if (tag.present) {
+      map['tag'] = Variable<String>(tag.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BmcTargetTagsCompanion(')
+          ..write('targetId: $targetId, ')
+          ..write('tag: $tag')
           ..write(')'))
         .toString();
   }
@@ -10226,6 +10754,8 @@ abstract class _$AppDb extends GeneratedDatabase {
       $ServerIdentityFilesTable(this);
   late final $ServerDisabledCmdsTable serverDisabledCmds =
       $ServerDisabledCmdsTable(this);
+  late final $BmcTargetsTable bmcTargets = $BmcTargetsTable(this);
+  late final $BmcTargetTagsTable bmcTargetTags = $BmcTargetTagsTable(this);
   late final $KnownHostsTable knownHosts = $KnownHostsTable(this);
   late final $SnippetsTable snippets = $SnippetsTable(this);
   late final $SnippetTagsTable snippetTags = $SnippetTagsTable(this);
@@ -10259,6 +10789,8 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverJumps,
     serverIdentityFiles,
     serverDisabledCmds,
+    bmcTargets,
+    bmcTargetTags,
     knownHosts,
     snippets,
     snippetTags,
@@ -10281,13 +10813,6 @@ abstract class _$AppDb extends GeneratedDatabase {
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'private_key',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('server', kind: UpdateKind.update)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'bmc_credential',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server', kind: UpdateKind.update)],
@@ -10333,6 +10858,27 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server_disabled_cmd', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'bmc_credential',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('bmc_target', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('bmc_target', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'bmc_target',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('bmc_target_tag', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -10763,20 +11309,19 @@ final class $$BmcCredentialsTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$ServersTable, List<ServerRow>> _serversRefsTable(
-    _$AppDb db,
-  ) => MultiTypedResultKey.fromTable(
-    db.servers,
-    aliasName: 'bmc_credential__id__server__bmc_cred_id',
+  static MultiTypedResultKey<$BmcTargetsTable, List<BmcTargetRow>>
+  _bmcTargetsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.bmcTargets,
+    aliasName: 'bmc_credential__id__bmc_target__cred_id',
   );
 
-  $$ServersTableProcessedTableManager get serversRefs {
-    final manager = $$ServersTableTableManager(
+  $$BmcTargetsTableProcessedTableManager get bmcTargetsRefs {
+    final manager = $$BmcTargetsTableTableManager(
       $_db,
-      $_db.servers,
-    ).filter((f) => f.bmcCredId.id.sqlEquals($_itemColumn<String>('id')!));
+      $_db.bmcTargets,
+    ).filter((f) => f.credId.id.sqlEquals($_itemColumn<String>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(_serversRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(_bmcTargetsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -10822,22 +11367,22 @@ class $$BmcCredentialsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> serversRefs(
-    Expression<bool> Function($$ServersTableFilterComposer f) f,
+  Expression<bool> bmcTargetsRefs(
+    Expression<bool> Function($$BmcTargetsTableFilterComposer f) f,
   ) {
-    final $$ServersTableFilterComposer composer = $composerBuilder(
+    final $$BmcTargetsTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.bmcCredId,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.credId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableFilterComposer(
+          }) => $$BmcTargetsTableFilterComposer(
             $db: $db,
-            $table: $db.servers,
+            $table: $db.bmcTargets,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10915,22 +11460,22 @@ class $$BmcCredentialsTableAnnotationComposer
   GeneratedColumn<String> get pwd =>
       $composableBuilder(column: $table.pwd, builder: (column) => column);
 
-  Expression<T> serversRefs<T extends Object>(
-    Expression<T> Function($$ServersTableAnnotationComposer a) f,
+  Expression<T> bmcTargetsRefs<T extends Object>(
+    Expression<T> Function($$BmcTargetsTableAnnotationComposer a) f,
   ) {
-    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+    final $$BmcTargetsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.bmcCredId,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.credId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableAnnotationComposer(
+          }) => $$BmcTargetsTableAnnotationComposer(
             $db: $db,
-            $table: $db.servers,
+            $table: $db.bmcTargets,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -10954,7 +11499,7 @@ class $$BmcCredentialsTableTableManager
           $$BmcCredentialsTableUpdateCompanionBuilder,
           (BmcCredentialRow, $$BmcCredentialsTableReferences),
           BmcCredentialRow,
-          PrefetchHooks Function({bool serversRefs})
+          PrefetchHooks Function({bool bmcTargetsRefs})
         > {
   $$BmcCredentialsTableTableManager(_$AppDb db, $BmcCredentialsTable table)
     : super(
@@ -11007,30 +11552,30 @@ class $$BmcCredentialsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({serversRefs = false}) {
+          prefetchHooksCallback: ({bmcTargetsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (serversRefs) db.servers],
+              explicitlyWatchedTables: [if (bmcTargetsRefs) db.bmcTargets],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (serversRefs)
+                  if (bmcTargetsRefs)
                     await $_getPrefetchedData<
                       BmcCredentialRow,
                       $BmcCredentialsTable,
-                      ServerRow
+                      BmcTargetRow
                     >(
                       currentTable: table,
                       referencedTable: $$BmcCredentialsTableReferences
-                          ._serversRefsTable(db),
+                          ._bmcTargetsRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$BmcCredentialsTableReferences(
                             db,
                             table,
                             p0,
-                          ).serversRefs,
+                          ).bmcTargetsRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.bmcCredId == item.id),
+                          referencedItems.where((e) => e.credId == item.id),
                       typedResults: items,
                     ),
                 ];
@@ -11053,7 +11598,7 @@ typedef $$BmcCredentialsTableProcessedTableManager =
       $$BmcCredentialsTableUpdateCompanionBuilder,
       (BmcCredentialRow, $$BmcCredentialsTableReferences),
       BmcCredentialRow,
-      PrefetchHooks Function({bool serversRefs})
+      PrefetchHooks Function({bool bmcTargetsRefs})
     >;
 typedef $$ServersTableCreateCompanionBuilder =
     ServersCompanion Function({
@@ -11085,9 +11630,6 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
-      Value<String?> bmcAddr,
-      Value<String?> bmcCertSha256,
-      Value<String?> bmcCredId,
       Value<String?> preferTempDev,
       Value<bool> tempIsCelsius,
       Value<String?> logoUrl,
@@ -11131,9 +11673,6 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> wolMac,
       Value<String?> wolIp,
       Value<String?> wolPwd,
-      Value<String?> bmcAddr,
-      Value<String?> bmcCertSha256,
-      Value<String?> bmcCredId,
       Value<String?> preferTempDev,
       Value<bool> tempIsCelsius,
       Value<String?> logoUrl,
@@ -11163,23 +11702,6 @@ final class $$ServersTableReferences
       $_db.privateKeys,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_sshKeyIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $BmcCredentialsTable _bmcCredIdTable(_$AppDb db) =>
-      db.bmcCredentials.createAlias('server__bmc_cred_id__bmc_credential__id');
-
-  $$BmcCredentialsTableProcessedTableManager? get bmcCredId {
-    final $_column = $_itemColumn<String>('bmc_cred_id');
-    if ($_column == null) return null;
-    final manager = $$BmcCredentialsTableTableManager(
-      $_db,
-      $_db.bmcCredentials,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_bmcCredIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -11263,6 +11785,24 @@ final class $$ServersTableReferences
     final cache = $_typedResult.readTableOrNull(
       _serverDisabledCmdsRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$BmcTargetsTable, List<BmcTargetRow>>
+  _bmcTargetsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.bmcTargets,
+    aliasName: 'server__id__bmc_target__server_id',
+  );
+
+  $$BmcTargetsTableProcessedTableManager get bmcTargetsRefs {
+    final manager = $$BmcTargetsTableTableManager(
+      $_db,
+      $_db.bmcTargets,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_bmcTargetsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -11602,16 +12142,6 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get bmcAddr => $composableBuilder(
-    column: $table.bmcAddr,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bmcCertSha256 => $composableBuilder(
-    column: $table.bmcCertSha256,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get preferTempDev => $composableBuilder(
     column: $table.preferTempDev,
     builder: (column) => ColumnFilters(column),
@@ -11686,29 +12216,6 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$PrivateKeysTableFilterComposer(
             $db: $db,
             $table: $db.privateKeys,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$BmcCredentialsTableFilterComposer get bmcCredId {
-    final $$BmcCredentialsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bmcCredId,
-      referencedTable: $db.bmcCredentials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BmcCredentialsTableFilterComposer(
-            $db: $db,
-            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11809,6 +12316,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerDisabledCmdsTableFilterComposer(
             $db: $db,
             $table: $db.serverDisabledCmds,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> bmcTargetsRefs(
+    Expression<bool> Function($$BmcTargetsTableFilterComposer f) f,
+  ) {
+    final $$BmcTargetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetsTableFilterComposer(
+            $db: $db,
+            $table: $db.bmcTargets,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -12213,16 +12745,6 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get bmcAddr => $composableBuilder(
-    column: $table.bmcAddr,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get bmcCertSha256 => $composableBuilder(
-    column: $table.bmcCertSha256,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get preferTempDev => $composableBuilder(
     column: $table.preferTempDev,
     builder: (column) => ColumnOrderings(column),
@@ -12297,29 +12819,6 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$PrivateKeysTableOrderingComposer(
             $db: $db,
             $table: $db.privateKeys,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$BmcCredentialsTableOrderingComposer get bmcCredId {
-    final $$BmcCredentialsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bmcCredId,
-      referencedTable: $db.bmcCredentials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BmcCredentialsTableOrderingComposer(
-            $db: $db,
-            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -12450,14 +12949,6 @@ class $$ServersTableAnnotationComposer
   GeneratedColumn<String> get wolPwd =>
       $composableBuilder(column: $table.wolPwd, builder: (column) => column);
 
-  GeneratedColumn<String> get bmcAddr =>
-      $composableBuilder(column: $table.bmcAddr, builder: (column) => column);
-
-  GeneratedColumn<String> get bmcCertSha256 => $composableBuilder(
-    column: $table.bmcCertSha256,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get preferTempDev => $composableBuilder(
     column: $table.preferTempDev,
     builder: (column) => column,
@@ -12522,29 +13013,6 @@ class $$ServersTableAnnotationComposer
           }) => $$PrivateKeysTableAnnotationComposer(
             $db: $db,
             $table: $db.privateKeys,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$BmcCredentialsTableAnnotationComposer get bmcCredId {
-    final $$BmcCredentialsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bmcCredId,
-      referencedTable: $db.bmcCredentials,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BmcCredentialsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.bmcCredentials,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -12653,6 +13121,31 @@ class $$ServersTableAnnotationComposer
                     $removeJoinBuilderFromRootComposer,
               ),
         );
+    return f(composer);
+  }
+
+  Expression<T> bmcTargetsRefs<T extends Object>(
+    Expression<T> Function($$BmcTargetsTableAnnotationComposer a) f,
+  ) {
+    final $$BmcTargetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bmcTargets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
@@ -12924,11 +13417,11 @@ class $$ServersTableTableManager
           ServerRow,
           PrefetchHooks Function({
             bool sshKeyId,
-            bool bmcCredId,
             bool serverTagsRefs,
             bool serverEnvsRefs,
             bool serverIdentityFilesRefs,
             bool serverDisabledCmdsRefs,
+            bool bmcTargetsRefs,
             bool knownHostsRefs,
             bool snippetAutoRunOnRefs,
             bool portForwardsRefs,
@@ -12982,9 +13475,6 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
-                Value<String?> bmcAddr = const Value.absent(),
-                Value<String?> bmcCertSha256 = const Value.absent(),
-                Value<String?> bmcCredId = const Value.absent(),
                 Value<String?> preferTempDev = const Value.absent(),
                 Value<bool> tempIsCelsius = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
@@ -13026,9 +13516,6 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
-                bmcAddr: bmcAddr,
-                bmcCertSha256: bmcCertSha256,
-                bmcCredId: bmcCredId,
                 preferTempDev: preferTempDev,
                 tempIsCelsius: tempIsCelsius,
                 logoUrl: logoUrl,
@@ -13072,9 +13559,6 @@ class $$ServersTableTableManager
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
                 Value<String?> wolPwd = const Value.absent(),
-                Value<String?> bmcAddr = const Value.absent(),
-                Value<String?> bmcCertSha256 = const Value.absent(),
-                Value<String?> bmcCredId = const Value.absent(),
                 Value<String?> preferTempDev = const Value.absent(),
                 Value<bool> tempIsCelsius = const Value.absent(),
                 Value<String?> logoUrl = const Value.absent(),
@@ -13116,9 +13600,6 @@ class $$ServersTableTableManager
                 wolMac: wolMac,
                 wolIp: wolIp,
                 wolPwd: wolPwd,
-                bmcAddr: bmcAddr,
-                bmcCertSha256: bmcCertSha256,
-                bmcCredId: bmcCredId,
                 preferTempDev: preferTempDev,
                 tempIsCelsius: tempIsCelsius,
                 logoUrl: logoUrl,
@@ -13143,11 +13624,11 @@ class $$ServersTableTableManager
           prefetchHooksCallback:
               ({
                 sshKeyId = false,
-                bmcCredId = false,
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
                 serverIdentityFilesRefs = false,
                 serverDisabledCmdsRefs = false,
+                bmcTargetsRefs = false,
                 knownHostsRefs = false,
                 snippetAutoRunOnRefs = false,
                 portForwardsRefs = false,
@@ -13166,6 +13647,7 @@ class $$ServersTableTableManager
                     if (serverEnvsRefs) db.serverEnvs,
                     if (serverIdentityFilesRefs) db.serverIdentityFiles,
                     if (serverDisabledCmdsRefs) db.serverDisabledCmds,
+                    if (bmcTargetsRefs) db.bmcTargets,
                     if (knownHostsRefs) db.knownHosts,
                     if (snippetAutoRunOnRefs) db.snippetAutoRunOn,
                     if (portForwardsRefs) db.portForwards,
@@ -13202,19 +13684,6 @@ class $$ServersTableTableManager
                                         ._sshKeyIdTable(db),
                                     referencedColumn: $$ServersTableReferences
                                         ._sshKeyIdTable(db)
-                                        .id,
-                                  )
-                                  as T;
-                        }
-                        if (bmcCredId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.bmcCredId,
-                                    referencedTable: $$ServersTableReferences
-                                        ._bmcCredIdTable(db),
-                                    referencedColumn: $$ServersTableReferences
-                                        ._bmcCredIdTable(db)
                                         .id,
                                   )
                                   as T;
@@ -13302,6 +13771,27 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverDisabledCmdsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (bmcTargetsRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          BmcTargetRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._bmcTargetsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).bmcTargetsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.serverId == item.id,
@@ -13540,11 +14030,11 @@ typedef $$ServersTableProcessedTableManager =
       ServerRow,
       PrefetchHooks Function({
         bool sshKeyId,
-        bool bmcCredId,
         bool serverTagsRefs,
         bool serverEnvsRefs,
         bool serverIdentityFilesRefs,
         bool serverDisabledCmdsRefs,
+        bool bmcTargetsRefs,
         bool knownHostsRefs,
         bool snippetAutoRunOnRefs,
         bool portForwardsRefs,
@@ -14995,6 +15485,815 @@ typedef $$ServerDisabledCmdsTableProcessedTableManager =
       (ServerDisabledCmdRow, $$ServerDisabledCmdsTableReferences),
       ServerDisabledCmdRow,
       PrefetchHooks Function({bool serverId})
+    >;
+typedef $$BmcTargetsTableCreateCompanionBuilder =
+    BmcTargetsCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      required String id,
+      required String name,
+      required String addr,
+      Value<String?> credId,
+      Value<String?> certSha256,
+      Value<String?> serverId,
+    });
+typedef $$BmcTargetsTableUpdateCompanionBuilder =
+    BmcTargetsCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      Value<String> id,
+      Value<String> name,
+      Value<String> addr,
+      Value<String?> credId,
+      Value<String?> certSha256,
+      Value<String?> serverId,
+    });
+
+final class $$BmcTargetsTableReferences
+    extends BaseReferences<_$AppDb, $BmcTargetsTable, BmcTargetRow> {
+  $$BmcTargetsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $BmcCredentialsTable _credIdTable(_$AppDb db) =>
+      db.bmcCredentials.createAlias('bmc_target__cred_id__bmc_credential__id');
+
+  $$BmcCredentialsTableProcessedTableManager? get credId {
+    final $_column = $_itemColumn<String>('cred_id');
+    if ($_column == null) return null;
+    final manager = $$BmcCredentialsTableTableManager(
+      $_db,
+      $_db.bmcCredentials,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_credIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('bmc_target__server_id__server__id');
+
+  $$ServersTableProcessedTableManager? get serverId {
+    final $_column = $_itemColumn<String>('server_id');
+    if ($_column == null) return null;
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$BmcTargetTagsTable, List<BmcTargetTagRow>>
+  _bmcTargetTagsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.bmcTargetTags,
+    aliasName: 'bmc_target__id__bmc_target_tag__target_id',
+  );
+
+  $$BmcTargetTagsTableProcessedTableManager get bmcTargetTagsRefs {
+    final manager = $$BmcTargetTagsTableTableManager(
+      $_db,
+      $_db.bmcTargetTags,
+    ).filter((f) => f.targetId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_bmcTargetTagsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BmcTargetsTableFilterComposer
+    extends Composer<_$AppDb, $BmcTargetsTable> {
+  $$BmcTargetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get addr => $composableBuilder(
+    column: $table.addr,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BmcCredentialsTableFilterComposer get credId {
+    final $$BmcCredentialsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.credId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableFilterComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> bmcTargetTagsRefs(
+    Expression<bool> Function($$BmcTargetTagsTableFilterComposer f) f,
+  ) {
+    final $$BmcTargetTagsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bmcTargetTags,
+      getReferencedColumn: (t) => t.targetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetTagsTableFilterComposer(
+            $db: $db,
+            $table: $db.bmcTargetTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BmcTargetsTableOrderingComposer
+    extends Composer<_$AppDb, $BmcTargetsTable> {
+  $$BmcTargetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get addr => $composableBuilder(
+    column: $table.addr,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BmcCredentialsTableOrderingComposer get credId {
+    final $$BmcCredentialsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.credId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableOrderingComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BmcTargetsTableAnnotationComposer
+    extends Composer<_$AppDb, $BmcTargetsTable> {
+  $$BmcTargetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rev =>
+      $composableBuilder(column: $table.rev, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get addr =>
+      $composableBuilder(column: $table.addr, builder: (column) => column);
+
+  GeneratedColumn<String> get certSha256 => $composableBuilder(
+    column: $table.certSha256,
+    builder: (column) => column,
+  );
+
+  $$BmcCredentialsTableAnnotationComposer get credId {
+    final $$BmcCredentialsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.credId,
+      referencedTable: $db.bmcCredentials,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcCredentialsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bmcCredentials,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> bmcTargetTagsRefs<T extends Object>(
+    Expression<T> Function($$BmcTargetTagsTableAnnotationComposer a) f,
+  ) {
+    final $$BmcTargetTagsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bmcTargetTags,
+      getReferencedColumn: (t) => t.targetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetTagsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bmcTargetTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BmcTargetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $BmcTargetsTable,
+          BmcTargetRow,
+          $$BmcTargetsTableFilterComposer,
+          $$BmcTargetsTableOrderingComposer,
+          $$BmcTargetsTableAnnotationComposer,
+          $$BmcTargetsTableCreateCompanionBuilder,
+          $$BmcTargetsTableUpdateCompanionBuilder,
+          (BmcTargetRow, $$BmcTargetsTableReferences),
+          BmcTargetRow,
+          PrefetchHooks Function({
+            bool credId,
+            bool serverId,
+            bool bmcTargetTagsRefs,
+          })
+        > {
+  $$BmcTargetsTableTableManager(_$AppDb db, $BmcTargetsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BmcTargetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BmcTargetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BmcTargetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> addr = const Value.absent(),
+                Value<String?> credId = const Value.absent(),
+                Value<String?> certSha256 = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+              }) => BmcTargetsCompanion(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                name: name,
+                addr: addr,
+                credId: credId,
+                certSha256: certSha256,
+                serverId: serverId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                required String id,
+                required String name,
+                required String addr,
+                Value<String?> credId = const Value.absent(),
+                Value<String?> certSha256 = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+              }) => BmcTargetsCompanion.insert(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                name: name,
+                addr: addr,
+                credId: credId,
+                certSha256: certSha256,
+                serverId: serverId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$BmcTargetsTable, BmcTargetRow>(table),
+                  $$BmcTargetsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({credId = false, serverId = false, bmcTargetTagsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (bmcTargetTagsRefs) db.bmcTargetTags,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (credId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.credId,
+                                    referencedTable: $$BmcTargetsTableReferences
+                                        ._credIdTable(db),
+                                    referencedColumn:
+                                        $$BmcTargetsTableReferences
+                                            ._credIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (serverId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.serverId,
+                                    referencedTable: $$BmcTargetsTableReferences
+                                        ._serverIdTable(db),
+                                    referencedColumn:
+                                        $$BmcTargetsTableReferences
+                                            ._serverIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (bmcTargetTagsRefs)
+                        await $_getPrefetchedData<
+                          BmcTargetRow,
+                          $BmcTargetsTable,
+                          BmcTargetTagRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BmcTargetsTableReferences
+                              ._bmcTargetTagsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BmcTargetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).bmcTargetTagsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.targetId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$BmcTargetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $BmcTargetsTable,
+      BmcTargetRow,
+      $$BmcTargetsTableFilterComposer,
+      $$BmcTargetsTableOrderingComposer,
+      $$BmcTargetsTableAnnotationComposer,
+      $$BmcTargetsTableCreateCompanionBuilder,
+      $$BmcTargetsTableUpdateCompanionBuilder,
+      (BmcTargetRow, $$BmcTargetsTableReferences),
+      BmcTargetRow,
+      PrefetchHooks Function({
+        bool credId,
+        bool serverId,
+        bool bmcTargetTagsRefs,
+      })
+    >;
+typedef $$BmcTargetTagsTableCreateCompanionBuilder =
+    BmcTargetTagsCompanion Function({
+      required String targetId,
+      required String tag,
+    });
+typedef $$BmcTargetTagsTableUpdateCompanionBuilder =
+    BmcTargetTagsCompanion Function({
+      Value<String> targetId,
+      Value<String> tag,
+    });
+
+final class $$BmcTargetTagsTableReferences
+    extends BaseReferences<_$AppDb, $BmcTargetTagsTable, BmcTargetTagRow> {
+  $$BmcTargetTagsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BmcTargetsTable _targetIdTable(_$AppDb db) =>
+      db.bmcTargets.createAlias('bmc_target_tag__target_id__bmc_target__id');
+
+  $$BmcTargetsTableProcessedTableManager get targetId {
+    final $_column = $_itemColumn<String>('target_id')!;
+
+    final manager = $$BmcTargetsTableTableManager(
+      $_db,
+      $_db.bmcTargets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_targetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$BmcTargetTagsTableFilterComposer
+    extends Composer<_$AppDb, $BmcTargetTagsTable> {
+  $$BmcTargetTagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get tag => $composableBuilder(
+    column: $table.tag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BmcTargetsTableFilterComposer get targetId {
+    final $$BmcTargetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.targetId,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetsTableFilterComposer(
+            $db: $db,
+            $table: $db.bmcTargets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BmcTargetTagsTableOrderingComposer
+    extends Composer<_$AppDb, $BmcTargetTagsTable> {
+  $$BmcTargetTagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get tag => $composableBuilder(
+    column: $table.tag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BmcTargetsTableOrderingComposer get targetId {
+    final $$BmcTargetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.targetId,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.bmcTargets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BmcTargetTagsTableAnnotationComposer
+    extends Composer<_$AppDb, $BmcTargetTagsTable> {
+  $$BmcTargetTagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get tag =>
+      $composableBuilder(column: $table.tag, builder: (column) => column);
+
+  $$BmcTargetsTableAnnotationComposer get targetId {
+    final $$BmcTargetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.targetId,
+      referencedTable: $db.bmcTargets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BmcTargetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bmcTargets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BmcTargetTagsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $BmcTargetTagsTable,
+          BmcTargetTagRow,
+          $$BmcTargetTagsTableFilterComposer,
+          $$BmcTargetTagsTableOrderingComposer,
+          $$BmcTargetTagsTableAnnotationComposer,
+          $$BmcTargetTagsTableCreateCompanionBuilder,
+          $$BmcTargetTagsTableUpdateCompanionBuilder,
+          (BmcTargetTagRow, $$BmcTargetTagsTableReferences),
+          BmcTargetTagRow,
+          PrefetchHooks Function({bool targetId})
+        > {
+  $$BmcTargetTagsTableTableManager(_$AppDb db, $BmcTargetTagsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BmcTargetTagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BmcTargetTagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BmcTargetTagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> targetId = const Value.absent(),
+                Value<String> tag = const Value.absent(),
+              }) => BmcTargetTagsCompanion(targetId: targetId, tag: tag),
+          createCompanionCallback:
+              ({required String targetId, required String tag}) =>
+                  BmcTargetTagsCompanion.insert(targetId: targetId, tag: tag),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$BmcTargetTagsTable, BmcTargetTagRow>(table),
+                  $$BmcTargetTagsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({targetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (targetId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.targetId,
+                                referencedTable: $$BmcTargetTagsTableReferences
+                                    ._targetIdTable(db),
+                                referencedColumn: $$BmcTargetTagsTableReferences
+                                    ._targetIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BmcTargetTagsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $BmcTargetTagsTable,
+      BmcTargetTagRow,
+      $$BmcTargetTagsTableFilterComposer,
+      $$BmcTargetTagsTableOrderingComposer,
+      $$BmcTargetTagsTableAnnotationComposer,
+      $$BmcTargetTagsTableCreateCompanionBuilder,
+      $$BmcTargetTagsTableUpdateCompanionBuilder,
+      (BmcTargetTagRow, $$BmcTargetTagsTableReferences),
+      BmcTargetTagRow,
+      PrefetchHooks Function({bool targetId})
     >;
 typedef $$KnownHostsTableCreateCompanionBuilder =
     KnownHostsCompanion Function({
@@ -19799,6 +21098,10 @@ class $AppDbManager {
       $$ServerIdentityFilesTableTableManager(_db, _db.serverIdentityFiles);
   $$ServerDisabledCmdsTableTableManager get serverDisabledCmds =>
       $$ServerDisabledCmdsTableTableManager(_db, _db.serverDisabledCmds);
+  $$BmcTargetsTableTableManager get bmcTargets =>
+      $$BmcTargetsTableTableManager(_db, _db.bmcTargets);
+  $$BmcTargetTagsTableTableManager get bmcTargetTags =>
+      $$BmcTargetTagsTableTableManager(_db, _db.bmcTargetTags);
   $$KnownHostsTableTableManager get knownHosts =>
       $$KnownHostsTableTableManager(_db, _db.knownHosts);
   $$SnippetsTableTableManager get snippets =>

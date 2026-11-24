@@ -1510,22 +1510,29 @@ extension _Widgets on _ServerEditPageState {
   /// put to anyone from inside them. Reviewing here means the check at request
   /// time answers by itself, with nothing to interrupt — see `cert_pin.dart`.
   Widget _buildBmcCert() {
-    return _bmcCert.listenVal((pinned) {
-      final has = pinned?.isNotEmpty == true;
-      return ListTile(
-        leading: Icon(
-          has ? Icons.verified_user : Icons.gpp_maybe,
-          color: has ? null : Colors.orange,
-        ),
-        title: Text(l10n.bmcCert),
-        subtitle: Text(
-          has ? l10n.bmcCertPinned : l10n.bmcCertUnreviewed,
-          style: UIs.textGrey,
-        ),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: _onTapBmcCert,
-      ).cardx;
-    });
+    return ListenableBuilder(
+      listenable: Listenable.merge([_bmcCert, _bmcAddrCtrl]),
+      builder: (_, _) {
+        final stored = _bmcCert.value;
+        final pinned = _bmcCertAddr?.trim() == _bmcAddrCtrl.text.trim()
+            ? stored
+            : null;
+        final has = pinned?.isNotEmpty == true;
+        return ListTile(
+          leading: Icon(
+            has ? Icons.verified_user : Icons.gpp_maybe,
+            color: has ? null : Colors.orange,
+          ),
+          title: Text(l10n.bmcCert),
+          subtitle: Text(
+            has ? l10n.bmcCertPinned : l10n.bmcCertUnreviewed,
+            style: UIs.textGrey,
+          ),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapBmcCert,
+        ).cardx;
+      },
+    );
   }
 
   Widget _buildWOLs() {

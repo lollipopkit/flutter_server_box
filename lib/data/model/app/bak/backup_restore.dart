@@ -63,6 +63,32 @@ extension BackupV2Restore on BackupV2 {
         force: force,
         notify: false,
       );
+      final (:data, :liftedServerIds) = _bmcTargetsToRestore(
+        restored.servers,
+        appliedServerIds,
+        restored.serverIds,
+        restored.credIds,
+      );
+      var bmcTargetsChanged =
+          data != null &&
+          Stores.bmcTarget.merge(
+            data,
+            force: force,
+            notify: false,
+          );
+      // A forced restore from a pre-v44 backup speaks for every applied server:
+      // any locally linked BMC for a server that had no BMC in that backup is
+      // cleared, while standalone (unlinked) BMCs remain untouched.
+      if (force && !carriesBmcTargetsSection && bmcTargets.isEmpty) {
+        for (final serverId in appliedServerIds) {
+          if (liftedServerIds.contains(serverId)) continue;
+          final existing = Stores.bmcTarget.forServer(serverId);
+          if (existing != null) {
+            Stores.bmcTarget.deleteById(existing.id, notify: false);
+            bmcTargetsChanged = true;
+          }
+        }
+      }
 
       final restoredContainer = _containerWithRestoredServerIds(
         restored.serverIds,
@@ -147,6 +173,7 @@ extension BackupV2Restore on BackupV2 {
         snippets: snippetsChanged,
         forwards: forwardsChanged,
         remoteDesktops: remoteDesktopsChanged,
+        bmcTargets: bmcTargetsChanged,
         container: containerChanged,
         history: historyNotifications,
         settings: settingNotifications,
@@ -166,14 +193,18 @@ extension BackupV2Restore on BackupV2 {
     if (changed.creds) Stores.bmcCredential.invalidate();
     if (changed.servers) {
       Stores.server.invalidate();
-      // A server tombstone cascades these rows even when their own merge pass
-      // has no later write to announce.
+      // A server tombstone cascades or unlinks these rows even when their own
+      // merge pass has no later write to announce.
       Stores.portForward.invalidate();
       Stores.remoteDesktop.invalidate();
       Stores.snippet.invalidate();
       // A PVE write sets `servers`; a deleted server's row cascades
       // without one, since `restoreOne` answers false for a server not here.
       Stores.pve.invalidate();
+      Stores.bmcTarget.invalidate();
+    }
+    if (changed.bmcTargets || changed.creds) {
+      if (!changed.servers) Stores.bmcTarget.invalidate();
     }
     if (changed.snippets && !changed.servers) Stores.snippet.invalidate();
     if (changed.forwards && !changed.servers) Stores.portForward.invalidate();
@@ -191,6 +222,8 @@ extension BackupV2Restore on BackupV2 {
       if (changed.snippets) ReloadedStore.snippets,
       if (changed.keys) ReloadedStore.keys,
       if (changed.creds) ReloadedStore.bmcCredentials,
+      if (changed.bmcTargets || changed.servers || changed.creds)
+        ReloadedStore.bmcTargets,
       if (changed.container) ReloadedStore.containers,
     });
 
@@ -217,7 +250,11 @@ extension BackupV2Restore on BackupV2 {
   /// no id. In a sync, another device's server of the same name is another
   /// server. Never onto an id another server of the backup has: both would
   /// be restored as one.
-  ({Map<String, Object?> servers, Map<String, String> serverIds})
+  ({
+    Map<String, Object?> servers,
+    Map<String, String> serverIds,
+    Map<String, String> credIds,
+  })
   _restoredServerGraph({required bool force}) {
     final keyIds = _restoredIds(
       keys,
@@ -314,7 +351,7 @@ extension BackupV2Restore on BackupV2 {
           serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
       };
     }
-    return (servers: servers, serverIds: serverIds);
+    return (servers: servers, serverIds: serverIds, credIds: credIds);
   }
 
   /// Backup id -> local id, for the records of [store] whose name already
@@ -371,6 +408,94 @@ extension BackupV2Restore on BackupV2 {
     for (final entry in remoteDesktopProfiles.entries)
       entry.key: _recordWithRestoredServerId(entry.value, serverIds),
   };
+
+  /// Rewrites `credId` and `serverId` on [bmcTargets], or lifts legacy nested
+  /// `spi.bmc` entries from backups written at schema v43 and earlier.
+  ({Map<String, Object?>? data, Set<String> liftedServerIds})
+  _bmcTargetsToRestore(
+    Map<String, Object?> restoredServers,
+    Set<String> appliedServerIds,
+    Map<String, String> serverIds,
+    Map<String, String> credIds,
+  ) {
+    if (carriesBmcTargetsSection || bmcTargets.isNotEmpty) {
+      return (
+        data: {
+          for (final entry in bmcTargets.entries)
+            entry.key: _isInternalStoreKey(entry.key)
+                ? entry.value
+                : _bmcTargetWithRestoredIds(
+                    entry.value,
+                    serverIds,
+                    credIds,
+                  ),
+        },
+        liftedServerIds: const <String>{},
+      );
+    }
+
+    // Legacy backup (<= v43): promote any `spis[*].bmc` into `bmc_target`
+    // records for servers that were actually applied by this restore.
+    final serverTs = restoredServers[StoreDefaults.defaultLastUpdateTsKey];
+    final lifted = <String, Object?>{};
+    final liftedTs = <String, Object?>{};
+    final liftedServerIds = <String>{};
+    for (final entry in restoredServers.entries) {
+      if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
+      final server = entry.value as Map;
+      final serverId = (server['id'] as String?) ?? entry.key;
+      if (!appliedServerIds.contains(serverId)) continue;
+      final bmc = server['bmc'];
+      if (bmc is! Map) continue;
+      final addr = bmc['addr'];
+      if (addr is! String || addr.trim().isEmpty) continue;
+      // Reuse an existing linked target id so updating never collides with
+      // the unique `server_id` index.
+      final targetId =
+          Stores.bmcTarget.forServer(serverId)?.id ?? 'bmc_$serverId';
+      final rawCredId = bmc['credId'];
+      // `_serverWithRestoredIds` already remapped `bmc['credId']` through `credIds`.
+      final credId = rawCredId is String ? rawCredId : null;
+      liftedServerIds.add(serverId);
+      lifted[targetId] = <String, Object?>{
+        'id': targetId,
+        'name': (server['name'] as String?) ?? addr,
+        'addr': addr,
+        'credId': ?credId,
+        if (bmc['certSha256'] is String) 'certSha256': bmc['certSha256'],
+        'serverId': serverId,
+        if (server['tags'] is List) 'tags': server['tags'],
+      };
+      if (serverTs is Map && serverTs[entry.key] != null) {
+        liftedTs[targetId] = serverTs[entry.key];
+      }
+    }
+    if (lifted.isEmpty) {
+      return (data: null, liftedServerIds: liftedServerIds);
+    }
+    if (liftedTs.isNotEmpty) {
+      lifted[StoreDefaults.defaultLastUpdateTsKey] = liftedTs;
+    }
+    return (data: lifted, liftedServerIds: liftedServerIds);
+  }
+
+  Object? _bmcTargetWithRestoredIds(
+    Object? value,
+    Map<String, String> serverIds,
+    Map<String, String> credIds,
+  ) {
+    if (value is! Map) return value;
+    final map = Map<String, Object?>.from(value);
+    final credId = map['credId'];
+    if (credId is String && credIds.containsKey(credId)) {
+      map['credId'] = credIds[credId];
+    }
+    final serverId = map['serverId'];
+    if (serverId is String && serverIds.containsKey(serverId)) {
+      map['serverId'] = serverIds[serverId];
+    }
+    return map;
+  }
 
   Map<String, Object?> _containerWithRestoredServerIds(
     Map<String, String> serverIds,

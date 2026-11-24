@@ -426,6 +426,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BmcSnapshot dco_decode_bmc_snapshot(dynamic raw);
 
   @protected
+  BmcSummary dco_decode_bmc_summary(dynamic raw);
+
+  @protected
   bool dco_decode_bool(dynamic raw);
 
   @protected
@@ -2742,6 +2745,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BmcSnapshot sse_decode_bmc_snapshot(SseDeserializer deserializer);
+
+  @protected
+  BmcSummary sse_decode_bmc_summary(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
@@ -5488,6 +5494,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_bmc_snapshot(BmcSnapshot self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bmc_summary(BmcSummary self, SseSerializer serializer);
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);

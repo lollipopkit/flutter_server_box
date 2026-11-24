@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -28,6 +29,7 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
+import 'package:server_box/data/store/migrations/m043_bmc_target.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/store_reload.dart';
@@ -91,9 +93,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     @Default(<String, Object?>{}) Map<String, Object?> remoteDesktopProfiles,
 
     /// Same reason as [portForwards]: no file written before BMC support has
-    /// one. A server whose `bmc.credId` names an account this map does not
-    /// carry restores with the address and no account, which the editor shows.
+    /// one. A target whose `credId` names an account this map does not carry
+    /// restores with the address and no account, which the editor shows.
     @Default(<String, Object?>{}) Map<String, Object?> bmcCredentials,
+
+    /// Standalone and server-linked Redfish BMC targets (`BmcTargetStore`).
+    /// Absent from files written at schema v43 and earlier, where BMC config
+    /// lived under each server's `bmc` field.
+    @Default(<String, Object?>{}) Map<String, Object?> bmcTargets,
 
     /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
     ///
@@ -153,6 +160,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
+      bmcTargets: Stores.bmcTarget.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       remoteDesktopProfiles: Stores.remoteDesktop.getAllMap(),
       container: Stores.container.getAllMap(),
@@ -227,6 +235,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     (Stores.snippet.getAllMap(), snippets),
     (Stores.key.getAllMap(), keys),
     (Stores.bmcCredential.getAllMap(), bmcCredentials),
+    (Stores.bmcTarget.getAllMap(), bmcTargets),
     (Stores.portForward.getAllMap(), portForwards),
     (Stores.remoteDesktop.getAllMap(), remoteDesktopProfiles),
     (_backupStore(Stores.history), history),
@@ -433,12 +442,16 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('portForwards', portForwards);
     _validateRestorableStore('remoteDesktopProfiles', remoteDesktopProfiles);
     _validateRestorableStore('bmcCredentials', bmcCredentials);
+    _validateRestorableStore('bmcTargets', bmcTargets);
   }
 
   /// Whether this file was written by a build with `server_pve`, and so has
   /// a [pve] section that is the complete state: every server with PVE has an
   /// entry, and one without an entry has none.
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
+
+  /// Whether this file was written by a build with standalone `bmc_target`.
+  bool get carriesBmcTargetsSection => version > BmcTargetMigration.appliedAt;
 }
 
 /// Keeps the per-record modification map needed by sync, but not device-local
@@ -504,6 +517,7 @@ Object? _toEncodable(Object? value) {
     final SshCredential ssh => ssh.toJson(),
     final MonitorHttpCredential monitor => monitor.toJson(),
     final BmcCfg bmc => bmc.toJson(),
+    final BmcTarget bmcTarget => bmcTarget.toJson(),
     final PveConfig pve => pve.toJson(),
     _ => throw UnsupportedError(
       'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',

@@ -2,20 +2,20 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
+import 'package:server_box/data/provider/bmc/targets.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
 
 /// The drives the BMC sees, whatever the host OS is doing: the ones to look
 /// at first.
 final class BmcDrivesPage extends ConsumerStatefulWidget {
-  final SpiRequiredArgs args;
+  final BmcTargetRequiredArgs args;
 
   const BmcDrivesPage({super.key, required this.args});
 
-  static const route = AppRouteArg<void, SpiRequiredArgs>(
+  static const route = AppRouteArg<void, BmcTargetRequiredArgs>(
     page: BmcDrivesPage.new,
     path: '/server/bmc/drives',
   );
@@ -26,24 +26,45 @@ final class BmcDrivesPage extends ConsumerStatefulWidget {
 
 final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
   StorageReport? _report;
+  String? _loadedAddr;
+  String? _activeAddr;
   String? _err;
   var _loading = false;
+  var _read = 0;
 
-  Spi get _spi => widget.args.spi;
+  String get _targetId => widget.args.target.id;
+  BmcTarget get _currentTarget =>
+      ref.read(bmcTargetsProvider).targets[_targetId] ?? widget.args.target;
 
   @override
   void initState() {
     super.initState();
+    _activeAddr = _currentTarget.addr.trim();
     Future.microtask(_load);
   }
 
   @override
   Widget build(BuildContext context) {
+    final target = ref.watch(
+      bmcTargetsProvider.select(
+        (s) => s.targets[_targetId] ?? widget.args.target,
+      ),
+    );
+    final currentAddr = target.addr.trim();
+    if (_activeAddr != currentAddr) {
+      _activeAddr = currentAddr;
+      _read++;
+      _report = null;
+      _loadedAddr = null;
+      _err = null;
+      _loading = true;
+      Future.microtask(_load);
+    }
     // Watched so the session lives while this page does.
-    ref.watch(bmcProvider(_spi).select((s) => s.hasData));
+    ref.watch(bmcProvider(_targetId).select((s) => s.hasData));
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.bmcDrives, down: _spi.name),
+        title: TwoLineText(up: l10n.bmcDrives, down: target.name),
         actions: [
           Btn.icon(
             text: libL10n.refresh,
@@ -52,12 +73,12 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: _buildBody(currentAddr),
     );
   }
 
-  Widget _buildBody() {
-    final report = _report;
+  Widget _buildBody(String currentAddr) {
+    final report = _loadedAddr == currentAddr ? _report : null;
     if (report == null) {
       return Center(
         child: _err == null
@@ -127,19 +148,26 @@ final class _BmcDrivesPageState extends ConsumerState<BmcDrivesPage> {
   }
 
   Future<void> _load() async {
+    final addr = _currentTarget.addr.trim();
+    final read = ++_read;
     setState(() {
       _loading = true;
       _err = null;
     });
     try {
-      final report = await ref.read(bmcProvider(_spi).notifier).storage();
-      if (!mounted) return;
+      final report = await ref.read(bmcProvider(_targetId).notifier).storage();
+      if (!mounted || read != _read || _currentTarget.addr.trim() != addr) {
+        return;
+      }
       setState(() {
         _report = report;
+        _loadedAddr = addr;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || read != _read || _currentTarget.addr.trim() != addr) {
+        return;
+      }
       setState(() {
         _err = bmcErrorText(e);
         _loading = false;

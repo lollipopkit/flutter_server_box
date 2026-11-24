@@ -23,7 +23,8 @@ mixin _$ServerShare {
 /// server growing a second key reference should not need a format change.
  List<PrivateKeyInfo> get keys;/// [spi]'s PVE configuration, which is a table of its own rather than
 /// part of [Spi].
- PveConfig? get pve;/// Unix milliseconds, or null for a payload with no deadline.
+ PveConfig? get pve;/// [spi]'s linked BMC endpoint, stripped of its device-local credential id.
+ BmcCfg? get bmc;/// Unix milliseconds, or null for a payload with no deadline.
 ///
 /// Set for the QR flavour and not for the file one, which is the whole
 /// difference between them: a QR is shown on a screen in a room, and the
@@ -44,20 +45,20 @@ $ServerShareCopyWith<ServerShare> get copyWith => _$ServerShareCopyWithImpl<Serv
 @override
 bool operator ==(Object other) {
   final _this = this as ServerShare;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerShare&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.spi, _this.spi) || other.spi == _this.spi)&&const DeepCollectionEquality().equals(other.keys, _this.keys)&&(identical(other.pve, _this.pve) || other.pve == _this.pve)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerShare&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.spi, _this.spi) || other.spi == _this.spi)&&const DeepCollectionEquality().equals(other.keys, _this.keys)&&(identical(other.pve, _this.pve) || other.pve == _this.pve)&&(identical(other.bmc, _this.bmc) || other.bmc == _this.bmc)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ServerShare;
-  return Object.hash(runtimeType,_this.version,_this.spi,const DeepCollectionEquality().hash(_this.keys),_this.pve,_this.expiresAt);
+  return Object.hash(runtimeType,_this.version,_this.spi,const DeepCollectionEquality().hash(_this.keys),_this.pve,_this.bmc,_this.expiresAt);
 }
 
 @override
 String toString() {
   final _this = this as ServerShare;
-  return 'ServerShare(version: ${_this.version}, spi: ${_this.spi}, keys: ${_this.keys}, pve: ${_this.pve}, expiresAt: ${_this.expiresAt})';
+  return 'ServerShare(version: ${_this.version}, spi: ${_this.spi}, keys: ${_this.keys}, pve: ${_this.pve}, bmc: ${_this.bmc}, expiresAt: ${_this.expiresAt})';
 }
 
 
@@ -68,7 +69,7 @@ abstract mixin class $ServerShareCopyWith<$Res>  {
   factory $ServerShareCopyWith(ServerShare value, $Res Function(ServerShare) _then) = _$ServerShareCopyWithImpl;
 @useResult
 $Res call({
- int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, int? expiresAt
+ int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, BmcCfg? bmc, int? expiresAt
 });
 
 
@@ -85,13 +86,14 @@ class _$ServerShareCopyWithImpl<$Res>
 
 /// Create a copy of ServerShare
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? spi = null,Object? keys = null,Object? pve = freezed,Object? expiresAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? version = null,Object? spi = null,Object? keys = null,Object? pve = freezed,Object? bmc = freezed,Object? expiresAt = freezed,}) {
   return _then(ServerShare(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,keys: null == keys ? _self.keys : keys // ignore: cast_nullable_to_non_nullable
 as List<PrivateKeyInfo>,pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
-as PveConfig?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as PveConfig?,bmc: freezed == bmc ? _self.bmc : bmc // ignore: cast_nullable_to_non_nullable
+as BmcCfg?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }
@@ -198,10 +200,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  BmcCfg? bmc,  int? expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerShare() when $default != null:
-return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
+return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.bmc,_that.expiresAt);case _:
   return orElse();
 
 }
@@ -219,10 +221,10 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  BmcCfg? bmc,  int? expiresAt)  $default,) {final _that = this;
 switch (_that) {
 case _ServerShare():
-return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
+return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.bmc,_that.expiresAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -239,10 +241,10 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  BmcCfg? bmc,  int? expiresAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerShare() when $default != null:
-return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
+return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.bmc,_that.expiresAt);case _:
   return null;
 
 }
@@ -254,7 +256,7 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 @JsonSerializable()
 
 class _ServerShare extends ServerShare {
-  const _ServerShare({required this.version, required this.spi,  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], this.pve, this.expiresAt}): _keys = keys,super._();
+  const _ServerShare({required this.version, required this.spi,  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], this.pve, this.bmc, this.expiresAt}): _keys = keys,super._();
   factory _ServerShare.fromJson(Map<String, dynamic> json) => _$ServerShareFromJson(json);
 
 @override final  int version;
@@ -277,6 +279,8 @@ class _ServerShare extends ServerShare {
 /// [spi]'s PVE configuration, which is a table of its own rather than
 /// part of [Spi].
 @override final  PveConfig? pve;
+/// [spi]'s linked BMC endpoint, stripped of its device-local credential id.
+@override final  BmcCfg? bmc;
 /// Unix milliseconds, or null for a payload with no deadline.
 ///
 /// Set for the QR flavour and not for the file one, which is the whole
@@ -299,18 +303,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerShare&&(identical(other.version, version) || other.version == version)&&(identical(other.spi, spi) || other.spi == spi)&&const DeepCollectionEquality().equals(other.keys, _keys)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerShare&&(identical(other.version, version) || other.version == version)&&(identical(other.spi, spi) || other.spi == spi)&&const DeepCollectionEquality().equals(other.keys, _keys)&&(identical(other.pve, pve) || other.pve == pve)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,version,spi,const DeepCollectionEquality().hash(_keys),pve,expiresAt);
+    return Object.hash(runtimeType,version,spi,const DeepCollectionEquality().hash(_keys),pve,bmc,expiresAt);
 }
 
 @override
 String toString() {
-    return 'ServerShare(version: $version, spi: $spi, keys: $keys, pve: $pve, expiresAt: $expiresAt)';
+    return 'ServerShare(version: $version, spi: $spi, keys: $keys, pve: $pve, bmc: $bmc, expiresAt: $expiresAt)';
 }
 
 
@@ -321,7 +325,7 @@ abstract mixin class _$ServerShareCopyWith<$Res> implements $ServerShareCopyWith
   factory _$ServerShareCopyWith(_ServerShare value, $Res Function(_ServerShare) _then) = __$ServerShareCopyWithImpl;
 @override @useResult
 $Res call({
- int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, int? expiresAt
+ int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, BmcCfg? bmc, int? expiresAt
 });
 
 
@@ -338,13 +342,14 @@ class __$ServerShareCopyWithImpl<$Res>
 
 /// Create a copy of ServerShare
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? spi = null,Object? keys = null,Object? pve = freezed,Object? expiresAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? version = null,Object? spi = null,Object? keys = null,Object? pve = freezed,Object? bmc = freezed,Object? expiresAt = freezed,}) {
   return _then(_ServerShare(
 version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,keys: null == keys ? _self._keys : keys // ignore: cast_nullable_to_non_nullable
 as List<PrivateKeyInfo>,pve: freezed == pve ? _self.pve : pve // ignore: cast_nullable_to_non_nullable
-as PveConfig?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as PveConfig?,bmc: freezed == bmc ? _self.bmc : bmc // ignore: cast_nullable_to_non_nullable
+as BmcCfg?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }

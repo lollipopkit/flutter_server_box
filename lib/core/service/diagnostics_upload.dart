@@ -9,6 +9,7 @@ import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/stores.dart';
 
 /// The revision of the crash-collection notice.
@@ -233,7 +234,12 @@ abstract final class DiagnosticsUpload {
   ) {
     final Map<String, String> identifiers;
     try {
-      identifiers = KnownIdentifiers.of(Stores.server.fetch());
+      identifiers = KnownIdentifiers.of(
+        Stores.server.fetch(),
+        bmcTargets: getIt.isRegistered<BmcTargetStore>()
+            ? Stores.bmcTarget.fetch()
+            : const [],
+      );
     } catch (e, s) {
       Loggers.app.warning('Could not read what to scrub from a report', e, s);
       return null;

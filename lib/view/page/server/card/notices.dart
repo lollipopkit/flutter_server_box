@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
@@ -38,6 +39,9 @@ enum ServerNoticeKind {
 
   /// Reaching it failed, and the machine said why.
   failed,
+
+  /// Reaching the OS failed, and the linked BMC reports the machine is off.
+  poweredOff,
 
   /// Nothing yet, and something on its way.
   connecting,
@@ -85,31 +89,24 @@ class ServerNotice {
   final String hint;
 
   /// Which state this machine is in, and what to say about it.
-  static ServerNotice of(ServerState srv) {
-    // Asked before the error is read: a connection this app has not been
-    // allowed to make has not been tried, so whatever else is on `err` is
-    // about an earlier address or an earlier setting.
-    //
-    // The agent that is going to be dialled, not the one on file: with the
-    // agent switched off, or the server being this device, nothing is sent to
-    // that address and there is nothing to allow.
-    //
-    // Only a plaintext *primary* takes the page: nothing is dialled until it
-    // is allowed. A plaintext fallback is just not used without it, so the
-    // primary's own failure is what is said, with the fallback beside it.
+  static ServerNotice of(ServerState srv, {PowerState? bmcPower}) {
     final monitor = srv.spi.monitorOn;
     final plain = monitor?.insecureAddr;
     if (plain != null && plain == monitor!.addr) {
       return ServerNotice(
         kind: ServerNoticeKind.plainHttp,
         glyph: Icons.no_encryption_gmailerrorred_outlined,
-        // What is true, not what the setting is called: nothing has been sent
-        // to this address yet, and what the page's button turns on is the
-        // sending.
         title: l10n.plainHttpTitle,
         text: l10n.plainHttpTip,
         mono: plain,
         hint: l10n.monitorAllowInsecureHttpTip,
+      );
+    }
+    if (srv.conn == ServerConn.failed && bmcPower == PowerState.off) {
+      return ServerNotice(
+        kind: ServerNoticeKind.poweredOff,
+        glyph: Icons.power_settings_new,
+        title: l10n.bmcPowerOff,
       );
     }
     final err = srv.status.err;
@@ -167,9 +164,12 @@ class ServerNotice {
   /// The page asks this too, of the block it holds room for: what the card
   /// draws, the page paints only at the handover; what the card does not,
   /// the page brings in itself — see `ServerDetailPage.readingsShowing`.
-  static ServerNotice? onCard(ServerState srv) {
+  static ServerNotice? onCard(ServerState srv, {PowerState? bmcPower}) {
+    if (srv.conn == ServerConn.failed && bmcPower == PowerState.off) {
+      return of(srv, bmcPower: bmcPower);
+    }
     if (srv.status.err == null || srv.needsInteractiveAuth) return null;
-    return of(srv);
+    return of(srv, bmcPower: bmcPower);
   }
 }
 

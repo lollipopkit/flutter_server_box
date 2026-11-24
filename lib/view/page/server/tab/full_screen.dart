@@ -215,7 +215,7 @@ extension _FullScreen on _ServerPageState {
           ? _showFullScreenOne(id)
           : _onTapCard(context, srv, inPlace: false),
       onLongPress: () => _onLongPressCard(context, srv),
-      highlighted: id == _menuId,
+      highlighted: 'srv:$id' == _menuId,
     ).onSecondary((at) => _onLongPressCard(context, srv, at: at));
   }
 

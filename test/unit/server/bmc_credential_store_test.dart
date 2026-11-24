@@ -1,26 +1,21 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/model/server/bmc_target.dart';
 import 'package:server_box/data/store/bmc_credential.dart';
+import 'package:server_box/data/store/bmc_target.dart';
 import 'package:server_box/data/store/entity_store.dart';
-import 'package:server_box/data/store/server.dart';
 
 import '../../helpers/test_db.dart';
 
-/// The account is the record the management page edits, so what that page
-/// promises has to hold in the store: a rename keeps every reference, a
-/// duplicate name is refused, and a delete does not take servers with it.
 void main() {
   late BmcCredentialStore creds;
-  late ServerStore servers;
+  late BmcTargetStore targets;
 
   setUp(() async {
     await openTestDb();
     creds = BmcCredentialStore();
-    servers = ServerStore();
+    targets = BmcTargetStore();
   });
 
   tearDown(() async => SqliteDb.close());
@@ -32,12 +27,8 @@ void main() {
     pwd: 'calvin',
   );
 
-  Spi serverOn(String id, String addr, {String? credId = 'cred-1'}) => Spi(
-    id: id,
-    name: id,
-    ssh: SshCredential(ip: '10.0.0.$id', port: 22, user: 'root'),
-    bmc: BmcCfg(addr: addr, credId: credId),
-  );
+  BmcTarget targetOn(String id, String addr, {String? credId = 'cred-1'}) =>
+      BmcTarget(id: id, name: id, addr: addr, credId: credId);
 
   test('round trips', () {
     creds.put(rackA);
@@ -49,27 +40,24 @@ void main() {
     expect(got.pwd, 'calvin');
   });
 
-  test('a rename keeps every server pointing at it', () {
+  test('a rename keeps every target pointing at it', () {
     creds.put(rackA);
-    servers.put(serverOn('1', 'https://10.0.0.9'));
-    servers.put(serverOn('2', 'https://10.0.0.10'));
+    targets.put(targetOn('1', 'https://10.0.0.9'));
+    targets.put(targetOn('2', 'https://10.0.0.10'));
 
-    // The id is what the servers hold, so this is one UPDATE. It is the whole
-    // reason the id is not the name: a private key's id *was* its name, and
-    // renaming one detached every server using it.
     creds.update(rackA, rackA.copyWith(name: 'rack-a-renamed'));
     creds.invalidate();
-    servers.invalidate();
+    targets.invalidate();
 
     expect(creds.fetchOneRaw('cred-1')!.name, 'rack-a-renamed');
-    expect(servers.fetchOneRaw('1')!.bmc?.credId, 'cred-1');
-    expect(servers.fetchOneRaw('2')!.bmc?.credId, 'cred-1');
+    expect(targets.fetchOneRaw('1')!.credId, 'cred-1');
+    expect(targets.fetchOneRaw('2')!.credId, 'cred-1');
   });
 
-  test('a password rotation is one write, not one per server', () {
+  test('a password rotation is one write, not one per target', () {
     creds.put(rackA);
-    servers.put(serverOn('1', 'https://10.0.0.9'));
-    servers.put(serverOn('2', 'https://10.0.0.10'));
+    targets.put(targetOn('1', 'https://10.0.0.9'));
+    targets.put(targetOn('2', 'https://10.0.0.10'));
 
     creds.update(rackA, rackA.copyWith(pwd: 'rotated'));
     creds.invalidate();
@@ -88,18 +76,12 @@ void main() {
     );
   });
 
-  test('serversUsing counts only the servers that name it', () {
+  test('serversUsing counts only the targets that name it', () {
     creds.put(rackA);
     creds.put(const BmcCredential(id: 'cred-2', name: 'rack-b', user: 'root'));
-    servers.put(serverOn('1', 'https://10.0.0.9'));
-    servers.put(serverOn('2', 'https://10.0.0.10', credId: 'cred-2'));
-    servers.put(
-      const Spi(
-        id: '3',
-        name: '3',
-        ssh: SshCredential(ip: '10.0.0.3', port: 22, user: 'root'),
-      ),
-    );
+    targets.put(targetOn('1', 'https://10.0.0.9'));
+    targets.put(targetOn('2', 'https://10.0.0.10', credId: 'cred-2'));
+    targets.put(targetOn('3', 'https://10.0.0.11', credId: null));
 
     expect(creds.serversUsing('cred-1'), 1);
     expect(creds.serversUsing('cred-2'), 1);
@@ -112,19 +94,17 @@ void main() {
     expect(creds.fetchOneRaw('cred-1')!.pwd, isNull);
   });
 
-  test('deleting leaves the servers, without an account', () {
+  test('deleting leaves the targets, without an account', () {
     creds.put(rackA);
-    servers.put(serverOn('1', 'https://10.0.0.9'));
+    targets.put(targetOn('1', 'https://10.0.0.9'));
 
     creds.deleteById('cred-1');
-    servers.invalidate();
+    targets.invalidate();
 
-    // What the delete confirmation says will happen. `ON DELETE SET NULL`:
-    // losing an account must not lose the machines it opened.
-    final got = servers.fetchOneRaw('1')!;
-    expect(got.bmc?.addr, 'https://10.0.0.9');
-    expect(got.bmc?.credId, isNull);
-    expect(got.bmc?.isComplete, isFalse);
+    final got = targets.fetchOneRaw('1')!;
+    expect(got.addr, 'https://10.0.0.9');
+    expect(got.credId, isNull);
+    expect(got.isComplete, isFalse);
   });
 
   test('a backup carries the account and reads it back', () {
