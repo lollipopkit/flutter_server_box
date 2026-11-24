@@ -10,6 +10,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/in_flight_work.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/url.dart';
@@ -40,7 +41,14 @@ abstract final class LlmHost {
     @visibleForTesting ExternalLibrary? externalLibrary,
     @visibleForTesting Map<String, String> Function()? environment,
   }) async {
-    AgentScope.container = container;
+    if (AppContainer.maybeContainer == null) {
+      AppContainer.container = container;
+    } else {
+      assert(
+        identical(AppContainer.maybeContainer, container),
+        'LlmHost.init called with a different ProviderContainer than AppContainer',
+      );
+    }
     // TODO: remove once no install has it: the switch the modes replaced.
     Stores.setting.remove('agentAutoRunSafe', updateLastUpdateTsOnRemove: false);
     _configure();
@@ -181,7 +189,7 @@ abstract final class LlmHost {
   static String? prompt(ChatMeta? meta) {
     final serverId = AgentScope.terminalServerOf(meta);
     if (serverId == null) {
-      return AgentScope.container
+      return AppContainer.container
           .read(globalAgentToolServiceProvider)
           .buildInstructions();
     }

@@ -45,21 +45,21 @@ use std::time::Duration;
 use ntex::rt::spawn;
 use ntex::service::fn_service;
 use ntex::time::sleep;
-use ntex::util::{ByteString, Bytes};
-use ntex::web::ws::{self, CloseCode, Frame, Message};
+use ntex::util::Bytes;
+use ntex::web::ws::{CloseCode, Frame, Message};
 
 use super::upgrade::WsSink;
+use super::WsCallerCtx;
 use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use super::audit::{self, Action, Event, Kind, Outcome};
+use super::audit::{Action, Event, Kind, Outcome};
 use super::session::{
     AttachmentId, Replay, Session, SessionInput, SessionOutput, SessionStore,
 };
 use super::ticket::Purpose;
-use crate::api::authz;
 use crate::api::server::AppState;
 use crate::pty::{LocalShell, ShellEvent};
 
@@ -76,7 +76,6 @@ const INPUT_QUEUE: usize = 64;
 /// observe pongs, so without this a client cannot tell a quiet session from a
 /// dead link — and it is the client noticing that starts a reconnect.
 const HEARTBEAT: Duration = Duration::from_secs(15);
-const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
@@ -193,11 +192,7 @@ enum ServerMsg<'a> {
 
 impl ServerMsg<'_> {
     fn frame(&self) -> Message {
-        // Every variant is a plain struct of owned strings, so this cannot
-        // fail in practice; an empty object is a harmless fallback if it ever
-        // did, and is better than dropping the connection over it.
-        let json = serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string());
-        Message::Text(ByteString::from(json))
+        super::json_frame(self)
     }
 }
 
@@ -205,96 +200,26 @@ pub async fn terminal_ws(
     req: HttpRequest,
     app_state: Arc<AppState>,
 ) -> Result<HttpResponse, WebError> {
-    let remote_ip = audit::peer_ip(&req);
-
-    let deny = async |reason: &'static str, status: HttpResponse| {
-        Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip.clone())
-            .detail(reason)
-            .record(&app_state.db)
-            .await;
-        Ok(status)
-    };
-
-    let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().build()).await;
-    }
-
-    let Some(protocol) = ws::subprotocols(&req)
-        .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
-        .map(str::to_owned)
-    else {
-        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
-    };
-    let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
-    let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Terminal) else {
-        return deny("ticket", HttpResponse::Unauthorized().build()).await;
-    };
+    let admitted =
+        match super::admit_ws(&req, &app_state, Purpose::Terminal, Kind::Terminal, None).await {
+            Ok(a) => a,
+            Err(resp) => return Ok(resp),
+        };
     let tickets = app_state.tickets.clone();
-
-    // Checked here as well as at the ticket, so the answer cannot be stale by
-    // the time the socket opens: the password may have changed in
-    // between. Checked again when a frame asks for a shell.
-    let admitted = authz::caller(&app_state)
-        .await
-        .filter(|caller| caller.check(&app_state, secure).is_ok());
-    let Some(admitted) = admitted else {
-        tickets.rollback(reservation);
-        return deny("not admitted", HttpResponse::Forbidden().build()).await;
-    };
-
-    let ctx = Rc::new(ConnCtx {
+    let protocol = admitted.protocol.clone();
+    let reservation = admitted.reservation;
+    let ctx = Rc::new(WsCallerCtx {
         state: app_state,
-        remote_ip,
-        secure,
+        remote_ip: admitted.remote_ip,
+        secure: admitted.secure,
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start(
-        &req,
-        Some(&protocol),
-        move |sink: WsSink| {
-            start_heartbeat(sink.clone());
-            handler(ctx, sink)
-        },
-    )
-    .await;
-    if upgraded.is_ok() {
-        tickets.commit(reservation);
-    } else {
-        tickets.rollback(reservation);
-    }
-    upgraded
-}
-
-/// Everything about the connection that outlives a single frame.
-struct ConnCtx {
-    state: Arc<AppState>,
-    /// Where the upgrade came from, for the audit log.
-    remote_ip: Option<String>,
-    /// Whether this connection arrived over a link that can't be read off the
-    /// network. Captured at the handshake, where the peer address is known.
-    secure: bool,
-    /// The account's password as of the upgrade (`Caller::since`): a socket
-    /// that outlived a password change opens nothing more under it.
-    since: i64,
-}
-
-impl ConnCtx {
-    /// Whether a shell may be opened now: the account read again, not
-    /// trusted from the handshake — its password may have changed since.
-    async fn may(&self) -> Result<(), &'static str> {
-        match authz::caller(&self.state)
-            .await
-            .filter(|caller| caller.since == self.since)
-        {
-            Some(caller) => caller
-                .check(&self.state, self.secure)
-                .map_err(|why| why.as_str()),
-            None => Err("password_changed"),
-        }
-    }
+    super::upgrade_with_ticket(&req, &tickets, &protocol, reservation, move |sink: WsSink| {
+        start_heartbeat(sink.clone());
+        handler(ctx, sink)
+    })
+    .await
 }
 
 /// What a client is told when a shell may not be opened.
@@ -346,7 +271,7 @@ fn set_if_opening(phase: &Rc<RefCell<Phase>>, next: Phase) -> bool {
 }
 
 fn handler(
-    ctx: Rc<ConnCtx>,
+    ctx: Rc<WsCallerCtx>,
     sink: WsSink,
 ) -> impl ntex::service::Service<WsSink, Frame, Res = Option<Message>, Error = WebError> {
     let phase = Rc::new(RefCell::new(Phase::Idle));
@@ -428,7 +353,7 @@ async fn on_input(phase: &Rc<RefCell<Phase>>, data: Vec<u8>) {
 }
 
 async fn on_control(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     raw: &[u8],
@@ -502,7 +427,7 @@ async fn on_control(
 /// runtime is detected with the same probe the page runs, so a machine with no
 /// runtime answers `no_container_runtime` rather than starting a host shell.
 async fn open_local(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     target: Option<TerminalTarget>,
@@ -512,7 +437,7 @@ async fn open_local(
 ) -> Option<Message> {
     // Re-derived here rather than trusted from the handshake: the password
     // may have changed in between, and this is the request that matters.
-    if let Err(why) = ctx.may().await {
+    if let Err(why) = ctx.check().await {
         Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
             .remote_ip(ctx.remote_ip.clone())
             .detail(format!("shell: {why}"))
@@ -670,7 +595,7 @@ async fn open_local(
     // A password change can race the spawn above on another worker. Once
     // registered, either this recheck rejects it or `authz::end_account`
     // closes it.
-    if let Err(why) = ctx.may().await {
+    if let Err(why) = ctx.check().await {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
@@ -741,7 +666,7 @@ async fn find_tmux(exec: &crate::api::exec::Limits) -> Option<String> {
 /// Records a refused tmux value and answers with the code the panel phrases.
 /// Runs nothing.
 async fn tmux_refused(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     phase: &Rc<RefCell<Phase>>,
     what: &str,
     issue: sbm_parser::tmux::TmuxError,
@@ -761,7 +686,7 @@ async fn tmux_refused(
 
 /// tmux is not installed on the machine, which is its own code rather than a
 /// generic failure: the remedy is on the machine, not in the panel.
-async fn no_tmux(ctx: &Rc<ConnCtx>, phase: &Rc<RefCell<Phase>>) -> Option<Message> {
+async fn no_tmux(ctx: &Rc<WsCallerCtx>, phase: &Rc<RefCell<Phase>>) -> Option<Message> {
     Event::new(Kind::Terminal, Action::Open, Outcome::Error)
         .remote_ip(ctx.remote_ip.clone())
         .detail("tmux: not installed")
@@ -823,7 +748,7 @@ fn drive_local_shell(
 }
 
 async fn attach(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     handle: &str,
@@ -850,7 +775,7 @@ async fn attach(
     };
     // Rejoining a session checks the transport rule again: a link that may
     // not open a shell may not take over one either.
-    if let Err(why) = ctx.may().await {
+    if let Err(why) = ctx.check().await {
         reset_opening(phase);
         return Some(not_permitted(why));
     }

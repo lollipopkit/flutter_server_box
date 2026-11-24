@@ -249,7 +249,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// The rows of the store [name] this file holds.
   Map<String, Object?> _storeRows(String name) => switch (stores[name]) {
     final Map<String, Object?> rows => rows,
-    final Map rows => rows.cast<String, Object?>(),
+    final Map<Object?, Object?> rows => rows.cast<String, Object?>(),
     _ => const {},
   };
 

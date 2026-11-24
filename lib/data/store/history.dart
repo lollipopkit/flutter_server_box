@@ -18,7 +18,7 @@ class _ListHistory {
   /// like everything else, and a snapshot taken at first access would outlive
   /// it.
   List<String> get all =>
-      _store.get<List>(_name)?.cast<String>().toList() ?? <String>[];
+      _store.get<List<Object?>>(_name)?.cast<String>().toList() ?? <String>[];
 
   void add(String path) {
     final history = all..remove(path);
@@ -38,7 +38,8 @@ class _MapHistory {
   final String _name;
 
   Map<String, String> get _all =>
-      _store.get<Map>(_name)?.cast<String, String>() ?? <String, String>{};
+      _store.get<Map<Object?, Object?>>(_name)?.cast<String, String>() ??
+      <String, String>{};
 
   void put(String id, String val) {
     _store.set(_name, {..._all, id: val});

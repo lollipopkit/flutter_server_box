@@ -840,11 +840,13 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   /// One operation per guest at a time, power actions included: a snapshot
   /// taken while a shutdown is on its way, or a revert under a running
   /// snapshot, is a race the host settles in a way nobody asked for.
-  Future<void> _snapshotOp(
-    String guestId,
-    VirtSnapshotOp op,
-    Future<void> Function(VirtGuest guest) run,
-  ) async {
+  Future<T> _guestOp<T>(
+    String guestId, {
+    required VirtHostState Function(VirtHostState state) markBusy,
+    required VirtHostState Function(VirtHostState state) clearBusy,
+    required Future<T> Function(VirtGuest guest) run,
+    FutureOr<void> Function()? after,
+  }) async {
     final guest = _guest(guestId);
     if (state.isBusy(guestId)) {
       throw VirtErr(
@@ -852,24 +854,37 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         message: '${guest.name} is busy',
       );
     }
-    state = state.copyWith(snapshotOps: {...state.snapshotOps, guestId: op});
+    state = markBusy(state);
     final generation = _generation;
     try {
-      await run(guest);
+      return await run(guest);
     } finally {
       if (_current(generation)) {
-        state = state.copyWith(
-          snapshotOps: {...state.snapshotOps}..remove(guestId),
-        );
-        // A revert brings back the snapshot's CPU, memory and disks, and an
-        // external snapshot moves the writable disks onto new overlays: the
-        // hardware read before says otherwise, whether or not the operation
-        // got all the way.
-        _bump('hw:$guestId');
-        unawaited(refresh());
+        state = clearBusy(state);
+        await after?.call();
       }
     }
   }
+
+  Future<void> _snapshotOp(
+    String guestId,
+    VirtSnapshotOp op,
+    Future<void> Function(VirtGuest guest) run,
+  ) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(snapshotOps: {...s.snapshotOps, guestId: op}),
+    clearBusy: (s) =>
+        s.copyWith(snapshotOps: {...s.snapshotOps}..remove(guestId)),
+    run: run,
+    after: () {
+      // A revert brings back the snapshot's CPU, memory and disks, and an
+      // external snapshot moves the writable disks onto new overlays: the
+      // hardware read before says otherwise, whether or not the operation
+      // got all the way.
+      _bump('hw:$guestId');
+      unawaited(refresh());
+    },
+  );
 
   /// See [VirtBackend.hardware].
   Future<VirtHardware> hardware(String guestId) =>
@@ -886,48 +901,24 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     String guestId,
     VirtHardware base,
     VirtHwChange change,
-  ) async {
-    final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    state = state.copyWith(editing: {...state.editing, guestId});
-    final generation = _generation;
-    try {
-      return await _backend.changeHardware(guest, base, change);
-    } finally {
-      if (_current(generation)) {
-        state = state.copyWith(editing: {...state.editing}..remove(guestId));
-        unawaited(refresh());
-      }
-    }
-  }
+  ) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(editing: {...s.editing, guestId}),
+    clearBusy: (s) => s.copyWith(editing: {...s.editing}..remove(guestId)),
+    run: (guest) => _backend.changeHardware(guest, base, change),
+    after: () => unawaited(refresh()),
+  );
 
   /// Discards every pending change to [guestId], made from [base] (the read
   /// the view was shown), then has the hardware read again. One hardware
   /// operation per guest at a time, as [changeHardware]. Throws [VirtErr].
-  Future<void> revertPending(String guestId, VirtHardware base) async {
-    final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    state = state.copyWith(editing: {...state.editing, guestId});
-    final generation = _generation;
-    try {
-      await _backend.revertPending(guest, base);
-    } finally {
-      if (_current(generation)) {
-        state = state.copyWith(editing: {...state.editing}..remove(guestId));
-        _bump('hw:$guestId');
-      }
-    }
-  }
+  Future<void> revertPending(String guestId, VirtHardware base) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(editing: {...s.editing, guestId}),
+    clearBusy: (s) => s.copyWith(editing: {...s.editing}..remove(guestId)),
+    run: (guest) => _backend.revertPending(guest, base),
+    after: () => _bump('hw:$guestId'),
+  );
 
   /// See [VirtBackend.cloudInit].
   Future<VirtCloudInitState> cloudInit(String guestId) =>
@@ -941,26 +932,16 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     String guestId,
     VirtCloudInitState base,
     VirtCloudInitEdit edit,
-  ) async {
-    final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    state = state.copyWith(editing: {...state.editing, guestId});
-    final generation = _generation;
-    try {
-      await _backend.setCloudInit(guest, base, edit);
-    } finally {
-      if (_current(generation)) {
-        state = state.copyWith(editing: {...state.editing}..remove(guestId));
-        _bump('ci:$guestId');
-        _bump('hw:$guestId');
-      }
-    }
-  }
+  ) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(editing: {...s.editing, guestId}),
+    clearBusy: (s) => s.copyWith(editing: {...s.editing}..remove(guestId)),
+    run: (guest) => _backend.setCloudInit(guest, base, edit),
+    after: () {
+      _bump('ci:$guestId');
+      _bump('hw:$guestId');
+    },
+  );
 
   /// See [VirtBackend.nextVmid].
   Future<int?> nextVmid() => _backend.nextVmid();
@@ -978,25 +959,13 @@ class VirtHostNotifier extends _$VirtHostNotifier {
 
   /// Deletes the stopped guest [guestId], then refreshes. One operation per
   /// guest, as [power]. Throws [VirtErr].
-  Future<void> delete(String guestId, {bool removeDisks = true}) async {
-    final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    state = state.copyWith(deleting: {...state.deleting, guestId});
-    final generation = _generation;
-    try {
-      await _backend.delete(guest, removeDisks: removeDisks);
-    } finally {
-      if (_current(generation)) {
-        state = state.copyWith(deleting: {...state.deleting}..remove(guestId));
-        await refresh();
-      }
-    }
-  }
+  Future<void> delete(String guestId, {bool removeDisks = true}) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(deleting: {...s.deleting, guestId}),
+    clearBusy: (s) => s.copyWith(deleting: {...s.deleting}..remove(guestId)),
+    run: (guest) => _backend.delete(guest, removeDisks: removeDisks),
+    after: refresh,
+  );
 
   /// Clones [guestId] and loads the host again, so the copy is in
   /// [VirtHostState.data] when its id is returned. Throws [VirtErr].
@@ -1089,25 +1058,13 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     String guestId,
     VirtCopyOp op,
     Future<T> Function(VirtGuest guest) run,
-  ) async {
-    final guest = _guest(guestId);
-    if (state.isBusy(guestId)) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is busy',
-      );
-    }
-    state = state.copyWith(copyOps: {...state.copyOps, guestId: op});
-    final generation = _generation;
-    try {
-      return await run(guest);
-    } finally {
-      if (_current(generation)) {
-        state = state.copyWith(copyOps: {...state.copyOps}..remove(guestId));
-        unawaited(refresh());
-      }
-    }
-  }
+  ) => _guestOp(
+    guestId,
+    markBusy: (s) => s.copyWith(copyOps: {...s.copyOps, guestId: op}),
+    clearBusy: (s) => s.copyWith(copyOps: {...s.copyOps}..remove(guestId)),
+    run: run,
+    after: () => unawaited(refresh()),
+  );
 
   /// Makes [change] to the host's storage or networks, then reads them
   /// again. One change per pool or network at a time, one per PVE node's

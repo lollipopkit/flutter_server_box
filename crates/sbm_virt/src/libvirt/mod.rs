@@ -5362,14 +5362,15 @@ pub fn definition_of_live_xml(live_xml: &str, definition_xml: &str) -> Result<St
                     let r = whole_line(def_xml, t);
                     Some(format!("{}{}", &text[..r.start - base], &text[r.end - base..]))
                 }
-                (None, Some(live)) if cpu.first_child().is_some() => {
-                    let at = cpu.first_child().unwrap().range().start - base;
-                    Some(format!("{}{live}{}", &text[..at], &text[at..]))
-                }
                 (None, Some(live)) => {
-                    // `<cpu …/>`: opened to take the topology.
-                    let open = text.trim_end_matches("/>").trim_end();
-                    Some(format!("{open}>{live}</cpu>"))
+                    if let Some(first) = cpu.first_child() {
+                        let at = first.range().start - base;
+                        Some(format!("{}{live}{}", &text[..at], &text[at..]))
+                    } else {
+                        // `<cpu …/>`: opened to take the topology.
+                        let open = text.trim_end_matches("/>").trim_end();
+                        Some(format!("{open}>{live}</cpu>"))
+                    }
                 }
                 (None, None) => Some(text.to_string()),
             }

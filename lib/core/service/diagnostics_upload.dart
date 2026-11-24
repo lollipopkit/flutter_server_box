@@ -59,8 +59,7 @@ abstract final class DiagnosticsUpload {
   static DiagnosticsLevel? _started;
 
   /// What the user has chosen.
-  static DiagnosticsLevel get level =>
-      DiagnosticsLevel.fromName(Stores.setting.diagnosticsLevel.fetch());
+  static DiagnosticsLevel get level => Stores.setting.diagnosticsLevel.fetch();
 
   /// Whether an error handed to [Diag] *now* would be uploaded.
   ///
@@ -112,8 +111,8 @@ abstract final class DiagnosticsUpload {
   /// `basic` rather than `none`, because `full` included everything `basic`
   /// sends: the user agreed to that much.
   static Future<void> retireFullLevel() async {
-    if (Stores.setting.diagnosticsLevel.fetch() == 'full') {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+    if (Stores.setting.get<Object>('diagnosticsLevel') == 'full') {
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
     }
     await PrefStore.shared.remove('openpanel_profile_id');
   }

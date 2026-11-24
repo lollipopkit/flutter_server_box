@@ -233,7 +233,7 @@ abstract final class HiveImport {
   }
 
   static Set<String> _doneBoxes() {
-    final raw = Stores.setting.get<List>(_doneKey);
+    final raw = Stores.setting.get<List<Object?>>(_doneKey);
     if (raw == null) return <String>{};
     return raw.whereType<String>().toSet();
   }

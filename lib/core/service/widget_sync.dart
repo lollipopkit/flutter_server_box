@@ -243,7 +243,7 @@ final class WidgetSync {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return {};
       return {
-        for (final entry in decoded.whereType<Map>())
+        for (final entry in decoded.whereType<Map<Object?, Object?>>())
           if (entry['id'] is String && entry['endpoint'] is String)
             entry['id'] as String: ScopedToken.held(
               endpoint: normalizeAgentEndpoint(entry['endpoint'] as String),

@@ -591,7 +591,7 @@ Object? _serverWithRestoredIds(
 }
 
 Map<String, Object?> _sshWithRestoredKeyId(
-  Map value,
+  Map<Object?, Object?> value,
   Map<String, String> keyIds,
 ) {
   final ssh = Map<String, Object?>.from(value);
@@ -603,7 +603,7 @@ Map<String, Object?> _sshWithRestoredKeyId(
 }
 
 Map<String, Object?> _sshWithRestoredIds(
-  Map value,
+  Map<Object?, Object?> value,
   Map<String, String> keyIds,
   Map<String, String> serverIds,
 ) {

@@ -12,7 +12,7 @@ bool get isICloudSupported => isMacOS || isIOS;
 abstract final class SyncRemotes {
   /// The active file-backed sync remote (iCloud or WebDAV), or null when
   /// neither is enabled.
-  static RemoteStorage? get fileRemote {
+  static RemoteStorage<Object?>? get fileRemote {
     if (PrefProps.icloudSync.get() && isICloudSupported) return icloud;
     if (PrefProps.webdavSync.get()) return webdav;
     return null;

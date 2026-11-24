@@ -82,7 +82,7 @@ class MonitorWebApp {
   }
 
   static Map<String, String> _text(Object? json) => {
-    if (json case final Map text)
+    if (json case final Map<Object?, Object?> text)
       for (final MapEntry(:key, :value) in text.entries)
         if (key is String && value is String) key: value,
   };

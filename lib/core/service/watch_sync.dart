@@ -578,7 +578,7 @@ final class WatchSync {
       final servers = raw?['servers'];
       if (servers is! List) return {};
       return {
-        for (final entry in servers.whereType<Map>())
+        for (final entry in servers.whereType<Map<Object?, Object?>>())
           if (entry['id'] is String &&
               entry['addr'] is String &&
               entry['token'] is String)

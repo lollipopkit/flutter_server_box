@@ -681,8 +681,12 @@ class MonitorHttpClient {
     });
   }
 
-  /// Sends [data] to [path]. The agent stages it and renames, so a write that
-  /// dies halfway leaves no half-file under the destination's name.
+  /// Sends the byte stream opened by [open] to [path]. The agent stages it and
+  /// renames, so a write that dies halfway leaves no half-file under the
+  /// destination's name.
+  ///
+  /// Passing [open] as a factory lets [_authed] open a fresh stream if the
+  /// token expires and the PUT has to retry after re-signing in.
   ///
   /// With [ifVersion], the `version` the caller last saw: a file changed
   /// since is left alone and this throws [MonitorHttpErrType.modified].
@@ -691,50 +695,27 @@ class MonitorHttpClient {
   /// not report one.
   Future<String?> fsWrite(
     String path,
-    Stream<List<int>> data, {
+    Stream<List<int>> Function() open, {
     int? size,
-    Stream<List<int>> Function()? replayData,
     String? ifVersion,
-  }) async {
-    // `_authed` cannot retry the PUT: a `File.openRead()` stream is consumed by
-    // the first attempt. Signed in first, so only an expiry in between needs
-    // [replayData].
-    if (_token == null) await _login();
-
-    Future<String?> put(Stream<List<int>> body) async {
-      final resp = await _session().put<dynamic>(
-        '/api/v1/fs/write',
-        queryParameters: {'path': path, 'if_version': ?ifVersion},
-        data: body,
-        options: Options(
-          // Dio will not set one for a stream, and the agent needs to know
-          // where the body ends. Null sends it chunked, which the agent reads
-          // to completion either way.
-          headers: {
-            'content-type': 'application/octet-stream',
-            'content-length': ?size,
-          },
-        ),
-      );
-      final answer = resp.data;
-      return answer is Map ? answer['version'] as String? : null;
-    }
-
-    try {
-      return await put(data);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401 && replayData != null) {
-        _token = null;
-        await _login();
-        try {
-          return await put(replayData());
-        } on DioException catch (retryError) {
-          throw _toMonitorHttpErr(retryError);
-        }
-      }
-      throw _toMonitorHttpErr(e);
-    }
-  }
+  }) => _authed(() async {
+    final resp = await _session().put<dynamic>(
+      '/api/v1/fs/write',
+      queryParameters: {'path': path, 'if_version': ?ifVersion},
+      data: open(),
+      options: Options(
+        // Dio will not set one for a stream, and the agent needs to know
+        // where the body ends. Null sends it chunked, which the agent reads
+        // to completion either way.
+        headers: {
+          'content-type': 'application/octet-stream',
+          'content-length': ?size,
+        },
+      ),
+    );
+    final answer = resp.data;
+    return answer is Map ? answer['version'] as String? : null;
+  });
 
   Future<void> fsMkdir(String path) =>
       _fsAct('/api/v1/fs/mkdir', {'path': path});
@@ -1140,13 +1121,13 @@ class MonitorHttpClient {
   /// `event`, `resync`), until the agent ends the stream or the
   /// subscription is cancelled. The agent pings every 25 s, so a stream
   /// silent for longer than [_eventsSilence] is gone.
-  Stream<Map<String, dynamic>> agentEvents() {
+  Stream<MonitorAgentEvent> agentEvents() {
     // Cancelling the stream ends the request at once. An `async*` body would
     // reach its `finally` only at its next `yield`, which an idle agent,
     // sending only `: ping`, never gives it.
     final cancel = CancelToken();
     StreamSubscription<String>? frames;
-    late final StreamController<Map<String, dynamic>> out;
+    late final StreamController<MonitorAgentEvent> out;
     out = StreamController(
       onListen: () async {
         try {
@@ -1171,7 +1152,11 @@ class MonitorHttpClient {
               for (var end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
                 final frame = pending.substring(0, end);
                 pending = pending.substring(end + 2);
-                if (sseData(frame) case final e?) out.add(e);
+                if (sseData(frame) case final raw?) {
+                  if (MonitorAgentEvent.fromJson(raw) case final event?) {
+                    out.add(event);
+                  }
+                }
               }
             },
             // `cancelOnError` skips `onDone`: the error ends the stream too.

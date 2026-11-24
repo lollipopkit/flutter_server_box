@@ -31,7 +31,7 @@ use reqwest::{Method, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::cert::{PinnedCert, PinnedVerifier};
+use crate::cert::{PinnedCert, PinnedCertVerifier};
 use crate::error::{Error, Failure};
 use crate::model::{RedfishTask, odata_id, session_link};
 
@@ -227,10 +227,10 @@ impl Client {
         }
 
         let provider = Arc::new(rustls::crypto::ring::default_provider());
-        let verifier = Arc::new(PinnedVerifier {
+        let verifier = Arc::new(PinnedCertVerifier::pinned(
             pin,
-            algorithms: provider.signature_verification_algorithms,
-        });
+            provider.signature_verification_algorithms,
+        ));
         let tls = rustls::ClientConfig::builder_with_provider(provider)
             .with_safe_default_protocol_versions()
             .map_err(|e| Error::with(Failure::Unreachable, format!("TLS setup: {e}")))?

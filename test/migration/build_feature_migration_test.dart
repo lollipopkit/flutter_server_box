@@ -53,7 +53,7 @@ void main() {
     migrateBuildFeatures(1536);
 
     expect(setting.lastVer.get(), 0);
-    expect(setting.get<List>('serverBtns'), isNull);
+    expect(setting.get<List<Object?>>('serverBtns'), isNull);
   });
 
   test('rolls back every feature write when one persistence step fails', () {

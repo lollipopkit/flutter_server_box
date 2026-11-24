@@ -14,10 +14,156 @@ pub mod ticket;
 pub mod upgrade;
 pub mod virt_console;
 
+use std::fmt;
 use std::net::IpAddr;
+use std::sync::Arc;
 
 use ntex::http::header;
-use ntex::web::HttpRequest;
+use ntex::service::Service;
+use ntex::util::ByteString;
+use ntex::web::ws::{self, Frame, Message};
+use ntex::web::{HttpRequest, HttpResponse};
+
+use crate::api::WebError;
+use crate::api::authz;
+use crate::api::server::AppState;
+
+pub(crate) const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
+
+/// Encodes a control frame as JSON text; falls back to `{}` rather than
+/// dropping the socket if serialization ever failed.
+pub(crate) fn json_frame(msg: &impl serde::Serialize) -> Message {
+    let json = serde_json::to_string(msg).unwrap_or_else(|_| "{}".to_string());
+    Message::Text(ByteString::from(json))
+}
+
+pub(crate) fn pong_frame() -> Message {
+    Message::Text(ByteString::from_static("{\"type\":\"pong\"}"))
+}
+
+/// Verified WebSocket handshake admission, before the HTTP upgrade runs.
+pub(crate) struct AdmittedWs {
+    pub(crate) protocol: String,
+    pub(crate) raw_ticket: String,
+    pub(crate) reservation: ticket::TicketReservation,
+    pub(crate) remote_ip: Option<String>,
+    pub(crate) secure: bool,
+    pub(crate) since: i64,
+}
+
+/// Shared caller context retained for the lifetime of an upgraded WebSocket so
+/// mid-stream rechecks see password changes or transport-rule changes.
+pub(crate) struct WsCallerCtx {
+    pub(crate) state: Arc<AppState>,
+    pub(crate) remote_ip: Option<String>,
+    pub(crate) secure: bool,
+    pub(crate) since: i64,
+}
+
+impl WsCallerCtx {
+    /// Re-reads the caller, returning `None` if the password has changed since
+    /// the handshake.
+    pub(crate) async fn caller(&self) -> Option<authz::Caller> {
+        authz::caller(&self.state)
+            .await
+            .filter(|caller| caller.since == self.since)
+    }
+
+    /// Checks that the caller's password has not changed and the transport
+    /// policy still allows acting on the host.
+    pub(crate) async fn check(&self) -> Result<(), &'static str> {
+        match self.caller().await {
+            Some(caller) => caller
+                .check(&self.state, self.secure)
+                .map_err(|why| why.as_str()),
+            None => Err("password_changed"),
+        }
+    }
+
+    pub(crate) async fn still_admitted(&self) -> bool {
+        self.check().await.is_ok()
+    }
+}
+
+/// Runs origin validation, single-use ticket reservation, and caller admission
+/// before a WebSocket upgrade. Denied attempts are audited with `kind` (and
+/// optional `detail_prefix`).
+pub(crate) async fn admit_ws(
+    req: &HttpRequest,
+    app_state: &Arc<AppState>,
+    purpose: ticket::Purpose,
+    kind: audit::Kind,
+    detail_prefix: Option<&str>,
+) -> Result<AdmittedWs, HttpResponse> {
+    let remote_ip = audit::peer_ip(req);
+    let deny = async |reason: &'static str, status: HttpResponse| {
+        let detail = match detail_prefix {
+            Some(prefix) => format!("{prefix}: {reason}"),
+            None => reason.to_string(),
+        };
+        audit::Event::new(kind, audit::Action::Denied, audit::Outcome::Denied)
+            .remote_ip(remote_ip.clone())
+            .detail(detail)
+            .record(&app_state.db)
+            .await;
+        Err(status)
+    };
+
+    let secure = is_secure_transport(req, app_state.tls_active);
+    if !origin_allowed(req, &app_state.config.get_server().cors_allowed_origins) {
+        return deny("origin", HttpResponse::Unauthorized().build()).await;
+    }
+
+    let Some(protocol) = ws::subprotocols(req)
+        .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
+        .map(str::to_owned)
+    else {
+        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
+    };
+    let raw_ticket = protocol[TICKET_PROTOCOL_PREFIX.len()..].to_owned();
+    let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, purpose) else {
+        return deny("ticket", HttpResponse::Unauthorized().build()).await;
+    };
+
+    let admitted = authz::caller(app_state)
+        .await
+        .filter(|caller| caller.check(app_state, secure).is_ok());
+    let Some(admitted) = admitted else {
+        app_state.tickets.rollback(reservation);
+        return deny("not admitted", HttpResponse::Forbidden().build()).await;
+    };
+
+    Ok(AdmittedWs {
+        protocol,
+        raw_ticket,
+        reservation,
+        remote_ip,
+        secure,
+        since: admitted.since,
+    })
+}
+
+/// Performs the WebSocket upgrade and commits or rolls back `reservation`
+/// depending on whether the handshake succeeded.
+pub(crate) async fn upgrade_with_ticket<S>(
+    req: &HttpRequest,
+    tickets: &Arc<ticket::TicketStore>,
+    protocol: &str,
+    reservation: ticket::TicketReservation,
+    service: impl FnOnce(upgrade::WsSink) -> S,
+) -> Result<HttpResponse, WebError>
+where
+    S: Service<upgrade::WsSink, Frame, Res = Option<Message>> + 'static,
+    S::Error: fmt::Debug + 'static,
+{
+    let upgraded = upgrade::start(req, Some(protocol), service).await;
+    if upgraded.is_ok() {
+        tickets.commit(reservation);
+    } else {
+        tickets.rollback(reservation);
+    }
+    upgraded
+}
 
 /// Whether this request reached us over a link that can't be passively read.
 ///

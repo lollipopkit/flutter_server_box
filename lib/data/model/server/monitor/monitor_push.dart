@@ -110,7 +110,7 @@ class MonitorPushList {
     final pushes = json['pushes'];
     return MonitorPushList(
       pushes: switch (pushes) {
-        final List list => [
+        final List<Object?> list => [
           for (var i = 0; i < list.length; i++)
             if (list[i] case final Map<String, dynamic> push)
               MonitorPushEntry.fromJson(push, i),
@@ -119,7 +119,7 @@ class MonitorPushList {
       },
       pushRate: json['push_rate'] as String?,
       pushTypes: switch (json['push_types']) {
-        final List list => list.whereType<String>().toList(),
+        final List<Object?> list => list.whereType<String>().toList(),
         _ => const [],
       },
       appliesOnRestart: json['applies_on_restart'] != false,

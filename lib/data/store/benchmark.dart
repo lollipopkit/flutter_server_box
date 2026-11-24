@@ -240,7 +240,7 @@ class BenchmarkStore {
         _drop(id);
         continue;
       }
-      if (kept case {'h': final String h, 'd': final Map d}) {
+      if (kept case {'h': final String h, 'd': final Map<Object?, Object?> d}) {
         final current = SyncRecorder.stampsOf([(c, id)])[(c, id)];
         if (current != null && current.compareTo(h) >= 0) {
           _drop(id);

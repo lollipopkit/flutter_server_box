@@ -153,7 +153,7 @@ class MonitorSettings {
       idlePauseThresholdSecs: (json['idle_pause_threshold_secs'] as num?)
           ?.toInt(),
       rules: switch (json['rules']) {
-        final List list => [
+        final List<Object?> list => [
           for (final rule in list)
             if (rule is Map<String, dynamic>) MonitorRule.fromJson(rule),
         ],
@@ -163,12 +163,12 @@ class MonitorSettings {
           ? MonitorDataRetention.fromJson(retention)
           : null,
       corsAllowedOrigins: switch (json['cors_allowed_origins']) {
-        final List list => list.whereType<String>().toList(),
+        final List<Object?> list => list.whereType<String>().toList(),
         _ => const [],
       },
       diskCountsNetwork: json['disk_counts_network'] as bool?,
       liveFields: switch (json['live_fields']) {
-        final List list => list.whereType<String>().toList(),
+        final List<Object?> list => list.whereType<String>().toList(),
         _ => const [],
       },
       // An agent older than this field answers without it. Its own defaults

@@ -29,12 +29,11 @@ use hyper::rt::{Read, ReadBufCursor, Write};
 use hyper_util::client::legacy::Client as HyperClient;
 use hyper_util::client::legacy::connect::{Connected, Connection};
 use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
+use rustls::RootCertStore;
 use rustls::client::WebPkiServerVerifier;
-use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
-use rustls::crypto::WebPkiSupportedAlgorithms;
-use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
-use rustls::{CertificateError, DigitallySignedStruct, RootCertStore, SignatureScheme};
-use sbm_redfish::cert::{CertInfo, PinnedCert, fingerprint};
+use rustls::client::danger::ServerCertVerifier;
+use rustls::pki_types::ServerName;
+use sbm_redfish::cert::{CertInfo, PinnedCert, PinnedCertVerifier, fingerprint};
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 
 use super::Config;
@@ -254,12 +253,13 @@ struct TlsPolicy {
 
 impl TlsPolicy {
     fn client_config(&self, presented: Arc<Mutex<Option<Vec<u8>>>>) -> Result<rustls::ClientConfig, rustls::Error> {
-        let verifier = PveVerifier {
-            webpki: self.webpki.clone(),
-            pin: self.pin.clone(),
+        let fallback = self.webpki.clone().map(|v| v as Arc<dyn ServerCertVerifier>);
+        let verifier = PinnedCertVerifier::with_fallback(
+            self.pin.clone(),
+            fallback,
             presented,
-            algorithms: self.provider.signature_verification_algorithms,
-        };
+            self.provider.signature_verification_algorithms,
+        );
         Ok(rustls::ClientConfig::builder_with_provider(self.provider.clone())
             .with_safe_default_protocol_versions()?
             .dangerous()
@@ -425,58 +425,6 @@ fn error_chain(e: &(dyn std::error::Error + 'static)) -> String {
     out
 }
 
-/// CA-valid, or the pinned leaf. A refused leaf is kept for the error.
-#[derive(Debug)]
-struct PveVerifier {
-    webpki: Option<Arc<WebPkiServerVerifier>>,
-    pin: PinnedCert,
-    presented: Arc<Mutex<Option<Vec<u8>>>>,
-    algorithms: WebPkiSupportedAlgorithms,
-}
-
-impl ServerCertVerifier for PveVerifier {
-    fn verify_server_cert(
-        &self,
-        end_entity: &CertificateDer<'_>,
-        intermediates: &[CertificateDer<'_>],
-        server_name: &ServerName<'_>,
-        ocsp_response: &[u8],
-        now: UnixTime,
-    ) -> Result<ServerCertVerified, rustls::Error> {
-        if self.pin.accepts(Some(end_entity.as_ref()))
-            || self.webpki.as_ref().is_some_and(|v| {
-                v.verify_server_cert(end_entity, intermediates, server_name, ocsp_response, now).is_ok()
-            })
-        {
-            return Ok(ServerCertVerified::assertion());
-        }
-        *self.presented.lock().unwrap() = Some(end_entity.as_ref().to_vec());
-        Err(rustls::Error::InvalidCertificate(CertificateError::ApplicationVerificationFailure))
-    }
-
-    fn verify_tls12_signature(
-        &self,
-        message: &[u8],
-        cert: &CertificateDer<'_>,
-        dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        rustls::crypto::verify_tls12_signature(message, cert, dss, &self.algorithms)
-    }
-
-    fn verify_tls13_signature(
-        &self,
-        message: &[u8],
-        cert: &CertificateDer<'_>,
-        dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        rustls::crypto::verify_tls13_signature(message, cert, dss, &self.algorithms)
-    }
-
-    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
-        self.algorithms.supported_schemes()
-    }
-}
-
 /// hyper's connector: a [`Dial`] stream, secured for `https`.
 #[derive(Clone)]
 struct PveConnect {
@@ -509,7 +457,7 @@ impl tower_service::Service<Uri> for PveConnect {
                 let config = tls.client_config(presented.clone()).map_err(io::Error::other)?;
                 match tokio_rustls::TlsConnector::from(Arc::new(config)).connect(name, stream).await {
                     Ok(secured) => Ok::<_, io::Error>(Box::new(secured) as Box<dyn Stream>),
-                    Err(e) => Err(match presented.lock().unwrap().take() {
+                    Err(e) => Err(match presented.lock().unwrap_or_else(|e| e.into_inner()).take() {
                         Some(der) => io::Error::other(CertRefused(der)),
                         None => e,
                     }),

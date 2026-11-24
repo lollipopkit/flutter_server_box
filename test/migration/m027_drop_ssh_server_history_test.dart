@@ -28,7 +28,7 @@ void main() {
 
     await const DropSshServerHistoryMigration().apply();
 
-    expect(history.get<List>('sshServerHistory'), isNull);
+    expect(history.get<List<Object?>>('sshServerHistory'), isNull);
     expect(history.get<String>('sshTabs'), isNotNull);
   });
 
@@ -36,6 +36,6 @@ void main() {
     await const DropSshServerHistoryMigration().apply();
     await const DropSshServerHistoryMigration().apply();
 
-    expect(SqliteStore('history').get<List>('sshServerHistory'), isNull);
+    expect(SqliteStore('history').get<List<Object?>>('sshServerHistory'), isNull);
   });
 }

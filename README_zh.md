@@ -61,7 +61,8 @@
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`_NoSign.ipa`，未签名，需自行签名后安装） |
 | macOS | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（按架构分别提供 `.dmg`） / `brew install --cask server-box` |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
+| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`.exe` 安装程序与便携版 `.zip`） / `winget install lollipopkit.serverbox` |
+| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
 
 请只从可信来源下载。
 
@@ -69,30 +70,37 @@
 
 **连接**
 
-- 支持 SSH 直连、经跳板机连接或使用 `ProxyCommand`；也可通过 [Monitor](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-agent/) 使用 HTTP 连接，适用于不希望暴露 SSH 端口的主机。
+- 支持 SSH 直连、经跳板机连接或使用 `ProxyCommand`，内置 [SSH 主机密钥与 CA 证书校验](https://serverbox.lollipopkit.com/docs/zh/advanced/host-keys/)、私钥管理、局域网 SSH 发现、Wake-on-LAN 和 [JSON 批量导入](https://serverbox.lollipopkit.com/docs/zh/advanced/bulk-import/)。
+- 可通过 [Monitor](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-agent/) 使用 HTTP 连接，适用于不希望暴露 SSH 端口的主机；同一台服务器可同时配置 SSH 与 Monitor，并在其中一种方式不可用时自动回退。
 - 在支持的平台上，可打开本机 shell，或安装 Linux 用户空间（[本机终端](https://serverbox.lollipopkit.com/docs/zh/advanced/local-terminal/)）。
 
 **查看状态**
 
-- CPU、内存、交换分区、磁盘、磁盘 I/O 和网络的实时与历史图表，以及传感器、GPU（NVIDIA、AMD）、电池和磁盘 S.M.A.R.T.。
+- CPU、内存、交换分区、磁盘、磁盘 I/O 和网络的实时与历史图表，以及传感器、GPU（NVIDIA、AMD）、电池、磁盘 S.M.A.R.T. 和[自定义命令](https://serverbox.lollipopkit.com/docs/zh/advanced/custom-commands/)。
 - 一览所有服务器，可按标签筛选，也可在[地球视图](https://serverbox.lollipopkit.com/docs/zh/advanced/globe/)中查看。
-- 推送提醒、[桌面小组件](https://serverbox.lollipopkit.com/docs/zh/advanced/widgets/)和 watchOS App；App 关闭后，Monitor 仍会为这些功能提供支持。
+- 推送提醒（支持自定义阈值规则与推送渠道）、[桌面小组件](https://serverbox.lollipopkit.com/docs/zh/advanced/widgets/)、watchOS App 和 macOS 菜单栏状态图标；App 关闭后，Monitor 仍会为告警、小组件和手表 App 提供支持。
 
 **管理服务器**
 
-- 完整的终端；[工作区](https://serverbox.lollipopkit.com/docs/zh/advanced/workspace/)支持分屏。
-- 通过 SFTP 或 SCP 浏览、上传、下载并直接编辑文件。
+- 完整的终端，移动端提供虚拟按键，支持 tmux、终端[程序状态](https://serverbox.lollipopkit.com/docs/zh/advanced/program-status/)指示与通知，以及支持分屏和同步输入的[工作区](https://serverbox.lollipopkit.com/docs/zh/advanced/workspace/)。
+- 通过 SFTP、SCP 或 Monitor 文件 API 浏览、上传、下载并直接编辑文件，Markdown 文件支持渲染预览。
 - [RDP 和 VNC](https://serverbox.lollipopkit.com/docs/zh/advanced/remote-desktop/)，可以连服务器本身，也可以连它能访问到的其他桌面。
-- Docker 与 Podman、进程、systemd 服务、用户与用户组、防火墙规则（ufw、firewalld）、定时任务、端口转发和代码片段。
-- 管理 libvirt 和 Proxmox VE 上的虚拟机与容器，通过 Redfish 管理服务器的 [BMC](https://serverbox.lollipopkit.com/docs/zh/advanced/bmc/)。
-- 基准测试（YABS）和 iperf。
-- [AI Agent](https://serverbox.lollipopkit.com/docs/zh/advanced/agent/) 可协助管理服务器，并使用你选择的模型提供商、MCP server 和 skill。
+- Docker 与 Podman、进程、systemd 服务、用户与用户组、防火墙规则（`ufw`、`firewalld`）、存储管理（磁盘、RAID、ZFS）、网络共享（SMB、NFS）、定时任务、电源控制、端口转发和代码片段。
+- 管理 libvirt 和 Proxmox VE 上的虚拟机与容器（快照、硬件配置、备份、VNC 与串口控制台），以及通过 Redfish 管理服务器硬件（[BMC](https://serverbox.lollipopkit.com/docs/zh/advanced/bmc/)）。
+- 基准测试（YABS）和 `iperf`。
+- **Monitor 网页面板：** 桌面风格 Web 界面，内置常用服务器管理工具，支持 Docker Compose [Monitor 应用](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-apps/)、沙箱化的第三方[桌面应用](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-desk-apps/)（`.fsba`）、加密的 [Monitor 配置备份](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-backup/) 以及 [Monitor Agent 模式](https://serverbox.lollipopkit.com/docs/zh/advanced/monitor-agent-mode/)。
+
+**AI 与自动化**
+
+- 内置 [AI Agent](https://serverbox.lollipopkit.com/docs/zh/advanced/agent/)，可协助管理服务器，并使用你选择的模型提供商、MCP server 和 skill。
+- 内置 [App MCP Server](https://serverbox.lollipopkit.com/docs/zh/advanced/app-mcp/)（支持 HTTP 与 stdio 桥接）和细粒度权限令牌，供外部 MCP 客户端访问 ServerBox 管理的服务器。
+- 支持 [`serverbox://` 链接](https://serverbox.lollipopkit.com/docs/zh/advanced/url-scheme/)，可在快捷指令、启动器和脚本中直接打开服务器、功能页或代码片段。
 
 **个性化**
 
 - 内置商店里的[主题和图标包](https://serverbox.lollipopkit.com/docs/zh/advanced/theme-packages/)，也可以自己制作。
-- 生物识别应用锁；可将备份保存到 iCloud 或 WebDAV，并使用你设置的密码加密。
-- 支持 iOS、Android、macOS、Linux 和 Windows，16 种语言。
+- 生物识别应用锁；可通过 iCloud 或 WebDAV 加密备份与同步，使用你设置的密码加密。
+- 支持 iOS、watchOS、Android、macOS、Linux 和 Windows，17 种语言。
 
 ## 帮助
 

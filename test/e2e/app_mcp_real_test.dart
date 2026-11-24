@@ -120,7 +120,11 @@ Future<void> main() async {
     });
   });
 
-  Future<Map> rpc(String method, Map params, {String? as}) async {
+  Future<Map<String, dynamic>> rpc(
+    String method,
+    Map<String, Object?> params, {
+    String? as,
+  }) async {
     final req = await http.post('127.0.0.1', server.port, '/mcp');
     req.headers.set('Authorization', 'Bearer ${as ?? token}');
     req.headers.set('Accept', 'application/json, text/event-stream');
@@ -128,15 +132,20 @@ Future<void> main() async {
     req.write(jsonEncode({'jsonrpc': '2.0', 'id': ++id, 'method': method, 'params': params}));
     final res = await req.close();
     expect(res.statusCode, 200);
-    return jsonDecode(await utf8.decoder.bind(res).join()) as Map;
+    return jsonDecode(await utf8.decoder.bind(res).join()) as Map<String, dynamic>;
   }
 
-  Future<Map> call(String name, [Map args = const {}, String? as]) async =>
-      (await rpc('tools/call', {'name': name, 'arguments': args}, as: as))['result'] as Map;
+  Future<Map<String, dynamic>> call(
+    String name, [
+    Map<String, Object?> args = const {},
+    String? as,
+  ]) async =>
+      (await rpc('tools/call', {'name': name, 'arguments': args}, as: as))['result']
+          as Map<String, dynamic>;
 
-  Future<String> hostId(bool Function(Map) which) async {
+  Future<String> hostId(bool Function(Map<String, dynamic>) which) async {
     final hosts = (await call('list'))['structuredContent']['hosts'] as List;
-    return hosts.cast<Map>().singleWhere(which)['id'] as String;
+    return hosts.cast<Map<String, dynamic>>().singleWhere(which)['id'] as String;
   }
 
   Future<String> named(Spi spi) => hostId((h) => h['name'] == spi.name);

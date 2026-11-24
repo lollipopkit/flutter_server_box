@@ -27,7 +27,7 @@ use sbm_virt::pve::Client;
 
 use super::machine;
 use super::server::AppState;
-use super::virt::{Backend, PowerResponse, backend, guest_of};
+use super::virt::{Backend, PowerResponse, answer, backend, guest_of};
 use super::virt_guests::Audit;
 
 #[derive(Deserialize)]
@@ -79,10 +79,6 @@ pub struct JobRunBody {
 #[derive(Deserialize)]
 pub struct ScheduleBody {
     schedule: String,
-}
-
-fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
-    Ok(HttpResponse::Ok().json(&value))
 }
 
 /// The PVE session, or libvirt's refusal.

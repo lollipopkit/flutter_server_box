@@ -1,26 +1,11 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 
 /// Where an Agent chat belongs: the app-wide Agent's list, or one server's
 /// terminal. Kept as [ChatMeta.scope], so each place lists only its own.
 abstract final class AgentScope {
-  /// The app's providers, for the tools: they run outside any widget. Set
-  /// once, before the first frame — see `main`.
-  static ProviderContainer get container => _container!;
-  static set container(ProviderContainer c) {
-    assert(_container == null, 'set once');
-    _container = c;
-  }
-
-  static ProviderContainer? _container;
-
-  /// [container], or null where the app's providers are not up — a widget
-  /// test that pumps one page.
-  static ProviderContainer? get maybeContainer => _container;
-
   static const _terminalPrefix = 'terminal:';
 
   /// The scope of the chats in the terminals of server [serverId].

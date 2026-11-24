@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -82,14 +81,8 @@ class RemoteDesktopStore extends EntityStore<RemoteDesktopProfile> {
   Map<String, dynamic> toJson(RemoteDesktopProfile item) => item.toJson();
 
   @override
-  RemoteDesktopProfile? fromJson(Map<String, dynamic> json) {
-    try {
-      return RemoteDesktopProfile.fromJson(json);
-    } catch (e) {
-      dprint('Parsing RemoteDesktopProfile from JSON', e);
-      return null;
-    }
-  }
+  RemoteDesktopProfile decodeJson(Map<String, dynamic> json) =>
+      RemoteDesktopProfile.fromJson(json);
 
   List<RemoteDesktopProfile> fetchForServer(String serverId) => db
       .select(

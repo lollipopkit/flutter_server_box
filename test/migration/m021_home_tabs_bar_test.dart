@@ -42,7 +42,7 @@ void main() {
 
     await migration.apply();
 
-    expect(store.get<List>('homeTabs'), [
+    expect(store.get<List<Object?>>('homeTabs'), [
       AppTab.server.name,
       AppTab.ssh.name,
       AppTab.file.name,
@@ -61,7 +61,7 @@ void main() {
 
     await migration.apply();
 
-    expect(store.get<List>('homeTabs'), [
+    expect(store.get<List<Object?>>('homeTabs'), [
       AppTab.snippet.name,
       AppTab.file.name,
       AppTab.agent.name,
@@ -73,7 +73,7 @@ void main() {
     final custom = [AppTab.server.name, AppTab.ssh.name];
     store.set('homeTabs', custom);
     await migration.apply();
-    expect(store.get<List>('homeTabs'), custom);
+    expect(store.get<List<Object?>>('homeTabs'), custom);
 
     final newer = [
       AppTab.server.name,
@@ -84,7 +84,7 @@ void main() {
     ];
     store.set('homeTabs', newer);
     await migration.apply();
-    expect(store.get<List>('homeTabs'), newer);
+    expect(store.get<List<Object?>>('homeTabs'), newer);
   });
 
   test('is idempotent', () async {
@@ -99,7 +99,7 @@ void main() {
     await migration.apply();
     await migration.apply();
 
-    expect(store.get<List>('homeTabs'), [
+    expect(store.get<List<Object?>>('homeTabs'), [
       AppTab.server.name,
       AppTab.ssh.name,
       AppTab.file.name,

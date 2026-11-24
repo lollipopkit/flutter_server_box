@@ -23,7 +23,7 @@ import 'package:server_box/data/store/sync_recorder.dart';
 
 final bakSync = BakSyncer._();
 
-final class BakSyncer extends SyncIface {
+final class BakSyncer extends SyncIface<Mergeable, Object?> {
   BakSyncer._() : super();
 
   /// Set by [fromFile] when the remote payload came from a newer build.
@@ -54,7 +54,7 @@ final class BakSyncer extends SyncIface {
 
   /// [rs]'s sync key, opened with the password here: throws
   /// [SyncPasswordMismatch] while it does not open it.
-  static Future<SyncKeyHandle> keyOf(RemoteStorage rs) => switch (rs) {
+  static Future<SyncKeyHandle> keyOf(RemoteStorage<Object?> rs) => switch (rs) {
     _ when keyForTest != null => keyForTest!(rs),
     LkcRemoteStorage() => lkcLog.key(),
     _ => fileLog.keyOf(rs),
@@ -62,7 +62,7 @@ final class BakSyncer extends SyncIface {
 
   /// [keyOf] for a remote a test made.
   @visibleForTesting
-  static Future<SyncKeyHandle> Function(RemoteStorage rs)? keyForTest;
+  static Future<SyncKeyHandle> Function(RemoteStorage<Object?> rs)? keyForTest;
 
   @override
   Future<void> saveToFile() async {
@@ -83,7 +83,7 @@ final class BakSyncer extends SyncIface {
   /// uncaught errors (SERVERBOX-8B). Handled here instead: logged, and
   /// reported only when [ReportFilter] says it is a defect of this app.
   void syncSoon({
-    RemoteStorage? rs,
+    RemoteStorage<Object?>? rs,
     int milliDelay = 1000,
     int throttleMilli = 5000,
   }) {
@@ -118,7 +118,7 @@ final class BakSyncer extends SyncIface {
   @override
   Future<void> sync({
     int throttleMilli = 5000,
-    RemoteStorage? rs,
+    RemoteStorage<Object?>? rs,
     int milliDelay = 0,
   }) async {
     if (SchemaVersion.readsAhead) return;
@@ -268,7 +268,7 @@ final class BakSyncer extends SyncIface {
   /// [inheritLegacyRemote] to finish deciding. Everything else defers to the
   /// base implementation.
   @override
-  Future<void> backup([RemoteStorage? rs]) async {
+  Future<void> backup([RemoteStorage<Object?>? rs]) async {
     // An upload is what creates the versioned remote file, and that file is
     // exactly what `inheritLegacyRemote` reads as "already inherited" — so a
     // sync overtaking it ends the one-shot without it ever having happened,
@@ -352,7 +352,7 @@ final class BakSyncer extends SyncIface {
     return _inheriting ??= _inheritLegacyRemote(rs);
   }
 
-  Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
+  Future<void> _inheritLegacyRemote(RemoteStorage<Object?> rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
       // Only with the password the remote's key opens with: one that does
@@ -448,7 +448,7 @@ final class BakSyncer extends SyncIface {
   }
 
   @override
-  RemoteStorage? get remoteStorage {
+  RemoteStorage<Object?>? get remoteStorage {
     if (SyncRemotes.fileRemote case final rs?) return rs;
 
     if (Lkc.enabled && LkcSyncPrefs.enabled.get() && Lkc.client.signedIn && Lkc.client.user.value != null) {

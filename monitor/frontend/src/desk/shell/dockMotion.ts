@@ -5,7 +5,7 @@
 
 import { backOut, cubicIn } from 'svelte/easing'
 import type { TransitionConfig } from 'svelte/transition'
-import { systemPrefs } from '../sys/systemPrefs.svelte'
+import { isReducedMotion } from '../sys/systemPrefs.svelte'
 
 export interface DockMotion {
   /// The item's size along the dock, in px.
@@ -19,16 +19,11 @@ export interface DockMotion {
   still?: boolean
 }
 
-function reduced(): boolean {
-  if (systemPrefs.value.reduceMotion) return true
-  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-}
-
 export function dockItem(_node: Element, { size, vertical, gap = 9, leaving = false, still = false }: DockMotion): TransitionConfig {
   const axis = vertical ? 'height' : 'width'
   const margin = vertical ? 'margin-bottom' : 'margin-right'
   return {
-    duration: still || reduced() ? 0 : leaving ? 220 : 350,
+    duration: still || isReducedMotion() ? 0 : leaving ? 220 : 350,
     easing: leaving ? cubicIn : backOut,
     css: (t) => {
       // The size never overshoots (the neighbours would bounce); the icon does.

@@ -124,14 +124,7 @@ class BmcTargetStore extends EntityStore<BmcTarget> {
   Map<String, dynamic> toJson(BmcTarget item) => item.toJson();
 
   @override
-  BmcTarget? fromJson(Map<String, dynamic> json) {
-    try {
-      return BmcTarget.fromJson(json);
-    } catch (e) {
-      dprint('Parsing BmcTarget from JSON', e);
-      return null;
-    }
-  }
+  BmcTarget decodeJson(Map<String, dynamic> json) => BmcTarget.fromJson(json);
 
   BmcTarget? fetchOne(String? id) => id == null ? null : fetchOneRaw(id);
 

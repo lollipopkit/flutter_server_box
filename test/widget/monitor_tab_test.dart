@@ -148,7 +148,7 @@ void main() {
     getIt.registerSingleton<ServerStore>(ServerStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
-    for (final map in <Map>[_versions, _features, _apps, _overviews, _audits, _lives, _failed]) {
+    for (final map in <Map<Object?, Object?>>[_versions, _features, _apps, _overviews, _audits, _lives, _failed]) {
       map.clear();
     }
     _calls.clear();

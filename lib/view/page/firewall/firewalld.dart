@@ -50,12 +50,9 @@ final class _FirewalldViewState extends ConsumerState<_FirewalldView>
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
     final ready = snapshot != null && !needsRoot && failure == null;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.firewall, down: host.spi.name),
-        actions: _buildActions(ready ? snapshot : null),
-      ),
-      body: RefreshIndicator(onRefresh: refresh, child: _buildBody()),
+    return firewallScaffold(
+      actions: _buildActions(ready ? snapshot : null),
+      body: _buildBody(),
     );
   }
 }
@@ -67,12 +64,7 @@ extension on _FirewalldViewState {
     final running = snapshot?.running ?? false;
     return [
       ...switchAction(FirewallKind.firewalld),
-      if (isDesktop)
-        Btn.icon(
-          text: libL10n.refresh,
-          icon: const Icon(Icons.refresh, size: 18),
-          onTap: busy ? null : refresh,
-        ),
+      ...desktopRefreshAction(),
       ContextMenuButton(
         tooltip: libL10n.more,
         enabled: snapshot != null && running && !busy,
@@ -166,37 +158,11 @@ extension on _FirewalldViewState {
     return card(
       Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(13, 11, 7, 11),
-            child: Row(
-              children: [
-                Icon(
-                  running ? Icons.shield : Icons.shield_outlined,
-                  size: 26,
-                  color: running ? Colors.green : UIs.textGrey.color,
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        running ? libL10n.running : libL10n.stopped,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        ['firewalld', ?snapshot.version].join(' '),
-                        style: UIs.text12Grey,
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: running,
-                  onChanged: busy ? null : (on) => _setRunning(snapshot, on),
-                ),
-              ],
-            ),
+          statusHeader(
+            active: running,
+            title: running ? libL10n.running : libL10n.stopped,
+            subtitle: ['firewalld', ?snapshot.version].join(' '),
+            onToggle: busy ? null : (on) => _setRunning(snapshot, on),
           ),
           row(
             Text(l10n.firewallDefaultZone),

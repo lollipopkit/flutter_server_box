@@ -1,8 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -107,6 +105,27 @@ class DetailMetric {
   final String? error;
 
   bool get hasChart => series.any((s) => s.hasSpots);
+
+  /// Builds a detail row from a card [ServerMetric] so headline value, bigNote,
+  /// percent, label, icon, and formatter stay identical between card and detail.
+  factory DetailMetric.fromMetric(
+    ServerMetric metric, {
+    required List<HistorySeries> series,
+    String? note,
+    List<MetricStat> stats = const [],
+  }) => DetailMetric(
+    kind: metric.kind,
+    label: metric.label,
+    icon: metric.icon,
+    value: metric.value,
+    note: note ?? metric.note,
+    bigNote: metric.bigNote,
+    percent: metric.percent,
+    stats: stats,
+    series: series,
+    format: metric.format,
+    binary: metric.binary,
+  );
 
   /// The same metric, with what its section said instead of a reading.
   DetailMetric failing(String error) => DetailMetric(
@@ -354,21 +373,19 @@ String? _sectionErr(ServerStatus ss, ServerMetricKind kind) {
 /// for these six it is never the true one. So the row stays where it was and
 /// says what happened to the reading, rather than leaving the reader to notice
 /// that a line is gone.
-DetailMetric _failedMetric(
-  ServerMetricKind kind,
-  String label,
-  IconData icon,
-  String err,
-) => DetailMetric(
-  kind: kind,
-  label: label,
-  icon: icon,
+DetailMetric _failedMetric(ServerMetricKind kind, String err) {
+  final desc = serverMetricDescriptor(kind);
+  return DetailMetric(
+    kind: kind,
+    label: desc.label,
+    icon: desc.icon,
     value: '',
-  note: '',
-  bigNote: '',
-  series: const [],
-  format: ReadingFmt.pct,
-).failing(err);
+    note: '',
+    bigNote: '',
+    series: const [],
+    format: ReadingFmt.pct,
+  ).failing(err);
+}
 
 /// The rows a machine has before it has answered.
 ///
@@ -379,25 +396,27 @@ DetailMetric _failedMetric(
 /// ones this machine does not report, which is the one shape change worth
 /// making.
 List<DetailMetric> _blankMetrics() {
-  DetailMetric dash(ServerMetricKind kind, String label, IconData icon) =>
-      DetailMetric(
-        kind: kind,
-        label: label,
-        icon: icon,
-        value: ReadingFmt.pct(null),
-        note: '',
-        bigNote: '',
-        series: const [],
-        format: ReadingFmt.pct,
-      );
+  DetailMetric dash(ServerMetricKind kind) {
+    final desc = serverMetricDescriptor(kind);
+    return DetailMetric(
+      kind: kind,
+      label: desc.label,
+      icon: desc.icon,
+      value: ReadingFmt.pct(null),
+      note: '',
+      bigNote: '',
+      series: const [],
+      format: ReadingFmt.pct,
+    );
+  }
 
   return [
-    dash(ServerMetricKind.cpu, 'CPU', ServerDetailCards.cpu.icon),
-    dash(ServerMetricKind.mem, libL10n.memory, ServerDetailCards.mem.icon),
-    dash(ServerMetricKind.swap, 'Swap', ServerDetailCards.swap.icon),
-    dash(ServerMetricKind.disk, libL10n.disk, ServerDetailCards.disk.icon),
-    dash(ServerMetricKind.netSpeed, l10n.netSpeed, ServerDetailCards.net.icon),
-    dash(ServerMetricKind.netTraffic, libL10n.traffic, kNetTrafficIcon),
+    dash(ServerMetricKind.cpu),
+    dash(ServerMetricKind.mem),
+    dash(ServerMetricKind.swap),
+    dash(ServerMetricKind.disk),
+    dash(ServerMetricKind.netSpeed),
+    dash(ServerMetricKind.netTraffic),
   ];
 }
 
@@ -428,22 +447,16 @@ List<DetailMetric> serverDetailMetrics(
 }) {
   final ss = srv.status;
   if (serverNeverSampled(srv)) return _blankMetrics();
+  final base = {for (final m in serverMetrics(srv)) m.kind: m};
   final views = <DetailMetric>[];
 
   // Always a row, even before the first sample: every machine has a CPU, so
   // an absent row would say this one does not rather than that nothing has
   // been measured yet — which is what the dash says.
-  final cpu = ss.cpu.usedPercent(coreIdx: 0);
-  {
+  if (base[ServerMetricKind.cpu] case final m?) {
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.cpu,
-        label: 'CPU',
-        icon: ServerDetailCards.cpu.icon,
-        value: ReadingFmt.pct(cpu),
-        note: cpuNote(ss),
-        bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
-        percent: cpu == null ? null : cpu / 100,
+      DetailMetric.fromMetric(
+        m,
         // Not idle as well: the line beside the number already says it,
         // and these are read straight after that line.
         stats: [
@@ -453,110 +466,59 @@ List<DetailMetric> serverDetailMetrics(
             (k: 'io', v: ReadingFmt.pct(ss.cpu.iowait)),
           ],
         ],
-        series: [HistorySeries('CPU', ChartPalette.accent, w.cpu)],
-        format: ReadingFmt.pct,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.cpu)],
       ),
     );
   }
 
-  if (ss.mem.usedPercent case final ratio?) {
-    final used = ratio * 100;
-    final total = (ss.mem.total * 1024).bytes2Str;
+  if (base[ServerMetricKind.mem] case final m?) {
+    final ratio = ss.mem.usedPercent!;
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.mem,
-        label: libL10n.memory,
-        icon: ServerDetailCards.mem.icon,
-        value: ReadingFmt.pct(used),
-        note: '${(ss.mem.used * 1024).bytes2Str} / $total',
-        bigNote: l10n.ofFmt(total),
-        percent: used / 100,
+      DetailMetric.fromMetric(
+        m,
         stats: [
           (k: 'free', v: ReadingFmt.pct(ss.mem.free / ss.mem.total * 100)),
           (k: 'avail', v: ReadingFmt.pct((1 - ratio) * 100)),
         ],
-        series: [HistorySeries(libL10n.memory, ChartPalette.accent, w.mem)],
-        format: ReadingFmt.pct,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.mem)],
       ),
     );
   } else if (_sectionErr(ss, ServerMetricKind.mem) case final err?) {
-    views.add(
-      _failedMetric(
-        ServerMetricKind.mem,
-        libL10n.memory,
-        ServerDetailCards.mem.icon,
-        err,
-      ),
-    );
+    views.add(_failedMetric(ServerMetricKind.mem, err));
   }
 
-  if (ss.swap.total > 0) {
-    final used = ss.swap.usedPercent * 100;
-    final total = (ss.swap.total * 1024).bytes2Str;
+  if (base[ServerMetricKind.swap] case final m?) {
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.swap,
-        label: 'Swap',
-        icon: ServerDetailCards.swap.icon,
-        value: ReadingFmt.pct(used),
-        note: l10n.ofFmt(total),
-        bigNote: l10n.ofFmt(total),
-        percent: used / 100,
+      DetailMetric.fromMetric(
+        m,
         stats: [
           (k: 'cached', v: ReadingFmt.pct(ss.swap.cached / ss.swap.total * 100)),
         ],
-        series: [HistorySeries('Swap', ChartPalette.accent, w.swap)],
-        format: ReadingFmt.pct,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.swap)],
       ),
     );
   } else if (_sectionErr(ss, ServerMetricKind.swap) case final err?) {
-    views.add(
-      _failedMetric(
-        ServerMetricKind.swap,
-        'Swap',
-        ServerDetailCards.swap.icon,
-        err,
-      ),
-    );
+    views.add(_failedMetric(ServerMetricKind.swap, err));
   }
 
   // `diskUsage` is the one reading the card's row, the chart's disk line and
   // the overview also draw — see [ServerStatus.diskUsage]. Null with no disks
   // or an unreadable list, and then there is no row.
-  if (ss.diskUsage case final usage?) {
-    final used = usage.usedPercent;
+  if (base[ServerMetricKind.disk] case final m?) {
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.disk,
-        label: libL10n.disk,
-        icon: ServerDetailCards.disk.icon,
-        value: ReadingFmt.pct(used),
-        note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
-        bigNote: l10n.ofFmt(usage.size.kb2Str),
-        percent: used / 100,
-        series: [HistorySeries(libL10n.disk, ChartPalette.accent, w.disk)],
-        format: ReadingFmt.pct,
+      DetailMetric.fromMetric(
+        m,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.disk)],
       ),
     );
   } else if (_sectionErr(ss, ServerMetricKind.disk) case final err?) {
-    views.add(
-      _failedMetric(
-        ServerMetricKind.disk,
-        libL10n.disk,
-        ServerDetailCards.disk.icon,
-        err,
-      ),
-    );
+    views.add(_failedMetric(ServerMetricKind.disk, err));
   }
 
-  final (read, write) = ss.diskIO.allSpeedBytes;
-  if (read != null || write != null) {
+  if (base[ServerMetricKind.diskIo] case final m?) {
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.diskIo,
-        label: l10n.diskIo,
-        icon: MingCute.transfer_3_line,
-        value: ReadingFmt.rate(write),
+      DetailMetric.fromMetric(
+        m,
         // The one that is going to be a problem, not the average of them:
         // a machine with six disks is busy because one of them is.
         note: _busiestNote(
@@ -566,7 +528,6 @@ List<DetailMetric> serverDetailMetrics(
             return (r ?? 0) + (wr ?? 0);
           }),
         ),
-        bigNote: '${l10n.write} · ${ReadingFmt.rate(read)} ${l10n.read}',
         stats: _rateStats(w.diskWrite),
         // Per device where there is more than one, because that is the
         // question a machine with six disks raises. With one there is
@@ -579,22 +540,15 @@ List<DetailMetric> serverDetailMetrics(
               HistorySeries(l10n.write, ChartPalette.lines[0], w.diskWrite),
               HistorySeries(l10n.read, ChartPalette.lines[1], w.diskRead),
             ],
-        format: ReadingFmt.rateAxis,
-        binary: true,
       ),
     );
   }
 
   final ns = ss.netSpeed;
-  if (ns.devices.isNotEmpty) {
-    final rx = ns.speedInBytesOf();
-    final tx = ns.speedOutBytesOf();
+  if (base[ServerMetricKind.netSpeed] case final speedMetric?) {
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.netSpeed,
-        label: l10n.netSpeed,
-        icon: ServerDetailCards.net.icon,
-        value: '↑ ${ReadingFmt.rate(tx)}',
+      DetailMetric.fromMetric(
+        speedMetric,
         note: _busiestNote(
           ns.realIfaces.length,
           _busiest(
@@ -604,7 +558,6 @@ List<DetailMetric> serverDetailMetrics(
                 (ns.speedOutBytesOf(device: dev) ?? 0),
           ),
         ),
-        bigNote: '↓ ${ReadingFmt.rate(rx)}',
         stats: _rateStats(w.netTx, prefix: '↑ '),
         series:
             deviceSeries(ServerMetricKind.netSpeed) ??
@@ -612,117 +565,83 @@ List<DetailMetric> serverDetailMetrics(
               HistorySeries('↑', ChartPalette.lines[0], w.netTx),
               HistorySeries('↓', ChartPalette.lines[1], w.netRx),
             ],
-        format: ReadingFmt.rateAxis,
-        binary: true,
       ),
     );
 
-    // Since boot, which is what the counters are: the one figure here that
-    // does not depend on how long this app has been watching. The chart is
-    // the window's own, added up from the rates.
-    final rxTotal = ns.sizeInBytesOf()?.toDouble();
-    final txTotal = ns.sizeOutBytesOf()?.toDouble();
-    final rxWindow = cumulativeBytes(w.times, w.netRx);
-    final txWindow = cumulativeBytes(w.times, w.netTx);
-    views.add(
-      DetailMetric(
-        kind: ServerMetricKind.netTraffic,
-        label: libL10n.traffic,
-        icon: kNetTrafficIcon,
-        value: '↑ ${ReadingFmt.size(txTotal)}',
-        note: _busiestNote(
-          ns.realIfaces.length,
-          _busiest(
-            ns.realIfaces,
-            (dev) =>
-                ((ns.sizeInBytesOf(device: dev) ?? BigInt.zero) +
-                        (ns.sizeOutBytesOf(device: dev) ?? BigInt.zero))
-                    .toDouble(),
+    if (base[ServerMetricKind.netTraffic] case final trafficMetric?) {
+      // Since boot, which is what the counters are: the one figure here that
+      // does not depend on how long this app has been watching. The chart is
+      // the window's own, added up from the rates.
+      final rxWindow = cumulativeBytes(w.times, w.netRx);
+      final txWindow = cumulativeBytes(w.times, w.netTx);
+      views.add(
+        DetailMetric.fromMetric(
+          trafficMetric,
+          note: _busiestNote(
+            ns.realIfaces.length,
+            _busiest(
+              ns.realIfaces,
+              (dev) =>
+                  ((ns.sizeInBytesOf(device: dev) ?? BigInt.zero) +
+                          (ns.sizeOutBytesOf(device: dev) ?? BigInt.zero))
+                      .toDouble(),
+            ),
           ),
+          stats: [
+            if (_last(txWindow) case final v?)
+              (k: l10n.inRange, v: '↑ ${ReadingFmt.size(v)}'),
+            if (_last(rxWindow) case final v?)
+              (k: l10n.inRange, v: '↓ ${ReadingFmt.size(v)}'),
+          ],
+          series:
+              deviceSeries(ServerMetricKind.netTraffic) ??
+              [
+                HistorySeries('↑', ChartPalette.lines[0], txWindow),
+                HistorySeries('↓', ChartPalette.lines[1], rxWindow),
+              ],
         ),
-        bigNote: '↓ ${ReadingFmt.size(rxTotal)}',
-        stats: [
-          if (_last(txWindow) case final v?)
-            (k: l10n.inRange, v: '↑ ${ReadingFmt.size(v)}'),
-          if (_last(rxWindow) case final v?)
-            (k: l10n.inRange, v: '↓ ${ReadingFmt.size(v)}'),
-        ],
-        series:
-            deviceSeries(ServerMetricKind.netTraffic) ??
-            [
-              HistorySeries('↑', ChartPalette.lines[0], txWindow),
-              HistorySeries('↓', ChartPalette.lines[1], rxWindow),
-            ],
-        format: ReadingFmt.sizeAxis,
-        binary: true,
-      ),
-    );
+      );
+    }
   } else if (_sectionErr(ss, ServerMetricKind.netSpeed) case final err?) {
-    views.add(
-      _failedMetric(
-        ServerMetricKind.netSpeed,
-        l10n.netSpeed,
-        ServerDetailCards.net.icon,
-        err,
-      ),
-    );
-    views.add(
-      _failedMetric(
-        ServerMetricKind.netTraffic,
-        libL10n.traffic,
-        kNetTrafficIcon,
-        err,
-      ),
-    );
+    views.add(_failedMetric(ServerMetricKind.netSpeed, err));
+    views.add(_failedMetric(ServerMetricKind.netTraffic, err));
   }
 
   // A row rather than a card of its own, like the three above it: what a GPU
   // is doing is one percentage with a line behind it. What it cannot be read
   // off a line — the processes holding its memory, its clock and fans — is
   // the card below, which is what a card is for.
-  if (busiestGpu(ss) case final gpu?) {
+  if (base[ServerMetricKind.gpu] case final m?) {
+    final gpu = busiestGpu(ss)!;
     final mem = gpu.memory;
-    final used = gpu.utilization;
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.gpu,
-        label: 'GPU',
-        icon: ServerDetailCards.gpu.icon,
-        value: ReadingFmt.pct(used),
+      DetailMetric.fromMetric(
+        m,
         note: ss.gpus.length > 1
             ? _busiestNote(ss.gpus.length, gpu.name)
             : gpu.name,
-        // The card's own, which this line takes over from. It carried the
-        // memory too, which is the first of the stats after it.
-        bigNote: gpu.name,
-        percent: used == null ? null : used / 100,
         stats: [
           if (mem != null)
             (k: libL10n.memory, v: '${mem.used} / ${mem.total} ${mem.unit}'),
           if (gpu.temperature case final t?)
             (k: libL10n.temperature, v: ReadingFmt.temp(t.toDouble())),
         ],
-        series: [HistorySeries('GPU', ChartPalette.accent, w.gpu)],
-        format: ReadingFmt.pct,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.gpu)],
       ),
     );
   }
 
-  if (hottestSensor(ss) case (final sensor, final celsius)) {
+  if (base[ServerMetricKind.temp] case final m?) {
+    final (sensor, _) = hottestSensor(ss)!;
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.temp,
-        label: libL10n.temperature,
-        icon: ServerDetailCards.temp.icon,
-        value: ReadingFmt.temp(celsius),
+      DetailMetric.fromMetric(
+        m,
         note: ss.temps.devices.length > 1
             ? l10n.sensorsHottestFmt(ss.temps.devices.length, sensor)
             : sensor,
-        bigNote: sensor,
         series:
             deviceSeries(ServerMetricKind.temp) ??
-            [HistorySeries(libL10n.temperature, ChartPalette.accent, w.temp)],
-        format: ReadingFmt.temp,
+            [HistorySeries(m.label, ChartPalette.accent, w.temp)],
       ),
     );
   }
@@ -730,22 +649,15 @@ List<DetailMetric> serverDetailMetrics(
   // The first battery, not every one: a laptop has one and a host reporting
   // several is reporting its mouse and its keyboard, which the card below
   // lists in full.
-  if (ss.batteries.firstOrNull case final battery?) {
-    final percent = battery.percent?.toDouble();
+  if (base[ServerMetricKind.battery] case final m?) {
+    final battery = ss.batteries.first;
     views.add(
-      DetailMetric(
-        kind: ServerMetricKind.battery,
-        label: libL10n.battery,
-        icon: ServerDetailCards.battery.icon,
-        value: ReadingFmt.pct(percent),
-        note: [battery.status.name, ?battery.name].join(' · '),
-        bigNote: battery.status.name,
-        percent: percent == null ? null : percent / 100,
+      DetailMetric.fromMetric(
+        m,
         stats: [
           if (battery.cycle case final cycle?) (k: l10n.cycle, v: '$cycle'),
         ],
-        series: [HistorySeries(libL10n.battery, ChartPalette.accent, w.battery)],
-        format: ReadingFmt.pct,
+        series: [HistorySeries(m.label, ChartPalette.accent, w.battery)],
       ),
     );
   }

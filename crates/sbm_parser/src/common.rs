@@ -1,5 +1,7 @@
 //! Cross-platform lightweight text parsing (Dart reference: server_status_update_req.dart)
 
+use std::collections::HashMap;
+
 /// `uptime` output (Dart `_parseUpTime`):
 /// "up 61 days, 18:16, 1 user, ..." → "61 days, 18:16";"up 34 min, ..." → "34 min"
 pub fn parse_uptime(raw: &str) -> Option<String> {
@@ -27,6 +29,24 @@ pub fn parse_uptime(raw: &str) -> Option<String> {
 /// alike, before it is split into lines.
 pub fn normalize_newlines(text: &str) -> String {
     text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+/// Splits `### <name>` delimited script output into a map of section name to
+/// non-empty body lines.
+pub(crate) fn parse_sections(out: &str) -> HashMap<&str, String> {
+    let mut map: HashMap<&str, String> = HashMap::new();
+    let mut current = "";
+    for line in out.lines() {
+        if let Some(name) = line.strip_prefix("### ") {
+            current = name.trim();
+            map.entry(current).or_default();
+        } else if !line.trim().is_empty() {
+            let s = map.entry(current).or_default();
+            s.push_str(line);
+            s.push('\n');
+        }
+    }
+    map
 }
 
 /// The seconds a [`parse_uptime`] string (or the monitor agent's

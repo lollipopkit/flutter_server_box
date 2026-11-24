@@ -22,7 +22,11 @@ class Model(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
-        req = json.loads(self.rfile.read(int(self.headers["content-length"])))
+        try:
+            length = max(0, int(self.headers.get("content-length") or 0))
+        except ValueError:
+            length = 0
+        req = json.loads(self.rfile.read(length) or b"{}")
         if "tools" in req:
             users = [m for m in req["messages"] if m["role"] == "user"]
             content = users[-1]["content"]
@@ -47,4 +51,11 @@ class Model(BaseHTTPRequestHandler):
         self.wfile.write(b"data: [DONE]\n\n")
 
 
-ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), Model).serve_forever()
+def main() -> None:
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: mock_model.py PORT")
+    ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), Model).serve_forever()
+
+
+if __name__ == "__main__":
+    main()

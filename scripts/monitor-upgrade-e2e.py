@@ -33,17 +33,20 @@ def call(method, path, body=None, token=None):
 
 
 def main():
+    if len(sys.argv) != 2:
+        sys.exit("Usage: monitor-upgrade-e2e.py <app dir>")
     app_dir = sys.argv[1]
-    with open(os.path.join(app_dir, "initial-admin-credentials.txt")) as f:
+    with open(os.path.join(app_dir, "initial-admin-credentials.txt"), encoding="utf-8") as f:
         password = next(line.split(":", 1)[1].strip() for line in f if line.startswith("password:"))
     token = call("POST", "/login", {"password": password})["token"]
     before = call("GET", "/update", token=token)
-    assert before["install"] == "script", before
+    if before.get("install") != "script":
+        sys.exit(f"unexpected install mode: {before}")
     call("POST", "/update/run", {}, token)
     print("    started; following")
     away = 0
-    started = time.time()
-    while time.time() - started < 600:
+    started = time.monotonic()
+    while time.monotonic() - started < 600:
         time.sleep(2)
         try:
             update = call("GET", "/update", token=token)

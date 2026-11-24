@@ -6,6 +6,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/agent/app_tools.dart';
 import 'package:server_box/view/agent/tool_preview.dart';
@@ -117,7 +118,7 @@ final class ServerAgentTool extends ToolFunc {
 
   @override
   Future<LlmToolResult> run(Map<String, Object?> args, ToolCtx ctx) {
-    final service = AgentScope.container.read(globalAgentToolServiceProvider);
+    final service = AppContainer.container.read(globalAgentToolServiceProvider);
     return AgentTools.cancellable(ctx.cancel, () async {
       final r = await service.execute(
         AgentTools.commandOf(name, args),

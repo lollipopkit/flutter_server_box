@@ -36,7 +36,7 @@ use sbm_virt::resource::{Change, Listing, Network, Pool, Volume};
 
 use super::machine;
 use super::server::AppState;
-use super::virt::{Backend, PowerResponse, backend, run_libvirt};
+use super::virt::{Backend, PowerResponse, answer, backend, run_libvirt};
 use super::ws::audit::{Action, Event, Kind, Outcome};
 
 #[derive(Deserialize, Default)]
@@ -61,10 +61,6 @@ pub struct ManageRequest {
 
 pub(crate) fn password(p: &Option<String>) -> Option<&str> {
     p.as_deref().filter(|p| !p.is_empty())
-}
-
-fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
-    Ok(HttpResponse::Ok().json(&value))
 }
 
 pub async fn storage(

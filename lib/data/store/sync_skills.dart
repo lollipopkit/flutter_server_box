@@ -44,7 +44,7 @@ abstract final class SyncSkills {
     for (final op in ops) {
       try {
         Skills.import(op.id, switch (op.d) {
-          final Map d => d.cast<String, Object?>(),
+          final Map<Object?, Object?> d => d.cast<String, Object?>(),
           _ => null,
         });
         SyncRecorder.forgetLost(c, op.id);

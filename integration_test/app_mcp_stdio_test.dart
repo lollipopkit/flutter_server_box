@@ -214,7 +214,10 @@ void main() {
         .transform(const LineSplitter())
         .asBroadcastStream();
     var id = 0;
-    Future<Map> send(String method, Map params) async {
+    Future<Map<String, dynamic>> send(
+      String method,
+      Map<String, Object?> params,
+    ) async {
       final reply = responses.first.timeout(const Duration(seconds: 15));
       client.stdin.writeln(
         jsonEncode({
@@ -245,13 +248,18 @@ void main() {
       (tools['result']['tools'] as List).map((tool) => tool['name']),
       containsAll(['run_command', 'processes', 'services', 'app_setting_set']),
     );
-    Future<Map> call(String name, Map arguments) async =>
+    Future<Map<String, dynamic>> call(
+      String name,
+      Map<String, Object?> arguments,
+    ) async =>
         (await send('tools/call', {'name': name, 'arguments': arguments}))['result']
-            as Map;
+            as Map<String, dynamic>;
     final hosts =
         (await call('list', {}))['structuredContent']['hosts'] as List;
-    Map row(String name) => hosts.singleWhere((r) => r['name'] == name) as Map;
-    void ranProbe(Map result, String reason) {
+    Map<String, dynamic> row(String name) =>
+        hosts.singleWhere((r) => (r as Map<String, dynamic>)['name'] == name)
+            as Map<String, dynamic>;
+    void ranProbe(Map<String, dynamic> result, String reason) {
       expect(result['isError'], false, reason: '$reason: $result');
       expect(result['structuredContent']['stdout'], 'local-42', reason: reason);
       expect(result['structuredContent']['exit_code'], 0, reason: reason);

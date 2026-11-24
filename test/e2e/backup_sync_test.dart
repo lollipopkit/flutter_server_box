@@ -49,7 +49,7 @@ void main() {
   }
 
   late Directory dir;
-  late RemoteStorage rs;
+  late RemoteStorage<Object?> rs;
 
   /// This device's data replaced by an empty one, as a second device.
   Future<void> becomeDevice() async {

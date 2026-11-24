@@ -51,7 +51,7 @@ class SelfAddrStore extends SqliteStore {
   /// because nothing has asked yet or because the answer was that it has none.
   /// Use [probedAt] to tell those apart.
   InternetAddress? addrOf(String id) {
-    final raw = get<Map>(id);
+    final raw = get<Map<Object?, Object?>>(id);
     final text = raw?['addr'];
     if (text is! String || text.isEmpty) return null;
     // Parsed rather than trusted: this came off a server's stdout, and a build
@@ -61,7 +61,7 @@ class SelfAddrStore extends SqliteStore {
 
   /// When [id] was last asked, or null if it never was.
   DateTime? probedAt(String id) {
-    final at = get<Map>(id)?['at'];
+    final at = get<Map<Object?, Object?>>(id)?['at'];
     if (at is! int) return null;
     return DateTime.fromMillisecondsSinceEpoch(at);
   }
@@ -81,7 +81,7 @@ class SelfAddrStore extends SqliteStore {
   });
 
   bool rename(String from, String to) {
-    final raw = get<Map>(from);
+    final raw = get<Map<Object?, Object?>>(from);
     if (raw == null) return true;
     if (!set(to, raw)) return false;
     return remove(from);

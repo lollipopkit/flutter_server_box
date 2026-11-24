@@ -198,7 +198,7 @@ void main() {
     addNewServerFuncs(0, 1600);
 
     expect(
-      setting.get<List>('serverBtns'),
+      setting.get<List<Object?>>('serverBtns'),
       isNull,
       reason: 'nothing was written, so the defaults still apply',
     );

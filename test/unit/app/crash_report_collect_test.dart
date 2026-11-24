@@ -166,7 +166,7 @@ void main() {
     }
 
     test('nothing at all when the level does not upload', () async {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.none);
       await crashUnreported();
 
       await CrashReport.collect();
@@ -178,7 +178,7 @@ void main() {
     });
 
     test('the error, when the level does upload', () async {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
       await crashUnreported();
 
       await CrashReport.collect();
@@ -190,7 +190,7 @@ void main() {
     });
 
     test('never the log, at any level', () async {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
       // One run writes both the line and the marker, and the next reads them:
       // a third launch in between would rotate the log this is looking for.
       await launch();
@@ -211,7 +211,7 @@ void main() {
     });
 
     test('and nothing when a sink already uploaded the error live', () async {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
       await launch();
       // What the app sets from `DiagnosticsUpload.uploading`. The crash is on
       // its way to a backend as the marker is written, so replaying it on this
@@ -235,7 +235,7 @@ void main() {
         () async {
       // `NativeExitReport.shared.reportPending` sends that one. It leaves no marker
       // detail, so there is nothing here to send a second time.
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
       await launch();
       CrashLog.reportPreviousRunCrashed();
 
@@ -247,7 +247,7 @@ void main() {
     test('the stack travels separately from the message', () async {
       // A backend groups by the error's text. A stack folded into it would
       // file every occurrence of one bug as its own issue.
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic);
       await crashUnreported();
 
       await CrashReport.collect();

@@ -18,7 +18,9 @@ again after changing a glyph or a theme's hand, then republish the themes.
 
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -232,7 +234,24 @@ def svg(h: Hand, inner: str) -> str:
     )
 
 
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=path.parent, delete=False
+    )
+    tmp_path = Path(tmp.name)
+    try:
+        with tmp:
+            tmp.write(text)
+        os.chmod(tmp_path, 0o644)
+        os.replace(tmp_path, path)
+    except BaseException:
+        tmp_path.unlink(missing_ok=True)
+        raise
+
+
 def draw(theme: str) -> None:
+    if theme not in HANDS:
+        raise SystemExit(f"unknown theme: {theme} (available: {', '.join(HANDS)})")
     h = HANDS[theme]
     out = ROOT / theme / "icons"
     out.mkdir(parents=True, exist_ok=True)
@@ -240,14 +259,16 @@ def draw(theme: str) -> None:
         old.unlink()
     for key_, glyph in GLYPHS.items():
         outline, body = glyph(h)
-        (out / f"{key_.replace('.', '_')}.svg").write_text(svg(h, outline))
+        _write_atomic(out / f"{key_.replace('.', '_')}.svg", svg(h, outline))
         if key_.startswith("tab."):
             duo = (
                 f'<g fill="currentColor" fill-opacity="{h.fill}" stroke="none">{body}</g>'
                 if body
                 else ""
             )
-            (out / f"{key_.replace('.', '_')}_selected.svg").write_text(svg(h, duo + outline))
+            _write_atomic(
+                out / f"{key_.replace('.', '_')}_selected.svg", svg(h, duo + outline)
+            )
 
 
 def main() -> int:

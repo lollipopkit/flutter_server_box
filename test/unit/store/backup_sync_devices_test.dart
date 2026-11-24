@@ -188,7 +188,7 @@ void main() {
     expect(Stores.setting.lastUpdateTs!['maxRetryCount'], later);
     expect(
       Stores.setting.get<Object>(Stores.setting.lastUpdateTsKey),
-      isA<Map>(),
+      isA<Map<Object?, Object?>>(),
       reason: 'the shape KvStore writes, or backups differ in it',
     );
   });

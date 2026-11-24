@@ -31,24 +31,23 @@ use std::sync::Arc;
 
 use ntex::rt::spawn;
 use ntex::service::{BindCtx, Ctx, Service};
-use ntex::util::{ByteString, Bytes};
-use ntex::web::ws::{self, CloseCode, Frame, Message};
+use ntex::util::Bytes;
+use ntex::web::ws::{CloseCode, Frame, Message};
 use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::mpsc;
 
-use super::audit::{self, Action, Event, Kind, Outcome};
+use super::audit::{Action, Event, Kind, Outcome};
 use super::live::{Ending, LiveKind};
 use super::ticket::Purpose;
 use super::upgrade::{QueueGate, WsSink};
-use crate::api::authz;
+use super::WsCallerCtx;
 use crate::api::server::AppState;
 use crate::api::virt::ConsoleTarget;
 use sbm_virt::model::ConsoleKind;
 
-const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 const QUEUE: usize = 256;
 const READ_BUFFER: usize = 32 * 1024;
 
@@ -69,7 +68,7 @@ enum ServerMsg<'a> {
 
 impl ServerMsg<'_> {
     fn frame(&self) -> Message {
-        Message::Text(ByteString::from(serde_json::to_string(self).unwrap_or_else(|_| "{}".into())))
+        super::json_frame(self)
     }
 }
 
@@ -85,29 +84,23 @@ enum Phase {
 }
 
 struct ConnCtx {
-    state: Arc<AppState>,
-    remote_ip: Option<String>,
-    secure: bool,
-    since: i64,
+    caller: WsCallerCtx,
     what: String,
 }
 
 impl ConnCtx {
     async fn still(&self) -> bool {
-        authz::caller(&self.state)
-            .await
-            .filter(|c| c.since == self.since)
-            .is_some_and(|c| c.check(&self.state, self.secure).is_ok())
+        self.caller.still_admitted().await
     }
 
     async fn audit(&self, action: Action, outcome: Outcome, why: Option<&str>) {
         Event::new(Kind::Machine, action, outcome)
-            .remote_ip(self.remote_ip.clone())
+            .remote_ip(self.caller.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{}: {why}", self.what),
                 None => self.what.clone(),
             })
-            .record(&self.state.db)
+            .record(&self.caller.state.db)
             .await;
     }
 }
@@ -116,59 +109,43 @@ pub async fn virt_console_ws(
     req: HttpRequest,
     app_state: Arc<AppState>,
 ) -> Result<HttpResponse, WebError> {
-    let remote_ip = audit::peer_ip(&req);
-    let deny = async |reason: &'static str, status: HttpResponse| {
-        Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip.clone())
-            .detail(format!("virt console: {reason}"))
-            .record(&app_state.db)
-            .await;
-        Ok(status)
-    };
-    let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().build()).await;
-    }
-    let Some(protocol) =
-        ws::subprotocols(&req).find(|v| v.starts_with(TICKET_PROTOCOL_PREFIX)).map(str::to_owned)
-    else {
-        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
-    };
-    let raw_ticket = protocol[TICKET_PROTOCOL_PREFIX.len()..].to_owned();
-    let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, Purpose::Virt) else {
-        return deny("ticket", HttpResponse::Unauthorized().build()).await;
+    let admitted = match super::admit_ws(
+        &req,
+        &app_state,
+        Purpose::Virt,
+        Kind::Machine,
+        Some("virt console"),
+    )
+    .await
+    {
+        Ok(a) => a,
+        Err(resp) => return Ok(resp),
     };
     let tickets = app_state.tickets.clone();
-    let admitted = authz::caller(&app_state)
-        .await
-        .filter(|caller| caller.check(&app_state, secure).is_ok());
-    let Some(admitted) = admitted else {
-        tickets.rollback(reservation);
-        return deny("not admitted", HttpResponse::Forbidden().build()).await;
+    let Some(pending) = app_state.virt.take_console(&admitted.raw_ticket) else {
+        tickets.rollback(admitted.reservation);
+        Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
+            .remote_ip(admitted.remote_ip)
+            .detail("virt console: no console")
+            .record(&app_state.db)
+            .await;
+        return Ok(HttpResponse::Unauthorized().build());
     };
-    let Some(pending) = app_state.virt.take_console(&raw_ticket) else {
-        tickets.rollback(reservation);
-        return deny("no console", HttpResponse::Unauthorized().build()).await;
-    };
+    let protocol = admitted.protocol.clone();
+    let reservation = admitted.reservation;
     let ctx = Rc::new(ConnCtx {
-        state: app_state,
-        remote_ip,
-        secure,
-        since: admitted.since,
+        caller: WsCallerCtx {
+            state: app_state,
+            remote_ip: admitted.remote_ip,
+            secure: admitted.secure,
+            since: admitted.since,
+        },
         what: pending.what,
     });
-    let upgraded = super::upgrade::start(
-        &req,
-        Some(&protocol),
-        move |sink: WsSink| handler(ctx, sink, pending.target),
-    )
-    .await;
-    if upgraded.is_ok() {
-        tickets.commit(reservation);
-    } else {
-        tickets.rollback(reservation);
-    }
-    upgraded
+    super::upgrade_with_ticket(&req, &tickets, &protocol, reservation, move |sink: WsSink| {
+        handler(ctx, sink, pending.target)
+    })
+    .await
 }
 
 fn handler(ctx: Rc<ConnCtx>, sink: WsSink, target: ConsoleTarget) -> Relay {
@@ -192,7 +169,7 @@ fn handler(ctx: Rc<ConnCtx>, sink: WsSink, target: ConsoleTarget) -> Relay {
 /// Connects to the console and starts carrying it, or says why not.
 async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, target: ConsoleTarget) {
     // Subscribed before the check, so a password change racing it is delivered.
-    let changes = ctx.state.password_changed.subscribe();
+    let changes = ctx.caller.state.password_changed.subscribe();
     if !ctx.still().await {
         *phase.borrow_mut() = Phase::Done;
         ctx.audit(Action::Denied, Outcome::Denied, Some("not admitted")).await;
@@ -265,7 +242,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
         Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone(), stop_rx),
         Opened::Pve(console) => spawn_pve(*console, rx, sink.clone(), stop_rx),
     };
-    let ending = ctx.state.live.register(changes, LiveKind::VirtConsole, listed, ctx.remote_ip.clone());
+    let ending = ctx.caller.state.live.register(changes, LiveKind::VirtConsole, listed, ctx.caller.remote_ip.clone());
     watch(ctx, sink, ending, pump, stop_tx);
 }
 
@@ -443,7 +420,7 @@ impl Service<WsSink, Frame> for Relay {
                 Ok(self.input(Input::Bytes(data.to_vec())).await)
             }
             Frame::Text(raw) => match serde_json::from_slice::<ClientMsg>(&raw) {
-                Ok(ClientMsg::Ping) => Ok(Some(Message::Text(ByteString::from("{\"type\":\"pong\"}")))),
+                Ok(ClientMsg::Ping) => Ok(Some(super::pong_frame())),
                 Ok(ClientMsg::Resize { cols, rows }) if self.text => Ok(self.input(Input::Resize(cols, rows)).await),
                 Ok(ClientMsg::Resize { .. }) => Ok(None),
                 Err(_) => Ok(Some(error_frame("bad_request", "Unrecognised control message"))),

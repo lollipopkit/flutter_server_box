@@ -94,7 +94,7 @@ void main() {
                  'b': tok('t-b', endpoint: 'http://10.0.0.8:3770')},
       );
 
-      final servers = (result['servers'] as List).cast<Map>();
+      final servers = (result['servers'] as List).cast<Map<String, Object?>>();
       expect(servers.map((e) => e['allowInsecure']), [true, false]);
     });
 
@@ -132,7 +132,7 @@ void main() {
         tokens: {'a': tok('t-a'), 'b': tok('t-b')},
       );
 
-      final servers = (result['servers'] as List).cast<Map>();
+      final servers = (result['servers'] as List).cast<Map<String, Object?>>();
       expect(servers.first['fallbackAddr'], 'https://100.64.0.1:3770');
       expect(servers.last.containsKey('fallbackAddr'), isFalse);
     });

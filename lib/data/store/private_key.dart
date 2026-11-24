@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -45,14 +44,8 @@ class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
   Map<String, dynamic> toJson(PrivateKeyInfo item) => item.toJson();
 
   @override
-  PrivateKeyInfo? fromJson(Map<String, dynamic> json) {
-    try {
-      return PrivateKeyInfo.fromJson(json);
-    } catch (e) {
-      dprint('Parsing PrivateKeyInfo from JSON', e);
-      return null;
-    }
-  }
+  PrivateKeyInfo decodeJson(Map<String, dynamic> json) =>
+      PrivateKeyInfo.fromJson(json);
 
   /// A key from a backup written before ids existed carries its name as its
   /// id; keeping the one already here is what makes restoring twice a no-op.

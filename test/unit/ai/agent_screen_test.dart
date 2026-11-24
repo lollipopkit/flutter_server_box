@@ -1,6 +1,5 @@
 import 'dart:async';
 
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
-import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/workspace.dart';
@@ -66,7 +65,7 @@ void main() {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     // Set once per isolate: the one test in this file.
-    AgentScope.container = c;
+    AppContainer.container = c;
     c.read(serversProvider);
     String? at() => AgentScreen.describe(null);
     void go(AppTab tab) => c.read(currentHomeTabProvider.notifier).update(tab);

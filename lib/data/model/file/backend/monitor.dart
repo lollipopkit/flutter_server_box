@@ -101,9 +101,7 @@ class MonitorFileBackend implements FileBackend {
       // Atomic on the agent's side: it stages beside the destination and
       // renames, which is the same contract the other two backends keep and
       // the reason this one does not have to stage anything itself.
-      _client
-          .fsWrite(path, open(), size: size, replayData: open)
-          .then((_) {});
+      _client.fsWrite(path, open, size: size).then((_) {});
 
   /// The agent's `version` of [path], which [writeIfUnchanged] compares
   /// against. Null where it reports none: a link, or an agent older than it.
@@ -123,9 +121,8 @@ class MonitorFileBackend implements FileBackend {
   ) async {
     final left = await _client.fsWrite(
       path,
-      Stream.value(bytes),
+      () => Stream.value(bytes),
       size: bytes.length,
-      replayData: () => Stream.value(bytes),
       ifVersion: version,
     );
     return left ?? await versionOf(path);

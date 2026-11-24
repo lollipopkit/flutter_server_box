@@ -5,6 +5,7 @@ import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
+import 'package:server_box/data/model/terminal/theme_mode.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/res/setting_range.dart';
 import 'package:server_box/data/res/terminal.dart';
@@ -75,7 +76,15 @@ Map<String, McpPreference> mcpPreferences(ProviderContainer container) {
   }, (v) => v is int && choices.contains(v) ? v : null);
   integer(s.maxRetryCount, List.generate(10, (i) => i));
   integer(s.serverStatusUpdateInterval, [0, for (int i = 2; i <= 10; i++) i]);
-  integer(s.termTheme, [0, 1, 2]);
+  add(
+    s.termTheme,
+    {
+      'type': 'string',
+      'enum': [for (final m in TerminalThemeMode.values) m.name],
+    },
+    (v) => v is String ? TerminalThemeMode.fromStored(v) : null,
+    encode: (m) => m.name,
+  );
 
   void bounded(StorePropDefault<double> prop, ({double min, double max}) r) =>
       add(

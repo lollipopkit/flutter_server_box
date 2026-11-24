@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/bmc/bmc_credential.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -45,14 +44,8 @@ class BmcCredentialStore extends EntityStore<BmcCredential> {
   Map<String, dynamic> toJson(BmcCredential item) => item.toJson();
 
   @override
-  BmcCredential? fromJson(Map<String, dynamic> json) {
-    try {
-      return BmcCredential.fromJson(json);
-    } catch (e) {
-      dprint('Parsing BmcCredential from JSON', e);
-      return null;
-    }
-  }
+  BmcCredential decodeJson(Map<String, dynamic> json) =>
+      BmcCredential.fromJson(json);
 
   /// Keeps the local id when a restored record turns out to be one already
   /// here under the same name.

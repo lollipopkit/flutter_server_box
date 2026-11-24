@@ -35,10 +35,11 @@ use std::sync::Arc;
 
 use ntex::rt::spawn;
 use ntex::service::{BindCtx, Ctx, Service};
-use ntex::util::{ByteString, Bytes};
-use ntex::web::ws::{self, CloseCode, Frame, Message};
+use ntex::util::Bytes;
+use ntex::web::ws::{CloseCode, Frame, Message};
 
 use super::upgrade::{QueueGate, WsSink};
+use super::WsCallerCtx;
 use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
@@ -46,18 +47,15 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, mpsc};
 
-use super::audit::{self, Action, Event, Kind, Outcome};
+use super::audit::{Action, Event, Kind, Outcome};
 use super::live::{Ending, LiveKind};
 use super::ticket::Purpose;
-use crate::api::authz;
 use crate::api::server::AppState;
 
 /// How many of the client's frames may wait for a target slower than the
 /// client — a disk behind an upload — before the socket stops being read
 /// (see [`Relay::ready`]), which is what holds the client back.
 const TARGET_QUEUE: usize = 256;
-
-const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 
 /// A remote desktop session's screen is megabytes and one of them may be
 /// dragged around while the other is used, so the read buffer is a frame's
@@ -94,8 +92,7 @@ enum ServerMsg<'a> {
 
 impl ServerMsg<'_> {
     fn frame(&self) -> Message {
-        let json = serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string());
-        Message::Text(ByteString::from(json))
+        super::json_frame(self)
     }
 }
 
@@ -103,93 +100,24 @@ pub async fn stream_ws(
     req: HttpRequest,
     app_state: Arc<AppState>,
 ) -> Result<HttpResponse, WebError> {
-    let remote_ip = audit::peer_ip(&req);
-
-    let deny = async |reason: &'static str, status: HttpResponse| {
-        Event::new(Kind::Stream, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip.clone())
-            .detail(reason)
-            .record(&app_state.db)
-            .await;
-        Ok(status)
-    };
-
-    let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().build()).await;
-    }
-
-    let Some(protocol) = ws::subprotocols(&req)
-        .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
-        .map(str::to_owned)
-    else {
-        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
-    };
-    let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
-    let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Stream) else {
-        return deny("ticket", HttpResponse::Unauthorized().build()).await;
+    let admitted = match super::admit_ws(&req, &app_state, Purpose::Stream, Kind::Stream, None).await {
+        Ok(a) => a,
+        Err(resp) => return Ok(resp),
     };
     let tickets = app_state.tickets.clone();
-
-    // Checked here as well as at the ticket, so the answer cannot be stale by
-    // the time a connection is actually made.
-    let admitted = authz::caller(&app_state)
-        .await
-        .filter(|caller| caller.check(&app_state, secure).is_ok());
-    let Some(admitted) = admitted else {
-        tickets.rollback(reservation);
-        return deny("not admitted", HttpResponse::Forbidden().build()).await;
-    };
-
-    let ctx = Rc::new(ConnCtx {
+    let protocol = admitted.protocol.clone();
+    let reservation = admitted.reservation;
+    let ctx = Rc::new(WsCallerCtx {
         state: app_state,
-        remote_ip,
-        secure,
+        remote_ip: admitted.remote_ip,
+        secure: admitted.secure,
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start(
-        &req,
-        Some(&protocol),
-        move |sink: WsSink| handler(ctx, sink),
-    )
-    .await;
-    if upgraded.is_ok() {
-        tickets.commit(reservation);
-    } else {
-        tickets.rollback(reservation);
-    }
-    upgraded
-}
-
-struct ConnCtx {
-    state: Arc<AppState>,
-    /// Where the upgrade came from, for the audit log.
-    remote_ip: Option<String>,
-    secure: bool,
-    /// The account's password as of the upgrade (`Caller::since`). A relay
-    /// ends once it moves: what was opened under the old one is not the
-    /// account's any more — see `authz::end_account`.
-    since: i64,
-}
-
-impl ConnCtx {
-    /// This connection's account, read again — none once its password has
-    /// changed since the upgrade.
-    async fn caller(&self) -> Option<authz::Caller> {
-        authz::caller(&self.state)
-            .await
-            .filter(|caller| caller.since == self.since)
-    }
-
-    /// Whether the relay may go on: the password unchanged, the link still
-    /// one the machine may be acted on over.
-    async fn still(&self) -> bool {
-        let Some(caller) = self.caller().await else {
-            return false;
-        };
-        caller.check(&self.state, self.secure).is_ok()
-    }
+    super::upgrade_with_ticket(&req, &tickets, &protocol, reservation, move |sink: WsSink| {
+        handler(ctx, sink)
+    })
+    .await
 }
 
 /// What the connection is doing. One `open` per socket, like the terminal's
@@ -202,7 +130,7 @@ enum Phase {
     Done,
 }
 
-fn handler(ctx: Rc<ConnCtx>, sink: WsSink) -> Relay {
+fn handler(ctx: Rc<WsCallerCtx>, sink: WsSink) -> Relay {
     let phase = Rc::new(RefCell::new(Phase::Idle));
 
     // The socket going away is what closes the connection: there is no session
@@ -221,7 +149,7 @@ fn handler(ctx: Rc<ConnCtx>, sink: WsSink) -> Relay {
 
 /// One socket's frames: control, and bytes for the target.
 struct Relay {
-    ctx: Rc<ConnCtx>,
+    ctx: Rc<WsCallerCtx>,
     sink: WsSink,
     phase: Rc<RefCell<Phase>>,
     gate: QueueGate,
@@ -295,7 +223,7 @@ async fn on_input(gate: &QueueGate, phase: &Rc<RefCell<Phase>>, data: Vec<u8>) -
 }
 
 async fn on_control(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     raw: &[u8],
@@ -305,7 +233,7 @@ async fn on_control(
     };
 
     match msg {
-        ClientMsg::Ping => Some(Message::Text(ByteString::from("{\"type\":\"pong\"}"))),
+        ClientMsg::Ping => Some(super::pong_frame()),
         ClientMsg::Open { host, port } => {
             if !claim_idle(phase) {
                 return Some(error_frame("bad_request", "A connection is already open"));
@@ -332,7 +260,7 @@ fn claim_idle(phase: &Rc<RefCell<Phase>>) -> bool {
 }
 
 async fn open(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     host: &str,
@@ -407,14 +335,14 @@ async fn open(
 /// Anything else — unknown, expired, already taken — is
 /// the same answer, so the answer says nothing about which.
 async fn accept(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
     id: &str,
 ) -> Option<Message> {
     // Before the check, for the reason `open` gives.
     let changes = ctx.state.password_changed.subscribe();
-    if !ctx.still().await {
+    if !ctx.still_admitted().await {
         *phase.borrow_mut() = Phase::Done;
         return Some(error_frame("forbidden", "The password changed, or this link may not act"));
     }
@@ -432,7 +360,7 @@ async fn accept(
 /// password changes or it is ended (`api::ws::live`), and answers the phase
 /// the socket is now in.
 fn relay(
-    ctx: &Rc<ConnCtx>,
+    ctx: &Rc<WsCallerCtx>,
     sink: &WsSink,
     stream: TcpStream,
     mut ending: Ending,
@@ -490,7 +418,7 @@ fn relay(
                 _ = &mut reading => break,
                 signal = ending.next() => {
                     // A notice that left this connection what it needs: carry on.
-                    if signal.rechecks() && ctx.still().await {
+                    if signal.rechecks() && ctx.still_admitted().await {
                         continue;
                     }
                     // Said before closing, so the app reports why rather than
@@ -535,7 +463,7 @@ pub(super) async fn next_change(changes: &mut broadcast::Receiver<&'static str>)
 
 /// [target] is the address dialled, or for a connection a listener accepted,
 /// the peer it came from.
-async fn audit_connect(ctx: &Rc<ConnCtx>, target: &str, outcome: Outcome) {
+async fn audit_connect(ctx: &Rc<WsCallerCtx>, target: &str, outcome: Outcome) {
     Event::new(Kind::Stream, Action::Connect, outcome)
         .remote_ip(ctx.remote_ip.clone())
         // The address is the whole of what this endpoint was asked for, and it

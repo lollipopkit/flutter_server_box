@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -68,14 +67,8 @@ class PortForwardStore extends EntityStore<PortForwardConfig> {
   Map<String, dynamic> toJson(PortForwardConfig item) => item.toJson();
 
   @override
-  PortForwardConfig? fromJson(Map<String, dynamic> json) {
-    try {
-      return PortForwardConfig.fromJson(json);
-    } catch (e) {
-      dprint('Parsing PortForwardConfig from JSON', e);
-      return null;
-    }
-  }
+  PortForwardConfig decodeJson(Map<String, dynamic> json) =>
+      PortForwardConfig.fromJson(json);
 
   /// Removes one server's records one by one so each leaves a tombstone.
   ///

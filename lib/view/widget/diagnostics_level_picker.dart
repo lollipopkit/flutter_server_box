@@ -30,14 +30,14 @@ final class DiagnosticsLevelPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     // Rebuilt on change so the selection is visible at once; the store is the
     // source of truth, not a field on this widget.
-    return Stores.setting.diagnosticsLevel.listenable().listenVal((name) {
+    return Stores.setting.diagnosticsLevel.listenable().listenVal((current) {
       // `RadioGroup` owns the selection — the per-tile `groupValue` and
       // `onChanged` are deprecated.
       return RadioGroup<DiagnosticsLevel>(
-        groupValue: DiagnosticsLevel.fromName(name),
+        groupValue: current,
         onChanged: (level) {
           if (level == null) return;
-          Stores.setting.diagnosticsLevel.put(level.name);
+          Stores.setting.diagnosticsLevel.put(level);
           onPicked?.call();
         },
         child: Column(

@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
+import 'package:server_box/data/provider/app_container.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
@@ -71,7 +72,7 @@ abstract final class RemoteAgentTasks {
   /// Servers whose agent offers Agent mode to this account: their id and
   /// name, in the order the server list has them.
   static List<({String id, String name})> servers() {
-    final container = AgentScope.maybeContainer;
+    final container = AppContainer.maybeContainer;
     if (container == null) return const [];
     final all = container.read(serversProvider);
     return [
@@ -88,7 +89,7 @@ abstract final class RemoteAgentTasks {
 
   /// The client for server [serverId]'s agent, or null when it has none.
   static MonitorHttpClient? client(String serverId) {
-    final cred = AgentScope.maybeContainer?.read(serversProvider).servers[serverId]?.monitorOn;
+    final cred = AppContainer.maybeContainer?.read(serversProvider).servers[serverId]?.monitorOn;
     final link = _links[serverId];
     if (cred == null) {
       _drop(serverId);
@@ -101,7 +102,7 @@ abstract final class RemoteAgentTasks {
 
   /// Server [serverId]'s events while it is followed: `flow`, `removed`,
   /// `pending`, `output`, `event`, `resync`.
-  static Stream<Map<String, dynamic>> events(String serverId) {
+  static Stream<MonitorAgentEvent> events(String serverId) {
     client(serverId);
     return _links[serverId]?.events.stream ?? const Stream.empty();
   }
@@ -110,7 +111,7 @@ abstract final class RemoteAgentTasks {
   /// does while it is on screen.
   static void follow() {
     if (_followers++ > 0) return;
-    final container = AgentScope.maybeContainer;
+    final container = AppContainer.maybeContainer;
     if (container == null) return;
     _serversSub = container.listen(serversProvider, (_, _) => _sync(), fireImmediately: false);
     _sync();
@@ -135,7 +136,7 @@ abstract final class RemoteAgentTasks {
 
   /// Follows the servers that offer Agent mode now, and forgets the rest.
   static void _sync() {
-    final container = AgentScope.maybeContainer;
+    final container = AppContainer.maybeContainer;
     if (container == null) return;
     // A server's capabilities arrive with its first poll, after it is listed.
     for (final id in container.read(serversProvider).servers.keys) {
@@ -235,26 +236,25 @@ abstract final class RemoteAgentTasks {
     return out;
   }
 
-  static void _onEvent(String serverId, Map<String, dynamic> e) {
+  static void _onEvent(String serverId, MonitorAgentEvent e) {
     final list = [...?tasks.value[serverId]];
-    switch (e['type']) {
-      case 'flow':
-        if (e['flow'] case final Map<String, dynamic> f) {
-          final flow = MonitorAgentFlow.fromJson(f);
-          list
-            ..removeWhere((x) => x.id == flow.id)
-            ..add(flow)
-            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-          tasks.value = {...tasks.value, serverId: list};
-        }
-      case 'removed':
-        list.removeWhere((x) => x.id == e['id']);
+    switch (e) {
+      case MonitorAgentFlowEvent(:final flow):
+        list
+          ..removeWhere((x) => x.id == flow.id)
+          ..add(flow)
+          ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
         tasks.value = {...tasks.value, serverId: list};
-        if (selected.value case (serverId: final s, flowId: final f) when s == serverId && f == e['id']) {
+      case MonitorAgentRemovedEvent(:final id):
+        list.removeWhere((x) => x.id == id);
+        tasks.value = {...tasks.value, serverId: list};
+        if (selected.value case (serverId: final s, flowId: final f) when s == serverId && f == id) {
           selected.value = null;
         }
-      case 'resync':
+      case MonitorAgentResyncEvent():
         unawaited(_load(serverId));
+      case MonitorAgentPendingEvent() || MonitorAgentOutputEvent() || MonitorAgentPiEvent():
+        break;
     }
   }
 
@@ -309,8 +309,8 @@ final class _Link {
   final String serverId;
   final MonitorClientLease _lease;
   MonitorHttpClient get client => _lease.client;
-  final events = StreamController<Map<String, dynamic>>.broadcast();
-  StreamSubscription<Map<String, dynamic>>? _sub;
+  final events = StreamController<MonitorAgentEvent>.broadcast();
+  StreamSubscription<MonitorAgentEvent>? _sub;
   Timer? _retry;
   var _backoff = const Duration(seconds: 1);
   var _running = false;

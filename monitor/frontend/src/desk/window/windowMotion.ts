@@ -2,12 +2,7 @@
 /// (`lk-window-in`), fading as it shrinks a little toward where it stood.
 
 import type { TransitionConfig } from 'svelte/transition'
-import { systemPrefs } from '../sys/systemPrefs.svelte'
-
-function reduced(): boolean {
-  if (systemPrefs.value.reduceMotion) return true
-  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-}
+import { isReducedMotion } from '../sys/systemPrefs.svelte'
 
 /// `--ease-exit` (cubic-bezier(0.4, 0, 1, 1), close to u²: slow, then fast)
 /// for an outro, whose `t` runs from 1 to 0: `1 - (1 - t)²`.
@@ -23,7 +18,7 @@ export interface WindowClose {
 
 export function windowClose(_node: Element, { closed }: WindowClose): TransitionConfig {
   if (!closed) return { duration: 0 }
-  const still = reduced()
+  const still = isReducedMotion()
   return {
     // `--dur-base`, as the design system's reduced motion shortens it.
     duration: still ? 120 : 220,
