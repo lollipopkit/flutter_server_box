@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/status/card_item.dart';
+import 'package:server_box/data/model/uptimer/uptimer.dart';
 import 'package:server_box/data/provider/bmc/summary.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -271,6 +272,7 @@ class ServerSortOrder {
     List<StatusCardItem> items, {
     required ServerState Function(String id) serverStateOf,
     required BmcSummaryState Function(BmcTarget target) bmcStateOf,
+    bool Function(UptimerMonitorCard monitor)? uptimerHasAlertOf,
   }) {
     switch (field) {
       case ServerSortField.manual:
@@ -290,6 +292,7 @@ class ServerSortOrder {
         return _byItem(items, (item) => switch (item) {
           ServerCardItem(:final id) => serverStateOf(id).conn.index.toDouble(),
           BmcCardItem(:final target) => _bmcStatusKey(bmcStateOf(target)),
+          UptimerCardItem(:final monitor) => _uptimerStatusKey(monitor),
         });
       case ServerSortField.cpu:
         return _byItem(items, (item) => switch (item) {
@@ -297,7 +300,7 @@ class ServerSortOrder {
             final used = serverStateOf(id).status.cpu.usedPercent(coreIdx: 0);
             return used == null ? null : -used;
           }(),
-          BmcCardItem() => null,
+          BmcCardItem() || UptimerCardItem() => null,
         });
       case ServerSortField.alert:
         return _byItem(items, (item) => switch (item) {
@@ -306,6 +309,11 @@ class ServerSortOrder {
                 ? 0
                 : 1,
           BmcCardItem(:final target) => _bmcHasAlert(bmcStateOf(target)) ? 0 : 1,
+          UptimerCardItem(:final monitor) =>
+            (uptimerHasAlertOf?.call(monitor) ??
+                    monitor.status == UptimerMonitorStatus.down)
+                ? 0
+                : 1,
         });
       case ServerSortField.uptime:
         return _byItem(items, (item) => switch (item) {
@@ -315,10 +323,18 @@ class ServerSortOrder {
                 ? null
                 : ffi.uptimeSeconds(formatted: raw)?.toDouble();
           }(),
-          BmcCardItem() => null,
+          BmcCardItem() || UptimerCardItem() => null,
         });
     }
   }
+
+  static double _uptimerStatusKey(UptimerMonitorCard m) => switch (m.status) {
+    UptimerMonitorStatus.down => ServerConn.failed.index.toDouble(),
+    UptimerMonitorStatus.maintenance ||
+    UptimerMonitorStatus.unknown => ServerConn.connecting.index.toDouble(),
+    UptimerMonitorStatus.up => ServerConn.finished.index.toDouble(),
+    UptimerMonitorStatus.paused => ServerConn.disconnected.index.toDouble(),
+  };
 
   static double _bmcStatusKey(BmcSummaryState s) {
     if (s.failure != null) return ServerConn.failed.index.toDouble();

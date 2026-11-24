@@ -17,7 +17,10 @@ extension _FullScreen on _ServerPageState {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // Every time in, the screen is the readings alone.
-      if (on) _fsBar.value = false;
+      if (on) {
+        _fsBar.value = false;
+        _elementFlight.end();
+      }
       ref.read(serverFullScreenProvider.notifier).set(on);
     });
   }

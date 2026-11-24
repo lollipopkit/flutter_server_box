@@ -12718,6 +12718,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter an IP address and port, e.g. 0.0.0.0:49762 or [::]:49762.'**
   String get appMcpInvalidAddress;
+
+  /// No description provided for @uptimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Uptimer'**
+  String get uptimer;
+
+  /// No description provided for @uptimerStatusUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Up'**
+  String get uptimerStatusUp;
+
+  /// No description provided for @uptimerStatusDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Down'**
+  String get uptimerStatusDown;
+
+  /// No description provided for @uptimerStatusMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get uptimerStatusMaintenance;
+
+  /// No description provided for @uptimerStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get uptimerStatusPaused;
+
+  /// No description provided for @uptimerStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get uptimerStatusUnknown;
+
+  /// No description provided for @uptimerTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get uptimerTest;
+
+  /// No description provided for @uptimerPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get uptimerPause;
+
+  /// No description provided for @uptimerResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get uptimerResume;
+
+  /// No description provided for @uptimerLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get uptimerLatency;
+
+  /// No description provided for @uptimerOutages.
+  ///
+  /// In en, this message translates to:
+  /// **'Outages'**
+  String get uptimerOutages;
+
+  /// No description provided for @uptimerNoOutages.
+  ///
+  /// In en, this message translates to:
+  /// **'No outages'**
+  String get uptimerNoOutages;
+
+  /// No description provided for @uptimerOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get uptimerOngoing;
+
+  /// No description provided for @uptimerIncidents.
+  ///
+  /// In en, this message translates to:
+  /// **'Incidents'**
+  String get uptimerIncidents;
+
+  /// No description provided for @uptimerMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get uptimerMaintenance;
+
+  /// No description provided for @uptimerUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get uptimerUpcoming;
+
+  /// No description provided for @uptimerInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval'**
+  String get uptimerInterval;
+
+  /// No description provided for @uptimerTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeout'**
+  String get uptimerTimeout;
+
+  /// No description provided for @uptimerGracePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Grace period'**
+  String get uptimerGracePeriod;
+
+  /// No description provided for @uptimerGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get uptimerGroup;
+
+  /// No description provided for @uptimerDisplayUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Display URL'**
+  String get uptimerDisplayUrl;
+
+  /// No description provided for @uptimerTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get uptimerTarget;
+
+  /// No description provided for @uptimerType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get uptimerType;
+
+  /// No description provided for @uptimerPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Public status page'**
+  String get uptimerPublic;
+
+  /// No description provided for @uptimerActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get uptimerActive;
+
+  /// No description provided for @uptimerMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get uptimerMethod;
+
+  /// No description provided for @uptimerFollowRedirects.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow redirects'**
+  String get uptimerFollowRedirects;
+
+  /// No description provided for @uptimerExpectedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected status codes'**
+  String get uptimerExpectedStatus;
+
+  /// No description provided for @uptimerForbiddenStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Forbidden status codes'**
+  String get uptimerForbiddenStatus;
+
+  /// No description provided for @uptimerHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Headers'**
+  String get uptimerHeaders;
+
+  /// No description provided for @uptimerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get uptimerBody;
+
+  /// No description provided for @uptimerKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'Required keyword'**
+  String get uptimerKeyword;
+
+  /// No description provided for @uptimerForbiddenKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forbidden keyword'**
+  String get uptimerForbiddenKeyword;
+
+  /// No description provided for @uptimerMatchContains.
+  ///
+  /// In en, this message translates to:
+  /// **'Contains'**
+  String get uptimerMatchContains;
+
+  /// No description provided for @uptimerMatchRegex.
+  ///
+  /// In en, this message translates to:
+  /// **'Regex'**
+  String get uptimerMatchRegex;
+
+  /// No description provided for @uptimerPushUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Push URL'**
+  String get uptimerPushUrl;
+
+  /// No description provided for @uptimerRotatePushUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate push URL'**
+  String get uptimerRotatePushUrl;
+
+  /// No description provided for @uptimerRotatePushUrlConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate the push URL for {name}? The previous URL stops working immediately.'**
+  String uptimerRotatePushUrlConfirm(String name);
+
+  /// No description provided for @uptimerPushUrlOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown once. Save this URL before closing.'**
+  String get uptimerPushUrlOnce;
+
+  /// No description provided for @uptimerDowntime.
+  ///
+  /// In en, this message translates to:
+  /// **'Downtime'**
+  String get uptimerDowntime;
+
+  /// No description provided for @uptimerLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get uptimerLoadMore;
+
+  /// No description provided for @uptimerMinIntervalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Min {sec}s'**
+  String uptimerMinIntervalHint(int sec);
+
+  /// No description provided for @uptimerSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get uptimerSchedule;
+
+  /// No description provided for @uptimerHttpRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP Request'**
+  String get uptimerHttpRequest;
+
+  /// No description provided for @uptimerResponseValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Response validation'**
+  String get uptimerResponseValidation;
 }
 
 class _AppLocalizationsDelegate

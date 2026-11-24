@@ -93,6 +93,33 @@ extension _Bar on _ServerPageState {
         onTap: () => unawaited(_deleteBmcTarget(target)),
       ),
     ],
+    UptimerCardItem(:final monitor) => [
+      BarAction(
+        icon: Icons.refresh,
+        label: libL10n.refresh,
+        onTap: () => unawaited(
+          ref.read(uptimerDetailProvider(monitor.id).notifier).refresh(),
+        ),
+      ),
+      BarAction(
+        icon: Icons.edit_outlined,
+        label: libL10n.edit,
+        onTap: () => unawaited(
+          UptimerEditPage.route.go(
+            context,
+            args: UptimerEditArgs(
+              config: ref.read(uptimerProvider).configs[monitor.id],
+              card: monitor,
+            ),
+          ),
+        ),
+      ),
+      BarAction(
+        icon: Icons.delete_outline,
+        label: libL10n.delete,
+        onTap: () => unawaited(_deleteUptimerMonitor(monitor)),
+      ),
+    ],
   };
 
   /// How much of each machine the list draws.
@@ -225,6 +252,7 @@ extension _Bar on _ServerPageState {
       icon: switch (openItem) {
         ServerCardItem() => BoxIcons.bx_server,
         BmcCardItem() => Icons.developer_board,
+        UptimerCardItem(:final monitor) => uptimerTypeIcon(monitor.type),
       },
       onTap: () => _showItemSheet(filtered, openItem),
     );

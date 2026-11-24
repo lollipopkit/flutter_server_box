@@ -7151,4 +7151,143 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get appMcpInvalidAddress =>
       'IP アドレスとポートを入力してください（例：0.0.0.0:49762 または [::]:49762）。';
+
+  @override
+  String get uptimer => 'Uptimer';
+
+  @override
+  String get uptimerStatusUp => 'Up';
+
+  @override
+  String get uptimerStatusDown => 'Down';
+
+  @override
+  String get uptimerStatusMaintenance => 'Maintenance';
+
+  @override
+  String get uptimerStatusPaused => 'Paused';
+
+  @override
+  String get uptimerStatusUnknown => 'Unknown';
+
+  @override
+  String get uptimerTest => 'Test';
+
+  @override
+  String get uptimerPause => 'Pause';
+
+  @override
+  String get uptimerResume => 'Resume';
+
+  @override
+  String get uptimerLatency => 'Latency';
+
+  @override
+  String get uptimerOutages => 'Outages';
+
+  @override
+  String get uptimerNoOutages => 'No outages';
+
+  @override
+  String get uptimerOngoing => 'Ongoing';
+
+  @override
+  String get uptimerIncidents => 'Incidents';
+
+  @override
+  String get uptimerMaintenance => 'Maintenance';
+
+  @override
+  String get uptimerUpcoming => 'Upcoming';
+
+  @override
+  String get uptimerInterval => 'Interval';
+
+  @override
+  String get uptimerTimeout => 'Timeout';
+
+  @override
+  String get uptimerGracePeriod => 'Grace period';
+
+  @override
+  String get uptimerGroup => 'Group';
+
+  @override
+  String get uptimerDisplayUrl => 'Display URL';
+
+  @override
+  String get uptimerTarget => 'Target';
+
+  @override
+  String get uptimerType => 'Type';
+
+  @override
+  String get uptimerPublic => 'Public status page';
+
+  @override
+  String get uptimerActive => 'Active';
+
+  @override
+  String get uptimerMethod => 'Method';
+
+  @override
+  String get uptimerFollowRedirects => 'Follow redirects';
+
+  @override
+  String get uptimerExpectedStatus => 'Expected status codes';
+
+  @override
+  String get uptimerForbiddenStatus => 'Forbidden status codes';
+
+  @override
+  String get uptimerHeaders => 'Headers';
+
+  @override
+  String get uptimerBody => 'Body';
+
+  @override
+  String get uptimerKeyword => 'Required keyword';
+
+  @override
+  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+
+  @override
+  String get uptimerMatchContains => 'Contains';
+
+  @override
+  String get uptimerMatchRegex => 'Regex';
+
+  @override
+  String get uptimerPushUrl => 'Push URL';
+
+  @override
+  String get uptimerRotatePushUrl => 'Rotate push URL';
+
+  @override
+  String uptimerRotatePushUrlConfirm(String name) {
+    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+  }
+
+  @override
+  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+
+  @override
+  String get uptimerDowntime => 'Downtime';
+
+  @override
+  String get uptimerLoadMore => 'Load more';
+
+  @override
+  String uptimerMinIntervalHint(int sec) {
+    return 'Min ${sec}s';
+  }
+
+  @override
+  String get uptimerSchedule => 'Schedule';
+
+  @override
+  String get uptimerHttpRequest => 'HTTP Request';
+
+  @override
+  String get uptimerResponseValidation => 'Response validation';
 }

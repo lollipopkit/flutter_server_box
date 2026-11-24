@@ -13,6 +13,14 @@ extension _DetailHost on _ServerPageState {
       BmcCardItem(:final target) => BmcDetailPage(
         args: BmcTargetRequiredArgs(target),
         bare: true,
+        markAnchor: _elementFlight.detailBinding(item.cardKey),
+        hideMark: _elementFlight.isFlying(item.cardKey),
+      ),
+      UptimerCardItem(:final monitor) => UptimerDetailPage(
+        args: UptimerDetailArgs(monitor: monitor),
+        bare: true,
+        stripAnchor: _elementFlight.detailBinding(item.cardKey),
+        hideStrip: _elementFlight.isFlying(item.cardKey),
       ),
     };
 

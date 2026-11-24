@@ -12,9 +12,11 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/bmc/common.dart';
 import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/shared_hero.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/title.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
+import 'package:server_box/view/page/server/tab/element_flight.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 
 /// Status-tab card for a standalone [BmcTarget], matching [ServerCard]'s three
@@ -26,6 +28,9 @@ final class BmcCard extends ConsumerWidget {
   final VoidCallback? onLongPress;
   final bool? selected;
   final bool highlighted;
+  final FlightAnchorBinding? markAnchor;
+  final bool hideMark;
+  final bool opensInPlace;
 
   const BmcCard({
     super.key,
@@ -35,6 +40,9 @@ final class BmcCard extends ConsumerWidget {
     this.onLongPress,
     this.selected,
     this.highlighted = false,
+    this.markAnchor,
+    this.hideMark = false,
+    this.opensInPlace = false,
   });
 
   static const _compactRadius = BorderRadius.all(Radius.circular(9));
@@ -192,9 +200,15 @@ final class BmcCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildMark(BuildContext context, BmcSummaryState s) {
+  /// Renders the board mark icon with its status dot cutout, reused by both
+  /// [BmcCard] and the in-place overlay flight proxy.
+  static Widget buildMarkBadge(
+    BuildContext context, {
+    required Color dotColor,
+    Color? cutoutBg,
+  }) {
     final scheme = Theme.of(context).colorScheme;
-    final bg = highlighted ? scheme.secondaryContainer : cardColorOf(context);
+    final bg = cutoutBg ?? cardColorOf(context);
     return SizedBox(
       width: kSideMarkSize,
       height: kSideMarkSize,
@@ -219,7 +233,7 @@ final class BmcCard extends ConsumerWidget {
                   width: SideMarkDot.size,
                   height: SideMarkDot.size,
                   decoration: BoxDecoration(
-                    color: statusDotColor(s),
+                    color: dotColor,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -227,6 +241,27 @@ final class BmcCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMark(BuildContext context, BmcSummaryState s) {
+    final scheme = Theme.of(context).colorScheme;
+    final mark = buildMarkBadge(
+      context,
+      dotColor: statusDotColor(s),
+      cutoutBg: highlighted ? scheme.secondaryContainer : cardColorOf(context),
+    );
+    return Opacity(
+      opacity: hideMark ? 0 : 1,
+      child: FlightAnchor(
+        binding: markAnchor,
+        child: SharedElementHero(
+          tag: 'bmc_mark_${target.id}',
+          enabled: !opensInPlace,
+          fit: BoxFit.contain,
+          child: mark,
+        ),
       ),
     );
   }

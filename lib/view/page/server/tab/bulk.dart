@@ -26,6 +26,11 @@ extension _Bulk on _ServerPageState {
       if (key.startsWith('bmc:')) key.substring(4),
   ];
 
+  List<int> get _selectedUptimerIds => [
+    for (final key in _selected)
+      if (key.startsWith('up:')) ?int.tryParse(key.substring(3)),
+  ];
+
   /// The bar while a set is being built up — actions are intersected by the
   /// selected card types.
   PreferredSizeWidget _buildSelectionBar(List<StatusCardItem> filtered) {
@@ -96,6 +101,17 @@ extension _Bulk on _ServerPageState {
       final tags = {...?target.tags, tag}.toList();
       bmcNotifier.setTags(id, tags);
     }
+
+    final uptimerIds = _selectedUptimerIds;
+    if (uptimerIds.isNotEmpty) {
+      try {
+        await ref.read(uptimerProvider.notifier).assignGroup(uptimerIds, tag);
+      } catch (e, st) {
+        if (mounted) context.showErrSheet(e, st);
+        return;
+      }
+      if (!mounted) return;
+    }
     _endSelecting();
   }
 
@@ -161,6 +177,27 @@ extension _Bulk on _ServerPageState {
     final bmcNotifier = ref.read(bmcTargetsProvider.notifier);
     for (final id in _selectedBmcIds) {
       bmcNotifier.delete(id);
+    }
+    final uptimerNotifier = ref.read(uptimerProvider.notifier);
+    var deletedUptimers = 0;
+    for (final id in _selectedUptimerIds) {
+      try {
+        await uptimerNotifier.deleteMonitor(id, refreshAfter: false);
+        deletedUptimers++;
+        if (mounted) {
+          setState(() => _selected.remove(UptimerCardItem.keyOf(id)));
+        }
+      } catch (e, st) {
+        if (deletedUptimers > 0) {
+          unawaited(uptimerNotifier.refresh(force: true));
+        }
+        if (mounted) context.showErrSheet(e, st);
+        return;
+      }
+      if (!mounted) return;
+    }
+    if (deletedUptimers > 0) {
+      unawaited(uptimerNotifier.refresh(force: true));
     }
     _endSelecting();
   }

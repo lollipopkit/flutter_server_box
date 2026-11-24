@@ -37,6 +37,18 @@ extension _Actions on _ServerPageState {
     BmcDetailPage.route.go(context, BmcTargetRequiredArgs(target));
   }
 
+  void _onTapUptimerCard(BuildContext context, UptimerMonitorCard monitor) {
+    if (_modifierHeld) {
+      _toggleSelected(UptimerCardItem.keyOf(monitor.id));
+      return;
+    }
+    if (_opensInPlace(context)) {
+      _openDetail(UptimerCardItem(monitor));
+      return;
+    }
+    UptimerDetailPage.route.go(context, UptimerDetailArgs(monitor: monitor));
+  }
+
   void _onLongPressCard(
     BuildContext ctx,
     ServerState srv, {
@@ -149,6 +161,120 @@ extension _Actions on _ServerPageState {
       _closeDetail();
     }
     ref.read(bmcTargetsProvider.notifier).delete(target.id);
+  }
+
+  void _onLongPressUptimerCard(
+    BuildContext ctx,
+    UptimerMonitorCard monitor, {
+    Offset? at,
+  }) {
+    final sheet = at == null && !_opensInPlace(ctx);
+    final key = UptimerCardItem.keyOf(monitor.id);
+    final isPaused = monitor.status == UptimerMonitorStatus.paused;
+
+    _keys.requestFocus();
+    setState(() => _menuId = key);
+    final actions = <ContextMenuAction>[
+      ContextMenuAction(
+        text: l10n.uptimerTest,
+        icon: Icons.play_arrow,
+        onTap: () => unawaited(_quickTestUptimerMonitor(monitor)),
+      ),
+      ContextMenuAction(
+        text: isPaused ? l10n.uptimerResume : l10n.uptimerPause,
+        icon: isPaused
+            ? Icons.play_circle_outline
+            : Icons.pause_circle_outline,
+        onTap: () => unawaited(_quickToggleUptimerPause(monitor, isPaused)),
+      ),
+      ContextMenuAction(
+        text: libL10n.edit,
+        icon: Icons.edit_outlined,
+        onTap: () => unawaited(
+          UptimerEditPage.route.go(
+            context,
+            args: UptimerEditArgs(
+              config: ref.read(uptimerProvider).configs[monitor.id],
+              card: monitor,
+            ),
+          ),
+        ),
+      ),
+      if (isMobile)
+        ContextMenuAction(
+          text: libL10n.select,
+          icon: Icons.check_box_outlined,
+          onTap: () => _toggleSelected(key),
+        ),
+      ContextMenuAction(
+        text: libL10n.delete,
+        icon: Icons.delete_outline,
+        destructive: true,
+        onTap: () => unawaited(_deleteUptimerMonitor(monitor)),
+      ),
+    ];
+
+    unawaited(
+      showContextMenu(
+        ctx,
+        actions,
+        at: at ?? (sheet ? null : contextMenuAnchorBelow(ctx)),
+      ).whenComplete(() {
+        if (!mounted || _menuId != key) return;
+        setState(() => _menuId = null);
+      }),
+    );
+  }
+
+  Future<void> _quickTestUptimerMonitor(UptimerMonitorCard monitor) async {
+    try {
+      final res = await ref
+          .read(uptimerProvider.notifier)
+          .testMonitor(monitor.id);
+      if (!mounted) return;
+      final parts = <String>[
+        monitor.name,
+        res.isUp ? l10n.uptimerStatusUp : l10n.uptimerStatusDown,
+        if (res.latencyMs case final ms?) formatLatencyMs(ms),
+        if (res.httpStatus case final code?) 'HTTP $code',
+        ?res.error,
+      ];
+      Toast.show(parts.join(' · '));
+    } catch (e) {
+      if (mounted) Toast.show(uptimerErrorMessage(e));
+    }
+  }
+
+  Future<void> _quickToggleUptimerPause(
+    UptimerMonitorCard monitor,
+    bool isPaused,
+  ) async {
+    try {
+      final notifier = ref.read(uptimerProvider.notifier);
+      if (isPaused) {
+        await notifier.resumeMonitor(monitor.id);
+      } else {
+        await notifier.pauseMonitor(monitor.id);
+      }
+    } catch (e) {
+      if (mounted) Toast.show(uptimerErrorMessage(e));
+    }
+  }
+
+  Future<void> _deleteUptimerMonitor(UptimerMonitorCard monitor) async {
+    final ok = await context.showSheet<bool>(
+      title: libL10n.attention,
+      child: Text(libL10n.askContinue('${libL10n.delete} ${monitor.name}')),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !mounted) return;
+    final wasOpen = ref.read(uptimerSelectionProvider) == monitor.id;
+    try {
+      await ref.read(uptimerProvider.notifier).deleteMonitor(monitor.id);
+      if (mounted && wasOpen) _closeDetail();
+    } catch (e) {
+      if (mounted) Toast.show(uptimerErrorMessage(e));
+    }
   }
 
   void _onTapAddServer(BuildContext anchor) => showContextMenu(
