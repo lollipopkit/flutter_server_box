@@ -1152,13 +1152,13 @@ fn parse_docker_stats(value: &serde_json::Value) -> ContainerStats {
 }
 
 fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> ContainerStats {
-    let number = |key: &str| value.get(key).map(as_f64).unwrap_or(0.0);
-    let bytes = |key: &str| value.get(key).map(as_i64).unwrap_or(0);
+    let number = |key: &str| value.get(key).and_then(try_as_f64);
+    let bytes = |key: &str| value.get(key).and_then(try_as_i64);
 
     let mem_usage_raw = bytes("MemUsage");
     let mem_limit_raw = bytes("MemLimit");
-    let mem_usage = human_bytes(mem_usage_raw);
-    let mem_limit = human_bytes(mem_limit_raw);
+    let mem_usage = human_bytes(mem_usage_raw.unwrap_or(0));
+    let mem_limit = human_bytes(mem_limit_raw.unwrap_or(0));
 
     // Podman 4 and earlier report both counters at the top level; 5 moved to
     // one set per interface when it changed network backend. The version is
@@ -1168,66 +1168,82 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
     let major = version
         .and_then(|version| version.split('.').next())
         .and_then(|major| major.parse::<i64>().ok());
-    let (mut net_in, mut net_out) = (0i64, 0i64);
-    let (mut net_in_neg, mut net_out_neg) = (false, false);
-    let nested = match major {
-        Some(major) if major >= 5 => value.get("Network").and_then(|v| v.as_object()),
-        _ => None,
+    let top_level_net = || {
+        let rx = bytes("NetInput");
+        let tx = bytes("NetOutput");
+        (
+            rx.unwrap_or(0),
+            tx.unwrap_or(0),
+            rx.and_then(|v| u64::try_from(v).ok()),
+            tx.and_then(|v| u64::try_from(v).ok()),
+        )
     };
-    match nested {
-        Some(interfaces) => {
-            let mut saw_counter = false;
-            for interface in interfaces.values() {
-                let Some(interface) = interface.as_object() else {
-                    continue;
+    let (net_in, net_out, net_rx_bytes, net_tx_bytes) = match major {
+        Some(major) if major >= 5 => match value.get("Network").and_then(|v| v.as_object()) {
+            Some(interfaces) => {
+                let (mut rx_sum, mut tx_sum) = (0i64, 0i64);
+                let (mut saw_rx, mut saw_tx) = (false, false);
+                let (mut rx_invalid, mut tx_invalid) = (false, false);
+                let accumulate = |sum: &mut i64, saw: &mut bool, invalid: &mut bool, raw: Option<&serde_json::Value>| {
+                    let Some(raw) = raw else { return };
+                    *saw = true;
+                    match try_as_i64(raw) {
+                        Some(v) if v >= 0 => *sum = sum.saturating_add(v),
+                        Some(v) => {
+                            *invalid = true;
+                            *sum = sum.saturating_add(v);
+                        }
+                        None => *invalid = true,
+                    }
                 };
-                saw_counter |= interface.contains_key("RxBytes") || interface.contains_key("TxBytes");
-                let rx = interface.get("RxBytes").map(as_i64).unwrap_or(0);
-                let tx = interface.get("TxBytes").map(as_i64).unwrap_or(0);
-                net_in_neg |= rx < 0;
-                net_out_neg |= tx < 0;
-                net_in = net_in.saturating_add(rx);
-                net_out = net_out.saturating_add(tx);
+                for interface in interfaces.values() {
+                    let Some(interface) = interface.as_object() else {
+                        continue;
+                    };
+                    accumulate(&mut rx_sum, &mut saw_rx, &mut rx_invalid, interface.get("RxBytes"));
+                    accumulate(&mut tx_sum, &mut saw_tx, &mut tx_invalid, interface.get("TxBytes"));
+                }
+                if saw_rx || saw_tx {
+                    (
+                        rx_sum,
+                        tx_sum,
+                        (saw_rx && !rx_invalid).then(|| u64::try_from(rx_sum).ok()).flatten(),
+                        (saw_tx && !tx_invalid).then(|| u64::try_from(tx_sum).ok()).flatten(),
+                    )
+                } else {
+                    top_level_net()
+                }
             }
-            if !saw_counter {
-                net_in = bytes("NetInput");
-                net_out = bytes("NetOutput");
-                net_in_neg = net_in < 0;
-                net_out_neg = net_out < 0;
-            }
-        }
-        None => {
-            net_in = bytes("NetInput");
-            net_out = bytes("NetOutput");
-            net_in_neg = net_in < 0;
-            net_out_neg = net_out < 0;
-        }
-    }
+            None => top_level_net(),
+        },
+        _ => top_level_net(),
+    };
 
     let cpu_raw = number("CPU");
+    let cpu_avg_raw = number("AvgCPU");
     let block_read_raw = bytes("BlockInput");
     let block_write_raw = bytes("BlockOutput");
-    let mem_used_bytes = u64::try_from(mem_usage_raw).ok();
-    let mem_limit_bytes = u64::try_from(mem_limit_raw).ok();
+    let mem_used_bytes = mem_usage_raw.and_then(|v| u64::try_from(v).ok());
+    let mem_limit_bytes = mem_limit_raw.and_then(|v| u64::try_from(v).ok());
 
     ContainerStats {
-        cpu: Some(format!("{}%", fixed1(cpu_raw))),
-        cpu_avg: Some(format!("{}%", fixed1(number("AvgCPU")))),
+        cpu: Some(format!("{}%", fixed1(cpu_raw.unwrap_or(0.0)))),
+        cpu_avg: Some(format!("{}%", fixed1(cpu_avg_raw.unwrap_or(0.0)))),
         mem: Some(format!("{mem_usage} / {mem_limit}")),
         mem_used: Some(mem_usage),
         mem_limit: Some(mem_limit),
         net_down: Some(human_bytes(net_in)),
         net_up: Some(human_bytes(net_out)),
-        disk_read: Some(human_bytes(block_read_raw)),
-        disk_write: Some(human_bytes(block_write_raw)),
-        cpu_percent: (cpu_raw.is_finite() && cpu_raw >= 0.0).then_some(cpu_raw),
+        disk_read: Some(human_bytes(block_read_raw.unwrap_or(0))),
+        disk_write: Some(human_bytes(block_write_raw.unwrap_or(0))),
+        cpu_percent: cpu_raw.filter(|&v| v.is_finite() && v >= 0.0),
         mem_used_bytes,
         mem_limit_bytes,
         mem_percent: usage_percent(mem_used_bytes, mem_limit_bytes),
-        net_rx_bytes: (!net_in_neg).then(|| u64::try_from(net_in).ok()).flatten(),
-        net_tx_bytes: (!net_out_neg).then(|| u64::try_from(net_out).ok()).flatten(),
-        block_read_bytes: u64::try_from(block_read_raw).ok(),
-        block_write_bytes: u64::try_from(block_write_raw).ok(),
+        net_rx_bytes,
+        net_tx_bytes,
+        block_read_bytes: block_read_raw.and_then(|v| u64::try_from(v).ok()),
+        block_write_bytes: block_write_raw.and_then(|v| u64::try_from(v).ok()),
     }
 }
 
@@ -1383,11 +1399,7 @@ fn split_image_reference(raw: &str) -> (Option<String>, Option<String>) {
 /// *unknown* — a prune dialog that read it as zero would offer an image that
 /// is in use.
 fn as_container_count(value: &serde_json::Value) -> Option<i64> {
-    match value {
-        serde_json::Value::Number(number) => number.as_i64(),
-        serde_json::Value::String(text) => text.trim().parse().ok(),
-        _ => None,
-    }
+    try_as_i64(value)
 }
 
 /// Count the tagged images known to have nothing referencing them.
@@ -1880,20 +1892,24 @@ fn non_empty_owned(value: Option<String>) -> Option<String> {
 
 /// The numeric value of a JSON field, read leniently: Podman answers some
 /// counters as numbers and others as strings of numbers.
-fn as_i64(value: &serde_json::Value) -> i64 {
+fn try_as_i64(value: &serde_json::Value) -> Option<i64> {
     match value {
-        serde_json::Value::Number(number) => number.as_i64().unwrap_or(0),
-        serde_json::Value::String(text) => text.trim().parse().unwrap_or(0),
-        _ => 0,
+        serde_json::Value::Number(number) => number.as_i64(),
+        serde_json::Value::String(text) => text.trim().parse().ok(),
+        _ => None,
     }
 }
 
-fn as_f64(value: &serde_json::Value) -> f64 {
+fn try_as_f64(value: &serde_json::Value) -> Option<f64> {
     match value {
-        serde_json::Value::Number(number) => number.as_f64().unwrap_or(0.0),
-        serde_json::Value::String(text) => text.trim().parse().unwrap_or(0.0),
-        _ => 0.0,
+        serde_json::Value::Number(number) => number.as_f64().filter(|v| v.is_finite()),
+        serde_json::Value::String(text) => text.trim().parse::<f64>().ok().filter(|v| v.is_finite()),
+        _ => None,
     }
+}
+
+fn as_i64(value: &serde_json::Value) -> i64 {
+    try_as_i64(value).unwrap_or(0)
 }
 
 /// Why one row could not be read.
@@ -3674,5 +3690,86 @@ mod tests {
         assert_eq!(neg.net_tx_bytes, Some(i64::MAX as u64));
         assert_eq!(neg.block_read_bytes, None);
         assert_eq!(neg.block_write_bytes, Some(2));
+
+        // Genuine zero measurements remain Some(0) / Some(0.0).
+        let zeros = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":0,"AvgCPU":0,"MemUsage":0,"MemLimit":1024,"NetInput":0,"NetOutput":0,"BlockInput":0,"BlockOutput":0}"#,
+            Some("4.9.0"),
+        )
+        .unwrap();
+        assert_eq!(zeros.cpu_percent, Some(0.0));
+        assert_eq!(zeros.mem_used_bytes, Some(0));
+        assert_eq!(zeros.mem_limit_bytes, Some(1024));
+        assert_eq!(zeros.mem_percent, Some(0.0));
+        assert_eq!(zeros.net_rx_bytes, Some(0));
+        assert_eq!(zeros.net_tx_bytes, Some(0));
+        assert_eq!(zeros.block_read_bytes, Some(0));
+        assert_eq!(zeros.block_write_bytes, Some(0));
+
+        // Null and malformed fields stay None instead of turning into 0, while
+        // existing display strings keep their fallback renderings.
+        let nulls = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":null,"AvgCPU":null,"MemUsage":null,"MemLimit":1024,"NetInput":null,"NetOutput":null,"BlockInput":null,"BlockOutput":null}"#,
+            Some("4.9.0"),
+        )
+        .unwrap();
+        assert_eq!(nulls.cpu.as_deref(), Some("0.0%"));
+        assert_eq!(nulls.mem.as_deref(), Some("0 B / 1 KB"));
+        assert_eq!(nulls.net_down.as_deref(), Some("0 B"));
+        assert_eq!(nulls.disk_read.as_deref(), Some("0 B"));
+        assert_eq!(nulls.cpu_percent, None);
+        assert_eq!(nulls.mem_used_bytes, None);
+        assert_eq!(nulls.mem_limit_bytes, Some(1024));
+        assert_eq!(nulls.mem_percent, None);
+        assert_eq!(nulls.net_rx_bytes, None);
+        assert_eq!(nulls.net_tx_bytes, None);
+        assert_eq!(nulls.block_read_bytes, None);
+        assert_eq!(nulls.block_write_bytes, None);
+
+        let malformed = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":"N/A","MemUsage":"bad","MemLimit":1024,"Network":{"eth0":{"RxBytes":"oops","TxBytes":0},"eth1":{"RxBytes":100,"TxBytes":null}},"BlockInput":"bad","BlockOutput":"NaN"}"#,
+            Some("5.1.0"),
+        )
+        .unwrap();
+        assert_eq!(malformed.cpu_percent, None);
+        assert_eq!(malformed.mem_used_bytes, None);
+        assert_eq!(malformed.mem_percent, None);
+        assert_eq!(malformed.net_rx_bytes, None);
+        assert_eq!(malformed.net_tx_bytes, None);
+        assert_eq!(malformed.block_read_bytes, None);
+        assert_eq!(malformed.block_write_bytes, None);
+
+        // Podman v5 genuine zero network counters remain Some(0), and missing
+        // fields stay None.
+        let v5_zeros = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":0,"MemUsage":0,"MemLimit":1024,"Network":{"eth0":{"RxBytes":0,"TxBytes":0}},"BlockInput":0,"BlockOutput":0}"#,
+            Some("5.1.0"),
+        )
+        .unwrap();
+        assert_eq!(v5_zeros.net_rx_bytes, Some(0));
+        assert_eq!(v5_zeros.net_tx_bytes, Some(0));
+
+        let empty = parse_stats(ContainerType::Podman, r#"{}"#, Some("5.1.0")).unwrap();
+        assert_eq!(empty.cpu_percent, None);
+        assert_eq!(empty.mem_used_bytes, None);
+        assert_eq!(empty.mem_limit_bytes, None);
+        assert_eq!(empty.mem_percent, None);
+        assert_eq!(empty.net_rx_bytes, None);
+        assert_eq!(empty.net_tx_bytes, None);
+        assert_eq!(empty.block_read_bytes, None);
+        assert_eq!(empty.block_write_bytes, None);
+
+        let rx_only = parse_stats(
+            ContainerType::Podman,
+            r#"{"Network":{"eth0":{"RxBytes":42}}}"#,
+            Some("5.1.0"),
+        )
+        .unwrap();
+        assert_eq!(rx_only.net_rx_bytes, Some(42));
+        assert_eq!(rx_only.net_tx_bytes, None);
     }
 }
