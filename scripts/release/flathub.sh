@@ -95,9 +95,9 @@ if yaml is not None:
         sys.exit(f"expected archive source, got: {archive.get('type')!r}")
     url = archive.get("url", "")
     sha = archive.get("sha256", "")
-    if not url.startswith("https://") or not url.endswith("_linux_amd64.tar.gz"):
+    if not isinstance(url, str) or not url.startswith("https://") or not url.endswith("_linux_amd64.tar.gz"):
         sys.exit(f"unexpected archive url: {url!r}")
-    if not re.fullmatch(r"[0-9a-f]{64}", sha):
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{64}", sha):
         sys.exit(f"invalid sha256: {sha!r}")
     checker = archive.get("x-checker-data", {})
     if checker.get("type") != "json":
@@ -105,7 +105,7 @@ if yaml is not None:
 else:
     if f"app-id: {app_id}" not in text:
         sys.exit("app-id line missing")
-    if not re.search(r"^\s*sha256:\s*[0-9a-f]{64}\s*$", text, re.M):
+    if not re.search(r"^\s*sha256:\s*'?[0-9a-f]{64}'?\s*$", text, re.M):
         sys.exit("valid sha256 line missing")
     if not re.search(r"^\s*url:\s*https://\S+_linux_amd64\.tar\.gz\s*$", text, re.M):
         sys.exit("valid archive url line missing")

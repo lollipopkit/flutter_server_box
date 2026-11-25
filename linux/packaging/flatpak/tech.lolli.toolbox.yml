@@ -39,7 +39,7 @@ modules:
         only-arches:
           - x86_64
         url: ${URL}
-        sha256: ${SHA256}
+        sha256: '${SHA256}'
         x-checker-data:
           type: json
           url: https://api.github.com/repos/lollipopkit/flutter_server_box/releases/latest
