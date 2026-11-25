@@ -44,7 +44,8 @@ pub struct ContainerItem {
     pub stats: Option<ContainerStatsItem>,
 }
 
-/// The runtime's own renderings, split so the app can word the row.
+/// The runtime's own renderings and parsed numeric stats, split so the app can
+/// render both labels and visual indicators without re-parsing display text.
 pub struct ContainerStatsItem {
     pub cpu: Option<String>,
     /// Podman's average over the sample window; Docker reports none.
@@ -54,6 +55,14 @@ pub struct ContainerStatsItem {
     pub net_up: Option<String>,
     pub disk_read: Option<String>,
     pub disk_write: Option<String>,
+    pub cpu_percent: Option<f64>,
+    pub mem_used_bytes: Option<u64>,
+    pub mem_limit_bytes: Option<u64>,
+    pub mem_percent: Option<f64>,
+    pub net_rx_bytes: Option<u64>,
+    pub net_tx_bytes: Option<u64>,
+    pub block_read_bytes: Option<u64>,
+    pub block_write_bytes: Option<u64>,
 }
 
 pub struct ContainerImageItem {
@@ -97,6 +106,14 @@ fn item(container: Container, stats: Option<ContainerStats>) -> ContainerItem {
             net_up: s.net_up,
             disk_read: s.disk_read,
             disk_write: s.disk_write,
+            cpu_percent: s.cpu_percent,
+            mem_used_bytes: s.mem_used_bytes,
+            mem_limit_bytes: s.mem_limit_bytes,
+            mem_percent: s.mem_percent,
+            net_rx_bytes: s.net_rx_bytes,
+            net_tx_bytes: s.net_tx_bytes,
+            block_read_bytes: s.block_read_bytes,
+            block_write_bytes: s.block_write_bytes,
         }),
     }
 }

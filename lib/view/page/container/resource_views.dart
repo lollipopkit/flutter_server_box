@@ -1279,18 +1279,24 @@ class _ContainerResourceData {
 
   factory _ContainerResourceData.from(ContainerPs item) {
     return _ContainerResourceData(
-      cpuPercent: _parsePercent(item.cpu),
-      memoryPercent: _parseUsagePercent(item.mem),
-      network: _parseMetricPair(item.net),
-      disk: _parseMetricPair(item.disk),
+      cpuPercent: _clampPercent(item.cpuPercent),
+      memoryPercent: _clampPercent(item.memPercent),
+      network: _metricPair(item.netDown, item.netUp),
+      disk: _metricPair(item.diskRead, item.diskWrite),
     );
   }
 
-  bool get isNotEmpty =>
-      cpuPercent != null ||
-      memoryPercent != null ||
-      network != null ||
-      disk != null;
+  static double? _clampPercent(double? value) {
+    if (value == null || !value.isFinite || value < 0) return null;
+    return value.clamp(0.0, 100.0).toDouble();
+  }
+
+  static _MetricPair? _metricPair(String? first, String? second) {
+    final a = first?.trim();
+    final b = second?.trim();
+    if (a == null || a.isEmpty || b == null || b.isEmpty) return null;
+    return _MetricPair(first: a, second: b);
+  }
 
   /// The metrics as one line, for a row too narrow to give each of them a
   /// column. Null when nothing was measured.
@@ -1634,88 +1640,6 @@ IconData _runtimeIcon(ContainerType type) => switch (type) {
 String _statusLabel(ContainerPs item) {
   final raw = item.rawStatus?.trim();
   return raw == null || raw.isEmpty ? item.status.displayName : raw;
-}
-
-double? _parsePercent(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
-  final parts = raw.split(RegExp(r'\s*/\s*'));
-  if (parts.isEmpty || parts.length > 2) return null;
-  final value = _parsePercentValue(parts.first);
-  if (value == null || !value.isFinite || value < 0) return null;
-  if (parts.length == 2 && _parsePercentValue(parts[1], labeled: true) == null) {
-    return null;
-  }
-  return value.clamp(0, 100).toDouble();
-}
-
-double? _parsePercentValue(String raw, {bool labeled = false}) {
-  final prefix = labeled ? r'[^\d.-]*' : '';
-  final match = RegExp(
-    '^\\s*$prefix(-?(?:\\d+(?:\\.\\d+)?|\\.\\d+))\\s*%\\s*\$',
-  ).firstMatch(raw);
-  final value = double.tryParse(match?.group(1) ?? '');
-  if (value == null || !value.isFinite || value < 0) return null;
-  return value;
-}
-
-double? _parseUsagePercent(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
-  final parts = raw.split(RegExp(r'\s*/\s*'));
-  if (parts.length != 2) return null;
-  final used = _parseByteSize(parts[0]);
-  final total = _parseByteSize(parts[1]);
-  if (used == null || total == null || total <= 0) return null;
-  return (used / total * 100).clamp(0, 100).toDouble();
-}
-
-double? _parseByteSize(String raw) {
-  final match = RegExp(
-    r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*([kmgtpe]?i?b)?\s*$',
-    caseSensitive: false,
-  ).firstMatch(raw);
-  if (match == null) return null;
-  final value = double.tryParse(match.group(1)!);
-  if (value == null || !value.isFinite || value < 0) return null;
-  final unit = (match.group(2) ?? 'b').toLowerCase();
-  final multiplier = switch (unit) {
-    'kb' => 1000.0,
-    'kib' => 1024.0,
-    'mb' => 1000.0 * 1000,
-    'mib' => 1024.0 * 1024,
-    'gb' => 1000.0 * 1000 * 1000,
-    'gib' => 1024.0 * 1024 * 1024,
-    'tb' => 1000.0 * 1000 * 1000 * 1000,
-    'tib' => 1024.0 * 1024 * 1024 * 1024,
-    'pb' => 1000.0 * 1000 * 1000 * 1000 * 1000,
-    'pib' => 1024.0 * 1024 * 1024 * 1024 * 1024,
-    'eb' => 1000.0 * 1000 * 1000 * 1000 * 1000 * 1000,
-    'eib' => 1024.0 * 1024 * 1024 * 1024 * 1024 * 1024,
-    _ => 1.0,
-  };
-  return value * multiplier;
-}
-
-_MetricPair? _parseMetricPair(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return null;
-  final parts = raw.split(RegExp(r'\s*/\s*'));
-  if (parts.length != 2) return null;
-  final first = _extractMetricValue(parts.first);
-  final second = _extractMetricValue(parts[1]);
-  if (first == null || second == null) return null;
-  return _MetricPair(first: first, second: second);
-}
-
-String? _extractMetricValue(String raw) {
-  final match = RegExp(
-    r'^\s*[^\d.-]*((-?(?:\d+(?:\.\d+)?|\.\d+))\s*[kmgtpe]?i?b)\s*$',
-    caseSensitive: false,
-  ).firstMatch(raw);
-  if (match != null) {
-    final value = double.tryParse(match.group(2)!);
-    if (value == null || !value.isFinite || value < 0) return null;
-    return match.group(1)!.replaceAll(RegExp(r'\s+'), ' ').trim();
-  }
-  return null;
 }
 
 String? _shortId(String? id) {

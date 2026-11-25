@@ -90,11 +90,25 @@ void main() {
       expect(web.mem, '10MiB / 1GiB');
       expect(web.net, '↓ 1kB / ↑ 2kB');
       expect(web.disk, 'Read 3MB / Write 4MB');
+      expect(web.cpuPercent, 1.5);
+      expect(web.memUsedBytes, BigInt.from(10 * 1024 * 1024));
+      expect(web.memLimitBytes, BigInt.from(1024 * 1024 * 1024));
+      expect(web.memPercent, closeTo(10 / 1024 * 100, 1e-6));
+      expect(web.netDown, '1kB');
+      expect(web.netUp, '2kB');
+      expect(web.netRxBytes, BigInt.from(1000));
+      expect(web.netTxBytes, BigInt.from(2000));
+      expect(web.diskRead, '3MB');
+      expect(web.diskWrite, '4MB');
+      expect(web.blockReadBytes, BigInt.from(3000000));
+      expect(web.blockWriteBytes, BigInt.from(4000000));
 
       final job = items.last;
       expect(job.status, ContainerStatus.exited);
       expect(job.cpu, isNull);
       expect(job.net, isNull);
+      expect(job.cpuPercent, isNull);
+      expect(job.memPercent, isNull);
     });
 
     test('word Podman\'s average beside its CPU', () async {
@@ -112,6 +126,13 @@ void main() {
       expect(worker.rawStatus, 'Up 3 hours');
       expect(worker.cpu, '1.0% / ${libL10n.pingAvg} 0.0%');
       expect(worker.net, '↓ 512 B / ↑ 256 B');
+      expect(worker.cpuPercent, 1.0);
+      expect(worker.memUsedBytes, BigInt.one);
+      expect(worker.memLimitBytes, BigInt.from(1073741824));
+      expect(worker.netDown, '512 B');
+      expect(worker.netUp, '256 B');
+      expect(worker.netRxBytes, BigInt.from(512));
+      expect(worker.netTxBytes, BigInt.from(256));
     });
   });
 

@@ -3,12 +3,11 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
-import 'package:server_box/src/rust/api/parser.dart';
-import 'package:server_box/src/rust/api/script.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
-
+import 'parser.dart';
+import 'script.dart';
 part 'app_mcp.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `app_tool`, `check`, `detect`, `failure`, `host_key`, `message`, `on_host`, `parse_scopes`, `parse`, `scope_names`, `scopes`, `text`, `token`, `tools_of`

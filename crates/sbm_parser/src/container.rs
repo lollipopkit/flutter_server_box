@@ -80,6 +80,13 @@ static DOCKER_EXPOSED_PORT: LazyLock<Regex> =
 static HUMAN_SIZE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^([\d.]+)\s*([kKMGTP]?i?)B").expect("valid regex"));
 
+static STRICT_PERCENT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^\s*((?:\d+(?:\.\d+)?|\.\d+))\s*%\s*$").expect("valid regex"));
+
+static STRICT_BYTES: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)^\s*((?:\d+(?:\.\d+)?|\.\d+))\s*([kmgtpe]?i?b)\s*$").expect("valid regex")
+});
+
 static IMAGE_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-fA-F0-9]{12,64}$").expect("valid regex"));
 
@@ -868,12 +875,11 @@ pub struct Container {
 
 /// One sample of a running container's resource use.
 ///
-/// Every field is the runtime's own rendering of a quantity, kept as text
-/// because both runtimes print two quantities in one field (`1.2MiB / 7.6GiB`)
-/// and neither is a number this side can recompute. The pair is split so the
-/// client can lay it out; nothing here is a sentence, so nothing here has a
-/// locale.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+/// Display fields keep the runtime's own renderings split into locale-free
+/// tokens, while numeric fields (`cpu_percent`, `*_bytes`, `mem_percent`) carry
+/// parsed values so clients can render bars and summaries without re-parsing
+/// display text.
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
 pub struct ContainerStats {
     /// `0.15%`.
     pub cpu: Option<String>,
@@ -889,6 +895,24 @@ pub struct ContainerStats {
     pub net_up: Option<String>,
     pub disk_read: Option<String>,
     pub disk_write: Option<String>,
+    /// Parsed CPU usage percentage (non-negative finite value).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpu_percent: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mem_used_bytes: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mem_limit_bytes: Option<u64>,
+    /// Derived memory usage percentage (`0.0..=100.0`) when limit > 0.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mem_percent: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub net_rx_bytes: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub net_tx_bytes: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub block_read_bytes: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub block_write_bytes: Option<u64>,
 }
 
 /// One image, from either runtime.
@@ -1067,19 +1091,47 @@ fn parse_docker_stats(value: &serde_json::Value) -> ContainerStats {
         let raw = text(key).unwrap_or_else(|| "0B / 0B".to_string());
         let mut parts = raw.split(" / ");
         let first = parts.next().unwrap_or("0B").to_string();
-        let second = parts.next().unwrap_or("0B").to_string();
-        (first, second)
+        let second_opt = parts.next();
+        let exact_pair = second_opt.is_some() && parts.next().is_none();
+        let second = second_opt.unwrap_or("0B").to_string();
+        (first, second, exact_pair)
     };
-    let (net_down, net_up) = pair("NetIO");
-    let (disk_read, disk_write) = pair("BlockIO");
+    let (net_down, net_up, net_exact_pair) = pair("NetIO");
+    let (disk_read, disk_write, disk_exact_pair) = pair("BlockIO");
     let mem = text("MemUsage");
-    let (mem_used, mem_limit) = match mem.as_deref().map(|m| m.split_once(" / ")) {
-        Some(Some((used, limit))) => (Some(used.to_string()), Some(limit.to_string())),
-        Some(None) => (mem.clone(), None),
-        None => (None, None),
+    let (mem_used, mem_limit, mem_has_extra) = match mem.as_deref() {
+        Some(raw) => {
+            let mut parts = raw.split(" / ");
+            let first = parts.next().map(str::to_string);
+            let second = parts.next().map(str::to_string);
+            let has_extra = parts.next().is_some();
+            (first, second, has_extra)
+        }
+        None => (None, None, false),
+    };
+    let cpu = text("CPUPerc");
+    let cpu_percent = cpu.as_deref().and_then(parse_strict_percent);
+    let (mem_used_bytes, mem_limit_bytes) = if mem_has_extra {
+        (None, None)
+    } else {
+        (
+            mem_used.as_deref().and_then(parse_strict_bytes),
+            mem_limit.as_deref().and_then(parse_strict_bytes),
+        )
+    };
+    let mem_percent = usage_percent(mem_used_bytes, mem_limit_bytes);
+    let (net_rx_bytes, net_tx_bytes) = if net_exact_pair {
+        (parse_strict_bytes(&net_down), parse_strict_bytes(&net_up))
+    } else {
+        (None, None)
+    };
+    let (block_read_bytes, block_write_bytes) = if disk_exact_pair {
+        (parse_strict_bytes(&disk_read), parse_strict_bytes(&disk_write))
+    } else {
+        (None, None)
     };
     ContainerStats {
-        cpu: text("CPUPerc"),
+        cpu,
         cpu_avg: None,
         mem,
         mem_used,
@@ -1088,6 +1140,14 @@ fn parse_docker_stats(value: &serde_json::Value) -> ContainerStats {
         net_up: Some(net_up),
         disk_read: Some(disk_read),
         disk_write: Some(disk_write),
+        cpu_percent,
+        mem_used_bytes,
+        mem_limit_bytes,
+        mem_percent,
+        net_rx_bytes,
+        net_tx_bytes,
+        block_read_bytes,
+        block_write_bytes,
     }
 }
 
@@ -1095,8 +1155,10 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
     let number = |key: &str| value.get(key).map(as_f64).unwrap_or(0.0);
     let bytes = |key: &str| value.get(key).map(as_i64).unwrap_or(0);
 
-    let mem_usage = human_bytes(bytes("MemUsage"));
-    let mem_limit = human_bytes(bytes("MemLimit"));
+    let mem_usage_raw = bytes("MemUsage");
+    let mem_limit_raw = bytes("MemLimit");
+    let mem_usage = human_bytes(mem_usage_raw);
+    let mem_limit = human_bytes(mem_limit_raw);
 
     // Podman 4 and earlier report both counters at the top level; 5 moved to
     // one set per interface when it changed network backend. The version is
@@ -1107,6 +1169,7 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
         .and_then(|version| version.split('.').next())
         .and_then(|major| major.parse::<i64>().ok());
     let (mut net_in, mut net_out) = (0i64, 0i64);
+    let (mut net_in_neg, mut net_out_neg) = (false, false);
     let nested = match major {
         Some(major) if major >= 5 => value.get("Network").and_then(|v| v.as_object()),
         _ => None,
@@ -1119,30 +1182,52 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
                     continue;
                 };
                 saw_counter |= interface.contains_key("RxBytes") || interface.contains_key("TxBytes");
-                net_in += interface.get("RxBytes").map(as_i64).unwrap_or(0);
-                net_out += interface.get("TxBytes").map(as_i64).unwrap_or(0);
+                let rx = interface.get("RxBytes").map(as_i64).unwrap_or(0);
+                let tx = interface.get("TxBytes").map(as_i64).unwrap_or(0);
+                net_in_neg |= rx < 0;
+                net_out_neg |= tx < 0;
+                net_in = net_in.saturating_add(rx);
+                net_out = net_out.saturating_add(tx);
             }
             if !saw_counter {
                 net_in = bytes("NetInput");
                 net_out = bytes("NetOutput");
+                net_in_neg = net_in < 0;
+                net_out_neg = net_out < 0;
             }
         }
         None => {
             net_in = bytes("NetInput");
             net_out = bytes("NetOutput");
+            net_in_neg = net_in < 0;
+            net_out_neg = net_out < 0;
         }
     }
 
+    let cpu_raw = number("CPU");
+    let block_read_raw = bytes("BlockInput");
+    let block_write_raw = bytes("BlockOutput");
+    let mem_used_bytes = u64::try_from(mem_usage_raw).ok();
+    let mem_limit_bytes = u64::try_from(mem_limit_raw).ok();
+
     ContainerStats {
-        cpu: Some(format!("{}%", fixed1(number("CPU")))),
+        cpu: Some(format!("{}%", fixed1(cpu_raw))),
         cpu_avg: Some(format!("{}%", fixed1(number("AvgCPU")))),
         mem: Some(format!("{mem_usage} / {mem_limit}")),
         mem_used: Some(mem_usage),
         mem_limit: Some(mem_limit),
         net_down: Some(human_bytes(net_in)),
         net_up: Some(human_bytes(net_out)),
-        disk_read: Some(human_bytes(bytes("BlockInput"))),
-        disk_write: Some(human_bytes(bytes("BlockOutput"))),
+        disk_read: Some(human_bytes(block_read_raw)),
+        disk_write: Some(human_bytes(block_write_raw)),
+        cpu_percent: (cpu_raw.is_finite() && cpu_raw >= 0.0).then_some(cpu_raw),
+        mem_used_bytes,
+        mem_limit_bytes,
+        mem_percent: usage_percent(mem_used_bytes, mem_limit_bytes),
+        net_rx_bytes: (!net_in_neg).then(|| u64::try_from(net_in).ok()).flatten(),
+        net_tx_bytes: (!net_out_neg).then(|| u64::try_from(net_out).ok()).flatten(),
+        block_read_bytes: u64::try_from(block_read_raw).ok(),
+        block_write_bytes: u64::try_from(block_write_raw).ok(),
     }
 }
 
@@ -1644,6 +1729,52 @@ pub fn parse_human_bytes(raw: &str) -> Option<i64> {
         _ => 0,
     };
     Some((amount * base.powi(exponent)).round() as i64)
+}
+
+/// Parses a strict non-negative percentage token like `"13.7%"`.
+fn parse_strict_percent(raw: &str) -> Option<f64> {
+    let captures = STRICT_PERCENT.captures(raw)?;
+    let value: f64 = captures[1].parse().ok()?;
+    (value.is_finite() && value >= 0.0).then_some(value)
+}
+
+/// Parses a strict non-negative byte-size token like `"640 MiB"`, `"1.2 GB"`,
+/// or `"0B"`, rejecting negative values and trailing text.
+fn parse_strict_bytes(raw: &str) -> Option<u64> {
+    let captures = STRICT_BYTES.captures(raw)?;
+    let amount: f64 = captures[1].parse().ok()?;
+    if !amount.is_finite() || amount < 0.0 {
+        return None;
+    }
+    let unit = captures[2].to_ascii_lowercase();
+    let multiplier: f64 = match unit.as_str() {
+        "b" => 1.0,
+        "kb" => 1_000.0,
+        "kib" => 1_024.0,
+        "mb" => 1_000.0_f64.powi(2),
+        "mib" => 1_024.0_f64.powi(2),
+        "gb" => 1_000.0_f64.powi(3),
+        "gib" => 1_024.0_f64.powi(3),
+        "tb" => 1_000.0_f64.powi(4),
+        "tib" => 1_024.0_f64.powi(4),
+        "pb" => 1_000.0_f64.powi(5),
+        "pib" => 1_024.0_f64.powi(5),
+        "eb" => 1_000.0_f64.powi(6),
+        "eib" => 1_024.0_f64.powi(6),
+        _ => return None,
+    };
+    let scaled = (amount * multiplier).round();
+    if !scaled.is_finite() || scaled < 0.0 || scaled >= u64::MAX as f64 {
+        return None;
+    }
+    Some(scaled as u64)
+}
+
+fn usage_percent(used: Option<u64>, limit: Option<u64>) -> Option<f64> {
+    match (used, limit) {
+        (Some(u), Some(l)) if l > 0 => Some((u as f64 / l as f64 * 100.0).clamp(0.0, 100.0)),
+        _ => None,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -3443,5 +3574,105 @@ mod tests {
         assert_eq!(fixed1(1.25), "1.3");
         assert_eq!(fixed1(-1.25), "-1.3");
         assert_eq!(trim_trailing_zero(fixed1(2.0)), "2");
+    }
+
+    #[test]
+    fn docker_stats_exposes_numeric_values_and_rejects_malformed_tokens() {
+        let valid = parse_stats(
+            ContainerType::Docker,
+            r#"{"CPUPerc":"13.7%","MemUsage":"640 MiB / 2 GiB","NetIO":"12.4 MB / 8.1 MB","BlockIO":"1.2 GB / 780 MB"}"#,
+            None,
+        )
+        .unwrap();
+        assert_eq!(valid.cpu_percent, Some(13.7));
+        assert_eq!(valid.mem_used_bytes, Some(640 * 1024 * 1024));
+        assert_eq!(valid.mem_limit_bytes, Some(2 * 1024 * 1024 * 1024));
+        assert!((valid.mem_percent.unwrap() - 31.25).abs() < 1e-6);
+        assert_eq!(valid.net_rx_bytes, Some(12_400_000));
+        assert_eq!(valid.net_tx_bytes, Some(8_100_000));
+        assert_eq!(valid.block_read_bytes, Some(1_200_000_000));
+        assert_eq!(valid.block_write_bytes, Some(780_000_000));
+
+        let malformed = parse_stats(
+            ContainerType::Docker,
+            r#"{"CPUPerc":"12.5% garbage","MemUsage":"640 MiB junk / 2 GiB","NetIO":"12 MB / garbage","BlockIO":"1 GB / -2 MB"}"#,
+            None,
+        )
+        .unwrap();
+        assert_eq!(malformed.cpu_percent, None);
+        assert_eq!(malformed.mem_used_bytes, None);
+        assert_eq!(malformed.mem_percent, None);
+        assert_eq!(malformed.net_tx_bytes, None);
+        assert_eq!(malformed.block_write_bytes, None);
+
+        let over = parse_stats(
+            ContainerType::Docker,
+            r#"{"CPUPerc":"150%","MemUsage":"3 GiB / 2 GiB"}"#,
+            None,
+        )
+        .unwrap();
+        assert_eq!(over.cpu_percent, Some(150.0));
+        assert_eq!(over.mem_percent, Some(100.0));
+
+        // Reject unitless tokens, 1-part or 3-part IO/MemUsage, and u64 overflow.
+        let edge = parse_stats(
+            ContainerType::Docker,
+            r#"{"MemUsage":"1 GiB / 2 GiB / 3 GiB","NetIO":"12 / 8","BlockIO":"16 EiB / 1 B"}"#,
+            None,
+        )
+        .unwrap();
+        assert_eq!(edge.mem_used_bytes, None);
+        assert_eq!(edge.mem_limit_bytes, None);
+        assert_eq!(edge.mem_percent, None);
+        assert_eq!(edge.net_rx_bytes, None);
+        assert_eq!(edge.net_tx_bytes, None);
+        assert_eq!(edge.block_read_bytes, None);
+        assert_eq!(edge.block_write_bytes, Some(1));
+
+        let single_part = parse_stats(
+            ContainerType::Docker,
+            r#"{"MemUsage":"512 MiB","NetIO":"12 MB","BlockIO":"1 MB / 2 MB / 3 MB"}"#,
+            None,
+        )
+        .unwrap();
+        assert_eq!(single_part.mem_used_bytes, Some(512 * 1024 * 1024));
+        assert_eq!(single_part.mem_limit_bytes, None);
+        assert_eq!(single_part.mem_percent, None);
+        assert_eq!(single_part.net_rx_bytes, None);
+        assert_eq!(single_part.net_tx_bytes, None);
+        assert_eq!(single_part.block_read_bytes, None);
+        assert_eq!(single_part.block_write_bytes, None);
+    }
+
+    #[test]
+    fn podman_stats_exposes_numeric_values_directly() {
+        let stats = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":2.5,"AvgCPU":1.2,"MemUsage":134217728,"MemLimit":1073741824,"NetInput":4000,"NetOutput":2000,"BlockInput":20000,"BlockOutput":5000}"#,
+            Some("4.9.0"),
+        )
+        .unwrap();
+        assert_eq!(stats.cpu_percent, Some(2.5));
+        assert_eq!(stats.mem_used_bytes, Some(134_217_728));
+        assert_eq!(stats.mem_limit_bytes, Some(1_073_741_824));
+        assert!((stats.mem_percent.unwrap() - 12.5).abs() < 1e-6);
+        assert_eq!(stats.net_rx_bytes, Some(4000));
+        assert_eq!(stats.net_tx_bytes, Some(2000));
+        assert_eq!(stats.block_read_bytes, Some(20_000));
+        assert_eq!(stats.block_write_bytes, Some(5_000));
+
+        // Negative values, zero MemLimit, and v5 multi-interface saturation/negative guard.
+        let neg = parse_stats(
+            ContainerType::Podman,
+            r#"{"CPU":-1.0,"MemUsage":100,"MemLimit":0,"Network":{"eth0":{"RxBytes":-10,"TxBytes":9223372036854775807},"eth1":{"RxBytes":500,"TxBytes":100}},"BlockInput":-1,"BlockOutput":2}"#,
+            Some("5.1.0"),
+        )
+        .unwrap();
+        assert_eq!(neg.cpu_percent, None);
+        assert_eq!(neg.mem_percent, None);
+        assert_eq!(neg.net_rx_bytes, None);
+        assert_eq!(neg.net_tx_bytes, Some(i64::MAX as u64));
+        assert_eq!(neg.block_read_bytes, None);
+        assert_eq!(neg.block_write_bytes, Some(2));
     }
 }

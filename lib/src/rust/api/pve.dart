@@ -3,12 +3,12 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
+import 'bmc.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/src/rust/api/virt.dart';
-import 'package:server_box/src/rust/api/virt_model.dart';
-import 'package:server_box/src/rust/api/virt_view.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
+import 'virt.dart';
+import 'virt_model.dart';
+import 'virt_view.dart';
 
 // These functions are ignored because they are not marked as `pub`: `power_action`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
@@ -226,9 +226,6 @@ abstract class PveSession implements RustOpaqueInterface {
   });
 
   Future<String?> snapshotRefusal({required PveGuestRef guest});
-
-  /// PVE's own answer whether every disk snapshots; None where it cannot say.
-  Future<bool?> snapshotSupported({required PveGuestRef guest});
 
   Future<List<Snapshot>> snapshots({required PveGuestRef guest});
 

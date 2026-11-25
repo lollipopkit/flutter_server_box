@@ -106,6 +106,12 @@ void main() {
       mem: '640 MiB / 2 GiB',
       net: '12.4 MB / 8.1 MB',
       disk: '1.2 GB / 780 MB',
+      cpuPercent: 13.7,
+      memPercent: 31.25,
+      netDown: '12.4 MB',
+      netUp: '8.1 MB',
+      diskRead: '1.2 GB',
+      diskWrite: '780 MB',
     );
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
@@ -231,6 +237,12 @@ void main() {
       mem: '128 MiB / 1 GiB',
       net: '4 MB / 2 MB',
       disk: '20 MB / 5 MB',
+      cpuPercent: 2.5,
+      memPercent: 12.5,
+      netDown: '4 MB',
+      netUp: '2 MB',
+      diskRead: '20 MB',
+      diskWrite: '5 MB',
     );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
@@ -255,17 +267,16 @@ void main() {
   testWidgets('missing or unparseable container stats are omitted', (
     tester,
   ) async {
-    final item = ContainerPs(
-      id: 'partial-stats',
-      name: 'worker',
-      image: 'example/worker:latest',
-      rawStatus: 'Up 4 minutes',
-      status: ContainerStatus.running,
-      cpu: '4.2%',
-      mem: 'not available',
-      net: 'not available / garbage',
-      disk: 'garbage / not available',
-    );
+    final item = (await tester.runAsync(
+      () => ffi.containerParsePs(
+        runtimeName: 'docker',
+        ps: 'CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tDIR\tPORTS\n'
+            'partial-stats\tUp 4 minutes\tworker\texample/worker:latest\t\t\t\n',
+        stats:
+            '{"ID":"partial-stats","CPUPerc":"4.2%","MemUsage":"not available",'
+            '"NetIO":"not available / garbage","BlockIO":"garbage / not available"}',
+      ),
+    ))!.map(ContainerPs.fromFfi).single;
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -298,26 +309,29 @@ void main() {
   testWidgets('partial or trailing-garbage metrics are omitted', (
     tester,
   ) async {
-    final item = ContainerPs(
-      id: 'malformed-stats',
-      name: 'worker',
-      image: 'example/worker:latest',
-      rawStatus: 'Up 4 minutes',
-      status: ContainerStatus.running,
-      cpu: '12.5% garbage',
-      mem: '640 MiB junk / 2 GiB',
-      net: '12 MB / garbage',
-      disk: '1 GB / -2 MB',
-    );
+    final item = (await tester.runAsync(
+      () => ffi.containerParsePs(
+        runtimeName: 'docker',
+        ps: 'CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tDIR\tPORTS\n'
+            'malformed-stats\tUp 4 minutes\tworker\texample/worker:latest\t\t\t\n',
+        stats:
+            '{"ID":"malformed-stats","CPUPerc":"12.5% garbage",'
+            '"MemUsage":"640 MiB junk / 2 GiB","NetIO":"12 MB / garbage",'
+            '"BlockIO":"1 GB / -2 MB"}',
+      ),
+    ))!.map(ContainerPs.fromFfi).single;
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
-    expect(
-      find.byKey(
-        const ValueKey('container-metrics-malformed-stats'),
-      ),
-      findsNothing,
-    );
+    for (final col in ['cpu', 'memory', 'network', 'disk']) {
+      expect(
+        find.descendant(
+          of: find.byKey(ValueKey('container-metric-malformed-stats-$col')),
+          matching: find.text('—'),
+        ),
+        findsOneWidget,
+      );
+    }
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -331,6 +345,7 @@ void main() {
       rawStatus: 'Up 4 minutes',
       status: ContainerStatus.running,
       cpu: '12.5% / Avg 3.0%',
+      cpuPercent: 12.5,
     );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
@@ -382,17 +397,17 @@ void main() {
     ];
 
     for (final data in cases) {
-      final item = ContainerPs(
-        id: data.id,
-        name: 'worker',
-        image: 'example/worker:latest',
-        rawStatus: 'Up 4 minutes',
-        status: ContainerStatus.running,
-        cpu: data.cpu,
-        mem: data.mem,
-        net: data.net,
-        disk: data.disk,
-      );
+      final item = (await tester.runAsync(
+        () => ffi.containerParsePs(
+          runtimeName: 'docker',
+          ps: 'CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tDIR\tPORTS\n'
+              '${data.id}\tUp 4 minutes\tworker\texample/worker:latest\t\t\t\n',
+          stats:
+              '{"ID":"${data.id}","CPUPerc":"${data.cpu}",'
+              '"MemUsage":"${data.mem}","NetIO":"${data.net}",'
+              '"BlockIO":"${data.disk}"}',
+        ),
+      ))!.map(ContainerPs.fromFfi).single;
 
       await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -427,6 +442,8 @@ void main() {
       status: ContainerStatus.running,
       cpu: '150%',
       mem: '3 GiB / 2 GiB',
+      cpuPercent: 150.0,
+      memPercent: 150.0,
     );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));

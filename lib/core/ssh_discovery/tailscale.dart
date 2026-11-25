@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/ssh_discovery/ssh_discovery.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/src/rust/api/tailscale.dart' as ts_ffi;
 
 /// The peers of the tailnet this device is on, read from the local
 /// `tailscale` CLI.
@@ -91,49 +92,47 @@ final class TailscaleDiscovery implements SshDiscovery {
   /// tailnet has it.
   @visibleForTesting
   SshDiscoveryRun parse(String json) {
-    final status = jsonDecode(json) as Map<String, dynamic>;
-    if (status['BackendState'] != 'Running') throw _stopped();
-    final tailnet = status['CurrentTailnet'] as Map<String, dynamic>? ?? {};
-    final magicDns = tailnet['MagicDNSEnabled'] == true;
-    final peers = (status['Peer'] as Map<String, dynamic>? ?? {}).values
-        .cast<Map<String, dynamic>>();
+    final ts_ffi.TailscaleStatusItem status;
+    try {
+      status = ts_ffi.tailscaleParseStatus(raw: json);
+    } on String catch (e, s) {
+      Loggers.app.warning('tailscale status parse', e, s);
+      throw _stopped();
+    }
+    if (status.state != 'Running') throw _stopped();
+    final magicDns = status.magicDnsEnabled;
     final hosts = <DiscoveredSshHost>[];
-    for (final p in peers) {
-      final os = p['OS'] as String? ?? '';
+    for (final p in status.peers) {
+      final os = p.os ?? '';
       if (_noSsh.contains(os)) continue;
-      final ips = (p['TailscaleIPs'] as List? ?? const []).cast<String>();
-      final ip = ips.firstWhereOrNull((e) => !e.contains(':')) ??
-          ips.firstOrNull;
-      final dns = (p['DNSName'] as String? ?? '').replaceFirst(
-        RegExp(r'\.$'),
-        '',
-      );
+      final ip =
+          p.ips.firstWhereOrNull((e) => !e.contains(':')) ?? p.ips.firstOrNull;
+      final dns = p.dnsName ?? '';
       final address = magicDns && dns.isNotEmpty ? dns : ip;
       if (address == null) continue;
-      final name = p['HostName'] as String? ?? dns.split('.').first;
+      final name = p.name.isNotEmpty ? p.name : dns.split('.').first;
       hosts.add(
         DiscoveredSshHost(
-          key: p['ID'] as String? ?? address,
+          key: p.id.isNotEmpty ? p.id : address,
           server: Spi(
             name: name.isEmpty ? address : name,
             id: ShortId.generate(),
             ssh: SshCredential(ip: address),
           ),
           detail: [?ip, if (os.isNotEmpty) os].join(' · '),
-          online: p['Online'] as bool?,
+          online: p.online,
         ),
       );
     }
-    // Online first: the ones that can be reached now.
+    // Online first: the ones that can be reached now. Re-sort after name
+    // fallback in case a peer had an empty HostName.
     hosts.sort((a, b) {
       final on = (b.online == true ? 1 : 0) - (a.online == true ? 1 : 0);
       return on != 0 ? on : a.server.name.compareTo(b.server.name);
     });
     return (
       hosts: hosts,
-      scope:
-          (tailnet['MagicDNSSuffix'] as String?)?.selfNotEmptyOrNull ??
-          tailnet['Name'] as String?,
+      scope: status.magicDnsSuffix ?? status.tailnet,
     );
   }
 }

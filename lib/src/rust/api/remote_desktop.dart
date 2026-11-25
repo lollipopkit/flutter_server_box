@@ -3,10 +3,9 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
-import 'package:server_box/src/rust/frb_generated.dart';
-
 part 'remote_desktop.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `apply_vnc_event`, `bgra_to_rgba`, `certificate_event`, `classify_rdp_failure`, `close`, `close`, `copy_rect`, `credssp_failure`, `draw_bgra`, `draw_jpeg`, `ensure_rect`, `event`, `failure_end_reason`, `finish_vnc_error`, `fold_into`, `format_endpoint`, `format_sha256`, `frame_len`, `frame_shared`, `frame`, `handle_rdp_command`, `handle_vnc_command`, `is_lifecycle`, `is_ready`, `new`, `new`, `parse_sha256_fingerprint`, `pinned_certificate`, `publish_latest_frame`, `rdp_connect_failure`, `rdp_pixels_to_bgra`, `rdp_session_end_failure`, `recv`, `recv`, `resize`, `run_rdp`, `run_vnc`, `send_rdp_fast_path`, `send_vnc_wheel`, `send`, `send`, `send`, `spawn`, `try_recv`, `validate_endpoint`, `validate_size`, `vnc_failure`
