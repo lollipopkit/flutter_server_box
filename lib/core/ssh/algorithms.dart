@@ -55,6 +55,7 @@ abstract final class SshAlgorithms {
     return SSHAlgorithms(
       kex: base.kex,
       hostkey: [...hostkey.where(relied), ...hostkey.where((t) => !relied(t))],
+      pubkey: base.pubkey,
       cipher: base.cipher,
       mac: base.mac,
     );
@@ -82,6 +83,9 @@ SSHAlgorithms _withLegacyAlgorithms() {
     ],
     // The SHA-1 certificate before the SHA-1 key, as OpenSSH orders them.
     hostkey: [...modern.hostkey, SSHHostkeyType.rsaSha1Cert, SSHHostkeyType.rsaSha1],
+    // Allow SHA-1 `ssh-rsa` publickey auth as a fallback for daemons that
+    // predate RFC 8332 (`rsa-sha2-256`), such as old Dropbear/OpenSSH builds.
+    pubkey: [...modern.pubkey, SSHPubkeyType.rsaSha1Cert, SSHPubkeyType.rsaSha1],
     cipher: [
       ...modern.cipher,
       SSHCipherType.aes256cbc,

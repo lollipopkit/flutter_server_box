@@ -26,6 +26,7 @@ void main() {
     final offered = SshAlgorithms.of(plain);
     expect(names(offered.kex), names(modern.kex));
     expect(names(offered.hostkey), names(modern.hostkey));
+    expect(names(offered.pubkey), names(modern.pubkey));
     expect(names(offered.cipher), names(modern.cipher));
     expect(names(offered.mac), names(modern.mac));
   });
@@ -33,6 +34,15 @@ void main() {
   test('which no longer contains the retired spellings', () {
     expect(names(modern.hostkey), isNot(contains('ssh-rsa')));
     expect(names(modern.hostkey), isNot(contains('ssh-rsa-cert-v01@openssh.com')));
+    expect(names(modern.pubkey), isNot(contains('ssh-rsa')));
+    expect(names(modern.pubkey), isNot(contains('ssh-rsa-cert-v01@openssh.com')));
+    expect(
+      names(modern.pubkey),
+      containsAll(const [
+        'sk-ssh-ed25519@openssh.com',
+        'sk-ecdsa-sha2-nistp256@openssh.com',
+      ]),
+    );
     expect(
       names(modern.kex),
       isNot(contains('diffie-hellman-group14-sha1')),
@@ -102,8 +112,16 @@ void main() {
     test('only the host keys move', () {
       final ordered = SshAlgorithms.of(plain, preferCertificates: true);
       expect(names(ordered.kex), names(modern.kex));
+      expect(names(ordered.pubkey), names(modern.pubkey));
       expect(names(ordered.cipher), names(modern.cipher));
       expect(names(ordered.mac), names(modern.mac));
+
+      final optedOrdered = SshAlgorithms.of(
+        optedIn,
+        preferCertificates: true,
+        pinnedKeyTypes: const {'ssh-rsa'},
+      );
+      expect(names(optedOrdered.pubkey), names(SshAlgorithms.legacy.pubkey));
     });
   });
 
@@ -121,15 +139,21 @@ void main() {
       names(modern.hostkey),
     );
     expect(
+      names(offered.pubkey).take(modern.pubkey.length),
+      names(modern.pubkey),
+    );
+    expect(
       names(offered.cipher).take(modern.cipher.length),
       names(modern.cipher),
     );
     expect(names(offered.mac).take(modern.mac.length), names(modern.mac));
 
-    // The host key that motivated this is last, so it is only reached when the
-    // server offers nothing newer.
+    // The host key and pubkey that motivated this are last, so they are only
+    // reached when the server offers/accepts nothing newer.
     expect(names(offered.hostkey).last, 'ssh-rsa');
     expect(names(offered.hostkey), contains('ssh-rsa-cert-v01@openssh.com'));
+    expect(names(offered.pubkey).last, 'ssh-rsa');
+    expect(names(offered.pubkey), contains('ssh-rsa-cert-v01@openssh.com'));
     expect(
       names(offered.kex),
       containsAll(const [
