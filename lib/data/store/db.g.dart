@@ -4029,6 +4029,266 @@ class ServerIdentityFilesCompanion
   }
 }
 
+class $ServerKeysTable extends ServerKeys
+    with TableInfo<$ServerKeysTable, ServerKeyRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerKeysTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ordMeta = const VerificationMeta('ord');
+  @override
+  late final GeneratedColumn<int> ord = GeneratedColumn<int>(
+    'ord',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _keyIdMeta = const VerificationMeta('keyId');
+  @override
+  late final GeneratedColumn<String> keyId = GeneratedColumn<String>(
+    'key_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES private_key (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, ord, keyId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_key';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerKeyRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('ord')) {
+      context.handle(
+        _ordMeta,
+        ord.isAcceptableOrUnknown(data['ord']!, _ordMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ordMeta);
+    }
+    if (data.containsKey('key_id')) {
+      context.handle(
+        _keyIdMeta,
+        keyId.isAcceptableOrUnknown(data['key_id']!, _keyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, ord};
+  @override
+  ServerKeyRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerKeyRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      ord: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ord'],
+      )!,
+      keyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key_id'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerKeysTable createAlias(String alias) {
+    return $ServerKeysTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerKeyRow extends DataClass implements Insertable<ServerKeyRow> {
+  final String serverId;
+  final int ord;
+  final String keyId;
+  const ServerKeyRow({
+    required this.serverId,
+    required this.ord,
+    required this.keyId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['ord'] = Variable<int>(ord);
+    map['key_id'] = Variable<String>(keyId);
+    return map;
+  }
+
+  ServerKeysCompanion toCompanion(bool nullToAbsent) {
+    return ServerKeysCompanion(
+      serverId: Value(serverId),
+      ord: Value(ord),
+      keyId: Value(keyId),
+    );
+  }
+
+  factory ServerKeyRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerKeyRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      ord: serializer.fromJson<int>(json['ord']),
+      keyId: serializer.fromJson<String>(json['keyId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'ord': serializer.toJson<int>(ord),
+      'keyId': serializer.toJson<String>(keyId),
+    };
+  }
+
+  ServerKeyRow copyWith({String? serverId, int? ord, String? keyId}) =>
+      ServerKeyRow(
+        serverId: serverId ?? this.serverId,
+        ord: ord ?? this.ord,
+        keyId: keyId ?? this.keyId,
+      );
+  ServerKeyRow copyWithCompanion(ServerKeysCompanion data) {
+    return ServerKeyRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      ord: data.ord.present ? data.ord.value : this.ord,
+      keyId: data.keyId.present ? data.keyId.value : this.keyId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerKeyRow(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('keyId: $keyId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, ord, keyId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerKeyRow &&
+          other.serverId == this.serverId &&
+          other.ord == this.ord &&
+          other.keyId == this.keyId);
+}
+
+class ServerKeysCompanion extends UpdateCompanion<ServerKeyRow> {
+  final Value<String> serverId;
+  final Value<int> ord;
+  final Value<String> keyId;
+  const ServerKeysCompanion({
+    this.serverId = const Value.absent(),
+    this.ord = const Value.absent(),
+    this.keyId = const Value.absent(),
+  });
+  ServerKeysCompanion.insert({
+    required String serverId,
+    required int ord,
+    required String keyId,
+  }) : serverId = Value(serverId),
+       ord = Value(ord),
+       keyId = Value(keyId);
+  static Insertable<ServerKeyRow> custom({
+    Expression<String>? serverId,
+    Expression<int>? ord,
+    Expression<String>? keyId,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (ord != null) 'ord': ord,
+      if (keyId != null) 'key_id': keyId,
+    });
+  }
+
+  ServerKeysCompanion copyWith({
+    Value<String>? serverId,
+    Value<int>? ord,
+    Value<String>? keyId,
+  }) {
+    return ServerKeysCompanion(
+      serverId: serverId ?? this.serverId,
+      ord: ord ?? this.ord,
+      keyId: keyId ?? this.keyId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (ord.present) {
+      map['ord'] = Variable<int>(ord.value);
+    }
+    if (keyId.present) {
+      map['key_id'] = Variable<String>(keyId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerKeysCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('keyId: $keyId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ServerDisabledCmdsTable extends ServerDisabledCmds
     with TableInfo<$ServerDisabledCmdsTable, ServerDisabledCmdRow> {
   @override
@@ -10752,6 +11012,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ServerJumpsTable serverJumps = $ServerJumpsTable(this);
   late final $ServerIdentityFilesTable serverIdentityFiles =
       $ServerIdentityFilesTable(this);
+  late final $ServerKeysTable serverKeys = $ServerKeysTable(this);
   late final $ServerDisabledCmdsTable serverDisabledCmds =
       $ServerDisabledCmdsTable(this);
   late final $BmcTargetsTable bmcTargets = $BmcTargetsTable(this);
@@ -10788,6 +11049,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverEnvs,
     serverJumps,
     serverIdentityFiles,
+    serverKeys,
     serverDisabledCmds,
     bmcTargets,
     bmcTargetTags,
@@ -10851,6 +11113,20 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server_identity_file', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_key', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'private_key',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_key', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -11008,6 +11284,24 @@ final class $$PrivateKeysTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$ServerKeysTable, List<ServerKeyRow>>
+  _serverKeysRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverKeys,
+    aliasName: 'private_key__id__server_key__key_id',
+  );
+
+  $$ServerKeysTableProcessedTableManager get serverKeysRefs {
+    final manager = $$ServerKeysTableTableManager(
+      $_db,
+      $_db.serverKeys,
+    ).filter((f) => f.keyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serverKeysRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$PrivateKeysTableFilterComposer
@@ -11065,6 +11359,31 @@ class $$PrivateKeysTableFilterComposer
           }) => $$ServersTableFilterComposer(
             $db: $db,
             $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverKeysRefs(
+    Expression<bool> Function($$ServerKeysTableFilterComposer f) f,
+  ) {
+    final $$ServerKeysTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverKeys,
+      getReferencedColumn: (t) => t.keyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerKeysTableFilterComposer(
+            $db: $db,
+            $table: $db.serverKeys,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11166,6 +11485,31 @@ class $$PrivateKeysTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> serverKeysRefs<T extends Object>(
+    Expression<T> Function($$ServerKeysTableAnnotationComposer a) f,
+  ) {
+    final $$ServerKeysTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverKeys,
+      getReferencedColumn: (t) => t.keyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerKeysTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$PrivateKeysTableTableManager
@@ -11181,7 +11525,7 @@ class $$PrivateKeysTableTableManager
           $$PrivateKeysTableUpdateCompanionBuilder,
           (PrivateKeyRow, $$PrivateKeysTableReferences),
           PrivateKeyRow,
-          PrefetchHooks Function({bool serversRefs})
+          PrefetchHooks Function({bool serversRefs, bool serverKeysRefs})
         > {
   $$PrivateKeysTableTableManager(_$AppDb db, $PrivateKeysTable table)
     : super(
@@ -11234,36 +11578,63 @@ class $$PrivateKeysTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({serversRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (serversRefs) db.servers],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (serversRefs)
-                    await $_getPrefetchedData<
-                      PrivateKeyRow,
-                      $PrivateKeysTable,
-                      ServerRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$PrivateKeysTableReferences
-                          ._serversRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$PrivateKeysTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).serversRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.sshKeyId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({serversRefs = false, serverKeysRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (serversRefs) db.servers,
+                    if (serverKeysRefs) db.serverKeys,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (serversRefs)
+                        await $_getPrefetchedData<
+                          PrivateKeyRow,
+                          $PrivateKeysTable,
+                          ServerRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PrivateKeysTableReferences
+                              ._serversRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PrivateKeysTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serversRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sshKeyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (serverKeysRefs)
+                        await $_getPrefetchedData<
+                          PrivateKeyRow,
+                          $PrivateKeysTable,
+                          ServerKeyRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PrivateKeysTableReferences
+                              ._serverKeysRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PrivateKeysTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverKeysRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.keyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -11280,7 +11651,7 @@ typedef $$PrivateKeysTableProcessedTableManager =
       $$PrivateKeysTableUpdateCompanionBuilder,
       (PrivateKeyRow, $$PrivateKeysTableReferences),
       PrivateKeyRow,
-      PrefetchHooks Function({bool serversRefs})
+      PrefetchHooks Function({bool serversRefs, bool serverKeysRefs})
     >;
 typedef $$BmcCredentialsTableCreateCompanionBuilder =
     BmcCredentialsCompanion Function({
@@ -11762,6 +12133,24 @@ final class $$ServersTableReferences
     final cache = $_typedResult.readTableOrNull(
       _serverIdentityFilesRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ServerKeysTable, List<ServerKeyRow>>
+  _serverKeysRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverKeys,
+    aliasName: 'server__id__server_key__server_id',
+  );
+
+  $$ServerKeysTableProcessedTableManager get serverKeysRefs {
+    final manager = $$ServerKeysTableTableManager(
+      $_db,
+      $_db.serverKeys,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_serverKeysRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -12291,6 +12680,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerIdentityFilesTableFilterComposer(
             $db: $db,
             $table: $db.serverIdentityFiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverKeysRefs(
+    Expression<bool> Function($$ServerKeysTableFilterComposer f) f,
+  ) {
+    final $$ServerKeysTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverKeys,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerKeysTableFilterComposer(
+            $db: $db,
+            $table: $db.serverKeys,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -13098,6 +13512,31 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> serverKeysRefs<T extends Object>(
+    Expression<T> Function($$ServerKeysTableAnnotationComposer a) f,
+  ) {
+    final $$ServerKeysTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverKeys,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerKeysTableAnnotationComposer(
+            $db: $db,
+            $table: $db.serverKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> serverDisabledCmdsRefs<T extends Object>(
     Expression<T> Function($$ServerDisabledCmdsTableAnnotationComposer a) f,
   ) {
@@ -13420,6 +13859,7 @@ class $$ServersTableTableManager
             bool serverTagsRefs,
             bool serverEnvsRefs,
             bool serverIdentityFilesRefs,
+            bool serverKeysRefs,
             bool serverDisabledCmdsRefs,
             bool bmcTargetsRefs,
             bool knownHostsRefs,
@@ -13627,6 +14067,7 @@ class $$ServersTableTableManager
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
                 serverIdentityFilesRefs = false,
+                serverKeysRefs = false,
                 serverDisabledCmdsRefs = false,
                 bmcTargetsRefs = false,
                 knownHostsRefs = false,
@@ -13646,6 +14087,7 @@ class $$ServersTableTableManager
                     if (serverTagsRefs) db.serverTags,
                     if (serverEnvsRefs) db.serverEnvs,
                     if (serverIdentityFilesRefs) db.serverIdentityFiles,
+                    if (serverKeysRefs) db.serverKeys,
                     if (serverDisabledCmdsRefs) db.serverDisabledCmds,
                     if (bmcTargetsRefs) db.bmcTargets,
                     if (knownHostsRefs) db.knownHosts,
@@ -13750,6 +14192,27 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverIdentityFilesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (serverKeysRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerKeyRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverKeysRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverKeysRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.serverId == item.id,
@@ -14033,6 +14496,7 @@ typedef $$ServersTableProcessedTableManager =
         bool serverTagsRefs,
         bool serverEnvsRefs,
         bool serverIdentityFilesRefs,
+        bool serverKeysRefs,
         bool serverDisabledCmdsRefs,
         bool bmcTargetsRefs,
         bool knownHostsRefs,
@@ -15215,6 +15679,365 @@ typedef $$ServerIdentityFilesTableProcessedTableManager =
       (ServerIdentityFileRow, $$ServerIdentityFilesTableReferences),
       ServerIdentityFileRow,
       PrefetchHooks Function({bool serverId})
+    >;
+typedef $$ServerKeysTableCreateCompanionBuilder =
+    ServerKeysCompanion Function({
+      required String serverId,
+      required int ord,
+      required String keyId,
+    });
+typedef $$ServerKeysTableUpdateCompanionBuilder =
+    ServerKeysCompanion Function({
+      Value<String> serverId,
+      Value<int> ord,
+      Value<String> keyId,
+    });
+
+final class $$ServerKeysTableReferences
+    extends BaseReferences<_$AppDb, $ServerKeysTable, ServerKeyRow> {
+  $$ServerKeysTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_key__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $PrivateKeysTable _keyIdTable(_$AppDb db) =>
+      db.privateKeys.createAlias('server_key__key_id__private_key__id');
+
+  $$PrivateKeysTableProcessedTableManager get keyId {
+    final $_column = $_itemColumn<String>('key_id')!;
+
+    final manager = $$PrivateKeysTableTableManager(
+      $_db,
+      $_db.privateKeys,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_keyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerKeysTableFilterComposer
+    extends Composer<_$AppDb, $ServerKeysTable> {
+  $$ServerKeysTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PrivateKeysTableFilterComposer get keyId {
+    final $$PrivateKeysTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.privateKeys,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PrivateKeysTableFilterComposer(
+            $db: $db,
+            $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerKeysTableOrderingComposer
+    extends Composer<_$AppDb, $ServerKeysTable> {
+  $$ServerKeysTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PrivateKeysTableOrderingComposer get keyId {
+    final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.privateKeys,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PrivateKeysTableOrderingComposer(
+            $db: $db,
+            $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerKeysTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerKeysTable> {
+  $$ServerKeysTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get ord =>
+      $composableBuilder(column: $table.ord, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PrivateKeysTableAnnotationComposer get keyId {
+    final $$PrivateKeysTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.keyId,
+      referencedTable: $db.privateKeys,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PrivateKeysTableAnnotationComposer(
+            $db: $db,
+            $table: $db.privateKeys,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerKeysTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerKeysTable,
+          ServerKeyRow,
+          $$ServerKeysTableFilterComposer,
+          $$ServerKeysTableOrderingComposer,
+          $$ServerKeysTableAnnotationComposer,
+          $$ServerKeysTableCreateCompanionBuilder,
+          $$ServerKeysTableUpdateCompanionBuilder,
+          (ServerKeyRow, $$ServerKeysTableReferences),
+          ServerKeyRow,
+          PrefetchHooks Function({bool serverId, bool keyId})
+        > {
+  $$ServerKeysTableTableManager(_$AppDb db, $ServerKeysTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerKeysTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerKeysTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServerKeysTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<int> ord = const Value.absent(),
+                Value<String> keyId = const Value.absent(),
+              }) => ServerKeysCompanion(
+                serverId: serverId,
+                ord: ord,
+                keyId: keyId,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required int ord,
+                required String keyId,
+              }) => ServerKeysCompanion.insert(
+                serverId: serverId,
+                ord: ord,
+                keyId: keyId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ServerKeysTable, ServerKeyRow>(table),
+                  $$ServerKeysTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false, keyId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$ServerKeysTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn: $$ServerKeysTableReferences
+                                    ._serverIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (keyId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.keyId,
+                                referencedTable: $$ServerKeysTableReferences
+                                    ._keyIdTable(db),
+                                referencedColumn: $$ServerKeysTableReferences
+                                    ._keyIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerKeysTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerKeysTable,
+      ServerKeyRow,
+      $$ServerKeysTableFilterComposer,
+      $$ServerKeysTableOrderingComposer,
+      $$ServerKeysTableAnnotationComposer,
+      $$ServerKeysTableCreateCompanionBuilder,
+      $$ServerKeysTableUpdateCompanionBuilder,
+      (ServerKeyRow, $$ServerKeysTableReferences),
+      ServerKeyRow,
+      PrefetchHooks Function({bool serverId, bool keyId})
     >;
 typedef $$ServerDisabledCmdsTableCreateCompanionBuilder =
     ServerDisabledCmdsCompanion Function({
@@ -21096,6 +21919,8 @@ class $AppDbManager {
       $$ServerJumpsTableTableManager(_db, _db.serverJumps);
   $$ServerIdentityFilesTableTableManager get serverIdentityFiles =>
       $$ServerIdentityFilesTableTableManager(_db, _db.serverIdentityFiles);
+  $$ServerKeysTableTableManager get serverKeys =>
+      $$ServerKeysTableTableManager(_db, _db.serverKeys);
   $$ServerDisabledCmdsTableTableManager get serverDisabledCmds =>
       $$ServerDisabledCmdsTableTableManager(_db, _db.serverDisabledCmds);
   $$BmcTargetsTableTableManager get bmcTargets =>

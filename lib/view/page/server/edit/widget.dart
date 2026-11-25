@@ -298,23 +298,26 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
+  static const _kMaxRecommendedKeys = 3;
+
   Widget _buildAuth() {
     // Reads both sources: a server imported with an IdentityFile authenticates
     // with a key even though nothing is selected among the stored ones, and a
     // switch that showed "off" there would be describing the wrong thing.
     final switch_ = ListTile(
       title: Text(l10n.keyAuth),
-      trailing: _keyIdx.listenVal(
-        (idx) => _keyPath.listenVal(
+      trailing: _useKeyAuth.listenVal(
+        (useKey) => _keyPath.listenVal(
           (path) => SwitchX(
-            value: idx != null || path != null,
+            value: useKey || path != null,
             onChanged: (on) {
               if (on) {
                 // Already on by way of a file: leave the file alone rather
                 // than adding an empty stored-key selection beside it
-                if (path == null) _keyIdx.value = -1;
+                if (path == null) _useKeyAuth.value = true;
               } else {
-                _keyIdx.value = null;
+                _useKeyAuth.value = false;
+                _keyIds.value = const [];
                 _keyPath.value = null;
               }
             },
@@ -334,9 +337,9 @@ extension _Widgets on _ServerEditPageState {
     );
 
     /// Keep static auth fields outside [ValueBuilder] to avoid rebuilding them.
-    return _keyIdx.listenVal((v) {
+    return _useKeyAuth.listenVal((on) {
       final children = <Widget>[switch_];
-      if (v != null) {
+      if (on) {
         children.add(_buildKeyAuth());
       }
       children.add(_buildKeyPath());
@@ -400,81 +403,102 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildKeyAuth() => _buildKeyAuthFor(_keyIdx);
+  Widget _buildKeyAuth() => _buildKeyAuthFor(_keyIds);
 
   /// The private-key picker, parameterised by which selection it drives.
   ///
   /// Two independent SSH credentials can be on this page — the direct one and
   /// the tunnel's — and they must not share a selection.
-  Widget _buildKeyAuthFor(ValueNotifier<int?> keyIdx) {
-    const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
-    final privateKeyState = ref.watch(privateKeyProvider);
-    final pkis = privateKeyState.keys;
-
-    final choice = keyIdx.listenVal((val) {
-      final selectedPki = val != null && val >= 0 && val < pkis.length
-          ? pkis[val]
-          : null;
-      return Choice<int>(
-        multiple: false,
-        clearable: true,
-        value: selectedPki != null ? [val!] : [],
-        builder: (state, _) => Column(
-          children: [
-            Wrap(
-              children: List<Widget>.generate(pkis.length, (index) {
-                final item = pkis[index];
-                return ChoiceChipX<int>(
-                  key: ValueKey(index),
-                  // The name, not the id: an id is generated now, so this
-                  // chip showed the user a `ShortId`.
-                  label: item.name,
-                  state: state,
-                  value: index,
-                  onSelected: (idx, on) {
-                    if (on) {
-                      keyIdx.value = idx;
-                      // At most one of the two — see `SshCredential.keyPath`
-                      _keyPath.value = null;
-                    } else {
-                      keyIdx.value = -1;
-                    }
-                  },
-                );
-              }),
+  Widget _buildKeyAuthFor(ValueNotifier<List<String>> keyIds) {
+    final pkis = ref.watch(privateKeyProvider).keys;
+    final byId = {for (final k in pkis) k.id: k};
+    return keyIds.listenVal((ids) {
+      final selected = [for (final id in ids) ?byId[id]];
+      final hasMissing = selected.length != ids.length;
+      final tile = LayoutBuilder(
+        builder: (context, cons) {
+          final maxSummaryWidth = cons.maxWidth.isFinite
+              ? math.min(180.0, math.max(72.0, cons.maxWidth * 0.42))
+              : 160.0;
+          return ListTile(
+            leading: Icon(
+              Icons.key,
+              color: hasMissing ? Theme.of(context).colorScheme.error : null,
             ),
-            UIs.height7,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            title: Text(l10n.privateKey),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (selectedPki != null)
-                  Btn.icon(
-                    icon: const Icon(Icons.edit, size: 20),
-                    text: libL10n.edit,
-                    onTap: () => PrivateKeyEditPage.route.go(
-                      context,
-                      args: PrivateKeyEditPageArgs(pki: selectedPki),
-                    ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxSummaryWidth),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          selected.isEmpty
+                              ? libL10n.empty
+                              : selected.first.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: selected.isNotEmpty
+                              ? UIs.text15
+                              : UIs.text15.copyWith(color: UIs.textGrey.color),
+                        ),
+                      ),
+                      if (selected.length > 1)
+                        Text(' +${selected.length - 1}', style: UIs.text15),
+                    ],
                   ),
-                Btn.icon(
-                  icon: const Icon(Icons.add, size: 20),
-                  text: libL10n.add,
-                  onTap: () => PrivateKeyEditPage.route.go(context),
                 ),
+                UIs.width7,
+                const Icon(Icons.keyboard_arrow_right),
               ],
             ),
-          ],
-        ),
+            onTap: () => _onTapPrivateKey(keyIds),
+          ).cardx;
+        },
+      );
+      if (!hasMissing && selected.length <= _kMaxRecommendedKeys) return tile;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          tile,
+          if (hasMissing)
+            _buildKeyWarning('${libL10n.invalid}: ${libL10n.key}'),
+          if (selected.length > _kMaxRecommendedKeys)
+            _buildTooManyKeysWarning(),
+        ],
       );
     });
+  }
 
-    return ExpandTile(
-      leading: const Icon(Icons.key),
-      initiallyExpanded: keyIdx.value != null && keyIdx.value! >= 0,
-      childrenPadding: padding,
-      title: Text(l10n.privateKey),
-      children: [choice],
-    ).cardx;
+  Widget _buildTooManyKeysWarning({
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(7, 2, 7, 7),
+  }) => _buildKeyWarning(l10n.sshTooManyKeysWarning, padding: padding);
+
+  Widget _buildKeyWarning(
+    String message, {
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(7, 2, 7, 7),
+  }) {
+    final color = Theme.of(context).colorScheme.error;
+    return Padding(
+      padding: padding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: UIs.text12Grey.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEnvs() {
@@ -720,12 +744,9 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildCustomDev() {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CenterGreyTitle(l10n.specifyDev),
-        ListTile(
-          leading: const Icon(MingCute.question_line),
-          title: TipText(libL10n.note, l10n.specifyDevTip),
-        ).cardx,
+        _buildGroupTitle(l10n.specifyDev, tip: l10n.specifyDevTip),
         Input(
           controller: _preferTempDevCtrl,
           type: TextInputType.text,
@@ -734,18 +755,17 @@ extension _Widgets on _ServerEditPageState {
           hint: 'nvme-pci-0400',
           suggestion: false,
         ),
-        ListTile(
-          leading: const Icon(MingCute.question_line),
-          title: TipText('${libL10n.temperature} (°C)', l10n.tempIsCelsiusTip),
-          trailing: _tempIsCelsius.listenVal(
-            (v) => SwitchX(
+        _tempIsCelsius.listenVal(
+          (v) => ListTile(
+            leading: const Icon(Icons.thermostat),
+            title: TipText('${libL10n.temperature} (°C)', l10n.tempIsCelsiusTip),
+            trailing: SwitchX(
               value: v,
-              onChanged: (val) {
-                _tempIsCelsius.value = val;
-              },
+              onChanged: (val) => _tempIsCelsius.value = val,
             ),
-          ),
-        ).cardx,
+            onTap: () => _tempIsCelsius.value = !v,
+          ).cardx,
+        ),
         Input(
           controller: _netDevCtrl,
           type: TextInputType.text,
@@ -1052,20 +1072,27 @@ extension _Widgets on _ServerEditPageState {
   /// The PVE password, only where the SSH login has none to lend: with a
   /// password there, that is what is sent.
   Widget _buildPvePassword() {
-    return _keyIdx.listenVal((v) {
-      final useKeyAuth = v != null && v >= 0;
-      if (!useKeyAuth) return UIs.placeholder;
-      return Input(
-        controller: _pvePwdCtrl,
-        type: TextInputType.visiblePassword,
-        icon: MingCute.lock_line,
-        label: l10n.pvePassword,
-        hint: l10n.pvePasswordHint,
-        obscureText: true,
-        onReveal: _revealStored(_pvePwdCtrl),
-        suggestion: false,
-      );
-    });
+    final liveIds = {
+      for (final k in ref.watch(privateKeyProvider).keys) k.id,
+    };
+    return ListenableBuilder(
+      listenable: _keyAuthChanges,
+      builder: (_, _) {
+        final useKeyAuth =
+            _useKeyAuth.value && _keyIds.value.any(liveIds.contains);
+        if (!useKeyAuth) return UIs.placeholder;
+        return Input(
+          controller: _pvePwdCtrl,
+          type: TextInputType.visiblePassword,
+          icon: MingCute.lock_line,
+          label: l10n.pvePassword,
+          hint: l10n.pvePasswordHint,
+          obscureText: true,
+          onReveal: _revealStored(_pvePwdCtrl),
+          suggestion: false,
+        );
+      },
+    );
   }
 
   /// The certificate the user confirmed, and the way to make the next
@@ -1300,8 +1327,9 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildCustomCmds() {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CenterGreyTitle(l10n.customCmd),
+        _buildGroupTitle(l10n.customCmd),
         // No count and no preview: the commands are on the server, and this
         // page has not asked it. The editor is what reads them.
         ListTile(
@@ -1323,8 +1351,9 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildStorageCollection() {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CenterGreyTitle(libL10n.disk),
+        _buildGroupTitle(libL10n.disk),
         _disabledCmdTypes.listenVal((_) {
           final diskInfoEnabled = !_isCmdGroupDisabled(_diskInfoCmdTypes);
           final diskHealthEnabled = !_isCmdGroupDisabled(_diskHealthCmdTypes);

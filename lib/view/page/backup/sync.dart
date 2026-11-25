@@ -66,212 +66,221 @@ enum _SyncDest {
 /// The sync group: where it goes and how that went, what it carries, and the
 /// one-off copies to a file or the clipboard.
 extension _SyncWidgets on _BackupPageState {
-  /// Beside each other where the pane has room for two columns.
-  Widget get _buildSyncSection {
-    return LayoutBuilder(
-      builder: (context, box) {
-        final pad = context.padBottom(UIs.roundRectCardPadding);
-        if (box.maxWidth < _twoColumns) {
-          return ListView(padding: pad, children: _syncTiles);
-        }
-        return SingleChildScrollView(
-          padding: pad,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: Column(children: _syncAutoTiles)),
-              Expanded(child: Column(children: _syncOtherTiles)),
-            ],
-          ),
+  List<Widget> get _syncGroups => [
+    _buildSyncAutoGroup,
+    _buildSyncContentGroup,
+    _buildSyncManualGroup,
+  ];
+
+  Widget get _buildSyncAutoGroup {
+    return ListenableBuilder(
+      listenable: _destChanges,
+      builder: (context, _) {
+        final dest = _SyncDest.current;
+        return SettingsGroupView(
+          SettingsGroup(l10n.syncAuto, [
+            SettingsRow(l10n.syncChannel, () => _buildDestPicker(dest)),
+            if (dest != _SyncDest.off) ..._buildDestDetailRows(dest),
+          ]),
         );
       },
     );
   }
 
-  static const _twoColumns = 720.0;
-
-  List<Widget> get _syncTiles => [..._syncAutoTiles, ..._syncOtherTiles];
-
-  List<Widget> get _syncAutoTiles => [
-    CenterGreyTitle(l10n.syncAuto),
-    ListenableBuilder(
-      listenable: _destChanges,
-      builder: (context, _) {
-        final dest = _SyncDest.current;
-        return Column(
-          children: [
-            _buildDestPicker(dest),
-            if (dest != _SyncDest.off) _buildDestDetails(dest),
-          ],
-        );
-      },
-    ),
-  ];
-
-  List<Widget> get _syncOtherTiles => [
-    CenterGreyTitle(libL10n.content),
-    CardX(
-      child: Column(
-        children: [
-          _buildBakPwd,
-          _buildSyncedData,
-        ],
-      ),
-    ),
-    CenterGreyTitle(libL10n.manual),
-    ListenableBuilder(
-      listenable: Listenable.merge([_destChanges, remoteLoading, lkcLoading]),
-      builder: (context, _) => _buildManual(_SyncDest.current),
-    ),
-  ];
+  Widget get _buildSyncContentGroup {
+    return SettingsGroupView(
+      SettingsGroup(libL10n.content, [
+        SettingsRow(l10n.backupPassword, () => _buildBakPwd),
+        SettingsRow(l10n.syncedData, () => _buildSyncedData),
+      ]),
+    );
+  }
 
   /// A file, the clipboard, and the remotes that are not the channel: one
   /// copy, either way, whatever syncs on its own.
-  Widget _buildManual(_SyncDest channel) {
-    return CardX(
-      child: Column(
-        children: [
-          _manualRow(
-            Icons.insert_drive_file_outlined,
-            libL10n.file,
-            onRestore: () => BackupService.restore(context, FileBackupSource()),
-            action: libL10n.export,
-            onAction: () => BackupService.backup(context, FileBackupSource()),
-          ),
-          _manualRow(
-            Icons.content_paste,
-            libL10n.clipboard,
-            onRestore: () => BackupService.restore(context, ClipboardBackupSource()),
-            action: libL10n.copy,
-            onAction: () => BackupService.backup(context, ClipboardBackupSource()),
-          ),
-          if (isICloudSupported && channel != _SyncDest.icloud)
-            _manualRow(
-              _SyncDest.icloud.icon,
-              _SyncDest.icloud.name,
-              busy: remoteLoading.value,
-              onRestore: _onTapIcloudRestore,
+  Widget get _buildSyncManualGroup {
+    return ListenableBuilder(
+      listenable: _manualChanges,
+      builder: (context, _) {
+        final channel = _SyncDest.current;
+        return SettingsGroupView(
+          SettingsGroup(libL10n.manual, [
+            SettingsRow(
+              libL10n.file,
+              () => _manualRow(
+                Icons.insert_drive_file_outlined,
+                libL10n.file,
+                onRestore: () => BackupService.restore(context, FileBackupSource()),
+                action: libL10n.export,
+                onAction: () => BackupService.backup(context, FileBackupSource()),
+              ),
             ),
-          if (_webdavSet && channel != _SyncDest.webdav)
-            _manualRow(
-              _SyncDest.webdav.icon,
-              _SyncDest.webdav.name,
-              busy: remoteLoading.value,
-              onRestore: () => _onTapWebdavDl(context),
-              action: libL10n.backup,
-              onAction: () => _onTapWebdavUp(context),
+            SettingsRow(
+              libL10n.clipboard,
+              () => _manualRow(
+                Icons.content_paste,
+                libL10n.clipboard,
+                onRestore: () => BackupService.restore(context, ClipboardBackupSource()),
+                action: libL10n.copy,
+                onAction: () => BackupService.backup(context, ClipboardBackupSource()),
+              ),
             ),
-          if (Lkc.enabled && Lkc.client.signedIn && channel != _SyncDest.lkc)
-            _manualRow(
-              _SyncDest.lkc.icon,
-              _SyncDest.lkc.name,
-              busy: lkcLoading.value,
-              onRestore: () => _onTapLkcRestore(context),
-            ),
-        ],
-      ),
+            if (isICloudSupported && channel != _SyncDest.icloud)
+              SettingsRow(
+                _SyncDest.icloud.name,
+                () => _manualRow(
+                  _SyncDest.icloud.icon,
+                  _SyncDest.icloud.name,
+                  busy: remoteLoading.value,
+                  onRestore: _onTapIcloudRestore,
+                ),
+              ),
+            if (_webdavSet && channel != _SyncDest.webdav)
+              SettingsRow(
+                _SyncDest.webdav.name,
+                () => _manualRow(
+                  _SyncDest.webdav.icon,
+                  _SyncDest.webdav.name,
+                  busy: remoteLoading.value,
+                  onRestore: () => _onTapWebdavDl(context),
+                  action: libL10n.backup,
+                  onAction: () => _onTapWebdavUp(context),
+                ),
+              ),
+            if (Lkc.enabled && Lkc.client.signedIn && channel != _SyncDest.lkc)
+              SettingsRow(
+                _SyncDest.lkc.name,
+                () => _manualRow(
+                  _SyncDest.lkc.icon,
+                  _SyncDest.lkc.name,
+                  busy: lkcLoading.value,
+                  onRestore: () => _onTapLkcRestore(context),
+                ),
+              ),
+          ]),
+        );
+      },
     );
   }
 
   Widget _buildDestPicker(_SyncDest dest) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return CardX(
-      child: Builder(
-        builder: (tile) => ListTile(
-          leading: Icon(dest.icon, color: primary),
-          title: Text(l10n.syncChannel),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(dest.name, style: UIs.textGrey),
-              const Icon(Icons.expand_more),
-            ],
-          ),
-          onTap: () => showContextMenu(
-            tile,
-            [
-              for (final d in _SyncDest.offered)
-                ContextMenuAction(
-                  text: d.name,
-                  icon: d.icon,
-                  note: d.note,
-                  checked: d == dest,
-                  onTap: () => _selectDest(d),
-                ),
-            ],
-            at: contextMenuAnchorBelow(tile),
+    final scheme = Theme.of(context).colorScheme;
+    List<ContextMenuAction> actions() => [
+      for (final d in _SyncDest.offered)
+        ContextMenuAction(
+          text: d.name,
+          icon: d.icon,
+          note: d.note,
+          checked: d == dest,
+          onTap: () => _selectDest(d),
+        ),
+    ];
+    return ListTile(
+      leading: Icon(
+        dest.icon,
+        color: dest == _SyncDest.off ? null : scheme.primary,
+      ),
+      title: Text(l10n.syncChannel),
+      trailing: IconTheme.merge(
+        key: _destAnchorKey,
+        data: IconThemeData(color: scheme.onSurfaceVariant),
+        child: ContextMenuButton.value(
+          Text(
+            dest.name,
+            style: dest == _SyncDest.off
+                ? UIs.text15.copyWith(color: UIs.textGrey.color)
+                : UIs.text15,
           ),
         ),
       ),
+      onTap: () {
+        final anchor = _destAnchorKey.currentContext ?? context;
+        showContextMenu(
+          anchor,
+          actions(),
+          at: contextMenuAnchorBelow(anchor),
+        );
+      },
     );
   }
 
-  Widget _buildDestDetails(_SyncDest dest) {
+  List<SettingsRow> _buildDestDetailRows(_SyncDest dest) {
     final loading = dest == _SyncDest.lkc ? lkcLoading : remoteLoading;
-    return CardX(
-      child: Column(
-        children: [
-          _buildSyncStatus(dest),
-          if (dest == _SyncDest.webdav)
-            ListTile(
-              title: Text(libL10n.server),
-              subtitle: Text(
-                [SyncRemotes.webdavUrl, SyncRemotes.webdavUser].nonNulls.join(' · '),
-                style: UIs.textGrey,
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _onTapWebdavSetting(context),
+    return [
+      SettingsRow(l10n.syncNow, () => _buildSyncStatus(dest)),
+      if (dest == _SyncDest.webdav)
+        SettingsRow(
+          libL10n.server,
+          () => ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: Text(libL10n.server),
+            subtitle: Text(
+              [SyncRemotes.webdavUrl, SyncRemotes.webdavUser].nonNulls.join(' · '),
+              style: UIs.textGrey,
             ),
-          if (dest == _SyncDest.lkc) ...[
-            ListTile(
-              title: Text(libL10n.lkcAccount),
-              subtitle: Text(_SyncDest.lkc.note ?? '', style: UIs.textGrey),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
-            ),
-            ListTile(
-              title: Text(l10n.syncKeyRotate),
-              trailing: const Icon(Icons.key),
-              onTap: () => _onTapRotateSyncKey(context),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.fromLTRB(13, 0, 13, 7),
-            child: loading.listenVal((busy) {
-              if (busy) return const Align(alignment: Alignment.centerRight, child: SizedLoading.small);
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(onPressed: () => _onTapDestRestore(dest), child: Text(libL10n.restore)),
-                  if (dest == _SyncDest.webdav) ...[
-                    UIs.width7,
-                    FilledButton.tonal(
-                      onPressed: () => _onTapWebdavUp(context),
-                      child: Text(libL10n.backup),
-                    ),
-                  ],
-                ],
-              );
-            }),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () => _onTapWebdavSetting(context),
           ),
-        ],
+        ),
+      if (dest == _SyncDest.lkc) ...[
+        SettingsRow(
+          libL10n.lkcAccount,
+          () => ListTile(
+            leading: const Icon(Icons.account_circle_outlined),
+            title: Text(libL10n.lkcAccount),
+            subtitle: Text(_SyncDest.lkc.note ?? '', style: UIs.textGrey),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () => LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
+          ),
+        ),
+        SettingsRow(
+          l10n.syncKeyRotate,
+          () => ListTile(
+            leading: const Icon(Icons.key_outlined),
+            title: Text(l10n.syncKeyRotate),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () => _onTapRotateSyncKey(context),
+          ),
+        ),
+      ],
+      SettingsRow(
+        libL10n.restore,
+        () => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          child: loading.listenVal((busy) {
+            if (busy) {
+              return const Align(
+                alignment: Alignment.centerRight,
+                child: SizedLoading.small,
+              );
+            }
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => _onTapDestRestore(dest),
+                  child: Text(libL10n.restore),
+                ),
+                if (dest == _SyncDest.webdav) ...[
+                  UIs.width7,
+                  FilledButton.tonal(
+                    onPressed: () => _onTapWebdavUp(context),
+                    child: Text(libL10n.backup),
+                  ),
+                ],
+              ],
+            );
+          }),
+        ),
       ),
-    );
+    ];
   }
 
   /// How the last sync went, and when; the one thing to do about it where
   /// there is one (the password).
   Widget _buildSyncStatus(_SyncDest dest) {
     return ListenableBuilder(
-      listenable: Listenable.merge([
-        _syncing,
-        bakSync.running,
-        bakSync.lastFailure,
-        SyncKeyring.passwordMismatch,
-        BakSyncer.remoteTooNew,
-        lkcLog.tooNew,
-        fileLog.tooNew,
-      ]),
+      listenable: _statusChanges,
       builder: (context, _) {
         return FutureBuilder<bool>(
           future: dest == _SyncDest.icloud ? _icloudConflict : null,
@@ -344,9 +353,10 @@ extension _SyncWidgets on _BackupPageState {
     return ListTile(
       leading: const Icon(Icons.tune),
       title: Text(l10n.syncedData),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => showRowsSheet<void>(
         context,
+        title: l10n.syncedData,
         rows: (_) => [
           for (final c in SyncCategory.values)
             if (c == SyncCategory.passphrases)

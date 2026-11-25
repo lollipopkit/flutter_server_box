@@ -74,7 +74,7 @@ final class BmcSummaryNotifierProvider
 }
 
 String _$bmcSummaryNotifierHash() =>
-    r'cdb7ae7309fca02b554e8ce6a7f05e4081d916aa';
+    r'2957b52e6b5a755f36c7a499e7cdde7bf5c0d760';
 
 /// Lightweight list-card BMC poller.
 ///

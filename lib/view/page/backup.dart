@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/sync/category.dart';
@@ -30,6 +29,7 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
+import 'package:server_box/view/page/setting/group.dart';
 
 part 'backup/sync.dart';
 
@@ -42,11 +42,12 @@ part 'backup/sync.dart';
 enum BackupSection { sync, import }
 
 class BackupPage extends ConsumerStatefulWidget {
-  /// Null shows both, side by side, under one heading each.
+  /// Null shows all sync and import groups together in one [PageColumns] grid.
   ///
   /// That is the standalone [route], which the DMG notice opens directly: there
-  /// is no menu around it to say which half you are looking at, so it says so
-  /// itself. Inside the settings page the row that opened it already has.
+  /// is no menu around it to say which half you are looking at, so it shows all
+  /// groups together. Inside the settings page the row that opened it already
+  /// selects a section.
   final BackupSection? section;
 
   const BackupPage({super.key, this.section});
@@ -76,6 +77,23 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
   /// Built once: a new one each build would subscribe again each time.
   late final _destChanges = Listenable.merge([_SyncDest.changes, _webdavEdited]);
+  late final _manualChanges = Listenable.merge([
+    _destChanges,
+    remoteLoading,
+    lkcLoading,
+  ]);
+  late final _statusChanges = Listenable.merge([
+    _syncing,
+    bakSync.running,
+    bakSync.lastFailure,
+    SyncKeyring.passwordMismatch,
+    BakSyncer.remoteTooNew,
+    lkcLog.tooNew,
+    fileLog.tooNew,
+  ]);
+
+  /// Anchor for the sync-channel context menu so every tap opens in one place.
+  final _destAnchorKey = GlobalKey();
 
   /// A channel being switched to.
   bool _selectingDest = false;
@@ -106,39 +124,37 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (section == null) {
       return Scaffold(
         appBar: CustomAppBar(title: Text(libL10n.backup)),
-        body: SafeArea(child: _buildBody),
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: _buildGrid([..._syncGroups, _buildImportGroup]),
+        ),
       );
     }
 
     // Shown in the settings content pane, which brings the Scaffold and the
-    // bar. No heading either, for the reason [AppSettingsPage] gives: the menu
-    // names the group and the bar repeats it, so a third would be one too many.
-    if (section == BackupSection.sync) return _buildSyncSection;
-    return ListView(
-      padding: context.padBottom(UIs.roundRectCardPadding),
-      children: _importTiles,
+    // bar. No page heading either, for the reason [AppSettingsPage] gives: the
+    // menu names the group and the bar repeats it.
+    if (section == BackupSection.sync) return _buildGrid(_syncGroups);
+    return _buildGrid([_buildImportGroup]);
+  }
+
+  Widget _buildGrid(List<Widget> children) {
+    return PageColumns(
+      padding: kSettingsGridPadding,
+      spacing: kSettingsGridSpacing,
+      bottomInset: MediaQuery.paddingOf(context).bottom,
+      children: children,
     );
   }
 
-  List<Widget> get _importTiles => [
-    _buildImportSharedServer,
-    _buildBulkImportServers,
-    _buildImportSnippet,
-  ];
-
-  /// Both groups in one list, which is also what each of them is on its own
-  /// when the settings pane shows one — see above. They were columns beside
-  /// each other on a wide window, each scrolling separately inside a row that
-  /// scrolled sideways.
-  Widget get _buildBody {
-    return ListView(
-      padding: context.padBottom(UIs.roundRectCardPadding),
-      children: [
-        CenterGreyTitle(libL10n.sync),
-        ..._syncTiles,
-        CenterGreyTitle(libL10n.import),
-        ..._importTiles,
-      ],
+  Widget get _buildImportGroup {
+    return SettingsGroupView(
+      SettingsGroup(libL10n.import, [
+        SettingsRow(l10n.shareImportTitle, () => _buildImportSharedServer),
+        SettingsRow(libL10n.server, () => _buildBulkImportServers),
+        SettingsRow(libL10n.snippet, () => _buildImportSnippet),
+      ]),
     );
   }
 
@@ -148,11 +164,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       builder: (context, snapshot) {
         final hasPwd = snapshot.data?.isNotEmpty == true;
         return ListTile(
-          leading: const Icon(Icons.lock),
+          leading: const Icon(Icons.lock_outline),
           title: Text(l10n.backupPassword),
           trailing: Text(
             hasPwd ? l10n.bakPwdSet : l10n.bakPwdNotSet,
-            style: UIs.textGrey,
+            style: hasPwd
+                ? UIs.text15
+                : UIs.text15.copyWith(color: UIs.textGrey.color),
           ),
           onTap: () async => _onTapSetBakPwd(context),
         );
@@ -335,24 +353,20 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   /// of servers and carries no keys: this one takes an encrypted payload made
   /// by another device, which does.
   Widget get _buildImportSharedServer {
-    return CardX(
-      child: ListTile(
-        title: Text(l10n.shareImportTitle),
-        leading: const Icon(Icons.ios_share),
-        onTap: () => ServerShareUi.receiveFromFile(context, ref),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-      ),
+    return ListTile(
+      title: Text(l10n.shareImportTitle),
+      leading: const Icon(Icons.ios_share),
+      onTap: () => ServerShareUi.receiveFromFile(context, ref),
+      trailing: const Icon(Icons.keyboard_arrow_right),
     );
   }
 
   Widget get _buildBulkImportServers {
-    return CardX(
-      child: ListTile(
-        title: Text(libL10n.server),
-        leading: const Icon(BoxIcons.bx_server),
-        onTap: () => _onBulkImportServers(context),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-      ),
+    return ListTile(
+      title: Text(libL10n.server),
+      leading: const Icon(BoxIcons.bx_server),
+      onTap: () => _onBulkImportServers(context),
+      trailing: const Icon(Icons.keyboard_arrow_right),
     );
   }
 
@@ -423,7 +437,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         }
         context.pop();
       },
-    ).cardx;
+    );
   }
 
   @override

@@ -102,6 +102,10 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id, path FROM server_identity_file ORDER BY ord;',
       'path',
     );
+    final keys = _group(
+      'SELECT server_id, key_id FROM server_key ORDER BY ord;',
+      'key_id',
+    );
     final envs = _pairs(
       'SELECT server_id, key, value FROM server_env;',
       'key',
@@ -116,6 +120,7 @@ class ServerStore extends EntityStore<Spi> {
           disabled: disabled[row['id']],
           jumps: jumps[row['id']],
           identityFiles: identityFiles[row['id']],
+          keyIds: keys[row['id']],
           envs: envs[row['id']],
         ),
     ];
@@ -144,6 +149,7 @@ class ServerStore extends EntityStore<Spi> {
     List<String>? disabled,
     List<String>? jumps,
     List<String>? identityFiles,
+    List<String>? keyIds,
     Map<String, String>? envs,
   }) {
     final sshIp = row['ssh_ip'] as String?;
@@ -165,7 +171,8 @@ class ServerStore extends EntityStore<Spi> {
               port: row['ssh_port'] as int? ?? 22,
               user: row['ssh_user'] as String? ?? 'root',
               pwd: row['ssh_pwd'] as String?,
-              keyId: row['ssh_key_id'] as String?,
+              keyId: keyIds?.firstOrNull ?? row['ssh_key_id'] as String?,
+              keyIds: keyIds,
               identityFiles: identityFiles,
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
@@ -256,6 +263,18 @@ class ServerStore extends EntityStore<Spi> {
     );
   }
 
+  /// Promotes each server's lowest-order remaining `server_key` into
+  /// `server.ssh_key_id` after a key deletion cleared it via `ON DELETE SET NULL`.
+  static void backfillPrimaryKeys(Database db) {
+    db.execute(
+      'UPDATE server SET ssh_key_id = ('
+      '  SELECT key_id FROM server_key'
+      '  WHERE server_id = server.id ORDER BY ord LIMIT 1'
+      ') WHERE ssh_key_id IS NULL'
+      '  AND EXISTS (SELECT 1 FROM server_key WHERE server_id = server.id);',
+    );
+  }
+
   @override
   void write(Spi item) {
     final ssh = item.ssh;
@@ -310,7 +329,8 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.port,
       ssh?.user,
       ssh?.pwd,
-      ssh?.keyId,
+      // Populated in [writeLinks] once every referenced key exists.
+      null,
       // TODO(migration): unused since `server_identity_file` (v35); dropped
       // with the next rebuild of `server`.
       null,
@@ -361,6 +381,7 @@ class ServerStore extends EntityStore<Spi> {
       'server_env',
       'server_jump',
       'server_identity_file',
+      'server_key',
       'server_disabled_cmd',
     ]) {
       db.execute('DELETE FROM $t WHERE server_id = ?;', [item.id]);
@@ -395,15 +416,16 @@ class ServerStore extends EntityStore<Spi> {
     }
   }
 
-  /// A jump host is a server, so the row it names may not have been written
-  /// yet — during a restore the order is whatever the backup listed. This runs
-  /// once every server exists.
+  /// Writes cross-record links (`server_jump` and `server_key` /
+  /// `server.ssh_key_id`) once every row in the batch exists.
   ///
-  /// One that is still missing is dropped rather than written as a dangling
-  /// reference; the foreign key would refuse it anyway, and refusing would
-  /// fail the whole restore over a server deleted long ago.
+  /// When [strict] is false (restore / sync), targets that are still missing
+  /// after the batch are dropped rather than failing the whole restore/sync.
+  /// When [strict] is true (interactive [put] / [rename]), key IDs are written
+  /// verbatim so SQLite foreign keys reject any key deleted concurrently.
   @override
-  void writeLinks(Spi item) {
+  void writeLinks(Spi item, {bool strict = false}) {
+    db.execute('DELETE FROM server_jump WHERE server_id = ?;', [item.id]);
     var ord = 0;
     for (final jump in item.ssh?.resolvedJumpIds ?? const <String>[]) {
       final exists = db.select('SELECT 1 FROM server WHERE id = ?;', [
@@ -414,6 +436,39 @@ class ServerStore extends EntityStore<Spi> {
         item.id,
         ord++,
         jump,
+      ]);
+    }
+
+    db.execute('DELETE FROM server_key WHERE server_id = ?;', [item.id]);
+    final rawKeyIds = item.ssh?.resolvedKeyIds ?? const <String>[];
+    final List<String> keyIds;
+    if (strict || rawKeyIds.isEmpty) {
+      keyIds = rawKeyIds;
+    } else {
+      final enforceFk =
+          (db.select('PRAGMA foreign_keys;').firstOrNull?['foreign_keys']
+                  as int? ??
+              0) !=
+          0;
+      keyIds = <String>[
+        for (final keyId in rawKeyIds)
+          if (!enforceFk ||
+              db.select('SELECT 1 FROM private_key WHERE id = ?;', [
+                keyId,
+              ]).isNotEmpty)
+            keyId,
+      ];
+    }
+    db.execute('UPDATE server SET ssh_key_id = ? WHERE id = ?;', [
+      keyIds.firstOrNull,
+      item.id,
+    ]);
+    var keyOrd = 0;
+    for (final keyId in keyIds) {
+      db.execute('INSERT INTO server_key VALUES (?, ?, ?);', [
+        item.id,
+        keyOrd++,
+        keyId,
       ]);
     }
   }
@@ -564,7 +619,7 @@ class ServerStore extends EntityStore<Spi> {
           ],
         );
         write(replacement);
-        writeLinks(replacement);
+        writeLinks(replacement, strict: true);
 
         // Every table whose `server_id` references this row. A table left out
         // keeps pointing at the old id, which the DELETE below then cascades

@@ -538,6 +538,7 @@ extension _Actions on _ServerEditPageState {
       BSDStatusCmdType.disk ||
       WindowsStatusCmdType.disk => libL10n.disk,
       StatusCmdType.diskSmart ||
+      BSDStatusCmdType.diskSmart ||
       WindowsStatusCmdType.diskSmart => l10n.diskHealth,
       _ => cmdType.name,
     };
@@ -623,13 +624,15 @@ extension _Actions on _ServerEditPageState {
     // methods rather than turning them off.
     final useSsh = _useSsh.value && !local;
     final useMonitorHttp = _useMonitorHttp.value && !local;
-    final keyIdx = _keyIdx.value;
-    // `-1` is what the key-auth switch writes when it is turned on before a
-    // key is picked: no selection. `elementAtOrNull` throws on it rather than
-    // answering null.
-    final selectedKey = keyIdx == null || keyIdx < 0
-        ? null
-        : ref.read(privateKeyProvider).keys.elementAtOrNull(keyIdx);
+    final useKeyAuth = _useKeyAuth.value;
+    final selectedKeyIds = useKeyAuth ? _keyIds.value : const <String>[];
+    final liveKeysById = {
+      for (final k in ref.read(privateKeyProvider).keys) k.id: k,
+    };
+    final selectedKeys = [
+      for (final id in selectedKeyIds) ?liveKeysById[id],
+    ];
+    final hasMissingKey = selectedKeys.length != selectedKeyIds.length;
 
     // The SSH form is hidden when SSH is switched off, so there is nothing
     // there to validate — and requiring it is what used to make a
@@ -638,7 +641,7 @@ extension _Actions on _ServerEditPageState {
       // Said rather than silently dropped: the chosen key was deleted from
       // another pane meanwhile, and going on would write a server with no
       // key and no word about why.
-      if (keyIdx != null && keyIdx >= 0 && selectedKey == null) {
+      if (hasMissingKey) {
         Toast.show('${libL10n.invalid}: ${libL10n.key}');
         return null;
       }
@@ -652,7 +655,10 @@ extension _Actions on _ServerEditPageState {
       }
       // Key auth switched on with no key picked and no password to fall back
       // on: refused before asking whether no authentication is meant.
-      if (keyIdx == -1 && _passwordController.text.isEmpty) {
+      if (useKeyAuth &&
+          selectedKeys.isEmpty &&
+          _keyPath.value == null &&
+          _passwordController.text.isEmpty) {
         Toast.show('${libL10n.empty}: ${libL10n.key}');
         return null;
       }
@@ -661,7 +667,7 @@ extension _Actions on _ServerEditPageState {
       // on every save would be asking about something that is not true.
       // An agent this build cannot reach is carried, not counted.
       final hasKey =
-          selectedKey != null ||
+          selectedKeys.isNotEmpty ||
           _keyPath.value != null ||
           (sshAgentSupported && _identityAgent != null);
       if (!hasKey && _passwordController.text.isEmpty) {
@@ -686,7 +692,7 @@ extension _Actions on _ServerEditPageState {
       Toast.show('${libL10n.invalid}: ${libL10n.location}');
       return null;
     }
-    final pve = _pveConfigToSave(sshKeyId: selectedKey?.id);
+    final pve = _pveConfigToSave(sshKeyId: selectedKeys.firstOrNull?.id);
     if (identical(pve, _pveInvalid)) return null;
 
     // Only the address is required, and only when the switch is on: there is
@@ -720,7 +726,7 @@ extension _Actions on _ServerEditPageState {
       local: local,
       useSsh: useSsh,
       useMonitorHttp: useMonitorHttp,
-      selectedKey: selectedKey,
+      selectedKeyIds: [for (final k in selectedKeys) k.id],
       geo: geo,
       pve: pve,
       wol: wol,
@@ -758,7 +764,7 @@ extension _Actions on _ServerEditPageState {
   /// The server the form describes, defaults applied once. Pure: nothing on
   /// the form is written.
   Spi _buildSpi(_SaveForm form) {
-    final (:local, :selectedKey, :geo, :wol, bmc: _, useSsh: _, useMonitorHttp: _, pve: _) = form;
+    final (:local, :selectedKeyIds, :geo, :wol, bmc: _, useSsh: _, useMonitorHttp: _, pve: _) = form;
     final proxyCommandText = _proxyCommandCtrl.text.trim();
     final custom = ServerCustom(
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
@@ -807,12 +813,13 @@ extension _Actions on _ServerEditPageState {
                 ? 'root'
                 : _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
-            keyId: selectedKey?.id,
+            keyId: selectedKeyIds.firstOrNull,
+            keyIds: selectedKeyIds.isEmpty ? null : selectedKeyIds,
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            identityFiles: switch ((selectedKey, _keyPath.value)) {
-              (null, final path?) =>
+            identityFiles: switch ((selectedKeyIds.isEmpty, _keyPath.value)) {
+              (true, final path?) =>
                 path == spi?.ssh?.resolvedIdentityFiles.firstOrNull
                     ? spi!.ssh!.resolvedIdentityFiles
                     : [path],
@@ -935,9 +942,9 @@ extension _Actions on _ServerEditPageState {
   /// what makes "which combinations are actually used" answerable without
   /// any of them being about a particular server.
   void _reportSaved(_SaveForm form) {
-    final (:useSsh, :useMonitorHttp, :local, :selectedKey, :geo, pve: _, wol: _, bmc: _) = form;
+    final (:useSsh, :useMonitorHttp, :local, :selectedKeyIds, :geo, pve: _, wol: _, bmc: _) = form;
     String auth() {
-      if (selectedKey != null || _keyPath.value != null) return 'key';
+      if (selectedKeyIds.isNotEmpty || _keyPath.value != null) return 'key';
       if (_passwordController.text.isNotEmpty) return 'password';
       return 'none';
     }
@@ -975,7 +982,7 @@ typedef _SaveForm = ({
   bool local,
   bool useSsh,
   bool useMonitorHttp,
-  PrivateKeyInfo? selectedKey,
+  List<String> selectedKeyIds,
   GeoCoord? geo,
   PveConfig? pve,
   WakeOnLanCfg? wol,
@@ -1030,41 +1037,26 @@ extension _Utils on _ServerEditPageState {
   }
 
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
-    return context.showSheet(
+    return showRowsSheet<void>(
+      context,
       title: '${libL10n.disabled} ${libL10n.cmd}',
-      child: SizedBox(
-        width: 270,
-        child: _disabledCmdTypes.listenVal((disabled) {
-          return ListView.builder(
-            itemCount: allCmdTypes.length,
-            itemExtent: 72,
-            itemBuilder: (context, index) {
-              final cmdType = allCmdTypes.elementAtOrNull(index);
-              if (cmdType == null) return UIs.placeholder;
-              final display = cmdType.displayName;
-              return ListTile(
-                leading: Icon(cmdType.sysType.icon, size: 20),
-                title: Text(
-                  _cmdTypeTitle(cmdType),
-                  style: const TextStyle(fontSize: 16),
-                ),
-                subtitle: Text(cmdType.displayName, style: UIs.text12Grey),
-                trailing: Checkbox(
-                  value: disabled.contains(display),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    _setCmdTypeDisabled(display, value);
-                  },
-                ),
-                onTap: () {
-                  _setCmdTypeDisabled(display, !disabled.contains(display));
-                },
-              );
-            },
-          );
-        }),
-      ),
-      actions: Btnx.oks,
+      rows: (_) => [
+        for (final cmdType in allCmdTypes)
+          _disabledCmdTypes.listenVal((disabled) {
+            final display = cmdType.displayName;
+            return CheckboxListTile(
+              secondary: Icon(cmdType.sysType.icon, size: 20),
+              title: Text(_cmdTypeTitle(cmdType)),
+              subtitle: Text(display, style: UIs.text12Grey),
+              value: disabled.contains(display),
+              onChanged: (value) {
+                if (value == null) return;
+                _setCmdTypeDisabled(display, value);
+              },
+            );
+          }),
+      ],
+      actions: (_) => Btnx.oks,
     );
   }
 
@@ -1101,11 +1093,16 @@ extension _Utils on _ServerEditPageState {
       _portController.text = ssh.port.toString();
       _usernameController.text = ssh.user;
       _passwordController.text = ssh.pwd ?? '';
-      if (ssh.keyId != null) {
-        _keyIdx.value = ref
-            .read(privateKeyProvider)
-            .keys
-            .indexWhere((e) => e.id == ssh.keyId);
+      final storedIds = ssh.resolvedKeyIds;
+      if (storedIds.isNotEmpty) {
+        final existingIds = {
+          for (final k in ref.read(privateKeyProvider).keys) k.id,
+        };
+        _useKeyAuth.value = true;
+        _keyIds.value = [
+          for (final id in storedIds)
+            if (existingIds.contains(id)) id,
+        ];
       }
       _keyPath.value = ssh.resolvedIdentityFiles.firstOrNull;
       _useAgent.value = ssh.identityAgent != null;
@@ -1206,4 +1203,145 @@ extension _Utils on _ServerEditPageState {
     disabledCmdTypes.removeWhere((e) => !allAvailableCmdTypes.contains(e));
     _disabledCmdTypes.value = disabledCmdTypes;
   }
+
+  Future<void> _onTapPrivateKey(ValueNotifier<List<String>> keyIds) async {
+    final pkis = ref.read(privateKeyProvider).keys;
+    final liveIds = {for (final k in pkis) k.id};
+    // Drop stale ids on open so deleted keys do not linger as phantom picks.
+    final initial = [
+      for (final id in keyIds.value)
+        if (liveIds.contains(id)) id,
+    ];
+    if (initial.length != keyIds.value.length) {
+      keyIds.value = initial;
+    }
+
+    final scheme = Theme.of(context).colorScheme;
+    final picked = await showRowsSheet<_KeyPickAction>(
+      context,
+      title: l10n.privateKey,
+      header: keyIds.listenVal(
+        (ids) => ids.length > _Widgets._kMaxRecommendedKeys
+            ? _buildTooManyKeysWarning(padding: const EdgeInsets.only(bottom: 4))
+            : UIs.placeholder,
+      ),
+      rows: (ctx) => [
+        if (pkis.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(17),
+            child: Text(libL10n.empty, style: UIs.textGrey),
+          )
+        else
+          for (final pki in pkis)
+            keyIds.listenVal((ids) {
+              final order = ids.indexOf(pki.id);
+              final selected = order >= 0;
+              return SheetChoiceTile(
+                leading: selected
+                    ? Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: scheme.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${order + 1}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: scheme.onPrimary,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.key),
+                title: pki.name,
+                selected: selected,
+                action: IconButton(
+                  tooltip: libL10n.edit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  onPressed: () =>
+                      Navigator.of(ctx).pop(_KeyPickEdit(pki)),
+                ),
+                onTap: () {
+                  final next = List<String>.from(keyIds.value);
+                  if (next.contains(pki.id)) {
+                    next.remove(pki.id);
+                  } else {
+                    next.add(pki.id);
+                    // At most one of the two — see `SshCredential.keyPath`
+                    _keyPath.value = null;
+                  }
+                  keyIds.value = next;
+                },
+              );
+            }),
+        const Divider(height: 1),
+        ListTile(
+          leading: const Icon(Icons.add),
+          title: Text(libL10n.add),
+          onTap: () => Navigator.of(ctx).pop(const _KeyPickAdd()),
+        ),
+      ],
+      actions: (ctx) => [
+        keyIds.listenVal(
+          (ids) => ids.isEmpty
+              ? UIs.placeholder
+              : TextButton(
+                  onPressed: () => keyIds.value = const [],
+                  child: Text(libL10n.clear),
+                ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+
+    switch (picked) {
+      case _KeyPickEdit(:final pki):
+        await PrivateKeyEditPage.route.go(
+          context,
+          args: PrivateKeyEditPageArgs(pki: pki),
+        );
+        if (!mounted) return;
+        final live = {for (final k in ref.read(privateKeyProvider).keys) k.id};
+        keyIds.value = [
+          for (final id in keyIds.value)
+            if (live.contains(id)) id,
+        ];
+      case _KeyPickAdd():
+        final created = await PrivateKeyEditPage.route.go(context);
+        if (!mounted) return;
+        final live = {for (final k in ref.read(privateKeyProvider).keys) k.id};
+        final next = [
+          for (final id in keyIds.value)
+            if (live.contains(id)) id,
+        ];
+        if (created is PrivateKeyInfo &&
+            live.contains(created.id) &&
+            !next.contains(created.id)) {
+          next.add(created.id);
+          _keyPath.value = null;
+        }
+        keyIds.value = next;
+    }
+  }
+}
+
+sealed class _KeyPickAction {
+  const _KeyPickAction();
+}
+
+final class _KeyPickEdit extends _KeyPickAction {
+  final PrivateKeyInfo pki;
+  const _KeyPickEdit(this.pki);
+}
+
+final class _KeyPickAdd extends _KeyPickAction {
+  const _KeyPickAdd();
 }

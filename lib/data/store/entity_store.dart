@@ -221,7 +221,7 @@ abstract class EntityStore<T extends Object> {
     try {
       SqliteStore.transact(() {
         write(item);
-        writeLinks(item);
+        writeLinks(item, strict: true);
         synced.stamp(idOf(item));
       });
     } on SqliteException catch (e) {
@@ -239,13 +239,17 @@ abstract class EntityStore<T extends Object> {
   /// transaction, with the timestamp applied afterwards.
   void write(T item);
 
-  /// Links [item] to other records of the same table.
+  /// Links [item] to other records (same table or sibling entity tables).
   ///
-  /// A second pass, because a foreign key pointing into this table cannot be
-  /// satisfied while the batch is still being written: a jump host is a
-  /// server, and the row it names may come later in the same restore. Writing
-  /// it inline dropped every forward reference.
-  void writeLinks(T item) {}
+  /// A second pass, because a foreign key pointing into this table or another
+  /// synced entity table cannot be satisfied while a batch is still being
+  /// written: a jump host is a server and a private key may arrive later in
+  /// the same sync batch. Writing links inline dropped forward references.
+  ///
+  /// When [strict] is true (interactive [put] / rename), missing targets are
+  /// not filtered out so foreign keys reject stale references instead of
+  /// silently dropping them.
+  void writeLinks(T item, {bool strict = false}) {}
 
   void upsert(
     List<String> columns,
@@ -429,6 +433,15 @@ abstract class EntityStore<T extends Object> {
             }
           }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
+          if (table == 'private_key') {
+            db.execute(
+              'UPDATE server SET ssh_key_id = ('
+              '  SELECT key_id FROM server_key'
+              '  WHERE server_id = server.id ORDER BY ord LIMIT 1'
+              ') WHERE ssh_key_id IS NULL'
+              '  AND EXISTS (SELECT 1 FROM server_key WHERE server_id = server.id);',
+            );
+          }
           synced.tombstone(id, at: at);
           appliedIds?.add(id);
           changed = true;
@@ -455,9 +468,14 @@ abstract class EntityStore<T extends Object> {
           // the operation log has it (`SyncRecords`); taking it for this
           // one's overwrote it.
           final resolved = byName && (force || idLess) ? reconcile(item) : item;
-          write(resolved);
+          // Savepoint per record so a failure in a child-table write rolls
+          // back the parent upsert and child DELETEs instead of leaving a
+          // half-written row committed.
+          SqliteStore.transact(() {
+            write(resolved);
+            synced.stamp(idOf(resolved), at: at);
+          });
           written.add(resolved);
-          synced.stamp(idOf(resolved), at: at);
           appliedIds?.add(idOf(resolved));
           changed = true;
         } on SqliteException catch (e) {

@@ -5790,265 +5790,266 @@ class AppLocalizationsFa extends AppLocalizations {
   String get kbServerClose => 'سرورها: بستن جزئیات';
 
   @override
-  String get storageTitle => 'Storage';
+  String get storageTitle => 'فضای ذخیره‌سازی';
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'مدیریت فضای ذخیره‌سازی در حال حاضر فقط از سرورهای Linux پشتیبانی می‌کند.';
 
   @override
-  String get storageDisks => 'Disks';
+  String get storageDisks => 'دیسک‌ها';
 
   @override
   String get storageRaid => 'RAID';
 
   @override
-  String get storagePools => 'ZFS pools';
+  String get storagePools => 'استخرهای ZFS';
 
   @override
-  String get storageNoFilesystem => 'No filesystem';
+  String get storageNoFilesystem => 'بدون فایل‌سیستم';
 
   @override
   String storageUsage(Object total, Object used) {
-    return '$used of $total';
+    return '$used از $total';
   }
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size آزاد';
   }
 
   @override
-  String get storageBusyMounted => 'In use';
+  String get storageBusyMounted => 'در حال استفاده';
 
   @override
-  String get storageBusySwap => 'Swap';
+  String get storageBusySwap => 'حافظهٔ مبادله (Swap)';
 
   @override
-  String get storageBusyRaid => 'In an array';
+  String get storageBusyRaid => 'در یک آرایه';
 
   @override
-  String get storageBusyPool => 'In a pool';
+  String get storageBusyPool => 'در یک استخر';
 
   @override
-  String get storageBusyVolume => 'Holds a volume';
+  String get storageBusyVolume => 'دارای حجم منطقی';
 
   @override
-  String get storageBusyReadOnly => 'Read only';
+  String get storageBusyReadOnly => 'فقط‌خواندنی';
 
   @override
-  String get storageBusySystem => 'System partition';
+  String get storageBusySystem => 'پارتیشن سیستم';
 
   @override
   String get storageSystemMount =>
-      'The system uses this mount; it stays mounted.';
+      'سیستم از این نقطهٔ اتصال استفاده می‌کند؛ متصل باقی می‌ماند.';
 
   @override
-  String get storageNotMounted => 'Nothing is mounted there any more.';
+  String get storageNotMounted => 'دیگر چیزی در آنجا متصل نیست.';
 
   @override
-  String get storageMount => 'Mount';
+  String get storageMount => 'اتصال (Mount)';
 
   @override
-  String get storageUnmount => 'Unmount';
+  String get storageUnmount => 'جداسازی (Unmount)';
 
   @override
-  String get storageFormat => 'Format';
+  String get storageFormat => 'فرمت کردن';
 
   @override
-  String get storageInitialize => 'Initialize';
+  String get storageInitialize => 'مقداردهی اولیه';
 
   @override
-  String get storageSmartTest => 'SMART test';
+  String get storageSmartTest => 'آزمایش SMART';
 
   @override
-  String get storageFilesystem => 'Filesystem';
+  String get storageFilesystem => 'فایل‌سیستم';
 
   @override
-  String get storageLabel => 'Label';
+  String get storageLabel => 'برچسب';
 
   @override
-  String get storageMountpoint => 'Mount point';
+  String get storageMountpoint => 'نقطهٔ اتصال';
 
   @override
-  String get storageMountPersist => 'Mount again at every start (/etc/fstab)';
+  String get storageMountPersist =>
+      'اتصال دوباره در هر راه‌اندازی (/etc/fstab)';
 
   @override
-  String get storageMountOwn => 'Let ServerBox write here (for backups)';
+  String get storageMountOwn =>
+      'اجازهٔ نوشتن ServerBox در اینجا (برای پشتیبان‌گیری)';
 
   @override
-  String get storageName => 'Name';
+  String get storageName => 'نام';
 
   @override
-  String get storageLevel => 'Level';
+  String get storageLevel => 'سطح';
 
   @override
-  String get storageLayout => 'Layout';
+  String get storageLayout => 'چیدمان';
 
   @override
   String storagePickDevices(Object count) {
-    return 'Pick at least $count devices. What they hold is lost.';
+    return 'حداقل $count دستگاه انتخاب کنید. تمام داده‌های روی آن‌ها پاک می‌شود.';
   }
 
   @override
-  String get storageCreateRaid => 'Create array';
+  String get storageCreateRaid => 'ایجاد آرایه';
 
   @override
   String storageCreateRaidBody(Object devices, Object level, Object name) {
-    return 'Builds /dev/$name (RAID $level) from $devices. Everything on them is lost.';
+    return '/dev/$name (RAID $level) را از $devices می‌سازد. تمام داده‌های روی آن‌ها پاک می‌شود.';
   }
 
   @override
-  String get storageCreatePool => 'Create pool';
+  String get storageCreatePool => 'ایجاد استخر';
 
   @override
   String storageCreatePoolBody(Object devices, Object layout, Object name) {
-    return 'Builds pool $name ($layout) from $devices. Everything on them is lost.';
+    return 'استخر $name ($layout) را از $devices می‌سازد. تمام داده‌های روی آن‌ها پاک می‌شود.';
   }
 
   @override
   String storageFormatBody(Object device) {
-    return 'Makes a new filesystem on $device. Everything on it is lost.';
+    return 'یک فایل‌سیستم جدید روی $device می‌سازد. تمام داده‌های روی آن پاک می‌شود.';
   }
 
   @override
   String storageInitializeBody(Object device) {
-    return 'Wipes $device and gives it one partition for the whole disk. Everything on it is lost.';
+    return '$device را پاک می‌کند و یک پارتیشن برای کل دیسک می‌سازد. تمام داده‌های روی آن پاک می‌شود.';
   }
 
   @override
   String storageMountBody(Object device, Object mountpoint) {
-    return 'Mounts $device at $mountpoint.';
+    return '$device را در $mountpoint متصل می‌کند.';
   }
 
   @override
   String storageUnmountBody(Object mountpoint) {
-    return 'Unmounts $mountpoint and stops mounting it at start.';
+    return '$mountpoint را جدا می‌کند و اتصال خودکار آن هنگام راه‌اندازی را متوقف می‌کند.';
   }
 
   @override
   String storageSmartTestBody(Object device) {
-    return 'Starts a short self-test on $device. It takes a few minutes; its progress and result show here.';
+    return 'یک خودآزمایی کوتاه روی $device شروع می‌کند. چند دقیقه طول می‌کشد؛ پیشرفت و نتیجه اینجا نمایش داده می‌شود.';
   }
 
   @override
-  String get storageAddMember => 'Add disk';
+  String get storageAddMember => 'افزودن دیسک';
 
   @override
   String storageAddMemberBody(Object array, Object device) {
-    return 'Adds $device to /dev/$array: it replaces a failed member, or waits as a spare. What it holds is lost.';
+    return '$device را به /dev/$array اضافه می‌کند: جایگزین عضو خراب می‌شود یا به‌عنوان یدکی منتظر می‌ماند. داده‌های روی آن پاک می‌شود.';
   }
 
   @override
-  String get storageRemoveMember => 'Remove';
+  String get storageRemoveMember => 'حذف';
 
   @override
   String storageRemoveMemberBody(Object array, Object device) {
-    return 'Marks $device failed and takes it out of /dev/$array. The array runs on without it, degraded if it was a working member.';
+    return '$device را معیوب علامت‌گذاری و از /dev/$array خارج می‌کند. آرایه بدون آن به کار ادامه می‌دهد و اگر عضو فعال بود در وضعیت تضعیف‌شده قرار می‌گیرد.';
   }
 
   @override
-  String get storageDeleteRaid => 'Delete array';
+  String get storageDeleteRaid => 'حذف آرایه';
 
   @override
   String storageDeleteRaidBody(Object array) {
-    return 'Stops /dev/$array and wipes its members\' RAID signatures. Its data is lost.';
+    return '/dev/$array را متوقف و امضاهای RAID اعضای آن را پاک می‌کند. داده‌های آن از دست می‌رود.';
   }
 
   @override
-  String get storageDestroyPool => 'Destroy pool';
+  String get storageDestroyPool => 'نابود کردن استخر';
 
   @override
   String storageDestroyPoolBody(Object name) {
-    return 'Destroys pool $name and everything in it.';
+    return 'استخر $name و تمام محتویات آن را نابود می‌کند.';
   }
 
   @override
-  String get storageScrub => 'Scrub';
+  String get storageScrub => 'پاک‌سازی و بررسی (Scrub)';
 
   @override
   String storageScrubBody(Object name) {
-    return 'Reads all of pool $name and repairs what it can. It runs in the background.';
+    return 'تمام استخر $name را می‌خواند و خطاهای قابل‌ترمیم را اصلاح می‌کند. در پس‌زمینه اجرا می‌شود.';
   }
 
   @override
-  String get storageState => 'State';
+  String get storageState => 'وضعیت';
 
   @override
-  String get storageHealthy => 'Healthy';
+  String get storageHealthy => 'سالم';
 
   @override
-  String get storageDegraded => 'Degraded';
+  String get storageDegraded => 'تضعیف‌شده';
 
   @override
   String storageSync(Object action) {
-    return 'Sync ($action)';
+    return 'همگام‌سازی ($action)';
   }
 
   @override
-  String get storageFaulty => 'Failed';
+  String get storageFaulty => 'خراب';
 
   @override
-  String get storageSpare => 'Spare';
+  String get storageSpare => 'یدکی';
 
   @override
-  String get storageActive => 'Working';
+  String get storageActive => 'فعال';
 
   @override
-  String get storageScan => 'Last scan';
+  String get storageScan => 'آخرین بررسی';
 
   @override
   String storageErrors(Object count) {
-    return '$count errors';
+    return '$count خطا';
   }
 
   @override
-  String get storageNoDisks => 'No disks';
+  String get storageNoDisks => 'هیچ دیسکی وجود ندارد';
 
   @override
-  String get storageNoArrays => 'No arrays';
+  String get storageNoArrays => 'هیچ آرایه‌ای وجود ندارد';
 
   @override
-  String get storageNoPools => 'No pools';
+  String get storageNoPools => 'هیچ استخری وجود ندارد';
 
   @override
   String get storageNoMdadm =>
-      'mdadm is not installed: arrays cannot be built or changed here.';
+      'mdadm نصب نیست: امکان ساخت یا تغییر آرایه‌ها در اینجا وجود ندارد.';
 
   @override
-  String get storageNoZfs => 'ZFS is not installed (zfsutils).';
+  String get storageNoZfs => 'ZFS نصب نیست (zfsutils).';
 
   @override
   String storageTypeToConfirm(Object word) {
-    return 'Type $word to confirm';
+    return 'برای تأیید، $word را بنویسید';
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => 'متن تأیید مطابقت نداشت.';
 
   @override
   String storageInUse(Object device) {
-    return '$device is in use.';
+    return '$device در حال استفاده است.';
   }
 
   @override
-  String get storageBusy => 'Another change to the disks is running.';
+  String get storageBusy => 'تغییر دیگری روی دیسک‌ها در حال اجراست.';
 
   @override
-  String get storageHealthRead => 'Read disk health';
+  String get storageHealthRead => 'خواندن سلامت دیسک';
 
   @override
-  String get storageHealthWearing => 'Wearing';
+  String get storageHealthWearing => 'فرسوده';
 
   @override
-  String get storageHealthFailing => 'Failing';
+  String get storageHealthFailing => 'در حال خراب شدن';
 
   @override
-  String get storageHealthAsleep => 'Asleep';
+  String get storageHealthAsleep => 'در حالت خواب';
 
   @override
-  String get storageHealthUnsupported => 'No SMART';
+  String get storageHealthUnsupported => 'بدون SMART';
 
   @override
   String storageTemperature(Object value) {
@@ -6057,222 +6058,224 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String storagePowerOn(Object hours) {
-    return '$hours h powered on';
+    return '$hours ساعت روشن';
   }
 
   @override
   String storageBadSectors(Object count) {
-    return '$count bad sectors';
+    return '$count سکتور خراب';
   }
 
   @override
   String storageTesting(Object percent) {
-    return 'Self-test: $percent% left';
+    return 'خودآزمایی: $percent% باقی‌مانده';
   }
 
   @override
-  String get storageGrowPartition => 'Grow partition';
+  String get storageGrowPartition => 'گسترش پارتیشن';
 
   @override
   String storageGrowPartitionBody(Object device) {
-    return 'Grows $device into the free space after it. Expand its filesystem after.';
+    return '$device را به فضای خالی پس از آن گسترش می‌دهد. پس از آن فایل‌سیستم آن را بزرگ کنید.';
   }
 
   @override
-  String get storageEncrypt => 'Encrypt (LUKS)';
+  String get storageEncrypt => 'رمزنگاری (LUKS)';
 
   @override
-  String get storagePassphrase => 'Passphrase';
+  String get storagePassphrase => 'عبارت عبور';
 
   @override
-  String get storagePassphraseAgain => 'The same again';
+  String get storagePassphraseAgain => 'تکرار عبارت عبور';
 
   @override
   String get storagePassphraseHint =>
-      'At least 8 characters. Without it the data cannot be read: keep it safe.';
+      'حداقل ۸ نویسه. بدون آن داده‌ها قابل خواندن نیستند: آن را در جای امن نگه دارید.';
 
   @override
   String get storageInvalidPassphrase =>
-      'The passphrase must be 8 to 512 characters, on one line.';
+      'عبارت عبور باید بین ۸ تا ۵۱۲ نویسه و در یک خط باشد.';
 
   @override
-  String get storagePassphrasesDiffer => 'The two passphrases differ.';
+  String get storagePassphrasesDiffer => 'دو عبارت عبور یکسان نیستند.';
 
   @override
-  String get storageEncrypted => 'Encrypted';
+  String get storageEncrypted => 'رمزنگاری‌شده';
 
   @override
-  String get storageLocked => 'Locked';
+  String get storageLocked => 'قفل‌شده';
 
   @override
-  String get storageUnlock => 'Unlock';
+  String get storageUnlock => 'باز کردن قفل';
 
   @override
   String storageUnlockBody(Object device) {
-    return 'Opens $device with its passphrase.';
+    return '$device را با عبارت عبور آن باز می‌کند.';
   }
 
   @override
-  String get storageLock => 'Lock';
+  String get storageLock => 'قفل کردن';
 
   @override
   String storageLockBody(Object device) {
-    return 'Closes $device. Its filesystem must be unmounted.';
+    return '$device را می‌بندد. فایل‌سیستم آن باید جدا شده باشد.';
   }
 
   @override
-  String get storageReplace => 'Replace';
+  String get storageReplace => 'جایگزینی';
 
   @override
   String storageReplaceBody(Object name, Object old, Object replacement) {
-    return 'Replaces $old in pool $name with $replacement. The pool copies its data onto it; what $replacement holds is lost.';
+    return '$old را در استخر $name با $replacement جایگزین می‌کند. استخر داده‌هایش را روی آن کپی می‌کند؛ داده‌های روی $replacement پاک می‌شود.';
   }
 
   @override
-  String get storageAttach => 'Mirror';
+  String get storageAttach => 'آینه‌سازی (Mirror)';
 
   @override
   String storageAttachBody(Object existing, Object replacement) {
-    return 'Mirrors $existing onto $replacement. What $replacement holds is lost.';
+    return '$existing را روی $replacement آینه‌سازی می‌کند. داده‌های روی $replacement پاک می‌شود.';
   }
 
   @override
-  String get storageAddSpare => 'Add spare';
+  String get storageAddSpare => 'افزودن یدکی';
 
   @override
   String storageAddSpareBody(Object devices, Object name) {
-    return 'Adds $devices to pool $name as spares. What they hold is lost.';
+    return '$devices را به‌عنوان یدکی به استخر $name اضافه می‌کند. داده‌های روی آن‌ها پاک می‌شود.';
   }
 
   @override
-  String get storageRemoveDevice => 'Remove';
+  String get storageRemoveDevice => 'حذف';
 
   @override
   String storageRemoveDeviceBody(Object device, Object name) {
-    return 'Takes $device out of pool $name.';
+    return '$device را از استخر $name خارج می‌کند.';
   }
 
   @override
-  String get storageOnline => 'Bring online';
+  String get storageOnline => 'آنلاین کردن';
 
   @override
   String storageOnlineBody(Object device, Object name) {
-    return 'Brings $device back into pool $name, grown into the whole disk.';
+    return '$device را دوباره به استخر $name برمی‌گرداند و به اندازهٔ کل دیسک گسترش می‌دهد.';
   }
 
   @override
-  String get storageDetails => 'Details';
+  String get storageDetails => 'جزئیات';
 
   @override
-  String get storageAttributes => 'Attributes';
+  String get storageAttributes => 'ویژگی‌ها';
 
   @override
-  String get storageAttrValue => 'Value';
+  String get storageAttrValue => 'مقدار';
 
   @override
-  String get storageAttrWorst => 'Worst';
+  String get storageAttrWorst => 'بدترین';
 
   @override
-  String get storageAttrThresh => 'Threshold';
+  String get storageAttrThresh => 'آستانه';
 
   @override
-  String get storageSelfTests => 'Self-tests';
+  String get storageSelfTests => 'خودآزمایی‌ها';
 
   @override
-  String get storageTestShort => 'Short';
+  String get storageTestShort => 'کوتاه';
 
   @override
-  String get storageTestLong => 'Long';
+  String get storageTestLong => 'طولانی';
 
   @override
-  String get storageTestPassed => 'Passed';
+  String get storageTestPassed => 'موفق';
 
   @override
-  String get storageTestFailed => 'Failed';
+  String get storageTestFailed => 'ناموفق';
 
   @override
-  String get storageTestAborted => 'Stopped';
+  String get storageTestAborted => 'متوقف‌شده';
 
   @override
   String storageAtHours(Object hours) {
-    return 'at $hours h';
+    return 'در ساعت $hours';
   }
 
   @override
-  String get storageNothingToShow => 'Nothing to show';
+  String get storageNothingToShow => 'موردی برای نمایش وجود ندارد';
 
   @override
-  String get storageLongTest => 'Long test';
+  String get storageLongTest => 'آزمایش طولانی';
 
   @override
   String storageSmartLongTestBody(Object device) {
-    return 'Starts a long self-test on $device. It reads the whole disk: hours on a large one.';
+    return 'یک خودآزمایی طولانی روی $device شروع می‌کند. کل دیسک را می‌خواند و در دیسک‌های بزرگ ممکن است ساعت‌ها طول بکشد.';
   }
 
   @override
-  String get storageMountedInside => 'Unmount its filesystem first.';
+  String get storageMountedInside => 'ابتدا فایل‌سیستم آن را جدا کنید.';
 
   @override
   String get storageNotRemovable =>
-      'Only a spare or cache device can be taken out here.';
+      'فقط دستگاه یدکی یا کش را می‌توان از اینجا خارج کرد.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'این دستگاه را نمی‌توان از اینجا گسترش داد.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping =>
+      'دستگاه‌هایی انتخاب کنید که با هم هم‌پوشانی نداشته باشند.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'دستگاه نامعتبر است یا دیگر در دسترس نیست.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'نقطهٔ اتصال نامعتبر است.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'نام نامعتبر است.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'این فایل‌سیستم پشتیبانی نمی‌شود.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'برچسب نامعتبر است.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'سطح RAID یا چیدمان استخر نامعتبر است.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices =>
+      'تعداد دستگاه‌های معتبر انتخاب‌شده کافی نیست.';
 
   @override
   String get storageKeyRequired => 'عبارت عبور الزامی است.';
 
   @override
-  String get storageExpand => 'Expand';
+  String get storageExpand => 'بزرگ کردن';
 
   @override
   String storageExpandBody(Object device) {
-    return 'Grows the filesystem on $device to fill its device. It stays mounted.';
+    return 'فایل‌سیستم روی $device را برای پر کردن کل دستگاه گسترش می‌دهد. متصل باقی می‌ماند.';
   }
 
   @override
-  String get storageGrowRaid => 'Grow';
+  String get storageGrowRaid => 'گسترش';
 
   @override
   String storageGrowRaidBody(Object array, Object device) {
-    return 'Adds $device to /dev/$array as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What $device holds is lost.';
+    return '$device را به‌عنوان یک عضو فعال دیگر به /dev/$array اضافه می‌کند. RAID 1 یک آینهٔ جدید به دست می‌آورد؛ RAID 5 و 6 پس از پایان بازآرایی (که ممکن است ساعت‌ها طول بکشد) فضای بیشتری می‌گیرند. پس از آن فایل‌سیستم را بزرگ کنید. داده‌های روی $device پاک می‌شود.';
   }
 
   @override
-  String get storageAddToPool => 'Add disks';
+  String get storageAddToPool => 'افزودن دیسک‌ها';
 
   @override
   String storageAddToPoolBody(Object devices, Object layout, Object name) {
-    return 'Adds $layout of $devices to pool $name for more room. They cannot be taken out again, and what they hold is lost.';
+    return '$layout از $devices را برای فضای بیشتر به استخر $name اضافه می‌کند. این دیسک‌ها دیگر قابل خارج کردن نیستند و داده‌های روی آن‌ها پاک می‌شود.';
   }
 
   @override
-  String get sharingTitle => 'Sharing';
+  String get sharingTitle => 'اشتراک‌گذاری';
 
   @override
   String get sharingSmb => 'SMB';
@@ -6281,235 +6284,236 @@ class AppLocalizationsFa extends AppLocalizations {
   String get sharingNfs => 'NFS';
 
   @override
-  String get sharingService => 'Service';
+  String get sharingService => 'سرویس';
 
   @override
-  String get sharingRunning => 'Running';
+  String get sharingRunning => 'در حال اجرا';
 
   @override
-  String get sharingStopped => 'Stopped';
+  String get sharingStopped => 'متوقف‌شده';
 
   @override
-  String get sharingNfsServer => 'NFS server';
+  String get sharingNfsServer => 'سرور NFS';
 
   @override
   String get sharingNoSamba =>
-      'Samba is not installed. Windows, macOS and Linux open SMB shares.';
+      'Samba نصب نیست. Windows، macOS و Linux اشتراک‌های SMB را باز می‌کنند.';
 
   @override
   String get sharingNoNfs =>
-      'The NFS server is not installed. Linux and macOS mount NFS exports.';
+      'سرور NFS نصب نیست. Linux و macOS اشتراک‌های NFS را متصل می‌کنند.';
 
   @override
-  String get sharingInstallSamba => 'Install Samba';
+  String get sharingInstallSamba => 'نصب Samba';
 
   @override
   String get sharingInstallSambaBody =>
-      'Installs Samba with the machine\'s package manager.';
+      'Samba را با مدیر بستهٔ سیستم نصب می‌کند.';
 
   @override
-  String get sharingInstallNfs => 'Install NFS server';
+  String get sharingInstallNfs => 'نصب سرور NFS';
 
   @override
   String get sharingInstallNfsBody =>
-      'Installs the NFS server with the machine\'s package manager.';
+      'سرور NFS را با مدیر بستهٔ سیستم نصب می‌کند.';
 
   @override
-  String get sharingAddShare => 'Add share';
+  String get sharingAddShare => 'افزودن اشتراک';
 
   @override
-  String get sharingAddExport => 'Add export';
+  String get sharingAddExport => 'افزودن اشتراک NFS';
 
   @override
-  String get sharingEdit => 'Edit';
+  String get sharingEdit => 'ویرایش';
 
   @override
-  String get sharingRemove => 'Remove';
+  String get sharingRemove => 'حذف';
 
   @override
-  String get sharingSave => 'Save';
+  String get sharingSave => 'ذخیره';
 
   @override
   String sharingSaveSmbBody(Object name, Object path) {
-    return 'Shares $path over SMB as $name, then reloads Samba.';
+    return '$path را با نام $name از طریق SMB به اشتراک می‌گذارد و سپس Samba را بارگذاری مجدد می‌کند.';
   }
 
   @override
   String sharingSaveNfsBody(Object path) {
-    return 'Exports $path over NFS, then reloads the exports.';
+    return '$path را از طریق NFS صادر می‌کند و سپس فهرست صادرات را بارگذاری مجدد می‌کند.';
   }
 
   @override
   String sharingRemoveSmbBody(Object name) {
-    return 'Stops sharing $name. The folder and its files stay.';
+    return 'اشتراک‌گذاری $name را متوقف می‌کند. پوشه و فایل‌های آن باقی می‌مانند.';
   }
 
   @override
   String sharingRemoveNfsBody(Object path) {
-    return 'Stops exporting $path. The folder and its files stay.';
+    return 'صادر کردن $path را متوقف می‌کند. پوشه و فایل‌های آن باقی می‌مانند.';
   }
 
   @override
-  String get sharingElsewhere => 'Set up outside ServerBox';
+  String get sharingElsewhere => 'خارج از ServerBox تنظیم شده است';
 
   @override
-  String get sharingNoShares => 'No SMB shares';
+  String get sharingNoShares => 'هیچ اشتراک SMB وجود ندارد';
 
   @override
-  String get sharingNoExports => 'No NFS exports';
+  String get sharingNoExports => 'هیچ اشتراک NFS وجود ندارد';
 
   @override
-  String get sharingReadOnly => 'Read only';
+  String get sharingReadOnly => 'فقط‌خواندنی';
 
   @override
-  String get sharingReadWrite => 'Read and write';
+  String get sharingReadWrite => 'خواندن و نوشتن';
 
   @override
-  String get sharingGuest => 'Guests';
+  String get sharingGuest => 'مهمان‌ها';
 
   @override
   String get sharingGuestLabel =>
-      'Let anyone on the network in without an account';
+      'اجازهٔ ورود به هر کسی در شبکه بدون حساب کاربری';
 
   @override
   String get sharingUsersHint =>
-      'Accounts allowed in (none ticked: every account with an SMB password):';
+      'حساب‌های مجاز به ورود (اگر هیچ‌کدام انتخاب نشود: هر حساب دارای گذرواژهٔ SMB):';
 
   @override
-  String get sharingFolder => 'Folder';
+  String get sharingFolder => 'پوشه';
 
   @override
   String get sharingFolderHint =>
-      'A folder on the server, e.g. a disk mounted in Storage.';
+      'یک پوشه روی سرور، مثلاً دیسکی که در بخش فضای ذخیره‌سازی متصل شده است.';
 
   @override
-  String get sharingComment => 'Description';
+  String get sharingComment => 'توضیحات';
 
   @override
-  String get sharingPasswords => 'SMB passwords';
+  String get sharingPasswords => 'گذرواژه‌های SMB';
 
   @override
   String get sharingPasswordsBody =>
-      'Samba keeps its own passwords: set one for each account that connects.';
+      'Samba گذرواژه‌های مخصوص به خود را نگه می‌دارد: برای هر حسابی که متصل می‌شود یک گذرواژه تنظیم کنید.';
 
   @override
-  String get sharingSetPassword => 'Set password';
+  String get sharingSetPassword => 'تنظیم گذرواژه';
 
   @override
-  String get sharingNewPassword => 'New SMB password';
+  String get sharingNewPassword => 'گذرواژهٔ جدید SMB';
 
   @override
-  String get sharingNewPasswordAgain => 'The same again';
+  String get sharingNewPasswordAgain => 'تکرار گذرواژه';
 
   @override
-  String get sharingPasswordsDiffer => 'The two passwords differ.';
+  String get sharingPasswordsDiffer => 'دو گذرواژه یکسان نیستند.';
 
   @override
   String get sharingClientsHint =>
-      'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.';
+      'چه کسانی مجاز به اتصال هستند: * برای همه، نام میزبان، نشانی IP یا شبکه‌ای مانند 192.168.1.0/24.';
 
   @override
-  String get sharingClient => 'Client';
+  String get sharingClient => 'کلاینت';
 
   @override
-  String get sharingAddClient => 'Add client';
+  String get sharingAddClient => 'افزودن کلاینت';
 
   @override
-  String get sharingSquashRoot => 'Root is nobody';
+  String get sharingSquashRoot => 'تبدیل root به nobody';
 
   @override
-  String get sharingSquashAll => 'Everyone is nobody';
+  String get sharingSquashAll => 'تبدیل همه به nobody';
 
   @override
-  String get sharingSquashNone => 'Root stays root';
+  String get sharingSquashNone => 'حفظ دسترسی root';
 
   @override
   String sharingNotAFolder(Object path) {
-    return '$path is not a folder on the server.';
+    return '$path یک پوشه روی سرور نیست.';
   }
 
   @override
   String sharingRefused(Object detail) {
-    return 'The configuration was refused and the previous one is back: $detail';
+    return 'پیکربندی رد شد و پیکربندی قبلی بازگردانده شد: $detail';
   }
 
   @override
-  String get sharingDuplicate => 'Another share has this name or folder.';
+  String get sharingDuplicate => 'اشتراک دیگری با این نام یا پوشه وجود دارد.';
 
   @override
   String get sharingInvalidName =>
-      'A name is letters, digits, _ . - (32 at most).';
+      'نام فقط می‌تواند شامل حروف، ارقام و _ . - باشد (حداکثر ۳۲ نویسه).';
 
   @override
   String get sharingInvalidPath =>
-      'The folder must be an absolute path without quotes, backslashes or ..';
+      'پوشه باید یک مسیر مطلق بدون گیومه، بک‌اسلش یا .. باشد.';
 
   @override
   String get sharingInvalidClient =>
-      'A client is *, a host, an address or a network.';
+      'کلاینت باید *، نام میزبان، نشانی IP یا یک شبکه باشد.';
 
   @override
-  String get sharingInvalidPassword => 'This password cannot be used.';
+  String get sharingInvalidPassword => 'از این گذرواژه نمی‌توان استفاده کرد.';
 
   @override
-  String get sharingTimeMachineOption => 'Time Machine backups (Mac)';
+  String get sharingTimeMachineOption => 'پشتیبان‌گیری Time Machine (مک)';
 
   @override
-  String get sharingRecycleOption => 'Keep deleted files in .recycle';
+  String get sharingRecycleOption => 'نگهداری فایل‌های حذف‌شده در .recycle';
 
   @override
   String get sharingTimeMachine => 'Time Machine';
 
   @override
-  String get sharingRecycle => 'Recycle bin';
+  String get sharingRecycle => 'سطل بازیافت';
 
   @override
-  String get sharingConnectedNow => 'Connected now';
+  String get sharingConnectedNow => 'هم‌اکنون متصل';
 
   @override
-  String get sharingNobodyConnected => 'Nobody is connected';
+  String get sharingNobodyConnected => 'کسی متصل نیست';
 
   @override
-  String get sharingShowConnections => 'Show connections';
+  String get sharingShowConnections => 'نمایش اتصال‌ها';
 
   @override
-  String get sharingShowConnectionsBody => 'Reads who is connected, as root.';
+  String get sharingShowConnectionsBody =>
+      'فهرست افراد متصل را با دسترسی root می‌خواند.';
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'مدیریت اشتراک‌گذاری در حال حاضر فقط از سرورهای Linux پشتیبانی می‌کند.';
 
   @override
-  String get agentThisDevice => 'This device';
+  String get agentThisDevice => 'این دستگاه';
 
   @override
-  String get agentSource => 'Source';
+  String get agentSource => 'مبدأ';
 
   @override
   String agentDeleteRemoteTip(String server) {
-    return 'The task is deleted on $server.';
+    return 'این وظیفه روی $server حذف می‌شود.';
   }
 
   @override
-  String get agentPlan => 'Plan';
+  String get agentPlan => 'برنامه';
 
   @override
-  String get agentRemoteGone => 'This task is no longer on the server.';
+  String get agentRemoteGone => 'این وظیفه دیگر روی سرور وجود ندارد.';
 
   @override
   String agentRemoteReplyHint(String server) {
-    return 'Reply to the task on $server';
+    return 'پاسخ به وظیفه روی $server';
   }
 
   @override
   String agentRemoteStatus(String server, String status) {
     String _temp0 = intl.Intl.selectLogic(status, {
-      'queued': 'Queued',
-      'running': 'Running',
-      'waiting': 'Waiting for you',
-      'done': 'Done',
-      'failed': 'Failed',
-      'cancelled': 'Stopped',
+      'queued': 'در صف',
+      'running': 'در حال اجرا',
+      'waiting': 'در انتظار شما',
+      'done': 'انجام شد',
+      'failed': 'ناموفق',
+      'cancelled': 'متوقف شد',
       'other': '',
     });
     return '$server · $_temp0';
@@ -6517,462 +6521,466 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String agentRemoteAlways(String rule) {
-    return 'Always allow $rule';
+    return 'اجازهٔ همیشگی به $rule';
   }
 
   @override
   String agentRemoteTypeToRun(String name) {
-    return 'Type $name to run';
+    return 'برای اجرا $name را بنویسید';
   }
 
   @override
-  String get agentRemoteRunAnyway => 'Run anyway';
+  String get agentRemoteRunAnyway => 'به هر حال اجرا شود';
 
   @override
   String agentRemoteSudoFor(String user) {
-    return 'Password of $user';
+    return 'گذرواژهٔ $user';
   }
 
   @override
-  String get agentRemoteSudoWrong => 'Wrong password';
+  String get agentRemoteSudoWrong => 'گذرواژه نادرست است';
 
   @override
-  String get agentRemoteSudoRemember => 'Remember for 15 minutes';
+  String get agentRemoteSudoRemember => 'به مدت ۱۵ دقیقه به خاطر بسپار';
 
   @override
   String agentNewOn(String place) {
-    return 'New in $place';
+    return 'جدید در $place';
   }
 
   @override
   String agentRemoteNewHint(String server) {
-    return 'Ask the agent on $server, or give it a task.';
+    return 'از Agent روی $server بپرسید یا وظیفه‌ای به آن بسپارید.';
   }
 
   @override
   String get agentModeBypassWarn =>
-      'Allow all: deleting, restarting and config changes run directly, without asking.';
+      'اجازه به همه: حذف، راه‌اندازی مجدد و تغییرات پیکربندی مستقیماً بدون پرسش اجرا می‌شوند.';
 
   @override
-  String get webApps => 'Web apps';
+  String get webApps => 'برنامه‌های وب';
 
   @override
-  String get webAppUnhealthy => 'Unhealthy';
+  String get webAppUnhealthy => 'ناسالم';
 
   @override
-  String get webAppDown => 'Down';
+  String get webAppDown => 'از دسترس خارج';
 
   @override
-  String get webAppInstalling => 'Installing';
+  String get webAppInstalling => 'در حال نصب';
 
   @override
   String get webAppsEmpty =>
-      'No web apps yet. Deploy them from the App Store of the Monitor panel.';
+      'هنوز برنامهٔ وبی وجود ندارد. آن‌ها را از فروشگاه برنامه در پنل Monitor مستقر کنید.';
 
   @override
-  String get deskAppOpensInPanel => 'Opens in the panel';
+  String get deskAppOpensInPanel => 'در پنل باز می‌شود';
 
   @override
-  String get webAppVersion => 'Version';
+  String get webAppVersion => 'نسخه';
 
   @override
-  String get webAppHomepage => 'Homepage';
+  String get webAppHomepage => 'صفحهٔ اصلی';
 
   @override
   String webAppUpdate(String version) {
-    return 'Version $version is available. Update it in the Monitor panel.';
+    return 'نسخهٔ $version در دسترس است. آن را در پنل Monitor به‌روزرسانی کنید.';
   }
 
   @override
   String noticeStackDown(String app) {
-    return '$app is down';
+    return '$app از دسترس خارج است';
   }
 
   @override
   String noticeStackDownBody(String services) {
-    return 'Not running: $services.';
+    return 'در حال اجرا نیست: $services.';
   }
 
   @override
-  String get noticeStackDownBodyEmpty => 'None of its containers is running.';
+  String get noticeStackDownBodyEmpty =>
+      'هیچ‌یک از کانتینرهای آن در حال اجرا نیست.';
 
   @override
   String noticeStackUnhealthy(String app) {
-    return '$app is unhealthy';
+    return '$app ناسالم است';
   }
 
   @override
   String noticeStackUnhealthyBody(String services) {
-    return 'Failing its health check: $services.';
+    return 'بررسی سلامت ناموفق: $services.';
   }
 
   @override
   String noticeStackBack(String app) {
-    return '$app is running again';
+    return '$app دوباره در حال اجراست';
   }
 
   @override
-  String get noticeStackBackBody => 'Every container is up.';
+  String get noticeStackBackBody => 'همهٔ کانتینرها فعال هستند.';
 
   @override
   String noticeStackUpdate(String app) {
-    return '$app: an update is available';
+    return '$app: به‌روزرسانی در دسترس است';
   }
 
   @override
   String noticeStackUpdateBody(String project, String version, String current) {
-    return '$project $version can be installed (now $current).';
+    return '$project نسخهٔ $version قابل نصب است (نسخهٔ فعلی $current).';
   }
 
   @override
   String noticeStorageArrayDegraded(String array) {
-    return '/dev/$array is degraded';
+    return '/dev/$array تضعیف شده است';
   }
 
   @override
   String get noticeStorageArrayDegradedBody =>
-      'A member failed or is missing; the array runs without its redundancy.';
+      'یک عضو خراب یا مفقود شده است؛ آرایه بدون افزونگی اجرا می‌شود.';
 
   @override
   String noticeStorageArrayBack(String array) {
-    return '/dev/$array is healthy again';
+    return '/dev/$array دوباره سالم است';
   }
 
   @override
-  String get noticeStorageArrayBackBody => 'Every member is working.';
+  String get noticeStorageArrayBackBody => 'همهٔ اعضا به‌درستی کار می‌کنند.';
 
   @override
   String noticeStoragePoolUnhealthy(String pool, String health) {
-    return 'Pool $pool is $health';
+    return 'استخر $pool در وضعیت $health است';
   }
 
   @override
   String get noticeStoragePoolUnhealthyBody =>
-      'Open Storage to see which device.';
+      'بخش فضای ذخیره‌سازی را باز کنید تا دستگاه مربوطه را ببینید.';
 
   @override
   String noticeStoragePoolBack(String pool) {
-    return 'Pool $pool is online again';
+    return 'استخر $pool دوباره آنلاین است';
   }
 
   @override
-  String get noticeStoragePoolBackBody => 'Every device is working.';
+  String get noticeStoragePoolBackBody =>
+      'همهٔ دستگاه‌ها به‌درستی کار می‌کنند.';
 
   @override
   String noticeStorageDiskFailing(String device) {
-    return '$device is failing';
+    return '$device در حال خراب شدن است';
   }
 
   @override
   String get noticeStorageDiskFailingBody =>
-      'Its SMART check or self-test failed: copy what it holds elsewhere and replace it.';
+      'بررسی SMART یا خودآزمایی آن ناموفق بود: داده‌های آن را در جای دیگری کپی و دیسک را تعویض کنید.';
 
   @override
   String noticeStorageDiskSectors(String device, int count) {
-    return '$device has $count bad sectors';
+    return '$device دارای $count سکتور خراب است';
   }
 
   @override
   String noticeStorageDiskSectorsBody(int was) {
-    return 'It had $was. A disk losing sectors often fails soon.';
+    return 'پیش‌تر $was سکتور داشت. دیسکی که سکتور از دست می‌دهد اغلب به‌زودی خراب می‌شود.';
   }
 
   @override
   String noticeStorageMaintenanceFailed(String task) {
-    return 'Storage maintenance did not run: $task';
+    return 'نگهداری فضای ذخیره‌سازی اجرا نشد: $task';
   }
 
   @override
-  String get storageTaskScrub => 'Scrub pools and check arrays';
+  String get storageTaskScrub => 'بررسی استخرها و آرایه‌ها';
 
   @override
-  String get storageTaskSmartShort => 'Short SMART test';
+  String get storageTaskSmartShort => 'آزمایش کوتاه SMART';
 
   @override
-  String get storageTaskSmartLong => 'Long SMART test';
+  String get storageTaskSmartLong => 'آزمایش طولانی SMART';
 
   @override
   String get storageNeedsSudo =>
-      'sudo asked for a password: run the Monitor as root, or allow these commands (above).';
+      'sudo گذرواژه درخواست کرد: Monitor را با دسترسی root اجرا کنید یا به دستورهای بالا اجازه دهید.';
 
   @override
   String get monitorTab => 'Monitor';
 
   @override
-  String get monitorOverview => 'Overview';
+  String get monitorOverview => 'نمای کلی';
 
   @override
-  String get monitorNotices => 'Notifications';
+  String get monitorNotices => 'اعلان‌ها';
 
   @override
-  String get monitorAudit => 'Audit log';
+  String get monitorAudit => 'گزارش ممیزی';
 
   @override
-  String get monitorLive => 'Sessions & devices';
+  String get monitorLive => 'نشست‌ها و دستگاه‌ها';
 
   @override
-  String get monitorNoAgents => 'No server is reached through a Monitor yet.';
+  String get monitorNoAgents => 'هنوز هیچ سروری از طریق Monitor متصل نشده است.';
 
   @override
   String get monitorNotOffered =>
-      'This Monitor version does not offer this. Update the Monitor.';
+      'این نسخه از Monitor این قابلیت را ارائه نمی‌دهد. Monitor را به‌روزرسانی کنید.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'This Monitor version does not report alerts.';
+      'این نسخه از Monitor هشدارها را گزارش نمی‌دهد.';
 
   @override
-  String get monitorAlertsNone => 'No rule is firing.';
+  String get monitorAlertsNone => 'هیچ قانونی فعال نشده است.';
 
   @override
   String monitorFiringFor(String duration) {
-    return 'firing for $duration';
+    return 'فعال به مدت $duration';
   }
 
   @override
   String monitorAgentUpdate(String version) {
-    return '$version available';
+    return 'نسخهٔ $version در دسترس است';
   }
 
   @override
   String monitorUnread(int count) {
-    return '$count unread';
+    return '$count خوانده‌نشده';
   }
 
   @override
   String monitorAppsUnwell(int count) {
-    return 'Apps with problems: $count';
+    return 'برنامه‌های دارای مشکل: $count';
   }
 
   @override
   String monitorAppsUpdates(int count) {
-    return 'App updates: $count';
+    return 'به‌روزرسانی برنامه‌ها: $count';
   }
 
   @override
-  String get monitorUpdatesOnly => 'Updates only';
+  String get monitorUpdatesOnly => 'فقط به‌روزرسانی‌ها';
 
   @override
-  String get monitorNoUpdates => 'No app has an update.';
+  String get monitorNoUpdates => 'هیچ برنامه‌ای به‌روزرسانی ندارد.';
 
   @override
-  String get monitorNoticesEmpty => 'No notifications.';
+  String get monitorNoticesEmpty => 'اعلانی وجود ندارد.';
 
   @override
-  String get monitorMarkAllRead => 'Mark all as read';
+  String get monitorMarkAllRead => 'علامت‌گذاری همه به‌عنوان خوانده‌شده';
 
   @override
-  String get monitorAuditExec => 'Commands';
+  String get monitorAuditExec => 'دستورها';
 
   @override
-  String get monitorAuditMachine => 'Machine management';
+  String get monitorAuditMachine => 'مدیریت ماشین';
 
   @override
-  String get monitorAuditListen => 'Listened ports';
+  String get monitorAuditListen => 'پورت‌های در حال شنود';
 
   @override
-  String get monitorAuditTicket => 'Connection tickets';
+  String get monitorAuditTicket => 'بلیت‌های اتصال';
 
   @override
-  String get monitorAuditPush => 'Notification channels';
+  String get monitorAuditPush => 'کانال‌های اعلان';
 
   @override
-  String get monitorAuditAdmin => 'Account';
+  String get monitorAuditAdmin => 'حساب کاربری';
 
   @override
-  String get monitorAuditDenied => 'Denied';
+  String get monitorAuditDenied => 'رد شده';
 
   @override
-  String get monitorLoadMore => 'Load more';
+  String get monitorLoadMore => 'بارگذاری بیشتر';
 
   @override
-  String get monitorLiveSessions => 'Terminal sessions';
+  String get monitorLiveSessions => 'نشست‌های ترمینال';
 
   @override
-  String get monitorLiveConnections => 'Connections';
+  String get monitorLiveConnections => 'اتصال‌ها';
 
   @override
-  String get monitorLiveWatchTokens => 'Watch and widget tokens';
+  String get monitorLiveWatchTokens => 'توکن‌های ساعت و ویجت';
 
   @override
-  String get monitorLiveDevices => 'Signed-in devices';
+  String get monitorLiveDevices => 'دستگاه‌های واردشده';
 
   @override
   String get monitorLiveDevicesTip =>
-      'Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.';
+      'فراموش کردن یک دستگاه باعث می‌شود ورود بعدی آن در حد مجاز تلاش‌های ناموفق کل حساب شمرده شود. این کار دستگاه را خارج نمی‌کند: دستگاهی که گذرواژه را دارد دوباره وارد می‌شود. برای جلوگیری از ورود یک دستگاه، گذرواژه را تغییر دهید.';
 
   @override
-  String get monitorLiveAttached => 'Attached';
+  String get monitorLiveAttached => 'متصل';
 
   @override
-  String get monitorLiveDetached => 'Detached';
+  String get monitorLiveDetached => 'جداشده';
 
   @override
-  String get monitorLiveEnd => 'End';
+  String get monitorLiveEnd => 'پایان دادن';
 
   @override
-  String get monitorLiveRevoke => 'Revoke';
+  String get monitorLiveRevoke => 'لغو';
 
   @override
-  String get monitorLiveForget => 'Forget';
+  String get monitorLiveForget => 'فراموش کردن';
 
   @override
   String monitorLiveEndSessionConfirm(String name) {
-    return 'End the terminal session \"$name\"? What runs in it stops.';
+    return 'نشست ترمینال «$name» پایان یابد؟ هرچه در آن اجرا می‌شود متوقف خواهد شد.';
   }
 
   @override
   String monitorLiveEndConnectionConfirm(String name) {
-    return 'End the connection to $name?';
+    return 'اتصال به $name پایان یابد؟';
   }
 
   @override
   String monitorLiveRevokeConfirm(String name) {
-    return 'Revoke the token of $name? It stops updating until it is set up again.';
+    return 'توکن $name لغو شود؟ تا زمانی که دوباره تنظیم نشود به‌روزرسانی آن متوقف می‌شود.';
   }
 
   @override
   String monitorLiveForgetConfirm(String name) {
-    return 'Forget $name?';
+    return '$name فراموش شود؟';
   }
 
   @override
   String monitorLiveExpires(String time) {
-    return 'Expires $time';
+    return 'انقضا: $time';
   }
 
   @override
-  String get monitorLiveStream => 'Relayed connection';
+  String get monitorLiveStream => 'اتصال بازپخش‌شده';
 
   @override
-  String get monitorLiveAccepted => 'Forwarded connection';
+  String get monitorLiveAccepted => 'اتصال هدایت‌شده';
 
   @override
-  String get monitorLiveConsole => 'Console';
+  String get monitorLiveConsole => 'کنسول';
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count Monitors';
+    return '$count Monitor';
   }
 
   @override
-  String get monitorStatOnline => 'Online';
+  String get monitorStatOnline => 'آنلاین';
 
   @override
-  String get monitorStatFiring => 'Alerts firing';
+  String get monitorStatFiring => 'هشدارهای فعال';
 
   @override
-  String get monitorStatUnread => 'Unread';
+  String get monitorStatUnread => 'خوانده‌نشده';
 
   @override
-  String get monitorStatUpdates => 'App updates';
+  String get monitorStatUpdates => 'به‌روزرسانی برنامه‌ها';
 
   @override
-  String get monitorAuditEmpty => 'Nothing recorded matches.';
+  String get monitorAuditEmpty => 'مورد ثبت‌شده‌ای مطابقت ندارد.';
 
   @override
-  String get monitorLiveNoSessions => 'No terminal session is open.';
+  String get monitorLiveNoSessions => 'هیچ نشست ترمینالی باز نیست.';
 
   @override
-  String get monitorLiveNoConnections => 'Nothing is forwarded or relayed.';
+  String get monitorLiveNoConnections =>
+      'هیچ اتصال هدایت‌شده یا بازپخش‌شده‌ای وجود ندارد.';
 
   @override
-  String get monitorLiveNoTokens => 'No watch or widget is paired.';
+  String get monitorLiveNoTokens => 'هیچ ساعت یا ویجتی جفت نشده است.';
 
   @override
-  String get monitorLiveNoDevices => 'No device has signed in.';
+  String get monitorLiveNoDevices => 'هیچ دستگاهی وارد نشده است.';
 
   @override
-  String get monitorUpdateAgent => 'Update the Monitor';
+  String get monitorUpdateAgent => 'به‌روزرسانی Monitor';
 
   @override
   String get monitorAgentTooOldTip =>
-      'The Monitor tab has the steps to update it.';
+      'مراحل به‌روزرسانی آن در برگهٔ Monitor قرار دارد.';
 
   @override
   String get monitorAgentTooOldBody =>
-      'This Monitor is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.';
+      'این Monitor مربوط به قبل از سیستم تک‌گذرواژه‌ای است و این برنامه نمی‌تواند به آن وارد شود. پس از به‌روزرسانی، گذرواژهٔ آن همان گذرواژهٔ قدیمی‌ترین حساب مدیر آن خواهد بود.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest is out; this Monitor runs $running.';
+    return 'نسخهٔ $latest منتشر شده است؛ این Monitor نسخهٔ $running را اجرا می‌کند.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Run this on the server, as the account the Monitor was installed from:';
+      'این دستور را روی سرور با همان حسابی که Monitor نصب شده است اجرا کنید:';
 
   @override
   String get monitorUpdateSshHint =>
-      'The terminal runs it. If the Monitor was installed system-wide and the terminal goes over SSH, sudo asks for its password there.';
+      'ترمینال آن را اجرا می‌کند. اگر Monitor به‌صورت سراسری نصب شده و ترمینال از طریق SSH متصل است، sudo آنجا گذرواژه می‌خواهد.';
 
   @override
   String get monitorUpdateNoSsh =>
-      'The app cannot open a terminal on this server: run it there yourself.';
+      'برنامه نمی‌تواند روی این سرور ترمینال باز کند: آن را خودتان آنجا اجرا کنید.';
 
   @override
   String get monitorUpdateDocker =>
-      'In Docker? Pull the new image and recreate the container instead.';
+      'در Docker اجرا می‌شود؟ به جای آن ایمیج جدید را دریافت و کانتینر را دوباره ایجاد کنید.';
 
   @override
   String get monitorUpdateAfter =>
-      'Once it has restarted, refresh the Monitor tab.';
+      'پس از راه‌اندازی مجدد، برگهٔ Monitor را بازآوری کنید.';
 
   @override
-  String get monitorUpdateInTerminal => 'Run in a terminal';
+  String get monitorUpdateInTerminal => 'اجرا در ترمینال';
 
   @override
-  String get monitorHowToUpdate => 'How to update';
+  String get monitorHowToUpdate => 'روش به‌روزرسانی';
 
   @override
   String get monitorUpdateNix =>
-      'Installed by the NixOS module: update it through your system configuration and rebuild.';
+      'توسط ماژول NixOS نصب شده است: آن را از طریق پیکربندی سیستم به‌روزرسانی و بازسازی کنید.';
 
   @override
-  String get noticeAgentUpdate => 'The Monitor has an update';
+  String get noticeAgentUpdate => 'به‌روزرسانی جدیدی برای Monitor موجود است';
 
   @override
-  String get monitorUpdateLegacyUser => 'Its account name';
+  String get monitorUpdateLegacyUser => 'نام حساب کاربری آن';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'This Monitor still signs in with an account name and a password: the name this app used before (often admin) and the saved password.';
+      'این Monitor هنوز با نام کاربری و گذرواژه وارد می‌شود: نامی که این برنامه قبلاً استفاده می‌کرد (معمولاً admin) و گذرواژهٔ ذخیره‌شده.';
 
   @override
-  String get monitorUpdateNow => 'Update now';
+  String get monitorUpdateNow => 'اکنون به‌روزرسانی شود';
 
   @override
-  String get monitorUpdating => 'Updating…';
+  String get monitorUpdating => 'در حال به‌روزرسانی…';
 
   @override
   String get monitorUpdateRestarting =>
-      'The Monitor is restarting; the connection is back in a few seconds…';
+      'Monitor در حال راه‌اندازی مجدد است؛ اتصال تا چند ثانیه دیگر برقرار می‌شود…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Updated: the Monitor runs $version.';
+    return 'به‌روزرسانی شد: Monitor نسخهٔ $version را اجرا می‌کند.';
   }
 
   @override
-  String get monitorUpdateFailed => 'The update failed. Its output is above.';
+  String get monitorUpdateFailed =>
+      'به‌روزرسانی ناموفق بود. خروجی آن در بالا نمایش داده شده است.';
 
   @override
   String get monitorUpdateAgentHint =>
-      'The Monitor runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.';
+      'Monitor نصب‌کننده را جدا از خودش اجرا می‌کند تا راه‌اندازی مجدد آن باعث توقف به‌روزرسانی نشود. در این میان اتصال برای چند ثانیه قطع می‌شود؛ این پنجره به‌روزرسانی را پس از راه‌اندازی مجدد دنبال می‌کند.';
 
   @override
-  String get monitorUpdateSudoPassword => 'sudo password';
+  String get monitorUpdateSudoPassword => 'گذرواژهٔ sudo';
 
   @override
   String get monitorUpdateSudoHint =>
-      'The installer needs root here (an OpenRC service). The password is used once and not saved.';
+      'نصب‌کننده اینجا به دسترسی root نیاز دارد (سرویس OpenRC). گذرواژه فقط یک‌بار استفاده می‌شود و ذخیره نمی‌شود.';
 
   @override
-  String get monitorUpdateSudoRefused => 'sudo did not accept this password.';
+  String get monitorUpdateSudoRefused => 'sudo این گذرواژه را نپذیرفت.';
 
   @override
   String get monitorUpdateNoAnswer =>
-      'The Monitor has not come back. Check it on the server.';
+      'Monitor برنگشت. وضعیت آن را روی سرور بررسی کنید.';
 
   @override
   String get keyArrowDown => 'کلید جهت‌نمای پایین';
@@ -7054,17 +7062,17 @@ class AppLocalizationsFa extends AppLocalizations {
       'هیچ نشست tmuxای برای اتصال مجدد وجود ندارد؛ بنابراین اتصال مجدد باعث پایان یافتن این شِل و هر آنچه هنوز در آن در حال اجراست می‌شود و خروجی آن را از صفحه پاک می‌کند.';
 
   @override
-  String get handedness => 'Handedness';
+  String get handedness => 'جهت دست';
 
   @override
-  String get handednessLeft => 'Left hand';
+  String get handednessLeft => 'دست چپ';
 
   @override
-  String get handednessRight => 'Right hand';
+  String get handednessRight => 'دست راست';
 
   @override
   String get handednessTip =>
-      'On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system\'s own bars do.';
+      'در سمت دستی که دستگاه را می‌گیرید، تب‌ها در ستون کنار نوار وضعیت قرار می‌گیرند، مشابه نوارهای خود سیستم.';
 
   @override
   String get storeUnreadableTitle => 'داده‌های قبلی باز نشدند';
@@ -7495,138 +7503,143 @@ class AppLocalizationsFa extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => 'فعال';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'از دسترس خارج';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'در حال نگهداری';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => 'متوقف‌شده';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => 'نامشخص';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'آزمایش';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => 'توقف موقت';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => 'ادامه';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'تأخیر';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => 'قطعی‌ها';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => 'بدون قطعی';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => 'در جریان';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'رخدادها';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'نگهداری';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => 'پیشِ رو';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => 'بازهٔ بررسی';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'مهلت زمانی';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => 'دورهٔ ارفاق';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'گروه';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => 'نشانی نمایشی';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => 'هدف';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => 'نوع';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => 'صفحهٔ وضعیت عمومی';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => 'فعال';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'متد';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'دنبال کردن تغییر مسیرها';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => 'کدهای وضعیت مورد انتظار';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => 'کدهای وضعیت غیرمجاز';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'سرآیندها';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => 'بدنه';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => 'کلیدواژهٔ الزامی';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => 'کلیدواژهٔ غیرمجاز';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => 'شامل';
 
   @override
-  String get uptimerMatchRegex => 'Regex';
+  String get uptimerMatchRegex => 'عبارت باقاعده (Regex)';
 
   @override
-  String get uptimerPushUrl => 'Push URL';
+  String get uptimerPushUrl => 'نشانی Push';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'تغییر نشانی Push';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return 'نشانی Push برای $name تغییر داده شود؟ نشانی قبلی بلافاصله از کار می‌افتد.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce =>
+      'فقط یک‌بار نمایش داده می‌شود. پیش از بستن، این نشانی را ذخیره کنید.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'مدت قطعی';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'بارگذاری بیشتر';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return 'حداقل $sec ثانیه';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'زمان‌بندی';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'درخواست HTTP';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'اعتبارسنجی پاسخ';
+
+  @override
+  String get sshTooManyKeysWarning =>
+      'انتخاب کلیدهای زیاد ممکن است به حد مجاز تلاش‌های احراز هویت سرور برسد یا باعث مسدود شدن IP شود.';
 }

@@ -151,8 +151,15 @@ class BackupV1 implements Mergeable {
 
     return [
       for (final spi in spis)
-        if (restored[spi.ssh?.keyId] case final keyId?)
-          spi.copyWith(ssh: spi.ssh?.copyWith(keyId: keyId))
+        if (spi.ssh case final ssh?
+            when ssh.resolvedKeyIds.any(restored.containsKey))
+          spi.copyWith(
+            ssh: ssh.copyWith(
+              keyIds: [
+                for (final id in ssh.resolvedKeyIds) restored[id] ?? id,
+              ],
+            ),
+          )
         else
           spi,
     ];

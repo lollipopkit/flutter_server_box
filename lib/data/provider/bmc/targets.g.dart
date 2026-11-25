@@ -45,7 +45,7 @@ final class BmcTargetsNotifierProvider
 }
 
 String _$bmcTargetsNotifierHash() =>
-    r'6d039fc65db596343f2d7c3320dc09449f60aa35';
+    r'f02f8d48dbb45159e56c0bd846e317a566d5c520';
 
 /// Manages all [BmcTarget] records (both standalone and server-linked).
 

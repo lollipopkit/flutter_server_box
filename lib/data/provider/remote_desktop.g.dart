@@ -167,7 +167,7 @@ final class RemoteDesktopSessionsProvider
 }
 
 String _$remoteDesktopSessionsHash() =>
-    r'b88345c5f56cbc8d6684240a72fd64f8c4861032';
+    r'5454df0931ddfd361815a51568f0c677af8d3d00';
 
 /// Every remote desktop session there is — the remote desktop tab's and the
 /// consoles other pages show — and their connections.

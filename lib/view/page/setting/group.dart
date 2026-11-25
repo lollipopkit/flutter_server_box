@@ -1,4 +1,14 @@
-part of 'entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/widget/group_title.dart';
+
+/// What a settings form is spaced by, which is the design's 17 minus what a
+/// `CardX` already carries: a `Card` brings a margin of 4 on every side, so 13
+/// here is 17 on screen at the edges and 9 between two columns is 17 between
+/// them.
+const kSettingsGridPadding = EdgeInsets.all(13);
+const kSettingsGridSpacing = 9.0;
 
 
 /// One row of a settings group.

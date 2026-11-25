@@ -453,13 +453,21 @@ abstract final class ServerShareInstaller {
     }
 
     var spi = share.spi;
-    final keyId = spi.ssh?.keyId;
-    if (keyId != null) {
-      // A payload whose `keys` does not carry the id its server names is one
+    final sshKeyIds = spi.ssh?.resolvedKeyIds ?? const <String>[];
+    if (sshKeyIds.isNotEmpty) {
+      // A payload whose `keys` does not carry an id its server names is one
       // the sender could not complete. Dropped rather than kept, for the same
       // reason `ServerShare._portable` drops it: a dangling reference looks
       // like key auth and behaves like nothing.
-      spi = spi.copyWith(ssh: spi.ssh?.copyWith(keyId: keyIds[keyId]));
+      final mapped = [
+        for (final id in sshKeyIds) ?keyIds[id],
+      ];
+      spi = spi.copyWith(
+        ssh: spi.ssh?.copyWith(
+          keyId: mapped.firstOrNull,
+          keyIds: mapped.isEmpty ? null : mapped,
+        ),
+      );
     }
 
     final existing = Stores.server.fetch();

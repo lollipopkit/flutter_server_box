@@ -88,7 +88,7 @@ class PveBackend implements VirtBackend {
       tunnel: dialer.loopback,
       connect: dialer.startConnect,
       user: spi.ssh?.user,
-      sshKeyId: spi.ssh?.keyId,
+      sshKeyId: spi.ssh?.firstKeyId,
       sshPassword: spi.ssh?.pwd,
       exec: () => ref.read(serverProvider(spi.id).notifier).ensureExec(),
       onClose: dialer.close,

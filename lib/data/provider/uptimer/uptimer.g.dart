@@ -46,7 +46,7 @@ final class UptimerProvider extends $NotifierProvider<Uptimer, UptimerState> {
   }
 }
 
-String _$uptimerHash() => r'7d8e127982da08dcc8d87a60f6725acdb1b07f27';
+String _$uptimerHash() => r'30674a8c9a7ae2153f429851f2756bf54249b2da';
 
 /// Manages the signed-in LK Cloud user's Uptimer monitors, periodic polling,
 /// and CRUD mutations.

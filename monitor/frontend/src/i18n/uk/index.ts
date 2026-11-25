@@ -1632,7 +1632,7 @@ const uk = {
 	terminalCursorBlock: 'Блок',
 	terminalCursorUnderline: 'Підкреслення',
 	terminalFontSize: 'Розмір шрифту',
-		deskAgentMode: 'Режим Agent',
+	deskAgentMode: 'Режим Agent',
 	deskAgentRunning: 'Виконується',
 	deskAgentNeedsYou: 'Потрібна ваша увага',
 	deskAgentDone: 'Готово',

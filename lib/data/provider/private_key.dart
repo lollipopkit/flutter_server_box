@@ -49,9 +49,8 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
       keys: entityDelete(Stores.key, state.keys, info, (e) => e.id),
     );
     _forgetPassphrases([stored]);
-    // DB cleared ssh_key_id via ON DELETE SET NULL, but in-memory Spis still
-    // hold the old keyId until reloaded; without this the editor sees
-    // _keyIdx == -1 and rejects a valid save.
+    // DB cleared/backfilled ssh_key_id and cascaded server_key, but in-memory
+    // Spis still hold the deleted keyId until reloaded.
     try {
       final serversNotifier = ref.read(serversProvider.notifier);
       await serversNotifier.reload(refreshConnections: false);

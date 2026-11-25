@@ -9479,5 +9479,6 @@
   "@uptimerMinIntervalHint": {"placeholders": {"sec": {"type": "int"}}},
   "uptimerSchedule": "Schedule",
   "uptimerHttpRequest": "HTTP Request",
-  "uptimerResponseValidation": "Response validation"
+  "uptimerResponseValidation": "Response validation",
+  "sshTooManyKeysWarning": "Selecting many keys may hit the server's auth retry limit or trigger an IP ban."
 }

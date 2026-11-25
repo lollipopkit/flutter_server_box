@@ -71,7 +71,7 @@ class PrivateKeyEditPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
 
-  static const route = AppRoute(
+  static const route = AppRoute<PrivateKeyInfo, PrivateKeyEditPageArgs>(
     page: PrivateKeyEditPage.new,
     path: '/private_key/edit',
   );
@@ -421,6 +421,7 @@ extension _Actions on _PrivateKeyEditPageState {
     }
     FocusScope.of(context).unfocus();
     _loading.value = SizedLoading.medium;
+    PrivateKeyInfo? saved;
     try {
       // Stored as it was given. An encrypted key stays encrypted — the
       // passphrase is what protects it, and stripping it here left every
@@ -466,6 +467,7 @@ extension _Actions on _PrivateKeyEditPageState {
       } else {
         _notifier.add(pki);
       }
+      saved = pki;
       // Only for a key that was stored.
       if (pwd.isNotEmpty && opened != key) {
         KeyPassphrases.write(key, pwd);
@@ -484,7 +486,7 @@ extension _Actions on _PrivateKeyEditPageState {
       if (mounted) _loading.value = null;
     }
     if (!mounted) return;
-    context.pop();
+    context.pop(saved);
   }
 
   Future<void> _onTapPickFile() async {
