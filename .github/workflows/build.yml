@@ -804,8 +804,10 @@ jobs:
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
           # The status icon. `tray_manager` links it rather than opening it,
           # so without this the Linux build fails outright — its CMake makes a
-          # missing appindicator a FATAL_ERROR.
-          sudo apt install -y libayatana-appindicator3-dev
+          # missing appindicator a FATAL_ERROR. `patchelf` writes `$ORIGIN`
+          # RUNPATH onto the bundled tray libs so transitive deps resolve from
+          # `bundle/lib/`.
+          sudo apt install -y libayatana-appindicator3-dev patchelf
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash

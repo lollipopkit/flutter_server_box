@@ -82,6 +82,59 @@ if [[ ! -x "$BUNDLE_DIR/$APP_NAME" ]]; then
   exit 1
 fi
 
+# Guard against the DT_RUNPATH transitive-lookup trap: bundled tray shared
+# libraries (when real ELF binaries rather than CI smoke placeholders) must
+# carry `$ORIGIN` in DT_RUNPATH or DT_RPATH so libayatana-appindicator3 can
+# resolve libdbusmenu-gtk3.so.4 from bundle/lib/ on hosts without system copies.
+python3 - "$BUNDLE_DIR/lib" <<'PY'
+import glob
+import os
+import struct
+import sys
+
+lib_dir = sys.argv[1]
+patterns = (
+    os.path.join(lib_dir, "libayatana-*.so*"),
+    os.path.join(lib_dir, "libdbusmenu-*.so*"),
+)
+missing = []
+for pat in patterns:
+    for path in sorted(glob.glob(pat)):
+        if os.path.islink(path) or not os.path.isfile(path):
+            continue
+        with open(path, "rb") as f:
+            data = f.read()
+        if len(data) < 64 or data[:4] != b"\x7fELF" or data[4] != 2:
+            continue
+        e_shoff = struct.unpack_from("<Q", data, 40)[0]
+        e_shentsize, e_shnum = struct.unpack_from("<HH", data, 58)
+        sections = [
+            struct.unpack_from("<IIQQQQIIQQ", data, e_shoff + i * e_shentsize)
+            for i in range(e_shnum)
+        ]
+        paths = []
+        for s in sections:
+            sh_type, sh_offset, sh_size, sh_link = s[1], s[4], s[5], s[6]
+            if sh_type != 6:  # SHT_DYNAMIC
+                continue
+            str_off = sections[sh_link][4]
+            for pos in range(sh_offset, sh_offset + sh_size, 16):
+                d_tag, d_val = struct.unpack_from("<qQ", data, pos)
+                if d_tag == 0:
+                    break
+                if d_tag in (15, 29):  # DT_RPATH, DT_RUNPATH
+                    end = data.index(b"\x00", str_off + d_val)
+                    paths.extend(data[str_off + d_val:end].decode().split(":"))
+        if "$ORIGIN" not in paths:
+            missing.append(os.path.basename(path))
+
+if missing:
+    sys.exit(
+        "bundled tray libraries missing $ORIGIN RUNPATH (install patchelf during CMake build): "
+        + ", ".join(missing)
+    )
+PY
+
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 

@@ -50,6 +50,10 @@ rpm:
   group: Applications/System
 
 overrides:
+  # libayatana-appindicator3 and its libdbusmenu-* chain are bundled into
+  # /opt/serverbox/lib with `$ORIGIN` RUNPATH by linux/CMakeLists.txt so the
+  # same .deb/.rpm runs across distributions where ayatana packages differ or
+  # are absent from base repos (e.g. RHEL/Rocky/Alma 9).
   deb:
     depends:
       - libgtk-3-0t64 | libgtk-3-0

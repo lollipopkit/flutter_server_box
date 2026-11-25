@@ -1,5 +1,8 @@
 # Flathub manifest template for ServerBox.
 # Render with scripts/release/flathub.sh (sets URL and SHA256).
+# Consumes the official Linux release tarball (similar to Flathub's Flutter
+# bundles) because ServerBox combines Flutter 3.50, multiple submodules, Rust
+# FFI crates, and C native build hooks (sqlite3mc, QuickJS).
 app-id: tech.lolli.toolbox
 runtime: org.freedesktop.Platform
 runtime-version: '26.08'
@@ -29,7 +32,16 @@ modules:
     build-commands:
       - mkdir -p /app/serverbox /app/bin
       - cp -a bundle/. /app/serverbox/
-      - ln -s /app/serverbox/ServerBox /app/bin/serverbox
+      # Set LD_LIBRARY_PATH so transitive dependencies of bundled tray
+      # libraries (e.g. libdbusmenu-gtk3.so.4) always resolve from
+      # /app/serverbox/lib in addition to their `$ORIGIN` DT_RUNPATH.
+      - |
+        cat <<'EOF' > /app/bin/serverbox
+        #!/bin/sh
+        export LD_LIBRARY_PATH="/app/serverbox/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        exec /app/serverbox/ServerBox "$@"
+        EOF
+        chmod 755 /app/bin/serverbox
       - install -Dm644 share/applications/${FLATPAK_ID}.desktop -t /app/share/applications/
       - install -Dm644 share/metainfo/${FLATPAK_ID}.metainfo.xml -t /app/share/metainfo/
       - install -Dm644 share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png -t /app/share/icons/hicolor/512x512/apps/
