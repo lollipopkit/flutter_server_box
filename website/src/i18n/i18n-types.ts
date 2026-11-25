@@ -755,7 +755,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * U​n​i​f​i​e​d​ ​A​P​I​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​f​r​o​n​t​i​e​r​ ​L​L​M​s​—​p​l​u​g​ ​s​t​r​a​i​g​h​t​ ​i​n​t​o​ ​S​e​r​v​e​r​B​o​x​ ​A​I​ ​A​g​e​n​t​,​ ​G​P​T​ ​B​o​x​,​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​t​o​o​l​s​.
+			 * U​n​i​f​i​e​d​ ​A​P​I​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​f​r​o​n​t​i​e​r​ ​L​L​M​s​—​p​l​u​g​ ​s​t​r​a​i​g​h​t​ ​i​n​t​o​ ​S​e​r​v​e​r​B​o​x​ ​A​I​ ​A​g​e​n​t​,​ ​L​L​M​B​o​x​,​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​t​o​o​l​s​.
 			 */
 			description: string
 		}
@@ -771,7 +771,7 @@ type RootTranslation = {
 		}
 		llmbox: {
 			/**
-			 * G​P​T​ ​B​o​x
+			 * L​L​M​B​o​x
 			 */
 			title: string
 			/**

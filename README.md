@@ -25,28 +25,71 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 
 <table>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="Server list"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg" alt="Server details"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="Terminal"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="Files"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/home.jpg?v=20261125" alt="Desktop server list"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/server-details.jpg?v=20261125" alt="Desktop server details"></td>
+  </tr>
+  <tr>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/terminal.jpg?v=20261125" alt="Desktop terminal"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/files.jpg?v=20261125" alt="Desktop files"></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="iPhone server list"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg" alt="iPhone server details"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="iPhone terminal"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="iPhone files"></td>
   </tr>
 </table>
 
 <details>
-<summary>8 more screenshots</summary>
+<summary>More screenshots (Desktop, iPhone Duo, iPhone)</summary>
 <br>
+
+**Desktop**
 <table>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="Containers"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="Processes"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="Services"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/users.jpg" alt="Users"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/container.jpg?v=20261125" alt="Desktop containers"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/process.jpg?v=20261125" alt="Desktop processes"></td>
   </tr>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="Benchmark"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/virt.jpg" alt="Virtualization"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/themes.jpg" alt="Theme store"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/users.jpg?v=20261125" alt="Desktop users"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/agent.jpg?v=20261125" alt="Desktop Agent"></td>
+  </tr>
+  <tr>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/settings.jpg?v=20261125" alt="Desktop themes and settings"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/more.jpg?v=20261125" alt="Desktop tools"></td>
+  </tr>
+</table>
+
+**iPhone Duo**
+<table>
+  <tr>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/home.jpg" alt="iPhone Duo server list"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/server-details.jpg" alt="iPhone Duo server details"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/terminal.jpg" alt="iPhone Duo terminal"></td>
+  </tr>
+  <tr>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/files.jpg" alt="iPhone Duo files"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/agent.jpg" alt="iPhone Duo Agent"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/settings.jpg" alt="iPhone Duo themes and settings"></td>
+  </tr>
+</table>
+
+**iPhone**
+<table>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="iPhone containers"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="iPhone processes"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="iPhone services"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/users.jpg" alt="iPhone users"></td>
+  </tr>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="iPhone Agent"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="iPhone benchmark"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/virt.jpg" alt="iPhone virtualization"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/themes.jpg" alt="iPhone theme store"></td>
   </tr>
 </table>
 </details>

@@ -37,6 +37,7 @@
 
   --radius-container: 14px;
   --radius-pill: 9999px;
+  --nav-bottom: 4.5rem;
 
   --font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -98,7 +99,7 @@ body {
 }
 
 [id] {
-  scroll-margin-top: 6rem;
+  scroll-margin-top: calc(var(--nav-bottom) + 1rem);
 }
 
 .site-nav {
@@ -295,6 +296,139 @@ body {
   margin-top: 0.4rem;
 }
 
+.hero-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Explicit measured pixel height; transitions only during visible device
+   switches so resize and offscreen switches never lag or shift scroll. */
+.hero-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+}
+
+.hero-viewport--animating {
+  transition: height 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-panel {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  perspective: 1200px;
+}
+
+.hero-showcase {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--snow);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--light-gray) 65%, transparent),
+    0 28px 64px -24px rgba(10, 8, 12, 0.55),
+    0 0 90px -24px var(--brand-glow);
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-showcase--mac {
+  aspect-ratio: 1440 / 823;
+}
+
+.hero-showcase--iphone-duo {
+  width: min(100%, 460px);
+  aspect-ratio: 1440 / 1013;
+  border-radius: 18px;
+}
+
+.hero-showcase-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.hero-showcase-img.shown {
+  opacity: 1;
+}
+
+.hero-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+  max-width: 520px;
+}
+
+.hero-thumb {
+  position: relative;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--snow);
+  cursor: pointer;
+  opacity: 0.62;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--light-gray) 70%, transparent);
+  transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.hero-thumb--mac {
+  aspect-ratio: 1440 / 823;
+}
+
+.hero-thumb--iphone-duo {
+  aspect-ratio: 1440 / 1013;
+}
+
+.hero-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (hover: hover) {
+  .hero-thumb:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+}
+
+.hero-thumb.active {
+  opacity: 1;
+  border-color: var(--brand);
+  box-shadow: none;
+}
+
+.hero-thumb:focus-visible {
+  outline: 2px solid var(--ring-blue);
+  outline-offset: 2px;
+}
+
 .screenshot-stack {
   position: relative;
   width: 100%;
@@ -346,12 +480,60 @@ body {
   }
 }
 
-
-
-
-
 .section-head {
-  margin-bottom: clamp(2rem, 4vw, 3.25rem);
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.tour-switcher-bar {
+  position: sticky;
+  top: calc(var(--nav-bottom) + 0.75rem);
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+  pointer-events: none;
+}
+
+.device-switcher {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--light-gray) 80%, transparent);
+  background: color-mix(in srgb, var(--snow) 84%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  box-shadow: 0 6px 24px -14px rgba(26, 20, 24, 0.35);
+  pointer-events: auto;
+}
+
+.device-pill {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--stone);
+  font: 600 0.84rem/1 var(--font-body);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .device-pill:hover:not(.active) {
+    color: var(--black);
+  }
+}
+
+.device-pill.active {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.device-pill:focus-visible {
+  outline: 2px solid var(--ring-blue);
+  outline-offset: 2px;
 }
 
 .section-head h2 {
@@ -381,6 +563,13 @@ body {
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
   gap: clamp(2rem, 6vw, 6rem);
   align-items: start;
+}
+
+@media (min-width: 861px) {
+  .tour.tour--wide {
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: clamp(2rem, 4vw, 4rem);
+  }
 }
 
 .tour-list {
@@ -480,17 +669,26 @@ body {
 
 .tour-device {
   position: sticky;
-  top: calc(50vh - min(36vh, 320px) + 2rem);
+  top: max(calc(var(--nav-bottom) + 4.5rem), calc(50vh - min(36vh, 320px) + 2rem));
   display: flex;
   justify-content: center;
+  container-type: inline-size;
+  transition: top 380ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* A phone drawn in CSS: a bezel the color of the text, the screenshot inside. */
+.tour-device--wide {
+  top: max(calc(var(--nav-bottom) + 4.5rem), calc(50vh - min(28vh, 220px) + 2rem));
+}
+
+/* A device frame drawn in CSS: explicit width & height lengths per device so
+   CSS transitions morph smoothly instead of snapping via `height: auto`. */
 .device-frame {
   position: relative;
-  height: min(72vh, 640px);
-  aspect-ratio: 662 / 1440;
+  --frame-w: min(100cqi, calc(min(72vh, 640px) * 662 / 1440));
+  width: var(--frame-w);
+  height: calc(var(--frame-w) * 1440 / 662);
   max-width: 100%;
+  overflow: hidden;
   border-radius: 40px;
   padding: 5px;
   /* A phone's bezel is dark in either scheme. */
@@ -499,6 +697,18 @@ body {
     0 0 0 1px var(--border-light),
     0 40px 80px -30px rgba(26, 20, 24, 0.5),
     0 0 120px -20px var(--brand-glow);
+  transition:
+    width 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.device-frame-layer {
+  position: absolute;
+  inset: 0;
 }
 
 .device-frame img {
@@ -510,7 +720,49 @@ body {
   border-radius: 35px;
   opacity: 0;
   transform: scale(0.985);
-  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.45s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    inset 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.device-frame--mac {
+  --frame-w: min(100cqi, calc(min(68vh, 520px) * 1440 / 823));
+  width: var(--frame-w);
+  height: calc(var(--frame-w) * 823 / 1440);
+  border-radius: 14px;
+  padding: 0;
+  background: var(--snow);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--light-gray) 65%, transparent),
+    0 32px 72px -28px rgba(10, 8, 12, 0.55),
+    0 0 100px -24px var(--brand-glow);
+}
+
+.device-frame--mac img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.device-frame--iphone-duo {
+  --frame-w: min(100cqi, 580px, calc(min(68vh, 520px) * 1440 / 1013));
+  width: var(--frame-w);
+  height: calc(var(--frame-w) * 1013 / 1440);
+  border-radius: 26px;
+  padding: 6px;
+}
+
+.device-frame--iphone-duo img {
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  border-radius: 20px;
 }
 
 .device-frame img.shown {
@@ -1259,12 +1511,14 @@ body {
   border: 1px solid var(--light-gray);
   background: var(--white);
   color: var(--near-black);
+  max-width: 100%;
   min-height: 42px;
   padding: 0.55rem 0.72rem;
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.42rem;
+  gap: 0.25rem 0.42rem;
   cursor: pointer;
   transition:
     opacity 0.2s ease,
@@ -1288,6 +1542,8 @@ body {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--stone);
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .download-note {
@@ -1439,6 +1695,11 @@ body {
 
 /* The tour as a swipeable row: no sticky phone, each card its own picture. */
 @media (max-width: 860px) {
+  .tour-switcher-bar {
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
   .tour {
     grid-template-columns: 1fr;
   }
@@ -1449,6 +1710,7 @@ body {
 
   .tour-list {
     flex-direction: row;
+    align-items: flex-start;
     gap: 1rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -1476,6 +1738,11 @@ body {
     background: var(--snow);
   }
 
+  .tour-list li.tour-card--mac,
+  .tour-list li.tour-card--iphone-duo {
+    flex: 0 0 min(88vw, 440px);
+  }
+
   .tour-item,
   .tour-item.active,
   .tour-item:hover {
@@ -1500,14 +1767,31 @@ body {
     display: block;
     width: 100%;
     aspect-ratio: 662 / 1440;
+    object-fit: cover;
     border-radius: 24px;
     border: 1px solid var(--light-gray);
     background: var(--snow);
     box-shadow: 0 20px 40px -24px rgba(26, 20, 24, 0.45);
   }
+
+  .tour-shot-inline--mac {
+    aspect-ratio: 1440 / 823;
+    border-radius: 12px;
+    border: 0;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--light-gray) 65%, transparent);
+  }
+
+  .tour-shot-inline--iphone-duo {
+    aspect-ratio: 1440 / 1013;
+    border-radius: 16px;
+  }
 }
 
 @media (max-width: 768px) {
+  :root {
+    --nav-bottom: 6.75rem;
+  }
+
   .site-nav {
     flex-wrap: wrap;
     border-radius: 20px;
@@ -1537,7 +1821,7 @@ body {
   }
 
   .download-platform {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.9rem;
   }
 
@@ -1584,11 +1868,21 @@ body {
     width: min(150px, 38vw);
   }
 
+  .device-switcher {
+    border-radius: 1.25rem;
+    justify-content: center;
+  }
+
+  .device-pill {
+    min-height: 36px;
+  }
+
   .protocol-badges {
     gap: 0.4rem;
   }
 
   .download-icon-btn {
+    border-radius: 1.25rem;
     min-height: 40px;
     padding-inline: 0.68rem;
   }
@@ -1621,6 +1915,13 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .screenshot-card,
+  .hero-viewport,
+  .hero-showcase,
+  .hero-showcase-img,
+  .hero-thumb,
+  .device-pill,
+  .tour-device,
+  .device-frame,
   .device-frame img,
   .tour-item,
   .tour-title,

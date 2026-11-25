@@ -27,28 +27,71 @@
 
 <table>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="服务器列表"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg" alt="服务器详情"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="终端"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="文件"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/home.jpg?v=20261125" alt="桌面端服务器列表"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/server-details.jpg?v=20261125" alt="桌面端服务器详情"></td>
+  </tr>
+  <tr>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/terminal.jpg?v=20261125" alt="桌面端终端"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/files.jpg?v=20261125" alt="桌面端文件"></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="iPhone 服务器列表"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg" alt="iPhone 服务器详情"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="iPhone 终端"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="iPhone 文件"></td>
   </tr>
 </table>
 
 <details>
-<summary>另外 8 张</summary>
+<summary>更多截图（桌面端、iPhone Duo、iPhone）</summary>
 <br>
+
+**桌面端**
 <table>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="容器"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="进程"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="服务"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/users.jpg" alt="用户"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/container.jpg?v=20261125" alt="桌面端容器"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/process.jpg?v=20261125" alt="桌面端进程"></td>
   </tr>
   <tr>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="基准测试"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/virt.jpg" alt="虚拟化"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/themes.jpg" alt="主题商店"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/users.jpg?v=20261125" alt="桌面端用户"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/agent.jpg?v=20261125" alt="桌面端 Agent"></td>
+  </tr>
+  <tr>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/settings.jpg?v=20261125" alt="桌面端主题与设置"></td>
+    <td><img width="420" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/more.jpg?v=20261125" alt="桌面端工具菜单"></td>
+  </tr>
+</table>
+
+**iPhone Duo**
+<table>
+  <tr>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/home.jpg" alt="iPhone Duo 服务器列表"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/server-details.jpg" alt="iPhone Duo 服务器详情"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/terminal.jpg" alt="iPhone Duo 终端"></td>
+  </tr>
+  <tr>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/files.jpg" alt="iPhone Duo 文件"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/agent.jpg" alt="iPhone Duo Agent"></td>
+    <td><img width="280" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone-duo/settings.jpg" alt="iPhone Duo 主题与设置"></td>
+  </tr>
+</table>
+
+**iPhone**
+<table>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="iPhone 容器"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="iPhone 进程"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="iPhone 服务"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/users.jpg" alt="iPhone 用户"></td>
+  </tr>
+  <tr>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="iPhone Agent"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="iPhone 基准测试"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/virt.jpg" alt="iPhone 虚拟化"></td>
+    <td><img width="180" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/themes.jpg" alt="iPhone 主题商店"></td>
   </tr>
 </table>
 </details>
