@@ -18,11 +18,9 @@ import 'package:server_box/data/store/stores.dart';
 /// from whether the data is installed, so off is a real off.
 ///
 /// Gate two: a private address. No lookup is attempted, and none could answer
-/// one — see `isPrivateHost`. The chain stops with no coordinate and
-/// [GeoMiss.private], which is the ordinary state of an install whose servers
-/// are all on a LAN. Phase two is what will fill this: the machine can read
-/// its own interfaces and hand back a public address if it has one, which is
-/// then fed to the links below in place of the private one — see [SelfAddr].
+/// one — see `isPrivateHost`. [locate] then tries the public address the server
+/// reported for itself ([SelfAddr]) and otherwise returns [GeoMiss.private],
+/// which is the ordinary state of an install whose servers are all on a LAN.
 /// A machine that has only private addresses of its own stays here, because
 /// nothing local can say where such a machine is.
 ///
@@ -181,15 +179,8 @@ final class IpGeo {
     final literal = InternetAddress.tryParse(host);
     if (literal != null) return literal;
     try {
-      final found = await _lookup(host);
-      // IPv4 first as a stable tie-break: a resolver may list a dual-stack
-      // host's addresses in either order, which would move it between runs.
-      // Unwrapped for the test, returned as it came: a v4-mapped answer is a
-      // v4 address and should win this, and `_cityOf` unwraps it again.
-      for (final addr in found) {
-        if (unwrapV4Mapped(addr).type == InternetAddressType.IPv4) return addr;
-      }
-      return found.firstOrNull;
+      // IPv4 first as a stable tie-break across dual-stack resolver ordering.
+      return preferV4(await _lookup(host));
     } catch (e) {
       // A name that will not resolve is not an error anyone needs told about:
       // the server is either off, or behind something this device is not on.

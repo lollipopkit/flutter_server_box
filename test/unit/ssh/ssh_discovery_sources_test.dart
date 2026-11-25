@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/service/ssh_discovery.dart';
-import 'package:server_box/core/service/ssh_discovery_cloudflare.dart';
-import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
-import 'package:server_box/core/service/ssh_discovery_tailscale.dart';
+import 'package:server_box/core/ssh_discovery/cloudflare.dart';
+import 'package:server_box/core/ssh_discovery/ssh_config.dart';
+import 'package:server_box/core/ssh_discovery/ssh_discovery.dart';
+import 'package:server_box/core/ssh_discovery/tailscale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 

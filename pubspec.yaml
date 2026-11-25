@@ -17,8 +17,8 @@ dependencies:
   # `clock` rather than `DateTime.now` so a test's fake time moves it too.
   # Already in the tree through flutter_test; named so the import is legal.
   clock: ^1.1.3
-  # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
-  # `X509Certificate` only offers sha1 ready made.
+  # SHA-256 for SSH key fingerprints and geo data integrity, plus SHA-1 for
+  # OpenSSH ControlPath %C hashes.
   crypto: ^3.0.0
   dio: ^5.11.1
   pinenacl: ^0.6.0
@@ -112,7 +112,6 @@ dependencies:
     path: packages/fl_pi_llm/fl_pi_llm_ui
   # Imported by the app itself, not only through the packages that bring them
   # in: a transitive dependency can drop or change one under it.
-  ffi: ^2.2.0
   path_provider: ^2.1.6
   path: ^1.9.1
   window_manager: ^0.5.2

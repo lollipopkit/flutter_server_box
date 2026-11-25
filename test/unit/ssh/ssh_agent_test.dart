@@ -329,7 +329,9 @@ Future<SSHClient> _createClient({
         forwardAgent: forwardAgent,
       ),
     ),
-    privateKey: privateKey,
+    privateKeysByKeyId: privateKey != null && keyId != null
+        ? {SshCredential.keyRefForId(keyId): privateKey}
+        : null,
     onKeyboardInteractive: onKeyboardInteractive,
     knownHostFingerprints: const {},
   );

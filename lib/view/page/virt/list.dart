@@ -239,7 +239,7 @@ class _VirtHostColumn extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(9, 5, 9, 17),
         children: [
-          if (err != null) VirtHostError(serverId: serverId, err: err),
+          if (err != null) VirtHostErrCard(serverId: serverId, err: err),
           if (data?.host.pveUntested ?? false)
             _UntestedNotice(version: data!.host.version!),
           if (data == null && err == null)

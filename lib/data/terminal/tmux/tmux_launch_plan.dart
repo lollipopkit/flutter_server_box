@@ -68,13 +68,11 @@ TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
     windows,
   );
   final target = session.id.value;
-  final command = windowIndex != null
-      ? TmuxCommandBuilder.attachSessionWindow(
-          target,
-          windowIndex,
-          tmuxBin: tmuxBin,
-        )
-      : TmuxCommandBuilder.attachSession(target, tmuxBin: tmuxBin);
+  final command = TmuxCommandBuilder.attachSession(
+    target,
+    windowIndex: windowIndex,
+    tmuxBin: tmuxBin,
+  );
 
   return TmuxLaunchPlan.tmux(
     command: command,
@@ -143,16 +141,11 @@ TmuxLaunchPlan buildChosenTmuxLaunchPlan(
       :final windowIndex,
     ) =>
       TmuxLaunchPlan.tmux(
-        command: windowIndex != null
-            ? TmuxCommandBuilder.attachSessionWindow(
-                sessionId?.value ?? sessionName,
-                windowIndex,
-                tmuxBin: tmuxBin,
-              )
-            : TmuxCommandBuilder.attachSession(
-                sessionId?.value ?? sessionName,
-                tmuxBin: tmuxBin,
-              ),
+        command: TmuxCommandBuilder.attachSession(
+          sessionId?.value ?? sessionName,
+          windowIndex: windowIndex,
+          tmuxBin: tmuxBin,
+        ),
         sessionName: sessionName,
         sessionId: sessionId,
         windowIndex: windowIndex,

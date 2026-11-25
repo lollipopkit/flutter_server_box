@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/monitor/exec.dart';
 import 'package:server_box/core/ssh/auth.dart';

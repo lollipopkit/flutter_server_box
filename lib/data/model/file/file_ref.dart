@@ -184,9 +184,9 @@ class SshTransferCreds {
     final ssh = spi.ssh;
     if (ssh != null && ssh.keyRefs.isNotEmpty) {
       try {
-        final keys = resolvePrivateKeys(ssh, originalHost: spi.name);
-        privateKeysByKeyId!.addAll(keys);
-        privateKey = keys[ssh.keyRefs.first];
+        privateKeysByKeyId!.addAll(
+          resolvePrivateKeys(ssh, originalHost: spi.name),
+        );
       } catch (e) {
         if (ssh.pwd?.isNotEmpty != true) rethrow;
         Loggers.app.warning(
@@ -200,20 +200,6 @@ class SshTransferCreds {
       for (final server in Stores.server.fetch()) server.id: server,
     };
     jumpSpisById = collectJumpServers(spi: spi, serversById: allServers);
-
-    final firstJumpId = spi.firstJumpId;
-    if (firstJumpId != null) {
-      jumpSpi = jumpSpisById?[firstJumpId];
-      final jumpSsh = jumpSpi?.ssh;
-      if (jumpSsh != null && jumpSsh.keyRefs.isNotEmpty) {
-        // A jump server whose key cannot be resolved is not fatal here: the
-        // hop may authenticate by password, and failing the whole transfer at
-        // queue time would take the other candidates with it.
-        final keys = _tryResolveAll(jumpSpi!);
-        privateKeysByKeyId!.addAll(keys);
-        jumpPrivateKey = keys[jumpSsh.keyRefs.first];
-      }
-    }
 
     for (final jump in jumpSpisById?.values ?? const <Spi>[]) {
       final jumpSsh = jump.ssh;
@@ -250,9 +236,6 @@ class SshTransferCreds {
   }
 
   final Spi spi;
-  String? privateKey;
-  Spi? jumpSpi;
-  String? jumpPrivateKey;
   Map<String, Spi>? jumpSpisById;
   Map<String, String>? privateKeysByKeyId;
 
@@ -298,20 +281,6 @@ class SshTransferCreds {
     }
     if (keys.isEmpty && !hasFallback && lastUnlockError != null) {
       throw lastUnlockError;
-    }
-    // The two hold the same string for the main server's key, so the copy
-    // outside the map has to be moved along with it.
-    final mainRef = spi.ssh?.keyRef;
-    if (mainRef != null) {
-      privateKey =
-          keys[mainRef] ??
-          spi.ssh?.keyRefs.map((r) => keys[r]).nonNulls.firstOrNull;
-    }
-    final jumpRef = jumpSpi?.ssh?.keyRef;
-    if (jumpRef != null) {
-      jumpPrivateKey =
-          keys[jumpRef] ??
-          jumpSpi?.ssh?.keyRefs.map((r) => keys[r]).nonNulls.firstOrNull;
     }
   }
 }

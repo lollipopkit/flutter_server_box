@@ -728,21 +728,15 @@ abstract final class SSHConfig {
         return (null, false);
       }
       final expandedPath = configPath.replaceFirst('~', homePath);
-      dprint('Checking SSH config at path: $expandedPath');
       final file = File(expandedPath);
       return (file, file.existsSync());
     }
 
     for (final path in _possibleConfigPaths) {
-      dprint('Checking SSH config at path: $path');
       final file = File(path);
-      if (file.existsSync()) {
-        dprint('Found SSH config at: $path');
-        return (file, true);
-      }
+      if (file.existsSync()) return (file, true);
     }
 
-    dprint('SSH config file not found in any of the expected locations');
     return (null, false);
   }
 

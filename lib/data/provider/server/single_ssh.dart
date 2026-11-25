@@ -147,7 +147,7 @@ mixin _SshStatus on _ScriptStatus {
       TermSessionManager.add(
         id: _statusSessionId,
         title: spi.name,
-        subtitle: spi.oldId,
+        subtitle: spi.displayAddr,
         serverId: spi.id,
         startTimeMs: startedAt.millisecondsSinceEpoch,
         disconnect: () => _disconnectStatusSession(spi.id),
@@ -229,24 +229,21 @@ mixin _SshStatus on _ScriptStatus {
           'Writing script for ${spi.name} (${detectedSystemType.name})',
         );
 
-        final writeScriptResult = await state.client!.execSafe(
-          (session) async {
-            final scriptRaw = ShellFuncManager.installPayload(
-              ShellFuncManager.allScript(
-                systemType: detectedSystemType,
-                disabledCmdTypes: spi.disabledCmdTypes,
-              ),
-              systemType: detectedSystemType,
-            ).uint8List;
-            session.stdin.add(scriptRaw);
-            unawaited(session.stdin.close());
-          },
-          entry: ShellFuncManager.getInstallShellCmd(
+        final scriptPayload = ShellFuncManager.installPayload(
+          ShellFuncManager.allScript(
+            systemType: detectedSystemType,
+            disabledCmdTypes: spi.disabledCmdTypes,
+          ),
+          systemType: detectedSystemType,
+        );
+        final writeScriptResult = await SshExec(state.client!).run(
+          ShellFuncManager.getInstallShellCmd(
             spi.id,
             systemType: detectedSystemType,
             customDir: spi.custom?.scriptDir,
           ),
-          systemType: detectedSystemType,
+          stdin: scriptPayload,
+          isWindows: detectedSystemType == SystemType.windows,
           logLabel: 'WriteScript<${spi.name}>',
         );
         if (!_isRefreshCurrent(operation, spi)) return false;

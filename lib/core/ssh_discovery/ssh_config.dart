@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/service/ssh_discovery.dart';
 import 'package:server_box/core/ssh/config.dart';
+import 'package:server_box/core/ssh_discovery/ssh_discovery.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// The `Host` entries of `~/.ssh/config`, with the `ProxyJump` hops each one

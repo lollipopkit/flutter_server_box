@@ -788,10 +788,6 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<String?> snapshotRefusal(String guestId) =>
       _backend.snapshotRefusal(_guest(guestId));
 
-  /// See [VirtBackend.snapshotSupported].
-  Future<bool?> snapshotSupported(String guestId) =>
-      _backend.snapshotSupported(_guest(guestId));
-
   /// See [VirtBackend.snapshotDiff].
   Future<List<VirtSnapDiff>> snapshotDiff(String guestId, String name) =>
       _backend.snapshotDiff(_guest(guestId), name);

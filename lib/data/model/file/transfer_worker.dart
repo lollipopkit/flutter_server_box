@@ -113,9 +113,6 @@ Future<SSHClient> _connectSsh(
 ) async {
   final client = await genClient(
     creds.spi,
-    privateKey: creds.privateKey,
-    jumpSpi: creds.jumpSpi,
-    jumpPrivateKey: creds.jumpPrivateKey,
     privateKeysByKeyId: creds.privateKeysByKeyId,
     jumpSpisById: creds.jumpSpisById,
     knownHostFingerprints: creds.knownHostFingerprints,
@@ -345,12 +342,10 @@ Future<void> _download(
     final watch = Stopwatch()..start();
     client = await _connectSsh(from.creds, mainSendPort);
     mainSendPort.send(FileTransferStage.connected);
-    Loggers.app.info('Transfer download SSH connected: ${from.path}');
 
     final dirPath = to.path.substring(0, to.path.lastIndexOf(Pfs.seperator));
     await Directory(dirPath).create(recursive: true);
 
-    Loggers.app.info('Transfer download opening session: ${from.path}');
     final openedSftp = await withSftpSessionOpenTimeout(
       'open download session',
       client.sftp(),
@@ -358,7 +353,6 @@ Future<void> _download(
     );
     sftp = openedSftp;
 
-    Loggers.app.info('Transfer download opening remote file: ${from.path}');
     final openedRemoteFile = await withSftpLateCleanupTimeout(
       'open remote file for download',
       openedSftp.open(from.path),
@@ -366,7 +360,6 @@ Future<void> _download(
       cleanup: (file) => file.close(),
     );
     remoteFile = openedRemoteFile;
-    Loggers.app.info('Transfer download reading remote size: ${from.path}');
     final size = (await withSftpOpTimeout(
       'stat remote file',
       openedRemoteFile.stat(),
@@ -379,8 +372,8 @@ Future<void> _download(
     mainSendPort.send(size);
     mainSendPort.send(FileTransferStage.loading);
     Loggers.app.info(
-      'Transfer download started: ${from.path}, '
-      'chunk=$_sftpChunkSize, pending=$_sftpDownloadMaxPendingRequests',
+      'Transfer download started: ${from.path} (size=$size, '
+      'chunk=$_sftpChunkSize, pending=$_sftpDownloadMaxPendingRequests)',
     );
 
     // Beside the destination, not under its name: a download that dies
@@ -401,7 +394,6 @@ Future<void> _download(
       var chunkCount = 0;
       var lastProgressUpdateMs = -progressUpdateIntervalMs;
       final dlWatch = Stopwatch()..start();
-      Loggers.app.info('Transfer download start size=$size');
 
       final timeout = _idleTimeout(job);
 
@@ -579,7 +571,6 @@ Future<void> _upload(
     final watch = Stopwatch()..start();
     client = await _connectSsh(to.creds, mainSendPort);
     mainSendPort.send(FileTransferStage.connected);
-    Loggers.app.info('Transfer upload SSH connected: ${to.path}');
 
     final local = File(from.path);
     if (!await local.exists()) {
@@ -589,7 +580,6 @@ Future<void> _upload(
     final localLen = await local.length();
     mainSendPort.send(localLen);
     final localFile = local.openRead().cast<Uint8List>();
-    Loggers.app.info('Transfer upload opening session: ${to.path}');
     final openedSftp = await withSftpSessionOpenTimeout(
       'open upload session',
       client.sftp(),
@@ -599,7 +589,6 @@ Future<void> _upload(
     // Beside the destination rather than onto it. Truncating first meant a
     // failed upload replaced a good remote file with a partial one.
     staging = stagingNameFor(to.path);
-    Loggers.app.info('Transfer upload opening remote file: $staging');
     final openedRemoteFile = await withSftpLateCleanupTimeout(
       'open remote file for upload',
       openedSftp.open(

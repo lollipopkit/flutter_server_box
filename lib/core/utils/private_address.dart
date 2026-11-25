@@ -66,6 +66,17 @@ InternetAddress unwrapV4Mapped(InternetAddress addr) {
   );
 }
 
+/// Picks the first IPv4 address (including v4-mapped IPv6) from [addresses],
+/// falling back to the first address in iteration order.
+InternetAddress? preferV4(Iterable<InternetAddress> addresses) {
+  InternetAddress? first;
+  for (final addr in addresses) {
+    first ??= addr;
+    if (unwrapV4Mapped(addr).type == InternetAddressType.IPv4) return addr;
+  }
+  return first;
+}
+
 /// [isPrivateHost] for an address that has already been parsed or resolved.
 bool isPrivateAddress(InternetAddress addr) {
   final b = unwrapV4Mapped(addr).rawAddress;

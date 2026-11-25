@@ -6,8 +6,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/local/files.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
 import 'package:server_box/data/model/file/backend/sftp_sudo.dart';
 import 'package:server_box/data/model/file/backend/sftp_timeout.dart';
@@ -260,7 +260,7 @@ extension _Open on _SftpPageState {
     bool rememberPwd() => Stores.setting.rememberPwdInMem.fetch();
     _sudoHelper = SftpSudoHelper(
       spi: spi,
-      exec: client.execWithPwd,
+      exec: SshExec(client).runSudo,
       rememberPwd: rememberPwd,
       askPassword: () async {
         if (!mounted) return null;
@@ -644,7 +644,7 @@ extension _Edit on _SftpPageState {
       }
       // A listing may leave the size out; never guess it is small enough.
       final (size, err) = await context.showLoadingSheet(fn: () async {
-        final result = await _client.execWithPwd(
+        final result = await SshExec(_client).run(
           files.filesSizeCommand(path: remotePath),
         );
         if (result.exitCode != 0) return null;

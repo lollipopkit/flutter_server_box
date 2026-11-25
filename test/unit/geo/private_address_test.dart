@@ -208,4 +208,24 @@ void main() {
     expect(isPrivateAddress(InternetAddress('fd00::1')), isTrue);
     expect(isPrivateAddress(InternetAddress('2606:4700::1111')), isFalse);
   });
+
+  group('preferV4', () {
+    test('returns null on empty input', () {
+      expect(preferV4(const []), isNull);
+    });
+
+    test('prefers IPv4 or v4-mapped IPv6 over pure IPv6', () {
+      final v6 = InternetAddress('2606:4700::1111');
+      final v4 = InternetAddress('1.1.1.1');
+      final mapped = InternetAddress('::ffff:8.8.8.8');
+      expect(preferV4([v6, v4]), v4);
+      expect(preferV4([v6, mapped]), mapped);
+    });
+
+    test('falls back to the first IPv6 when no IPv4 is present', () {
+      final a = InternetAddress('2606:4700::1111');
+      final b = InternetAddress('2001:4860:4860::8888');
+      expect(preferV4([a, b]), a);
+    });
+  });
 }

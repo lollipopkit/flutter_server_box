@@ -5,7 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
-import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/provider/port_forward.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/stores.dart';
 
