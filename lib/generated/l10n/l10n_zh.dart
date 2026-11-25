@@ -14226,5 +14226,144 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。';
 
   @override
+  String get uptimer => 'Uptimer';
+
+  @override
+  String get uptimerStatusUp => '正常';
+
+  @override
+  String get uptimerStatusDown => '離線';
+
+  @override
+  String get uptimerStatusMaintenance => '維護中';
+
+  @override
+  String get uptimerStatusPaused => '已暫停';
+
+  @override
+  String get uptimerStatusUnknown => '未知';
+
+  @override
+  String get uptimerTest => '測試';
+
+  @override
+  String get uptimerPause => '暫停';
+
+  @override
+  String get uptimerResume => '恢復';
+
+  @override
+  String get uptimerLatency => '延遲';
+
+  @override
+  String get uptimerOutages => '中斷記錄';
+
+  @override
+  String get uptimerNoOutages => '無中斷記錄';
+
+  @override
+  String get uptimerOngoing => '進行中';
+
+  @override
+  String get uptimerIncidents => '事件';
+
+  @override
+  String get uptimerMaintenance => '維護時段';
+
+  @override
+  String get uptimerUpcoming => '即將到來';
+
+  @override
+  String get uptimerInterval => '檢查間隔';
+
+  @override
+  String get uptimerTimeout => '逾時';
+
+  @override
+  String get uptimerGracePeriod => '寬限期';
+
+  @override
+  String get uptimerGroup => '群組';
+
+  @override
+  String get uptimerDisplayUrl => '顯示網址';
+
+  @override
+  String get uptimerTarget => '目標';
+
+  @override
+  String get uptimerType => '類型';
+
+  @override
+  String get uptimerPublic => '公開狀態頁';
+
+  @override
+  String get uptimerActive => '啟用';
+
+  @override
+  String get uptimerMethod => '請求方法';
+
+  @override
+  String get uptimerFollowRedirects => '跟隨重新導向';
+
+  @override
+  String get uptimerExpectedStatus => '預期狀態碼';
+
+  @override
+  String get uptimerForbiddenStatus => '禁止狀態碼';
+
+  @override
+  String get uptimerHeaders => '標頭';
+
+  @override
+  String get uptimerBody => '主體';
+
+  @override
+  String get uptimerKeyword => '必要關鍵字';
+
+  @override
+  String get uptimerForbiddenKeyword => '禁止關鍵字';
+
+  @override
+  String get uptimerMatchContains => '包含';
+
+  @override
+  String get uptimerMatchRegex => '正規表達式';
+
+  @override
+  String get uptimerPushUrl => '推送網址';
+
+  @override
+  String get uptimerRotatePushUrl => '輪換推送網址';
+
+  @override
+  String uptimerRotatePushUrlConfirm(String name) {
+    return '輪換 $name 的推送網址？舊網址將立即失效。';
+  }
+
+  @override
+  String get uptimerPushUrlOnce => '僅顯示一次，關閉前請妥善儲存。';
+
+  @override
+  String get uptimerDowntime => '停機時間';
+
+  @override
+  String get uptimerLoadMore => '載入更多';
+
+  @override
+  String uptimerMinIntervalHint(int sec) {
+    return '最小 $sec 秒';
+  }
+
+  @override
+  String get uptimerSchedule => '排程';
+
+  @override
+  String get uptimerHttpRequest => 'HTTP 請求';
+
+  @override
+  String get uptimerResponseValidation => '回應驗證';
+
+  @override
   String get sshTooManyKeysWarning => '選擇過多私鑰可能觸發伺服器認證重試上限或導致 IP 被封鎖。';
 }

@@ -7448,142 +7448,143 @@ class AppLocalizationsId extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => 'Aktif';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'Mati';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'Pemeliharaan';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => 'Dijeda';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => 'Tidak diketahui';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'Uji';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => 'Jeda';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => 'Lanjutkan';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'Latensi';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => 'Gangguan';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => 'Tidak ada gangguan';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => 'Berlangsung';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'Insiden';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'Pemeliharaan';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => 'Mendatang';
 
   @override
   String get uptimerInterval => 'Interval';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'Batas waktu';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => 'Masa tenggang';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'Grup';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => 'URL tampilan';
 
   @override
   String get uptimerTarget => 'Target';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => 'Jenis';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => 'Halaman status publik';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => 'Aktif';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'Metode';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'Ikuti pengalihan';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => 'Kode status yang diharapkan';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => 'Kode status yang dilarang';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'Header';
 
   @override
   String get uptimerBody => 'Body';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => 'Kata kunci wajib';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => 'Kata kunci terlarang';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => 'Berisi';
 
   @override
   String get uptimerMatchRegex => 'Regex';
 
   @override
-  String get uptimerPushUrl => 'Push URL';
+  String get uptimerPushUrl => 'URL Push';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'Putar URL push';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return 'Putar URL push untuk $name? URL sebelumnya akan langsung berhenti berfungsi.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce =>
+      'Hanya ditampilkan sekali. Simpan URL ini sebelum menutup.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'Waktu henti';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'Muat lainnya';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return 'Min. $sec dtk';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'Jadwal';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'Permintaan HTTP';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'Validasi respons';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      'Memilih terlalu banyak kunci dapat mencapai batas percobaan autentikasi server atau memicu pemblokiran IP.';
 }

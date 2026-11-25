@@ -7436,103 +7436,103 @@ class AppLocalizationsAz extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => 'Aktiv';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'Oflayn';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'Texniki xidmət';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => 'Dayandırılıb';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => 'Naməlum';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'Sınaq';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => 'Dayandır';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => 'Davam etdir';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'Gecikmə';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => 'Kəsintilər';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => 'Kəsinti yoxdur';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => 'Davam edir';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'Hadisələr';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'Texniki xidmət';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => 'Planlaşdırılan';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => 'İnterval';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'Vaxt aşımı';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => 'Güzəşt müddəti';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'Qrup';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => 'Göstərilən URL';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => 'Hədəf';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => 'Növ';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => 'Açıq status səhifəsi';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => 'Aktiv';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'Metod';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'Yönləndirmələri izlə';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => 'Gözlənilən status kodları';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => 'Qadağan olunmuş status kodları';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'Başlıqlar';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => 'Məzmun';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => 'Tələb olunan açar söz';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => 'Qadağan olunmuş açar söz';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => 'Ehtiva edir';
 
   @override
   String get uptimerMatchRegex => 'Regex';
@@ -7541,37 +7541,38 @@ class AppLocalizationsAz extends AppLocalizations {
   String get uptimerPushUrl => 'Push URL';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'Push URL-ni yenilə';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return '$name üçün Push URL yenilənsin? Əvvəlki URL dərhal işləməyi dayandıracaq.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce =>
+      'Yalnız bir dəfə göstərilir. Bağlamadan əvvəl bu URL-ni yadda saxlayın.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'Dayanma müddəti';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'Daha çox yüklə';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return 'Min. $sec san';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'Cədvəl';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'HTTP sorğusu';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'Cavab yoxlaması';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      'Çox sayda açar seçmək serverin autentifikasiya cəhdi limitinə çata və ya IP bloklanmasına səbəb ola bilər.';
 }

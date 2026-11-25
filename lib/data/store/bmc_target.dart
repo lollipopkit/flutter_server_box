@@ -107,7 +107,7 @@ class BmcTargetStore extends EntityStore<BmcTarget> {
   }
 
   @override
-  void writeLinks(BmcTarget item) {
+  void writeLinks(BmcTarget item, {bool strict = false}) {
     final credId = _validCredId(item.credId);
     final serverId = _validServerId(item.serverId);
     if (credId == null && serverId == null) return;

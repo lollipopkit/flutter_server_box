@@ -7157,142 +7157,142 @@ class AppLocalizationsKo extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => '정상';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => '다운';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => '점검 중';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => '일시 중지됨';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => '알 수 없음';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => '테스트';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => '일시 중지';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => '재개';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => '지연 시간';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => '장애 기록';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => '장애 기록 없음';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => '진행 중';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => '사건';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => '점검';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => '예정됨';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => '확인 간격';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => '시간 초과';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => '유예 기간';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => '그룹';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => '표시 URL';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => '대상';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => '유형';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => '공개 상태 페이지';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => '활성';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => '메서드';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => '리디렉션 따르기';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => '예상 상태 코드';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => '금지 상태 코드';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => '헤더';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => '본문';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => '필수 키워드';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => '금지 키워드';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => '포함';
 
   @override
-  String get uptimerMatchRegex => 'Regex';
+  String get uptimerMatchRegex => '정규식';
 
   @override
-  String get uptimerPushUrl => 'Push URL';
+  String get uptimerPushUrl => '푸시 URL';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => '푸시 URL 재발급';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return '$name의 푸시 URL을 재발급하시겠습니까? 이전 URL은 즉시 무효화됩니다.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce => '한 번만 표시됩니다. 닫기 전에 이 URL을 저장하세요.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => '다운타임';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => '더 불러오기';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return '최소 $sec초';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => '일정';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'HTTP 요청';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => '응답 검증';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      '키를 너무 많이 선택하면 서버의 인증 시도 제한에 도달하거나 IP 차단이 발생할 수 있습니다.';
 }

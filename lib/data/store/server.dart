@@ -280,22 +280,6 @@ class ServerStore extends EntityStore<Spi> {
     final ssh = item.ssh;
     final monitor = item.monitorHttp;
     final custom = item.custom;
-    // When foreign keys are enforced, drop any key id absent from `private_key`
-    // (e.g. deleted by a newer tombstone during backup/sync merge) so one
-    // deleted key does not abort writing the rest of the server record.
-    final enforceFk =
-        (db.select('PRAGMA foreign_keys;').firstOrNull?['foreign_keys']
-                as int? ??
-            0) !=
-        0;
-    final validKeyIds = <String>[
-      for (final keyId in ssh?.resolvedKeyIds ?? const <String>[])
-        if (!enforceFk ||
-            db.select('SELECT 1 FROM private_key WHERE id = ?;', [
-              keyId,
-            ]).isNotEmpty)
-          keyId,
-    ];
     const columns = [
       'id',
       'name',
@@ -345,7 +329,8 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.port,
       ssh?.user,
       ssh?.pwd,
-      validKeyIds.firstOrNull,
+      // Populated in [writeLinks] once every referenced key exists.
+      null,
       // TODO(migration): unused since `server_identity_file` (v35); dropped
       // with the next rebuild of `server`.
       null,
@@ -423,14 +408,6 @@ class ServerStore extends EntityStore<Spi> {
         path,
       ]);
     }
-    var keyOrd = 0;
-    for (final keyId in validKeyIds) {
-      db.execute('INSERT INTO server_key VALUES (?, ?, ?);', [
-        item.id,
-        keyOrd++,
-        keyId,
-      ]);
-    }
     for (final cmd in item.disabledCmdTypes ?? const <String>[]) {
       db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
         item.id,
@@ -439,15 +416,16 @@ class ServerStore extends EntityStore<Spi> {
     }
   }
 
-  /// A jump host is a server, so the row it names may not have been written
-  /// yet — during a restore the order is whatever the backup listed. This runs
-  /// once every server exists.
+  /// Writes cross-record links (`server_jump` and `server_key` /
+  /// `server.ssh_key_id`) once every row in the batch exists.
   ///
-  /// One that is still missing is dropped rather than written as a dangling
-  /// reference; the foreign key would refuse it anyway, and refusing would
-  /// fail the whole restore over a server deleted long ago.
+  /// When [strict] is false (restore / sync), targets that are still missing
+  /// after the batch are dropped rather than failing the whole restore/sync.
+  /// When [strict] is true (interactive [put] / [rename]), key IDs are written
+  /// verbatim so SQLite foreign keys reject any key deleted concurrently.
   @override
-  void writeLinks(Spi item) {
+  void writeLinks(Spi item, {bool strict = false}) {
+    db.execute('DELETE FROM server_jump WHERE server_id = ?;', [item.id]);
     var ord = 0;
     for (final jump in item.ssh?.resolvedJumpIds ?? const <String>[]) {
       final exists = db.select('SELECT 1 FROM server WHERE id = ?;', [
@@ -458,6 +436,39 @@ class ServerStore extends EntityStore<Spi> {
         item.id,
         ord++,
         jump,
+      ]);
+    }
+
+    db.execute('DELETE FROM server_key WHERE server_id = ?;', [item.id]);
+    final rawKeyIds = item.ssh?.resolvedKeyIds ?? const <String>[];
+    final List<String> keyIds;
+    if (strict || rawKeyIds.isEmpty) {
+      keyIds = rawKeyIds;
+    } else {
+      final enforceFk =
+          (db.select('PRAGMA foreign_keys;').firstOrNull?['foreign_keys']
+                  as int? ??
+              0) !=
+          0;
+      keyIds = <String>[
+        for (final keyId in rawKeyIds)
+          if (!enforceFk ||
+              db.select('SELECT 1 FROM private_key WHERE id = ?;', [
+                keyId,
+              ]).isNotEmpty)
+            keyId,
+      ];
+    }
+    db.execute('UPDATE server SET ssh_key_id = ? WHERE id = ?;', [
+      keyIds.firstOrNull,
+      item.id,
+    ]);
+    var keyOrd = 0;
+    for (final keyId in keyIds) {
+      db.execute('INSERT INTO server_key VALUES (?, ?, ?);', [
+        item.id,
+        keyOrd++,
+        keyId,
       ]);
     }
   }
@@ -608,7 +619,7 @@ class ServerStore extends EntityStore<Spi> {
           ],
         );
         write(replacement);
-        writeLinks(replacement);
+        writeLinks(replacement, strict: true);
 
         // Every table whose `server_id` references this row. A table left out
         // keeps pointing at the old id, which the DELETE below then cascades

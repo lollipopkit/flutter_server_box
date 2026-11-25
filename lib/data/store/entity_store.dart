@@ -221,7 +221,7 @@ abstract class EntityStore<T extends Object> {
     try {
       SqliteStore.transact(() {
         write(item);
-        writeLinks(item);
+        writeLinks(item, strict: true);
         synced.stamp(idOf(item));
       });
     } on SqliteException catch (e) {
@@ -239,13 +239,17 @@ abstract class EntityStore<T extends Object> {
   /// transaction, with the timestamp applied afterwards.
   void write(T item);
 
-  /// Links [item] to other records of the same table.
+  /// Links [item] to other records (same table or sibling entity tables).
   ///
-  /// A second pass, because a foreign key pointing into this table cannot be
-  /// satisfied while the batch is still being written: a jump host is a
-  /// server, and the row it names may come later in the same restore. Writing
-  /// it inline dropped every forward reference.
-  void writeLinks(T item) {}
+  /// A second pass, because a foreign key pointing into this table or another
+  /// synced entity table cannot be satisfied while a batch is still being
+  /// written: a jump host is a server and a private key may arrive later in
+  /// the same sync batch. Writing links inline dropped forward references.
+  ///
+  /// When [strict] is true (interactive [put] / rename), missing targets are
+  /// not filtered out so foreign keys reject stale references instead of
+  /// silently dropping them.
+  void writeLinks(T item, {bool strict = false}) {}
 
   void upsert(
     List<String> columns,

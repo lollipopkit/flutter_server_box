@@ -7156,142 +7156,142 @@ class AppLocalizationsJa extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => '正常';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'ダウン';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'メンテナンス中';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => '一時停止中';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => '不明';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'テスト';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => '一時停止';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => '再開';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'レイテンシ';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => '障害履歴';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => '障害履歴はありません';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => '継続中';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'インシデント';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'メンテナンス';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => '予定';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => '監視間隔';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'タイムアウト';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => '猶予期間';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'グループ';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => '表示用 URL';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => '対象';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => '種類';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => '公開ステータスページ';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => '有効';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'メソッド';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'リダイレクトを追跡';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => '期待するステータスコード';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => '禁止するステータスコード';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'ヘッダー';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => 'ボディ';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => '必須キーワード';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => '禁止キーワード';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => '含む';
 
   @override
-  String get uptimerMatchRegex => 'Regex';
+  String get uptimerMatchRegex => '正規表現';
 
   @override
-  String get uptimerPushUrl => 'Push URL';
+  String get uptimerPushUrl => 'プッシュ URL';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'プッシュ URL を再生成';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return '$name のプッシュ URL を再生成しますか？以前の URL は直ちに無効になります。';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce => '一度しか表示されません。閉じる前にこの URL を保存してください。';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'ダウンタイム';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'さらに読み込む';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return '最小 $sec秒';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'スケジュール';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'HTTP リクエスト';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'レスポンス検証';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      '多数の鍵を選択すると、サーバーの認証試行上限に達したり IP ブロックを引き起こす可能性があります。';
 }

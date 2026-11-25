@@ -146,9 +146,10 @@ final class EntityRecords implements SyncTableRecords {
       });
     }
     // Once every row exists, so a reference to one written later in the same
-    // ops still lands (a jump server).
+    // ops still lands (a jump server or private key).
     for (final (store, item, h) in linked) {
       SyncRecorder.receiving(h, () => store.writeLinks(item));
+      store.dropCache();
     }
     return {for (final store in touched) store.table};
   }

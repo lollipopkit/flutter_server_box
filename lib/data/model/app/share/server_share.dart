@@ -94,7 +94,11 @@ abstract class ServerShare with _$ServerShare {
       _$ServerShareFromJson(json);
 
   /// Bumped when the shape changes in a way an older reader would get wrong.
-  static const formatVer = 1;
+  ///
+  /// v1: single SSH key (`pubKeyId`/`keyId`).
+  /// v2: ordered multi-key SSH auth (`keyIds`); still emits v1 when zero or one
+  /// key is carried so older builds can import single-key shares.
+  static const formatVer = 2;
 
   /// Packs [spi] and whatever key it points at.
   ///
@@ -109,7 +113,7 @@ abstract class ServerShare with _$ServerShare {
     final bmcTarget = Stores.bmcTarget.forServer(spi.id);
 
     return ServerShare(
-      version: formatVer,
+      version: keys.length > 1 ? formatVer : 1,
       spi: _portable(spi, keptKeyIds: [for (final k in keys) k.id]),
       keys: keys,
       pve: Stores.pve.fetch(spi.id),

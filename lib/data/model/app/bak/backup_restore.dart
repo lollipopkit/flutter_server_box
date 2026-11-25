@@ -264,13 +264,19 @@ extension BackupV2Restore on BackupV2 {
       keys,
       PrivateKeyInfo.fromJson,
       (key) => key.id,
-      (key) => Stores.key.fetchByName(key.name)?.id,
+      (key, allowByName) => Stores.key.fetchOneRaw(key.id) != null
+          ? key.id
+          : (allowByName ? Stores.key.fetchByName(key.name)?.id : null),
+      force: force,
     );
     final credIds = _restoredIds(
       bmcCredentials,
       BmcCredential.fromJson,
       (cred) => cred.id,
-      (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
+      (cred, allowByName) => Stores.bmcCredential.fetchOneRaw(cred.id) != null
+          ? cred.id
+          : (allowByName ? Stores.bmcCredential.fetchByName(cred.name)?.id : null),
+      force: force,
     );
     // Every local id per name, not one: a server's name is not unique, and a
     // map keyed by it answers with whichever record happened to be last.
@@ -371,16 +377,18 @@ extension BackupV2Restore on BackupV2 {
     Map<String, Object?> store,
     T Function(Map<String, dynamic>) decode,
     String Function(T) idOf,
-    String? Function(T) localIdOf,
-  ) {
+    String? Function(T, bool allowByName) localIdOf, {
+    required bool force,
+  }) {
     final out = <String, String>{};
     for (final entry in store.entries) {
       if (_isInternalStoreKey(entry.key) || entry.value is! Map) continue;
       try {
         final json = Map<String, dynamic>.from(entry.value as Map);
-        json['id'] ??= entry.key;
+        final idLess = json['id'] == null;
+        if (idLess) json['id'] = entry.key;
         final record = decode(json);
-        final restored = localIdOf(record);
+        final restored = localIdOf(record, force || idLess);
         if (restored != null) {
           out[entry.key] = restored;
           out[idOf(record)] = restored;

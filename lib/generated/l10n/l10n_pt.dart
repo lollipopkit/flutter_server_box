@@ -7516,142 +7516,143 @@ class AppLocalizationsPt extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => 'Online';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'Fora do ar';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'Manutenção';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => 'Pausado';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => 'Desconhecido';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'Testar';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => 'Pausar';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => 'Retomar';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'Latência';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => 'Interrupções';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => 'Sem interrupções';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => 'Em andamento';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'Incidentes';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'Manutenção';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => 'Próxima';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => 'Intervalo';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'Tempo limite';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => 'Período de tolerância';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'Grupo';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => 'URL de exibição';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => 'Destino';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => 'Tipo';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => 'Página de status pública';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => 'Ativo';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'Método';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'Seguir redirecionamentos';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => 'Códigos de status esperados';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => 'Códigos de status proibidos';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'Cabeçalhos';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => 'Corpo';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => 'Palavra-chave obrigatória';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => 'Palavra-chave proibida';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => 'Contém';
 
   @override
   String get uptimerMatchRegex => 'Regex';
 
   @override
-  String get uptimerPushUrl => 'Push URL';
+  String get uptimerPushUrl => 'URL de push';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'Rotacionar URL de push';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return 'Rotacionar a URL de push de $name? A URL anterior deixará de funcionar imediatamente.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce =>
+      'Exibida apenas uma vez. Salve esta URL antes de fechar.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'Tempo de inatividade';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'Carregar mais';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return 'Mín. $sec s';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'Agendamento';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'Requisição HTTP';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'Validação da resposta';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      'Selecionar muitas chaves pode atingir o limite de tentativas de autenticação do servidor ou causar bloqueio de IP.';
 }

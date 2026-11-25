@@ -7497,103 +7497,103 @@ class AppLocalizationsUk extends AppLocalizations {
   String get uptimer => 'Uptimer';
 
   @override
-  String get uptimerStatusUp => 'Up';
+  String get uptimerStatusUp => 'У мережі';
 
   @override
-  String get uptimerStatusDown => 'Down';
+  String get uptimerStatusDown => 'Недоступний';
 
   @override
-  String get uptimerStatusMaintenance => 'Maintenance';
+  String get uptimerStatusMaintenance => 'Обслуговування';
 
   @override
-  String get uptimerStatusPaused => 'Paused';
+  String get uptimerStatusPaused => 'Призупинено';
 
   @override
-  String get uptimerStatusUnknown => 'Unknown';
+  String get uptimerStatusUnknown => 'Невідомо';
 
   @override
-  String get uptimerTest => 'Test';
+  String get uptimerTest => 'Перевірити';
 
   @override
-  String get uptimerPause => 'Pause';
+  String get uptimerPause => 'Пауза';
 
   @override
-  String get uptimerResume => 'Resume';
+  String get uptimerResume => 'Відновити';
 
   @override
-  String get uptimerLatency => 'Latency';
+  String get uptimerLatency => 'Затримка';
 
   @override
-  String get uptimerOutages => 'Outages';
+  String get uptimerOutages => 'Збої';
 
   @override
-  String get uptimerNoOutages => 'No outages';
+  String get uptimerNoOutages => 'Збоїв немає';
 
   @override
-  String get uptimerOngoing => 'Ongoing';
+  String get uptimerOngoing => 'Триває';
 
   @override
-  String get uptimerIncidents => 'Incidents';
+  String get uptimerIncidents => 'Інциденти';
 
   @override
-  String get uptimerMaintenance => 'Maintenance';
+  String get uptimerMaintenance => 'Обслуговування';
 
   @override
-  String get uptimerUpcoming => 'Upcoming';
+  String get uptimerUpcoming => 'Заплановано';
 
   @override
-  String get uptimerInterval => 'Interval';
+  String get uptimerInterval => 'Інтервал';
 
   @override
-  String get uptimerTimeout => 'Timeout';
+  String get uptimerTimeout => 'Тайм-аут';
 
   @override
-  String get uptimerGracePeriod => 'Grace period';
+  String get uptimerGracePeriod => 'Пільговий період';
 
   @override
-  String get uptimerGroup => 'Group';
+  String get uptimerGroup => 'Група';
 
   @override
-  String get uptimerDisplayUrl => 'Display URL';
+  String get uptimerDisplayUrl => 'Відображуваний URL';
 
   @override
-  String get uptimerTarget => 'Target';
+  String get uptimerTarget => 'Ціль';
 
   @override
-  String get uptimerType => 'Type';
+  String get uptimerType => 'Тип';
 
   @override
-  String get uptimerPublic => 'Public status page';
+  String get uptimerPublic => 'Публічна сторінка статусу';
 
   @override
-  String get uptimerActive => 'Active';
+  String get uptimerActive => 'Активний';
 
   @override
-  String get uptimerMethod => 'Method';
+  String get uptimerMethod => 'Метод';
 
   @override
-  String get uptimerFollowRedirects => 'Follow redirects';
+  String get uptimerFollowRedirects => 'Переходити за перенаправленнями';
 
   @override
-  String get uptimerExpectedStatus => 'Expected status codes';
+  String get uptimerExpectedStatus => 'Очікувані коди відповіді';
 
   @override
-  String get uptimerForbiddenStatus => 'Forbidden status codes';
+  String get uptimerForbiddenStatus => 'Заборонені коди відповіді';
 
   @override
-  String get uptimerHeaders => 'Headers';
+  String get uptimerHeaders => 'Заголовки';
 
   @override
-  String get uptimerBody => 'Body';
+  String get uptimerBody => 'Тіло запиту';
 
   @override
-  String get uptimerKeyword => 'Required keyword';
+  String get uptimerKeyword => 'Обов\'язкове ключове слово';
 
   @override
-  String get uptimerForbiddenKeyword => 'Forbidden keyword';
+  String get uptimerForbiddenKeyword => 'Заборонене ключове слово';
 
   @override
-  String get uptimerMatchContains => 'Contains';
+  String get uptimerMatchContains => 'Містить';
 
   @override
   String get uptimerMatchRegex => 'Regex';
@@ -7602,37 +7602,38 @@ class AppLocalizationsUk extends AppLocalizations {
   String get uptimerPushUrl => 'Push URL';
 
   @override
-  String get uptimerRotatePushUrl => 'Rotate push URL';
+  String get uptimerRotatePushUrl => 'Оновити Push URL';
 
   @override
   String uptimerRotatePushUrlConfirm(String name) {
-    return 'Rotate the push URL for $name? The previous URL stops working immediately.';
+    return 'Оновити Push URL для $name? Попередня адреса перестане працювати негайно.';
   }
 
   @override
-  String get uptimerPushUrlOnce => 'Shown once. Save this URL before closing.';
+  String get uptimerPushUrlOnce =>
+      'Показується один раз. Збережіть цей URL перед закриттям.';
 
   @override
-  String get uptimerDowntime => 'Downtime';
+  String get uptimerDowntime => 'Час простою';
 
   @override
-  String get uptimerLoadMore => 'Load more';
+  String get uptimerLoadMore => 'Завантажити ще';
 
   @override
   String uptimerMinIntervalHint(int sec) {
-    return 'Min ${sec}s';
+    return 'Мін. $sec с';
   }
 
   @override
-  String get uptimerSchedule => 'Schedule';
+  String get uptimerSchedule => 'Розклад';
 
   @override
-  String get uptimerHttpRequest => 'HTTP Request';
+  String get uptimerHttpRequest => 'HTTP-запит';
 
   @override
-  String get uptimerResponseValidation => 'Response validation';
+  String get uptimerResponseValidation => 'Перевірка відповіді';
 
   @override
   String get sshTooManyKeysWarning =>
-      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
+      'Вибір надто великої кількості ключів може перевищити ліміт спроб автентифікації сервера або спричинити блокування IP.';
 }

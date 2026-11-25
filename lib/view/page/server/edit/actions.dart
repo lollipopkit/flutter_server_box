@@ -1266,8 +1266,8 @@ extension _Utils on _ServerEditPageState {
                       Navigator.of(ctx).pop(_KeyPickEdit(pki)),
                 ),
                 onTap: () {
-                  final next = List<String>.from(ids);
-                  if (selected) {
+                  final next = List<String>.from(keyIds.value);
+                  if (next.contains(pki.id)) {
                     next.remove(pki.id);
                   } else {
                     next.add(pki.id);
