@@ -1,4 +1,22 @@
-part of 'hardware.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 
 /// One storage pool — the design's pool view: how full it is, what it is,
 /// its volumes with the guests using them, and what can be done to it.
@@ -35,7 +53,7 @@ class VirtPoolView extends ConsumerStatefulWidget {
 }
 
 class _VirtPoolViewState extends ConsumerState<VirtPoolView>
-    with _PaneRows<VirtPoolView> {
+    with VirtPaneRows<VirtPoolView> {
   String get _serverId => widget.serverId;
 
   VirtHostNotifier get _notifier =>
@@ -136,7 +154,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
                 : null,
           ),
           Expanded(
-            child: _buildGroups(
+            child: buildPaneGroups(
               [
                 _usageGroup(pool),
                 _infoGroup(pool, caps, busy),
@@ -194,10 +212,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
 
   // --- Usage ---
 
-  _Group _usageGroup(VirtStoragePool pool) {
+  VirtPaneGroup _usageGroup(VirtStoragePool pool) {
     final frac = pool.usedFraction;
     final cap = pool.capacity;
-    return _Group(
+    return VirtPaneGroup(
       key: 'usage',
       title: libL10n.capacity,
       right: pool.active ? libL10n.active : libL10n.inactive,
@@ -211,7 +229,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           ? StatePalette.warn
           : StatePalette.running,
       rows: [
-        _meter(
+        paneMeter(
           Icons.storage_outlined,
           libL10n.used,
           cap == null ? '--' : '${(pool.used ?? 0).bytes2Str} / ${cap.bytes2Str}',
@@ -227,26 +245,26 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
 
   // --- What it is ---
 
-  _Group _infoGroup(VirtStoragePool pool, VirtCapabilities caps, bool busy) {
+  VirtPaneGroup _infoGroup(VirtStoragePool pool, VirtCapabilities caps, bool busy) {
     final where = pool.path ?? pool.source;
-    return _Group(
+    return VirtPaneGroup(
       key: 'info',
       title: _pve ? libL10n.storage : l10n.virtPool,
       right: '',
       warn: false,
       indexNote: [pool.type, ?where].join(' · '),
       rows: [
-        _field(Icons.category_outlined, libL10n.type, pool.type.isEmpty ? '--' : pool.type),
-        if (pool.node case final n?) _field(Icons.dns_outlined, libL10n.node, n),
+        paneField(Icons.category_outlined, libL10n.type, pool.type.isEmpty ? '--' : pool.type),
+        if (pool.node case final n?) paneField(Icons.dns_outlined, libL10n.node, n),
         if (pool.path case final p?)
-          _field(Icons.folder_outlined, _pve ? libL10n.location : libL10n.path, p, mono: true),
+          paneField(Icons.folder_outlined, _pve ? libL10n.location : libL10n.path, p, mono: true),
         if (pool.source case final s? when s != pool.path)
-          _field(Icons.lan_outlined, libL10n.source, s, mono: true),
+          paneField(Icons.lan_outlined, libL10n.source, s, mono: true),
         if (pool.content.isNotEmpty)
-          _field(Icons.inventory_2_outlined, libL10n.content, pool.content.join(', ')),
-        if (pool.shared ?? false) _text(l10n.virtShared),
+          paneField(Icons.inventory_2_outlined, libL10n.content, pool.content.join(', ')),
+        if (pool.shared ?? false) paneText(l10n.virtShared),
         if (caps.poolAutostart)
-          _toggle(
+          paneToggle(
             Icons.power_settings_new,
             l10n.virtHwAutostart,
             pool.autostart ?? false,
@@ -261,7 +279,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
 
   // --- Volumes ---
 
-  _Group _volumesGroup(
+  VirtPaneGroup _volumesGroup(
     VirtStoragePool pool,
     AsyncValue<List<VirtVolume>> vols,
     VirtHostState host,
@@ -271,7 +289,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     final list = vols.value;
     final upload = host.uploads[pool.id];
     final media = virtPoolTakesMedia(pool) && caps.upload;
-    return _Group(
+    return VirtPaneGroup(
       key: 'vols',
       title: l10n.virtVolumes,
       right: list == null ? '' : '${list.length}',
@@ -282,14 +300,14 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         if (_adding && caps.storageEdit)
           ..._newVolumeRows(pool, list ?? const [], busy)
         else if (pool.active && caps.storageEdit)
-          _empty(
+          paneEmpty(
             media ? l10n.virtVolEmptyUpload : l10n.virtVolEmptyAttach,
             l10n.virtVolNew,
             key: 'pool:vol:new:empty',
             onTap: busy ? null : () => _openNew(pool),
           ),
         if (!pool.active)
-          _text(l10n.virtPoolInactive)
+          paneText(l10n.virtPoolInactive)
         else if (vols.hasError)
           VirtErrCard(
             vols.error!,
@@ -302,7 +320,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             child: Center(child: SizedLoading.small),
           )
         else if (list.isEmpty)
-          _text(l10n.virtVolNone)
+          paneText(l10n.virtVolNone)
         else
           for (final v in list) ..._volumeRows(pool, v, host, caps, busy),
       ],
@@ -310,13 +328,13 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 
   Widget _uploadRow(VirtStoragePool pool, VirtUploadProgress p) {
-    return _box(
+    return paneBox(
       key: const ValueKey('pool:upload:progress'),
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       padding: const EdgeInsets.fromLTRB(13, 7, 5, 9),
       child: Row(
         children: [
-          _icon(Icons.upload, color: Theme.of(context).colorScheme.primary),
+          paneIcon(Icons.upload, color: Theme.of(context).colorScheme.primary),
           UIs.width13,
           Expanded(
             child: Column(
@@ -373,14 +391,14 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             ),
           );
     return [
-      _disc(
+      paneDisc(
         '__newvol',
         Icons.add_circle_outline,
         l10n.virtVolNew,
         libL10n.cancel,
         onTap: () => setState(() => _adding = false),
       ),
-      _inputRow([Input(
+      paneInputRow([Input(
         key: const ValueKey('pool:vol:name'),
         controller: _volName,
         label: libL10n.name,
@@ -391,7 +409,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         errorText: issue,
         onChanged: (_) => setState(() {}),
       )], indent: true),
-      _seg(
+      paneSeg(
         Icons.description_outlined,
         libL10n.format,
         formats,
@@ -400,7 +418,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         indent: true,
         onSelected: (f) => setState(() => _volFormat = f),
       ),
-      _step(
+      paneStep(
         Icons.straighten,
         libL10n.capacity,
         '$_volGib GiB',
@@ -411,14 +429,14 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             : () => setState(() => _volGib = _volGib <= 10 ? 1 : _volGib - 10),
         onInc: () => setState(() => _volGib = _volGib == 1 ? 10 : _volGib + 10),
       ),
-      if (_pve) _text(l10n.virtVolPveName, indent: true),
-      _actions(indent: true, [
-        _Action(
+      if (_pve) paneText(l10n.virtVolPveName, indent: true),
+      paneActions(indent: true, [
+        VirtPaneAction(
           libL10n.cancel,
           icon: Icons.close,
           onTap: () => setState(() => _adding = false),
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.create,
           key: 'pool:vol:create',
           primary: true,
@@ -474,21 +492,21 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     final working = _working.contains(v.id);
     final locked = busy || working;
     return [
-      _disc(key, _volumeIcon(v), v.name, summary),
-      if (_open.contains(key)) ...[
+      paneDisc(key, _volumeIcon(v), v.name, summary),
+      if (paneOpen.contains(key)) ...[
         if (v.path case final p?)
-          _field(Icons.folder_outlined, libL10n.path, p, mono: true, indent: true),
+          paneField(Icons.folder_outlined, libL10n.path, p, mono: true, indent: true),
         if (disk)
-          _field(
+          paneField(
             Icons.view_in_ar_outlined,
             l10n.virtVolUsers,
             used ? usersText : l10n.unused,
             indent: true,
           ),
         if (v.backing case final b?)
-          _field(Icons.link, l10n.virtBackingFile, b, mono: true, indent: true),
+          paneField(Icons.link, l10n.virtBackingFile, b, mono: true, indent: true),
         if (disk && v.capacity != null)
-          _meter(
+          paneMeter(
             Icons.pie_chart_outline,
             l10n.virtVolAllocated,
             '${(v.allocation ?? 0).bytes2Str} / ${v.capacity!.bytes2Str}',
@@ -504,9 +522,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             virtVolumeResizable(pool, _pve ? VirtHostKind.pve : VirtHostKind.libvirt))
           ..._resizeRows(pool, v, users, locked),
         if (caps.storageEdit || iso) ..._useRows(pool, v, host, users, iso: iso, disk: disk, locked: locked),
-        _actions(indent: true, [
+        paneActions(indent: true, [
           if (disk && caps.volumeClone)
-            _Action(
+            VirtPaneAction(
               libL10n.clone,
               key: 'pool:vol:${v.name}:clone',
               icon: Icons.content_copy,
@@ -515,7 +533,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
                   : () => unawaited(_clone(pool, v, host)),
             ),
           if (caps.storageEdit)
-            _Action(
+            VirtPaneAction(
               libL10n.delete,
               key: 'pool:vol:${v.name}:delete',
               icon: Icons.delete_outline,
@@ -526,9 +544,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             ),
         ]),
         if (users.isNotEmpty && caps.storageEdit)
-          _text(l10n.virtVolInUse, indent: true)
+          paneText(l10n.virtVolInUse, indent: true)
         else if (v.backs.isNotEmpty && caps.storageEdit)
-          _text(l10n.virtVolIsBase, indent: true),
+          paneText(l10n.virtVolIsBase, indent: true),
       ],
     ];
   }
@@ -545,9 +563,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     final size = v.capacity!;
     final grown = _grow[v.id];
     const step = 8 << 30;
-    if (users.isNotEmpty) return [_text(l10n.virtVolGrowFromGuest, indent: true)];
+    if (users.isNotEmpty) return [paneText(l10n.virtVolGrowFromGuest, indent: true)];
     return [
-      _step(
+      paneStep(
         Icons.straighten,
         libL10n.capacity,
         (grown ?? size).bytes2Str,
@@ -565,13 +583,13 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         onInc: () => setState(() => _grow[v.id] = (grown ?? size) + step),
       ),
       if (grown != null)
-        _actions(indent: true, [
-          _Action(
+        paneActions(indent: true, [
+          VirtPaneAction(
             libL10n.cancel,
             icon: Icons.close,
             onTap: () => setState(() => _grow.remove(v.id)),
           ),
-          _Action(
+          VirtPaneAction(
             l10n.virtHwGrow,
             key: 'pool:vol:${v.name}:grow',
             primary: true,
@@ -621,9 +639,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         guests.firstWhereOrNull((g) => g.vmid != null && g.vmid == owner) ??
         guests.first;
     return [
-      _choice([
+      paneChoice([
         for (final g in guests)
-          _Choice(
+          VirtPaneChoice(
             key: 'pool:vol:${v.name}:to:${g.id}',
             icon: Icons.view_in_ar_outlined,
             label: [?g.vmid?.toString(), g.name].join(' · '),
@@ -632,9 +650,9 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
             onTap: () => setState(() => _target[v.id] = g.id),
           ),
       ], indent: true),
-      if (disk) _text(l10n.virtVolAttachNote, indent: true),
-      _actions(indent: true, [
-        _Action(
+      if (disk) paneText(l10n.virtVolAttachNote, indent: true),
+      paneActions(indent: true, [
+        VirtPaneAction(
           iso ? l10n.virtVolInsert : l10n.virtVolAttach,
           key: 'pool:vol:${v.name}:${iso ? 'insert' : 'attach'}',
           primary: true,
@@ -647,7 +665,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   // --- Operations ---
 
   /// [inUse] null: not known yet (see [_poolInUse]), and [vols] may be too.
-  _Group _opsGroup(
+  VirtPaneGroup _opsGroup(
     VirtStoragePool pool,
     List<VirtVolume>? vols,
     bool? inUse,
@@ -656,7 +674,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   ) {
     final error = Theme.of(context).colorScheme.error;
     final locked = busy || inUse != false;
-    return _Group(
+    return VirtPaneGroup(
       key: 'ops',
       title: l10n.virtOps,
       right: '',
@@ -668,10 +686,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         null => '--',
       },
       rows: [
-        if (inUse == true) _text(l10n.virtPoolInUse),
-        _actions([
+        if (inUse == true) paneText(l10n.virtPoolInUse),
+        paneActions([
           if (pool.active)
-            _Action(
+            VirtPaneAction(
               _pve ? l10n.virtStorageDisable : libL10n.stop,
               key: 'pool:stop',
               icon: Icons.stop_circle_outlined,
@@ -679,7 +697,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
               onTap: locked ? null : () => unawaited(_stop(pool)),
             )
           else
-            _Action(
+            VirtPaneAction(
               _pve ? l10n.virtStorageEnable : libL10n.start,
               key: 'pool:start',
               icon: Icons.play_circle_outline,
@@ -687,7 +705,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
                   ? null
                   : () => unawaited(_manage(VirtPoolSetActive(pool, active: true))),
             ),
-          _Action(
+          VirtPaneAction(
             _pve ? l10n.virtStorageRemove : l10n.virtPoolDelete,
             key: 'pool:delete',
             icon: Icons.delete_outline,
@@ -712,7 +730,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
       _volGib = 20;
       _volName.clear();
     });
-    _scrollTo('vols');
+    scrollToPaneGroup('vols');
     if (_pve) {
       // PVE names a volume for its guest: the next free VMID's first disk.
       unawaited(
@@ -739,7 +757,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         virtVolumesProvider(_serverId, change.pool.id).future,
       );
       final v = vols.firstWhereOrNull((v) => v.name == file);
-      if (v != null && mounted) setState(() => _open.add('vol:${v.id}'));
+      if (v != null && mounted) setState(() => paneOpen.add('vol:${v.id}'));
     } catch (_) {
       // The group shows why it cannot list.
     }
@@ -1033,7 +1051,7 @@ class VirtPoolCreateView extends ConsumerStatefulWidget {
 }
 
 class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
-    with _PaneRows<VirtPoolCreateView> {
+    with VirtPaneRows<VirtPoolCreateView> {
   final _name = TextEditingController();
   final _source = TextEditingController();
   final _mount = TextEditingController();
@@ -1117,16 +1135,16 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
         children: [
           SizedBox(height: 3, child: _creating ? const ProgressLine() : null),
           Expanded(
-            child: _buildGroups(
+            child: buildPaneGroups(
               [
-                _Group(
+                VirtPaneGroup(
                   key: 'new',
                   title: pve ? libL10n.storage : l10n.virtPool,
                   right: ref.read(serversProvider).servers[widget.serverId]?.name ?? '',
                   warn: false,
                   indexNote: type ?? '',
                   rows: [
-                    _inputRow([Input(
+                    paneInputRow([Input(
                       key: const ValueKey('pool:new:name'),
                       controller: _name,
                       label: libL10n.name,
@@ -1138,7 +1156,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                       onChanged: (_) => setState(() {}),
                     )]),
                     if (pve && nodes.length > 1)
-                      _seg(
+                      paneSeg(
                         Icons.dns_outlined,
                         libL10n.node,
                         nodes,
@@ -1146,9 +1164,9 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                         key: 'pool:new:node',
                         onSelected: (n) => setState(() => _node = n),
                       ),
-                    _choice([
+                    paneChoice([
                       for (final t in types)
-                        _Choice(
+                        VirtPaneChoice(
                           key: 'pool:new:type:$t',
                           icon: _typeIcon(t),
                           label: _typeLabel(t),
@@ -1157,7 +1175,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                           onTap: () => setState(() => _type = t),
                         ),
                     ]),
-                    _inputRow([Input(
+                    paneInputRow([Input(
                       key: const ValueKey('pool:new:source'),
                       controller: _source,
                       label: sourceLabel,
@@ -1169,7 +1187,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                       onChanged: (_) => setState(() {}),
                     )]),
                     if (type == 'netfs')
-                      _inputRow([Input(
+                      paneInputRow([Input(
                         key: const ValueKey('pool:new:mount'),
                         controller: _mount,
                         label: l10n.virtPoolMountPoint,
@@ -1182,14 +1200,14 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                             : null,
                         onChanged: (_) => setState(() {}),
                       )]),
-                    if (type == 'logical') _text(l10n.virtPoolLogicalNote),
-                    _actions([
-                      _Action(
+                    if (type == 'logical') paneText(l10n.virtPoolLogicalNote),
+                    paneActions([
+                      VirtPaneAction(
                         libL10n.cancel,
                         icon: Icons.close,
                         onTap: widget.onCancel,
                       ),
-                      _Action(
+                      VirtPaneAction(
                         libL10n.create,
                         key: 'pool:new:create',
                         primary: true,

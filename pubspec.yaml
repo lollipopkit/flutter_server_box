@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.1962+1962
 
 environment:
-  sdk: ">=3.11.0"
+  sdk: ">=3.14.0"
   flutter: ">=3.50.0"
 
 dependencies:
@@ -19,7 +19,7 @@ dependencies:
   clock: ^1.1.3
   # SHA-256 for SSH key fingerprints and geo data integrity, plus SHA-1 for
   # OpenSSH ControlPath %C hashes.
-  crypto: ^3.0.0
+  crypto: ^3.0.8
   dio: ^5.11.1
   pinenacl: ^0.6.0
   # ECDSA and RSA key generation for the in-app keygen. Ed25519 comes from
@@ -30,20 +30,20 @@ dependencies:
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
   extended_image: ^10.0.0
-  file_picker: ^12.3.0
+  file_picker: ^13.4.1
   flutter_gbk2utf8: ^1.0.1
   flutter_riverpod: ^3.3.1
   flutter_highlight: ^0.7.0
   flutter_displaymode: ^0.7.0
   flutter_markdown_plus: ^1.0.12
-  flutter_svg: ^2.2.1
-  fl_chart: ^1.2.0
+  flutter_svg: ^2.5.0
+  fl_chart: ^1.3.1
   freezed_annotation: ^3.0.0
   get_it: ^9.3.0
-  hive_ce: ^2.20.0
-  hive_ce_flutter: ^2.3.1
+  hive_ce: ^2.24.0
+  hive_ce_flutter: ^2.6.0
   intl: ^0.20.2
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
   logging: ^1.3.0
   meta: ^1.18.0
   responsive_framework: ^1.5.1
@@ -54,19 +54,19 @@ dependencies:
   # opens the database from here too. 3.7.1 or later: SQLite 3.54.0, which
   # opens a WAL database on Windows while another process maps its `-shm`
   # (#1860).
-  sqlite3: ^3.8.0
+  sqlite3: ^3.9.2
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
-  drift: ^2.34.4
+  drift: ^2.35.4
   wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^3.0.0
   # Already here through fl_lib, which does the syncing; named directly only
   # so the crash-report filter can recognise its "not signed in to iCloud"
   # exception by type.
-  icloud_storage_plus: ^4.0.0
-  url_launcher: ^6.2.6
+  icloud_storage_plus: ^4.4.0
+  url_launcher: ^6.3.3
   dartssh2:
     path: packages/dartssh2
   icons_plus:
@@ -75,10 +75,6 @@ dependencies:
       ref: main
   xterm:
     path: packages/xterm
-  computer:
-    git:
-      url: https://github.com/lollipopkit/dart_computer
-      ref: v1.0.88
   watch_connectivity:
     path: packages/watch_connectivity
   plain_notification_token:
@@ -94,14 +90,14 @@ dependencies:
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0
   desktop_drop: ^0.8.4
-  sentry: ^9.30.0
+  sentry: ^10.6.0
   # Runtime for the generated reader in `lib/src/proto`, which is how Android's
   # crash tombstone is decoded. Pure Dart, and its own dependencies —
   # collection, fixnum, meta — are already in this tree.
   protobuf: ^6.1.0
   fixnum: ^1.1.1
-  device_info_plus: ^13.2.0
-  material_ui: ^1.5.0
+  device_info_plus: ^13.3.0
+  material_ui: ^1.11.1
   # The LLM layer, shared with LLMBox: pi's agent loop and providers in
   # QuickJS, built by its own hook like `sbm_ffi` (`fl_pi_llm`), and the
   # chats, tools and provider settings over it (`fl_pi_llm_ui`). A submodule
@@ -114,10 +110,10 @@ dependencies:
   # in: a transitive dependency can drop or change one under it.
   path_provider: ^2.1.6
   path: ^1.9.1
-  window_manager: ^0.5.2
+  window_manager: ^0.7.1
   cross_file: ^0.3.5+4
   collection: ^1.19.1
-  flutter_local_notifications: ^22.3.1
+  flutter_local_notifications: ^23.0.4
 dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:
@@ -138,11 +134,11 @@ dev_dependencies:
   # was removed there, and every command this repo documents omits it. On an
   # earlier resolution that flag is live, and without it a conflicting output
   # is a y/n prompt — or a failed build when nothing is there to answer.
-  build_runner: ^2.15.0
+  build_runner: ^2.17.1
   # Same minor as `drift`, whose generated code it writes.
-  drift_dev: ">=2.34.6 <2.35.0"
+  drift_dev: ">=2.35.3 <2.36.0"
   flutter_lints: ^6.0.0
-  json_serializable: ^6.13.0
+  json_serializable: ^6.15.2
   freezed: ^4.0.1
   riverpod_generator: ^4.0.3
   test: ^1.29.0
@@ -154,7 +150,7 @@ dev_dependencies:
   toml: ^0.18.0
   xml: ^7.0.1
   # Theme packages (`.fsbt`, zip) built for the sync tests, as fl_lib's do.
-  archive: ^4.0.0
+  archive: ^4.7.0
   # The QR encoder, so `server_share_qr_test.dart` can hold the share's
   # capacity cap against what actually gets drawn. fl_lib depends on it too,
   # and `QrView` is the only thing in the app that draws one.
@@ -164,8 +160,8 @@ dev_dependencies:
   fl_build:
     path: packages/fl_build
   # Imported by tests directly, for the same reason as the block above.
-  shared_preferences: ^2.5.5
-  vector_graphics_compiler: ^1.3.0
+  shared_preferences: ^2.5.6
+  vector_graphics_compiler: ^1.3.7
   # The same fork fl_lib takes (flutter_secure_storage#1298).
   # TODO: back to pub.dev once upstream fixes it.
   flutter_secure_storage:

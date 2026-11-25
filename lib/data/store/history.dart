@@ -3,9 +3,7 @@ import 'package:server_box/data/model/app/tab.dart';
 
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {
-  const _ListHistory({required SqliteStore store, required String name})
-    : _store = store,
-      _name = name;
+  const _ListHistory({required this._store, required this._name});
 
   final SqliteStore _store;
   final String _name;
@@ -30,9 +28,7 @@ class _ListHistory {
 }
 
 class _MapHistory {
-  const _MapHistory({required SqliteStore store, required String name})
-    : _store = store,
-      _name = name;
+  const _MapHistory({required this._store, required this._name});
 
   final SqliteStore _store;
   final String _name;

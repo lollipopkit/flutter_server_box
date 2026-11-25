@@ -74,7 +74,7 @@ class Disk extends Equatable {
 }
 
 class DiskIO extends TimeSeq<DiskIOPiece> {
-  DiskIO({SystemType system = SystemType.linux}) : _system = system;
+  DiskIO({this._system = SystemType.linux});
 
   DiskIO.copy(DiskIO source) : _system = source._system, super.copy(source) {
     cachedAllSpeed = source.cachedAllSpeed;

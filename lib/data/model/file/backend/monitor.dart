@@ -21,9 +21,8 @@ class MonitorFileBackend implements FileBackend {
   /// Leases the shared session for [monitor] ([MonitorClientLease]).
   MonitorFileBackend(
     MonitorHttpCredential monitor, {
-    bool permissions = false,
-  }) : _permissions = permissions,
-       _lease = MonitorClientLease(monitor);
+    this._permissions = false,
+  }) : _lease = MonitorClientLease(monitor);
 
   final MonitorClientLease _lease;
   final bool _permissions;

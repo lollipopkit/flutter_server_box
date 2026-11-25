@@ -1,7 +1,12 @@
-part of '../entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
-extension _SFTP on _AppSettingsPageState {
-  List<SettingsGroup> _buildSFTP() {
+extension SftpSettingEntries on AppSettingsHost {
+  List<SettingsGroup> buildSftpSettings() {
     return [
       SettingsGroup(libL10n.general, [
         _buildSftpEditor(),
@@ -19,7 +24,7 @@ extension _SFTP on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.history_line),
         title: TipText(label, l10n.openLastPathTip),
-        trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
+        trailing: StoreSwitch(prop: setting.sftpOpenLastPath),
       ),
       keywords: l10n.openLastPathTip,
     );
@@ -32,7 +37,7 @@ extension _SFTP on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.folder_fill),
         title: Text(label),
-        trailing: StoreSwitch(prop: _setting.sftpShowFoldersFirst),
+        trailing: StoreSwitch(prop: setting.sftpShowFoldersFirst),
       ),
     );
   }
@@ -44,7 +49,7 @@ extension _SFTP on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.delete_2_fill),
         title: TipText(label, l10n.sftpRmrDirSummary),
-        trailing: StoreSwitch(prop: _setting.sftpRmrDir),
+        trailing: StoreSwitch(prop: setting.sftpRmrDir),
       ),
       keywords: l10n.sftpRmrDirSummary,
     );
@@ -54,7 +59,7 @@ extension _SFTP on _AppSettingsPageState {
     final label = libL10n.editor;
     return SettingsRow(
       label,
-      () => _setting.sftpEditor.listenable().listenVal((val) {
+      () => setting.sftpEditor.listenable().listenVal((val) {
         return ListTile(
           leading: const Icon(MingCute.edit_fill),
           title: TipText(label, l10n.sftpEditorTip),
@@ -65,7 +70,7 @@ extension _SFTP on _AppSettingsPageState {
             label: label,
             hint: '\$EDITOR / vim / nano ...',
             icon: Icons.edit,
-            onSave: _setting.sftpEditor.put,
+            onSave: setting.sftpEditor.put,
           ),
         );
       }),

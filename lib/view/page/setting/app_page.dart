@@ -1,4 +1,30 @@
-part of 'entry.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
+import 'package:fl_tty/fl_tty.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/crash_report.dart';
+import 'package:server_box/data/model/app/feature.dart';
+import 'package:server_box/view/page/setting/entries/ai.dart';
+import 'package:server_box/view/page/setting/entries/app.dart';
+import 'package:server_box/view/page/setting/entries/container.dart';
+import 'package:server_box/view/page/setting/entries/editor.dart';
+import 'package:server_box/view/page/setting/entries/full_screen.dart';
+import 'package:server_box/view/page/setting/entries/linux.dart';
+import 'package:server_box/view/page/setting/entries/mcp.dart';
+import 'package:server_box/view/page/setting/entries/remote_desktop.dart';
+import 'package:server_box/view/page/setting/entries/server.dart';
+import 'package:server_box/view/page/setting/entries/sftp.dart';
+import 'package:server_box/view/page/setting/entries/ssh.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/page/setting/menu.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/widget/group_title.dart';
+import 'package:server_box/view/widget/marked_title.dart';
 
 /// Which group of settings [AppSettingsPage] is showing.
 ///
@@ -160,34 +186,54 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
   ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
 }
 
-final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
-  final _setting = Stores.setting;
+final class _AppSettingsPageState extends AppSettingsHost<AppSettingsPage> {
 
   /// The kept crash report, read once in [initState]. Null again after it is
   /// dropped, which is what makes its group disappear.
   String? _savedCrashReport;
 
+  @override
+  String? get savedCrashReport => _savedCrashReport;
+
+  @override
+  void clearSavedCrashReport() {
+    _savedCrashReport = null;
+    refresh();
+  }
+
   /// Whether this device can ask for a fingerprint or a face. Null until the
   /// platform has answered, which is not a row and not a group.
   bool? _bioAuthAvail;
 
-  late final _sshOpacityCtrl = TextEditingController(
-    text: _setting.sshBgOpacity.fetch().toString(),
+  @override
+  bool? get bioAuthAvail => _bioAuthAvail;
+
+  @override
+  late final sshOpacityCtrl = TextEditingController(
+    text: setting.sshBgOpacity.fetch().toString(),
   );
-  late final _sshBlurCtrl = TextEditingController(
-    text: _setting.sshBlurRadius.fetch().toString(),
+  @override
+  late final sshBlurCtrl = TextEditingController(
+    text: setting.sshBlurRadius.fetch().toString(),
   );
-  late final _textScalerCtrl = TextEditingController(
+  @override
+  late final textScalerCtrl = TextEditingController(
     // `.fetch()`, as the three above: without it the field opened showing
     // `Instance of 'SqlitePropDefault<double>'` and handed that to be parsed.
-    text: _setting.textFactor.fetch().toString(),
+    text: setting.textFactor.fetch().toString(),
   );
-  late final _serverLogoCtrl = TextEditingController(
-    text: _setting.serverLogoUrl.fetch(),
+  @override
+  late final serverLogoCtrl = TextEditingController(
+    text: setting.serverLogoUrl.fetch(),
   );
-  late final _serverMarkCtrl = TextEditingController(
-    text: _setting.serverMarkUrl.fetch(),
+  @override
+  late final serverMarkCtrl = TextEditingController(
+    text: setting.serverMarkUrl.fetch(),
   );
+
+  @override
+  void openMcpSettings() =>
+      SettingsSectionPage.route.go(context, SettingsSection.mcp);
 
   @override
   void initState() {
@@ -224,11 +270,11 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
   @override
   void dispose() {
-    _sshOpacityCtrl.dispose();
-    _sshBlurCtrl.dispose();
-    _textScalerCtrl.dispose();
-    _serverLogoCtrl.dispose();
-    _serverMarkCtrl.dispose();
+    sshOpacityCtrl.dispose();
+    sshBlurCtrl.dispose();
+    textScalerCtrl.dispose();
+    serverLogoCtrl.dispose();
+    serverMarkCtrl.dispose();
     super.dispose();
   }
 
@@ -237,19 +283,19 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   /// A function of the section rather than a field, because the search walks
   /// every one of them — see [_buildSearch].
   List<SettingsGroup> _groupsOf(SettingsSection section) => switch (section) {
-    SettingsSection.app => _buildApp(),
-    SettingsSection.appearance => _buildAppearance(),
-    SettingsSection.privacy => _buildPrivacy(),
-    SettingsSection.ai => _buildAskAiConfig(),
-    SettingsSection.mcp => _buildMcp(),
-    SettingsSection.server => _buildServer(),
-    SettingsSection.ssh => _buildSSH(),
-    SettingsSection.linux => _buildLinux(),
-    SettingsSection.sftp => _buildSFTP(),
-    SettingsSection.container => _buildContainer(),
-    SettingsSection.remoteDesktop => _buildRemoteDesktop(),
-    SettingsSection.editor => _buildEditor(),
-    SettingsSection.fullScreen => _buildFullScreen(),
+    SettingsSection.app => buildAppSettings(),
+    SettingsSection.appearance => buildAppearanceSettings(),
+    SettingsSection.privacy => buildPrivacySettings(),
+    SettingsSection.ai => buildAskAiConfig(),
+    SettingsSection.mcp => buildMcpSettings(),
+    SettingsSection.server => buildServerSettings(),
+    SettingsSection.ssh => buildSshSettings(),
+    SettingsSection.linux => buildLinuxSettings(),
+    SettingsSection.sftp => buildSftpSettings(),
+    SettingsSection.container => buildContainerSettings(),
+    SettingsSection.remoteDesktop => buildRemoteDesktopSettings(),
+    SettingsSection.editor => buildEditorSettings(),
+    SettingsSection.fullScreen => buildFullScreenSettings(),
   };
 
   /// Every row of every group there is, that [query] names.
@@ -360,56 +406,14 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
       ],
     );
 
-    // See [_Linux._buildLinux]: its rows are about whichever profile is
-    // selected, and nothing else here notifies when that changes.
+    // See [LinuxSettingEntries.buildLinuxSettings]: its rows are about
+    // whichever profile is selected, and nothing else here notifies when that
+    // changes.
     if (widget.section != SettingsSection.linux) return grid();
     return ValBuilder(
-      listenable: _setting.linuxProfile.listenable(),
+      listenable: setting.linuxProfile.listenable(),
       builder: (_) => grid(),
     );
   }
 
-  /// Redraws after something a listenable does not cover.
-  ///
-  /// The Linux page reads `Rootfs.profiles`, which is built by scanning a
-  /// directory rather than from a store key, so nothing notifies when an
-  /// install or a removal changes it.
-  void refresh() {
-    if (mounted) setState(() {});
-  }
-
-  Future<void> showTextSettingDialog({
-    required String title,
-    required String initialValue,
-    required String label,
-    required String hint,
-    required IconData icon,
-    required ValueChanged<String> onSave,
-    bool suggestion = false,
-  }) {
-    return Future<void>.sync(
-      () => withTextFieldController((ctrl) async {
-        ctrl.text = initialValue;
-
-        void save() {
-          onSave(ctrl.text.trim());
-          context.popSheet();
-        }
-
-        await context.showSheet<bool>(
-          title: title,
-          child: Input(
-            controller: ctrl,
-            autoFocus: true,
-            label: label,
-            hint: hint,
-            icon: icon,
-            suggestion: suggestion,
-            onSubmitted: (_) => save(),
-          ),
-          actions: Btn.ok(onTap: save).toList,
-        );
-      }),
-    );
-  }
 }

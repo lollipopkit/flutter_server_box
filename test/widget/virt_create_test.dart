@@ -20,7 +20,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/virt/hardware.dart';
+import 'package:server_box/view/page/virt/create.dart';
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';

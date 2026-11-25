@@ -1,6 +1,20 @@
-part of '../entry.dart';
+import 'dart:async';
+import 'dart:io';
 
-extension _SSH on _AppSettingsPageState {
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh_discovery/ssh_config.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
+import 'package:server_box/data/model/terminal/theme_mode.dart';
+import 'package:server_box/data/res/terminal.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/widget/ssh_discovery/view.dart';
+
+extension SshSettingEntries on AppSettingsHost {
   void _refreshApp({bool closeDialog = false}) {
     if (closeDialog && mounted) {
       context.popSheet();
@@ -8,7 +22,7 @@ extension _SSH on _AppSettingsPageState {
     RNodes.app.notify();
   }
 
-  List<SettingsGroup> _buildSSH() {
+  List<SettingsGroup> buildSshSettings() {
     return [
       SettingsGroup(libL10n.general, [
         if (isDesktop) _buildSSHConfigImport(),
@@ -71,7 +85,7 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(MingCute.hotkey_fill),
         title: Text(label),
         subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
+        trailing: StoreSwitch(prop: setting.sshVirtualKeyAutoOff),
       ),
       keywords: 'Ctrl Alt',
     );
@@ -88,11 +102,11 @@ extension _SSH on _AppSettingsPageState {
         // one that did not load says so instead of looking as if it applied.
         trailing: ListenableBuilder(
           listenable: Listenable.merge([
-            _setting.fontPath.listenable(),
+            setting.fontPath.listenable(),
             TerminalFont.failed,
           ]),
           builder: (_, _) {
-            final fontName = _setting.fontPath.fetch().getFileName(
+            final fontName = setting.fontPath.fetch().getFileName(
               withoutExtension: true,
             );
             if (fontName == null) {
@@ -120,7 +134,7 @@ extension _SSH on _AppSettingsPageState {
               TextButton(
                 onPressed: () async {
                   await _clearCachedFont();
-                  _setting.fontPath.delete();
+                  setting.fontPath.delete();
                   await TerminalFont.load('');
                   _refreshApp(closeDialog: true);
                 },
@@ -134,7 +148,7 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Future<void> _clearCachedFont() async {
-    final oldFontPath = _setting.fontPath.fetch();
+    final oldFontPath = setting.fontPath.fetch();
     if (oldFontPath.isEmpty || !oldFontPath.startsWith(Paths.font)) return;
     final oldFile = File(oldFontPath);
     if (await oldFile.exists()) {
@@ -149,7 +163,7 @@ extension _SSH on _AppSettingsPageState {
     // The iOS file picker grants access to the selected file in place, so keep
     // its original path instead of copying it into the app directory.
     if (isIOS) {
-      _setting.fontPath.put(path);
+      setting.fontPath.put(path);
       await TerminalFont.load(path);
     } else {
       final fontName = path.getFileName();
@@ -166,8 +180,8 @@ extension _SSH on _AppSettingsPageState {
         if (mounted) context.showErrSheet(e, s, libL10n.font);
         return;
       }
-      if (_setting.fontPath.fetch() != fontPath) await _clearCachedFont();
-      _setting.fontPath.put(fontPath);
+      if (setting.fontPath.fetch() != fontPath) await _clearCachedFont();
+      setting.fontPath.put(fontPath);
       await TerminalFont.load(fontPath);
     }
 
@@ -182,10 +196,10 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(MingCute.font_size_line),
         title: TipText(label, l10n.termFontSizeTip),
         trailing: ValBuilder(
-          listenable: _setting.termFontSize.listenable(),
+          listenable: setting.termFontSize.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        onTap: () => _showFontSizeDialog(_setting.termFontSize),
+        onTap: () => showFontSizeDialog(setting.termFontSize),
       ),
       keywords: l10n.termFontSizeTip,
     );
@@ -194,7 +208,7 @@ extension _SSH on _AppSettingsPageState {
   SettingsRow _buildTermLineHeight() {
     final label = l10n.termLineHeight;
     final ctrl = TextEditingController(
-      text: _setting.termLineHeight.fetch().toString(),
+      text: setting.termLineHeight.fetch().toString(),
     );
     void onSave() {
       final val = double.tryParse(ctrl.text);
@@ -202,7 +216,7 @@ extension _SSH on _AppSettingsPageState {
         Toast.error('${libL10n.invalid}: ${ctrl.text}');
         return;
       }
-      _setting.termLineHeight.put(
+      setting.termLineHeight.put(
         val.clamp(TerminalLook.minLineHeight, TerminalLook.maxLineHeight),
       );
       context.popSheet();
@@ -214,11 +228,11 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.format_line_spacing),
         title: TipText(label, l10n.termLineHeightTip),
         trailing: ValBuilder(
-          listenable: _setting.termLineHeight.listenable(),
+          listenable: setting.termLineHeight.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
         onTap: () {
-          ctrl.text = _setting.termLineHeight.fetch().toString();
+          ctrl.text = setting.termLineHeight.fetch().toString();
           context.showSheet(
             title: label,
             child: Input(
@@ -249,8 +263,8 @@ extension _SSH on _AppSettingsPageState {
     // terminal page and Flutter's image cache drawing the one before.
     final newPath = Paths.img.joinPath('ssh_bg_${DateTime.now().millisecondsSinceEpoch}$ext');
     await file.copy(newPath);
-    final old = _setting.sshBgImage.fetch();
-    _setting.sshBgImage.put(newPath);
+    final old = setting.sshBgImage.fetch();
+    setting.sshBgImage.put(newPath);
     await _deleteBgImage(old);
 
     _refreshApp(closeDialog: true);
@@ -277,7 +291,7 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(MingCute.moon_stars_fill),
         title: Text(libL10n.theme),
         trailing: ValBuilder(
-          listenable: _setting.termTheme.listenable(),
+          listenable: setting.termTheme.listenable(),
           builder: (val) => Text(modeLabel(val), style: UIs.text15),
         ),
         onTap: () async {
@@ -285,10 +299,10 @@ extension _SSH on _AppSettingsPageState {
             title: libL10n.theme,
             items: TerminalThemeMode.values,
             display: modeLabel,
-            initial: _setting.termTheme.fetch(),
+            initial: setting.termTheme.fetch(),
           );
           if (selected != null) {
-            _setting.termTheme.put(selected);
+            setting.termTheme.put(selected);
           }
         },
       ),
@@ -302,7 +316,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.lock_fill),
         title: Text(label),
-        trailing: StoreSwitch(prop: _setting.sshWakeLock),
+        trailing: StoreSwitch(prop: setting.sshWakeLock),
       ),
     );
   }
@@ -315,12 +329,12 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.key),
         title: TipText(label, l10n.rememberKeyPassphraseTip),
         trailing: StoreSwitch(
-          prop: _setting.rememberKeyPassphrase,
+          prop: setting.rememberKeyPassphrase,
           // Off means none kept, not merely none added from now on. Off
           // before clearing, so a sync running now takes none after it.
           callback: (on) {
             if (on) return;
-            _setting.rememberKeyPassphrase.put(false);
+            setting.rememberKeyPassphrase.put(false);
             KeyPassphrases.clear();
           },
         ),
@@ -335,7 +349,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.notification_line),
         title: TipText(label, l10n.programStatusAlertsTip),
-        trailing: StoreSwitch(prop: _setting.programStatusAlerts),
+        trailing: StoreSwitch(prop: setting.programStatusAlerts),
       ),
       keywords: l10n.programStatusAlertsTip,
     );
@@ -348,7 +362,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.speed_outlined),
         title: TipText(label, l10n.termMetricsBarTip),
-        trailing: StoreSwitch(prop: _setting.termMetricsBar),
+        trailing: StoreSwitch(prop: setting.termMetricsBar),
       ),
       keywords: l10n.termMetricsBarTip,
     );
@@ -361,7 +375,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Bootstrap.alphabet),
         title: TipText(label, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
-        trailing: StoreSwitch(prop: _setting.letterCache),
+        trailing: StoreSwitch(prop: setting.letterCache),
       ),
       keywords: l10n.letterCacheTip,
     );
@@ -374,7 +388,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.image),
         title: Text(label),
-        trailing: _setting.sshBgImage.listenable().listenVal((val) {
+        trailing: setting.sshBgImage.listenable().listenVal((val) {
           final name = val.getFileName();
           return Text(name ?? libL10n.empty, style: UIs.text15);
         }),
@@ -388,8 +402,8 @@ extension _SSH on _AppSettingsPageState {
               ),
               TextButton(
                 onPressed: () async {
-                  final old = _setting.sshBgImage.fetch();
-                  _setting.sshBgImage.delete();
+                  final old = setting.sshBgImage.fetch();
+                  setting.sshBgImage.delete();
                   await _deleteBgImage(old);
                   _refreshApp(closeDialog: true);
                 },
@@ -410,7 +424,7 @@ extension _SSH on _AppSettingsPageState {
         Toast.error(libL10n.fail);
         return;
       }
-      _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
+      setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
       context.popSheet();
     }
 
@@ -420,13 +434,13 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.opacity),
         title: Text(libL10n.opacity),
         trailing: ValBuilder(
-          listenable: _setting.sshBgOpacity.listenable(),
+          listenable: setting.sshBgOpacity.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
         onTap: () => context.showSheet(
           title: libL10n.opacity,
           child: Input(
-            controller: _sshOpacityCtrl,
+            controller: sshOpacityCtrl,
             autoFocus: true,
             type: TextInputType.number,
             hint: '0.3',
@@ -434,7 +448,7 @@ extension _SSH on _AppSettingsPageState {
             suggestion: false,
             onSubmitted: onSave,
           ),
-          actions: Btn.ok(onTap: () => onSave(_sshOpacityCtrl.text)).toList,
+          actions: Btn.ok(onTap: () => onSave(sshOpacityCtrl.text)).toList,
         ),
       ),
       keywords: libL10n.background,
@@ -451,7 +465,7 @@ extension _SSH on _AppSettingsPageState {
       const minRadius = 0.0;
       const maxBlur = 50.0;
       final clampedVal = val.clamp(minRadius, maxBlur);
-      _setting.sshBlurRadius.put(clampedVal);
+      setting.sshBlurRadius.put(clampedVal);
       context.popSheet();
     }
 
@@ -461,13 +475,13 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.blur_on),
         title: Text(libL10n.blurRadius),
         trailing: ValBuilder(
-          listenable: _setting.sshBlurRadius.listenable(),
+          listenable: setting.sshBlurRadius.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
         onTap: () => context.showSheet(
           title: libL10n.blurRadius,
           child: Input(
-            controller: _sshBlurCtrl,
+            controller: sshBlurCtrl,
             autoFocus: true,
             type: TextInputType.number,
             hint: '0',
@@ -475,7 +489,7 @@ extension _SSH on _AppSettingsPageState {
             suggestion: false,
             onSubmitted: onSave,
           ),
-          actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
+          actions: Btn.ok(onTap: () => onSave(sshBlurCtrl.text)).toList,
         ),
       ),
       keywords: libL10n.background,
@@ -490,7 +504,7 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.terminal),
         title: Text(label),
         subtitle: Text(l10n.tmuxAutoTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.tmuxAuto),
+        trailing: StoreSwitch(prop: setting.tmuxAuto),
       ),
       keywords: 'tmux ${l10n.tmuxAutoTip}',
     );
@@ -500,7 +514,7 @@ extension _SSH on _AppSettingsPageState {
     final label = l10n.tmuxSessionSelector;
     return SettingsRow(
       label,
-      () => _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
+      () => setting.tmuxAuto.listenable().listenVal((autoEnabled) {
         return IgnorePointer(
           ignoring: !autoEnabled,
           child: Opacity(
@@ -509,7 +523,7 @@ extension _SSH on _AppSettingsPageState {
               leading: const Icon(Icons.list_alt),
               title: Text(label),
               subtitle: Text(l10n.tmuxSessionSelectorTip, style: UIs.textGrey),
-              trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
+              trailing: StoreSwitch(prop: setting.tmuxShowSelector),
             ),
           ),
         );
@@ -522,8 +536,8 @@ extension _SSH on _AppSettingsPageState {
     final label = l10n.tmuxDefaultSessionName;
     return SettingsRow(
       label,
-      () => _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
-        return _setting.tmuxSessionName.listenable().listenVal((name) {
+      () => setting.tmuxAuto.listenable().listenVal((autoEnabled) {
+        return setting.tmuxSessionName.listenable().listenVal((name) {
           final displayName = name.isEmpty ? 'server_box' : name;
           return IgnorePointer(
             ignoring: !autoEnabled,
@@ -547,7 +561,7 @@ extension _SSH on _AppSettingsPageState {
     withTextFieldController((ctrl) async {
       ctrl.text = current;
       void onSave() {
-        _setting.tmuxSessionName.put(ctrl.text.trim());
+        setting.tmuxSessionName.put(ctrl.text.trim());
         // `popSheet`: `context` here is the settings page's, and the dialog
         // is on the root navigator.
         context.popSheet();
@@ -574,7 +588,7 @@ extension _SSH on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.verified_user_outlined),
         title: TipText(label, l10n.hostCertAuthoritiesTip),
-        trailing: _setting.sshHostCertAuthorities.listenable().listenVal(
+        trailing: setting.sshHostCertAuthorities.listenable().listenVal(
           (list) => Text('${list.length}', style: UIs.text15),
         ),
         onTap: _showHostCertAuthorities,
@@ -584,7 +598,7 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Future<void> _showHostCertAuthorities() async {
-    final prop = _setting.sshHostCertAuthorities;
+    final prop = setting.sshHostCertAuthorities;
     await context.showSheet(
       title: l10n.hostCertAuthorities,
       child: SizedBox(
@@ -633,7 +647,7 @@ extension _SSH on _AppSettingsPageState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
-    final prop = _setting.sshHostCertAuthorities;
+    final prop = setting.sshHostCertAuthorities;
     final list = [...prop.get()];
     // By position: the list may have changed while this was asked.
     if (index < list.length && list[index] == ca) {
@@ -660,7 +674,7 @@ extension _SSH on _AppSettingsPageState {
             keyCtrl.text,
             hosts: hostsCtrl.text,
           );
-          final prop = _setting.sshHostCertAuthorities;
+          final prop = setting.sshHostCertAuthorities;
           final list = prop.get();
           setErrors(() {
             keyError = ca.key == null
@@ -707,7 +721,7 @@ extension _SSH on _AppSettingsPageState {
           actions: Btn.ok(onTap: onSave).toList,
         );
       } finally {
-        _disposeAfterExit(hostsCtrl);
+        disposeAfterExit(hostsCtrl);
       }
     });
   }

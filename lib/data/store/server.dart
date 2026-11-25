@@ -22,16 +22,12 @@ import 'package:sqlite3/sqlite3.dart';
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
   ServerStore({
-    PortForwardStore? portForwards,
-    RemoteDesktopStore? remoteDesktops,
-    SnippetStore? snippets,
-    PveStore? pve,
-    BmcTargetStore? bmcTargets,
-  }) : _portForwards = portForwards,
-       _remoteDesktops = remoteDesktops,
-       _snippets = snippets,
-       _pve = pve,
-       _bmcTargets = bmcTargets;
+    this._portForwards,
+    this._remoteDesktops,
+    this._snippets,
+    this._pve,
+    this._bmcTargets,
+  });
 
   static final instance = ServerStore(
     portForwards: PortForwardStore.instance,

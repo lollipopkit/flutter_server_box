@@ -10,8 +10,7 @@ import 'package:server_box/data/terminal/tmux/tmux_control_protocol.dart';
 /// the startup result. It does not know about SSH, Flutter, tmux semantics, or
 /// the protocol parser.
 final class TmuxCommandExecutor {
-  TmuxCommandExecutor({required void Function(String command) writeCommand})
-    : _writeCommand = writeCommand {
+  TmuxCommandExecutor({required this._writeCommand}) {
     // `startup` is awaited by `initialize`, but a client can be closed before
     // that happens. Attach the same no-op error handler the old inline queue
     // used so an unobserved startup failure cannot become an unhandled future.

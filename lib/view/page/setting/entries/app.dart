@@ -1,11 +1,30 @@
-part of '../entry.dart';
+import 'dart:async';
+import 'dart:convert';
 
-extension _App on _AppSettingsPageState {
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
+import 'package:server_box/view/widget/crash_report_dialog.dart';
+import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+
+extension AppSettingEntries on AppSettingsHost {
   void _showInvalidDialog() {
     context.showSheet(title: libL10n.fail, child: Text(libL10n.invalid));
   }
 
-  List<SettingsGroup> _buildApp() {
+  List<SettingsGroup> buildAppSettings() {
     return [
       SettingsGroup(libL10n.general, [
         SettingsRow(libL10n.language, () => const LocaleTile()),
@@ -17,7 +36,7 @@ extension _App on _AppSettingsPageState {
       // that used to be behind a tile called "More" ended up: a group with a
       // name is what that tile was standing in for.
       SettingsGroup(libL10n.system, [
-        if (_bioAuthAvail == true) ...[_buildBioAuth(), _buildBioAuthDelay()],
+        if (bioAuthAvail == true) ...[_buildBioAuth(), _buildBioAuthDelay()],
         if (isMobile) _buildWakeLock(),
         if (isAndroid) _buildBgRun(),
         if (isDesktop) _buildHideTitleBar(),
@@ -37,7 +56,7 @@ extension _App on _AppSettingsPageState {
   /// and the font page was one group called "Font". The page is the appearance
   /// and the groups are the two halves of it — which is also what puts the
   /// font beside the theme it is part of, rather than a tap away.
-  List<SettingsGroup> _buildAppearance() {
+  List<SettingsGroup> buildAppearanceSettings() {
     // The rows themselves are shared with the other apps on fl_lib; which page
     // they are on, and the groups they are read in, are this app's.
     final appearance = ThemeAppearance(context, setStateSafe);
@@ -118,37 +137,6 @@ extension _App on _AppSettingsPageState {
     keywords: 'v${BuildData.build}',
   );
 
-  SettingsRow _buildUpdateInterval() => SettingsRow(
-    l10n.updateServerStatusInterval,
-    () => const UpdateIntervalTile(),
-  );
-
-  SettingsRow _buildMaxRetry() {
-    final label = l10n.maxRetryCount;
-    return SettingsRow(
-      label,
-      () => ValBuilder(
-        listenable: _setting.maxRetryCount.listenable(),
-        builder: (val) => ListTile(
-          leading: const Icon(Icons.replay),
-          title: Text(label),
-          onTap: () async {
-            final selected = await context.showPickSingleSheet(
-              title: label,
-              items: List.generate(10, (index) => index),
-              display: (p0) => '$p0 ${l10n.times}',
-              initial: val,
-            );
-            if (selected != null) {
-              _setting.maxRetryCount.put(selected);
-            }
-          },
-          trailing: Text('$val ${l10n.times}', style: UIs.text15),
-        ),
-      ),
-    );
-  }
-
   SettingsRow _buildMotion() => SettingsRow(
     l10n.reduceMotion,
     () => const MotionPrefTile(),
@@ -162,7 +150,7 @@ extension _App on _AppSettingsPageState {
   /// A page can also be reached — from the intro that first asks the question,
   /// from a release note, from an answer to someone asking what is collected —
   /// and a row buried in a collapsed tile cannot.
-  List<SettingsGroup> _buildPrivacy() {
+  List<SettingsGroup> buildPrivacySettings() {
     return [
       // Only where a report could actually be sent. A control that cannot do
       // anything is worse than one that is not offered, and a build with no
@@ -178,7 +166,7 @@ extension _App on _AppSettingsPageState {
       // crash gets reported at all. Absent when nothing crashed: a row reading
       // "no crash report" would be on the page for the whole life of every
       // healthy install, while a row that appears is itself the news.
-      if (_savedCrashReport != null)
+      if (savedCrashReport != null)
         SettingsGroup(libL10n.log, [_buildLastCrashReport()]),
       SettingsGroup(l10n.privacy, [
         // The policy describes what is kept on the device as well as what is
@@ -213,7 +201,7 @@ extension _App on _AppSettingsPageState {
   /// The previous run's log, when there is one.
   ///
   /// Whether one exists is a file on disk, read once when the page opens —
-  /// see [_AppSettingsPageState.initState]. Read here through a builder it
+  /// see [AppSettingsPage]. Read here through a builder it
   /// flickered out and back on every unrelated rebuild, and the group it is in
   /// could not know whether to exist at all.
   SettingsRow _buildLastCrashReport() {
@@ -226,13 +214,12 @@ extension _App on _AppSettingsPageState {
         subtitle: Text(l10n.crashLastRunFailed, style: UIs.textGrey),
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
-          final report = _savedCrashReport;
+          final report = savedCrashReport;
           if (report == null) return;
           final kept = await CrashReportDialog.show(context, report);
           // The row goes when the report does.
           if (kept) return;
-          _savedCrashReport = null;
-          refresh();
+          clearSavedCrashReport();
         },
       ),
     );
@@ -263,7 +250,7 @@ extension _App on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.science_outlined),
         title: Text(label),
-        trailing: StoreSwitch(prop: _setting.betaTest),
+        trailing: StoreSwitch(prop: setting.betaTest),
       ),
     );
   }
@@ -275,7 +262,7 @@ extension _App on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.lock_fill),
         title: Text(label),
-        trailing: StoreSwitch(prop: _setting.generalWakeLock),
+        trailing: StoreSwitch(prop: setting.generalWakeLock),
       ),
     );
   }
@@ -287,7 +274,7 @@ extension _App on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.unfold_less),
         title: TipText(label, l10n.collapseUITip),
-        trailing: StoreSwitch(prop: _setting.collapseUIDefault),
+        trailing: StoreSwitch(prop: setting.collapseUIDefault),
       ),
       keywords: l10n.collapseUITip,
     );
@@ -301,7 +288,7 @@ extension _App on _AppSettingsPageState {
         leading: const Icon(Icons.web_asset),
         title: Text(label),
         trailing: StoreSwitch(
-          prop: _setting.hideTitleBar,
+          prop: setting.hideTitleBar,
           callback: (value) async {
             await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
           },
@@ -528,7 +515,7 @@ extension _App on _AppSettingsPageState {
 
     /// Encode [map] to String with indent `\t`
     final text = jsonIndentEncoder.convert(mapForEditor);
-    final editorFont = _setting.editorFontFamily.fetch();
+    final editorFont = setting.editorFontFamily.fetch();
     await EditorPage.route.go(
       context,
       args: EditorPageArgs(
@@ -536,14 +523,14 @@ extension _App on _AppSettingsPageState {
         lang: ProgLang.json,
         title: libL10n.setting,
         onSave: onSave,
-        closeAfterSave: _setting.closeAfterSave.fetch(),
-        softWrap: _setting.editorSoftWrap.fetch(),
-        enableHighlight: _setting.editorHighlight.fetch(),
+        closeAfterSave: setting.closeAfterSave.fetch(),
+        softWrap: setting.editorSoftWrap.fetch(),
+        enableHighlight: setting.editorHighlight.fetch(),
         lightTheme: HighlightTheme.fromThemeMapKey(
-          _setting.editorTheme.fetch(),
+          setting.editorTheme.fetch(),
         ),
         darkTheme: HighlightTheme.fromThemeMapKey(
-          _setting.editorDarkTheme.fetch(),
+          setting.editorDarkTheme.fetch(),
         ),
         fontFamily: editorFont.isEmpty ? null : editorFont,
       ),

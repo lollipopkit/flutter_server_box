@@ -1,95 +1,23 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
-import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
-import 'package:fl_tty/fl_tty.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
-import 'package:flutter_highlight/theme_map.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/chan.dart';
-import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/service/app_mcp.dart';
-import 'package:server_box/core/service/app_mcp_tokens.dart';
-import 'package:server_box/core/service/crash_report.dart';
-import 'package:server_box/core/service/diagnostics_upload.dart';
-import 'package:server_box/core/service/geo_data.dart';
-import 'package:server_box/core/ssh/key_passphrase.dart';
-import 'package:server_box/core/ssh_discovery/ssh_config.dart';
-import 'package:server_box/core/utils/logo_url.dart';
-import 'package:server_box/data/model/app/feature.dart';
-import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
-import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/model/terminal/theme_mode.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
-import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/github_id.dart';
-import 'package:server_box/data/res/setting_range.dart';
-import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/res/url.dart';
-import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/agent/permissions.dart';
-import 'package:server_box/view/page/agent/settings.dart';
-import 'package:server_box/view/page/backup.dart';
-import 'package:server_box/view/page/bmc/credential/list.dart';
-import 'package:server_box/view/page/private_key/list.dart';
-import 'package:server_box/view/page/server/connection_stats.dart';
-import 'package:server_box/view/page/setting/entries/home_tabs.dart';
-import 'package:server_box/view/page/setting/entries/keybindings.dart';
+import 'package:server_box/view/page/setting/app_page.dart';
 import 'package:server_box/view/page/setting/group.dart';
-import 'package:server_box/view/page/setting/platform/desktop.dart';
-import 'package:server_box/view/page/setting/platform/ios.dart';
-import 'package:server_box/view/page/setting/platform/platform_pub.dart';
-import 'package:server_box/view/page/setting/seq/known_hosts.dart';
-import 'package:server_box/view/page/setting/seq/srv_orders.dart';
-import 'package:server_box/view/page/setting/seq/virtual_key.dart';
-import 'package:server_box/view/page/setting/tiles.dart';
+import 'package:server_box/view/page/setting/level.dart';
+import 'package:server_box/view/page/setting/menu.dart';
+import 'package:server_box/view/page/setting/nodes.dart';
 import 'package:server_box/view/widget/crash_debug.dart';
-import 'package:server_box/view/widget/crash_report_dialog.dart';
-import 'package:server_box/view/widget/diagnostics_level_picker.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
-import 'package:server_box/view/widget/edge_fade_scroll.dart';
-import 'package:server_box/view/widget/geo_data_install.dart';
-import 'package:server_box/view/widget/group_title.dart';
-import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/rootfs_install.dart';
-import 'package:server_box/view/widget/server_picker.dart';
-import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
-export 'package:server_box/view/page/setting/group.dart';
-
-part 'about.dart';
-part 'app_page.dart';
-part 'entries/ai.dart';
-part 'entries/app.dart';
-part 'entries/container.dart';
-part 'entries/editor.dart';
-part 'entries/full_screen.dart';
-part 'entries/globe.dart';
-part 'entries/linux.dart';
-part 'entries/mcp.dart';
-part 'entries/remote_desktop.dart';
-part 'entries/server.dart';
-part 'entries/sftp.dart';
-part 'entries/ssh.dart';
 part 'layout.dart';
-part 'level.dart';
-part 'menu.dart';
-part 'nodes.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -145,7 +73,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _selectedId = _buildNodes().firstOrNull?.firstLeaf?.id;
+    _selectedId = buildSettingsNodes().firstOrNull?.firstLeaf?.id;
     // Which appearance rows there are follows what is installed: the icon
     // pack row is one only once a pack is — see [ThemeAppearance.themeRows].
     ThemePackages.installedChanged.addListener(_onInstalledChanged);
@@ -298,7 +226,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final nodes = _buildNodes();
+    final nodes = buildSettingsNodes();
     final leaves = [
       for (final node in nodes) ...node.flattened.where((e) => e.isLeaf),
     ];
@@ -309,7 +237,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     final hits = _searching ? _hits(nodes) : const <SettingsHit>[];
 
-    final menu = _SettingsMenu(
+    final menu = SettingsMenu(
       nodes: nodes,
       selectedId: selected.id,
       onSelect: _onMenuTap,

@@ -22,7 +22,7 @@ import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/page/routes.dart';
 import 'package:server_box/view/page/server/full_screen.dart';
-import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/group.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/tiles.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';

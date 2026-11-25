@@ -20,8 +20,8 @@ enum TmuxPageLifecyclePhase {
 /// and terminal rendering remain in the page.
 final class TmuxPageController {
   TmuxPageController({
-    required void Function(TmuxPageLifecyclePhase phase) onPhaseChanged,
-  }) : _onPhaseChanged = onPhaseChanged;
+    required this._onPhaseChanged,
+  });
 
   final void Function(TmuxPageLifecyclePhase phase) _onPhaseChanged;
 

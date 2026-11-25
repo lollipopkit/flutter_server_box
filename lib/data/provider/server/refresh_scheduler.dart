@@ -16,9 +16,8 @@ typedef ServerRefreshTask = Future<void> Function(String serverId);
 class ServerRefreshScheduler {
   ServerRefreshScheduler({
     required this.maxConcurrent,
-    required ServerRefreshTask refresh,
-  }) : assert(maxConcurrent > 0),
-       _refresh = refresh;
+    required this._refresh,
+  }) : assert(maxConcurrent > 0);
 
   final int maxConcurrent;
   final ServerRefreshTask _refresh;

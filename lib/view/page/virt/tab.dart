@@ -13,16 +13,19 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/virt/backup_jobs.dart';
 import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
-import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/host_error.dart';
+import 'package:server_box/view/page/virt/hosts.dart';
+import 'package:server_box/view/page/virt/network.dart';
 import 'package:server_box/view/page/virt/resources.dart';
+import 'package:server_box/view/page/virt/storage.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/swap_switcher.dart';
 
-part 'hosts.dart';
 part 'list.dart';
 
 /// What the list column is showing. Storage, network and backup are offered
@@ -529,7 +532,7 @@ extension _Actions on _VirtTabPageState {
   Future<void> _showHostSheet(String? hostId) async {
     await showResizableSheet<void>(
       context,
-      builder: (sheetContext) => _VirtHostPicker(
+      builder: (sheetContext) => VirtHostPicker(
         selectedId: hostId,
         onSelect: (id) {
           Navigator.of(sheetContext).pop();

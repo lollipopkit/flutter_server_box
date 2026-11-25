@@ -1,7 +1,12 @@
-part of '../entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
-extension _Fullscreen on _AppSettingsPageState {
-  List<SettingsGroup> _buildFullScreen() {
+extension FullScreenSettingEntries on AppSettingsHost {
+  List<SettingsGroup> buildFullScreenSettings() {
     return [
       SettingsGroup(libL10n.general, [
         if (isMobile) _buildFullScreenSwitch(),
@@ -18,7 +23,7 @@ extension _Fullscreen on _AppSettingsPageState {
         leading: const Icon(Bootstrap.phone_landscape_fill),
         title: TipText(label, l10n.fullScreenTip),
         trailing: StoreSwitch(
-          prop: _setting.fullScreen,
+          prop: setting.fullScreen,
           callback: (_) => RNodes.app.notify(),
         ),
       ),
@@ -34,7 +39,7 @@ extension _Fullscreen on _AppSettingsPageState {
         leading: const Icon(AntDesign.shake_outline),
         title: Text(label),
         trailing: StoreSwitch(
-          prop: _setting.fullScreenJitter,
+          prop: setting.fullScreenJitter,
         ),
       ),
     );

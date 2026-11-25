@@ -59,24 +59,19 @@ typedef PveTunnel = Future<SshLocalTunnel> Function(String host, int port);
 class PveBackend implements VirtBackend {
   PveBackend({
     required this.serverId,
-    required PveConfig config,
+    required this._config,
     required PveTunnel tunnel,
-    required PveConnect connect,
+    required this._connect,
     this.user,
     this.sshKeyId,
     this.sshPassword,
     this.securityContext,
-    Future<CommandExec> Function()? exec,
-    void Function(String fingerprint)? onCertConfirmed,
-    void Function()? onClose,
+    this._exec,
+    this._onCertConfirmed,
+    this._onClose,
     this.taskPoll = const Duration(seconds: 1),
     this.taskTimeout = const Duration(minutes: 10),
-  }) : _config = config,
-       _openTunnel = tunnel,
-       _connect = connect,
-       _onCertConfirmed = onCertConfirmed,
-       _onClose = onClose,
-       _exec = exec;
+  }) : _openTunnel = tunnel;
 
   /// The backend for [spi], connecting through its `ServerTcpDialer` and
   /// writing a confirmed certificate to `Stores.pve`.

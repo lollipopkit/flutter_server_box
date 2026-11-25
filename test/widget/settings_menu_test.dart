@@ -16,7 +16,9 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/agent/settings.dart';
 import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/setting/app_page.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/menu.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 

@@ -1,4 +1,28 @@
-part of 'guest.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/serial_wake.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/remote_desktop.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/session_keep_alive.dart';
+import 'package:server_box/data/provider/virt/text_consoles.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
+import 'package:server_box/view/page/remote_desktop/viewer.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/console_connect.dart';
 
 /// Where a guest's console goes.
 ///
@@ -596,7 +620,7 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
   }
 }
 
-extension on VirtConsoleKind {
+extension VirtConsoleKindX on VirtConsoleKind {
   String get label => switch (this) {
     VirtConsoleKind.text => libL10n.terminal,
     VirtConsoleKind.vnc => l10n.virtConsoleGraphical,

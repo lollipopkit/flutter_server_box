@@ -40,10 +40,10 @@ class HostKeyPromptInfo {
 class HostKeyVerifier {
   HostKeyVerifier({
     required this.spi,
-    required Map<String, String> cache,
+    required this._cache,
     required this.prompt,
     this.persistCallback,
-  }) : _cache = cache;
+  });
 
   final Spi spi;
   final Map<String, String> _cache;

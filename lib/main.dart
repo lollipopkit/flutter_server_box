@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -141,20 +140,10 @@ void _onUncaught(Object e, StackTrace s) {
 
 /// Shows the window a launch that stopped early never showed.
 ///
-/// On desktop the window is created hidden — `hiddenWindowAtLaunch()` on
-/// macOS, no `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux — and
-/// the only `windowManager.show()` at launch is inside `_initWindow`,
-/// which is *after* the throw. Without this the rescue screen is drawn
-/// into a window nobody ever sees: still no window, still no message,
-/// which is the failure it exists to fix.
-///
-/// Measured, by running a build with this call commented out against a
-/// v25 database: the widget tree was there, and `window_manager` had no
-/// window at all. Asking it anything is then fatal rather than false —
-/// `WindowManager.mainWindow` force-unwraps, so `isVisible()` took the
-/// process down with `EXC_BREAKPOINT` in `WindowManager.swift:60`. So this
-/// is not only about the user seeing the screen; without it the plugin is
-/// a landmine for anything that later asks about the window.
+/// On desktop platforms where the runner starts the window hidden (no
+/// `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux), the only `show()`
+/// at launch is inside `_initWindow`, which runs *after* storage migration.
+/// Without this, the rescue screen is drawn into a window nobody ever sees.
 ///
 /// Not `_initWindow`, which reads the size and the title-bar preference
 /// out of the database this build has just refused to touch. Fixed
@@ -585,11 +574,6 @@ Future<void> _startBackgroundServices() async {
       })(),
     );
   }
-
-  // Only for fl_lib's editor, the last user of the pool; this app's own
-  // background work goes through `compute`.
-  // TODO: drop with the `computer` dependency once fl_lib's editor moves off.
-  await Computer.shared.turnOn(workersCount: 1);
 }
 
 /// The storage layout brought up to this build's, before any provider loads.

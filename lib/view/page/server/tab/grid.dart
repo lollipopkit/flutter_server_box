@@ -718,12 +718,10 @@ final class _RenderReportCardHeight extends RenderProxyBox {
   double _reported = -1;
 
   _RenderReportCardHeight({
-    required bool enabled,
-    required int epoch,
-    required ValueChanged<double> onHeight,
-  }) : _enabled = enabled,
-       _epoch = epoch,
-       _onHeight = onHeight;
+    required this._enabled,
+    required this._epoch,
+    required this._onHeight,
+  });
 
   set enabled(bool value) {
     if (_enabled == value) return;

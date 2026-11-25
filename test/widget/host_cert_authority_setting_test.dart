@@ -14,7 +14,7 @@ import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
-import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/app_page.dart';
 
 import '../helpers/test_db.dart';
 

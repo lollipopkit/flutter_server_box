@@ -1,4 +1,19 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 
 final class VirtCreateArgs {
   const VirtCreateArgs({required this.serverId});
@@ -90,7 +105,7 @@ VirtPoolVolume? _picked(_PoolVolume? v) => switch (v) {
 };
 
 class _VirtCreateViewState extends ConsumerState<VirtCreateView>
-    with _PaneRows<VirtCreateView> {
+    with VirtPaneRows<VirtCreateView> {
   var _kind = VirtGuestKind.qemu;
   var _source = _Source.iso;
   final _name = TextEditingController();
@@ -220,7 +235,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               future: Future.wait<Object>([?_pools, ?_networks, ?_options]),
               builder: (context, snap) {
                 if (snap.error case final e?) {
-                  return _buildError(e, onRetry: () => setState(_load));
+                  return buildPaneError(e, onRetry: () => setState(_load));
                 }
                 final loaded = snap.data;
                 if (loaded == null) {
@@ -373,7 +388,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             }.contains(issue);
         final ciOk = !_ciIssues.contains(issue) &&
             issue != VirtCreateIssue.sshKeys;
-        return _buildGroups(
+        return buildPaneGroups(
           [
             _generalGroup(host, issue, node, nodes, generalOk),
             _systemGroup(
@@ -469,7 +484,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   // --- General ---
 
-  _Group _generalGroup(
+  VirtPaneGroup _generalGroup(
     VirtHostKind host,
     VirtCreateIssue? issue,
     String? node,
@@ -488,7 +503,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             _ => null,
           };
     final vmid = _vmid;
-    return _Group(
+    return VirtPaneGroup(
       key: 'general',
       title: libL10n.general,
       right: node ?? ref.read(serversProvider).servers[widget.serverId]?.name ?? '',
@@ -497,9 +512,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       dot: _dot(ok),
       rows: [
         if (pve && (caps?.lxc ?? false))
-          _choice([
+          paneChoice([
             for (final k in VirtGuestKind.values)
-              _Choice(
+              VirtPaneChoice(
                 key: 'create:kind:${k.name}',
                 icon: k.icon,
                 label: k == VirtGuestKind.qemu ? l10n.virtKindVm : l10n.virtKindLxc,
@@ -513,7 +528,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 }),
               ),
           ]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('create:name'),
           controller: _name,
           label: lxc ? l10n.virtHostname : libL10n.name,
@@ -527,7 +542,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           }),
         )]),
         if (pve)
-          _step(
+          paneStep(
             Icons.tag,
             'VMID',
             vmid == null ? '…' : '$vmid',
@@ -540,9 +555,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 : () => setState(() => _vmid = vmid + 1),
           ),
         if (issue == VirtCreateIssue.vmidTaken)
-          _text(l10n.virtCreateVmidTaken, error: true),
+          paneText(l10n.virtCreateVmidTaken, error: true),
         if (pve && nodes.length > 1)
-          _seg(
+          paneSeg(
             Icons.dns_outlined,
             libL10n.node,
             [for (final n in nodes) n.name],
@@ -560,7 +575,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   // --- System (VM) or template (container) ---
 
-  _Group _systemGroup({
+  VirtPaneGroup _systemGroup({
     required VirtHostKind host,
     required VirtCreateOptions options,
     required AsyncSnapshot<Object> snap,
@@ -582,7 +597,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     final pve = host == VirtHostKind.pve;
     Widget? waiting() {
       if (snap.error case final e?) {
-        return _text(
+        return paneText(
           e is VirtErr ? [e.title, ?e.detail].join('\n') : '$e',
           error: true,
         );
@@ -610,10 +625,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         ?waiting(),
         if (loaded)
           media.isEmpty
-              ? _text(l10n.virtNoTemplates)
-              : _choice([
+              ? paneText(l10n.virtNoTemplates)
+              : paneChoice([
                   for (final (:key, volume: v, pool: _) in media)
-                    _Choice(
+                    VirtPaneChoice(
                       key: 'create:media:$key',
                       icon: Icons.inventory_2_outlined,
                       label: v.name.split('_').first,
@@ -622,7 +637,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                       onTap: () => setState(() => _media = key),
                     ),
                 ]),
-        _toggle(
+        paneToggle(
           Icons.shield_outlined,
           l10n.virtUnprivileged,
           _unprivileged,
@@ -637,7 +652,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           (chosenMedia?.volume.name.toLowerCase().contains('win') ?? false);
       rows = [
         if (options.cloudImages)
-          _seg(
+          paneSeg(
             Icons.install_desktop_outlined,
             libL10n.source,
             [l10n.virtInstallMedia, l10n.virtCloudImage],
@@ -649,10 +664,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           ),
         ?waiting(),
         if (loaded && !fromImage) ...[
-          _choice([
+          paneChoice([
             // Nothing to install from: a network boot, or a disk that
             // gets its system later.
-            _Choice(
+            VirtPaneChoice(
               key: 'create:media:none',
               icon: Icons.block,
               label: libL10n.none,
@@ -660,7 +675,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               onTap: () => setState(() => _media = null),
             ),
             for (final (:key, volume: v, :pool) in media)
-              _Choice(
+              VirtPaneChoice(
                 key: 'create:media:$key',
                 icon: Icons.album_outlined,
                 label: v.name,
@@ -669,16 +684,16 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 onTap: () => setState(() => _media = key),
               ),
           ]),
-          if (media.isEmpty) _text(l10n.virtNoIsos),
+          if (media.isEmpty) paneText(l10n.virtNoIsos),
         ],
         if (loaded && fromImage) ...[
-          _text(l10n.virtCloudImageTip),
+          paneText(l10n.virtCloudImageTip),
           if (images.isEmpty)
-            _text(pve ? l10n.virtNoCloudImagesPve : l10n.virtNoCloudImagesLibvirt)
+            paneText(pve ? l10n.virtNoCloudImagesPve : l10n.virtNoCloudImagesLibvirt)
           else
-            _choice([
+            paneChoice([
               for (final (:key, volume: v, :pool) in images)
-                _Choice(
+                VirtPaneChoice(
                   key: 'create:image:$key',
                   icon: Icons.cloud_outlined,
                   label: v.name,
@@ -697,7 +712,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             ]),
         ],
         if (options.uefi)
-          _seg(
+          paneSeg(
             Icons.memory_outlined,
             l10n.virtHwFirmware,
             const ['UEFI', 'BIOS'],
@@ -706,7 +721,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onSelected: (f) => setState(() => _uefi = f == 'UEFI'),
           ),
         if (options.uefi && options.secureBoot)
-          _toggle(
+          paneToggle(
             Icons.verified_user_outlined,
             l10n.virtCreateSecureBoot,
             secureBoot,
@@ -715,9 +730,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onChanged: (v) => setState(() => _secureBoot = v),
           ),
         if (options.uefi && !options.secureBoot)
-          _text(l10n.virtSbUnsupported),
+          paneText(l10n.virtSbUnsupported),
         if (options.tpm)
-          _toggle(
+          paneToggle(
             Icons.shield_outlined,
             'TPM 2.0',
             tpm,
@@ -726,7 +741,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onChanged: (v) => setState(() => _tpm = v),
           ),
         if (windows && !(uefi && tpm))
-          _callout(
+          paneCallout(
             l10n.virtCreateWindowsTitle,
             options.tpm ? l10n.virtCreateWindowsBody : l10n.virtCreateWindowsNoTpm,
             warn: false,
@@ -738,7 +753,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         : fromImage
         ? image?.volume.name
         : chosenMedia?.volume.name;
-    return _Group(
+    return VirtPaneGroup(
       key: 'system',
       title: lxc ? l10n.virtTemplate : libL10n.system,
       right: lxc
@@ -752,7 +767,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       rows: [
         ...rows,
         if (issue == VirtCreateIssue.imageSize && image?.volume.capacity != null)
-          _text(
+          paneText(
             l10n.virtCreateImageSize(image!.volume.capacity!.bytes2Str),
             error: true,
           ),
@@ -762,7 +777,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   // --- cloud-init (a cloud image) ---
 
-  _Group _cloudInitGroup(
+  VirtPaneGroup _cloudInitGroup(
     bool pve,
     VirtCreateOptions options,
     VirtNetwork? network,
@@ -774,7 +789,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     final rows = <Widget>[];
     if (!options.cloudInit) {
       rows.add(
-        _callout(
+        paneCallout(
           l10n.virtCiNoToolTitle,
           l10n.virtCiNoToolBody(options.cloudInitMissing ?? ''),
           key: const ValueKey('create:ci:no-tool'),
@@ -782,8 +797,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       );
     } else {
       rows.addAll([
-        _text(l10n.virtCiTip),
-        _inputRow([Input(
+        paneText(l10n.virtCiTip),
+        paneInputRow([Input(
           key: const ValueKey('create:ci:user'),
           controller: _ciUser,
           label: libL10n.user,
@@ -794,7 +809,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           errorText: on(VirtCreateIssue.ciUser, l10n.virtCiUserInvalid, _ciUser),
           onChanged: (_) => setState(() {}),
         )]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('create:ci:password'),
           controller: _ciPassword,
           label: libL10n.pwd,
@@ -804,7 +819,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           suggestion: false,
           onChanged: (_) => setState(() {}),
         )]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('create:ci:keys'),
           controller: _ciKeys,
           label: l10n.virtSshKeys,
@@ -821,9 +836,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         )]),
         if (issue == VirtCreateIssue.ciCredentials &&
             _ciUser.text.trim().isNotEmpty)
-          _text(l10n.virtCiCredentialsMissing, error: true),
+          paneText(l10n.virtCiCredentialsMissing, error: true),
         if (!pve)
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('create:ci:hostname'),
             controller: _ciHostname,
             label: l10n.virtHostname,
@@ -836,9 +851,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onChanged: (_) => setState(() => _hostnameTyped = true),
           )])
         else
-          _text(l10n.virtCiHostnamePve),
+          paneText(l10n.virtCiHostnamePve),
         if (network != null) ...[
-          _seg(
+          paneSeg(
             Icons.lan_outlined,
             libL10n.addr,
             ['DHCP', l10n.virtCiStatic],
@@ -847,7 +862,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onSelected: (v) => setState(() => _ciStatic = v != 'DHCP'),
           ),
           if (_ciStatic) ...[
-            _inputRow([Input(
+            paneInputRow([Input(
               key: const ValueKey('create:ci:address'),
               controller: _ciAddress,
               label: 'IPv4 / CIDR',
@@ -858,7 +873,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               errorText: on(VirtCreateIssue.ciAddress, l10n.virtCiAddressInvalid, _ciAddress),
               onChanged: (_) => setState(() {}),
             )]),
-            _inputRow([Input(
+            paneInputRow([Input(
               key: const ValueKey('create:ci:gateway'),
               controller: _ciGateway,
               label: libL10n.gateway,
@@ -870,7 +885,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               onChanged: (_) => setState(() {}),
             )]),
           ],
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('create:ci:dns'),
             controller: _ciDns,
             label: 'DNS',
@@ -881,7 +896,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             errorText: on(VirtCreateIssue.ciDns, l10n.virtCiDnsInvalid, _ciDns),
             onChanged: (_) => setState(() {}),
           )]),
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('create:ci:search'),
             controller: _ciSearch,
             label: l10n.virtCiSearch,
@@ -893,10 +908,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onChanged: (_) => setState(() {}),
           )]),
         ],
-        if (!pve) _text(l10n.virtCiSeedNote),
+        if (!pve) paneText(l10n.virtCiSeedNote),
       ]);
     }
-    return _Group(
+    return VirtPaneGroup(
       key: 'cloud-init',
       title: 'cloud-init',
       right: pve ? 'cloudinit' : 'NoCloud',
@@ -910,13 +925,13 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
   }
 
   /// A container's root login: a password, keys, or both.
-  _Group _loginGroup(VirtCreateIssue? issue) {
+  VirtPaneGroup _loginGroup(VirtCreateIssue? issue) {
     final ok = !const {
       VirtCreateIssue.credentials,
       VirtCreateIssue.password,
       VirtCreateIssue.sshKeys,
     }.contains(issue);
-    return _Group(
+    return VirtPaneGroup(
       key: 'login',
       title: 'root',
       right: '',
@@ -924,8 +939,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       indexNote: l10n.virtCredentialsTip,
       dot: _dot(ok),
       rows: [
-        _text(l10n.virtCredentialsTip),
-        _inputRow([Input(
+        paneText(l10n.virtCredentialsTip),
+        paneInputRow([Input(
           key: const ValueKey('create:password'),
           controller: _password,
           label: libL10n.pwd,
@@ -938,7 +953,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               : null,
           onChanged: (_) => setState(() {}),
         )]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('create:keys'),
           controller: _keys,
           label: l10n.virtSshKeys,
@@ -959,10 +974,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
 
   // --- Resources ---
 
-  _Group _resourcesGroup(VirtCreateIssue? issue) {
+  VirtPaneGroup _resourcesGroup(VirtCreateIssue? issue) {
     final lxc = _kind == VirtGuestKind.lxc;
     final mem = (_memorySteps[_memory] << 20).bytes2Str;
-    return _Group(
+    return VirtPaneGroup(
       key: 'resources',
       title: l10n.virtHwResources,
       right: '',
@@ -970,7 +985,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       indexNote: '$_cores ${lxc ? l10n.cores : 'vCPU'} · $mem',
       dot: _dot(issue != VirtCreateIssue.cores && issue != VirtCreateIssue.memory),
       rows: [
-        _step(
+        paneStep(
           Icons.developer_board,
           lxc ? l10n.cores : 'vCPU',
           '$_cores',
@@ -978,7 +993,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           onDec: _cores > 1 ? () => setState(() => _cores--) : null,
           onInc: () => setState(() => _cores++),
         ),
-        _step(
+        paneStep(
           Icons.memory,
           libL10n.memory,
           mem,
@@ -989,16 +1004,16 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               : null,
         ),
         if (issue == VirtCreateIssue.cores)
-          _text(l10n.virtCreateCoresInvalid, error: true)
+          paneText(l10n.virtCreateCoresInvalid, error: true)
         else if (issue == VirtCreateIssue.memory)
-          _text(l10n.virtCreateMemoryInvalid, error: true),
+          paneText(l10n.virtCreateMemoryInvalid, error: true),
       ],
     );
   }
 
   // --- Storage ---
 
-  _Group _storageGroup(
+  VirtPaneGroup _storageGroup(
     List<VirtStoragePool> disks,
     VirtStoragePool? storage,
     String? bus,
@@ -1012,7 +1027,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     final canDec =
         _disk > 0 &&
         (minBytes == null || _diskSteps[_disk - 1] * (1 << 30) >= minBytes);
-    return _Group(
+    return VirtPaneGroup(
       key: 'storage',
       title: libL10n.storage,
       right: storage == null || pve ? '' : virtLibvirtDiskFormat(storage.type),
@@ -1022,11 +1037,11 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       dot: _dot(storage != null && issue != VirtCreateIssue.diskSize),
       rows: [
         if (disks.isEmpty)
-          _text(l10n.virtNoDiskStorage)
+          paneText(l10n.virtNoDiskStorage)
         else
-          _choice([
+          paneChoice([
             for (final p in disks)
-              _Choice(
+              VirtPaneChoice(
                 key: 'create:storage:${p.id}',
                 icon: Icons.storage_outlined,
                 label: p.name,
@@ -1038,7 +1053,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 onTap: () => setState(() => _storage = p),
               ),
           ]),
-        _step(
+        paneStep(
           Icons.straighten,
           libL10n.size,
           '${_diskSteps[_disk]} GiB',
@@ -1049,7 +1064,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
               : null,
         ),
         if (!lxc && options.buses.length > 1)
-          _seg(
+          paneSeg(
             Icons.cable,
             l10n.virtHwBus,
             options.buses,
@@ -1058,21 +1073,21 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onSelected: (b) => setState(() => _bus = b),
           ),
         if (issue == VirtCreateIssue.diskSize)
-          _text(l10n.virtCreateDiskInvalid, error: true),
+          paneText(l10n.virtCreateDiskInvalid, error: true),
       ],
     );
   }
 
   // --- Network ---
 
-  _Group _networkGroup(
+  VirtPaneGroup _networkGroup(
     List<VirtNetwork> nets,
     VirtNetwork? network,
     String? model,
     VirtCreateOptions options,
   ) {
     final lxc = _kind == VirtGuestKind.lxc;
-    return _Group(
+    return VirtPaneGroup(
       key: 'network',
       title: libL10n.network,
       right: '',
@@ -1080,8 +1095,8 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       indexNote: network?.name ?? libL10n.none,
       dot: _dot(true),
       rows: [
-        _choice([
-          _Choice(
+        paneChoice([
+          VirtPaneChoice(
             key: 'create:network:none',
             icon: Icons.block,
             label: libL10n.none,
@@ -1089,7 +1104,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             onTap: () => setState(() => _noNetwork = true),
           ),
           for (final n in nets)
-            _Choice(
+            VirtPaneChoice(
               key: 'create:network:${n.id}',
               icon: Icons.lan_outlined,
               label: n.name,
@@ -1106,7 +1121,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             ),
         ]),
         if (network != null && !lxc && options.nicModels.length > 1)
-          _seg(
+          paneSeg(
             Icons.settings_ethernet,
             l10n.virtHwModel,
             options.nicModels,
@@ -1114,14 +1129,14 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
             key: 'create:model',
             onSelected: (m) => setState(() => _nicModel = m),
           ),
-        if (network?.mode == 'isolated') _text(l10n.virtNetIsolatedTip),
+        if (network?.mode == 'isolated') paneText(l10n.virtNetIsolatedTip),
       ],
     );
   }
 
   // --- Confirm ---
 
-  _Group _confirmGroup(
+  VirtPaneGroup _confirmGroup(
     VirtHostKind host,
     VirtCreateSpec? spec,
     VirtCreateIssue? issue,
@@ -1138,7 +1153,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       _ => l10n.virtCreateIncomplete,
     };
     final name = ref.read(serversProvider).servers[widget.serverId]?.name;
-    return _Group(
+    return VirtPaneGroup(
       key: 'confirm',
       title: libL10n.confirm,
       right: name == null ? '' : l10n.virtCreateOn(name),
@@ -1146,18 +1161,18 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
       indexNote: ready ? libL10n.ready : l10n.virtCreateIncomplete,
       dot: _dot(ready),
       rows: [
-        _toggle(
+        paneToggle(
           Icons.play_arrow_outlined,
           l10n.virtStartAfterCreate,
           _start,
           key: 'create:start',
           onChanged: (v) => setState(() => _start = v),
         ),
-        ?note == null ? null : _text(note, error: true),
-        _actions([
+        ?note == null ? null : paneText(note, error: true),
+        paneActions([
           if (widget.onCancel case final cancel?)
-            _Action(libL10n.cancel, icon: Icons.close, onTap: cancel),
-          _Action(
+            VirtPaneAction(libL10n.cancel, icon: Icons.close, onTap: cancel),
+          VirtPaneAction(
             host == VirtHostKind.pve && lxc
                 ? l10n.virtCreateLxc
                 : l10n.virtCreateVm,

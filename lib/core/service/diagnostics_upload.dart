@@ -127,7 +127,7 @@ abstract final class DiagnosticsUpload {
         // changing cannot turn it on: no tracing, no log streaming (see
         // [SentrySink.log]), no PII, no print breadcrumbs, no thread dumps.
         options.tracesSampleRate = 0.0;
-        options.enableLogs = false;
+        options.beforeSendLog = (_, _) => null;
         options.sendDefaultPii = false;
         options.enablePrintBreadcrumbs = false;
         options.maxBreadcrumbs = 200;

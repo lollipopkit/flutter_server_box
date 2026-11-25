@@ -18,7 +18,7 @@ import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
-import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/app_page.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/widget/terminal_status_dot.dart';
 import 'package:server_box/view/page/ssh/widget/terminal_status_sheet.dart';

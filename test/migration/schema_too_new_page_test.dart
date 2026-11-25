@@ -420,7 +420,7 @@ class _FakeDirectoryPicker extends FilePickerPlatform {
   int asked = 0;
 
   @override
-  Future<String?> getDirectoryPath({
+  Future<Uri?> pickDirectory({
     String? dialogTitle,
     String? initialDirectory,
     AndroidOptions androidOptions = const AndroidOptions(),
@@ -429,7 +429,7 @@ class _FakeDirectoryPicker extends FilePickerPlatform {
     WebOptions webOptions = const WebOptions(),
   }) async {
     asked++;
-    return cancel ? null : dir.path;
+    return cancel ? null : Uri.directory(dir.path);
   }
 }
 

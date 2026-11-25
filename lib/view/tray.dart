@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:flutter/foundation.dart';
@@ -48,7 +49,7 @@ import 'package:window_manager/window_manager.dart';
 /// Nothing here polls. The rows come from the providers that were already
 /// refreshing on the app's own cycle, so the menu costs one rebuild per change
 /// and nothing at all while nothing changes.
-class TrayService with WindowListener, WidgetsBindingObserver {
+class TrayService with WidgetsBindingObserver {
   TrayService(this._ref);
 
   final Ref _ref;
@@ -62,6 +63,9 @@ class TrayService with WindowListener, WidgetsBindingObserver {
 
   ProviderSubscription<ServersState>? _watchedAll;
   ValueListenable<String>? _localeListenable;
+  Window? _window;
+  ListenerId? _windowListenerId;
+  var _quitting = false;
 
   /// What was last pushed, so an unchanged model is not pushed again.
   ///
@@ -76,11 +80,10 @@ class TrayService with WindowListener, WidgetsBindingObserver {
   Future<void> init() async {
     if (!isDesktop) return;
     _channel.setMethodCallHandler(_onNative);
-    windowManager.addListener(this);
+    _ensureWindow();
     WidgetsBinding.instance.addObserver(this);
     _localeListenable = Stores.setting.locale.listenable()
       ..addListener(_onLocaleChanged);
-    await _applyCloseBehaviour();
 
     _watchedAll = _ref.listen<ServersState>(
       serversProvider,
@@ -92,7 +95,7 @@ class TrayService with WindowListener, WidgetsBindingObserver {
   void dispose() {
     _disposed = true;
     _debounce?.cancel();
-    windowManager.removeListener(this);
+    _detachWindow();
     WidgetsBinding.instance.removeObserver(this);
     _localeListenable?.removeListener(_onLocaleChanged);
     for (final sub in _watched.values) {
@@ -103,6 +106,31 @@ class TrayService with WindowListener, WidgetsBindingObserver {
     if (isDesktop) unawaited(_invoke('destroy'));
   }
 
+  Window? _ensureWindow() {
+    final existing = _window;
+    if (existing != null) return existing;
+    try {
+      final window = WindowManager.instance.getCurrent();
+      if (window == null) return null;
+      _window = window;
+      _windowListenerId = window.addListener(_onWindowEvent);
+      return window;
+    } catch (e, s) {
+      Loggers.app.warning('Tray: attaching to window', e, s);
+      return null;
+    }
+  }
+
+  void _detachWindow() {
+    final id = _windowListenerId;
+    final window = _window;
+    _windowListenerId = null;
+    _window = null;
+    if (id != null && window != null) {
+      window.removeListener(id);
+    }
+  }
+
   /// Re-reads the settings and pushes what they changed.
   ///
   /// Called by the switches themselves. The layout is part of the payload, so
@@ -110,19 +138,9 @@ class TrayService with WindowListener, WidgetsBindingObserver {
   /// forgotten first, since the rows may be identical and only the shape
   /// different.
   Future<void> applySetting() async {
-    await _applyCloseBehaviour();
+    _ensureWindow();
     _shown = null;
     _schedule();
-  }
-
-  Future<void> _applyCloseBehaviour() async {
-    if (!isDesktop) return;
-    final keep = Stores.setting.trayKeepRunning.fetch();
-    try {
-      await windowManager.setPreventClose(keep);
-    } catch (e, s) {
-      Loggers.app.warning('Tray: setting the close behaviour', e, s);
-    }
   }
 
   void _resubscribe(ServersState state) {
@@ -241,10 +259,10 @@ class TrayService with WindowListener, WidgetsBindingObserver {
       case 'settings':
         await _openSettings();
       case 'quit':
-        // Past the prevention flag, which is the point of the item: the window
-        // refuses to close while the app is meant to stay resident, and this is
-        // the way out that leaves.
-        await windowManager.destroy();
+        // Past the keep-running interception, which is the point of the item:
+        // the window hides on close while the app is meant to stay resident,
+        // and this is the way out that leaves.
+        await _quitWindow();
       case 'server':
         final id = call.arguments;
         if (id is String) await _openServer(id);
@@ -252,10 +270,23 @@ class TrayService with WindowListener, WidgetsBindingObserver {
     return null;
   }
 
+  Future<void> _quitWindow() async {
+    _quitting = true;
+    try {
+      final window = _ensureWindow();
+      if (window != null && window.close()) return;
+    } catch (e, s) {
+      Loggers.app.warning('Tray: closing the window', e, s);
+    }
+    _quitting = false;
+    exit(0);
+  }
+
   Future<void> _showWindow() async {
     try {
-      await windowManager.show();
-      await windowManager.focus();
+      final window = _ensureWindow();
+      window?.show();
+      window?.focus();
     } catch (e, s) {
       Loggers.app.warning('Tray: showing the window', e, s);
     }
@@ -281,16 +312,19 @@ class TrayService with WindowListener, WidgetsBindingObserver {
 
   /// Closing the window hides it instead, while the app is meant to stay.
   ///
-  /// `setPreventClose` only stops the close; something still has to say what
-  /// happens instead, and hiding is what keeps the engine — and so the polling
-  /// behind the menu — alive. Destroying the window would take both with it.
-  @override
-  void onWindowClose() {
-    if (!Stores.setting.trayKeepRunning.fetch()) {
-      unawaited(windowManager.destroy());
-      return;
+  /// Cancelling the close request keeps the window alive, and hiding keeps the
+  /// engine — and so the polling behind the menu — running.
+  void _onWindowEvent(WindowEvent event) {
+    switch (event) {
+      case WindowCloseRequestedEvent(:final request):
+        if (_quitting || !Stores.setting.trayKeepRunning.fetch()) return;
+        request.cancel();
+        _window?.hide();
+      case WindowClosedEvent():
+        _detachWindow();
+      default:
+        break;
     }
-    unawaited(windowManager.hide());
   }
 }
 

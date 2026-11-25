@@ -557,3 +557,8 @@ PreferredSizeWidget virtResourceBar({
     ],
   );
 }
+
+extension VirtStringX on String {
+  /// This, or [other] when this is empty.
+  String ifEmpty(String other) => isEmpty ? other : this;
+}

@@ -25,9 +25,8 @@ final class FieldProp<T extends Object, F extends Object>
     this.parent,
     String field, {
     required F Function(T) read,
-    required T Function(T, F) write,
+    required this._write,
   }) : _read = read,
-       _write = write,
        super('${parent.key}.$field', read(parent.defaultValue));
 
   final StorePropDefault<T> parent;

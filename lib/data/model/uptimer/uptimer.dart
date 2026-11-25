@@ -659,12 +659,10 @@ final class UptimerPageData {
     required this.activeIncidents,
     required this.activeMaintenance,
     required this.upcomingMaintenance,
-    required Map<int, List<UptimerIncident>> incidentsByMonitor,
-    required Map<int, List<UptimerMaintenanceWindow>> activeMaintByMonitor,
-    required Map<int, List<UptimerMaintenanceWindow>> upcomingMaintByMonitor,
-  }) : _incidentsByMonitor = incidentsByMonitor,
-       _activeMaintByMonitor = activeMaintByMonitor,
-       _upcomingMaintByMonitor = upcomingMaintByMonitor;
+    required this._incidentsByMonitor,
+    required this._activeMaintByMonitor,
+    required this._upcomingMaintByMonitor,
+  });
 
   factory UptimerPageData({
     required int generatedAt,

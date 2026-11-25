@@ -76,7 +76,7 @@ extension _SettingsLayout on _SettingsPageState {
     final actions = _buildActions();
     // While searching it names the results it is over, as the narrow bar does,
     // and keeps the way out.
-    final header = _SettingsContentHeader(
+    final header = SettingsContentHeader(
       title: _searching
           ? libL10n.search
           : _branchOf(nodes, selected.id)?.title ?? selected.title,
@@ -325,7 +325,7 @@ extension _SettingsLayout on _SettingsPageState {
     }
   }
 
-  Widget _buildSearchField() => _SettingsSearchField(
+  Widget _buildSearchField() => SettingsSearchField(
     controller: _searchCtrl,
     focusNode: _searchFocus,
     onChanged: _onSearch,
@@ -353,7 +353,7 @@ extension _SettingsLayout on _SettingsPageState {
     /// cut off, which is the swipe not feeling like a swipe.
     Widget pagesOf(List<SettingsNode> level) {
       final leaves = level.where((e) => e.isLeaf).toList();
-      return _SettingsPages(
+      return SettingsPages(
         key: ValueKey('pages_${leaves.firstOrNull?.id ?? 'none'}'),
         leaves: leaves,
         selectedId: selected.id,
@@ -378,7 +378,7 @@ extension _SettingsLayout on _SettingsPageState {
           AppPage<void>(
             key: const ValueKey('root'),
             child: _opaque(
-              _SettingsList(
+              SettingsList(
                 nodes: nodes,
                 onTap: _onTab,
                 search: _buildSearchField(),
@@ -443,7 +443,7 @@ extension _SettingsLayout on _SettingsPageState {
     // twice — and nothing over a leaf, which has no level under it to show.
     final entered = _path.lastOrNull;
     final level = entered == null || entered.isLeaf ? null : entered;
-    final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+    final space = level == null ? 0.0 : kSettingsTabsHeight + kSettingsTabsMargin * 2;
     final reduceMotion = context.reduceMotion;
 
     return Stack(
@@ -478,7 +478,7 @@ extension _SettingsLayout on _SettingsPageState {
             //
             // Where the device has asked for less movement it only fades, on
             // a curve that stays inside 0 to 1.
-            switchInCurve: reduceMotion ? Curves.easeOut : _kTabsCurve,
+            switchInCurve: reduceMotion ? Curves.easeOut : kSettingsTabsCurve,
             switchOutCurve: Curves.easeIn,
             transitionBuilder: (child, animation) => reduceMotion
                 ? FadeTransition(opacity: animation, child: child)
@@ -492,7 +492,7 @@ extension _SettingsLayout on _SettingsPageState {
                   ),
             child: level == null
                 ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
-                : _SettingsTabs(
+                : SettingsTabs(
                     key: ValueKey(level.id),
                     nodes: _levelOf(level),
                     selectedId: _selectedId,

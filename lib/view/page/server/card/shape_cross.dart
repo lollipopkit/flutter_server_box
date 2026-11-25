@@ -104,12 +104,10 @@ class _HeightBetween extends SingleChildRenderObjectWidget {
 
 class _RenderHeightBetween extends RenderProxyBox {
   _RenderHeightBetween({
-    required double from,
-    required double t,
-    required double minChildWidth,
-  }) : _from = from,
-       _t = t,
-       _minChildWidth = minChildWidth;
+    required this._from,
+    required this._t,
+    required this._minChildWidth,
+  });
 
   double _from;
   set from(double v) {
