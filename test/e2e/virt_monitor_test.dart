@@ -4239,11 +4239,6 @@ void _p8Pve(_Agent agent) {
       // The listing names a new guest a moment after its task.
       final g = await w.settle((x) => x.vmid == vmid, '$vmid', (x) => true);
       made.add(g.id);
-      expect(
-        await w.host.snapshotSupported(g.id),
-        isFalse,
-        reason: 'PVE snapshots a whole volume; a file is not one',
-      );
       final why = await w.host.snapshotRefusal(g.id);
       expect(why, contains('snapshot feature is not available'));
       expect(why, contains(dir.name));

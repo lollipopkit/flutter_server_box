@@ -1,8 +1,8 @@
-import 'package:server_box/core/service/ssh_discovery.dart';
-import 'package:server_box/core/service/ssh_discovery_cloudflare.dart';
-import 'package:server_box/core/service/ssh_discovery_lan.dart';
-import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
-import 'package:server_box/core/service/ssh_discovery_tailscale.dart';
+import 'package:server_box/core/ssh_discovery/cloudflare.dart';
+import 'package:server_box/core/ssh_discovery/lan.dart';
+import 'package:server_box/core/ssh_discovery/ssh_config.dart';
+import 'package:server_box/core/ssh_discovery/ssh_discovery.dart';
+import 'package:server_box/core/ssh_discovery/tailscale.dart';
 
 /// The [SshDiscovery] sources this build and device can run, in the order
 /// shown.

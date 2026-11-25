@@ -275,13 +275,6 @@ class PveBackend implements VirtBackend {
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
       (await _rust((s) => s.snapshots(guest: _ref(guest)))).virt;
 
-  /// PVE's own answer whether every disk of [guest] is on a storage that
-  /// snapshots (`sbm_virt::pve::Client::snapshot_supported`); null where it
-  /// cannot say.
-  @override
-  Future<bool?> snapshotSupported(VirtGuest guest) =>
-      _rust((s) => s.snapshotSupported(guest: _ref(guest)));
-
   @override
   Future<String?> snapshotRefusal(VirtGuest guest) =>
       _rust((s) => s.snapshotRefusal(guest: _ref(guest)));

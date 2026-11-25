@@ -14,7 +14,8 @@ class ServerFuncBtnsOrderPage extends StatefulWidget {
   const ServerFuncBtnsOrderPage({super.key, this.embedded = false});
 
   @override
-  State<ServerFuncBtnsOrderPage> createState() => _ServerDetailOrderPageState();
+  State<ServerFuncBtnsOrderPage> createState() =>
+      _ServerFuncBtnsOrderPageState();
 
   static const route = AppRouteNoArg(
     page: ServerFuncBtnsOrderPage.new,
@@ -22,7 +23,7 @@ class ServerFuncBtnsOrderPage extends StatefulWidget {
   );
 }
 
-class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
+class _ServerFuncBtnsOrderPageState extends State<ServerFuncBtnsOrderPage> {
   final prop = Stores.setting.serverFuncBtns;
 
   @override

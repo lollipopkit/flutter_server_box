@@ -18,8 +18,8 @@ import 'package:server_box/view/widget/cert_sheet.dart';
 /// a TOTP code, the certificate, the sudo password, the server's settings.
 /// Repeating the same request would get the same refusal, which is also why
 /// the provider stops refreshing on these by itself.
-class VirtHostError extends ConsumerWidget {
-  const VirtHostError({super.key, required this.serverId, required this.err});
+class VirtHostErrCard extends ConsumerWidget {
+  const VirtHostErrCard({super.key, required this.serverId, required this.err});
 
   final String serverId;
   final VirtErr err;

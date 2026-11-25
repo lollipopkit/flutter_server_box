@@ -11,7 +11,7 @@ import 'package:server_box/src/rust/api/files.dart' as files;
 final class SftpSudoHelper {
   final Spi spi;
 
-  /// Runs a script on the server's stdin as this user (`execWithPwd`).
+  /// Runs a script on the server's stdin as this user (`SshExec.runSudo`).
   final Future<SudoExecResult> Function(String script) exec;
 
   /// Asks for the sudo password; null when the user declines.

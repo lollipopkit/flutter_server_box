@@ -509,7 +509,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     TermSessionManager.add(
       id: _sessionId,
       title: widget.args.source.label,
-      subtitle: widget.args.spi?.oldId ?? '',
+      subtitle: widget.args.spi?.displayAddr ?? '',
       // Each shell on this device is its own session.
       serverId: switch (widget.args.spi) {
         final spi? when !spi.local => spi.id,

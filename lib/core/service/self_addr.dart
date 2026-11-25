@@ -56,13 +56,6 @@ abstract final class SelfAddr {
   /// v4 address consistently. Otherwise the first address the machine reported,
   /// in the order it reported them — nothing here sorts, so the answer follows
   /// that order rather than being independent of it.
-  static InternetAddress? pick(List<String> reported) {
-    final found = publicIn(reported);
-    // Through `unwrapV4Mapped`, because `::ffff:a.b.c.d` has `type` IPv6 and
-    // is a v4 address.
-    for (final addr in found) {
-      if (unwrapV4Mapped(addr).type == InternetAddressType.IPv4) return addr;
-    }
-    return found.firstOrNull;
-  }
+  static InternetAddress? pick(List<String> reported) =>
+      preferV4(publicIn(reported));
 }

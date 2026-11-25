@@ -9,25 +9,26 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
-class ServerOrderPage extends ConsumerStatefulWidget {
-    /// Whether it is being shown inside the settings pane rather than pushed.
+class ServerListOrderPage extends ConsumerStatefulWidget {
+  /// Whether it is being shown inside the settings pane rather than pushed.
   ///
   /// The pane already names what it is showing, in the one bar the page has;
   /// a second one under it would say it twice.
   final bool embedded;
 
-  const ServerOrderPage({super.key, this.embedded = false});
+  const ServerListOrderPage({super.key, this.embedded = false});
 
   @override
-  ConsumerState<ServerOrderPage> createState() => _ServerOrderPageState();
+  ConsumerState<ServerListOrderPage> createState() =>
+      _ServerListOrderPageState();
 
   static const route = AppRouteNoArg(
-    page: ServerOrderPage.new,
+    page: ServerListOrderPage.new,
     path: '/settings/order/server',
   );
 }
 
-class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
+class _ServerListOrderPageState extends ConsumerState<ServerListOrderPage> {
   late List<String> _order;
 
   @override
@@ -114,7 +115,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
         spi.name,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
-      subtitle: Text(spi.oldId, style: UIs.textGrey),
+      subtitle: Text(spi.displayAddr, style: UIs.textGrey),
       // The distribution rather than the name's first letter, which said
       // nothing a row already showing the name did not.
       leading: distIcon(spi.id, size: 22),

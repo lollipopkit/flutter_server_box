@@ -5051,8 +5051,8 @@ Future<void> _p8Libvirt() async {
       final before = (await virt.snapshotChain(guest!)).disks.single;
       expect(before.isChain, isFalse, reason: 'a plain qcow2 disk to start');
       expect(
-        await virt.snapshotSupported(guest!),
-        isTrue,
+        await virt.snapshotRefusal(guest!),
+        isNull,
         reason: 'a qcow2 disk can be overlaid',
       );
 
@@ -5499,7 +5499,6 @@ Future<void> _p8Pve() async {
     test('a thin storage supports snapshots; the diff reads a real change',
         () async {
       final guest = created!;
-      expect(await pve.snapshotSupported(guest), isTrue);
       expect(await pve.snapshotRefusal(guest), isNull);
 
       await pve.createSnapshot(guest, name: 'sbxe2e-p8a', description: 'one');
@@ -5554,12 +5553,7 @@ Future<void> _p8Pve() async {
           .where((g) => g.vmid == rawId)
           .firstOrNull;
       expect(raw, isNotNull);
-      expect(
-        await pve.snapshotSupported(raw!),
-        isFalse,
-        reason: 'a raw disk on a dir storage cannot be snapshotted',
-      );
-      final why = await pve.snapshotRefusal(raw);
+      final why = await pve.snapshotRefusal(raw!);
       expect(why, contains('snapshot feature is not available'));
       expect(why, contains(rawName));
       final e = await _virtErr(pve.createSnapshot(raw, name: 'sbxe2e-p8raw'));

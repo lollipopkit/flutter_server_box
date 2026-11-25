@@ -1008,16 +1008,11 @@ extension _Init on SSHPageState {
         restoredWindowIndex,
         windows,
       );
-      final command = windowIndex != null
-          ? TmuxCommandBuilder.attachSessionWindow(
-              restoredSession.id.value,
-              windowIndex,
-              tmuxBin: tmuxBin,
-            )
-          : TmuxCommandBuilder.attachSession(
-              restoredSession.id.value,
-              tmuxBin: tmuxBin,
-            );
+      final command = TmuxCommandBuilder.attachSession(
+        restoredSession.id.value,
+        windowIndex: windowIndex,
+        tmuxBin: tmuxBin,
+      );
 
       final session = await _openTmuxControlSession(command);
       if (session == null) return false;

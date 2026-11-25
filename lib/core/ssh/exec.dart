@@ -4,8 +4,10 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:server_box/core/ssh/decoder.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/src/rust/api/exec_session.dart' as es;
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 typedef SshExecCollectedOutput = ({
   String stdout,
@@ -36,10 +38,14 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   OnExecOutput? onStdout,
   OnExecOutput? onStderr,
   Future<void>? cancel,
+  bool isWindows = false,
+  String? logLabel,
 }) async {
   final out = StringBuffer();
   final err = StringBuffer();
-  final decoder = const Utf8Decoder(allowMalformed: true);
+  final outBytes = isWindows ? BytesBuilder(copy: false) : null;
+  final errBytes = isWindows ? BytesBuilder(copy: false) : null;
+  const decoder = Utf8Decoder(allowMalformed: true);
 
   Object? streamError;
   StackTrace? streamErrorStackTrace;
@@ -57,34 +63,94 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
     }
   }
 
+  String decodeWindows(List<int> bytes, String streamLabel) {
+    final context = logLabel != null ? '$logLabel ($streamLabel)' : streamLabel;
+    return SSHDecoder.decode(bytes, isWindows: true, context: context);
+  }
+
   // Subscriptions rather than `forEach`, so that giving up on the drain can
   // actually let go of the streams instead of leaving them writing into
   // buffers nobody will read.
-  final outSub = decoder.bind(stdout).listen((chunk) {
-    out.write(chunk);
-    deliver(onStdout, chunk);
-  });
-  final errSub = decoder.bind(stderr).listen((chunk) {
-    err.write(chunk);
-    deliver(onStderr, chunk);
-  });
+  final StreamSubscription<Object?> outSub;
+  final StreamSubscription<Object?> errSub;
+  final WindowsStreamDecoder? outWinDecoder;
+  final WindowsStreamDecoder? errWinDecoder;
+  if (isWindows) {
+    outWinDecoder = onStdout != null
+        ? WindowsStreamDecoder(
+            context: logLabel != null ? '$logLabel (stdout)' : 'stdout',
+          )
+        : null;
+    errWinDecoder = onStderr != null
+        ? WindowsStreamDecoder(
+            context: logLabel != null ? '$logLabel (stderr)' : 'stderr',
+          )
+        : null;
+    outSub = stdout.listen((chunk) {
+      outBytes!.add(chunk);
+      if (outWinDecoder != null) {
+        final text = outWinDecoder.add(chunk);
+        if (text.isNotEmpty) deliver(onStdout, text);
+      }
+    });
+    errSub = stderr.listen((chunk) {
+      errBytes!.add(chunk);
+      if (errWinDecoder != null) {
+        final text = errWinDecoder.add(chunk);
+        if (text.isNotEmpty) deliver(onStderr, text);
+      }
+    });
+  } else {
+    outWinDecoder = null;
+    errWinDecoder = null;
+    outSub = decoder.bind(stdout).listen((chunk) {
+      out.write(chunk);
+      deliver(onStdout, chunk);
+    });
+    errSub = decoder.bind(stderr).listen((chunk) {
+      err.write(chunk);
+      deliver(onStderr, chunk);
+    });
+  }
 
   // These must be obtained while the subscriptions are still live. Calling
   // asFuture after a done event has already been delivered creates futures
   // that can no longer complete. `asFuture` also replaces the subscription's
-  // error callback, so catch its error here and keep the output buffered up to
-  // that point instead of letting the collector throw it away.
-  Future<void> captureDone(StreamSubscription<String> subscription) async {
+  // onDone and onError callbacks, so flush buffered stream decoders here once
+  // the stream completes rather than in `listen(onDone: ...)`.
+  Future<void> captureDone(
+    StreamSubscription<Object?> subscription, {
+    void Function()? onFlush,
+  }) async {
     try {
       await subscription.asFuture<void>();
+      onFlush?.call();
     } catch (error, trace) {
       streamError ??= error;
       streamErrorStackTrace ??= trace;
     }
   }
 
-  final outDone = captureDone(outSub);
-  final errDone = captureDone(errSub);
+  final outDone = captureDone(
+    outSub,
+    onFlush: switch (outWinDecoder) {
+      final winDecoder? => () {
+        final tail = winDecoder.flush();
+        if (tail.isNotEmpty) deliver(onStdout, tail);
+      },
+      null => null,
+    },
+  );
+  final errDone = captureDone(
+    errSub,
+    onFlush: switch (errWinDecoder) {
+      final winDecoder? => () {
+        final tail = winDecoder.flush();
+        if (tail.isNotEmpty) deliver(onStderr, tail);
+      },
+      null => null,
+    },
+  );
 
   var abandoned = false;
   await Future.any([
@@ -115,9 +181,19 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
     );
   }
 
+  final String stdoutText;
+  final String stderrText;
+  if (isWindows) {
+    stdoutText = decodeWindows(outBytes!.takeBytes(), 'stdout');
+    stderrText = decodeWindows(errBytes!.takeBytes(), 'stderr');
+  } else {
+    stdoutText = out.toString();
+    stderrText = err.toString();
+  }
+
   return (
-    stdout: out.toString(),
-    stderr: err.toString(),
+    stdout: stdoutText,
+    stderr: stderrText,
     outputIncomplete: incomplete,
     streamError: streamError,
     streamErrorStackTrace: streamErrorStackTrace,
@@ -182,6 +258,8 @@ class SshExec implements CommandByteExec {
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
     Future<void>? cancel,
+    bool isWindows = false,
+    String? logLabel,
   }) async {
     // With no [entry] the script *is* the command, which leaves the channel's
     // stdin free to be stdin — where a sudo password belongs. With one, the
@@ -197,6 +275,8 @@ class SshExec implements CommandByteExec {
       onStderr: onStderr,
       cancel: cancel,
       nonce: nonce,
+      isWindows: isWindows,
+      logLabel: logLabel,
     );
     // Nothing to stop, so no session id to know.
     if (cancel == null) return (await exec(command)).result;
@@ -214,6 +294,16 @@ class SshExec implements CommandByteExec {
     return (await exec(command)).result;
   }
 
+  /// Runs [script] on stdin via `cat | sh` and checks whether sudo rejected
+  /// the password carried inside it.
+  Future<SudoExecResult> runSudo(String script) async {
+    final result = await run(script, entry: 'cat | sh');
+    return SudoExecResult(
+      result,
+      rejected: script_ffi.sudoPasswordRejected(stderr: result.stderr),
+    );
+  }
+
   Future<_Run> _exec(
     String command, {
     required String script,
@@ -224,6 +314,8 @@ class SshExec implements CommandByteExec {
     OnExecOutput? onStderr,
     Future<void>? cancel,
     String? nonce,
+    bool isWindows = false,
+    String? logLabel,
   }) async {
     final session = await client.execute(command, environment: env);
     // Tracked: run through `exec_session::wrap` with this [nonce].
@@ -291,13 +383,15 @@ class SshExec implements CommandByteExec {
       onStdout: gated(onStdout),
       onStderr: gated(onStderr),
       cancel: cancel,
+      isWindows: isWindows,
+      logLabel: logLabel,
     );
 
     try {
       if (stdin != null) {
         session.stdin.add(Uint8List.fromList(utf8.encode(stdin)));
       }
-      if (entry != null) {
+      if (entry != null && script.isNotEmpty) {
         session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
       }
       // Closed either way: a command that reads stdin would otherwise wait for
@@ -306,9 +400,13 @@ class SshExec implements CommandByteExec {
 
       final collected = await output;
       final gone = await reaped;
+      // Windows OpenSSH can send `exit-status` after channel EOF (#1710).
+      final exitCode =
+          session.exitCode ??
+          (stopped ? null : await session.waitForExit(timeout: drainTimeout));
       return (
         result: ExecResult(
-          exitCode: session.exitCode,
+          exitCode: exitCode,
           stdout: collected.stdout,
           stderr: collected.stderr,
           outputIncomplete: collected.outputIncomplete,

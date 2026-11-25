@@ -50,10 +50,6 @@ mixin _Snapshots on _LibvirtCore {
   /// chain's own read says (a disk QEMU opened as raw). A disk the read could
   /// not open refuses only the external form ([VirtSnapChain.externalRefusal]).
   @override
-  Future<bool?> snapshotSupported(VirtGuest guest) async =>
-      (await snapshotChain(guest)).refusal == null;
-
-  @override
   Future<String?> snapshotRefusal(VirtGuest guest) async =>
       (await snapshotChain(guest)).refusal;
 

@@ -309,7 +309,7 @@ void main() {
     'ServerFilePage': (c) =>
         ServerFilePage.route.go(c, SftpPageArgs(spi: stored())),
     'ServerFuncBtnsOrderPage': (c) => ServerFuncBtnsOrderPage.route.go(c),
-    'ServerOrderPage': (c) => ServerOrderPage.route.go(c),
+    'ServerListOrderPage': (c) => ServerListOrderPage.route.go(c),
     'ServerOrdersPage': (c) => ServerOrdersPage.route.go(c),
     'ServiceDetailPage': (c) => ServiceDetailPage.route.go(
       c,

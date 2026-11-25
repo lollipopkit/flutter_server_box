@@ -54,17 +54,6 @@ abstract interface class VirtBackend {
   /// Only where `VirtCapabilities.snapshotExternal`.
   Future<VirtSnapChain> snapshotChain(VirtGuest guest);
 
-  /// Whether this guest can be snapshotted at all: whether every disk it has
-  /// is on a storage that supports it.
-  ///
-  /// PVE answers this itself (`GET .../{type}/{vmid}/feature?feature=
-  /// snapshot`), which is what its own UI asks before it offers the button;
-  /// the answer is about the *storages* the guest's disks are on, so a guest
-  /// whose disks are mixed answers false when any one of them does. libvirt
-  /// has nothing to ask: it is [snapshotChain]'s own read. Null where the
-  /// backend cannot say (a container on a host that refuses the question).
-  Future<bool?> snapshotSupported(VirtGuest guest);
-
   /// Why a snapshot cannot be taken, in the host's words, or null when one
   /// can. Read before the form offers to make one, so a refusal is said
   /// before the task is started rather than after it fails.

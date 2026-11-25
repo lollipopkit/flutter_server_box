@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/service/ssh_discovery_parse.dart';
+import 'package:server_box/core/ssh_discovery/parse.dart';
 
 Set<String> _ips(Iterable<InternetAddress> a) => {for (final e in a) e.address};
 

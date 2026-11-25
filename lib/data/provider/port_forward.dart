@@ -21,7 +21,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/store/stores.dart';
 
-part 'port_forward_provider.g.dart';
+part 'port_forward.g.dart';
 
 /// Which forwards [server] can make: [relay] a local or dynamic one, a
 /// connection dialled from the server per connection; [listen] a remote one,

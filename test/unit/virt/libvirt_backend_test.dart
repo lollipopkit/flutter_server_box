@@ -607,7 +607,7 @@ void main() {
       final rawChain = await virt2.snapshotChain(web2);
       expect(rawChain.refusal, contains('raw'));
       expect(rawChain.externalRefusal, contains('raw'));
-      expect(await virt2.snapshotSupported(web2), isFalse);
+      expect(await virt2.snapshotRefusal(web2), contains('raw'));
     });
 
     test('an external snapshot names an overlay per disk', () async {

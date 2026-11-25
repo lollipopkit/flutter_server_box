@@ -824,7 +824,6 @@ void main() {
         vmid: 100,
         node: 'pve',
       );
-      expect(await backend.snapshotSupported(guest), isFalse);
       final refusal = await backend.snapshotRefusal(guest);
       expect(refusal, 'snapshot feature is not available: local-lvm');
       // The create is refused before any task is started, with the reason.
@@ -841,13 +840,11 @@ void main() {
       api.routes['GET /nodes/pve/qemu/100/status/current'] = (_) => {
         'status': 'running',
       };
-      expect(await backend.snapshotSupported(guest), isTrue);
       expect(await backend.snapshotRefusal(guest), isNull);
 
       // A host that does not answer the question at all (an older PVE, or a
       // guest deleted since the last load) is "unknown", not "no".
       api.routes['GET /nodes/pve/qemu/100/feature'] = (_) => _Api._status(501);
-      expect(await backend.snapshotSupported(guest), isNull);
       expect(await backend.snapshotRefusal(guest), isNull);
     });
 

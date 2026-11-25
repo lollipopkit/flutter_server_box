@@ -26,21 +26,14 @@ Future<SSHClient> genClient(
   Spi spi, {
   void Function(GenSSHClientStatus)? onStatus,
 
-  /// Private key material supplied when this runs in an isolate.
-  String? privateKey,
-
-  /// Jump-host private key material supplied when this runs in an isolate.
-  String? jumpPrivateKey,
-
-  /// Preferred in isolate mode; otherwise credentials come from [Stores.key].
+  /// Preloaded private keys keyed by `SshCredential.keyRefs` for isolate mode;
+  /// otherwise credentials come from [Stores.key].
   Map<String, String>? privateKeysByKeyId,
 
-  /// Preferred in isolate mode; otherwise servers come from [Stores.server].
+  /// Preloaded jump servers keyed by server id for isolate mode; otherwise
+  /// servers come from [Stores.server].
   Map<String, Spi>? jumpSpisById,
   Duration timeout = const Duration(seconds: 5),
-
-  /// Jump server supplied when this runs in an isolate with key authentication.
-  Spi? jumpSpi,
 
   /// Handles keyboard-interactive authentication prompts.
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
@@ -152,7 +145,6 @@ Future<SSHClient> genClient(
         // Proxy
         final jumpSpis = _resolveJumpCandidates(
           spi: spi,
-          preloadedJumpSpi: jumpSpi,
           jumpSpisById: jumpSpisById,
         );
         final jumpIds = spi.resolvedJumpIds;
@@ -181,20 +173,8 @@ Future<SSHClient> genClient(
               );
               if (viaMaster != null) return viaMaster;
 
-              String? nextJumpPrivateKey;
-              final jumpSpiKeyRef = jumpSpi_.ssh?.keyRef;
-              if (jumpSpi != null &&
-                  jumpSpi.id == jumpSpi_.id &&
-                  jumpPrivateKey != null) {
-                // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
-                nextJumpPrivateKey = jumpPrivateKey;
-              } else if (jumpSpiKeyRef != null) {
-                nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyRef];
-              }
-
               jumpClient = await genClient(
                 jumpSpi_,
-                privateKey: nextJumpPrivateKey,
                 privateKeysByKeyId: privateKeysByKeyId,
                 jumpSpisById: jumpSpisById,
                 timeout: timeout,
@@ -300,7 +280,6 @@ Future<SSHClient> genClient(
       ssh: ssh,
       timeout: timeout,
       alterUser: alterUser,
-      privateKey: privateKey,
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
@@ -339,7 +318,6 @@ Future<SSHClient> _authenticatedClient({
   required SshCredential ssh,
   required Duration timeout,
   required String? alterUser,
-  required String? privateKey,
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
@@ -365,7 +343,6 @@ Future<SSHClient> _authenticatedClient({
       ssh: ssh,
       timeout: timeout,
       alterUser: alterUser,
-      privateKey: privateKey,
       privateKeysByKeyId: privateKeysByKeyId,
       onStatus: onStatus,
       onKeyboardInteractive: onKeyboardInteractive,
@@ -399,7 +376,6 @@ Future<SSHClient> _clientWith({
   required SshCredential ssh,
   required Duration timeout,
   required String? alterUser,
-  required String? privateKey,
   required Map<String, String>? privateKeysByKeyId,
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
@@ -439,13 +415,12 @@ Future<SSHClient> _clientWith({
     return passwordClient();
   }
   final keyMaterial = <String, String>{};
-  if (privateKey != null) keyMaterial[keyRefs.first] = privateKey;
   if (privateKeysByKeyId != null) {
     for (final ref in keyRefs) {
       final pem = privateKeysByKeyId[ref];
       if (pem != null) keyMaterial[ref] = pem;
     }
-  } else if (privateKey == null || keyRefs.length > 1) {
+  } else {
     try {
       for (final entry in (await resolvePrivateKeysAsync(
         ssh,
@@ -454,22 +429,14 @@ Future<SSHClient> _clientWith({
         keyMaterial.putIfAbsent(entry.key, () => entry.value);
       }
     } catch (e, s) {
-      if (keyMaterial.isNotEmpty) {
-        Loggers.app.warning(
-          'Failed to resolve additional SSH keys for ${spi.name}',
-          e,
-          s,
-        );
-      } else {
-        if (ssh.pwd?.isNotEmpty != true && agent == null) rethrow;
-        Loggers.app.warning(
-          'SSH key unavailable for ${spi.name}; going on with '
-          '${agent == null ? 'the password' : 'the agent\'s keys'}',
-          e,
-          s,
-        );
-        return passwordClient();
-      }
+      if (ssh.pwd?.isNotEmpty != true && agent == null) rethrow;
+      Loggers.app.warning(
+        'SSH key unavailable for ${spi.name}; going on with '
+        '${agent == null ? 'the password' : 'the agent\'s keys'}',
+        e,
+        s,
+      );
+      return passwordClient();
     }
   }
   if (keyMaterial.isEmpty) {
@@ -595,14 +562,11 @@ Future<SSHClient> _clientWith({
 
 List<Spi> _resolveJumpCandidates({
   required Spi spi,
-  required Spi? preloadedJumpSpi,
   required Map<String, Spi>? jumpSpisById,
 }) {
   final candidates = <Spi>[];
   for (final jumpId in spi.resolvedJumpIds) {
-    final candidate = preloadedJumpSpi?.id == jumpId
-        ? preloadedJumpSpi
-        : jumpSpisById?[jumpId] ?? Stores.server.fetchOneRaw(jumpId);
+    final candidate = jumpSpisById?[jumpId] ?? Stores.server.fetchOneRaw(jumpId);
     if (candidate == null || candidates.any((e) => e.id == candidate.id)) {
       continue;
     }
@@ -678,7 +642,6 @@ Future<void> ensureKnownHostKey(
 
   for (final jumpSpi in _resolveJumpCandidates(
     spi: spi,
-    preloadedJumpSpi: null,
     jumpSpisById: jumpSpisById,
   )) {
     if (!hasKnownHostFingerprint(jumpSpi, cache)) {

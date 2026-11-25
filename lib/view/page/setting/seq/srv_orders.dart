@@ -38,7 +38,7 @@ class ServerOrdersPage extends StatelessWidget {
 
     const views = TabBarView(
       children: [
-        ServerOrderPage(embedded: true),
+        ServerListOrderPage(embedded: true),
         ServerDetailOrderPage(embedded: true),
         ServerFuncBtnsOrderPage(embedded: true),
       ],

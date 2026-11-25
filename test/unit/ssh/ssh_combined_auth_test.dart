@@ -62,9 +62,12 @@ void main() {
 Future<SSHClient> _createClient(Spi spi, {String? privateKey}) async {
   final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
   final peerFuture = server.first;
+  final keyRef = spi.ssh?.keyRef;
   final client = await genClient(
     spi.copyWith(ssh: spi.ssh!.copyWith(port: server.port)),
-    privateKey: privateKey,
+    privateKeysByKeyId: privateKey != null && keyRef != null
+        ? {keyRef: privateKey}
+        : null,
     knownHostFingerprints: const {},
   );
   final peer = await peerFuture;
