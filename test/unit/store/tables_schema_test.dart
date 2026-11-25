@@ -104,7 +104,11 @@ void main() {
   });
 
   test('deleting a server takes everything hanging off it', () {
-    addServer('srv');
+    db.execute(
+      "INSERT INTO private_key (id, name, key) VALUES ('k_del', 'k_del', 'PEM');",
+    );
+    addServer('srv', keyId: 'k_del');
+    db.execute("INSERT INTO server_key VALUES ('srv', 0, 'k_del');");
     db.execute("INSERT INTO server_tag VALUES ('srv', 'prod');");
     db.execute("INSERT INTO server_env VALUES ('srv', 'TERM', 'xterm');");
     db.execute("INSERT INTO server_disabled_cmd VALUES ('srv', 'sensors');");
@@ -128,6 +132,7 @@ void main() {
     db.execute("DELETE FROM server WHERE id = 'srv';");
 
     for (final t in const [
+      'server_key',
       'server_tag',
       'server_env',
       'server_disabled_cmd',
@@ -154,10 +159,15 @@ void main() {
       "VALUES ('k1', 'work', 'PRIVATE');",
     );
     addServer('srv', keyId: 'k1');
+    db.execute("INSERT INTO server_key VALUES ('srv', 0, 'k1');");
 
     db.execute("DELETE FROM private_key WHERE id = 'k1';");
 
     final row = db.select("SELECT ssh_key_id FROM server WHERE id = 'srv';");
+    expect(
+      db.select("SELECT count(*) AS n FROM server_key WHERE server_id = 'srv';").single['n'],
+      0,
+    );
     expect(row.length, 1, reason: 'the server must survive');
     expect(row.single['ssh_key_id'], isNull, reason: 'and ask for a new key');
   });

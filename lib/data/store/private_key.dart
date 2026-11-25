@@ -1,5 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/server.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Private keys, as rows in `private_key`.
@@ -57,4 +59,14 @@ class PrivateKeyStore extends EntityStore<PrivateKeyInfo> {
   }
 
   PrivateKeyInfo? fetchOne(String? id) => id == null ? null : fetchOneRaw(id);
+
+  @override
+  void deleteById(String id, {bool notify = true}) {
+    SqliteStore.transact(() {
+      db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
+      ServerStore.backfillPrimaryKeys(db);
+      synced.tombstone(id);
+    });
+    if (notify) invalidate();
+  }
 }

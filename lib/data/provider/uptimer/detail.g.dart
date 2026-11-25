@@ -64,7 +64,7 @@ final class UptimerDetailProvider
   }
 }
 
-String _$uptimerDetailHash() => r'd7098635339356c38cbd386fd1150a838b9ee529';
+String _$uptimerDetailHash() => r'83019cf295cce1277420775f8f8d72623499f0c6';
 
 /// On-demand detail data (24h latency series, ranged uptime, outage log, and
 /// latest manual test result) for one Uptimer monitor.

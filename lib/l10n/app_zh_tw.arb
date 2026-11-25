@@ -2096,5 +2096,6 @@
   "appMcpBusy": "正在儲存另一項權杖變更。",
   "appMcpProtect": "無法設定權杖檔案的存取權限。",
   "appMcpListenBusy": "MCP 伺服器正在切換狀態。",
-  "appMcpInvalidAddress": "請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。"
+  "appMcpInvalidAddress": "請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。",
+  "sshTooManyKeysWarning": "選擇過多私鑰可能觸發伺服器認證重試上限或導致 IP 被封鎖。"
 }

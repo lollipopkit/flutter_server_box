@@ -454,14 +454,22 @@ Future<SSHClient> _clientWith({
         keyMaterial.putIfAbsent(entry.key, () => entry.value);
       }
     } catch (e, s) {
-      if (ssh.pwd?.isNotEmpty != true && agent == null) rethrow;
-      Loggers.app.warning(
-        'SSH key unavailable for ${spi.name}; going on with '
-        '${agent == null ? 'the password' : 'the agent\'s keys'}',
-        e,
-        s,
-      );
-      return passwordClient();
+      if (keyMaterial.isNotEmpty) {
+        Loggers.app.warning(
+          'Failed to resolve additional SSH keys for ${spi.name}',
+          e,
+          s,
+        );
+      } else {
+        if (ssh.pwd?.isNotEmpty != true && agent == null) rethrow;
+        Loggers.app.warning(
+          'SSH key unavailable for ${spi.name}; going on with '
+          '${agent == null ? 'the password' : 'the agent\'s keys'}',
+          e,
+          s,
+        );
+        return passwordClient();
+      }
     }
   }
   if (keyMaterial.isEmpty) {
@@ -471,7 +479,7 @@ Future<SSHClient> _clientWith({
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
       message: l10n.privateKeyNotFoundFmt(
-        ssh.keyId ?? ssh.keyPath ?? keyRefs.first,
+        ssh.firstKeyId ?? ssh.keyPath ?? keyRefs.first,
       ),
     );
   }
@@ -483,6 +491,7 @@ Future<SSHClient> _clientWith({
   // line with no screen to ask on.
   final openedKeys = <String>[];
   var deferredIdentity = false;
+  Object? lastUnlockError;
   for (final entry in keyMaterial.entries) {
     try {
       openedKeys.add(await PrivateKeyUnlock.open(
@@ -493,6 +502,26 @@ Future<SSHClient> _clientWith({
       ));
     } on SshInteractionRequired {
       deferredIdentity = true;
+    } on SSHErr catch (e, s) {
+      lastUnlockError = e;
+      if (keyMaterial.length == 1 &&
+          ssh.pwd?.isNotEmpty != true &&
+          agent == null) {
+        rethrow;
+      }
+      Loggers.app.warning(
+        'Skipping locked SSH key ${privateKeyDisplayName(entry.key)} for ${spi.name}',
+        e,
+        s,
+      );
+    }
+  }
+  if (openedKeys.isEmpty) {
+    if (!deferredIdentity) {
+      if (ssh.pwd?.isNotEmpty == true || agent != null) {
+        return passwordClient();
+      }
+      if (lastUnlockError != null) throw lastUnlockError;
     }
   }
 

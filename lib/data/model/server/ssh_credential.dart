@@ -44,14 +44,19 @@ final class SshCredential {
   final String user;
   final String? pwd;
 
-  /// [PrivateKeyInfo.id] of a key held in `Stores.key`, and nothing else.
+  /// [PrivateKeyInfo.id] of the primary stored key held in `Stores.key`.
   ///
-  /// It used to mean that *or* a filesystem path, depending on who wrote it:
-  /// `~/.ssh/config` import put an `IdentityFile` value straight in here while
-  /// every reader looked it up as a store id, so an imported server could only
-  /// ever fail to connect. The path now has [keyPath] to itself.
-  @JsonKey(name: 'pubKeyId')
+  /// Read from records written before [keyIds] held every stored key; [toJson]
+  /// mirrors [resolvedKeyIds.firstOrNull] here for older readers. Read
+  /// [resolvedKeyIds].
+  ///
+  /// TODO(migration): drop, and its key in [toJson], once no supported build
+  /// reads `pubKeyId` alone.
+  @JsonKey(name: 'pubKeyId', includeToJson: false)
   final String? keyId;
+
+  /// Ordered [PrivateKeyInfo.id]s held in `Stores.key`, tried in this order.
+  final List<String>? keyIds;
 
   /// A private key on this machine's filesystem, as an `IdentityFile` line
   /// names one. Read when the connection is made, never copied into the app.
@@ -135,6 +140,7 @@ final class SshCredential {
     this.user = 'root',
     this.pwd,
     this.keyId,
+    this.keyIds,
     this.keyPath,
     this.identityFiles,
     this.identityAgent,
@@ -152,12 +158,53 @@ final class SshCredential {
       _$SshCredentialFromJson(json);
 
   /// The single legacy fields too, from the lists, for a build that reads only
-  /// them (see [keyPath]).
-  Map<String, dynamic> toJson() => {
-    ..._$SshCredentialToJson(this),
-    'keyPath': ?resolvedIdentityFiles.firstOrNull,
-    'jumpId': ?resolvedJumpIds.firstOrNull,
-  };
+  /// them (see [keyId], [keyPath], [jumpId]).
+  Map<String, dynamic> toJson() {
+    final ids = resolvedKeyIds;
+    final json = _$SshCredentialToJson(this);
+    if (ids.isEmpty) {
+      json.remove('keyIds');
+    } else {
+      json['keyIds'] = ids;
+      json['pubKeyId'] = ids.first;
+    }
+    final files = resolvedIdentityFiles;
+    if (files.isNotEmpty) json['keyPath'] = files.first;
+    final jumps = resolvedJumpIds;
+    if (jumps.isNotEmpty) json['jumpId'] = jumps.first;
+    return json;
+  }
+
+  static List<String>? _normalizeKeyIds(Iterable<String?>? raw) {
+    if (raw == null) return null;
+    final ids = <String>[];
+    for (final id in raw) {
+      if (id == null || id.isEmpty || ids.contains(id)) continue;
+      ids.add(id);
+    }
+    return ids.isEmpty ? null : ids;
+  }
+
+  /// [keyIds] first, falling back to the legacy single [keyId] only when that
+  /// list yields nothing.
+  List<String> get resolvedKeyIds {
+    final ids = <String>[];
+    void add(String? id) {
+      if (id == null || id.isEmpty || ids.contains(id)) return;
+      ids.add(id);
+    }
+
+    for (final id in keyIds ?? const <String>[]) {
+      add(id);
+    }
+    if (ids.isEmpty) add(keyId);
+    return ids;
+  }
+
+  String? get firstKeyId {
+    final ids = resolvedKeyIds;
+    return ids.isEmpty ? null : ids.first;
+  }
 
   /// [jumpIds] first, falling back
   /// to the legacy single [jumpId] only when that list yields nothing.
@@ -176,7 +223,7 @@ final class SshCredential {
   }
 
   List<String> get resolvedIdentityFiles {
-    if (keyId != null) return const [];
+    if (resolvedKeyIds.isNotEmpty) return const [];
     final paths = <String>[];
     void add(String? path) {
       if (path == null || path.isEmpty || paths.contains(path)) return;
@@ -211,15 +258,13 @@ final class SshCredential {
   /// Never stored — the bundle is built when a transfer is queued and lives
   /// only as long as it does — so the shape of these strings is free to change.
   String? get keyRef {
-    final id = keyId;
-    if (id != null) return keyRefForId(id);
     final refs = keyRefs;
     return refs.isEmpty ? null : refs.first;
   }
 
   List<String> get keyRefs {
-    final id = keyId;
-    if (id != null) return [keyRefForId(id)];
+    final ids = resolvedKeyIds;
+    if (ids.isNotEmpty) return [for (final id in ids) keyRefForId(id)];
     return [for (final path in resolvedIdentityFiles) 'path:$path'];
   }
 
@@ -266,6 +311,7 @@ final class SshCredential {
     String? user,
     Object? pwd = _unset,
     Object? keyId = _unset,
+    Object? keyIds = _unset,
     Object? keyPath = _unset,
     Object? identityFiles = _unset,
     Object? identityAgent = _unset,
@@ -278,12 +324,21 @@ final class SshCredential {
     SshFileTransport? fileTransport,
     bool? allowLegacyAlgorithms,
   }) {
+    final nextKeyIds = keyIds != _unset
+        ? _normalizeKeyIds(keyIds as List<String>?)
+        : keyId != _unset
+        ? _normalizeKeyIds([keyId as String?])
+        : this.keyIds;
+    final nextKeyId = (keyIds != _unset || keyId != _unset)
+        ? nextKeyIds?.firstOrNull
+        : this.keyId;
     return SshCredential(
       ip: ip ?? this.ip,
       port: port ?? this.port,
       user: user ?? this.user,
       pwd: pwd == _unset ? this.pwd : pwd as String?,
-      keyId: keyId == _unset ? this.keyId : keyId as String?,
+      keyId: nextKeyId,
+      keyIds: nextKeyIds,
       keyPath: keyPath == _unset ? this.keyPath : keyPath as String?,
       identityFiles: identityFiles == _unset
           ? this.identityFiles
@@ -314,7 +369,7 @@ final class SshCredential {
         port == other.port &&
         user == other.user &&
         pwd == other.pwd &&
-        keyId == other.keyId &&
+        listEquals(resolvedKeyIds, other.resolvedKeyIds) &&
         listEquals(resolvedIdentityFiles, other.resolvedIdentityFiles) &&
         identityAgent == other.identityAgent &&
         // Asked for when a session opens, with the handler the client was
@@ -349,7 +404,7 @@ final class SshCredential {
     port,
     user,
     pwd,
-    keyId,
+    Object.hashAll(resolvedKeyIds),
     Object.hashAll(resolvedIdentityFiles),
     identityAgent,
     forwardAgent,

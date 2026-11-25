@@ -429,6 +429,15 @@ abstract class EntityStore<T extends Object> {
             }
           }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
+          if (table == 'private_key') {
+            db.execute(
+              'UPDATE server SET ssh_key_id = ('
+              '  SELECT key_id FROM server_key'
+              '  WHERE server_id = server.id ORDER BY ord LIMIT 1'
+              ') WHERE ssh_key_id IS NULL'
+              '  AND EXISTS (SELECT 1 FROM server_key WHERE server_id = server.id);',
+            );
+          }
           synced.tombstone(id, at: at);
           appliedIds?.add(id);
           changed = true;
@@ -455,9 +464,14 @@ abstract class EntityStore<T extends Object> {
           // the operation log has it (`SyncRecords`); taking it for this
           // one's overwrote it.
           final resolved = byName && (force || idLess) ? reconcile(item) : item;
-          write(resolved);
+          // Savepoint per record so a failure in a child-table write rolls
+          // back the parent upsert and child DELETEs instead of leaving a
+          // half-written row committed.
+          SqliteStore.transact(() {
+            write(resolved);
+            synced.stamp(idOf(resolved), at: at);
+          });
           written.add(resolved);
-          synced.stamp(idOf(resolved), at: at);
           appliedIds?.add(idOf(resolved));
           changed = true;
         } on SqliteException catch (e) {

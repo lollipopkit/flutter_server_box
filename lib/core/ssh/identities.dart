@@ -187,10 +187,14 @@ class PrivateKeyParseException implements Exception {
 /// isolate, which has no stores; there the reference is the best that can be
 /// said.
 String privateKeyDisplayName(String keyRef) {
+  final id = keyRef.startsWith('id:') ? keyRef.substring(3) : null;
+  if (id == null) {
+    return keyRef.startsWith('path:') ? keyRef.substring(5) : keyRef;
+  }
   try {
-    return Stores.key.fetchOne(keyRef)?.name ?? keyRef;
+    return Stores.key.fetchOne(id)?.name ?? id;
   } catch (_) {
-    return keyRef;
+    return id;
   }
 }
 
@@ -234,13 +238,29 @@ String _decodeCapped(String path, List<int> bytes) {
   return utf8.decode(bytes);
 }
 
+Map<String, String> _resolveStoredPrivateKeys(List<String> keyIds) {
+  final keys = <String, String>{};
+  Object? lastError;
+  for (final keyId in keyIds) {
+    try {
+      keys[SshCredential.keyRefForId(keyId)] = getPrivateKey(keyId);
+    } catch (e) {
+      if (keyIds.length == 1) rethrow;
+      lastError = e;
+      Loggers.app.warning('Skipping missing private key $keyId', e);
+    }
+  }
+  if (keys.isEmpty && lastError != null) throw lastError;
+  return keys;
+}
+
 Map<String, String> resolvePrivateKeys(
   SshCredential ssh, {
   String? originalHost,
 }) {
-  final keyId = ssh.keyId;
-  if (keyId != null) {
-    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  final keyIds = ssh.resolvedKeyIds;
+  if (keyIds.isNotEmpty) {
+    return _resolveStoredPrivateKeys(keyIds);
   }
   final keyPaths = ssh.resolvedIdentityFiles;
   if (keyPaths.isEmpty) return const {};
@@ -287,9 +307,9 @@ Future<Map<String, String>> resolvePrivateKeysAsync(
   SshCredential ssh, {
   String? originalHost,
 }) async {
-  final keyId = ssh.keyId;
-  if (keyId != null) {
-    return {SshCredential.keyRefForId(keyId): getPrivateKey(keyId)};
+  final keyIds = ssh.resolvedKeyIds;
+  if (keyIds.isNotEmpty) {
+    return _resolveStoredPrivateKeys(keyIds);
   }
   final keyPaths = ssh.resolvedIdentityFiles;
   if (keyPaths.isEmpty) return const {};

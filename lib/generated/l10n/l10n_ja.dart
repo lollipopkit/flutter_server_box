@@ -7290,4 +7290,8 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get uptimerResponseValidation => 'Response validation';
+
+  @override
+  String get sshTooManyKeysWarning =>
+      'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.';
 }

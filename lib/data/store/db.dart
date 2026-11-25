@@ -297,6 +297,25 @@ class ServerIdentityFiles extends Table {
   Set<Column> get primaryKey => {serverId, ord};
 }
 
+/// Stored private keys (`PrivateKeyInfo.id`) assigned to a server, in the
+/// order authentication tries them.
+@DataClassName('ServerKeyRow')
+class ServerKeys extends Table {
+  @override
+  String get tableName => 'server_key';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  IntColumn get ord => integer()();
+  TextColumn get keyId =>
+      text().references(PrivateKeys, #id, onDelete: KeyAction.cascade)();
+
+  @override
+  Set<Column> get primaryKey => {serverId, ord};
+}
+
 @DataClassName('ServerDisabledCmdRow')
 class ServerDisabledCmds extends Table {
   @override
@@ -806,6 +825,7 @@ class BmcTargetTags extends Table {
     ServerEnvs,
     ServerJumps,
     ServerIdentityFiles,
+    ServerKeys,
     ServerDisabledCmds,
     BmcTargets,
     BmcTargetTags,
@@ -854,6 +874,7 @@ class AppDb extends _$AppDb {
   /// `server`.
   static const _indexes = <({String table, String sql})>[
     (table: 'server', sql: 'CREATE INDEX IF NOT EXISTS idx_server_key ON server(ssh_key_id);'),
+    (table: 'server_key', sql: 'CREATE INDEX IF NOT EXISTS idx_server_key_ref ON server_key(key_id);'),
     (table: 'bmc_target', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_cred ON bmc_target(cred_id);'),
     (table: 'bmc_target', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_server ON bmc_target(server_id);'),
     (table: 'bmc_target_tag', sql: 'CREATE INDEX IF NOT EXISTS idx_bmc_target_tag_tag ON bmc_target_tag(tag);'),

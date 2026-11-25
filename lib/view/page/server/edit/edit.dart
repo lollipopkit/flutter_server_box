@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:choice/choice.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -174,13 +175,17 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   late FocusScopeNode _focusScope;
 
-  /// -1: key auth enabled without a selection, null: key auth disabled,
-  /// others: index of private key
-  final _keyIdx = ValueNotifier<int?>(null);
+  /// Whether stored-key authentication is switched on.
+  final _useKeyAuth = ValueNotifier<bool>(false);
+
+  /// Ordered stored [PrivateKeyInfo.id]s selected for SSH authentication.
+  final _keyIds = ValueNotifier<List<String>>(const []);
+
+  late final _keyAuthChanges = Listenable.merge([_useKeyAuth, _keyIds]);
 
   /// A key file on this machine, as `~/.ssh/config` named one — see
   /// `SshCredential.keyPath`. Not a selection among stored keys, which is what
-  /// [_keyIdx] is, and mutually exclusive with it.
+  /// [_keyIds] is, and mutually exclusive with it.
   ///
   /// Held here so that opening an imported server and saving it does not
   /// quietly drop the key it was connecting with.
@@ -322,7 +327,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _monitorFallbackCtrl.dispose();
     _monitorPwdCtrl.dispose();
 
-    _keyIdx.dispose();
+    _useKeyAuth.dispose();
+    _keyIds.dispose();
     _keyPath.dispose();
     _useAgent.dispose();
     _forwardAgent.dispose();

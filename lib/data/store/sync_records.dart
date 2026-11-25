@@ -5,6 +5,7 @@ import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/picked_files.dart';
+import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_skills.dart';
@@ -51,7 +52,8 @@ abstract final class ServerSyncRecords {
     // The preset may have come before or after its theme.
     if (won.any((op) => op.c == SyncThemes.c) || written.contains('kv:${Stores.setting.name}')) SyncThemes.reselect();
     final servers = written.contains(Stores.server.table);
-    if (written.contains(Stores.key.table)) {
+    final keys = written.contains(Stores.key.table);
+    if (keys) {
       Stores.key.invalidate();
       if (keysBefore != null) KeyPassphrases.forgetGone(keysBefore, Stores.key.fetch().map((e) => e.key));
     }
@@ -66,6 +68,10 @@ abstract final class ServerSyncRecords {
       Stores.snippet.invalidate();
       Stores.pve.invalidate();
       Stores.bmcTarget.invalidate();
+    } else if (keys) {
+      // A deleted private key cascades out of `server_key` and updates
+      // `server.ssh_key_id`.
+      Stores.server.invalidate();
     }
     if (bmcTargets || bmcCreds) Stores.bmcTarget.invalidate();
     if (written.contains(Stores.snippet.table)) Stores.snippet.invalidate();
@@ -73,8 +79,9 @@ abstract final class ServerSyncRecords {
     if (written.contains(Stores.remoteDesktop.table)) Stores.remoteDesktop.invalidate();
     StoreReload.after({
       if (servers) ...{ReloadedStore.servers, ReloadedStore.containers},
+      if (!servers && keys) ReloadedStore.servers,
       if (written.contains(Stores.snippet.table)) ReloadedStore.snippets,
-      if (written.contains(Stores.key.table)) ReloadedStore.keys,
+      if (keys) ReloadedStore.keys,
       if (bmcCreds) ReloadedStore.bmcCredentials,
       if (bmcTargets || servers || bmcCreds) ReloadedStore.bmcTargets,
     });
@@ -154,6 +161,7 @@ final class EntityRecords implements SyncTableRecords {
     final id = _aliasOf(op.c, op.id) ?? op.id;
     if (d == null) {
       store.db.execute('DELETE FROM ${store.table} WHERE ${store.idColumn} = ?;', [id]);
+      if (store == Stores.key) ServerStore.backfillPrimaryKeys(store.db);
       store.synced.tombstone(id);
       if (id != op.id) SyncRecorder.record(op.c, op.id);
       return null;

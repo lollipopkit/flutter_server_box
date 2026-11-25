@@ -3,6 +3,7 @@ import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/jump_chain.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -271,20 +272,46 @@ class SshTransferCreds {
   Future<void> unlockKeys() async {
     final keys = privateKeysByKeyId;
     if (keys == null) return;
+    final total = keys.length;
+    final hasFallback =
+        spi.ssh?.pwd?.isNotEmpty == true || spi.ssh?.identityAgent != null;
+    Object? lastUnlockError;
     for (final ref in keys.keys.toList()) {
       final pem = keys[ref]!;
       if (!PrivateKeyUnlock.isLocked(pem)) continue;
-      keys[ref] = await PrivateKeyUnlock.open(
-        pem,
-        cacheKey: ref,
-        keyName: privateKeyDisplayName(ref),
-      );
+      try {
+        keys[ref] = await PrivateKeyUnlock.open(
+          pem,
+          cacheKey: ref,
+          keyName: privateKeyDisplayName(ref),
+        );
+      } on SSHErr catch (e, s) {
+        if (total == 1 && !hasFallback) rethrow;
+        lastUnlockError = e;
+        keys.remove(ref);
+        Loggers.app.warning(
+          'Skipping locked transfer SSH key ${privateKeyDisplayName(ref)}',
+          e,
+          s,
+        );
+      }
+    }
+    if (keys.isEmpty && !hasFallback && lastUnlockError != null) {
+      throw lastUnlockError;
     }
     // The two hold the same string for the main server's key, so the copy
     // outside the map has to be moved along with it.
     final mainRef = spi.ssh?.keyRef;
-    if (mainRef != null) privateKey = keys[mainRef] ?? privateKey;
+    if (mainRef != null) {
+      privateKey =
+          keys[mainRef] ??
+          spi.ssh?.keyRefs.map((r) => keys[r]).nonNulls.firstOrNull;
+    }
     final jumpRef = jumpSpi?.ssh?.keyRef;
-    if (jumpRef != null) jumpPrivateKey = keys[jumpRef] ?? jumpPrivateKey;
+    if (jumpRef != null) {
+      jumpPrivateKey =
+          keys[jumpRef] ??
+          jumpSpi?.ssh?.keyRefs.map((r) => keys[r]).nonNulls.firstOrNull;
+    }
   }
 }

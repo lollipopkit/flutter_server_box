@@ -202,6 +202,10 @@ extension BackupV2Restore on BackupV2 {
       // without one, since `restoreOne` answers false for a server not here.
       Stores.pve.invalidate();
       Stores.bmcTarget.invalidate();
+    } else if (changed.keys) {
+      // A deleted private key cascades out of `server_key` and updates
+      // `server.ssh_key_id`.
+      Stores.server.invalidate();
     }
     if (changed.bmcTargets || changed.creds) {
       if (!changed.servers) Stores.bmcTarget.invalidate();
@@ -218,7 +222,7 @@ extension BackupV2Restore on BackupV2 {
     }
 
     StoreReload.after({
-      if (changed.servers) ReloadedStore.servers,
+      if (changed.servers || changed.keys) ReloadedStore.servers,
       if (changed.snippets) ReloadedStore.snippets,
       if (changed.keys) ReloadedStore.keys,
       if (changed.creds) ReloadedStore.bmcCredentials,
@@ -598,6 +602,12 @@ Map<String, Object?> _sshWithRestoredKeyId(
   for (final key in const ['pubKeyId', 'keyId']) {
     final id = ssh[key];
     if (id is String && keyIds.containsKey(id)) ssh[key] = keyIds[id];
+  }
+  final list = ssh['keyIds'];
+  if (list is List) {
+    ssh['keyIds'] = [
+      for (final id in list) id is String ? keyIds[id] ?? id : id,
+    ];
   }
   return ssh;
 }

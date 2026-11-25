@@ -12988,6 +12988,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Response validation'**
   String get uptimerResponseValidation;
+
+  /// No description provided for @sshTooManyKeysWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.'**
+  String get sshTooManyKeysWarning;
 }
 
 class _AppLocalizationsDelegate

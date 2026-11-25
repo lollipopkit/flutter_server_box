@@ -101,15 +101,16 @@ abstract class ServerShare with _$ServerShare {
   /// [ttl] sets [expiresAt]. Null means the payload never expires.
   static ServerShare of(Spi spi, {Duration? ttl}) {
     final keys = <PrivateKeyInfo>[];
-    final keyId = spi.ssh?.keyId;
-    final key = keyId == null ? null : Stores.key.fetchOne(keyId);
-    if (key != null) keys.add(key);
+    for (final keyId in spi.ssh?.resolvedKeyIds ?? const <String>[]) {
+      final key = Stores.key.fetchOne(keyId);
+      if (key != null) keys.add(key);
+    }
 
     final bmcTarget = Stores.bmcTarget.forServer(spi.id);
 
     return ServerShare(
       version: formatVer,
-      spi: _portable(spi, keptKey: key),
+      spi: _portable(spi, keptKeyIds: [for (final k in keys) k.id]),
       keys: keys,
       pve: Stores.pve.fetch(spi.id),
       bmc: bmcTarget == null
@@ -136,8 +137,7 @@ abstract class ServerShare with _$ServerShare {
       if (ssh.keyPath != null || ssh.identityFiles?.isNotEmpty == true) {
         out.add(ServerShareOmission.localKeyPath);
       }
-      final keyId = ssh.keyId;
-      if (keyId != null && Stores.key.fetchOne(keyId) == null) {
+      if (ssh.resolvedKeyIds.any((id) => Stores.key.fetchOne(id) == null)) {
         out.add(ServerShareOmission.missingKey);
       }
     }
@@ -149,13 +149,14 @@ abstract class ServerShare with _$ServerShare {
 
   /// Strips every reference that only means something on the sender's device.
   ///
-  /// [keptKey] is what the payload actually carries; when it is null the
-  /// `keyId` goes with it rather than being handed over as a dangling id.
-  static Spi _portable(Spi spi, {required PrivateKeyInfo? keptKey}) {
+  /// [keptKeyIds] are the keys the payload actually carries; any id not in it
+  /// is dropped rather than handed over as a dangling id.
+  static Spi _portable(Spi spi, {required List<String> keptKeyIds}) {
     final ssh = spi.ssh;
     return spi.copyWith(
       ssh: ssh?.copyWith(
-        keyId: keptKey?.id,
+        keyId: keptKeyIds.firstOrNull,
+        keyIds: keptKeyIds.isEmpty ? null : keptKeyIds,
         keyPath: null,
         identityFiles: null,
         jumpId: null,

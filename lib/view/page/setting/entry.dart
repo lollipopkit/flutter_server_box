@@ -48,6 +48,7 @@ import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entries/keybindings.dart';
+import 'package:server_box/view/page/setting/group.dart';
 import 'package:server_box/view/page/setting/platform/desktop.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
@@ -69,6 +70,8 @@ import 'package:server_box/view/widget/rootfs_install.dart';
 import 'package:server_box/view/widget/server_picker.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
+export 'package:server_box/view/page/setting/group.dart';
+
 part 'about.dart';
 part 'app_page.dart';
 part 'entries/ai.dart';
@@ -83,7 +86,6 @@ part 'entries/remote_desktop.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
-part 'group.dart';
 part 'layout.dart';
 part 'level.dart';
 part 'menu.dart';
@@ -115,15 +117,9 @@ class SettingsPage extends ConsumerStatefulWidget {
 /// form out in a single column the width of two.
 final _kContentMaxWidth = PageColumns.widthFor(
   2,
-  padding: _kGridPadding,
-  spacing: _kGridSpacing,
+  padding: kSettingsGridPadding,
+  spacing: kSettingsGridSpacing,
 );
-
-/// What the form is spaced by, which is the design's 17 minus what a `CardX`
-/// already carries: a `Card` brings a margin of 4 on every side, so 13 here is
-/// 17 on screen at the edges and 9 between two columns is 17 between them.
-const _kGridPadding = EdgeInsets.all(13);
-const _kGridSpacing = 9.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// Which branch the narrow tabs are inside, innermost last.

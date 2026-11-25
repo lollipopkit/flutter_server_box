@@ -7179,6 +7179,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get uptimerResponseValidation => '响应校验';
+
+  @override
+  String get sshTooManyKeysWarning => '选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -14221,4 +14224,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get appMcpInvalidAddress =>
       '請輸入 IP 位址與連接埠，例如 0.0.0.0:49762 或 [::]:49762。';
+
+  @override
+  String get sshTooManyKeysWarning => '選擇過多私鑰可能觸發伺服器認證重試上限或導致 IP 被封鎖。';
 }

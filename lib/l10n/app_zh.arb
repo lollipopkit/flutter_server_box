@@ -2141,5 +2141,6 @@
   "uptimerMinIntervalHint": "最小 {sec}s",
   "uptimerSchedule": "检查计划",
   "uptimerHttpRequest": "HTTP 请求",
-  "uptimerResponseValidation": "响应校验"
+  "uptimerResponseValidation": "响应校验",
+  "sshTooManyKeysWarning": "选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。"
 }

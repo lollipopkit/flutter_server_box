@@ -71,7 +71,7 @@ class PrivateKeyEditPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
 
-  static const route = AppRoute(
+  static const route = AppRoute<PrivateKeyInfo, PrivateKeyEditPageArgs>(
     page: PrivateKeyEditPage.new,
     path: '/private_key/edit',
   );
@@ -484,7 +484,7 @@ extension _Actions on _PrivateKeyEditPageState {
       if (mounted) _loading.value = null;
     }
     if (!mounted) return;
-    context.pop();
+    context.pop(pki);
   }
 
   Future<void> _onTapPickFile() async {

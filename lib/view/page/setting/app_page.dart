@@ -349,8 +349,8 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     // the header above the content repeats it. The headings inside are the
     // groups' own.
     Widget grid() => PageColumns(
-      padding: _kGridPadding,
-      spacing: _kGridSpacing,
+      padding: kSettingsGridPadding,
+      spacing: kSettingsGridSpacing,
       bottomInset: MediaQuery.paddingOf(context).bottom,
       children: [
         // A group can come out empty — every row in it is behind a platform
