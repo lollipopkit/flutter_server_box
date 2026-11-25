@@ -1,0 +1,71 @@
+# Shared nFPM specification for Debian (.deb) and RPM (.rpm) packages.
+# Invoked via scripts/release/package-linux-native.sh, which sets VERSION,
+# BUNDLE_DIR, and METAINFO_FILE before running `nfpm package`.
+name: serverbox
+arch: amd64
+platform: linux
+version: "${VERSION}"
+section: utils
+priority: optional
+maintainer: "lollipopkit <10864310+lollipopkit@users.noreply.github.com>"
+description: |
+  Server status monitor and management toolbox.
+  Monitor CPU, memory, disks, network, GPUs, and services, and manage Linux,
+  Unix, and Windows servers over SSH or ServerBox Monitor.
+vendor: lollipopkit
+homepage: https://serverbox.lollipopkit.com/docs/
+license: AGPL-3.0-only
+
+contents:
+  - src: "${BUNDLE_DIR}/"
+    dst: /opt/serverbox
+    type: tree
+  - src: "/opt/serverbox/${APP_NAME}"
+    dst: /usr/bin/serverbox
+    type: symlink
+    file_info:
+      mode: 0777
+  - src: linux/packaging/tech.lolli.toolbox.desktop
+    dst: /usr/share/applications/tech.lolli.toolbox.desktop
+    file_info:
+      mode: 0644
+  - src: "${METAINFO_FILE}"
+    dst: /usr/share/metainfo/tech.lolli.toolbox.metainfo.xml
+    file_info:
+      mode: 0644
+  - src: assets/app_icon.png
+    dst: /usr/share/icons/hicolor/512x512/apps/tech.lolli.toolbox.png
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/licenses/serverbox/LICENSE
+    file_info:
+      mode: 0644
+
+scripts:
+  postinstall: linux/packaging/scripts/refresh-desktop.sh
+  postremove: linux/packaging/scripts/refresh-desktop.sh
+
+rpm:
+  group: Applications/System
+
+overrides:
+  deb:
+    depends:
+      - libgtk-3-0t64 | libgtk-3-0
+      - libsecret-1-0
+      - libepoxy0
+      - libstdc++6
+      - libgcc-s1
+      - libatomic1
+      - xdg-utils
+  rpm:
+    # ELF SONAME provides resolve identically across Fedora, RHEL, and openSUSE.
+    depends:
+      - libgtk-3.so.0()(64bit)
+      - libsecret-1.so.0()(64bit)
+      - libepoxy.so.0()(64bit)
+      - libstdc++.so.6()(64bit)
+      - libgcc_s.so.1()(64bit)
+      - libatomic.so.1()(64bit)
+      - xdg-utils

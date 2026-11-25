@@ -777,9 +777,14 @@ jobs:
           - runs_on: ubuntu-latest
             release_suffix: ""
             artifact_suffix: ""
+            package_native: false
           - runs_on: ubuntu-22.04
             release_suffix: "_legacy"
             artifact_suffix: "-legacy"
+            # Built on ubuntu-22.04 (glibc 2.35) so the single .deb, .rpm, and
+            # Flathub tarball run across Ubuntu 22.04+, Debian 12+, Fedora, and
+            # openSUSE without requiring GLIBC_2.38+.
+            package_native: true
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 30
     steps:
@@ -820,11 +825,28 @@ jobs:
         shell: bash
         run: |
           mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
+      - name: Stage Linux release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          mv "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage" dist/
+      - name: Package deb, rpm, and portable tarball
+        if: matrix.package_native
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/release/install-nfpm.sh "$RUNNER_TEMP/nfpm-bin"
+          PATH="$RUNNER_TEMP/nfpm-bin:$PATH" scripts/release/package-linux-native.sh \
+            --bundle build/linux/x64/release/bundle \
+            --version "1.0.${BUILD_NUMBER}" \
+            --app-name "${APP_NAME}" \
+            --out dist
       - name: Upload artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
-          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
+          path: dist/*
           if-no-files-found: error
           retention-days: 14
 
@@ -876,8 +898,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          # The zip beside the installer: releases up to v1.0.1787 update only
-          # from a zip. TODO: drop the zip once few users run those.
+          # Keep the portable zip alongside the installer: releases up to
+          # v1.0.1787 update only from a zip, and the official Scoop `extras`
+          # bucket (`ScoopInstaller/Extras/bucket/serverbox.json`) consumes it.
           path: |
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.exe
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
@@ -954,8 +977,11 @@ jobs:
             "${APP_NAME}_${TAG}_amd64.apk"
             "${APP_NAME}_${TAG}_amd64.AppImage"
             "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
+            "${APP_NAME}_${TAG}_amd64.deb"
+            "${APP_NAME}_${TAG}_x86_64.rpm"
+            "${APP_NAME}_${TAG}_linux_amd64.tar.gz"
             "${APP_NAME}_${TAG}_windows_amd64.exe"
-            # TODO: remove with the zip, see `buildWindows`.
+            # Also consumed by ScoopInstaller/Extras/bucket/serverbox.json.
             "${APP_NAME}_${TAG}_windows_amd64.zip"
           )
 

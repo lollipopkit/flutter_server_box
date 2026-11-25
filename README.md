@@ -59,8 +59,8 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
 | macOS | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (architecture-specific `.dmg`) / `brew install --cask server-box` |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.exe` installer & portable `.zip`) / `winget install lollipopkit.serverbox` |
-| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
+| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.exe` installer & portable `.zip`) / `winget install lollipopkit.serverbox` / `scoop install extras/serverbox` |
+| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.deb`, `.rpm`, `.AppImage`, portable `.tar.gz`) |
 
 Download packages only from sources you trust.
 

@@ -35,19 +35,43 @@ Mac App Store 版本已不再更新。直接安装 DMG 版本即可，首次启�
 
 ### Linux
 
-从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载 AppImage。
+从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载 `x86_64` 安装包：
+
+- **Debian / Ubuntu（`.deb`）**：
+
+  ```sh
+  sudo apt install ./ServerBox_v1.0.N_amd64.deb
+  ```
+
+- **Fedora / RHEL / openSUSE（`.rpm`）**：
+
+  ```sh
+  sudo dnf install ./ServerBox_v1.0.N_x86_64.rpm
+  # openSUSE：
+  sudo zypper install ./ServerBox_v1.0.N_x86_64.rpm
+  ```
+
+- **AppImage（`.AppImage`）**：下载 `ServerBox_v1.0.N_amd64.AppImage`（Ubuntu 22.04 / Debian 12 等较旧 glibc 系统可选 `_legacy_amd64.AppImage`），赋予可执行权限后运行。
+- **便携压缩包（`.tar.gz`）**：解压 `ServerBox_v1.0.N_linux_amd64.tar.gz` 后运行 `ServerBox_v1.0.N_linux_amd64/bundle/ServerBox`。
+
+`.deb` 与 `.rpm` 安装包会将程序安装到 `/opt/serverbox`，创建 `/usr/bin/serverbox` 符号链接，并注册桌面入口与图标；基于 glibc 2.35 构建，兼容 Ubuntu 22.04+、Debian 12+、Fedora 与 openSUSE。
 
 ### Windows
 
-从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载安装程序（`ServerBox_v1.0.N_windows_amd64.exe`），或使用 WinGet 安装：
+从 **[GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases)** 下载安装程序（`ServerBox_v1.0.N_windows_amd64.exe`），或使用 WinGet / Scoop 安装：
 
 ```sh
 winget install lollipopkit.serverbox
 ```
 
+```sh
+scoop bucket add extras
+scoop install extras/serverbox
+```
+
 安装程序会为当前用户安装到 `%LOCALAPPDATA%\Programs\ServerBox`，不需要管理员权限，并添加开始菜单项和卸载程序。新版本会直接覆盖安装旧版本，设置和服务器数据会保留。
 
-安装程序没有代码签名,SmartScreen 可能提示"未知发布者"。目前仍会同时发布便携版 zip。
+安装程序没有代码签名，SmartScreen 可能提示"未知发布者"。便携版 zip 也会随版本一并发布（同时作为官方 Scoop `extras` 桶的安装源）。
 
 ## watchOS
 

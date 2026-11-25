@@ -61,8 +61,8 @@
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`_NoSign.ipa`，未签名，需自行签名后安装） |
 | macOS | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（按架构分别提供 `.dmg`） / `brew install --cask server-box` |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`.exe` 安装程序与便携版 `.zip`） / `winget install lollipopkit.serverbox` |
-| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
+| Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`.exe` 安装程序与便携版 `.zip`） / `winget install lollipopkit.serverbox` / `scoop install extras/serverbox` |
+| Linux | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`.deb`、`.rpm`、`.AppImage` 与便携版 `.tar.gz`） |
 
 请只从可信来源下载。
 
