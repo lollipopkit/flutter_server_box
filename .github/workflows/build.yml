@@ -800,7 +800,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev libx11-dev libxi-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
           # The status icon. `tray_manager` links it rather than opening it,
           # so without this the Linux build fails outright — its CMake makes a

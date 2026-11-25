@@ -67,12 +67,21 @@ if (requiresReleaseSigning && !hasReleaseSigning) {
 }
 
 def pinnedNdkVersion = rootProject.file('ndk-version.txt').text.trim()
-def pinnedCompileSdkVersion = rootProject.file('compile-sdk-version.txt').text.trim().toInteger()
+def pinnedCompileSdkRaw = rootProject.file('compile-sdk-version.txt').text.trim()
+def pinnedCompileSdkParts = pinnedCompileSdkRaw.split('\\.')
+if (pinnedCompileSdkParts.length < 1 || pinnedCompileSdkParts.length > 2) {
+    throw new GradleException("Invalid compile-sdk-version.txt value: '${pinnedCompileSdkRaw}' (expected <major> or <major>.<minor>)")
+}
+def pinnedCompileSdkVersion = pinnedCompileSdkParts[0].toInteger()
+def pinnedCompileSdkMinor = pinnedCompileSdkParts.length == 2 ? pinnedCompileSdkParts[1].toInteger() : null
 def pinnedBuildToolsVersion = rootProject.file('build-tools-version.txt').text.trim()
 
 android {
     namespace "tech.lolli.toolbox"
     compileSdk pinnedCompileSdkVersion
+    if (pinnedCompileSdkMinor != null) {
+        compileSdkMinor pinnedCompileSdkMinor
+    }
     buildToolsVersion pinnedBuildToolsVersion
     // One version for Gradle native assets and fl_tty's proot build.
     // A runner's "latest" NDK is not a reproducible build input.

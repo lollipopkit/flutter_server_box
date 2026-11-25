@@ -794,6 +794,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # `cnativeapi` (transitive via `window_manager`) runs
+      # `pkg-config --cflags gtk+-3.0 x11 xi` in its native-assets build hook
+      # during `flutter test`.
+      - name: Install Linux build hook dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-3-dev libx11-dev libxi-dev
+
       # `flutter test` builds sbm_ffi through the build hook, and the
       # FFI-dependent suites load that build (`test/helpers/rust_lib_helper.dart`)
       # — no `cargo build` of a second copy here. fl_lib's and fl_pi_llm's
