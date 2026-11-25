@@ -4,7 +4,9 @@
     ExternalLink,
   } from '@lucide/svelte'
   import { spring } from 'svelte/motion'
-  import { onMount } from 'svelte'
+  import { fade, scale } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import { onMount, tick } from 'svelte'
   import LL, { setLocale } from './i18n/i18n-svelte'
   import { loadLocale } from './i18n/i18n-util.sync'
   import {
@@ -23,72 +25,102 @@
   const showPlugins = false
 
   // One per screenshot, in the order of the README's table. `tag` is what the
-  // screen talks to on the server, so it stays untranslated.
-  const features = [
-    { key: 'list', shot: 'home', tag: 'ssh · monitor' },
-    { key: 'charts', shot: 'server-details', tag: '/proc · /sys' },
-    { key: 'terminal', shot: 'terminal', tag: 'ssh' },
-    { key: 'files', shot: 'files', tag: 'sftp' },
-    { key: 'containers', shot: 'container', tag: 'docker · podman' },
-    { key: 'processes', shot: 'process', tag: 'ps' },
-    { key: 'services', shot: 'services', tag: 'systemctl' },
-    { key: 'users', shot: 'users', tag: '/etc/passwd' },
-    { key: 'agent', shot: 'agent', tag: 'llm · mcp' },
-    { key: 'bench', shot: 'bench', tag: 'yabs' },
-    { key: 'virt', shot: 'virt', tag: 'libvirt · pve' },
-    { key: 'themes', shot: 'themes', tag: '.fsbt' },
+  // screen talks to on the server, so it stays untranslated. Device-specific
+  // overrides fall back to `iphone/${shot}` when a screen is mobile-only.
+  const deviceViews = [
+    { key: 'mac', label: 'Desktop' },
+    { key: 'iphone', label: 'iPhone' },
+    { key: 'iphone-duo', label: 'iPhone Duo' },
   ]
 
-  // Which feature the phone shows: the one scrolled to the middle of the
+  const features = [
+    { key: 'list', shot: 'home', tag: 'ssh · monitor', shots: { mac: 'home', 'iphone-duo': 'home' } },
+    { key: 'charts', shot: 'server-details', tag: '/proc · /sys', shots: { mac: 'server-details', 'iphone-duo': 'server-details' } },
+    { key: 'terminal', shot: 'terminal', tag: 'ssh', shots: { mac: 'terminal', 'iphone-duo': 'terminal' } },
+    { key: 'files', shot: 'files', tag: 'sftp', shots: { mac: 'files', 'iphone-duo': 'files' } },
+    { key: 'containers', shot: 'container', tag: 'docker · podman', shots: { mac: 'container' } },
+    { key: 'processes', shot: 'process', tag: 'ps', shots: { mac: 'process' } },
+    { key: 'services', shot: 'services', tag: 'systemctl', shots: { mac: 'services' } },
+    { key: 'users', shot: 'users', tag: '/etc/passwd', shots: { mac: 'users' } },
+    { key: 'agent', shot: 'agent', tag: 'llm · mcp', shots: { mac: 'agent', 'iphone-duo': 'agent' } },
+    { key: 'bench', shot: 'bench', tag: 'yabs' },
+    { key: 'virt', shot: 'virt', tag: 'libvirt · pve' },
+    { key: 'themes', shot: 'themes', tag: '.fsbt', shots: { mac: 'settings', 'iphone-duo': 'settings' } },
+  ]
+
+  // The CDN stores original PNGs and 1440px JPEGs for the web under matching
+  // names, so refreshing an image does not require a source-code change.
+  const shotBase = 'https://cdn.lollipopkit.com/serverbox/screenshot'
+
+  // Bump `shotVersion` when overwriting existing CDN files in-place so edge
+  // caches (Cloudflare) and browser caches pick up the new crops immediately.
+  const shotVersion = '20261125'
+
+  function shotUrl(device, name) {
+    return `${shotBase}/${device}/${name}.jpg?v=${shotVersion}`
+  }
+
+  function featureShot(feature, device) {
+    if (device !== 'iphone' && feature.shots?.[device]) {
+      return { device, src: shotUrl(device, feature.shots[device]) }
+    }
+    return { device: 'iphone', src: shotUrl('iphone', feature.shot) }
+  }
+
+  // Which feature the preview shows: the one scrolled to the middle of the
   // viewport, or the one last pressed.
   let activeFeature = $state(0)
   let featureItems = $state([])
 
+  function syncActiveFeature() {
+    // The sticky preview column is hidden below 860px; nothing to follow then.
+    if (!window.matchMedia('(min-width: 861px)').matches) return
+    const items = featureItems.filter(Boolean)
+    if (!items.length) return
+    const middle = window.innerHeight / 2
+    let best = 0
+    let bestDistance = Infinity
+    items.forEach((item, index) => {
+      const rect = item.getBoundingClientRect()
+      const distance = Math.abs(rect.top + rect.height / 2 - middle)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        best = index
+      }
+    })
+    activeFeature = best
+  }
+
   // The item whose middle is nearest the viewport's middle, read on every
-  // scroll frame: a band-crossing observer missed items a fast wheel jumped.
+  // scroll/resize frame: a band-crossing observer missed items a fast wheel jumped.
   $effect(() => {
     const items = featureItems.filter(Boolean)
     if (!items.length) return
     let frame = 0
     const update = () => {
       frame = 0
-      // The phone column is hidden below 860px; nothing to follow then.
-      if (!window.matchMedia('(min-width: 861px)').matches) return
-      const middle = window.innerHeight / 2
-      let best = activeFeature
-      let bestDistance = Infinity
-      items.forEach((item, index) => {
-        const rect = item.getBoundingClientRect()
-        const distance = Math.abs(rect.top + rect.height / 2 - middle)
-        if (distance < bestDistance) {
-          bestDistance = distance
-          best = index
-        }
-      })
-      activeFeature = best
+      syncActiveFeature()
     }
-    const onScroll = () => {
+    const onViewportChange = () => {
       if (!frame) frame = requestAnimationFrame(update)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('scroll', onViewportChange, { passive: true })
+    window.addEventListener('resize', onViewportChange, { passive: true })
     update()
     return () => {
-      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('scroll', onViewportChange)
+      window.removeEventListener('resize', onViewportChange)
       if (frame) cancelAnimationFrame(frame)
     }
   })
 
-  // The CDN stores original PNGs and 1440px JPEGs for the web under matching
-  // names, so refreshing an image does not require a source-code change.
-  const shotBase = 'https://cdn.lollipopkit.com/serverbox/screenshot'
-
   // The order matches the stack transforms below. Each key also selects its
   // localized alt text, so update all locales when changing a key's image.
-  const screenshots = [
-    { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -24, y: 8, hoverSlot: -1.5, rotate: -8, hoverRotate: -1.8, motion: 18 },
-    { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -8, y: -4, hoverSlot: -0.5, rotate: -2.5, hoverRotate: -0.6, motion: 12 },
-    { src: `${shotBase}/iphone/terminal.jpg`, key: 'three', x: 9, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
-    { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 24, y: -2, hoverSlot: 1.5, rotate: 8.5, hoverRotate: 1.8, motion: 20 },
+  const heroShots = [
+    { shot: 'home', key: 'one', x: -24, y: 8, hoverSlot: -1.5, rotate: -8, hoverRotate: -1.8, motion: 18 },
+    { shot: 'server-details', key: 'two', x: -8, y: -4, hoverSlot: -0.5, rotate: -2.5, hoverRotate: -0.6, motion: 12 },
+    { shot: 'terminal', key: 'three', x: 9, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
+    { shot: 'files', key: 'four', x: 24, y: -2, hoverSlot: 1.5, rotate: 8.5, hoverRotate: 1.8, motion: 20 },
   ]
 
   const releases = 'https://github.com/lollipopkit/flutter_server_box/releases'
@@ -115,7 +147,163 @@
     return undefined
   }
 
+  function detectInitialDevice() {
+    if (typeof navigator === 'undefined') return 'mac'
+    const ua = navigator.userAgent || ''
+    const platform = navigator.platform || ''
+    const hasWindow = typeof window !== 'undefined'
+    const hasViewport = hasWindow && window.innerWidth > 0 && window.innerHeight > 0
+    const minSide = hasViewport ? Math.min(window.innerWidth, window.innerHeight) : 0
+
+    const isIpad = /\biPad\b/i.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    if (isIpad) return hasViewport && minSide < 540 ? 'iphone' : 'iphone-duo'
+
+    // Tablets omit `Mobile` in Android UAs; unfolded foldables keep `Mobile`
+    // but expose a shorter viewport side >= 540px (phones stay <= 480px).
+    if (/\bAndroid\b/i.test(ua)) {
+      return !/\bMobile\b/i.test(ua) || minSide >= 540 ? 'iphone-duo' : 'iphone'
+    }
+
+    const isMobileUa =
+      /\biPhone\b|\biPod\b|\bWindows Phone\b|\bHarmonyOS\b|\bMobile\b/i.test(ua) ||
+      navigator.userAgentData?.mobile === true
+    if (isMobileUa) {
+      return minSide >= 540 ? 'iphone-duo' : 'iphone'
+    }
+
+    if (hasViewport) {
+      const isTouchOnly =
+        window.matchMedia?.('(pointer: coarse)').matches &&
+        !window.matchMedia?.('(any-pointer: fine)').matches
+      if (isTouchOnly) {
+        return minSide >= 540 ? 'iphone-duo' : 'iphone'
+      }
+      if (window.innerWidth < 600) {
+        return 'iphone'
+      }
+    }
+
+    return 'mac'
+  }
+
   const currentPlatform = detectPlatform()
+  let activeDevice = $state(detectInitialDevice())
+  let userSelectedDevice = false
+  let activeHeroShot = $state(0)
+  let heroViewportEl = $state(undefined)
+  let tourEl = $state(undefined)
+  let heroViewportHeight = $state(undefined)
+  let animateHeroHeight = $state(false)
+  let heroAnimTimer = 0
+  let deviceSwitchSeq = 0
+  const activeFeatureShot = $derived(featureShot(features[activeFeature], activeDevice))
+  // Keep column proportions anchored to the user's selected device so scrolling
+  // past mobile-only fallback features never reflows the list.
+  const isWideDevice = $derived(activeDevice !== 'iphone')
+
+  async function selectDevice(device) {
+    userSelectedDevice = true
+    if (device === activeDevice) return
+
+    const seq = ++deviceSwitchSeq
+    const heroRect = heroViewportEl?.getBoundingClientRect()
+    const heroInView = Boolean(heroRect && heroRect.top >= 0 && heroRect.bottom <= window.innerHeight + 160)
+
+    if (heroInView && !prefersReducedMotion()) {
+      animateHeroHeight = true
+      if (heroAnimTimer) window.clearTimeout(heroAnimTimer)
+      heroAnimTimer = window.setTimeout(() => {
+        animateHeroHeight = false
+        heroAnimTimer = 0
+      }, 420)
+      activeDevice = device
+      await tick()
+      if (seq === deviceSwitchSeq) syncActiveFeature()
+      return
+    }
+
+    if (heroAnimTimer) {
+      window.clearTimeout(heroAnimTimer)
+      heroAnimTimer = 0
+    }
+    animateHeroHeight = false
+    // Anchor to a non-sticky element inside `#features` so switching devices
+    // does not shift the visible list when Hero height or grid tracks change.
+    const anchor = featureItems[activeFeature] || tourEl
+    const beforeTop = anchor?.getBoundingClientRect().top
+
+    activeDevice = device
+    // First tick mounts the new hero panel (which measures offsetHeight);
+    // second tick flushes the updated `.hero-viewport` height to the DOM.
+    await tick()
+    await tick()
+    if (seq !== deviceSwitchSeq) return
+
+    if (anchor && Number.isFinite(beforeTop)) {
+      const afterTop = anchor.getBoundingClientRect().top
+      const delta = afterTop - beforeTop
+      if (Math.abs(delta) > 0.5) {
+        window.scrollBy(0, delta)
+      }
+    }
+    syncActiveFeature()
+  }
+
+  $effect(() => {
+    const syncDevice = () => {
+      if (userSelectedDevice) return
+      const detected = detectInitialDevice()
+      if (detected !== activeDevice) activeDevice = detected
+    }
+    window.addEventListener('resize', syncDevice, { passive: true })
+    return () => {
+      window.removeEventListener('resize', syncDevice)
+      if (heroAnimTimer) {
+        window.clearTimeout(heroAnimTimer)
+        heroAnimTimer = 0
+      }
+    }
+  })
+
+  // Measure the active hero panel's layout height (`offsetHeight` ignores 3D tilt
+  // overflow and `in:scale` transforms) so `.hero-viewport` matches it accurately.
+  function measureHeroHeight(node, deviceKey) {
+    const update = () => {
+      if (deviceKey !== activeDevice) return
+      const next = Math.ceil(node.offsetHeight)
+      if (next > 0) heroViewportHeight = next
+    }
+    update()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : undefined
+    ro?.observe(node)
+    return {
+      destroy() {
+        ro?.disconnect()
+      },
+    }
+  }
+
+  // Track the sticky `.site-nav` bottom edge in `--nav-bottom` so sticky controls
+  // below it never overlap across locales or wrapped narrow-screen navbars.
+  function syncNavOffset(node) {
+    const update = () => {
+      const top = parseFloat(getComputedStyle(node).top) || 0
+      const bottom = Math.ceil(top + node.offsetHeight)
+      if (bottom > 0) {
+        document.documentElement.style.setProperty('--nav-bottom', `${bottom}px`)
+      }
+    }
+    update()
+    window.addEventListener('resize', update, { passive: true })
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : undefined
+    ro?.observe(node)
+    return {
+      destroy() {
+        window.removeEventListener('resize', update)
+        ro?.disconnect()
+      },
+    }
+  }
 
   // `file` says what the source gives you; formats and commands stay untranslated.
   const downloadGroups = [
@@ -149,14 +337,16 @@
       key: 'linux',
       label: 'Linux',
       sources: [
-        { label: 'GitHub Releases', file: '.AppImage', href: releases },
+        { label: 'GitHub Releases', file: '.deb / .rpm / .AppImage / .tar.gz', href: releases },
       ],
     },
     {
       key: 'windows',
       label: 'Windows',
       sources: [
-        { label: 'GitHub Releases', file: '.zip', href: releases },
+        { label: 'GitHub Releases', file: '.exe / .zip', href: releases },
+        { label: 'WinGet', file: 'winget install lollipopkit.serverbox', command: 'winget install lollipopkit.serverbox' },
+        { label: 'Scoop', file: 'scoop bucket add extras && scoop install extras/serverbox', command: 'scoop bucket add extras && scoop install extras/serverbox' },
       ],
     },
   ]
@@ -223,6 +413,7 @@
   }
 
   function handleStackMove(event) {
+    if (prefersReducedMotion()) return
     const rect = event.currentTarget.getBoundingClientRect()
     const x = (event.clientX - rect.left) / rect.width - 0.5
     const y = (event.clientY - rect.top) / rect.height - 0.5
@@ -236,8 +427,16 @@
 
   // Smooth unless the reader asked for reduced motion; the CSS rule for it
   // covers transitions, not scrolling started from here.
+  function prefersReducedMotion() {
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
   function scrollBehavior() {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    return prefersReducedMotion() ? 'auto' : 'smooth'
+  }
+
+  function transitionMs(ms) {
+    return prefersReducedMotion() ? 0 : ms
   }
 
   function scrollToSection(event, id) {
@@ -267,7 +466,7 @@
 
 {#if locale}
   <main class="site">
-    <header class="site-nav" id="top">
+    <header class="site-nav" id="top" use:syncNavOffset>
       <a class="brand" href="#top" onclick={(event) => scrollToSection(event, 'top')}>
         <img src="/app_icon.png" alt="" width="26" height="26" />
         ServerBox
@@ -319,23 +518,86 @@
         </a>
       </div>
 
-      <div
-        class="screenshot-stack"
-        aria-label={$LL.screenshots.label()}
-        onmousemove={handleStackMove}
-        onmouseleave={resetStack}
-        role="img"
-      >
-        {#each screenshots as shot, index}
-          <img
-            class="screenshot-card"
-            src={shot.src}
-            alt={$LL.screenshots[shot.key]()}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            referrerpolicy="no-referrer"
-            style={`--base-x:${shot.x}%; --base-y:${shot.y}%; --hover-slot:${shot.hoverSlot}; --base-r:${shot.rotate}deg; --hover-r:${shot.hoverRotate}deg; --move-x:${$stackMotion.x * shot.motion}px; --move-y:${$stackMotion.y * shot.motion}px; --tilt-x:${-$stackMotion.y * 6}deg; --tilt-y:${$stackMotion.x * 8}deg; --z:${screenshots.length - index};`}
-          />
-        {/each}
+      <div class="hero-stage">
+        <div
+          class="hero-viewport"
+          class:hero-viewport--animating={animateHeroHeight}
+          bind:this={heroViewportEl}
+          style={heroViewportHeight ? `height:${heroViewportHeight}px` : undefined}
+        >
+          {#key activeDevice}
+            <div
+              class="hero-panel"
+              use:measureHeroHeight={activeDevice}
+              in:scale={{ start: 0.96, duration: transitionMs(340), easing: cubicOut }}
+              out:fade={{ duration: transitionMs(180) }}
+            >
+              {#if activeDevice === 'iphone'}
+                <div
+                  class="screenshot-stack"
+                  aria-label={$LL.screenshots.label()}
+                  onmousemove={handleStackMove}
+                  onmouseleave={resetStack}
+                  role="img"
+                >
+                  {#each heroShots as item, index}
+                    <img
+                      class="screenshot-card"
+                      src={shotUrl('iphone', item.shot)}
+                      alt={$LL.screenshots[item.key]()}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      referrerpolicy="no-referrer"
+                      style={`--base-x:${item.x}%; --base-y:${item.y}%; --hover-slot:${item.hoverSlot}; --base-r:${item.rotate}deg; --hover-r:${item.hoverRotate}deg; --move-x:${$stackMotion.x * item.motion}px; --move-y:${$stackMotion.y * item.motion}px; --tilt-x:${-$stackMotion.y * 6}deg; --tilt-y:${$stackMotion.x * 8}deg; --z:${heroShots.length - index};`}
+                    />
+                  {/each}
+                </div>
+              {:else}
+                <div class="hero-gallery">
+                  <div
+                    class={`hero-showcase hero-showcase--${activeDevice}`}
+                    role="presentation"
+                    onmousemove={handleStackMove}
+                    onmouseleave={resetStack}
+                    style={`--tilt-x:${-$stackMotion.y * 4}deg; --tilt-y:${$stackMotion.x * 5}deg;`}
+                  >
+                    {#each heroShots as item, index}
+                      <img
+                        class="hero-showcase-img"
+                        class:shown={index === activeHeroShot}
+                        src={shotUrl(activeDevice, item.shot)}
+                        alt={index === activeHeroShot ? $LL.screenshots[item.key]() : ''}
+                        aria-hidden={index !== activeHeroShot}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        referrerpolicy="no-referrer"
+                      />
+                    {/each}
+                  </div>
+                  <div class="hero-thumbs" role="group" aria-label={$LL.screenshots.label()}>
+                    {#each heroShots as item, index}
+                      <button
+                        type="button"
+                        class={`hero-thumb hero-thumb--${activeDevice}`}
+                        class:active={index === activeHeroShot}
+                        aria-pressed={index === activeHeroShot}
+                        aria-label={$LL.screenshots[item.key]()}
+                        onclick={() => {
+                          activeHeroShot = index
+                        }}
+                      >
+                        <img
+                          src={shotUrl(activeDevice, item.shot)}
+                          alt=""
+                          loading="lazy"
+                          referrerpolicy="no-referrer"
+                        />
+                      </button>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/key}
+        </div>
       </div>
     </section>
 
@@ -347,10 +609,29 @@
         </p>
       </div>
 
-      <div class="tour">
+      <div class="tour-switcher-bar">
+        <div class="device-switcher" role="group" aria-label={$LL.screenshots.label()}>
+          {#each deviceViews as view}
+            <button
+              type="button"
+              class="device-pill"
+              class:active={activeDevice === view.key}
+              aria-pressed={activeDevice === view.key}
+              onclick={() => {
+                selectDevice(view.key)
+              }}
+            >
+              {view.label}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <div class="tour" class:tour--wide={isWideDevice} bind:this={tourEl}>
         <ol class="tour-list">
           {#each features as feature, index}
-            <li bind:this={featureItems[index]}>
+            {@const itemShot = featureShot(feature, activeDevice)}
+            <li bind:this={featureItems[index]} class={`tour-card--${itemShot.device}`}>
               <button
                 type="button"
                 class="tour-item"
@@ -368,8 +649,8 @@
               <!-- Phones get the picture beside its text; wider screens, the
                    one device frame. -->
               <img
-                class="tour-shot-inline"
-                src={`${shotBase}/iphone/${feature.shot}.jpg`}
+                class={`tour-shot-inline tour-shot-inline--${itemShot.device}`}
+                src={itemShot.src}
                 alt=""
                 loading="lazy"
                 decoding="async"
@@ -378,18 +659,29 @@
             </li>
           {/each}
         </ol>
-        <div class="tour-device">
-          <div class="device-frame">
-            {#each features as feature, index}
-              <img
-                class:shown={index === activeFeature}
-                src={`${shotBase}/iphone/${feature.shot}.jpg`}
-                alt={index === activeFeature ? $LL.features[feature.key].title() : ''}
-                loading="lazy"
-                decoding="async"
-                referrerpolicy="no-referrer"
-              />
-            {/each}
+        <div class="tour-device" class:tour-device--wide={activeFeatureShot.device !== 'iphone'}>
+          <div class={`device-frame device-frame--${activeFeatureShot.device}`}>
+            {#key activeFeatureShot.device}
+              <div
+                class="device-frame-layer"
+                in:scale={{ start: 0.96, duration: transitionMs(340), easing: cubicOut }}
+                out:fade={{ duration: transitionMs(180) }}
+              >
+                {#each features as feature, index}
+                  {@const itemShot = featureShot(feature, activeDevice)}
+                  {#if itemShot.device === activeFeatureShot.device}
+                    <img
+                      class:shown={index === activeFeature}
+                      src={itemShot.src}
+                      alt={index === activeFeature ? $LL.features[feature.key].title() : ''}
+                      loading="lazy"
+                      decoding="async"
+                      referrerpolicy="no-referrer"
+                    />
+                  {/if}
+                {/each}
+              </div>
+            {/key}
           </div>
         </div>
       </div>
@@ -531,7 +823,7 @@
                         {source.label}
                       {/if}
                     </span>
-                    {#if source.file}<small>{source.file}</small>{/if}
+                    {#if source.file && copyFallbackCommand !== source.command}<small>{source.file}</small>{/if}
                   </button>
                 {:else}
                   <a class="download-icon-btn" href={source.href} aria-label={`${group.label} ${source.label}`}>
