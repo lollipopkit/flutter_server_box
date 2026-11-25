@@ -394,11 +394,6 @@ impl PveSession {
         Ok(self.client.snapshots(&guest.into()).await?)
     }
 
-    /// PVE's own answer whether every disk snapshots; None where it cannot say.
-    pub async fn snapshot_supported(&self, guest: PveGuestRef) -> Option<bool> {
-        self.client.snapshot_supported(&guest.into()).await
-    }
-
     pub async fn snapshot_refusal(&self, guest: PveGuestRef) -> Option<String> {
         self.client.snapshot_refusal(&guest.into()).await
     }

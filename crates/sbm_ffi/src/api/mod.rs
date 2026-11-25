@@ -28,6 +28,7 @@ pub mod snippet;
 pub mod storage;
 pub mod ssh_crypto;
 pub mod ssh_asym;
+pub mod tailscale;
 pub mod tmux;
 pub mod users;
 pub mod virt;

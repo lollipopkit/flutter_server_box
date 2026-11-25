@@ -6,47 +6,47 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/agent_pipe.dart';
+import 'api/app_mcp.dart';
+import 'api/backup.dart';
+import 'api/bench.dart';
+import 'api/bmc.dart';
+import 'api/container.dart';
+import 'api/control_master.dart';
+import 'api/create.dart';
+import 'api/cron.dart';
+import 'api/desktop.dart';
+import 'api/digest.dart';
+import 'api/exec_session.dart';
+import 'api/file.dart';
+import 'api/files.dart';
+import 'api/firewall.dart';
+import 'api/hardware.dart';
+import 'api/iperf.dart';
+import 'api/parser.dart';
+import 'api/proc.dart';
+import 'api/protocol.dart';
+import 'api/pve.dart';
+import 'api/remote_desktop.dart';
+import 'api/resource.dart';
+import 'api/script.dart';
+import 'api/service.dart';
+import 'api/shares.dart';
+import 'api/snippet.dart';
+import 'api/ssh_asym.dart';
+import 'api/ssh_crypto.dart';
+import 'api/storage.dart';
+import 'api/tailscale.dart';
+import 'api/tmux.dart';
+import 'api/users.dart';
+import 'api/virt.dart';
+import 'api/virt_libvirt.dart';
+import 'api/virt_model.dart';
+import 'api/virt_view.dart';
 import 'dart:async';
 import 'dart:convert';
-
+import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
-import 'package:server_box/src/rust/api/agent_pipe.dart';
-import 'package:server_box/src/rust/api/app_mcp.dart';
-import 'package:server_box/src/rust/api/backup.dart';
-import 'package:server_box/src/rust/api/bench.dart';
-import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/src/rust/api/container.dart';
-import 'package:server_box/src/rust/api/control_master.dart';
-import 'package:server_box/src/rust/api/create.dart';
-import 'package:server_box/src/rust/api/cron.dart';
-import 'package:server_box/src/rust/api/desktop.dart';
-import 'package:server_box/src/rust/api/digest.dart';
-import 'package:server_box/src/rust/api/exec_session.dart';
-import 'package:server_box/src/rust/api/file.dart';
-import 'package:server_box/src/rust/api/files.dart';
-import 'package:server_box/src/rust/api/firewall.dart';
-import 'package:server_box/src/rust/api/hardware.dart';
-import 'package:server_box/src/rust/api/iperf.dart';
-import 'package:server_box/src/rust/api/parser.dart';
-import 'package:server_box/src/rust/api/proc.dart';
-import 'package:server_box/src/rust/api/protocol.dart';
-import 'package:server_box/src/rust/api/pve.dart';
-import 'package:server_box/src/rust/api/remote_desktop.dart';
-import 'package:server_box/src/rust/api/resource.dart';
-import 'package:server_box/src/rust/api/script.dart';
-import 'package:server_box/src/rust/api/service.dart';
-import 'package:server_box/src/rust/api/shares.dart';
-import 'package:server_box/src/rust/api/snippet.dart';
-import 'package:server_box/src/rust/api/ssh_asym.dart';
-import 'package:server_box/src/rust/api/ssh_crypto.dart';
-import 'package:server_box/src/rust/api/storage.dart';
-import 'package:server_box/src/rust/api/tmux.dart';
-import 'package:server_box/src/rust/api/users.dart';
-import 'package:server_box/src/rust/api/virt.dart';
-import 'package:server_box/src/rust/api/virt_libvirt.dart';
-import 'package:server_box/src/rust/api/virt_model.dart';
-import 'package:server_box/src/rust/api/virt_view.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustLibApiImplPlatform({
@@ -1433,6 +1433,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SystemUser> dco_decode_list_system_user(dynamic raw);
 
   @protected
+  List<TailscalePeerItem> dco_decode_list_tailscale_peer_item(dynamic raw);
+
+  @protected
   List<TmuxSessionItem> dco_decode_list_tmux_session_item(dynamic raw);
 
   @protected
@@ -2161,6 +2164,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemUser dco_decode_system_user(dynamic raw);
+
+  @protected
+  TailscalePeerItem dco_decode_tailscale_peer_item(dynamic raw);
+
+  @protected
+  TailscaleStatusItem dco_decode_tailscale_status_item(dynamic raw);
 
   @protected
   TmuxSessionItem dco_decode_tmux_session_item(dynamic raw);
@@ -3968,6 +3977,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SystemUser> sse_decode_list_system_user(SseDeserializer deserializer);
 
   @protected
+  List<TailscalePeerItem> sse_decode_list_tailscale_peer_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<TmuxSessionItem> sse_decode_list_tmux_session_item(
     SseDeserializer deserializer,
   );
@@ -4838,6 +4852,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemUser sse_decode_system_user(SseDeserializer deserializer);
+
+  @protected
+  TailscalePeerItem sse_decode_tailscale_peer_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TailscaleStatusItem sse_decode_tailscale_status_item(
+    SseDeserializer deserializer,
+  );
 
   @protected
   TmuxSessionItem sse_decode_tmux_session_item(SseDeserializer deserializer);
@@ -7079,6 +7103,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_tailscale_peer_item(
+    List<TailscalePeerItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_tmux_session_item(
     List<TmuxSessionItem> self,
     SseSerializer serializer,
@@ -8181,6 +8211,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_system_user(SystemUser self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tailscale_peer_item(
+    TailscalePeerItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tailscale_status_item(
+    TailscaleStatusItem self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_tmux_session_item(

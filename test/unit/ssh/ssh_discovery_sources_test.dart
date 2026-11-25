@@ -8,7 +8,11 @@ import 'package:server_box/core/ssh_discovery/tailscale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('Tailscale', () {
     const ts = TailscaleDiscovery('/usr/bin/tailscale');
 
@@ -56,6 +60,56 @@ void main() {
         () => ts.parse(status(state: 'Stopped')),
         throwsA(isA<SshDiscoveryException>()),
       );
+    });
+
+    test('invalid json is treated as a stopped backend error', () {
+      expect(
+        () => ts.parse('not json'),
+        throwsA(isA<SshDiscoveryException>()),
+      );
+    });
+
+    test('fallbacks for empty hostname, id, suffix and IPv6-only peers', () {
+      final raw = jsonEncode({
+        'BackendState': 'Running',
+        'CurrentTailnet': {
+          'Name': 'fallback-tailnet',
+          'MagicDNSSuffix': '',
+          'MagicDNSEnabled': false,
+        },
+        'Peer': {
+          'a': {
+            'ID': '',
+            'HostName': '',
+            'DNSName': 'box.example.ts.net.',
+            'OS': 'linux',
+            'Online': true,
+            'TailscaleIPs': ['fd7a::2', '100.64.0.9'],
+          },
+          'b': {
+            'ID': '',
+            'HostName': '',
+            'DNSName': '',
+            'OS': 'android',
+            'Online': true,
+            'TailscaleIPs': ['100.64.0.10'],
+          },
+          'c': {
+            'ID': '',
+            'HostName': '',
+            'DNSName': '',
+            'OS': 'freebsd',
+            'Online': true,
+            'TailscaleIPs': ['fd7a::3'],
+          },
+        },
+      });
+      final run = ts.parse(raw);
+      expect(run.scope, 'fallback-tailnet');
+      expect(run.hosts.map((e) => (e.key, e.server.name, e.host, e.detail)), [
+        ('100.64.0.9', 'box', '100.64.0.9', '100.64.0.9 · linux'),
+        ('fd7a::3', 'fd7a::3', 'fd7a::3', 'fd7a::3 · freebsd'),
+      ]);
     });
   });
 

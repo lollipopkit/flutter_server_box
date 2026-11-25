@@ -3,8 +3,8 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `command_kind`, `image_back`, `image_item`, `item`, `runtime`, `status_name`, `status`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
@@ -351,7 +351,8 @@ class ContainerItem {
 /// answers, as `sbm_parser::container::ContainerActionKind`.
 enum ContainerMenuKind { start, stop, restart, remove, logs, terminal }
 
-/// The runtime's own renderings, split so the app can word the row.
+/// The runtime's own renderings and parsed numeric stats, split so the app can
+/// render both labels and visual indicators without re-parsing display text.
 class ContainerStatsItem {
   final String? cpu;
 
@@ -362,6 +363,14 @@ class ContainerStatsItem {
   final String? netUp;
   final String? diskRead;
   final String? diskWrite;
+  final double? cpuPercent;
+  final BigInt? memUsedBytes;
+  final BigInt? memLimitBytes;
+  final double? memPercent;
+  final BigInt? netRxBytes;
+  final BigInt? netTxBytes;
+  final BigInt? blockReadBytes;
+  final BigInt? blockWriteBytes;
 
   const ContainerStatsItem({
     this.cpu,
@@ -371,6 +380,14 @@ class ContainerStatsItem {
     this.netUp,
     this.diskRead,
     this.diskWrite,
+    this.cpuPercent,
+    this.memUsedBytes,
+    this.memLimitBytes,
+    this.memPercent,
+    this.netRxBytes,
+    this.netTxBytes,
+    this.blockReadBytes,
+    this.blockWriteBytes,
   });
 
   @override
@@ -381,7 +398,15 @@ class ContainerStatsItem {
       netDown.hashCode ^
       netUp.hashCode ^
       diskRead.hashCode ^
-      diskWrite.hashCode;
+      diskWrite.hashCode ^
+      cpuPercent.hashCode ^
+      memUsedBytes.hashCode ^
+      memLimitBytes.hashCode ^
+      memPercent.hashCode ^
+      netRxBytes.hashCode ^
+      netTxBytes.hashCode ^
+      blockReadBytes.hashCode ^
+      blockWriteBytes.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -394,5 +419,13 @@ class ContainerStatsItem {
           netDown == other.netDown &&
           netUp == other.netUp &&
           diskRead == other.diskRead &&
-          diskWrite == other.diskWrite;
+          diskWrite == other.diskWrite &&
+          cpuPercent == other.cpuPercent &&
+          memUsedBytes == other.memUsedBytes &&
+          memLimitBytes == other.memLimitBytes &&
+          memPercent == other.memPercent &&
+          netRxBytes == other.netRxBytes &&
+          netTxBytes == other.netTxBytes &&
+          blockReadBytes == other.blockReadBytes &&
+          blockWriteBytes == other.blockWriteBytes;
 }

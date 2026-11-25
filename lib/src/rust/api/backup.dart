@@ -3,9 +3,9 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/api/virt_model.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
+import 'virt_model.dart';
 
 /// Why `schedule` cannot be a backup job's; None when it has the shape of
 /// one PVE takes.

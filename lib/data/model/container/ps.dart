@@ -22,10 +22,28 @@ final class ContainerPs {
     this.mem,
     this.net,
     this.disk,
+    this.cpuPercent,
+    this.memPercent,
+    this.memUsedBytes,
+    this.memLimitBytes,
+    this.netDown,
+    this.netUp,
+    this.netRxBytes,
+    this.netTxBytes,
+    this.diskRead,
+    this.diskWrite,
+    this.blockReadBytes,
+    this.blockWriteBytes,
   });
 
   factory ContainerPs.fromFfi(ffi.ContainerItem item) {
     final stats = item.stats;
+    final hasValidNet =
+        stats != null && stats.netRxBytes != null && stats.netTxBytes != null;
+    final hasValidDisk =
+        stats != null &&
+        stats.blockReadBytes != null &&
+        stats.blockWriteBytes != null;
     return ContainerPs(
       id: item.id,
       name: item.name,
@@ -46,6 +64,18 @@ final class ContainerPs {
       disk: stats == null
           ? null
           : '${l10n.read} ${stats.diskRead} / ${l10n.write} ${stats.diskWrite}',
+      cpuPercent: stats?.cpuPercent,
+      memPercent: stats?.memPercent,
+      memUsedBytes: stats?.memUsedBytes,
+      memLimitBytes: stats?.memLimitBytes,
+      netDown: hasValidNet ? _cleanStatToken(stats.netDown) : null,
+      netUp: hasValidNet ? _cleanStatToken(stats.netUp) : null,
+      netRxBytes: stats?.netRxBytes,
+      netTxBytes: stats?.netTxBytes,
+      diskRead: hasValidDisk ? _cleanStatToken(stats.diskRead) : null,
+      diskWrite: hasValidDisk ? _cleanStatToken(stats.diskWrite) : null,
+      blockReadBytes: stats?.blockReadBytes,
+      blockWriteBytes: stats?.blockWriteBytes,
     );
   }
 
@@ -70,4 +100,25 @@ final class ContainerPs {
   final String? mem;
   final String? net;
   final String? disk;
+
+  /// Parsed numeric stats produced on the Rust side (`sbm_parser::container`).
+  final double? cpuPercent;
+  final double? memPercent;
+  final BigInt? memUsedBytes;
+  final BigInt? memLimitBytes;
+  final String? netDown;
+  final String? netUp;
+  final BigInt? netRxBytes;
+  final BigInt? netTxBytes;
+  final String? diskRead;
+  final String? diskWrite;
+  final BigInt? blockReadBytes;
+  final BigInt? blockWriteBytes;
+
+  static final _whitespace = RegExp(r'\s+');
+
+  static String? _cleanStatToken(String? raw) {
+    final cleaned = raw?.replaceAll(_whitespace, ' ').trim();
+    return cleaned == null || cleaned.isEmpty ? null : cleaned;
+  }
 }

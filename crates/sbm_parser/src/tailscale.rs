@@ -135,13 +135,18 @@ fn prefs(v: &Value) -> Prefs {
     }
 }
 
-/// [`read_command`]'s output.
-pub fn parse(out: &str) -> TailscaleView {
-    let s = sections(out);
-    let os: Vec<String> = s.get("os").map(|o| o.lines().map(|l| l.trim().to_string()).collect()).unwrap_or_default();
-    let status: Value = s.get("status").and_then(|t| serde_json::from_str(t.trim()).ok()).unwrap_or(Value::Null);
-    let prefs_json: Option<Value> = s.get("prefs").and_then(|t| serde_json::from_str(t.trim()).ok());
-    let me = &status["Self"];
+/// Parsed output of `tailscale status --json`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TailscaleStatus {
+    pub state: Option<String>,
+    pub tailnet: Option<String>,
+    pub magic_dns_enabled: bool,
+    pub magic_dns_suffix: Option<String>,
+    pub peers: Vec<Peer>,
+}
+
+fn parse_peers(status: &Value) -> Vec<Peer> {
     let mut peers: Vec<Peer> = status["Peer"]
         .as_object()
         .into_iter()
@@ -164,6 +169,33 @@ pub fn parse(out: &str) -> TailscaleView {
         })
         .collect();
     peers.sort_by(|a, b| b.online.cmp(&a.online).then_with(|| a.name.cmp(&b.name)));
+    peers
+}
+
+/// Parses raw `tailscale status --json` output.
+pub fn parse_status_json(raw: &str) -> Result<TailscaleStatus, String> {
+    let status: Value = serde_json::from_str(raw.trim()).map_err(|e| e.to_string())?;
+    if !status.is_object() {
+        return Err("expected JSON object".to_string());
+    }
+    let tailnet = &status["CurrentTailnet"];
+    Ok(TailscaleStatus {
+        state: text(&status["BackendState"]),
+        tailnet: text(&tailnet["Name"]),
+        magic_dns_enabled: tailnet["MagicDNSEnabled"].as_bool().unwrap_or(false),
+        magic_dns_suffix: text(&tailnet["MagicDNSSuffix"]),
+        peers: parse_peers(&status),
+    })
+}
+
+/// [`read_command`]'s output.
+pub fn parse(out: &str) -> TailscaleView {
+    let s = sections(out);
+    let os: Vec<String> = s.get("os").map(|o| o.lines().map(|l| l.trim().to_string()).collect()).unwrap_or_default();
+    let status: Value = s.get("status").and_then(|t| serde_json::from_str(t.trim()).ok()).unwrap_or(Value::Null);
+    let prefs_json: Option<Value> = s.get("prefs").and_then(|t| serde_json::from_str(t.trim()).ok());
+    let me = &status["Self"];
+    let peers = parse_peers(&status);
     let user = me["UserID"].as_u64().and_then(|id| text(&status["User"][id.to_string()]["LoginName"]));
     TailscaleView {
         installable: matches!(os.first().map(String::as_str), Some("debian" | "ubuntu")) && os.get(1).is_some_and(|c| !c.is_empty()),
@@ -514,5 +546,24 @@ mod tests {
         assert!(auth_key_ok("hskey-auth-AbCdEf0123456789_xyz") && !auth_key_ok("a b"));
         assert_eq!(ping_command("100.64.0.1").as_deref(), Some("tailscale ping -c 3 --timeout 5s 100.64.0.1 2>&1"));
         assert_eq!(ping_command("100.64.0.1; reboot"), None);
+    }
+
+    #[test]
+    fn parses_raw_status_json() {
+        let raw = r#"{"BackendState":"Running","CurrentTailnet":{"Name":"me@example.com","MagicDNSSuffix":"example.ts.net","MagicDNSEnabled":true},"Peer":{"b":{"ID":"2","HostName":"desk","DNSName":"desk.example.ts.net.","OS":"windows","Online":false,"TailscaleIPs":["100.64.0.4"]},"a":{"ID":"1","HostName":"nas","DNSName":"nas.example.ts.net.","OS":"linux","Online":true,"TailscaleIPs":["100.64.0.3","fd7a::1"]}}}"#;
+        let parsed = parse_status_json(raw).unwrap();
+        assert_eq!(parsed.state.as_deref(), Some("Running"));
+        assert_eq!(parsed.tailnet.as_deref(), Some("me@example.com"));
+        assert!(parsed.magic_dns_enabled);
+        assert_eq!(parsed.magic_dns_suffix.as_deref(), Some("example.ts.net"));
+        assert_eq!(parsed.peers.len(), 2);
+        assert_eq!(parsed.peers[0].name, "nas");
+        assert_eq!(parsed.peers[0].dns_name.as_deref(), Some("nas.example.ts.net"));
+        assert!(parsed.peers[0].online);
+        assert_eq!(parsed.peers[1].name, "desk");
+        assert!(!parsed.peers[1].online);
+
+        assert!(parse_status_json("not json").is_err());
+        assert!(parse_status_json("[]").is_err());
     }
 }
