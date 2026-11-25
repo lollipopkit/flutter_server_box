@@ -73,20 +73,36 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   // buffers nobody will read.
   final StreamSubscription<Object?> outSub;
   final StreamSubscription<Object?> errSub;
+  final WindowsStreamDecoder? outWinDecoder;
+  final WindowsStreamDecoder? errWinDecoder;
   if (isWindows) {
+    outWinDecoder = onStdout != null
+        ? WindowsStreamDecoder(
+            context: logLabel != null ? '$logLabel (stdout)' : 'stdout',
+          )
+        : null;
+    errWinDecoder = onStderr != null
+        ? WindowsStreamDecoder(
+            context: logLabel != null ? '$logLabel (stderr)' : 'stderr',
+          )
+        : null;
     outSub = stdout.listen((chunk) {
       outBytes!.add(chunk);
-      if (onStdout != null) {
-        deliver(onStdout, decodeWindows(chunk, 'stdout'));
+      if (outWinDecoder != null) {
+        final text = outWinDecoder.add(chunk);
+        if (text.isNotEmpty) deliver(onStdout, text);
       }
     });
     errSub = stderr.listen((chunk) {
       errBytes!.add(chunk);
-      if (onStderr != null) {
-        deliver(onStderr, decodeWindows(chunk, 'stderr'));
+      if (errWinDecoder != null) {
+        final text = errWinDecoder.add(chunk);
+        if (text.isNotEmpty) deliver(onStderr, text);
       }
     });
   } else {
+    outWinDecoder = null;
+    errWinDecoder = null;
     outSub = decoder.bind(stdout).listen((chunk) {
       out.write(chunk);
       deliver(onStdout, chunk);
@@ -100,19 +116,41 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   // These must be obtained while the subscriptions are still live. Calling
   // asFuture after a done event has already been delivered creates futures
   // that can no longer complete. `asFuture` also replaces the subscription's
-  // error callback, so catch its error here and keep the output buffered up to
-  // that point instead of letting the collector throw it away.
-  Future<void> captureDone(StreamSubscription<Object?> subscription) async {
+  // onDone and onError callbacks, so flush buffered stream decoders here once
+  // the stream completes rather than in `listen(onDone: ...)`.
+  Future<void> captureDone(
+    StreamSubscription<Object?> subscription, {
+    void Function()? onFlush,
+  }) async {
     try {
       await subscription.asFuture<void>();
+      onFlush?.call();
     } catch (error, trace) {
       streamError ??= error;
       streamErrorStackTrace ??= trace;
     }
   }
 
-  final outDone = captureDone(outSub);
-  final errDone = captureDone(errSub);
+  final outDone = captureDone(
+    outSub,
+    onFlush: switch (outWinDecoder) {
+      final winDecoder? => () {
+        final tail = winDecoder.flush();
+        if (tail.isNotEmpty) deliver(onStdout, tail);
+      },
+      null => null,
+    },
+  );
+  final errDone = captureDone(
+    errSub,
+    onFlush: switch (errWinDecoder) {
+      final winDecoder? => () {
+        final tail = winDecoder.flush();
+        if (tail.isNotEmpty) deliver(onStderr, tail);
+      },
+      null => null,
+    },
+  );
 
   var abandoned = false;
   await Future.any([
