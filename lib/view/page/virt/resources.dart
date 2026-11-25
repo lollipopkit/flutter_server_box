@@ -7,7 +7,8 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/guest.dart';
-import 'package:server_box/view/page/virt/hardware.dart';
+import 'package:server_box/view/page/virt/network.dart';
+import 'package:server_box/view/page/virt/storage.dart';
 
 /// The Storage and Network sections of the Virtualization tab: a host's
 /// storage pools with their volumes, and its networks with the guests on

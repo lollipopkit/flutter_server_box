@@ -65,7 +65,7 @@ extension _List on _VirtTabPageState {
 
     final Widget body;
     if (picking) {
-      body = _VirtHostPicker(
+      body = VirtHostPicker(
         key: const ValueKey('picker'),
         selectedId: hostId,
         onSelect: _selectHost,

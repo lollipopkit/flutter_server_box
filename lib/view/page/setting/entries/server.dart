@@ -1,6 +1,22 @@
-part of '../entry.dart';
+import 'dart:async';
 
-extension _Server on _AppSettingsPageState {
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/logo_url.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/setting_range.dart';
+import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/server/connection_stats.dart';
+import 'package:server_box/view/page/setting/entries/globe.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/server_picker.dart';
+
+extension ServerSettingEntries on AppSettingsHost {
   void _showInvalidUrlDialog() {
     context.showSheet(
       title: libL10n.fail,
@@ -9,7 +25,7 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
-  List<SettingsGroup> _buildServer() {
+  List<SettingsGroup> buildServerSettings() {
     return [
       SettingsGroup(libL10n.view, [
         _buildServerOverview(),
@@ -31,7 +47,7 @@ extension _Server on _AppSettingsPageState {
         _buildMaxRetry(),
         if (isDesktop) _buildSSHConfigAutoImportToggle(),
       ]),
-      _buildGlobe(),
+      buildGlobeSettings(),
       SettingsGroup(libL10n.servers, [
         _buildConnectionStats(),
         _buildDeleteServers(),
@@ -98,7 +114,7 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(Icons.format_size),
         title: TipText(label, l10n.textScalerTip),
         trailing: ValBuilder(
-          listenable: _setting.textFactor.listenable(),
+          listenable: setting.textFactor.listenable(),
           builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
         onTap: () => context.showSheet(
@@ -108,11 +124,11 @@ extension _Server on _AppSettingsPageState {
             type: TextInputType.number,
             hint: '1.0',
             icon: Icons.format_size,
-            controller: _textScalerCtrl,
+            controller: textScalerCtrl,
             onSubmitted: _onSaveTextScaler,
             suggestion: false,
           ),
-          actions: Btn.ok(onTap: () => _onSaveTextScaler(_textScalerCtrl.text)).toList,
+          actions: Btn.ok(onTap: () => _onSaveTextScaler(textScalerCtrl.text)).toList,
         ),
       ),
       keywords: l10n.textScalerTip,
@@ -125,7 +141,7 @@ extension _Server on _AppSettingsPageState {
       Toast.error(libL10n.fail);
       return;
     }
-    _setting.textFactor.put(val);
+    setting.textFactor.put(val);
     RNodes.app.notify();
     context.popSheet();
   }
@@ -137,7 +153,7 @@ extension _Server on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.space_dashboard_outlined),
         title: TipText(label, l10n.serverOverviewTip),
-        trailing: StoreSwitch(prop: _setting.serverOverview),
+        trailing: StoreSwitch(prop: setting.serverOverview),
       ),
       keywords: l10n.serverOverviewTip,
     );
@@ -151,7 +167,7 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(Icons.history_toggle_off),
         title: Text(label),
         subtitle: Text(l10n.keepStatusWhenErrTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.keepStatusWhenErr),
+        trailing: StoreSwitch(prop: setting.keepStatusWhenErr),
       ),
       keywords: l10n.keepStatusWhenErrTip,
     );
@@ -164,7 +180,7 @@ extension _Server on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.password),
         title: TipText(label, l10n.rememberPwdInMemTip),
-        trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
+        trailing: StoreSwitch(prop: setting.rememberPwdInMem),
       ),
       keywords: l10n.rememberPwdInMemTip,
     );
@@ -188,7 +204,7 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(Icons.dns_outlined),
         title: TipText(label, distLegalPlain(l10n)),
         trailing: StoreSwitch(
-          prop: _setting.showDistMark,
+          prop: setting.showDistMark,
           validator: _confirmDistIcon,
         ),
       ),
@@ -210,7 +226,7 @@ extension _Server on _AppSettingsPageState {
       // Emptying it is how marks are turned off, so it is the one value that
       // skips both the validation and the terms.
       if (url.isEmpty) {
-        _setting.serverMarkUrl.put('');
+        setting.serverMarkUrl.put('');
         context.popSheet();
         return;
       }
@@ -218,7 +234,7 @@ extension _Server on _AppSettingsPageState {
         _showInvalidUrlDialog();
         return;
       }
-      _setting.serverMarkUrl.put(url);
+      setting.serverMarkUrl.put(url);
       context.popSheet();
     }
 
@@ -228,7 +244,7 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(Icons.label_outline),
         title: TipText(label, l10n.markUrlTip),
         subtitle: ValBuilder(
-          listenable: _setting.serverMarkUrl.listenable(),
+          listenable: setting.serverMarkUrl.listenable(),
           builder: (url) => Text(
             url.isEmpty ? libL10n.empty : url,
             style: UIs.textGrey,
@@ -238,14 +254,14 @@ extension _Server on _AppSettingsPageState {
         ),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () {
-          _serverMarkCtrl.text = _setting.serverMarkUrl.fetch();
+          serverMarkCtrl.text = setting.serverMarkUrl.fetch();
           context.showSheet(
             title: label,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Input(
-                  controller: _serverMarkCtrl,
+                  controller: serverMarkCtrl,
                   autoFocus: true,
                   hint: 'https://example.com/{DIST}.svg',
                   icon: Icons.link,
@@ -260,7 +276,7 @@ extension _Server on _AppSettingsPageState {
                 ),
               ],
             ),
-            actions: Btn.ok(onTap: () => onSave(_serverMarkCtrl.text)).toList,
+            actions: Btn.ok(onTap: () => onSave(serverMarkCtrl.text)).toList,
           );
         },
       ),
@@ -279,7 +295,7 @@ extension _Server on _AppSettingsPageState {
     return SettingsRow(
       label,
       () => ValBuilder(
-        listenable: _setting.distNameMap.listenable(),
+        listenable: setting.distNameMap.listenable(),
         builder: (map) => ListTile(
           leading: const Icon(Icons.swap_horiz),
           title: TipText(label, l10n.distNameMapTip),
@@ -298,7 +314,7 @@ extension _Server on _AppSettingsPageState {
             // Null is a back-button, which is not the same as saving an empty
             // map — that is how every override is cleared.
             if (result == null) return;
-            _setting.distNameMap.put(result);
+            setting.distNameMap.put(result);
           },
         ),
       ),
@@ -324,7 +340,7 @@ extension _Server on _AppSettingsPageState {
       // so it was refused as invalid — and unset is the state this starts in
       // and shows as [libL10n.empty], which left no way back to it.
       if (raw.trim().isEmpty) {
-        _setting.serverLogoUrl.put('');
+        setting.serverLogoUrl.put('');
         context.popSheet();
         return;
       }
@@ -336,7 +352,7 @@ extension _Server on _AppSettingsPageState {
         _showInvalidUrlDialog();
         return;
       }
-      _setting.serverLogoUrl.put(url);
+      setting.serverLogoUrl.put(url);
       context.popSheet();
     }
 
@@ -346,7 +362,7 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(Icons.image),
         title: TipText(label, l10n.logoUrlTip),
         subtitle: ValBuilder(
-          listenable: _setting.serverLogoUrl.listenable(),
+          listenable: setting.serverLogoUrl.listenable(),
           builder: (url) => Text(
             url.isEmpty ? libL10n.empty : url,
             style: UIs.textGrey,
@@ -356,14 +372,14 @@ extension _Server on _AppSettingsPageState {
         ),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () {
-          _serverLogoCtrl.text = _setting.serverLogoUrl.fetch();
+          serverLogoCtrl.text = setting.serverLogoUrl.fetch();
           context.showSheet(
             title: label,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Input(
-                  controller: _serverLogoCtrl,
+                  controller: serverLogoCtrl,
                   autoFocus: true,
                   hint: 'https://example.com/logo.png',
                   icon: Icons.link,
@@ -382,7 +398,7 @@ extension _Server on _AppSettingsPageState {
                 ),
               ],
             ),
-            actions: Btn.ok(onTap: () => onSave(_serverLogoCtrl.text)).toList,
+            actions: Btn.ok(onTap: () => onSave(serverLogoCtrl.text)).toList,
           );
         },
       ),
@@ -398,9 +414,40 @@ extension _Server on _AppSettingsPageState {
         leading: const Icon(MingCute.file_import_line),
         title: Text(label),
         subtitle: Text(l10n.sshConfigImportTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.firstTimeReadSSHCfg),
+        trailing: StoreSwitch(prop: setting.firstTimeReadSSHCfg),
       ),
       keywords: l10n.sshConfigImportTip,
+    );
+  }
+
+  SettingsRow _buildUpdateInterval() => SettingsRow(
+    l10n.updateServerStatusInterval,
+    () => const UpdateIntervalTile(),
+  );
+
+  SettingsRow _buildMaxRetry() {
+    final label = l10n.maxRetryCount;
+    return SettingsRow(
+      label,
+      () => ValBuilder(
+        listenable: setting.maxRetryCount.listenable(),
+        builder: (val) => ListTile(
+          leading: const Icon(Icons.replay),
+          title: Text(label),
+          onTap: () async {
+            final selected = await context.showPickSingleSheet(
+              title: label,
+              items: List.generate(10, (index) => index),
+              display: (p0) => '$p0 ${l10n.times}',
+              initial: val,
+            );
+            if (selected != null) {
+              setting.maxRetryCount.put(selected);
+            }
+          },
+          trailing: Text('$val ${l10n.times}', style: UIs.text15),
+        ),
+      ),
     );
   }
 }

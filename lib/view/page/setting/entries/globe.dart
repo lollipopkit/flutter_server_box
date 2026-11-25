@@ -1,4 +1,15 @@
-part of '../entry.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/geo_data.dart';
+import 'package:server_box/data/model/app/geo_manifest.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/widget/geo_data_install.dart';
 
 /// The globe's settings: whether it exists, and whether its data is installed.
 ///
@@ -14,8 +25,8 @@ part of '../entry.dart';
 /// nothing after it leaves the device, and having the data *is* the consent —
 /// F-Droid's Tracking anti-feature wants opt-in and off by default, and a
 /// feature that does nothing until someone accepts a 25 MB download is both.
-extension _Globe on _AppSettingsPageState {
-  SettingsGroup _buildGlobe() {
+extension GlobeSettingEntries on AppSettingsHost {
+  SettingsGroup buildGlobeSettings() {
     return SettingsGroup(l10n.globe, [
       _buildGlobeEnabled(),
       SettingsRow(
@@ -39,7 +50,7 @@ extension _Globe on _AppSettingsPageState {
       leading: const Icon(Icons.public),
       title: TipText(l10n.globe, l10n.globeEnabledTip),
       trailing: StoreSwitch(
-        prop: _setting.globeEnabled,
+        prop: setting.globeEnabled,
         callback: (on) async {
           Diag.crumb(SbDiag.globe, on ? 'enabled' : 'disabled');
           // Turning it on with nothing installed leaves a feature that draws

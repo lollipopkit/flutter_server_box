@@ -203,20 +203,15 @@ class LibvirtBackend extends _LibvirtCore with _Snapshots, _Storage, _Hardware, 
 abstract class _LibvirtCore implements VirtBackend {
   _LibvirtCore({
     required this.serverId,
-    required Future<CommandExec> Function() exec,
-    Future<CommandByteExec> Function()? byteExec,
-    bool Function()? canStream,
+    required this._exec,
+    this._byteExec,
+    this._canStream,
     DateTime Function()? now,
-    String? Function()? knownSudoPassword,
-    void Function()? onSudoRejected,
+    this._knownSudoPassword,
+    this._onSudoRejected,
     @visibleForTesting this.seedTools,
     @visibleForTesting this.uploadReadyTimeout = const Duration(seconds: 60),
-  }) : _exec = exec,
-       _byteExec = byteExec,
-       _canStream = canStream,
-       _knownSudoPassword = knownSudoPassword,
-       _onSudoRejected = onSudoRejected,
-       _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now;
 
   /// The ISO tools a cloud-init seed may be made with, in order; null: all
   /// of them, in `sbm_virt`'s order. The end-to-end tests narrow it to

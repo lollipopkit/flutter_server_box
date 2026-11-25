@@ -1,7 +1,12 @@
-part of '../entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
-extension _Container on _AppSettingsPageState {
-  List<SettingsGroup> _buildContainer() {
+extension ContainerSettingEntries on AppSettingsHost {
+  List<SettingsGroup> buildContainerSettings() {
     return [
       SettingsGroup(libL10n.general, [
         _buildUsePodman(),
@@ -18,7 +23,7 @@ extension _Container on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(IonIcons.logo_docker),
         title: Text(label),
-        trailing: StoreSwitch(prop: _setting.usePodman),
+        trailing: StoreSwitch(prop: setting.usePodman),
       ),
       keywords: 'podman docker',
     );
@@ -31,7 +36,7 @@ extension _Container on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(EvaIcons.person_done),
         title: TipText(label, l10n.containerTrySudoTip),
-        trailing: StoreSwitch(prop: _setting.containerTrySudo),
+        trailing: StoreSwitch(prop: setting.containerTrySudo),
       ),
       keywords: 'sudo ${l10n.containerTrySudoTip}',
     );
@@ -44,7 +49,7 @@ extension _Container on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(MingCute.chart_line_line),
         title: TipText(label, l10n.parseContainerStatsTip),
-        trailing: StoreSwitch(prop: _setting.containerParseStat),
+        trailing: StoreSwitch(prop: setting.containerParseStat),
       ),
       keywords: l10n.parseContainerStatsTip,
     );

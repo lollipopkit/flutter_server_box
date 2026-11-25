@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/db_rescue.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -188,8 +189,9 @@ extension _Actions on _SchemaTooNewPageState {
     // `db` is one — macOS then appends it a second time and saves `.db.db`.
     final String? destDir;
     if (isDesktop) {
-      destDir = await FilePicker.getDirectoryPath(dialogTitle: libL10n.backup);
-      if (destDir == null) return;
+      final uri = await FilePicker.pickDirectory(dialogTitle: libL10n.backup);
+      if (uri == null || !uri.isScheme('file')) return;
+      destDir = p.normalize(uri.toFilePath());
     } else {
       destDir = null;
     }

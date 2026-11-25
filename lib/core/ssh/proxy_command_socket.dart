@@ -20,18 +20,13 @@ import 'package:server_box/data/model/app/error.dart';
 /// [IulProxySocket] runs the command in its interpreter instead.
 class ProxyCommandSocket implements SSHSocket {
   ProxyCommandSocket._({
-    required Process process,
-    required int? processGroupId,
-    required Stream<Uint8List> stream,
-    required IOSink sink,
-    required Future<void> done,
-    void Function()? release,
-  }) : _process = process,
-       _processGroupId = processGroupId,
-       _stream = stream,
-       _sink = sink,
-       _done = done,
-       _release = release {
+    required this._process,
+    required this._processGroupId,
+    required this._stream,
+    required this._sink,
+    required this._done,
+    this._release,
+  }) {
     // The guest stays "in use" — and so cannot be deleted — for exactly as
     // long as the proxy runs.
     // A command that ends by itself frees its guest; one being ended here is

@@ -1,15 +1,22 @@
-part of 'entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/github_id.dart';
+import 'package:server_box/data/res/url.dart';
+
 
 const _sponsorUrl = 'https://lollipopkit.com/donate';
 
-final class _AppAboutPage extends StatefulWidget {
-  const _AppAboutPage();
+final class AppAboutPage extends StatefulWidget {
+  const AppAboutPage({super.key});
 
   @override
-  State<_AppAboutPage> createState() => _AppAboutPageState();
+  State<AppAboutPage> createState() => _AppAboutPageState();
 }
 
-final class _AppAboutPageState extends State<_AppAboutPage>
+final class _AppAboutPageState extends State<AppAboutPage>
     with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,9 @@
-part of 'firewall.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/firewall/firewalld.dart';
+import 'package:server_box/view/page/firewall/common.dart';
 
 /// One item of a zone's list, and which configuration holds it.
 typedef _Held<T> = ({T value, bool runtime, bool permanent});
@@ -8,24 +13,24 @@ typedef _Held<T> = ({T value, bool runtime, bool permanent});
 /// While it runs, a zone is shown as it is in force, with what only one of
 /// the two configurations holds tagged; every change goes to both. While it
 /// does not, the saved configuration is all there is, and changes go there.
-final class _FirewalldView extends ConsumerStatefulWidget {
-  const _FirewalldView({super.key, required this.host});
+final class FirewalldView extends ConsumerStatefulWidget {
+  const FirewalldView({super.key, required this.host});
 
-  final _FirewallHost host;
+  final FirewallHost host;
 
   @override
-  ConsumerState<_FirewalldView> createState() => _FirewalldViewState();
+  ConsumerState<FirewalldView> createState() => _FirewalldViewState();
 }
 
-final class _FirewalldViewState extends ConsumerState<_FirewalldView>
-    with _FirewallView<_FirewalldView> {
+final class _FirewalldViewState extends ConsumerState<FirewalldView>
+    with FirewallView<FirewalldView> {
   FirewalldSnapshot? _snapshot;
 
   /// The zone on screen.
   String? _zone;
 
   @override
-  _FirewallHost get host => widget.host;
+  FirewallHost get host => widget.host;
 
   @override
   void initState() {
@@ -137,7 +142,7 @@ extension on _FirewalldViewState {
       [
         l10n.firewallDrift,
         for (final access in shut)
-          l10n.firewallDriftLockoutFmt(_accessName(access)),
+          l10n.firewallDriftLockoutFmt(firewallAccessName(access)),
       ].join('\n'),
       danger: shut.isNotEmpty,
       actions: [

@@ -1,10 +1,19 @@
-part of '../entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LocalPermissionsSource, llmL10n;
+import 'package:fl_tty/fl_tty.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
+import 'package:server_box/view/page/agent/settings.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
-extension _AI on _AppSettingsPageState {
+extension AiSettingEntries on AppSettingsHost {
   /// The section, in named groups: what the Agent may do by itself, and what
   /// it talks to — the providers and their models, its tools, and its skills.
   /// Those three are fl_pi_llm_ui's pages.
-  List<SettingsGroup> _buildAskAiConfig() {
+  List<SettingsGroup> buildAskAiConfig() {
     final l10n = context.l10n;
     final local = LocalExec.forThisDevice();
     return [
@@ -12,12 +21,12 @@ extension _AI on _AppSettingsPageState {
         _buildAgentProviders(l10n),
         _buildAgentTools(l10n),
         SettingsRow(
-          SettingsSection.mcp.title,
+          l10n.appMcpServer,
           () => ListTile(
             leading: const Icon(Icons.dns_outlined),
-            title: Text(SettingsSection.mcp.title),
+            title: Text(l10n.appMcpServer),
             trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: () => SettingsSectionPage.route.go(context, SettingsSection.mcp),
+            onTap: openMcpSettings,
           ),
           keywords: 'MCP server token HTTP',
         ),
@@ -122,7 +131,7 @@ extension _AI on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(Icons.computer_outlined),
         title: TipText(label, tip),
-        trailing: StoreSwitch(prop: _setting.agentLocalExec),
+        trailing: StoreSwitch(prop: setting.agentLocalExec),
       ),
       keywords: tip,
     );

@@ -1,8 +1,19 @@
-part of 'firewall.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/privileged_exec.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/model/server/firewall/firewalld.dart';
+import 'package:server_box/data/model/server/firewall/ufw.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 
 /// What [FirewallPage] hands the page of one firewall.
-final class _FirewallHost {
-  const _FirewallHost({
+final class FirewallHost {
+  const FirewallHost({
     required this.spi,
     required this.probe,
     required this.accesses,
@@ -21,8 +32,8 @@ final class _FirewallHost {
 
 /// What both firewalls' pages share: running as root, asking before a
 /// change, and the pieces they are drawn with.
-mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
-  _FirewallHost get host;
+mixin FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  FirewallHost get host;
 
   bool busy = false;
 
@@ -254,7 +265,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     FirewallReach reach, {
     bool later = false,
   }) {
-    final name = _accessName(access);
+    final name = firewallAccessName(access);
     return switch (reach) {
       FirewallReach.blocked when later => l10n.firewallDriftLockoutFmt(name),
       FirewallReach.blocked => l10n.firewallWillRefuseFmt(name),
@@ -522,7 +533,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 }
 
 /// `SSH 22`, `Monitor 3770`: a way in, as a warning names it.
-String _accessName(FirewallAccess access) => switch (access.via) {
+String firewallAccessName(FirewallAccess access) => switch (access.via) {
   FirewallAccessVia.ssh => 'SSH (TCP ${access.port})',
   FirewallAccessVia.monitor => 'Monitor (TCP ${access.port})',
 };

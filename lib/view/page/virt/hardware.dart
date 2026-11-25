@@ -1,35 +1,19 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' show Random;
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/model/virt/virt_backup.dart';
-import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
-import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
-import 'package:server_box/view/widget/group_title.dart';
-import 'package:server_box/view/widget/progress_line.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
 
-part 'backup_jobs.dart';
-part 'backups.dart';
-part 'create.dart';
-part 'edit_pane.dart';
-part 'network.dart';
-part 'settings.dart';
-part 'snapshots.dart';
-part 'storage.dart';
 
 /// A guest's hardware, and changing it — the design's sectioned edit pane:
 /// groups under a title and a rule, each saying on the right what it amounts
@@ -99,13 +83,13 @@ class _MemDraft {
 }
 
 class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
-    with _PaneRows<VirtHardwareView>, _EditPane<VirtHardwareView> {
+    with VirtPaneRows<VirtHardwareView>, VirtEditPane<VirtHardwareView> {
   @override
-  String get _serverId => widget.serverId;
+  String get editServerId => widget.serverId;
   @override
-  VirtGuest get _guest => widget.guest;
+  VirtGuest get editGuest => widget.guest;
   @override
-  VirtCapabilities get _caps => widget.caps;
+  VirtCapabilities get editCaps => widget.caps;
 
   _CpuDraft? _cpu;
   _MemDraft? _mem;
@@ -166,17 +150,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   }
 
   @override
-  Widget build(BuildContext context) => _buildEditPane(_groups);
+  Widget build(BuildContext context) => buildEditPane(_groups);
 
   /// The design's order. Groups task B adds (devices and passthrough,
   /// display, firmware) go where the design has them: between the CD-ROM
   /// and the boot order.
-  List<_Group> _groups(VirtHardware hw, bool busy) => [
+  List<VirtPaneGroup> _groups(VirtHardware hw, bool busy) => [
     _cpuGroup(hw, busy),
     _memGroup(hw, busy),
     _diskGroup(hw, busy),
     _nicGroup(hw, busy),
-    if (!_lxc) _devicesGroup(hw, busy),
+    if (!editIsLxc) _devicesGroup(hw, busy),
     if (hw.display case final d?) _displayGroup(hw, d, busy),
     // A container boots its root; it has no order to set.
     if (hw.boot != null || hw.firmware != null) _bootGroup(hw, busy),
@@ -190,7 +174,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   // --- CPU ---
 
-  _Group _cpuGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _cpuGroup(VirtHardware hw, bool busy) {
     final saved = _CpuDraft(hw.cpu.sockets, hw.cpu.cores, hw.cpu.online);
     final d = _cpu ?? saved;
     final threads = hw.cpu.threads;
@@ -207,17 +191,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             d.online != saved.online);
     final waits = _waits(hw, const ['cpu', 'cores', 'sockets', 'vcpus']);
     final allocated = _allocated((g) => g.vcpu);
-    return _Group(
+    return VirtPaneGroup(
       key: 'cpu',
-      title: _lxc ? 'CPU' : l10n.virtHwProcessor,
+      title: editIsLxc ? 'CPU' : l10n.virtHwProcessor,
       right: waits
           ? l10n.virtHwLater
           : l10n.virtHwHostCpus(hw.limits.hostCpus ?? 0, allocated),
       warn: waits,
-      indexNote: _lxc ? '${hw.cpu.cores}' : '${hw.cpu.total} vCPU',
+      indexNote: editIsLxc ? '${hw.cpu.cores}' : '${hw.cpu.total} vCPU',
       rows: [
-        if (_lxc)
-          _step(
+        if (editIsLxc)
+          paneStep(
             Icons.developer_board,
             l10n.virtHwCores,
             '${d.cores}',
@@ -230,7 +214,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 : () => edit(_CpuDraft(1, d.cores + 1, null)),
           )
         else ...[
-          _step(
+          paneStep(
             Icons.developer_board,
             'vCPU',
             '$total',
@@ -248,7 +232,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ? null
                 : () => edit(_CpuDraft(d.sockets, d.cores + 1, d.online)),
           ),
-          _step(
+          paneStep(
             Icons.view_module_outlined,
             l10n.virtHwSockets,
             '${d.sockets}',
@@ -266,7 +250,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ? null
                 : () => edit(_CpuDraft(d.sockets + 1, d.cores, d.online)),
           ),
-          _step(
+          paneStep(
             Icons.bolt_outlined,
             l10n.virtHwOnline,
             d.online == null ? '$total' : '${d.online} / $total',
@@ -287,7 +271,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   ),
           ),
           if (hw.cpuTypes.isNotEmpty || hw.cpu.type != null)
-            _field(
+            paneField(
               Icons.memory_outlined,
               l10n.virtHwModel,
               hw.cpu.type ?? l10n.virtHwCpuTypeDefault,
@@ -299,20 +283,20 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   ? null
                   : const Icon(Icons.chevron_right, size: 17),
             ),
-          _field(
+          paneField(
             Icons.grid_view,
             l10n.virtHwTopology,
             l10n.virtHwTopologyValue(d.sockets, d.cores, threads),
           ),
         ],
-        ..._pendingRows(
+        ...buildPendingRows(
           hw,
           busy,
-          (p) => _placeOf(hw, p.key) == _PendingPlace.cpu,
+          (p) => placeOfPending(hw, p.key) == VirtPendingPlace.cpu,
         ),
         if (changed)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() {
@@ -320,7 +304,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 _drafted.remove('cpu');
               }),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'hw:cpu:save',
               primary: true,
@@ -360,9 +344,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   ) async {
     final started = _drafted[draft] ?? hw;
     final base = fields(started) == fields(hw) ? hw : started;
-    final applied = await _applyFor(base, change);
+    final applied = await applyHwChangeFor(base, change);
     if (!mounted) return;
-    if (applied == _Applied.done || applied == _Applied.conflict) {
+    if (applied == VirtApplied.done || applied == VirtApplied.conflict) {
       setState(() {
         clear();
         _drafted.remove(draft);
@@ -393,7 +377,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   static int _memStep(int mib, {required bool up}) =>
       mib < 1024 || (!up && mib == 1024) ? 256 : 1024;
 
-  _Group _memGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _memGroup(VirtHardware hw, bool busy) {
     final saved = _MemDraft(
       hw.memory.mib,
       hw.memory.minMib,
@@ -420,9 +404,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         widget.serverId,
       ).select((s) => s.statsOf(widget.guest.id)?.memUsed),
     );
-    final pve = _pve;
+    final pve = editIsPve;
     final current = d.minMib ?? d.mib;
-    return _Group(
+    return VirtPaneGroup(
       key: 'mem',
       title: libL10n.memory,
       right: waits
@@ -436,7 +420,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         if (hw.memory.balloon && hw.memory.minMib != 0) 'balloon',
       ].join(' · '),
       rows: [
-        _step(
+        paneStep(
           Icons.memory,
           libL10n.memory,
           _mib(d.mib),
@@ -466,7 +450,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ),
         ),
         if (hw.memory.balloon && pve)
-          _toggle(
+          paneToggle(
             Icons.compress,
             'virtio-balloon',
             d.minMib != 0,
@@ -490,7 +474,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         // libvirt's balloon is a target the host sets rather than a floor: a
         // stepper for it rather than a switch.
         if (hw.memory.balloon && !pve)
-          _step(
+          paneStep(
             Icons.compress,
             l10n.virtHwBalloonLibvirt,
             _mib(current),
@@ -507,8 +491,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                     );
                   },
           ),
-        if (_lxc && d.swapMib != null)
-          _step(
+        if (editIsLxc && d.swapMib != null)
+          paneStep(
             Icons.swap_horiz,
             l10n.virtHwSwap,
             _mib(d.swapMib!),
@@ -525,15 +509,15 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             onInc: () => edit(_MemDraft(d.mib, d.minMib, d.swapMib! + 512)),
           ),
         if (hw.running && used != null)
-          _field(Icons.data_usage, l10n.virtHwGuestUsed, used.bytes2Str),
-        ..._pendingRows(
+          paneField(Icons.data_usage, l10n.virtHwGuestUsed, used.bytes2Str),
+        ...buildPendingRows(
           hw,
           busy,
-          (p) => _placeOf(hw, p.key) == _PendingPlace.memory,
+          (p) => placeOfPending(hw, p.key) == VirtPendingPlace.memory,
         ),
         if (changed)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() {
@@ -541,7 +525,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 _drafted.remove('mem');
               }),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'hw:memory:save',
               primary: true,
@@ -571,33 +555,33 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   // --- Disks ---
 
-  _Group _diskGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _diskGroup(VirtHardware hw, bool busy) {
     final disks = [
       for (final d in hw.disks)
         if (d.kind != VirtHwDiskKind.cdrom) d,
     ];
     final total = disks.fold(0, (s, d) => s + (d.size ?? 0));
-    return _Group(
+    return VirtPaneGroup(
       key: 'disks',
-      title: _lxc ? l10n.virtHwDisksLxc : libL10n.disk,
+      title: editIsLxc ? l10n.virtHwDisksLxc : libL10n.disk,
       right: l10n.virtHwTotal(total.bytes2Str),
       warn: _waits(hw, disks.map((d) => d.key)),
       indexNote: disks.isEmpty ? '—' : disks.map((d) => d.key).join(', '),
       rows: [
         for (final d in disks) ..._diskRows(hw, d, busy),
         // Pending for a disk the next start no longer has: removed.
-        ..._pendingRows(
+        ...buildPendingRows(
           hw,
           busy,
           (p) =>
-              _placeOf(hw, p.key) == _PendingPlace.disk && hw.disk(p.key) == null,
+              placeOfPending(hw, p.key) == VirtPendingPlace.disk && hw.disk(p.key) == null,
         ),
         if (_adding == _HwAdd.disk)
           ..._addDiskRows(hw, busy)
         else
-          _empty(
-            _lxc ? l10n.virtHwMountFromPool : l10n.virtHwDiskHotplug,
-            _lxc ? l10n.virtHwAddMount : l10n.virtHwAddDisk,
+          paneEmpty(
+            editIsLxc ? l10n.virtHwMountFromPool : l10n.virtHwDiskHotplug,
+            editIsLxc ? l10n.virtHwAddMount : l10n.virtHwAddDisk,
             key: 'hw:disk:add',
             onTap: busy ? null : () => _openAdd(_HwAdd.disk),
           ),
@@ -610,13 +594,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     final grown = _grow[d.key];
     final summary = [
       ?size?.bytes2Str,
-      if (_lxc) ?d.mountPoint else ...[?d.format, ?d.bus],
+      if (editIsLxc) ?d.mountPoint else ...[?d.format, ?d.bus],
     ].join(' · ');
     return [
-      _disc(d.key, Icons.storage, d.key, summary),
-      ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-      _reveal(d.key, [
-        _field(
+      paneDisc(d.key, Icons.storage, d.key, summary),
+      ...buildPendingRows(hw, busy, (p) => p.key == d.key, indent: true),
+      paneReveal(d.key, [
+        paneField(
           Icons.folder_outlined,
           l10n.virtHwSource,
           d.source ?? '—',
@@ -624,9 +608,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           indent: true,
         ),
         if (size != null && !virtHwDiskGrowable(d))
-          _field(Icons.straighten, libL10n.capacity, size.bytes2Str, indent: true)
+          paneField(Icons.straighten, libL10n.capacity, size.bytes2Str, indent: true)
         else if (size != null)
-          _step(
+          paneStep(
             Icons.straighten,
             libL10n.capacity,
             (grown ?? size).bytes2Str,
@@ -640,9 +624,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             onInc: () =>
                 setState(() => _grow[d.key] = (grown ?? size) + (8 << 30)),
           ),
-        if (!_lxc && d.kind == VirtHwDiskKind.disk) ...[
+        if (!editIsLxc && d.kind == VirtHwDiskKind.disk) ...[
           if (hw.support.buses.isNotEmpty)
-            _seg(
+            paneSeg(
               Icons.cable,
               l10n.virtHwBus,
               hw.support.buses,
@@ -652,12 +636,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               // A disk moves to another bus only while nothing has it open.
               onSelected: busy || hw.running
                   ? null
-                  : (bus) => _apply(hw, VirtHwUpdateDisk(key: d.key, bus: bus)),
+                  : (bus) => applyHwChange(hw, VirtHwUpdateDisk(key: d.key, bus: bus)),
             ),
           if (hw.running && hw.support.buses.isNotEmpty)
-            _text(l10n.virtHwBusStopped, indent: true),
+            paneText(l10n.virtHwBusStopped, indent: true),
           if (hw.support.caches.isNotEmpty)
-            _seg(
+            paneSeg(
               Icons.cached,
               l10n.virtHwCache,
               [
@@ -669,7 +653,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               indent: true,
               onSelected: busy
                   ? null
-                  : (c) => _apply(
+                  : (c) => applyHwChange(
                       hw,
                       VirtHwUpdateDisk(
                         key: d.key,
@@ -679,24 +663,24 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             ),
         ],
         if (virtHwDiskGrowable(d))
-          _text(
+          paneText(
             hw.running ? l10n.virtHwGrowNoteRunning : l10n.virtHwGrowNote,
             indent: true,
           ),
-        _actions(indent: true, [
+        paneActions(indent: true, [
           if (grown != null) ...[
-            _Action(
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() => _grow.remove(d.key)),
             ),
-            _Action(
+            VirtPaneAction(
               l10n.virtHwGrow,
               key: 'hw:disk:${d.key}:grow',
               primary: true,
               onTap: busy
                   ? null
-                  : () => _save(
+                  : () => saveHwChange(
                       hw,
                       VirtHwGrowDisk(key: d.key, bytes: grown),
                       () => _grow.remove(d.key),
@@ -705,7 +689,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           ],
           // A container's root is its own.
           if (d.kind != VirtHwDiskKind.rootfs)
-            _Action(
+            VirtPaneAction(
               l10n.virtHwDetach,
               key: 'hw:disk:${d.key}:detach',
               icon: Icons.link_off,
@@ -725,14 +709,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         : VirtHwAddDisk(
             storage: pool,
             gib: _addGib,
-            mountPoint: _lxc ? _mount.text.trim() : null,
+            mountPoint: editIsLxc ? _mount.text.trim() : null,
           );
-    final issue = add == null ? null : _issueText(hw, virtHwIssue(hw, add));
+    final issue = add == null ? null : hwIssueText(hw, virtHwIssue(hw, add));
     return [
-      _disc(
+      paneDisc(
         '__add',
         Icons.add_circle_outline,
-        _lxc ? l10n.virtHwNewMount : l10n.virtHwNewDisk,
+        editIsLxc ? l10n.virtHwNewMount : l10n.virtHwNewDisk,
         l10n.virtHwPickPool,
         onTap: () => setState(() => _adding = null),
       ),
@@ -742,11 +726,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           child: Center(child: SizedLoading.small),
         )
       else if (pools.isEmpty)
-        _text(l10n.virtHwNoStorage, indent: true)
+        paneText(l10n.virtHwNoStorage, indent: true)
       else ...[
-        _choice([
+        paneChoice([
           for (final p in pools)
-            _Choice(
+            VirtPaneChoice(
               key: 'hw:disk:pool:${p.id}',
               icon: Icons.dns_outlined,
               label: p.name,
@@ -758,7 +742,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               onTap: () => setState(() => _addPool = p),
             ),
         ], indent: true),
-        _step(
+        paneStep(
           Icons.straighten,
           libL10n.capacity,
           '$_addGib GiB',
@@ -767,8 +751,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           onDec: _addGib <= 8 ? null : () => setState(() => _addGib -= 8),
           onInc: () => setState(() => _addGib += 8),
         ),
-        if (_lxc)
-          _inputRow([Input(
+        if (editIsLxc)
+          paneInputRow([Input(
             key: const ValueKey('hw:disk:mount'),
             controller: _mount,
             label: l10n.virtHwMountPoint,
@@ -777,22 +761,22 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             suggestion: false,
             onChanged: (_) => setState(() {}),
           )], indent: true),
-        if (hw.running) _text(l10n.virtHwHotplugNow, indent: true),
-        if (issue != null) _text(issue, indent: true, error: true),
+        if (hw.running) paneText(l10n.virtHwHotplugNow, indent: true),
+        if (issue != null) paneText(issue, indent: true, error: true),
       ],
-      _actions(indent: true, [
-        _Action(
+      paneActions(indent: true, [
+        VirtPaneAction(
           libL10n.cancel,
           icon: Icons.close,
           onTap: () => setState(() => _adding = null),
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.add,
           key: 'hw:disk:add:ok',
           primary: true,
           onTap: busy || add == null || issue != null
               ? null
-              : () => _save(hw, add, () => _adding = null),
+              : () => saveHwChange(hw, add, () => _adding = null),
         ),
       ]),
     ];
@@ -800,8 +784,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   // --- Network ---
 
-  _Group _nicGroup(VirtHardware hw, bool busy) {
-    return _Group(
+  VirtPaneGroup _nicGroup(VirtHardware hw, bool busy) {
+    return VirtPaneGroup(
       key: 'nics',
       title: l10n.virtHwNics,
       right: '${hw.nics.length}',
@@ -811,16 +795,16 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           : hw.nics.map((n) => n.source ?? n.key).join(', '),
       rows: [
         for (final (i, n) in hw.nics.indexed) ..._nicRows(hw, n, i, busy),
-        ..._pendingRows(
+        ...buildPendingRows(
           hw,
           busy,
           (p) =>
-              _placeOf(hw, p.key) == _PendingPlace.nic && hw.nic(p.key) == null,
+              placeOfPending(hw, p.key) == VirtPendingPlace.nic && hw.nic(p.key) == null,
         ),
         if (_adding == _HwAdd.nic)
           ..._addNicRows(hw, busy)
         else
-          _empty(
+          paneEmpty(
             l10n.virtHwNicHotplug,
             l10n.virtHwAddNic,
             key: 'hw:nic:add',
@@ -840,16 +824,16 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         n.type == null || n.type == 'network' || n.type == 'bridge';
     final nets = _nets;
     return [
-      _disc(
+      paneDisc(
         n.key,
         Icons.lan_outlined,
         _nicName(n, i),
         [?n.model, ?n.source, if (!n.linkUp) l10n.virtHwLinkDown].join(' · '),
       ),
-      ..._pendingRows(hw, busy, (p) => p.key == n.key, indent: true),
-      _reveal(n.key, [
+      ...buildPendingRows(hw, busy, (p) => p.key == n.key, indent: true),
+      paneReveal(n.key, [
         if (editable && nets != null && nets.isNotEmpty)
-          _seg(
+          paneSeg(
             Icons.hub_outlined,
             libL10n.network,
             [for (final x in nets) x.name],
@@ -858,7 +842,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             indent: true,
             onSelected: busy
                 ? null
-                : (name) => _apply(
+                : (name) => applyHwChange(
                     hw,
                     VirtHwUpdateNic(
                       key: n.key,
@@ -868,14 +852,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   ),
           )
         else
-          _field(
+          paneField(
             Icons.hub_outlined,
             libL10n.network,
             n.source ?? '—',
             indent: true,
           ),
-        if (!_lxc && hw.support.nicModels.isNotEmpty && editable)
-          _seg(
+        if (!editIsLxc && hw.support.nicModels.isNotEmpty && editable)
+          paneSeg(
             Icons.memory_outlined,
             l10n.virtHwModel,
             [
@@ -888,10 +872,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             indent: true,
             onSelected: busy
                 ? null
-                : (m) => _apply(hw, VirtHwSetNicHardware(key: n.key, model: m)),
+                : (m) => applyHwChange(hw, VirtHwSetNicHardware(key: n.key, model: m)),
           ),
         if (n.mac case final mac?)
-          _field(
+          paneField(
             Icons.fingerprint,
             l10n.virtHwMac,
             mac,
@@ -903,7 +887,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 : () => _editMac(hw, n),
           ),
         if (editable)
-          _toggle(
+          paneToggle(
             Icons.link,
             l10n.virtHwLinkUp,
             n.linkUp,
@@ -912,10 +896,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             indent: true,
             onChanged: busy
                 ? null
-                : (up) => _apply(hw, VirtHwUpdateNic(key: n.key, linkUp: up)),
+                : (up) => applyHwChange(hw, VirtHwUpdateNic(key: n.key, linkUp: up)),
           ),
         if (n.firewall case final fw?)
-          _toggle(
+          paneToggle(
             Icons.local_fire_department_outlined,
             l10n.virtHwFirewall,
             fw,
@@ -923,13 +907,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             indent: true,
             onChanged: busy
                 ? null
-                : (on) => _apply(
+                : (on) => applyHwChange(
                     hw,
                     VirtHwUpdateNic(key: n.key, linkUp: n.linkUp, firewall: on),
                   ),
           ),
-        _actions(indent: true, [
-          _Action(
+        paneActions(indent: true, [
+          VirtPaneAction(
             l10n.virtHwRemove,
             key: 'hw:nic:${n.key}:remove',
             icon: Icons.delete_outline,
@@ -945,7 +929,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     final nets = _nets;
     final net = _addNet;
     return [
-      _disc(
+      paneDisc(
         '__add',
         Icons.add_circle_outline,
         l10n.virtHwNewNic,
@@ -958,9 +942,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           child: Center(child: SizedLoading.small),
         )
       else if (nets.isEmpty)
-        _text(l10n.virtHwNoNetworks, indent: true)
+        paneText(l10n.virtHwNoNetworks, indent: true)
       else
-        _seg(
+        paneSeg(
           Icons.lan_outlined,
           libL10n.network,
           [for (final x in nets) x.name],
@@ -970,21 +954,21 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           onSelected: (name) =>
               setState(() => _addNet = nets.firstWhere((x) => x.name == name)),
         ),
-      if (hw.running) _text(l10n.virtHwHotplugNow, indent: true),
-      _actions(indent: true, [
-        _Action(
+      if (hw.running) paneText(l10n.virtHwHotplugNow, indent: true),
+      paneActions(indent: true, [
+        VirtPaneAction(
           libL10n.cancel,
           icon: Icons.close,
           onTap: () => setState(() => _adding = null),
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.add,
           key: 'hw:nic:add:ok',
           primary: true,
           onTap: busy || net == null
               ? null
               : () =>
-                    _save(hw, VirtHwAddNic(network: net), () => _adding = null),
+                    saveHwChange(hw, VirtHwAddNic(network: net), () => _adding = null),
         ),
       ]),
     ];
@@ -994,7 +978,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   /// CD-ROMs, host USB and PCI devices, and the TPM: the design's
   /// "CD-ROM and passthrough".
-  _Group _devicesGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _devicesGroup(VirtHardware hw, bool busy) {
     final drives = [
       for (final d in hw.disks)
         if (d.kind == VirtHwDiskKind.cdrom) d,
@@ -1007,7 +991,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       if (hw.support.pci) _NewDevice.pci,
       if (hw.support.tpm && !hw.hasTpm) _NewDevice.tpm,
     ];
-    return _Group(
+    return VirtPaneGroup(
       key: 'devices',
       title: l10n.virtHwDevices,
       right: '${drives.length + hw.devices.length}',
@@ -1022,38 +1006,38 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       rows: [
         for (final d in drives)
           if (d.cloudInit) ..._cloudInitRows(hw, d, busy) else ...[
-          _disc(
+          paneDisc(
             d.key,
             Icons.album_outlined,
             '${d.key} · ${l10n.virtHwCdrom}',
             d.source == null ? l10n.virtHwNoMedia : _baseName(d.source!),
             onTap: () {
               setState(
-                () => _open.contains(d.key)
-                    ? _open.remove(d.key)
-                    : _open.add(d.key),
+                () => paneOpen.contains(d.key)
+                    ? paneOpen.remove(d.key)
+                    : paneOpen.add(d.key),
               );
               _isos ??= _loadIsos();
             },
           ),
-          ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-          _reveal(d.key, [
+          ...buildPendingRows(hw, busy, (p) => p.key == d.key, indent: true),
+          paneReveal(d.key, [
             _isoPicker(
               (isos) {
                 bool inDrive(VirtVolume v) =>
                     v.id == d.source || v.path == d.source;
-                return _choice([
-                  _Choice(
+                return paneChoice([
+                  VirtPaneChoice(
                     key: 'hw:media:none',
                     icon: Icons.block,
                     label: l10n.virtHwEmpty,
                     selected: d.source == null,
                     onTap: busy || d.source == null
                         ? null
-                        : () => _apply(hw, VirtHwSetMedia(key: d.key)),
+                        : () => applyHwChange(hw, VirtHwSetMedia(key: d.key)),
                   ),
                   for (final m in isos)
-                    _Choice(
+                    VirtPaneChoice(
                       key: 'hw:media:${m.volume.id}',
                       icon: Icons.album_outlined,
                       label: m.volume.name,
@@ -1061,7 +1045,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                       selected: inDrive(m.volume),
                       onTap: busy || inDrive(m.volume)
                           ? null
-                          : () => _apply(
+                          : () => applyHwChange(
                               hw,
                               VirtHwSetMedia(key: d.key, media: m),
                             ),
@@ -1069,17 +1053,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ], indent: true);
               },
             ),
-            _actions(indent: true, [
+            paneActions(indent: true, [
               if (d.source != null)
-                _Action(
+                VirtPaneAction(
                   l10n.virtHwEject,
                   key: 'hw:media:${d.key}:eject',
                   icon: Icons.eject,
                   onTap: busy
                       ? null
-                      : () => _apply(hw, VirtHwSetMedia(key: d.key)),
+                      : () => applyHwChange(hw, VirtHwSetMedia(key: d.key)),
                 ),
-              _Action(
+              VirtPaneAction(
                 l10n.virtHwRemoveCdrom,
                 key: 'hw:media:${d.key}:remove',
                 icon: Icons.delete_outline,
@@ -1093,7 +1077,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         if (_adding == _HwAdd.dev)
           ..._addDeviceRows(hw, kinds, busy)
         else if (kinds.isNotEmpty)
-          _empty(
+          paneEmpty(
             l10n.virtHwDevicesEmpty,
             l10n.virtHwAddDevice,
             key: 'hw:add:dev',
@@ -1106,17 +1090,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   /// A cloud-init drive: what it is, and taking it off. Its contents are
   /// not media to swap.
   List<Widget> _cloudInitRows(VirtHardware hw, VirtHwDisk d, bool busy) => [
-    _disc(
+    paneDisc(
       d.key,
       Icons.cloud_outlined,
       '${d.key} · cloud-init',
       d.source == null ? l10n.virtHwNoMedia : _baseName(d.source!),
     ),
-    ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-    _reveal(d.key, [
-      _text(l10n.virtHwCloudInitNote, indent: true),
-      _actions(indent: true, [
-        _Action(
+    ...buildPendingRows(hw, busy, (p) => p.key == d.key, indent: true),
+    paneReveal(d.key, [
+      paneText(l10n.virtHwCloudInitNote, indent: true),
+      paneActions(indent: true, [
+        VirtPaneAction(
           l10n.virtHwRemove,
           key: 'hw:media:${d.key}:remove',
           icon: Icons.delete_outline,
@@ -1129,7 +1113,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   /// Where a USB device is, as the label of the address form: its bus and
   /// its address on it.
-  String _addressLabel(VirtHostDevice d) => _host == VirtHostKind.pve
+  String _addressLabel(VirtHostDevice d) => editHostKind == VirtHostKind.pve
       ? l10n.virtUsbPortNote(d.usbBus ?? 0, d.usbPort ?? '')
       : l10n.virtUsbAddressNote(d.usbBus ?? 0, d.usbDevice ?? 0);
 
@@ -1164,10 +1148,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   };
 
   List<Widget> _deviceRows(VirtHardware hw, VirtHwDevice d, bool busy) => [
-    _disc(d.key, _deviceIcon(d.kind), _deviceName(d.kind), d.detail ?? d.key),
-    ..._pendingRows(hw, busy, (p) => p.key == d.key, indent: true),
-    _reveal(d.key, [
-      _field(
+    paneDisc(d.key, _deviceIcon(d.kind), _deviceName(d.kind), d.detail ?? d.key),
+    ...buildPendingRows(hw, busy, (p) => p.key == d.key, indent: true),
+    paneReveal(d.key, [
+      paneField(
         Icons.tag,
         d.kind == VirtHwDeviceKind.pci ? libL10n.addr : libL10n.device,
         [d.detail ?? d.key, if (d.mapping) '(mapping)'].join(' '),
@@ -1175,17 +1159,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         indent: true,
       ),
       switch (d.kind) {
-        VirtHwDeviceKind.usb => _text(l10n.virtHwUsbHotplug, indent: true),
-        VirtHwDeviceKind.pci => _callout(
+        VirtHwDeviceKind.usb => paneText(l10n.virtHwUsbHotplug, indent: true),
+        VirtHwDeviceKind.pci => paneCallout(
           l10n.virtHwPciTitle,
           l10n.virtHwPciBody,
           warn: false,
           indent: true,
         ),
-        VirtHwDeviceKind.tpm => _text(l10n.virtHwTpmNote, indent: true),
+        VirtHwDeviceKind.tpm => paneText(l10n.virtHwTpmNote, indent: true),
       },
-      _actions(indent: true, [
-        _Action(
+      paneActions(indent: true, [
+        VirtPaneAction(
           l10n.virtHwRemove,
           key: 'hw:dev:${d.key}:remove',
           icon: Icons.delete_outline,
@@ -1222,12 +1206,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             : VirtUsbNaming.vendorProduct,
       ),
     };
-    final issue = change == null ? null : virtHwIssue(hw, change, host: _host);
+    final issue = change == null ? null : virtHwIssue(hw, change, host: editHostKind);
     return [
-      _disc('__add_dev', Icons.add_circle_outline, l10n.virtHwNewDevice,
+      paneDisc('__add_dev', Icons.add_circle_outline, l10n.virtHwNewDevice,
           kinds.map(_newDeviceName).join(' · ')),
       if (kinds.length > 1)
-        _seg(
+        paneSeg(
           Icons.category_outlined,
           libL10n.type,
           [for (final k in kinds) _newDeviceName(k)],
@@ -1243,8 +1227,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       if (kind == _NewDevice.cdrom) ...[
         _isoPicker(
           (isos) {
-            return _choice([
-              _Choice(
+            return paneChoice([
+              VirtPaneChoice(
                 key: 'hw:cdrom:new:none',
                 icon: Icons.block,
                 label: l10n.virtHwEmpty,
@@ -1252,7 +1236,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 onTap: () => setState(() => _cdMedia = null),
               ),
               for (final m in isos)
-                _Choice(
+                VirtPaneChoice(
                   key: 'hw:cdrom:new:${m.volume.id}',
                   icon: Icons.album_outlined,
                   label: m.volume.name,
@@ -1263,12 +1247,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             ], indent: true);
           },
         ),
-        if (hw.running) _text(l10n.virtHwCdromLater, indent: true),
+        if (hw.running) paneText(l10n.virtHwCdromLater, indent: true),
       ],
-      if (kind == _NewDevice.tpm && _pve) ..._storageChoice(),
-      if (kind == _NewDevice.tpm) _text(l10n.virtHwTpmNote, indent: true),
+      if (kind == _NewDevice.tpm && editIsPve) ..._storageChoice(),
+      if (kind == _NewDevice.tpm) paneText(l10n.virtHwTpmNote, indent: true),
       if (kind == _NewDevice.usb)
-        _seg(
+        paneSeg(
           Icons.usb,
           l10n.virtUsbByVendor,
           [l10n.virtUsbByVendor, l10n.virtUsbByAddress],
@@ -1281,13 +1265,13 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           }),
         ),
       if (kind == _NewDevice.usb && _usbByAddress)
-        _text(l10n.virtUsbAddressTip, indent: true),
+        paneText(l10n.virtUsbAddressTip, indent: true),
       if (kind == _NewDevice.usb || kind == _NewDevice.pci)
         FutureBuilder<VirtHostDevices>(
           future: _hostDevs,
           builder: (_, snap) {
             if (snap.error case final e?) {
-              return _text(e is VirtErr ? e.title : '$e', indent: true, error: true);
+              return paneText(e is VirtErr ? e.title : '$e', indent: true, error: true);
             }
             final devs = snap.data;
             if (devs == null) {
@@ -1315,10 +1299,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
               children: [
                 if (kind == _NewDevice.pci)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: _rowGap),
+                    padding: const EdgeInsets.only(bottom: virtPaneRowGap),
                     child: devs.iommu
-                        ? _callout(l10n.virtHwPciTitle, l10n.virtHwPciBody, indent: true)
-                        : _callout(
+                        ? paneCallout(l10n.virtHwPciTitle, l10n.virtHwPciBody, indent: true)
+                        : paneCallout(
                             l10n.virtHwIommuOffTitle,
                             l10n.virtHwIommuOffBody,
                             indent: true,
@@ -1327,15 +1311,15 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                   ),
                 if (devs.mappingsOnly)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: _rowGap),
-                    child: _text(l10n.virtHwMappingsOnly, indent: true),
+                    padding: const EdgeInsets.only(bottom: virtPaneRowGap),
+                    child: paneText(l10n.virtHwMappingsOnly, indent: true),
                   ),
                 if (list.isEmpty)
-                  _text(l10n.virtHwNoHostDevices, indent: true)
+                  paneText(l10n.virtHwNoHostDevices, indent: true)
                 else
-                  _choice([
+                  paneChoice([
                     for (final x in list)
-                      _Choice(
+                      VirtPaneChoice(
                         key: 'hw:dev:pick:${_hostDevKey(x)}',
                         icon: x.mapping ? Icons.link : _deviceIcon(kind!.hw!),
                         label: x.label,
@@ -1358,21 +1342,21 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             );
           },
         ),
-      if (_issueText(hw, issue) case final t? when pick != null || kind == _NewDevice.tpm)
-        _text(t, indent: true, error: true),
-      _actions(indent: true, [
-        _Action(
+      if (hwIssueText(hw, issue) case final t? when pick != null || kind == _NewDevice.tpm)
+        paneText(t, indent: true, error: true),
+      paneActions(indent: true, [
+        VirtPaneAction(
           libL10n.cancel,
           icon: Icons.close,
           onTap: () => setState(() => _adding = null),
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.add,
           key: 'hw:dev:add',
           primary: true,
           onTap: busy || change == null || issue != null
               ? null
-              : () => _save(hw, change, () {
+              : () => saveHwChange(hw, change, () {
                   _adding = null;
                   _devPick = null;
                   _cdMedia = null;
@@ -1390,11 +1374,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
         Padding(padding: EdgeInsets.all(7), child: Center(child: SizedLoading.small)),
       ];
     }
-    if (pools.isEmpty) return [_text(l10n.virtHwNoStorage, indent: true)];
+    if (pools.isEmpty) return [paneText(l10n.virtHwNoStorage, indent: true)];
     return [
-      _choice([
+      paneChoice([
         for (final p in pools)
-          _Choice(
+          VirtPaneChoice(
             key: 'hw:pool:${p.id}',
             icon: Icons.dns_outlined,
             label: p.name,
@@ -1411,11 +1395,11 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   static const _listenLocal = '127.0.0.1';
   static const _listenAll = '0.0.0.0';
 
-  _Group _displayGroup(VirtHardware hw, VirtHwDisplay d, bool busy) {
+  VirtPaneGroup _displayGroup(VirtHardware hw, VirtHwDisplay d, bool busy) {
     final support = hw.support;
     final waits = _waits(hw, const ['display', 'vga']);
     final listen = d.listen ?? _listenLocal;
-    return _Group(
+    return VirtPaneGroup(
       key: 'display',
       title: l10n.virtHwDisplay,
       right: waits ? l10n.virtHwLater : '',
@@ -1423,7 +1407,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       indexNote: [?d.protocol?.toUpperCase(), ?d.gpu].join(' · ').ifEmpty('—'),
       rows: [
         if (support.protocols.length > 1)
-          _seg(
+          paneSeg(
             Icons.cast,
             l10n.virtHwProtocol,
             [for (final p in support.protocols) p.toUpperCase()],
@@ -1431,12 +1415,12 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             key: 'display:protocol',
             onSelected: busy
                 ? null
-                : (p) => _apply(hw, VirtHwSetDisplay(protocol: p.toLowerCase())),
+                : (p) => applyHwChange(hw, VirtHwSetDisplay(protocol: p.toLowerCase())),
           )
         else if (d.protocol case final p?)
-          _field(Icons.cast, l10n.virtHwProtocol, p.toUpperCase()),
+          paneField(Icons.cast, l10n.virtHwProtocol, p.toUpperCase()),
         if (support.listen)
-          _seg(
+          paneSeg(
             Icons.wifi_tethering,
             l10n.virtHwListen,
             [
@@ -1448,10 +1432,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             key: 'display:listen',
             onSelected: busy
                 ? null
-                : (l) => _apply(hw, VirtHwSetDisplay(listen: l)),
+                : (l) => applyHwChange(hw, VirtHwSetDisplay(listen: l)),
           ),
         if (support.gpus.isNotEmpty)
-          _seg(
+          paneSeg(
             Icons.monitor,
             l10n.virtHwGpu,
             [
@@ -1460,17 +1444,17 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             ],
             d.gpu,
             key: 'display:gpu',
-            onSelected: busy ? null : (g) => _apply(hw, VirtHwSetDisplay(gpu: g)),
+            onSelected: busy ? null : (g) => applyHwChange(hw, VirtHwSetDisplay(gpu: g)),
           ),
         if (d.port case final port?)
-          _field(Icons.pin_outlined, libL10n.port, '$port', mono: true),
+          paneField(Icons.pin_outlined, libL10n.port, '$port', mono: true),
         if (support.listen && listen == _listenAll)
-          _callout(
+          paneCallout(
             l10n.virtHwListenAllTitle,
             l10n.virtHwListenAllBody,
             key: const ValueKey('hw:display:exposed'),
           ),
-        ..._pendingRows(hw, busy, (p) => p.key == 'display' || p.key == 'vga'),
+        ...buildPendingRows(hw, busy, (p) => p.key == 'display' || p.key == 'vga'),
       ],
     );
   }
@@ -1484,7 +1468,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   /// The boot order, arrows and a numbered place as the design draws it.
   /// Starting with the host is the Settings view's.
-  _Group _bootGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _bootGroup(VirtHardware hw, bool busy) {
     final saved = hw.boot;
     final waits = _waits(hw, const ['boot', 'firmware', 'bios', 'efidisk0']);
     final rows = <Widget>[];
@@ -1492,8 +1476,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       // Switching the firmware only while nothing runs on it.
       final canSwitch = !busy && !hw.running;
       rows.addAll([
-        _choice([
-          _Choice(
+        paneChoice([
+          VirtPaneChoice(
             key: 'hw:fw:uefi',
             icon: Icons.shield_outlined,
             label: 'UEFI',
@@ -1503,7 +1487,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ? null
                 : () => _setFirmware(hw, uefi: true, secureBoot: false),
           ),
-          _Choice(
+          VirtPaneChoice(
             key: 'hw:fw:bios',
             icon: Icons.memory_outlined,
             label: 'BIOS',
@@ -1515,7 +1499,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
           ),
         ]),
         if (fw.uefi && hw.support.secureBoot)
-          _toggle(
+          paneToggle(
             Icons.verified_user_outlined,
             'Secure Boot',
             fw.secureBoot,
@@ -1527,8 +1511,8 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 ? (on) => _setFirmware(hw, uefi: true, secureBoot: on)
                 : null,
           ),
-        if (hw.running) _text(l10n.virtHwFirmwareStopped),
-        ..._pendingRows(
+        if (hw.running) paneText(l10n.virtHwFirmwareStopped),
+        ...buildPendingRows(
           hw,
           busy,
           (p) => const {'firmware', 'bios', 'efidisk0'}.contains(p.key),
@@ -1557,9 +1541,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       }
 
       rows.addAll([
-        _text(l10n.virtHwBootOrder),
+        paneText(l10n.virtHwBootOrder),
         for (final (i, k) in order.indexed)
-          _reorder(
+          paneReorder(
             key: 'boot:$k',
             ord: on.contains(k) ? '${picked.indexOf(k) + 1}' : '–',
             first: picked.isNotEmpty && picked.first == k,
@@ -1572,15 +1556,15 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
             onUp: i == 0 ? null : () => move(i, -1),
             onDown: i == order.length - 1 ? null : () => move(i, 1),
           ),
-        _text(l10n.virtHwBootTip),
-        ..._pendingRows(
+        paneText(l10n.virtHwBootTip),
+        ...buildPendingRows(
           hw,
           busy,
-          (p) => _placeOf(hw, p.key) == _PendingPlace.boot,
+          (p) => placeOfPending(hw, p.key) == VirtPendingPlace.boot,
         ),
         if (changed)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() {
@@ -1588,7 +1572,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 _drafted.remove('boot');
               }),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'hw:boot:save',
               primary: true,
@@ -1607,10 +1591,10 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
     }
     if (hw.firmware != null) {
       rows.add(
-        _callout(l10n.virtHwFirmwareWarnTitle, l10n.virtHwFirmwareWarnBody),
+        paneCallout(l10n.virtHwFirmwareWarnTitle, l10n.virtHwFirmwareWarnBody),
       );
     }
-    return _Group(
+    return VirtPaneGroup(
       key: 'boot',
       title: l10n.virtHwBoot,
       right: waits ? l10n.virtHwLater : '',
@@ -1659,9 +1643,9 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
 
   // --- Configuration file ---
 
-  _Group _configGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _configGroup(VirtHardware hw, bool busy) {
     final g = widget.guest;
-    final (name, path) = switch ((_pve, _lxc)) {
+    final (name, path) = switch ((editIsPve, editIsLxc)) {
       (true, true) => ('pct config ${g.vmid}', '/etc/pve/lxc/${g.vmid}.conf'),
       (true, false) => (
         'qm config ${g.vmid}',
@@ -1669,23 +1653,23 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       ),
       _ => ('virsh dumpxml ${g.name}', '/etc/libvirt/qemu/${g.name}.xml'),
     };
-    final open = _open.contains('config');
-    return _Group(
+    final open = paneOpen.contains('config');
+    return VirtPaneGroup(
       key: 'config',
       title: l10n.virtHwConfigFile,
       right: '',
       warn: false,
-      indexNote: _pve ? (_lxc ? 'pct config' : 'qm config') : 'dumpxml',
+      indexNote: editIsPve ? (editIsLxc ? 'pct config' : 'qm config') : 'dumpxml',
       rows: [
         // Options this view does not edit, still waiting for the restart
         // the notice offers: listed rather than left unexplained.
-        ..._pendingRows(
+        ...buildPendingRows(
           hw,
           busy,
-          (p) => _placeOf(hw, p.key) == _PendingPlace.other,
+          (p) => placeOfPending(hw, p.key) == VirtPendingPlace.other,
         ),
-        _disc('config', Icons.code, name, open ? '' : path),
-        _reveal('config', [
+        paneDisc('config', Icons.code, name, open ? '' : path),
+        paneReveal('config', [
           Container(
             key: const ValueKey('hw:config:text'),
             padding: const EdgeInsets.all(13),
@@ -1774,7 +1758,7 @@ extension _Actions on _VirtHardwareViewState {
     final failed = <String>[];
     final lists = await Future.wait([
       for (final p in pools)
-        _notifier.volumes(p).catchError((Object e) {
+        editNotifier.volumes(p).catchError((Object e) {
           failed.add('${p.name}: ${e is VirtErr ? e.title : e}');
           return <VirtVolume>[];
         }),
@@ -1807,15 +1791,15 @@ extension _Actions on _VirtHardwareViewState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.only(bottom: _rowGap),
-                child: _text(
+                padding: const EdgeInsets.only(bottom: virtPaneRowGap),
+                child: paneText(
                   e is VirtErr ? [e.title, ?e.detail].join('\n') : '$e',
                   indent: true,
                   error: true,
                 ),
               ),
-              _actions(indent: true, [
-                _Action(
+              paneActions(indent: true, [
+                VirtPaneAction(
                   libL10n.retry,
                   key: 'hw:isos:retry',
                   icon: Icons.refresh,
@@ -1838,8 +1822,8 @@ extension _Actions on _VirtHardwareViewState {
           children: [
             for (final f in read.failed)
               Padding(
-                padding: const EdgeInsets.only(bottom: _rowGap),
-                child: _text(f, indent: true, error: true),
+                padding: const EdgeInsets.only(bottom: virtPaneRowGap),
+                child: paneText(f, indent: true, error: true),
               ),
             choices(read.isos),
           ],
@@ -1870,7 +1854,7 @@ extension _Actions on _VirtHardwareViewState {
       actions: [Btn.cancel()],
     );
     if (picked == null || picked == hw.cpu.type || !mounted) return;
-    await _apply(
+    await applyHwChange(
       hw,
       VirtHwSetCpu(
         sockets: hw.cpu.sockets,
@@ -1908,7 +1892,7 @@ extension _Actions on _VirtHardwareViewState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    await _apply(hw, VirtHwRemoveDisk(key: d.key, deleteVolume: delete));
+    await applyHwChange(hw, VirtHwRemoveDisk(key: d.key, deleteVolume: delete));
   }
 
   Future<void> _openAddDevice(_NewDevice kind) async {
@@ -1922,7 +1906,7 @@ extension _Actions on _VirtHardwareViewState {
       _loadFor(kind);
     });
     // The TPM's state is a volume on PVE: where it goes is asked.
-    if (_pve) await _loadDiskPools();
+    if (editIsPve) await _loadDiskPools();
   }
 
   /// Starts reading what the add block offers for [kind]: the host's
@@ -1934,7 +1918,7 @@ extension _Actions on _VirtHardwareViewState {
   void _loadFor(_NewDevice kind) {
     switch (kind) {
       case _NewDevice.usb || _NewDevice.pci:
-        _hostDevs ??= _notifier.hostDevices(widget.guest.id)..ignore();
+        _hostDevs ??= editNotifier.hostDevices(widget.guest.id)..ignore();
       case _NewDevice.cdrom:
         _isos ??= _loadIsos();
       case _NewDevice.tpm:
@@ -1943,7 +1927,7 @@ extension _Actions on _VirtHardwareViewState {
   }
 
   Future<void> _loadDiskPools() async {
-    final host = _host;
+    final host = editHostKind;
     if (host == null) return;
     try {
       final pools = virtDiskStorages(
@@ -1974,7 +1958,7 @@ extension _Actions on _VirtHardwareViewState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    await _apply(hw, VirtHwRemoveDevice(key: d.key));
+    await applyHwChange(hw, VirtHwRemoveDevice(key: d.key));
   }
 
   /// A new MAC: typed, or generated in the range the host uses for its own
@@ -1984,7 +1968,7 @@ extension _Actions on _VirtHardwareViewState {
     String generate() {
       final r = Random.secure();
       String b() => r.nextInt(256).toRadixString(16).padLeft(2, '0');
-      return '${_pve ? 'bc:24:11' : '52:54:00'}:${b()}:${b()}:${b()}';
+      return '${editIsPve ? 'bc:24:11' : '52:54:00'}:${b()}:${b()}:${b()}';
     }
 
     final mac = await context.showSheet<String>(
@@ -2029,11 +2013,11 @@ extension _Actions on _VirtHardwareViewState {
     if (mac == null || !mounted) return;
     if (mac.toLowerCase() == n.mac?.toLowerCase()) return;
     final change = VirtHwSetNicHardware(key: n.key, mac: mac);
-    if (_issueText(hw, virtHwIssue(hw, change, host: _host)) case final t?) {
+    if (hwIssueText(hw, virtHwIssue(hw, change, host: editHostKind)) case final t?) {
       Toast.error(t);
       return;
     }
-    await _apply(hw, change);
+    await applyHwChange(hw, change);
   }
 
   /// Switches the firmware after saying what it does to an installed
@@ -2056,7 +2040,7 @@ extension _Actions on _VirtHardwareViewState {
     if (ok != true || !mounted) return;
     // Null keeps the storage the old EFI disk is on.
     VirtStoragePool? storage;
-    if (_pve && uefi && hw.firmware?.varsStorage == null) {
+    if (editIsPve && uefi && hw.firmware?.varsStorage == null) {
       await _loadDiskPools();
       if (!mounted) return;
       final pools = _addPools ?? const [];
@@ -2068,7 +2052,7 @@ extension _Actions on _VirtHardwareViewState {
       if (picked == null || !mounted) return;
       storage = picked;
     }
-    await _apply(
+    await applyHwChange(
       hw,
       VirtHwSetFirmware(uefi: uefi, secureBoot: secureBoot, storage: storage),
     );
@@ -2081,13 +2065,9 @@ extension _Actions on _VirtHardwareViewState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    await _apply(hw, VirtHwRemoveNic(key: n.key));
+    await applyHwChange(hw, VirtHwRemoveNic(key: n.key));
   }
 }
 
-extension on String {
-  /// This, or [other] when this is empty.
-  String ifEmpty(String other) => isEmpty ? other : this;
-}
 
 enum _HwAdd { disk, nic, dev }

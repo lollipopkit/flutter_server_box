@@ -1,35 +1,49 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/widget/group_title.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 
 /// Where the index column appears: room for it beside the 600-wide pane.
 const _indexFrom = 860.0;
 
 /// How far a device's own rows sit in from its row.
-const _indent = 26.0;
+const virtPaneIndent = 26.0;
 
 /// Between the rows of a group.
 ///
 /// Outside each row rather than a separator between them, so a row whose
 /// height changes — a fold, a loading row — carries its own gap with it.
-const _rowGap = 7.0;
+const virtPaneRowGap = 7.0;
 
-/// [rows] with [_rowGap] under each, as a group draws what it is given.
+/// [rows] with [virtPaneRowGap] under each, as a group draws what it is given.
 ///
 /// For a stack the group's own per-row padding does not reach: it wraps each
-/// element of `_Group.rows`, and a `Reveal` is one element, as the rows inside
+/// element of `VirtPaneGroup.rows`, and a `Reveal` is one element, as the rows inside
 /// an add block are. Both have to space themselves or their rows draw against
 /// one another with nothing between them.
 List<Widget> _gapped(List<Widget> rows) => [
   for (final row in rows)
-    Padding(padding: const EdgeInsets.only(bottom: _rowGap), child: row),
+    Padding(padding: const EdgeInsets.only(bottom: virtPaneRowGap), child: row),
 ];
 
 /// The design's sectioned pane, as every view of it draws it — a guest's
 /// Hardware, Settings and Backup views, a pool, a network: groups under a
 /// title and a rule, the index of them beside where there is room, and the
 /// rows the design has (a field, a stepper, a switch, a device that opens).
-mixin _PaneRows<W extends StatefulWidget> on State<W> {
+mixin VirtPaneRows<W extends StatefulWidget> on State<W> {
   /// Open device rows, by key; `config` for the configuration file.
-  final _open = <String>{};
+  final paneOpen = <String>{};
   final _groupKeys = <String, GlobalKey>{};
 
   /// The index column's width: dragged at its seam, kept for this view only.
@@ -41,8 +55,8 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 
   /// [groups] under their titles, with the index beside them where there
   /// is room; a pull runs [onRefresh].
-  Widget _buildGroups(
-    List<_Group> groups, {
+  Widget buildPaneGroups(
+    List<VirtPaneGroup> groups, {
     required Future<void> Function() onRefresh,
     List<Widget> header = const [],
   }) {
@@ -76,7 +90,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
                                   3,
                                   0,
                                   3,
-                                  _rowGap,
+                                  virtPaneRowGap,
                                 ),
                                 child: Text(note, style: UIs.text12Grey),
                               ),
@@ -113,7 +127,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _buildIndex(List<_Group> groups) {
+  Widget _buildIndex(List<VirtPaneGroup> groups) {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 13),
       children: [
@@ -121,7 +135,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
           InkWell(
             key: ValueKey('hw:index:${g.key}'),
             borderRadius: BorderRadius.circular(13),
-            onTap: () => _scrollTo(g.key),
+            onTap: () => scrollToPaneGroup(g.key),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
               child: Row(
@@ -161,7 +175,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 
   /// The group's own list only: `Scrollable.ensureVisible` would move every
   /// scrollable above it too.
-  void _scrollTo(String key) {
+  void scrollToPaneGroup(String key) {
     final ctx = _groupKeys[key]?.currentContext;
     final object = ctx?.findRenderObject();
     if (ctx == null || object == null) return;
@@ -173,7 +187,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
   }
 
   /// A failure where the groups would be, with a way to ask again.
-  Widget _buildError(Object e, {required VoidCallback onRetry}) {
+  Widget buildPaneError(Object e, {required VoidCallback onRetry}) {
     return ListView(
       padding: const EdgeInsets.all(13),
       children: [
@@ -203,7 +217,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
       Theme.of(context).cardTheme.color ??
       Theme.of(context).colorScheme.surfaceContainerLow;
 
-  Widget _box({
+  Widget paneBox({
     required Widget child,
     Key? key,
     EdgeInsets padding = const EdgeInsets.symmetric(
@@ -216,7 +230,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
   }) {
     return Padding(
       key: key,
-      padding: EdgeInsets.only(left: indent ? _indent : 0),
+      padding: EdgeInsets.only(left: indent ? virtPaneIndent : 0),
       child: Material(
         color: color ?? _rowColor,
         borderRadius: BorderRadius.circular(13),
@@ -233,31 +247,31 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
   ///
   /// fl_lib's `Input(noWrap: true)` draws a bare field, which between boxed
   /// rows read as loose text rather than a row of the pane. The field's own
-  /// content padding (7 above and below) already gives most of a [_box]'s 9,
+  /// content padding (7 above and below) already gives most of a [paneBox]'s 9,
   /// so the box adds the 2 left: a field with its risen label is then as tall
-  /// as a [_field] row beside it.
+  /// as a [paneField] row beside it.
   ///
   /// Several [inputs] share one row side by side (a range's two ends, a
   /// host's address and name), 13 apart; one already in an `Expanded` or
   /// `Flexible` keeps its flex, the rest take equal shares. [trailing] sits
-  /// after them (a Remove button), with the right edge of a [_step] row.
-  Widget _inputRow(
+  /// after them (a Remove button), with the right edge of a [paneStep] row.
+  Widget paneInputRow(
     List<Widget> inputs, {
     bool indent = false,
     Key? key,
     Widget? trailing,
   }) {
-    return _box(
+    return paneBox(
       key: key,
       indent: indent,
       padding: EdgeInsets.fromLTRB(13, 2, trailing == null ? 13 : 7, 2),
-      child: _inputLine(inputs, trailing: trailing),
+      child: paneInputLine(inputs, trailing: trailing),
     );
   }
 
-  /// The inside of an [_inputRow], for a box that stacks more than one line
+  /// The inside of an [paneInputRow], for a box that stacks more than one line
   /// of fields.
-  Widget _inputLine(List<Widget> inputs, {Widget? trailing}) {
+  Widget paneInputLine(List<Widget> inputs, {Widget? trailing}) {
     if (inputs.length == 1 && trailing == null) return inputs.single;
     return Row(
       children: [
@@ -270,13 +284,13 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _icon(IconData icon, {Color? color}) => Icon(
+  Widget paneIcon(IconData icon, {Color? color}) => Icon(
     icon,
     size: 19,
     color: color ?? Theme.of(context).colorScheme.outline,
   );
 
-  Widget _field(
+  Widget paneField(
     IconData icon,
     String label,
     String value, {
@@ -286,13 +300,13 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     VoidCallback? onTap,
     Widget? trailing,
   }) {
-    return _box(
+    return paneBox(
       key: key,
       indent: indent,
       onTap: onTap,
       child: Row(
         children: [
-          _icon(icon),
+          paneIcon(icon),
           UIs.width13,
           Expanded(
             child: Column(
@@ -319,7 +333,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 
   /// How full something is: what it is, the figure, the bar, and what is
   /// left — the design's meter row.
-  Widget _meter(
+  Widget paneMeter(
     IconData icon,
     String label,
     String value,
@@ -329,12 +343,12 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     bool indent = false,
   }) {
     final f = fraction?.clamp(0.0, 1.0);
-    return _box(
+    return paneBox(
       key: key,
       indent: indent,
       child: Row(
         children: [
-          _icon(icon),
+          paneIcon(icon),
           UIs.width13,
           Expanded(
             child: Column(
@@ -374,7 +388,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _step(
+  Widget paneStep(
     IconData icon,
     String label,
     String value, {
@@ -383,13 +397,13 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     required VoidCallback? onInc,
     bool indent = false,
   }) {
-    return _box(
+    return paneBox(
       key: ValueKey('hw:step:$key'),
       indent: indent,
       padding: const EdgeInsets.fromLTRB(13, 5, 7, 5),
       child: Row(
         children: [
-          _icon(icon),
+          paneIcon(icon),
           UIs.width13,
           Expanded(
             child: Column(
@@ -439,7 +453,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _toggle(
+  Widget paneToggle(
     IconData icon,
     String label,
     bool value, {
@@ -448,13 +462,13 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     String? note,
     bool indent = false,
   }) {
-    return _box(
+    return paneBox(
       key: ValueKey('hw:toggle:$key'),
       indent: indent,
       onTap: onChanged == null ? null : () => onChanged(!value),
       child: Row(
         children: [
-          _icon(icon),
+          paneIcon(icon),
           UIs.width13,
           Expanded(
             child: Column(
@@ -471,7 +485,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _seg(
+  Widget paneSeg(
     IconData icon,
     String label,
     List<String> options,
@@ -480,7 +494,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     required ValueChanged<String>? onSelected,
     bool indent = false,
   }) {
-    return _box(
+    return paneBox(
       key: ValueKey('hw:seg:$key'),
       indent: indent,
       padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
@@ -493,7 +507,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _icon(icon),
+              paneIcon(icon),
               UIs.width13,
               Text(label, style: UIs.text13),
             ],
@@ -512,9 +526,9 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _choice(List<_Choice> options, {bool indent = false}) {
+  Widget paneChoice(List<VirtPaneChoice> options, {bool indent = false}) {
     final scheme = Theme.of(context).colorScheme;
-    return _box(
+    return paneBox(
       indent: indent,
       padding: const EdgeInsets.all(5),
       child: Column(
@@ -533,7 +547,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
                   padding: const EdgeInsets.all(9),
                   child: Row(
                     children: [
-                      _icon(
+                      paneIcon(
                         o.icon,
                         color: o.selected ? scheme.onSecondaryContainer : null,
                       ),
@@ -568,7 +582,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 
   /// A notice among the rows, as the design's callout: a title, what it
   /// means, in the warning colour or the primary one.
-  Widget _callout(
+  Widget paneCallout(
     String title,
     String body, {
     bool warn = true,
@@ -576,7 +590,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     Key? key,
   }) {
     final color = warn ? StatePalette.warn : Theme.of(context).colorScheme.primary;
-    return _box(
+    return paneBox(
       key: key,
       indent: indent,
       child: Row(
@@ -599,7 +613,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  /// The rows a [_disc] opened, unfolded under it rather than put on screen
+  /// The rows a [paneDisc] opened, unfolded under it rather than put on screen
   /// between two frames.
   ///
   /// A [Reveal] per device rather than one around all of them, so a fold moves
@@ -607,14 +621,14 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
   ///
   /// Spaced by [_gapped], since a `Reveal` is one element of the group's row
   /// list and the group's per-row padding stops at its edge.
-  Widget _reveal(String key, List<Widget> rows) =>
-      Reveal(open: _open.contains(key), children: _gapped(rows));
+  Widget paneReveal(String key, List<Widget> rows) =>
+      Reveal(open: paneOpen.contains(key), children: _gapped(rows));
 
   /// A device's row, which opens and closes its own rows under it.
   ///
   /// [badge] sits after the label (a snapshot's "current"), and [marked]
   /// draws the icon in the primary colour while the row is closed.
-  Widget _disc(
+  Widget paneDisc(
     String key,
     IconData icon,
     String label,
@@ -623,22 +637,22 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     Widget? badge,
     bool marked = false,
   }) {
-    final open = _open.contains(key);
+    final open = paneOpen.contains(key);
     final scheme = Theme.of(context).colorScheme;
-    return _box(
+    return paneBox(
       key: ValueKey('hw:disc:$key'),
       padding: const EdgeInsets.all(13),
       color: open ? scheme.surfaceContainerHigh : null,
       onTap:
           onTap ??
-          () => setState(() => open ? _open.remove(key) : _open.add(key)),
+          () => setState(() => open ? paneOpen.remove(key) : paneOpen.add(key)),
       // Most of the row for the label, not all of it: a long name (a
       // snapshot's, deep in the tree, on a phone) ellipsises before the
       // summary is gone. The summary takes whatever the label leaves.
       child: LayoutBuilder(
         builder: (context, cons) => Row(
           children: [
-            _icon(icon, color: open || marked ? scheme.primary : null),
+            paneIcon(icon, color: open || marked ? scheme.primary : null),
             UIs.width13,
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: cons.maxWidth * 0.6),
@@ -679,9 +693,9 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _text(String text, {bool indent = false, bool error = false}) {
+  Widget paneText(String text, {bool indent = false, bool error = false}) {
     return Padding(
-      padding: EdgeInsets.only(left: (indent ? _indent : 0) + 13, right: 13),
+      padding: EdgeInsets.only(left: (indent ? virtPaneIndent : 0) + 13, right: 13),
       child: Text(
         text,
         style: error
@@ -692,7 +706,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
   }
 
   /// A group with nothing more to it yet: what it is for, and the way to add.
-  Widget _empty(
+  Widget paneEmpty(
     String text,
     String action, {
     required String key,
@@ -717,10 +731,10 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     );
   }
 
-  Widget _actions(List<_Action> actions, {bool indent = false}) {
+  Widget paneActions(List<VirtPaneAction> actions, {bool indent = false}) {
     final error = Theme.of(context).colorScheme.error;
     return Padding(
-      padding: EdgeInsets.only(left: indent ? _indent : 0),
+      padding: EdgeInsets.only(left: indent ? virtPaneIndent : 0),
       child: Wrap(
         alignment: WrapAlignment.end,
         spacing: 7,
@@ -756,7 +770,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 
   /// One boot device: its place, what it is, and the arrows that move it.
   /// Tapped, it is booted from or not.
-  Widget _reorder({
+  Widget paneReorder({
     required String key,
     required String ord,
     required bool first,
@@ -769,7 +783,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
     final (icon, label, summary) = device;
     return Opacity(
       opacity: ord == '–' ? 0.5 : 1,
-      child: _box(
+      child: paneBox(
         key: ValueKey('hw:$key'),
         padding: const EdgeInsets.fromLTRB(13, 5, 7, 5),
         onTap: onToggle,
@@ -793,7 +807,7 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
               ),
             ),
             UIs.width7,
-            _icon(icon),
+            paneIcon(icon),
             UIs.width7,
             Expanded(
               child: Column(
@@ -833,45 +847,45 @@ mixin _PaneRows<W extends StatefulWidget> on State<W> {
 }
 
 /// The guest views' pane: the rows above, and every change made through
-/// [_apply] against the one hardware read those views share — the same
+/// [applyHwChange] against the one hardware read those views share — the same
 /// pending changes, the same revision sent back, the same conflict.
-mixin _EditPane<W extends ConsumerStatefulWidget>
-    on ConsumerState<W>, _PaneRows<W> {
-  String get _serverId;
-  VirtGuest get _guest;
-  VirtCapabilities get _caps;
+mixin VirtEditPane<W extends ConsumerStatefulWidget>
+    on ConsumerState<W>, VirtPaneRows<W> {
+  String get editServerId;
+  VirtGuest get editGuest;
+  VirtCapabilities get editCaps;
 
-  VirtHostNotifier get _notifier =>
-      ref.read(virtHostProvider(_serverId).notifier);
+  VirtHostNotifier get editNotifier =>
+      ref.read(virtHostProvider(editServerId).notifier);
 
-  VirtHardwareProvider get _provider =>
-      virtHardwareProvider(_serverId, _guest.id);
+  VirtHardwareProvider get editHwProvider =>
+      virtHardwareProvider(editServerId, editGuest.id);
 
-  bool get _lxc => _guest.kind == VirtGuestKind.lxc;
+  bool get editIsLxc => editGuest.kind == VirtGuestKind.lxc;
 
-  VirtHostKind? get _host => ref.read(virtHostProvider(_serverId)).kind;
+  VirtHostKind? get editHostKind => ref.read(virtHostProvider(editServerId)).kind;
 
-  bool get _pve => _host == VirtHostKind.pve;
+  bool get editIsPve => editHostKind == VirtHostKind.pve;
 
   /// The pane: [groupsOf]'s groups under their titles, with the index
   /// beside them where there is room, once the hardware is read.
-  Widget _buildEditPane(
-    List<_Group> Function(VirtHardware hw, bool busy) groupsOf,
+  Widget buildEditPane(
+    List<VirtPaneGroup> Function(VirtHardware hw, bool busy) groupsOf,
   ) {
-    final async = ref.watch(_provider);
+    final async = ref.watch(editHwProvider);
     final busy = ref.watch(
       virtHostProvider(
-        _serverId,
-      ).select((s) => s.isBusy(_guest.id)),
+        editServerId,
+      ).select((s) => s.isBusy(editGuest.id)),
     );
     final hw = async.value;
     if (async.error case final e?) {
-      return _buildError(e, onRetry: () => ref.invalidate(_provider));
+      return buildPaneError(e, onRetry: () => ref.invalidate(editHwProvider));
     }
     if (hw == null) return const Center(child: SizedLoading.medium);
-    return _buildGroups(
+    return buildPaneGroups(
       groupsOf(hw, busy),
-      onRefresh: () => ref.refresh(_provider.future),
+      onRefresh: () => ref.refresh(editHwProvider.future),
     );
   }
 
@@ -897,21 +911,21 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
   /// Which part of the pane a pending change is shown in: beside the field
   /// or device it changes, so what waits for a restart is read where it is
   /// set. A key none of them has — an option this app does not edit — is
-  /// [_PendingPlace.other], shown with the configuration file.
-  _PendingPlace _placeOf(VirtHardware hw, String key) {
-    if (_cpuKeys.contains(key)) return _PendingPlace.cpu;
-    if (_memKeys.contains(key)) return _PendingPlace.memory;
-    if (_bootKeys.contains(key)) return _PendingPlace.boot;
-    if (_settingsKeys.contains(key)) return _PendingPlace.settings;
-    if (hw.nic(key) != null || _nicKey.hasMatch(key)) return _PendingPlace.nic;
+  /// [VirtPendingPlace.other], shown with the configuration file.
+  VirtPendingPlace placeOfPending(VirtHardware hw, String key) {
+    if (_cpuKeys.contains(key)) return VirtPendingPlace.cpu;
+    if (_memKeys.contains(key)) return VirtPendingPlace.memory;
+    if (_bootKeys.contains(key)) return VirtPendingPlace.boot;
+    if (_settingsKeys.contains(key)) return VirtPendingPlace.settings;
+    if (hw.nic(key) != null || _nicKey.hasMatch(key)) return VirtPendingPlace.nic;
     if (hw.disk(key) != null || _diskKey.hasMatch(key)) {
-      return _PendingPlace.disk;
+      return VirtPendingPlace.disk;
     }
-    return _PendingPlace.other;
+    return VirtPendingPlace.other;
   }
 
   /// The pending changes [where] picks, one row each.
-  List<Widget> _pendingRows(
+  List<Widget> buildPendingRows(
     VirtHardware hw,
     bool busy,
     bool Function(VirtPendingField p) where, {
@@ -932,14 +946,14 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
     final value = p.delete
         ? '${p.current ?? ''} → ${libL10n.delete}'
         : '${p.current ?? '—'} → ${p.pending ?? '—'}';
-    return _box(
+    return paneBox(
       key: ValueKey('hw:pending:${p.key}'),
       indent: indent,
       color: StatePalette.warn.withValues(alpha: 0.1),
       padding: const EdgeInsets.fromLTRB(13, 5, 5, 5),
       child: Row(
         children: [
-          _icon(Icons.schedule, color: StatePalette.warn),
+          paneIcon(Icons.schedule, color: StatePalette.warn),
           UIs.width13,
           Expanded(
             child: Column(
@@ -958,50 +972,50 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
               ],
             ),
           ),
-          if (_caps.hardwareRevert)
+          if (editCaps.hardwareRevert)
             Btn.icon(
               key: ValueKey('hw:revert:${p.key}'),
               text: l10n.virtHwRevert,
               icon: const Icon(Icons.undo, size: 17),
-              onTap: busy ? null : () => _apply(hw, VirtHwRevert([p.key])),
+              onTap: busy ? null : () => applyHwChange(hw, VirtHwRevert([p.key])),
             ),
         ],
       ),
     );
   }
 
-  String? _issueText(VirtHardware hw, VirtHwIssue? issue) =>
-      virtHwIssueText(issue, limits: hw.limits, pve: _pve);
+  String? hwIssueText(VirtHardware hw, VirtHwIssue? issue) =>
+      virtHwIssueText(issue, limits: hw.limits, pve: editIsPve);
 
   /// Makes [change] and, when the host took it, drops the draft with
   /// [clear].
-  Future<void> _save(
+  Future<void> saveHwChange(
     VirtHardware hw,
     VirtHwChange change,
     void Function() clear,
   ) async {
-    if (await _apply(hw, change) && mounted) {
+    if (await applyHwChange(hw, change) && mounted) {
       setState(clear);
     }
   }
 
   /// Makes [change], says what came of it, and reads the hardware again.
   /// True when the host took it.
-  Future<bool> _apply(VirtHardware hw, VirtHwChange change) async =>
-      await _applyFor(hw, change) == _Applied.done;
+  Future<bool> applyHwChange(VirtHardware hw, VirtHwChange change) async =>
+      await applyHwChangeFor(hw, change) == VirtApplied.done;
 
-  /// [_apply], saying why it did not: a caller holding a draft keeps it
+  /// [applyHwChange], saying why it did not: a caller holding a draft keeps it
   /// through a failure that retrying could get past, and not through a
   /// conflict, which says its base is gone.
-  Future<_Applied> _applyFor(VirtHardware hw, VirtHwChange change) async {
-    final issue = virtHwIssue(hw, change, host: _host);
+  Future<VirtApplied> applyHwChangeFor(VirtHardware hw, VirtHwChange change) async {
+    final issue = virtHwIssue(hw, change, host: editHostKind);
     if (issue != null) {
-      Toast.warn(_issueText(hw, issue) ?? libL10n.fail);
-      return _Applied.refused;
+      Toast.warn(hwIssueText(hw, issue) ?? libL10n.fail);
+      return VirtApplied.refused;
     }
     final VirtHwOutcome outcome;
     try {
-      outcome = await _notifier.changeHardware(_guest.id, hw, change);
+      outcome = await editNotifier.changeHardware(editGuest.id, hw, change);
     } on VirtErr catch (e) {
       final conflict = e.type == VirtErrType.conflict;
       if (conflict) {
@@ -1009,19 +1023,19 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
       } else {
         Toast.error(e.title, body: e.detail);
       }
-      if (mounted) ref.invalidate(_provider);
-      return conflict ? _Applied.conflict : _Applied.failed;
+      if (mounted) ref.invalidate(editHwProvider);
+      return conflict ? VirtApplied.conflict : VirtApplied.failed;
     } catch (e, s) {
       Loggers.app.warning('Virtualization hardware', e, s);
       Toast.error(libL10n.fail, body: '$e');
-      if (mounted) ref.invalidate(_provider);
-      return _Applied.failed;
+      if (mounted) ref.invalidate(editHwProvider);
+      return VirtApplied.failed;
     }
-    if (!mounted) return _Applied.done;
+    if (!mounted) return VirtApplied.done;
     final before = {for (final p in hw.pending) p.key};
     VirtHardware? after;
     try {
-      after = await ref.refresh(_provider.future);
+      after = await ref.refresh(editHwProvider.future);
     } catch (_) {
       // The view shows why it cannot read.
     }
@@ -1035,12 +1049,12 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
     } else {
       Toast.success(libL10n.success);
     }
-    return _Applied.done;
+    return VirtApplied.done;
   }
 }
 
-/// How [_apply] ended.
-enum _Applied {
+/// How [applyHwChange] ended.
+enum VirtApplied {
   done,
 
   /// Not sent: the change itself is not one the guest takes.
@@ -1053,11 +1067,11 @@ enum _Applied {
   failed,
 }
 
-enum _PendingPlace { cpu, memory, disk, nic, boot, settings, other }
+enum VirtPendingPlace { cpu, memory, disk, nic, boot, settings, other }
 
 /// One group of the pane: its heading and rows, and its line in the index.
-final class _Group {
-  const _Group({
+final class VirtPaneGroup {
+  const VirtPaneGroup({
     required this.key,
     required this.title,
     required this.right,
@@ -1088,8 +1102,8 @@ final class _Group {
   final String? note;
 }
 
-final class _Action {
-  const _Action(
+final class VirtPaneAction {
+  const VirtPaneAction(
     this.text, {
     this.icon,
     this.key,
@@ -1106,8 +1120,8 @@ final class _Action {
   final VoidCallback? onTap;
 }
 
-final class _Choice {
-  const _Choice({
+final class VirtPaneChoice {
+  const VirtPaneChoice({
     required this.key,
     required this.icon,
     required this.label,
@@ -1124,3 +1138,47 @@ final class _Choice {
   final VoidCallback? onTap;
 }
 
+/// Makes [change] through the host's notifier and says what came of it.
+/// True when the host took it.
+Future<bool> virtManage(
+  WidgetRef ref,
+  String serverId,
+  VirtResourceChange change, {
+  bool quiet = false,
+}) async =>
+    await virtManageFor(ref, serverId, change, quiet: quiet) == VirtApplied.done;
+
+/// [virtManage], saying why it did not: a draft is kept through a failure
+/// that retrying could get past, and dropped on a conflict, which says the
+/// read it was made from is gone.
+Future<VirtApplied> virtManageFor(
+  WidgetRef ref,
+  String serverId,
+  VirtResourceChange change, {
+  bool quiet = false,
+}) async {
+  // Read before the await: the page may be left while the host works, and
+  // a disposed ref throws — which would report a change that was made as
+  // failed.
+  final pending =
+      (change is VirtNetworkCreate || change is VirtNetworkDelete) &&
+      (ref.read(virtHostProvider(serverId)).data?.capabilities.networkApply ??
+          false);
+  try {
+    await ref.read(virtHostProvider(serverId).notifier).manage(change);
+    if (!quiet) {
+      Toast.success(pending ? l10n.virtNetPendingSaved : libL10n.success);
+    }
+    return VirtApplied.done;
+  } on VirtErr catch (e) {
+    if (e.type == VirtErrType.conflict) {
+      Toast.warn(e.title, body: e.detail);
+      return VirtApplied.conflict;
+    }
+    Toast.error(e.title, body: e.detail);
+  } catch (e, s) {
+    Loggers.app.warning('Virtualization storage or network', e, s);
+    Toast.error(libL10n.fail, body: '$e');
+  }
+  return VirtApplied.failed;
+}

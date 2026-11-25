@@ -1,4 +1,18 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
 
 /// A guest's settings — the design's Settings view: what the guest is called
 /// and noted as, whether it starts with the host, PVE's protection, its
@@ -35,17 +49,17 @@ class VirtSettingsView extends ConsumerStatefulWidget {
 }
 
 class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
-    with _PaneRows<VirtSettingsView>, _EditPane<VirtSettingsView> {
+    with VirtPaneRows<VirtSettingsView>, VirtEditPane<VirtSettingsView> {
   @override
-  String get _serverId => widget.serverId;
+  String get editServerId => widget.serverId;
   @override
-  VirtGuest get _guest => widget.guest;
+  VirtGuest get editGuest => widget.guest;
   @override
-  VirtCapabilities get _caps => widget.caps;
+  VirtCapabilities get editCaps => widget.caps;
 
   final _name = TextEditingController();
   final _desc = TextEditingController();
-  late final _cloneName = TextEditingController(text: '${_guest.name}-clone');
+  late final _cloneName = TextEditingController(text: '${editGuest.name}-clone');
 
   /// The design's Full clone (PVE) / Copy disk contents (libvirt).
   var _cloneFull = true;
@@ -100,10 +114,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   }
 
   @override
-  Widget build(BuildContext context) => _buildEditPane(_groups);
+  Widget build(BuildContext context) => buildEditPane(_groups);
 
   void _sync(VirtHardware hw) {
-    final name = hw.name ?? _guest.name;
+    final name = hw.name ?? editGuest.name;
     if (_nameBase != name) {
       if (_nameBase == null || _name.text == _nameBase) _name.text = name;
       _nameBase = name;
@@ -115,50 +129,50 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     }
   }
 
-  List<_Group> _groups(VirtHardware hw, bool busy) {
+  List<VirtPaneGroup> _groups(VirtHardware hw, bool busy) {
     _sync(hw);
     return [
       _generalGroup(hw, busy),
-      if (!_lxc && hw.disks.any((d) => d.cloudInit)) _cloudInitGroup(busy),
-      if (_caps.template && !_guest.template) _templateGroup(hw, busy),
-      if (_caps.clone) _cloneGroup(hw, busy),
-      if (_caps.create) _deleteGroup(hw, busy),
+      if (!editIsLxc && hw.disks.any((d) => d.cloudInit)) _cloudInitGroup(busy),
+      if (editCaps.template && !editGuest.template) _templateGroup(hw, busy),
+      if (editCaps.clone) _cloneGroup(hw, busy),
+      if (editCaps.create) _deleteGroup(hw, busy),
     ];
   }
 
   // --- General ---
 
-  _Group _generalGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _generalGroup(VirtHardware hw, bool busy) {
     final name = _name.text.trim();
     final nameChanged = name != _nameBase;
     final taken =
         nameChanged &&
-        (ref.read(virtHostProvider(_serverId)).data?.guests ??
+        (ref.read(virtHostProvider(editServerId)).data?.guests ??
                 const <VirtGuest>[])
-            .any((g) => g.id != _guest.id && g.name == name);
+            .any((g) => g.id != editGuest.id && g.name == name);
     final nameIssue = !nameChanged
         ? null
         : taken
         ? l10n.virtCreateNameTaken
-        : _issueText(hw, virtHwIssue(hw, VirtHwSetName(name), host: _host));
+        : hwIssueText(hw, virtHwIssue(hw, VirtHwSetName(name), host: editHostKind));
     final renameLocked = hw.running && !hw.renameRunning;
     final desc = _desc.text;
     final descChanged = desc != _descBase;
     final descIssue = descChanged
-        ? _issueText(hw, virtHwIssue(hw, VirtHwSetDescription(desc)))
+        ? hwIssueText(hw, virtHwIssue(hw, VirtHwSetDescription(desc)))
         : null;
     final waits = _waits(hw);
-    return _Group(
+    return VirtPaneGroup(
       key: 'general',
       title: libL10n.general,
       right: waits ? l10n.virtHwLater : '',
       warn: waits,
       indexNote: hw.autostart ? l10n.virtHwAutostart : l10n.virtSetManualStart,
       rows: [
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('set:name'),
           controller: _name,
-          label: _lxc ? l10n.virtHostname : libL10n.name,
+          label: editIsLxc ? l10n.virtHostname : libL10n.name,
           icon: Icons.label_outline,
           noWrap: true,
           suggestion: false,
@@ -166,24 +180,24 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           errorText: nameIssue,
           onChanged: (_) => setState(() {}),
         )]),
-        if (renameLocked) _text(l10n.virtSetRenameStopped),
+        if (renameLocked) paneText(l10n.virtSetRenameStopped),
         if (nameChanged)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() => _name.text = _nameBase ?? ''),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'set:name:save',
               primary: true,
               onTap: busy || nameIssue != null || renameLocked
                   ? null
-                  : () => _apply(hw, VirtHwSetName(name)),
+                  : () => applyHwChange(hw, VirtHwSetName(name)),
             ),
           ]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('set:desc'),
           controller: _desc,
           label: libL10n.description,
@@ -197,31 +211,31 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           onChanged: (_) => setState(() {}),
         )]),
         if (descChanged)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() => _desc.text = _descBase ?? ''),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'set:desc:save',
               primary: true,
               onTap: busy || descIssue != null
                   ? null
-                  : () => _apply(hw, VirtHwSetDescription(desc)),
+                  : () => applyHwChange(hw, VirtHwSetDescription(desc)),
             ),
           ]),
-        _toggle(
+        paneToggle(
           Icons.power_settings_new,
           l10n.virtHwAutostart,
           hw.autostart,
           key: 'autostart',
-          note: _pve ? l10n.virtHwAutostartPve : 'virsh autostart',
-          onChanged: busy ? null : (on) => _apply(hw, VirtHwSetAutostart(on)),
+          note: editIsPve ? l10n.virtHwAutostartPve : 'virsh autostart',
+          onChanged: busy ? null : (on) => applyHwChange(hw, VirtHwSetAutostart(on)),
         ),
         if (hw.protection case final protected?)
-          _toggle(
+          paneToggle(
             Icons.lock_outline,
             l10n.virtSetProtection,
             protected,
@@ -229,12 +243,12 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             note: l10n.virtSetProtectionNote,
             onChanged: busy
                 ? null
-                : (on) => _apply(hw, VirtHwSetProtection(on)),
+                : (on) => applyHwChange(hw, VirtHwSetProtection(on)),
           ),
-        ..._pendingRows(
+        ...buildPendingRows(
           hw,
           busy,
-          (p) => _placeOf(hw, p.key) == _PendingPlace.settings,
+          (p) => placeOfPending(hw, p.key) == VirtPendingPlace.settings,
         ),
       ],
     );
@@ -242,7 +256,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   bool _waits(VirtHardware hw) =>
       hw.running &&
-      hw.pending.any((p) => _placeOf(hw, p.key) == _PendingPlace.settings);
+      hw.pending.any((p) => placeOfPending(hw, p.key) == VirtPendingPlace.settings);
 
   // --- Template ---
 
@@ -254,15 +268,15 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   /// either — and it lives here because it is a setting of the guest rather
   /// than an action on it: PVE's own web UI puts it under "More", beside
   /// Clone, and it is the one change that decides what the guest *is*.
-  _Group _templateGroup(VirtHardware hw, bool busy) {
-    final running = _guest.state != VirtGuestState.stopped;
+  VirtPaneGroup _templateGroup(VirtHardware hw, bool busy) {
+    final running = editGuest.state != VirtGuestState.stopped;
     // PVE refuses a guest with snapshots. Only known where the Snapshots
     // view has read them this session; otherwise the host says so itself
     // when the request is made.
     final snapCount = _readSnapshotCount();
     final snaps = snapCount != null && snapCount != 0;
     final blocked = running || snaps || busy || _toTemplate;
-    return _Group(
+    return VirtPaneGroup(
       key: 'template',
       title: l10n.virtToTemplate,
       right: '',
@@ -273,11 +287,11 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           ? l10n.virtToTemplateStopped
           : l10n.virtToTemplateIrreversible,
       rows: [
-        _text(l10n.virtToTemplateNote),
-        if (running) _text(l10n.virtToTemplateStopped),
-        if (snaps) _text(l10n.virtToTemplateSnapshots),
-        _actions([
-          _Action(
+        paneText(l10n.virtToTemplateNote),
+        if (running) paneText(l10n.virtToTemplateStopped),
+        if (snaps) paneText(l10n.virtToTemplateSnapshots),
+        paneActions([
+          VirtPaneAction(
             l10n.virtToTemplate,
             key: 'template:go',
             icon: Icons.inventory_2_outlined,
@@ -292,7 +306,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   /// them this session — the same trick the pending banner uses, so opening
   /// Settings is not a round trip of its own.
   int? _readSnapshotCount() {
-    final provider = virtSnapshotsProvider(_serverId, _guest.id);
+    final provider = virtSnapshotsProvider(editServerId, editGuest.id);
     if (!ref.read(provider.exists)) return null;
     return ref.watch(provider).value?.length;
   }
@@ -304,7 +318,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.virtToTemplateConfirm(_guest.name)),
+          Text(l10n.virtToTemplateConfirm(editGuest.name)),
           UIs.height7,
           Text(l10n.virtToTemplateNote, style: UIs.text12Grey),
           UIs.height7,
@@ -321,8 +335,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     if (ok != true || !mounted) return;
     setState(() => _toTemplate = true);
     try {
-      await _notifier.makeTemplate(_guest.id);
-      Toast.success(l10n.virtTemplateCreated(_guest.name));
+      await editNotifier.makeTemplate(editGuest.id);
+      Toast.success(l10n.virtTemplateCreated(editGuest.name));
     } on VirtErr catch (e) {
       Toast.error(e.title, body: e.detail);
     } catch (e, s) {
@@ -336,7 +350,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   // --- cloud-init ---
 
   VirtCloudInitProvider get _ciProvider =>
-      virtCloudInitProvider(_serverId, _guest.id);
+      virtCloudInitProvider(editServerId, editGuest.id);
 
   /// The draft from [ci], and [ci] as what it is compared with.
   void _ciFill(VirtCloudInitState ci) {
@@ -370,7 +384,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             ? null
             : _ciPassword.text,
         sshKeys: _ciKeys.text,
-        hostname: _pve ? null : _ciHostname.text.trim(),
+        hostname: editIsPve ? null : _ciHostname.text.trim(),
         address: ci.network ? (static ? _ciAddress.text.trim() : null) : ci.address,
         gateway: ci.network
             ? (static && gateway.isNotEmpty ? gateway : null)
@@ -398,14 +412,14 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
         edit.passwordExpires != ci.passwordExpires;
   }
 
-  _Group _cloudInitGroup(bool busy) {
+  VirtPaneGroup _cloudInitGroup(bool busy) {
     final async = ref.watch(_ciProvider);
     final read = async.value;
     const title = 'cloud-init';
-    final right = _pve ? 'cloudinit' : 'NoCloud';
+    final right = editIsPve ? 'cloudinit' : 'NoCloud';
     if (read == null) {
       final e = async.error;
-      return _Group(
+      return VirtPaneGroup(
         key: 'cloud-init',
         title: title,
         right: right,
@@ -419,9 +433,9 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               child: Center(child: SizedLoading.small),
             )
           else ...[
-            _text(e is VirtErr ? [e.title, ?e.detail].join('\n') : '$e', error: true),
-            _actions([
-              _Action(
+            paneText(e is VirtErr ? [e.title, ?e.detail].join('\n') : '$e', error: true),
+            paneActions([
+              VirtPaneAction(
                 libL10n.retry,
                 icon: Icons.refresh,
                 key: 'ci:retry',
@@ -446,25 +460,25 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     final edit = _ciEditOf(ci);
     final changed = _ciChanges(ci, edit);
     final issue = changed
-        ? virtCloudInitEditIssue(ci, edit, host: _host ?? VirtHostKind.libvirt)
+        ? virtCloudInitEditIssue(ci, edit, host: editHostKind ?? VirtHostKind.libvirt)
         : null;
     String? on(VirtCreateIssue which, String text) => issue == which ? text : null;
     final locked = busy || _ciSaving;
-    return _Group(
+    return VirtPaneGroup(
       key: 'cloud-init',
       title: title,
       right: right,
       warn: false,
       indexNote: ci.user.ifEmpty(l10n.virtCreateNotChosen),
       rows: [
-        _text(l10n.virtCiEditTip),
+        paneText(l10n.virtCiEditTip),
         if (ci.foreign)
-          _callout(
+          paneCallout(
             l10n.virtCiForeignTitle,
             l10n.virtCiForeignBody,
             key: const ValueKey('ci:foreign'),
           ),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('ci:user'),
           controller: _ciUser,
           label: libL10n.user,
@@ -475,7 +489,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           errorText: on(VirtCreateIssue.ciUser, l10n.virtCiUserInvalid),
           onChanged: (_) => setState(() {}),
         )]),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('ci:password'),
           controller: _ciPassword,
           label: libL10n.pwd,
@@ -488,7 +502,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           onChanged: (_) => setState(() {}),
         )]),
         if (ci.passwordSet)
-          _toggle(
+          paneToggle(
             Icons.no_encryption_outlined,
             l10n.virtCiRemovePassword,
             _ciRemovePassword,
@@ -504,8 +518,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
         // The expiry is cloud-init's own `chpasswd: expire:`. PVE writes
         // `expire: false` for every VM and has no option for it, so it is
         // offered on libvirt only.
-        if (!_pve && !_ciRemovePassword)
-          _toggle(
+        if (!editIsPve && !_ciRemovePassword)
+          paneToggle(
             Icons.update_outlined,
             l10n.virtCiExpire,
             _ciExpire,
@@ -513,7 +527,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             note: l10n.virtCiExpireNote,
             onChanged: locked ? null : (on) => setState(() => _ciExpire = on),
           ),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('ci:keys'),
           controller: _ciKeys,
           label: l10n.virtSshKeys,
@@ -527,13 +541,13 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           errorText: on(VirtCreateIssue.sshKeys, l10n.virtCreateSshKeysInvalid),
           onChanged: (_) => setState(() {}),
         )]),
-        _text(l10n.virtCiKeysAdded),
+        paneText(l10n.virtCiKeysAdded),
         if (issue == VirtCreateIssue.ciCredentials)
-          _text(l10n.virtCiCredentialsMissing, error: true),
-        if (_pve)
-          _text(l10n.virtCiHostnamePve)
+          paneText(l10n.virtCiCredentialsMissing, error: true),
+        if (editIsPve)
+          paneText(l10n.virtCiHostnamePve)
         else
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('ci:hostname'),
             controller: _ciHostname,
             label: l10n.virtHostname,
@@ -545,7 +559,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             onChanged: (_) => setState(() {}),
           )]),
         if (ci.network) ...[
-          _seg(
+          paneSeg(
             Icons.lan_outlined,
             libL10n.addr,
             ['DHCP', l10n.virtCiStatic],
@@ -554,7 +568,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             onSelected: locked ? null : (v) => setState(() => _ciStatic = v != 'DHCP'),
           ),
           if (_ciStatic) ...[
-            _inputRow([Input(
+            paneInputRow([Input(
               key: const ValueKey('ci:address'),
               controller: _ciAddress,
               label: 'IPv4 / CIDR',
@@ -566,7 +580,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               errorText: on(VirtCreateIssue.ciAddress, l10n.virtCiAddressInvalid),
               onChanged: (_) => setState(() {}),
             )]),
-            _inputRow([Input(
+            paneInputRow([Input(
               key: const ValueKey('ci:gateway'),
               controller: _ciGateway,
               label: libL10n.gateway,
@@ -579,7 +593,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               onChanged: (_) => setState(() {}),
             )]),
           ],
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('ci:dns'),
             controller: _ciDns,
             label: 'DNS',
@@ -591,7 +605,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             errorText: on(VirtCreateIssue.ciDns, l10n.virtCiDnsInvalid),
             onChanged: (_) => setState(() {}),
           )]),
-          _inputRow([Input(
+          paneInputRow([Input(
             key: const ValueKey('ci:search'),
             controller: _ciSearch,
             label: l10n.virtCiSearch,
@@ -603,29 +617,29 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
             errorText: on(VirtCreateIssue.ciSearch, l10n.virtCreateNameInvalidPve),
             onChanged: (_) => setState(() {}),
           )]),
-          _text(l10n.virtCiSearchTip),
-          if (ci.nics > 1) _text(l10n.virtCiNicsTip(ci.nics)),
+          paneText(l10n.virtCiSearchTip),
+          if (ci.nics > 1) paneText(l10n.virtCiNicsTip(ci.nics)),
         ],
         // cloud-init runs most of what it does once per instance: what
         // saving here does, and when.
-        _callout(
+        paneCallout(
           l10n.virtCiEffectTitle,
           [
-            _pve ? l10n.virtCiEffectPve : l10n.virtCiEffectLibvirt,
+            editIsPve ? l10n.virtCiEffectPve : l10n.virtCiEffectLibvirt,
             l10n.virtCiNewInstance,
           ].join(' '),
           warn: false,
           key: const ValueKey('ci:effect'),
         ),
         if (changed)
-          _actions([
-            _Action(
+          paneActions([
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               key: 'ci:cancel',
               onTap: locked ? null : () => setState(() => _ciFill(read)),
             ),
-            _Action(
+            VirtPaneAction(
               libL10n.save,
               key: 'ci:save',
               primary: true,
@@ -642,7 +656,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   ) async {
     setState(() => _ciSaving = true);
     try {
-      await _notifier.setCloudInit(_guest.id, base, edit);
+      await editNotifier.setCloudInit(editGuest.id, base, edit);
       // The draft is what was saved: refilled from the read that follows.
       final after = await ref.read(_ciProvider.future);
       if (mounted) setState(() => _ciFill(after));
@@ -667,18 +681,18 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   // --- Clone ---
 
-  _Group _cloneGroup(VirtHardware hw, bool busy) {
+  VirtPaneGroup _cloneGroup(VirtHardware hw, bool busy) {
     final name = _cloneName.text.trim();
-    final taken = (ref.read(virtHostProvider(_serverId)).data?.guests ??
+    final taken = (ref.read(virtHostProvider(editServerId)).data?.guests ??
             const <VirtGuest>[])
         .any((g) => g.name == name);
     // libvirt copies a disk only while nothing writes to it; PVE clones a
     // running guest through a snapshot of its own.
-    final stopFirst = !_pve && _guest.state != VirtGuestState.stopped;
+    final stopFirst = !editIsPve && editGuest.state != VirtGuestState.stopped;
     // PVE links a clone only to a template's disks; anything else is full.
-    final canLink = _caps.linkedClone && _guest.template;
-    final full = _pve && !canLink ? true : _cloneFull;
-    final nameOk = virtCloneNameIssue(name, _host) == null && !taken;
+    final canLink = editCaps.linkedClone && editGuest.template;
+    final full = editIsPve && !canLink ? true : _cloneFull;
+    final nameOk = virtCloneNameIssue(name, editHostKind) == null && !taken;
     final nameIssue = name.isEmpty || !nameOk
         ? (taken ? l10n.virtCreateNameTaken : _nameIssueText(name))
         : null;
@@ -687,39 +701,39 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     // pools that take a volume.
     final pools = _clonePools();
     final nodes = _cloneNodes();
-    final targetIssue = _pve && !full
+    final targetIssue = editIsPve && !full
         // A linked clone shares the template's disks: PVE refuses a storage
         // and a node on it (`parameter 'storage' not allowed for linked
         // clones`). libvirt's empty disks are made in the pool picked.
         ? (_cloneStorage != null || _cloneNode != null
               ? VirtCreateIssue.cloneLinkedTarget
               : null)
-        : _pve
+        : editIsPve
         ? virtCloneNodeIssue(
                 nodes: nodes,
                 targetNode: _cloneNode,
-                sourceNode: _guest.node,
+                sourceNode: editGuest.node,
               ) ??
               virtCloneStorageIssue(
                 storages: pools,
                 storage: _cloneStorage,
                 full: full,
-                kind: _guest.kind,
+                kind: editGuest.kind,
                 targetNode: _cloneNode,
               )
         : null;
-    return _Group(
+    return VirtPaneGroup(
       key: 'clone',
       title: libL10n.clone,
       right: '',
       warn: false,
       indexNote: full
           ? l10n.virtCloneFullShort
-          : _pve
+          : editIsPve
           ? l10n.virtCloneLinkedShort
           : l10n.virtCloneEmptyShort,
       rows: [
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('clone:name'),
           controller: _cloneName,
           label: l10n.virtCloneName,
@@ -730,23 +744,23 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           errorText: name.isEmpty ? null : nameIssue,
           onChanged: (_) => setState(() {}),
         )]),
-        _toggle(
+        paneToggle(
           Icons.file_copy_outlined,
-          _pve ? l10n.virtCloneFull : l10n.virtCloneCopyDisks,
+          editIsPve ? l10n.virtCloneFull : l10n.virtCloneCopyDisks,
           full,
           key: 'clone:full',
-          note: !_pve
+          note: !editIsPve
               ? l10n.virtCloneEmptyNote
               : canLink
               ? l10n.virtCloneLinkedNote
               : l10n.virtCloneFullOnly,
-          onChanged: _cloning || (_pve && !canLink)
+          onChanged: _cloning || (editIsPve && !canLink)
               ? null
               : (on) => setState(() => _cloneFull = on),
         ),
-        if (_caps.cloneTarget && (full || !_pve) && pools.isNotEmpty)
-          _choice([
-            _Choice(
+        if (editCaps.cloneTarget && (full || !editIsPve) && pools.isNotEmpty)
+          paneChoice([
+            VirtPaneChoice(
               key: 'clone:target:same',
               icon: Icons.storage_outlined,
               label: l10n.virtCloneStorageSame,
@@ -755,11 +769,11 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               onTap: () => setState(() => _cloneStorage = null),
             ),
             for (final p in pools)
-              _Choice(
+              VirtPaneChoice(
                 key: 'clone:target:${p.id}',
                 icon: Icons.storage_outlined,
                 label: p.name,
-                sub: _pve
+                sub: editIsPve
                     ? [?p.node, ?p.path].join(' · ')
                     : [p.type, ?p.path].join(' · '),
                 selected: _cloneStorage == p.name,
@@ -768,19 +782,19 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
           ]),
         // The node, only where there is another one to pick: a copy to
         // another node needs a cluster and a storage both see.
-        if (_pve && full && nodes.length > 1)
-          _choice([
-            _Choice(
+        if (editIsPve && full && nodes.length > 1)
+          paneChoice([
+            VirtPaneChoice(
               key: 'clone:node:same',
               icon: Icons.dns_outlined,
               label: l10n.virtCloneNodeSame,
-              sub: _guest.node,
+              sub: editGuest.node,
               selected: _cloneNode == null,
               onTap: () => setState(() => _cloneNode = null),
             ),
             for (final n in nodes)
-              if (n.name != _guest.node)
-                _Choice(
+              if (n.name != editGuest.node)
+                VirtPaneChoice(
                   key: 'clone:node:${n.name}',
                   icon: Icons.dns_outlined,
                   label: n.name,
@@ -789,10 +803,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
                 ),
           ]),
         if (targetIssue != null)
-          _text(_cloneTargetText(targetIssue), error: true),
-        if (stopFirst) _text(l10n.virtCloneStopFirst),
-        _actions([
-          _Action(
+          paneText(_cloneTargetText(targetIssue), error: true),
+        if (stopFirst) paneText(l10n.virtCloneStopFirst),
+        paneActions([
+          VirtPaneAction(
             _cloning ? l10n.virtCloning : libL10n.clone,
             key: 'clone:go',
             primary: true,
@@ -810,10 +824,10 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     );
   }
 
-  String _nameIssueText(String name) => switch (virtCloneNameIssue(name, _host)) {
+  String _nameIssueText(String name) => switch (virtCloneNameIssue(name, editHostKind)) {
     null => '',
     _ =>
-      _pve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
+      editIsPve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
   };
 
   String _cloneTargetText(VirtCreateIssue issue) => switch (issue) {
@@ -829,30 +843,30 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   /// libvirt's pools that take a volume.
   List<VirtStoragePool> _clonePools() {
     final pools =
-        ref.watch(virtStoragePoolsProvider(_serverId)).value ??
+        ref.watch(virtStoragePoolsProvider(editServerId)).value ??
         const <VirtStoragePool>[];
     return virtDiskStorages(
       pools,
-      host: _host ?? VirtHostKind.libvirt,
-      kind: _guest.kind,
-      node: _guest.node,
+      host: editHostKind ?? VirtHostKind.libvirt,
+      kind: editGuest.kind,
+      node: editGuest.node,
     );
   }
 
   List<VirtNode> _cloneNodes() =>
-      ref.watch(virtHostProvider(_serverId)).data?.host.nodes ??
+      ref.watch(virtHostProvider(editServerId)).data?.host.nodes ??
       const <VirtNode>[];
 
   /// Where the copy's disks stay when no target is picked: the storages the
   /// guest's own disks are on, named as the host names them.
   String _cloneSources() {
-    final hw = ref.watch(_provider).value;
+    final hw = ref.watch(editHwProvider).value;
     final names = <String>{};
     for (final d in hw?.disks ?? const <VirtHwDisk>[]) {
       final source = d.source;
       if (source == null) continue;
       // PVE: `local-lvm:vm-100-disk-0`; libvirt: a path in a pool.
-      names.add(_pve ? source.split(':').first : source);
+      names.add(editIsPve ? source.split(':').first : source);
     }
     return names.join(', ');
   }
@@ -860,14 +874,14 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
   Future<void> _onClone(String name, bool full) async {
     setState(() => _cloning = true);
     try {
-      final id = await _notifier.clone(
-        _guest.id,
+      final id = await editNotifier.clone(
+        editGuest.id,
         VirtCloneRequest(
           name: name,
           full: full,
-          storage: _pve ? _cloneStorage : null,
-          targetNode: _pve ? _cloneNode : null,
-          targetPool: _pve ? null : _cloneStorage,
+          storage: editIsPve ? _cloneStorage : null,
+          targetNode: editIsPve ? _cloneNode : null,
+          targetPool: editIsPve ? null : _cloneStorage,
         ),
       );
       Toast.success(l10n.virtCloned(name));
@@ -883,15 +897,15 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
 
   // --- Delete ---
 
-  _Group _deleteGroup(VirtHardware hw, bool busy) {
-    final running = _guest.state != VirtGuestState.stopped;
+  VirtPaneGroup _deleteGroup(VirtHardware hw, bool busy) {
+    final running = editGuest.state != VirtGuestState.stopped;
     final protected = hw.protection ?? false;
     final blocked = running || protected || busy || _deleting;
     final volumes = [
       for (final d in hw.disks)
         if (d.kind != VirtHwDiskKind.cdrom && d.source != null) d.source!,
     ];
-    return _Group(
+    return VirtPaneGroup(
       key: 'delete',
       title: libL10n.delete,
       right: '',
@@ -899,8 +913,8 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
       dot: Theme.of(context).colorScheme.error,
       indexNote: l10n.virtSetIrreversible,
       rows: [
-        if (_caps.deleteKeepsDisks)
-          _toggle(
+        if (editCaps.deleteKeepsDisks)
+          paneToggle(
             Icons.delete_sweep_outlined,
             l10n.virtDeleteDisks,
             _removeDisks,
@@ -911,18 +925,18 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
                 : (on) => setState(() => _removeDisks = on),
           )
         else
-          _text(l10n.virtDeleteDisksPve),
-        if (running) _text(l10n.virtSetDeleteStopFirst),
-        if (protected) _text(l10n.virtSetDeleteProtected),
+          paneText(l10n.virtDeleteDisksPve),
+        if (running) paneText(l10n.virtSetDeleteStopFirst),
+        if (protected) paneText(l10n.virtSetDeleteProtected),
         if (_confirmDelete && !blocked)
-          _box(
+          paneBox(
             key: const ValueKey('delete:callout'),
             color: Theme.of(context).colorScheme.surfaceContainerHigh,
             padding: const EdgeInsets.all(13),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _icon(
+                paneIcon(
                   Icons.warning_amber_rounded,
                   color: Theme.of(context).colorScheme.error,
                 ),
@@ -942,17 +956,17 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
               ],
             ),
           ),
-        _actions([
+        paneActions([
           if (_confirmDelete && !blocked)
-            _Action(
+            VirtPaneAction(
               libL10n.cancel,
               icon: Icons.close,
               onTap: () => setState(() => _confirmDelete = false),
             ),
-          _Action(
+          VirtPaneAction(
             _confirmDelete && !blocked
-                ? l10n.virtSetDeleteConfirm(_guest.name)
-                : _lxc
+                ? l10n.virtSetDeleteConfirm(editGuest.name)
+                : editIsLxc
                 ? l10n.virtSetDeleteLxc
                 : l10n.virtSetDeleteVm,
             key: 'delete:go',
@@ -973,7 +987,7 @@ class _VirtSettingsViewState extends ConsumerState<VirtSettingsView>
     setState(() => _deleting = true);
     try {
       await widget.onDelete(
-        removeDisks: !_caps.deleteKeepsDisks || _removeDisks,
+        removeDisks: !editCaps.deleteKeepsDisks || _removeDisks,
       );
     } finally {
       if (mounted) {

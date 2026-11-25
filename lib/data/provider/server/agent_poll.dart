@@ -15,9 +15,8 @@ final class AgentPoll {
   AgentPoll(
     MonitorHttpCredential cred, {
     required Duration every,
-    required Future<void> Function(MonitorHttpClient client, bool Function() current) read,
-  }) : _lease = MonitorClientLease(cred),
-       _read = read {
+    required this._read,
+  }) : _lease = MonitorClientLease(cred) {
     // After `build` has returned its state: [read] may write it at once.
     scheduleMicrotask(() => unawaited(refresh()));
     _timer = Timer.periodic(every, (_) {

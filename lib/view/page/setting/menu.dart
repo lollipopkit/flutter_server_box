@@ -1,4 +1,13 @@
-part of 'entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
+import 'package:server_box/data/model/app/keybinding.dart';
+import 'package:server_box/data/provider/app/keybindings.dart';
+import 'package:server_box/view/widget/marked_title.dart';
+
 
 /// One row of the settings menu.
 ///
@@ -144,7 +153,7 @@ final class _SettingsRow extends StatelessWidget {
 /// Flat, and every row goes somewhere. A branch is a door rather than a fold:
 /// there is only the one screen here, and the level behind it arrives as the
 /// bar of tabs over the page.
-final class _SettingsList extends StatelessWidget {
+final class SettingsList extends StatelessWidget {
   final List<SettingsNode> nodes;
   final void Function(SettingsNode node) onTap;
 
@@ -154,7 +163,7 @@ final class _SettingsList extends StatelessWidget {
   /// What that field found, in the list's place. Null while nothing is typed.
   final Widget? results;
 
-  const _SettingsList({
+  const SettingsList({super.key, 
     required this.nodes,
     required this.onTap,
     required this.search,
@@ -187,8 +196,8 @@ final class _SettingsList extends StatelessWidget {
 /// Always there rather than behind a button: what it searches is a tree nine
 /// subjects wide, and the whole point is to reach a page without having to
 /// know which subject somebody filed it under.
-final class _SettingsSearchField extends StatelessWidget {
-  const _SettingsSearchField({
+final class SettingsSearchField extends StatelessWidget {
+  const SettingsSearchField({super.key, 
     required this.controller,
     required this.focusNode,
     required this.onChanged,
@@ -376,7 +385,7 @@ final class _SettingsMenuRow extends StatelessWidget {
 ///
 /// A row carries how many pages the subject holds, which is what the fold used
 /// to say before it was opened.
-final class _SettingsMenu extends StatelessWidget {
+final class SettingsMenu extends StatelessWidget {
   final List<SettingsNode> nodes;
   final String? selectedId;
   final void Function(SettingsNode node) onSelect;
@@ -384,7 +393,7 @@ final class _SettingsMenu extends StatelessWidget {
   /// The field, above the menu it searches.
   final Widget search;
 
-  const _SettingsMenu({
+  const SettingsMenu({super.key, 
     required this.nodes,
     required this.selectedId,
     required this.onSelect,

@@ -11590,10 +11590,11 @@ class $$PrivateKeysTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (serversRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           PrivateKeyRow,
                           $PrivateKeysTable,
-                          ServerRow
+                          ServerRow,
+                          $ServersTable
                         >(
                           currentTable: table,
                           referencedTable: $$PrivateKeysTableReferences
@@ -11604,17 +11605,16 @@ class $$PrivateKeysTableTableManager
                                 table,
                                 p0,
                               ).serversRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.sshKeyId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'ssh_key_id',
                           typedResults: items,
                         ),
                       if (serverKeysRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           PrivateKeyRow,
                           $PrivateKeysTable,
-                          ServerKeyRow
+                          ServerKeyRow,
+                          $ServerKeysTable
                         >(
                           currentTable: table,
                           referencedTable: $$PrivateKeysTableReferences
@@ -11625,10 +11625,8 @@ class $$PrivateKeysTableTableManager
                                 table,
                                 p0,
                               ).serverKeysRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.keyId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'key_id',
                           typedResults: items,
                         ),
                     ];
@@ -11931,10 +11929,11 @@ class $$BmcCredentialsTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (bmcTargetsRefs)
-                    await $_getPrefetchedData<
+                    await $_getPrefetchedDataByColumns<
                       BmcCredentialRow,
                       $BmcCredentialsTable,
-                      BmcTargetRow
+                      BmcTargetRow,
+                      $BmcTargetsTable
                     >(
                       currentTable: table,
                       referencedTable: $$BmcCredentialsTableReferences
@@ -11945,8 +11944,8 @@ class $$BmcCredentialsTableTableManager
                             table,
                             p0,
                           ).bmcTargetsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.credId == item.id),
+                      currentColumn: 'id',
+                      referencedColumn: 'cred_id',
                       typedResults: items,
                     ),
                 ];
@@ -11971,92 +11970,90 @@ typedef $$BmcCredentialsTableProcessedTableManager =
       BmcCredentialRow,
       PrefetchHooks Function({bool bmcTargetsRefs})
     >;
-typedef $$ServersTableCreateCompanionBuilder =
-    ServersCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      required String id,
-      required String name,
-      Value<bool> autoConnect,
-      Value<String?> systemType,
-      Value<String?> sshIp,
-      Value<int?> sshPort,
-      Value<String?> sshUser,
-      Value<String?> sshPwd,
-      Value<String?> sshKeyId,
-      Value<String?> sshKeyPath,
-      Value<String?> sshAlterUrl,
-      Value<String?> sshProxyCommand,
-      Value<String?> sshFileTransport,
-      Value<bool> sshAllowLegacyAlgorithms,
-      Value<String?> preferredTransport,
-      Value<bool> sshEnabled,
-      Value<bool> monitorEnabled,
-      Value<bool> isLocal,
-      Value<String?> monitorAddr,
-      Value<String?> monitorUser,
-      Value<String?> monitorPwd,
-      Value<String?> monitorCertSha256,
-      Value<bool?> monitorAllowInsecure,
-      Value<String?> wolMac,
-      Value<String?> wolIp,
-      Value<String?> wolPwd,
-      Value<String?> preferTempDev,
-      Value<bool> tempIsCelsius,
-      Value<String?> logoUrl,
-      Value<String?> netDev,
-      Value<String?> scriptDir,
-      Value<double?> geoLat,
-      Value<double?> geoLon,
-      Value<bool> diskCountsNetwork,
-      Value<String?> sshIdentityAgent,
-      Value<bool> sshForwardAgent,
-      Value<String?> sshControlPath,
-      Value<String?> monitorFallbackAddr,
-    });
-typedef $$ServersTableUpdateCompanionBuilder =
-    ServersCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      Value<String> id,
-      Value<String> name,
-      Value<bool> autoConnect,
-      Value<String?> systemType,
-      Value<String?> sshIp,
-      Value<int?> sshPort,
-      Value<String?> sshUser,
-      Value<String?> sshPwd,
-      Value<String?> sshKeyId,
-      Value<String?> sshKeyPath,
-      Value<String?> sshAlterUrl,
-      Value<String?> sshProxyCommand,
-      Value<String?> sshFileTransport,
-      Value<bool> sshAllowLegacyAlgorithms,
-      Value<String?> preferredTransport,
-      Value<bool> sshEnabled,
-      Value<bool> monitorEnabled,
-      Value<bool> isLocal,
-      Value<String?> monitorAddr,
-      Value<String?> monitorUser,
-      Value<String?> monitorPwd,
-      Value<String?> monitorCertSha256,
-      Value<bool?> monitorAllowInsecure,
-      Value<String?> wolMac,
-      Value<String?> wolIp,
-      Value<String?> wolPwd,
-      Value<String?> preferTempDev,
-      Value<bool> tempIsCelsius,
-      Value<String?> logoUrl,
-      Value<String?> netDev,
-      Value<String?> scriptDir,
-      Value<double?> geoLat,
-      Value<double?> geoLon,
-      Value<bool> diskCountsNetwork,
-      Value<String?> sshIdentityAgent,
-      Value<bool> sshForwardAgent,
-      Value<String?> sshControlPath,
-      Value<String?> monitorFallbackAddr,
-    });
+typedef $$ServersTableCreateCompanionBuilder = ServersCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  required String id,
+  required String name,
+  Value<bool> autoConnect,
+  Value<String?> systemType,
+  Value<String?> sshIp,
+  Value<int?> sshPort,
+  Value<String?> sshUser,
+  Value<String?> sshPwd,
+  Value<String?> sshKeyId,
+  Value<String?> sshKeyPath,
+  Value<String?> sshAlterUrl,
+  Value<String?> sshProxyCommand,
+  Value<String?> sshFileTransport,
+  Value<bool> sshAllowLegacyAlgorithms,
+  Value<String?> preferredTransport,
+  Value<bool> sshEnabled,
+  Value<bool> monitorEnabled,
+  Value<bool> isLocal,
+  Value<String?> monitorAddr,
+  Value<String?> monitorUser,
+  Value<String?> monitorPwd,
+  Value<String?> monitorCertSha256,
+  Value<bool?> monitorAllowInsecure,
+  Value<String?> wolMac,
+  Value<String?> wolIp,
+  Value<String?> wolPwd,
+  Value<String?> preferTempDev,
+  Value<bool> tempIsCelsius,
+  Value<String?> logoUrl,
+  Value<String?> netDev,
+  Value<String?> scriptDir,
+  Value<double?> geoLat,
+  Value<double?> geoLon,
+  Value<bool> diskCountsNetwork,
+  Value<String?> sshIdentityAgent,
+  Value<bool> sshForwardAgent,
+  Value<String?> sshControlPath,
+  Value<String?> monitorFallbackAddr,
+});
+typedef $$ServersTableUpdateCompanionBuilder = ServersCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  Value<String> id,
+  Value<String> name,
+  Value<bool> autoConnect,
+  Value<String?> systemType,
+  Value<String?> sshIp,
+  Value<int?> sshPort,
+  Value<String?> sshUser,
+  Value<String?> sshPwd,
+  Value<String?> sshKeyId,
+  Value<String?> sshKeyPath,
+  Value<String?> sshAlterUrl,
+  Value<String?> sshProxyCommand,
+  Value<String?> sshFileTransport,
+  Value<bool> sshAllowLegacyAlgorithms,
+  Value<String?> preferredTransport,
+  Value<bool> sshEnabled,
+  Value<bool> monitorEnabled,
+  Value<bool> isLocal,
+  Value<String?> monitorAddr,
+  Value<String?> monitorUser,
+  Value<String?> monitorPwd,
+  Value<String?> monitorCertSha256,
+  Value<bool?> monitorAllowInsecure,
+  Value<String?> wolMac,
+  Value<String?> wolIp,
+  Value<String?> wolPwd,
+  Value<String?> preferTempDev,
+  Value<bool> tempIsCelsius,
+  Value<String?> logoUrl,
+  Value<String?> netDev,
+  Value<String?> scriptDir,
+  Value<double?> geoLat,
+  Value<double?> geoLon,
+  Value<bool> diskCountsNetwork,
+  Value<String?> sshIdentityAgent,
+  Value<bool> sshForwardAgent,
+  Value<String?> sshControlPath,
+  Value<String?> monitorFallbackAddr,
+});
 
 final class $$ServersTableReferences
     extends BaseReferences<_$AppDb, $ServersTable, ServerRow> {
@@ -14118,17 +14115,15 @@ class $$ServersTableTableManager
                         >
                       >(state) {
                         if (sshKeyId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.sshKeyId,
-                                    referencedTable: $$ServersTableReferences
-                                        ._sshKeyIdTable(db),
-                                    referencedColumn: $$ServersTableReferences
-                                        ._sshKeyIdTable(db)
-                                        .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.sshKeyId,
+                            referencedTable: $$ServersTableReferences
+                                ._sshKeyIdTable(db),
+                            referencedColumn: $$ServersTableReferences
+                                ._sshKeyIdTable(db)
+                                .id,
+                          ) as T;
                         }
 
                         return state;
@@ -14136,10 +14131,11 @@ class $$ServersTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (serverTagsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerTagRow
+                          ServerTagRow,
+                          $ServerTagsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14150,17 +14146,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverTagsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverEnvsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerEnvRow
+                          ServerEnvRow,
+                          $ServerEnvsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14171,17 +14166,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverEnvsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverIdentityFilesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerIdentityFileRow
+                          ServerIdentityFileRow,
+                          $ServerIdentityFilesTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14192,17 +14186,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverIdentityFilesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverKeysRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerKeyRow
+                          ServerKeyRow,
+                          $ServerKeysTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14213,17 +14206,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverKeysRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverDisabledCmdsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerDisabledCmdRow
+                          ServerDisabledCmdRow,
+                          $ServerDisabledCmdsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14234,17 +14226,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverDisabledCmdsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (bmcTargetsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          BmcTargetRow
+                          BmcTargetRow,
+                          $BmcTargetsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14255,17 +14246,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).bmcTargetsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (knownHostsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          KnownHostRow
+                          KnownHostRow,
+                          $KnownHostsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14276,17 +14266,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).knownHostsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (snippetAutoRunOnRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          SnippetAutoRunRow
+                          SnippetAutoRunRow,
+                          $SnippetAutoRunOnTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14297,17 +14286,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).snippetAutoRunOnRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (portForwardsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          PortForwardRow
+                          PortForwardRow,
+                          $PortForwardsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14318,17 +14306,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).portForwardsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (remoteDesktopProfilesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          RemoteDesktopProfileRow
+                          RemoteDesktopProfileRow,
+                          $RemoteDesktopProfilesTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14339,17 +14326,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).remoteDesktopProfilesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (containerHostsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ContainerHostRow
+                          ContainerHostRow,
+                          $ContainerHostsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14360,17 +14346,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).containerHostsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (containerRuntimesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ContainerRuntimeRow
+                          ContainerRuntimeRow,
+                          $ContainerRuntimesTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14381,17 +14366,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).containerRuntimesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverPvesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerPveRow
+                          ServerPveRow,
+                          $ServerPvesTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14402,17 +14386,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverPvesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (connStatsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ConnStatRow
+                          ConnStatRow,
+                          $ConnStatsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14423,17 +14406,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).connStatsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (serverDistsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          ServerDistRow
+                          ServerDistRow,
+                          $ServerDistsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14444,17 +14426,16 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverDistsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                       if (benchmarkRunsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           ServerRow,
                           $ServersTable,
-                          BenchmarkRunRow
+                          BenchmarkRunRow,
+                          $BenchmarkRunsTable
                         >(
                           currentTable: table,
                           referencedTable: $$ServersTableReferences
@@ -14465,10 +14446,8 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).benchmarkRunsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'server_id',
                           typedResults: items,
                         ),
                     ];
@@ -14511,13 +14490,14 @@ typedef $$ServersTableProcessedTableManager =
         bool benchmarkRunsRefs,
       })
     >;
-typedef $$ServerTagsTableCreateCompanionBuilder =
-    ServerTagsCompanion Function({
-      required String serverId,
-      required String tag,
-    });
-typedef $$ServerTagsTableUpdateCompanionBuilder =
-    ServerTagsCompanion Function({Value<String> serverId, Value<String> tag});
+typedef $$ServerTagsTableCreateCompanionBuilder = ServerTagsCompanion Function({
+  required String serverId,
+  required String tag,
+});
+typedef $$ServerTagsTableUpdateCompanionBuilder = ServerTagsCompanion Function({
+  Value<String> serverId,
+  Value<String> tag,
+});
 
 final class $$ServerTagsTableReferences
     extends BaseReferences<_$AppDb, $ServerTagsTable, ServerTagRow> {
@@ -14679,14 +14659,14 @@ class $$ServerTagsTableTableManager
               $$ServerTagsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ServerTagsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<String> tag = const Value.absent(),
-              }) => ServerTagsCompanion(serverId: serverId, tag: tag),
-          createCompanionCallback:
-              ({required String serverId, required String tag}) =>
-                  ServerTagsCompanion.insert(serverId: serverId, tag: tag),
+          updateCompanionCallback: ({
+            Value<String> serverId = const Value.absent(),
+            Value<String> tag = const Value.absent(),
+          }) => ServerTagsCompanion(serverId: serverId, tag: tag),
+          createCompanionCallback: ({
+            required String serverId,
+            required String tag,
+          }) => ServerTagsCompanion.insert(serverId: serverId, tag: tag),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -14716,17 +14696,15 @@ class $$ServerTagsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerTagsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerTagsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerTagsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerTagsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -14754,18 +14732,16 @@ typedef $$ServerTagsTableProcessedTableManager =
       ServerTagRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$ServerEnvsTableCreateCompanionBuilder =
-    ServerEnvsCompanion Function({
-      required String serverId,
-      required String key,
-      required String value,
-    });
-typedef $$ServerEnvsTableUpdateCompanionBuilder =
-    ServerEnvsCompanion Function({
-      Value<String> serverId,
-      Value<String> key,
-      Value<String> value,
-    });
+typedef $$ServerEnvsTableCreateCompanionBuilder = ServerEnvsCompanion Function({
+  required String serverId,
+  required String key,
+  required String value,
+});
+typedef $$ServerEnvsTableUpdateCompanionBuilder = ServerEnvsCompanion Function({
+  Value<String> serverId,
+  Value<String> key,
+  Value<String> value,
+});
 
 final class $$ServerEnvsTableReferences
     extends BaseReferences<_$AppDb, $ServerEnvsTable, ServerEnvRow> {
@@ -14940,16 +14916,11 @@ class $$ServerEnvsTableTableManager
               $$ServerEnvsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ServerEnvsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<String> key = const Value.absent(),
-                Value<String> value = const Value.absent(),
-              }) => ServerEnvsCompanion(
-                serverId: serverId,
-                key: key,
-                value: value,
-              ),
+          updateCompanionCallback: ({
+            Value<String> serverId = const Value.absent(),
+            Value<String> key = const Value.absent(),
+            Value<String> value = const Value.absent(),
+          }) => ServerEnvsCompanion(serverId: serverId, key: key, value: value),
           createCompanionCallback:
               ({
                 required String serverId,
@@ -14989,17 +14960,15 @@ class $$ServerEnvsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerEnvsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerEnvsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerEnvsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerEnvsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -15335,30 +15304,26 @@ class $$ServerJumpsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerJumpsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerJumpsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerJumpsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerJumpsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
                     if (jumpId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.jumpId,
-                                referencedTable: $$ServerJumpsTableReferences
-                                    ._jumpIdTable(db),
-                                referencedColumn: $$ServerJumpsTableReferences
-                                    ._jumpIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.jumpId,
+                        referencedTable: $$ServerJumpsTableReferences
+                            ._jumpIdTable(db),
+                        referencedColumn: $$ServerJumpsTableReferences
+                            ._jumpIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -15640,19 +15605,15 @@ class $$ServerIdentityFilesTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$ServerIdentityFilesTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ServerIdentityFilesTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerIdentityFilesTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerIdentityFilesTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -15680,18 +15641,16 @@ typedef $$ServerIdentityFilesTableProcessedTableManager =
       ServerIdentityFileRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$ServerKeysTableCreateCompanionBuilder =
-    ServerKeysCompanion Function({
-      required String serverId,
-      required int ord,
-      required String keyId,
-    });
-typedef $$ServerKeysTableUpdateCompanionBuilder =
-    ServerKeysCompanion Function({
-      Value<String> serverId,
-      Value<int> ord,
-      Value<String> keyId,
-    });
+typedef $$ServerKeysTableCreateCompanionBuilder = ServerKeysCompanion Function({
+  required String serverId,
+  required int ord,
+  required String keyId,
+});
+typedef $$ServerKeysTableUpdateCompanionBuilder = ServerKeysCompanion Function({
+  Value<String> serverId,
+  Value<int> ord,
+  Value<String> keyId,
+});
 
 final class $$ServerKeysTableReferences
     extends BaseReferences<_$AppDb, $ServerKeysTable, ServerKeyRow> {
@@ -15939,16 +15898,11 @@ class $$ServerKeysTableTableManager
               $$ServerKeysTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ServerKeysTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<int> ord = const Value.absent(),
-                Value<String> keyId = const Value.absent(),
-              }) => ServerKeysCompanion(
-                serverId: serverId,
-                ord: ord,
-                keyId: keyId,
-              ),
+          updateCompanionCallback: ({
+            Value<String> serverId = const Value.absent(),
+            Value<int> ord = const Value.absent(),
+            Value<String> keyId = const Value.absent(),
+          }) => ServerKeysCompanion(serverId: serverId, ord: ord, keyId: keyId),
           createCompanionCallback:
               ({
                 required String serverId,
@@ -15988,30 +15942,26 @@ class $$ServerKeysTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerKeysTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerKeysTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerKeysTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerKeysTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
                     if (keyId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.keyId,
-                                referencedTable: $$ServerKeysTableReferences
-                                    ._keyIdTable(db),
-                                referencedColumn: $$ServerKeysTableReferences
-                                    ._keyIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.keyId,
+                        referencedTable: $$ServerKeysTableReferences
+                            ._keyIdTable(db),
+                        referencedColumn: $$ServerKeysTableReferences
+                            ._keyIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -16269,19 +16219,15 @@ class $$ServerDisabledCmdsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$ServerDisabledCmdsTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ServerDisabledCmdsTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerDisabledCmdsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerDisabledCmdsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -16309,28 +16255,26 @@ typedef $$ServerDisabledCmdsTableProcessedTableManager =
       ServerDisabledCmdRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$BmcTargetsTableCreateCompanionBuilder =
-    BmcTargetsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      required String id,
-      required String name,
-      required String addr,
-      Value<String?> credId,
-      Value<String?> certSha256,
-      Value<String?> serverId,
-    });
-typedef $$BmcTargetsTableUpdateCompanionBuilder =
-    BmcTargetsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      Value<String> id,
-      Value<String> name,
-      Value<String> addr,
-      Value<String?> credId,
-      Value<String?> certSha256,
-      Value<String?> serverId,
-    });
+typedef $$BmcTargetsTableCreateCompanionBuilder = BmcTargetsCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  required String id,
+  required String name,
+  required String addr,
+  Value<String?> credId,
+  Value<String?> certSha256,
+  Value<String?> serverId,
+});
+typedef $$BmcTargetsTableUpdateCompanionBuilder = BmcTargetsCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  Value<String> id,
+  Value<String> name,
+  Value<String> addr,
+  Value<String?> credId,
+  Value<String?> certSha256,
+  Value<String?> serverId,
+});
 
 final class $$BmcTargetsTableReferences
     extends BaseReferences<_$AppDb, $BmcTargetsTable, BmcTargetRow> {
@@ -16789,32 +16733,26 @@ class $$BmcTargetsTableTableManager
                         >
                       >(state) {
                         if (credId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.credId,
-                                    referencedTable: $$BmcTargetsTableReferences
-                                        ._credIdTable(db),
-                                    referencedColumn:
-                                        $$BmcTargetsTableReferences
-                                            ._credIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.credId,
+                            referencedTable: $$BmcTargetsTableReferences
+                                ._credIdTable(db),
+                            referencedColumn: $$BmcTargetsTableReferences
+                                ._credIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (serverId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.serverId,
-                                    referencedTable: $$BmcTargetsTableReferences
-                                        ._serverIdTable(db),
-                                    referencedColumn:
-                                        $$BmcTargetsTableReferences
-                                            ._serverIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.serverId,
+                            referencedTable: $$BmcTargetsTableReferences
+                                ._serverIdTable(db),
+                            referencedColumn: $$BmcTargetsTableReferences
+                                ._serverIdTable(db)
+                                .id,
+                          ) as T;
                         }
 
                         return state;
@@ -16822,10 +16760,11 @@ class $$BmcTargetsTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (bmcTargetTagsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           BmcTargetRow,
                           $BmcTargetsTable,
-                          BmcTargetTagRow
+                          BmcTargetTagRow,
+                          $BmcTargetTagsTable
                         >(
                           currentTable: table,
                           referencedTable: $$BmcTargetsTableReferences
@@ -16836,10 +16775,8 @@ class $$BmcTargetsTableTableManager
                                 table,
                                 p0,
                               ).bmcTargetTagsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.targetId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'target_id',
                           typedResults: items,
                         ),
                     ];
@@ -17043,14 +16980,14 @@ class $$BmcTargetTagsTableTableManager
               $$BmcTargetTagsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$BmcTargetTagsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> targetId = const Value.absent(),
-                Value<String> tag = const Value.absent(),
-              }) => BmcTargetTagsCompanion(targetId: targetId, tag: tag),
-          createCompanionCallback:
-              ({required String targetId, required String tag}) =>
-                  BmcTargetTagsCompanion.insert(targetId: targetId, tag: tag),
+          updateCompanionCallback: ({
+            Value<String> targetId = const Value.absent(),
+            Value<String> tag = const Value.absent(),
+          }) => BmcTargetTagsCompanion(targetId: targetId, tag: tag),
+          createCompanionCallback: ({
+            required String targetId,
+            required String tag,
+          }) => BmcTargetTagsCompanion.insert(targetId: targetId, tag: tag),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -17080,17 +17017,15 @@ class $$BmcTargetTagsTableTableManager
                     >
                   >(state) {
                     if (targetId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.targetId,
-                                referencedTable: $$BmcTargetTagsTableReferences
-                                    ._targetIdTable(db),
-                                referencedColumn: $$BmcTargetTagsTableReferences
-                                    ._targetIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.targetId,
+                        referencedTable: $$BmcTargetTagsTableReferences
+                            ._targetIdTable(db),
+                        referencedColumn: $$BmcTargetTagsTableReferences
+                            ._targetIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -17118,18 +17053,16 @@ typedef $$BmcTargetTagsTableProcessedTableManager =
       BmcTargetTagRow,
       PrefetchHooks Function({bool targetId})
     >;
-typedef $$KnownHostsTableCreateCompanionBuilder =
-    KnownHostsCompanion Function({
-      required String serverId,
-      required String keyType,
-      required String fingerprint,
-    });
-typedef $$KnownHostsTableUpdateCompanionBuilder =
-    KnownHostsCompanion Function({
-      Value<String> serverId,
-      Value<String> keyType,
-      Value<String> fingerprint,
-    });
+typedef $$KnownHostsTableCreateCompanionBuilder = KnownHostsCompanion Function({
+  required String serverId,
+  required String keyType,
+  required String fingerprint,
+});
+typedef $$KnownHostsTableUpdateCompanionBuilder = KnownHostsCompanion Function({
+  Value<String> serverId,
+  Value<String> keyType,
+  Value<String> fingerprint,
+});
 
 final class $$KnownHostsTableReferences
     extends BaseReferences<_$AppDb, $KnownHostsTable, KnownHostRow> {
@@ -17355,17 +17288,15 @@ class $$KnownHostsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$KnownHostsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$KnownHostsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$KnownHostsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$KnownHostsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -17393,24 +17324,22 @@ typedef $$KnownHostsTableProcessedTableManager =
       KnownHostRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$SnippetsTableCreateCompanionBuilder =
-    SnippetsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      required String id,
-      required String name,
-      required String script,
-      Value<String?> note,
-    });
-typedef $$SnippetsTableUpdateCompanionBuilder =
-    SnippetsCompanion Function({
-      Value<int> updatedAt,
-      Value<int> rev,
-      Value<String> id,
-      Value<String> name,
-      Value<String> script,
-      Value<String?> note,
-    });
+typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  required String id,
+  required String name,
+  required String script,
+  Value<String?> note,
+});
+typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
+  Value<int> updatedAt,
+  Value<int> rev,
+  Value<String> id,
+  Value<String> name,
+  Value<String> script,
+  Value<String?> note,
+});
 
 final class $$SnippetsTableReferences
     extends BaseReferences<_$AppDb, $SnippetsTable, SnippetRow> {
@@ -17743,10 +17672,11 @@ class $$SnippetsTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (snippetTagsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           SnippetRow,
                           $SnippetsTable,
-                          SnippetTagRow
+                          SnippetTagRow,
+                          $SnippetTagsTable
                         >(
                           currentTable: table,
                           referencedTable: $$SnippetsTableReferences
@@ -17757,17 +17687,16 @@ class $$SnippetsTableTableManager
                                 table,
                                 p0,
                               ).snippetTagsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.snippetId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'snippet_id',
                           typedResults: items,
                         ),
                       if (snippetAutoRunOnRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           SnippetRow,
                           $SnippetsTable,
-                          SnippetAutoRunRow
+                          SnippetAutoRunRow,
+                          $SnippetAutoRunOnTable
                         >(
                           currentTable: table,
                           referencedTable: $$SnippetsTableReferences
@@ -17778,10 +17707,8 @@ class $$SnippetsTableTableManager
                                 table,
                                 p0,
                               ).snippetAutoRunOnRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.snippetId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'snippet_id',
                           typedResults: items,
                         ),
                     ];
@@ -17974,14 +17901,14 @@ class $$SnippetTagsTableTableManager
               $$SnippetTagsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SnippetTagsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> snippetId = const Value.absent(),
-                Value<String> tag = const Value.absent(),
-              }) => SnippetTagsCompanion(snippetId: snippetId, tag: tag),
-          createCompanionCallback:
-              ({required String snippetId, required String tag}) =>
-                  SnippetTagsCompanion.insert(snippetId: snippetId, tag: tag),
+          updateCompanionCallback: ({
+            Value<String> snippetId = const Value.absent(),
+            Value<String> tag = const Value.absent(),
+          }) => SnippetTagsCompanion(snippetId: snippetId, tag: tag),
+          createCompanionCallback: ({
+            required String snippetId,
+            required String tag,
+          }) => SnippetTagsCompanion.insert(snippetId: snippetId, tag: tag),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -18011,17 +17938,15 @@ class $$SnippetTagsTableTableManager
                     >
                   >(state) {
                     if (snippetId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.snippetId,
-                                referencedTable: $$SnippetTagsTableReferences
-                                    ._snippetIdTable(db),
-                                referencedColumn: $$SnippetTagsTableReferences
-                                    ._snippetIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.snippetId,
+                        referencedTable: $$SnippetTagsTableReferences
+                            ._snippetIdTable(db),
+                        referencedColumn: $$SnippetTagsTableReferences
+                            ._snippetIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -18340,34 +18265,26 @@ class $$SnippetAutoRunOnTableTableManager
                     >
                   >(state) {
                     if (snippetId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.snippetId,
-                                referencedTable:
-                                    $$SnippetAutoRunOnTableReferences
-                                        ._snippetIdTable(db),
-                                referencedColumn:
-                                    $$SnippetAutoRunOnTableReferences
-                                        ._snippetIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.snippetId,
+                        referencedTable: $$SnippetAutoRunOnTableReferences
+                            ._snippetIdTable(db),
+                        referencedColumn: $$SnippetAutoRunOnTableReferences
+                            ._snippetIdTable(db)
+                            .id,
+                      ) as T;
                     }
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$SnippetAutoRunOnTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$SnippetAutoRunOnTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$SnippetAutoRunOnTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$SnippetAutoRunOnTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -18767,17 +18684,15 @@ class $$PortForwardsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$PortForwardsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$PortForwardsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$PortForwardsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$PortForwardsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -19274,19 +19189,15 @@ class $$RemoteDesktopProfilesTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$RemoteDesktopProfilesTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$RemoteDesktopProfilesTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$RemoteDesktopProfilesTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$RemoteDesktopProfilesTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -19553,18 +19464,15 @@ class $$ContainerHostsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ContainerHostsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ContainerHostsTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ContainerHostsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ContainerHostsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -19773,11 +19681,10 @@ class $$ContainerRuntimesTableTableManager
                 $db: db,
                 $table: table,
               ),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<String> type = const Value.absent(),
-              }) => ContainerRuntimesCompanion(serverId: serverId, type: type),
+          updateCompanionCallback: ({
+            Value<String> serverId = const Value.absent(),
+            Value<String> type = const Value.absent(),
+          }) => ContainerRuntimesCompanion(serverId: serverId, type: type),
           createCompanionCallback:
               ({required String serverId, required String type}) =>
                   ContainerRuntimesCompanion.insert(
@@ -19815,19 +19722,15 @@ class $$ContainerRuntimesTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$ContainerRuntimesTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ContainerRuntimesTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ContainerRuntimesTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ContainerRuntimesTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -19855,26 +19758,24 @@ typedef $$ContainerRuntimesTableProcessedTableManager =
       ContainerRuntimeRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$ServerPvesTableCreateCompanionBuilder =
-    ServerPvesCompanion Function({
-      required String serverId,
-      required String addr,
-      required String auth,
-      Value<String?> pwd,
-      Value<String?> tokenId,
-      Value<String?> tokenSecret,
-      Value<String?> certSha256,
-    });
-typedef $$ServerPvesTableUpdateCompanionBuilder =
-    ServerPvesCompanion Function({
-      Value<String> serverId,
-      Value<String> addr,
-      Value<String> auth,
-      Value<String?> pwd,
-      Value<String?> tokenId,
-      Value<String?> tokenSecret,
-      Value<String?> certSha256,
-    });
+typedef $$ServerPvesTableCreateCompanionBuilder = ServerPvesCompanion Function({
+  required String serverId,
+  required String addr,
+  required String auth,
+  Value<String?> pwd,
+  Value<String?> tokenId,
+  Value<String?> tokenSecret,
+  Value<String?> certSha256,
+});
+typedef $$ServerPvesTableUpdateCompanionBuilder = ServerPvesCompanion Function({
+  Value<String> serverId,
+  Value<String> addr,
+  Value<String> auth,
+  Value<String?> pwd,
+  Value<String?> tokenId,
+  Value<String?> tokenSecret,
+  Value<String?> certSha256,
+});
 
 final class $$ServerPvesTableReferences
     extends BaseReferences<_$AppDb, $ServerPvesTable, ServerPveRow> {
@@ -20170,17 +20071,15 @@ class $$ServerPvesTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerPvesTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerPvesTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerPvesTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerPvesTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -20208,26 +20107,24 @@ typedef $$ServerPvesTableProcessedTableManager =
       ServerPveRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$ConnStatsTableCreateCompanionBuilder =
-    ConnStatsCompanion Function({
-      required String id,
-      required String serverId,
-      required String serverName,
-      required int timestamp,
-      required String result,
-      Value<String> errorMessage,
-      required int durationMs,
-    });
-typedef $$ConnStatsTableUpdateCompanionBuilder =
-    ConnStatsCompanion Function({
-      Value<String> id,
-      Value<String> serverId,
-      Value<String> serverName,
-      Value<int> timestamp,
-      Value<String> result,
-      Value<String> errorMessage,
-      Value<int> durationMs,
-    });
+typedef $$ConnStatsTableCreateCompanionBuilder = ConnStatsCompanion Function({
+  required String id,
+  required String serverId,
+  required String serverName,
+  required int timestamp,
+  required String result,
+  Value<String> errorMessage,
+  required int durationMs,
+});
+typedef $$ConnStatsTableUpdateCompanionBuilder = ConnStatsCompanion Function({
+  Value<String> id,
+  Value<String> serverId,
+  Value<String> serverName,
+  Value<int> timestamp,
+  Value<String> result,
+  Value<String> errorMessage,
+  Value<int> durationMs,
+});
 
 final class $$ConnStatsTableReferences
     extends BaseReferences<_$AppDb, $ConnStatsTable, ConnStatRow> {
@@ -20525,17 +20422,15 @@ class $$ConnStatsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ConnStatsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ConnStatsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ConnStatsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ConnStatsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -20798,17 +20693,15 @@ class $$ServerDistsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$ServerDistsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$ServerDistsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$ServerDistsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$ServerDistsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -21231,17 +21124,15 @@ class $$BenchmarkRunsTableTableManager
                     >
                   >(state) {
                     if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable: $$BenchmarkRunsTableReferences
-                                    ._serverIdTable(db),
-                                referencedColumn: $$BenchmarkRunsTableReferences
-                                    ._serverIdTable(db)
-                                    .id,
-                              )
-                              as T;
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.serverId,
+                        referencedTable: $$BenchmarkRunsTableReferences
+                            ._serverIdTable(db),
+                        referencedColumn: $$BenchmarkRunsTableReferences
+                            ._serverIdTable(db)
+                            .id,
+                      ) as T;
                     }
 
                     return state;
@@ -21269,18 +21160,16 @@ typedef $$BenchmarkRunsTableProcessedTableManager =
       BenchmarkRunRow,
       PrefetchHooks Function({bool serverId})
     >;
-typedef $$TombstonesTableCreateCompanionBuilder =
-    TombstonesCompanion Function({
-      required String tbl,
-      required String rowId,
-      required int deletedAt,
-    });
-typedef $$TombstonesTableUpdateCompanionBuilder =
-    TombstonesCompanion Function({
-      Value<String> tbl,
-      Value<String> rowId,
-      Value<int> deletedAt,
-    });
+typedef $$TombstonesTableCreateCompanionBuilder = TombstonesCompanion Function({
+  required String tbl,
+  required String rowId,
+  required int deletedAt,
+});
+typedef $$TombstonesTableUpdateCompanionBuilder = TombstonesCompanion Function({
+  Value<String> tbl,
+  Value<String> rowId,
+  Value<int> deletedAt,
+});
 
 class $$TombstonesTableFilterComposer
     extends Composer<_$AppDb, $TombstonesTable> {
@@ -21431,10 +21320,14 @@ typedef $$TombstonesTableProcessedTableManager =
       TombstoneRow,
       PrefetchHooks Function()
     >;
-typedef $$SyncStatesTableCreateCompanionBuilder =
-    SyncStatesCompanion Function({required String k, required String v});
-typedef $$SyncStatesTableUpdateCompanionBuilder =
-    SyncStatesCompanion Function({Value<String> k, Value<String> v});
+typedef $$SyncStatesTableCreateCompanionBuilder = SyncStatesCompanion Function({
+  required String k,
+  required String v,
+});
+typedef $$SyncStatesTableUpdateCompanionBuilder = SyncStatesCompanion Function({
+  Value<String> k,
+  Value<String> v,
+});
 
 class $$SyncStatesTableFilterComposer
     extends Composer<_$AppDb, $SyncStatesTable> {
@@ -21521,11 +21414,10 @@ class $$SyncStatesTableTableManager
               $$SyncStatesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SyncStatesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> k = const Value.absent(),
-                Value<String> v = const Value.absent(),
-              }) => SyncStatesCompanion(k: k, v: v),
+          updateCompanionCallback: ({
+            Value<String> k = const Value.absent(),
+            Value<String> v = const Value.absent(),
+          }) => SyncStatesCompanion(k: k, v: v),
           createCompanionCallback: ({required String k, required String v}) =>
               SyncStatesCompanion.insert(k: k, v: v),
           withReferenceMapper: (p0) => p0
@@ -21670,15 +21562,16 @@ class $$SyncRecordsTableTableManager
               $$SyncRecordsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SyncRecordsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> c = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> hlc = const Value.absent(),
-              }) => SyncRecordsCompanion(c: c, id: id, hlc: hlc),
-          createCompanionCallback:
-              ({required String c, required String id, required String hlc}) =>
-                  SyncRecordsCompanion.insert(c: c, id: id, hlc: hlc),
+          updateCompanionCallback: ({
+            Value<String> c = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> hlc = const Value.absent(),
+          }) => SyncRecordsCompanion(c: c, id: id, hlc: hlc),
+          createCompanionCallback: ({
+            required String c,
+            required String id,
+            required String hlc,
+          }) => SyncRecordsCompanion.insert(c: c, id: id, hlc: hlc),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -21713,22 +21606,20 @@ typedef $$SyncRecordsTableProcessedTableManager =
       SyncRecordRow,
       PrefetchHooks Function()
     >;
-typedef $$SyncPassedTableCreateCompanionBuilder =
-    SyncPassedCompanion Function({
-      required String e,
-      required String c,
-      required String id,
-      required String h,
-      required String d,
-    });
-typedef $$SyncPassedTableUpdateCompanionBuilder =
-    SyncPassedCompanion Function({
-      Value<String> e,
-      Value<String> c,
-      Value<String> id,
-      Value<String> h,
-      Value<String> d,
-    });
+typedef $$SyncPassedTableCreateCompanionBuilder = SyncPassedCompanion Function({
+  required String e,
+  required String c,
+  required String id,
+  required String h,
+  required String d,
+});
+typedef $$SyncPassedTableUpdateCompanionBuilder = SyncPassedCompanion Function({
+  Value<String> e,
+  Value<String> c,
+  Value<String> id,
+  Value<String> h,
+  Value<String> d,
+});
 
 class $$SyncPassedTableFilterComposer
     extends Composer<_$AppDb, $SyncPassedTable> {
@@ -21854,22 +21745,20 @@ class $$SyncPassedTableTableManager
               $$SyncPassedTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SyncPassedTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> e = const Value.absent(),
-                Value<String> c = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> h = const Value.absent(),
-                Value<String> d = const Value.absent(),
-              }) => SyncPassedCompanion(e: e, c: c, id: id, h: h, d: d),
-          createCompanionCallback:
-              ({
-                required String e,
-                required String c,
-                required String id,
-                required String h,
-                required String d,
-              }) => SyncPassedCompanion.insert(e: e, c: c, id: id, h: h, d: d),
+          updateCompanionCallback: ({
+            Value<String> e = const Value.absent(),
+            Value<String> c = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> h = const Value.absent(),
+            Value<String> d = const Value.absent(),
+          }) => SyncPassedCompanion(e: e, c: c, id: id, h: h, d: d),
+          createCompanionCallback: ({
+            required String e,
+            required String c,
+            required String id,
+            required String h,
+            required String d,
+          }) => SyncPassedCompanion.insert(e: e, c: c, id: id, h: h, d: d),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (

@@ -184,13 +184,12 @@ Widget _viewSwapLayout(Widget? current, List<Widget> previous) => Stack(
 const _kBurnInShift = 7.0;
 
 class _ServerPageState extends ConsumerState<ServerPage>
-    with
-        AutomaticKeepAliveClientMixin,
-        TickerProviderStateMixin,
-        WindowListener {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   final _offsetNotifier = ValueNotifier(Offset.zero);
   PageController? _landscapeController;
   String? _landscapeSeenId;
+  Window? _window;
+  ListenerId? _windowListenerId;
 
   /// Full screen asked for by the bar's button rather than by turning the
   /// device.
@@ -319,10 +318,43 @@ class _ServerPageState extends ConsumerState<ServerPage>
     setState(() {});
   }
 
+  Window? _ensureWindow() {
+    if (!isDesktop) return null;
+    final existing = _window;
+    if (existing != null) return existing;
+    try {
+      final window = WindowManager.instance.getCurrent();
+      if (window == null) return null;
+      _window = window;
+      _windowListenerId = window.addListener(_onWindowEvent);
+      return window;
+    } catch (e, s) {
+      Loggers.app.warning('Window listener', e, s);
+      return null;
+    }
+  }
+
+  void _detachWindow() {
+    final listenerId = _windowListenerId;
+    final window = _window;
+    _windowListenerId = null;
+    _window = null;
+    if (listenerId != null && window != null) {
+      window.removeListener(listenerId);
+    }
+  }
+
   /// The window left full screen some other way: the page follows it.
-  @override
-  void onWindowLeaveFullScreen() =>
-      unawaited(_exitFullScreen(window: false));
+  void _onWindowEvent(WindowEvent event) {
+    switch (event) {
+      case WindowExitedFullScreenEvent():
+        unawaited(_exitFullScreen(window: false));
+      case WindowClosedEvent():
+        _detachWindow();
+      default:
+        break;
+    }
+  }
 
   /// What the globe guide points at: the globe button in the tag bar's
   /// [_Bar._listActions]. Null context when that button is not built — the
@@ -678,9 +710,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     Stores.setting.fullScreenJitter.listenable().removeListener(
       _burnInListener,
     );
-    if (isDesktop) windowManager.removeListener(this);
+    final window = _window;
+    _detachWindow();
     if (_fsManual.value && isDesktop && !_fsWindowWasFull) {
-      unawaited(windowManager.setFullScreen(false));
+      try {
+        (window ?? WindowManager.instance.getCurrent())?.isFullScreen = false;
+      } catch (e, s) {
+        Loggers.app.warning('Window full screen', e, s);
+      }
     }
     _fsKeys.dispose();
     _fsManual.dispose();
@@ -716,7 +753,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     Stores.setting.globeEnabled.listenable().addListener(_globeEnabledListener);
     Stores.setting.collapseUIDefault.listenable().addListener(_uiFoldListener);
     Stores.setting.fullScreenJitter.listenable().addListener(_burnInListener);
-    if (isDesktop) windowManager.addListener(this);
+    _ensureWindow();
     _startAvoidJitterTimer();
     _scheduleGlobeGuide();
   }

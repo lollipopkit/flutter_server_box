@@ -1,4 +1,19 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_manage.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 
 /// One network — the design's network view: its configuration, edited in
 /// place, the guests on it, its configuration file, and what can be done to
@@ -47,7 +62,7 @@ class VirtNetworkView extends ConsumerStatefulWidget {
 }
 
 class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
-    with _PaneRows<VirtNetworkView> {
+    with VirtPaneRows<VirtNetworkView> {
   String get _serverId => widget.serverId;
 
   // --- The configuration draft ---
@@ -263,7 +278,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             child: nets.isLoading || busy ? const ProgressLine() : null,
           ),
           Expanded(
-            child: _buildGroups(
+            child: buildPaneGroups(
               [
                 _configGroup(net, all, caps, busy),
                 if (net.takesGuests) _usersGroup(net, host),
@@ -295,7 +310,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
 
   /// The design's `cfg` group: the rows that edit the network where the app
   /// may edit it, what it is otherwise, and the draft's Save and Revert.
-  _Group _configGroup(
+  VirtPaneGroup _configGroup(
     VirtNetwork net,
     List<VirtNetwork> all,
     VirtCapabilities caps,
@@ -309,7 +324,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
         caps.networkEditExisting &&
         net.managementEditable &&
         (!pve || pveBridge);
-    return _Group(
+    return VirtPaneGroup(
       key: 'cfg',
       title: pveBridge ? 'Linux bridge' : l10n.virtNetConfig,
       right: net.active ? libL10n.active : libL10n.inactive,
@@ -323,17 +338,17 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           ..._pveRows(net, all, busy)
         else
           ..._libvirtRows(net, all, caps, busy),
-        if (caps.networkApply && !net.active) _text(l10n.virtNetInactivePve),
+        if (caps.networkApply && !net.active) paneText(l10n.virtNetInactivePve),
         if (caps.networkApply && pve && !net.managementEditable)
-          _text(
+          paneText(
             net.mode == 'bridge'
                 ? l10n.virtNetManagementTip
                 : l10n.virtNetPhysicalTip,
           ),
         if (caps.networkRestart && net.pendingRestart) ...[
-          _text(l10n.virtNetEditPending, error: true),
-          _actions([
-            _Action(
+          paneText(l10n.virtNetEditPending, error: true),
+          paneActions([
+            VirtPaneAction(
               l10n.virtNetRestart,
               key: 'net:restart',
               icon: Icons.restart_alt,
@@ -349,46 +364,46 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   List<Widget> _facts(VirtNetwork net, VirtCapabilities caps, bool busy) {
     final pveBridge = net.node != null && net.mode == 'bridge';
     return [
-      _field(Icons.router_outlined, libL10n.mode, net.modeLabel),
-      if (net.node case final n?) _field(Icons.dns_outlined, libL10n.node, n),
+      paneField(Icons.router_outlined, libL10n.mode, net.modeLabel),
+      if (net.node case final n?) paneField(Icons.dns_outlined, libL10n.node, n),
       if (net.bridge case final b?)
-        _field(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
+        paneField(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
       if (pveBridge)
-        _field(
+        paneField(
           Icons.settings_ethernet,
           l10n.virtNetBridgePorts,
           net.ports.isEmpty ? l10n.virtNetInternal : net.ports.join(' '),
           mono: true,
         )
       else if (net.ports.isNotEmpty)
-        _field(Icons.settings_ethernet, l10n.virtPorts, net.ports.join(', '), mono: true),
-      _field(
+        paneField(Icons.settings_ethernet, l10n.virtPorts, net.ports.join(', '), mono: true),
+      paneField(
         Icons.language,
         'IPv4 / CIDR',
         net.cidrs.isEmpty ? '--' : net.cidrs.join('\n'),
         mono: true,
       ),
       if (net.gateway case final g?)
-        _field(Icons.alt_route, libL10n.gateway, g, mono: true),
+        paneField(Icons.alt_route, libL10n.gateway, g, mono: true),
       if (net.dhcpRanges.isNotEmpty)
-        _field(
+        paneField(
           Icons.format_list_numbered,
           l10n.virtNetDhcpRange,
           net.dhcpRanges.join('\n'),
           mono: true,
         ),
       if (net.vlanAware case final v?)
-        _field(Icons.segment, l10n.virtNetVlanAware, v ? libL10n.enabled : libL10n.disabled),
+        paneField(Icons.segment, l10n.virtNetVlanAware, v ? libL10n.enabled : libL10n.disabled),
       if (net.vlanId case final id?)
-        _field(Icons.segment, 'VLAN', [id, ?net.vlanDevice].join(' · ')),
-      if (net.bondMode case final m?) _field(Icons.merge_type, libL10n.mode, m),
+        paneField(Icons.segment, 'VLAN', [id, ?net.vlanDevice].join(' · ')),
+      if (net.bondMode case final m?) paneField(Icons.merge_type, libL10n.mode, m),
       if (net.comment case final c? when c.isNotEmpty)
-        _field(Icons.notes, libL10n.note, c),
+        paneField(Icons.notes, libL10n.note, c),
       _autostartRow(net, caps, busy),
       if (net.hosts.isNotEmpty) ...[
-        _text(l10n.virtNetHosts),
+        paneText(l10n.virtNetHosts),
         for (final (i, h) in net.hosts.indexed)
-          _field(
+          paneField(
             Icons.link,
             h.name?.isNotEmpty ?? false ? h.name! : h.mac,
             '${h.mac} → ${h.ip}',
@@ -396,7 +411,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             mono: true,
           ),
       ] else if (net.node == null)
-        _text(l10n.virtNetHostEmpty),
+        paneText(l10n.virtNetHostEmpty),
     ];
   }
 
@@ -404,7 +419,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   /// definition the draft edits.
   Widget _autostartRow(VirtNetwork net, VirtCapabilities caps, bool busy) {
     if (caps.networkStart) {
-      return _toggle(
+      return paneToggle(
         Icons.power_settings_new,
         l10n.virtHwAutostart,
         net.autostart ?? false,
@@ -414,7 +429,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             : (on) => unawaited(_manage(VirtNetworkSetAutostart(net, on: on))),
       );
     }
-    return _field(
+    return paneField(
       Icons.power_settings_new,
       l10n.virtHwAutostart,
       (net.autostart ?? false) ? libL10n.enabled : libL10n.disabled,
@@ -435,14 +450,14 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     String? on(Set<VirtResIssue> which) => which.contains(issue) ? text : null;
     final change = _change(_seeded ?? net);
     return [
-      _choice([
+      paneChoice([
         for (final (m, icon, label, sub) in [
           ('nat', Icons.router_outlined, 'NAT', l10n.virtNetNatTip),
           ('route', Icons.alt_route, l10n.virtNetRouted, l10n.virtNetRoutedTip),
           ('isolated', Icons.link_off, l10n.virtNetIsolated, l10n.virtNetIsolatedTip),
           ('bridge', Icons.lan_outlined, l10n.virtNetBridged, l10n.virtNetBridgedTip),
         ])
-          _Choice(
+          VirtPaneChoice(
             key: 'net:edit:mode:$m',
             icon: icon,
             label: label,
@@ -452,7 +467,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           ),
       ]),
       if (bridged)
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('net:edit:bridge'),
           controller: _bridge,
           label: l10n.virtNetHostBridge,
@@ -471,8 +486,8 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
         })),
         // The device libvirt makes for it: not edited here.
         if (net.bridge case final b?)
-          _field(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
-        _toggle(
+          paneField(Icons.settings_ethernet, l10n.virtBridge, b, mono: true),
+        paneToggle(
           Icons.dns_outlined,
           'DHCP',
           _dhcp,
@@ -481,7 +496,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           onChanged: busy ? null : (v) => setState(() => _dhcp = v),
         ),
         if (_dhcp)
-          _inputRow([
+          paneInputRow([
             Input(
               key: const ValueKey('net:edit:dhcp:start'),
               controller: _dhcpStart,
@@ -506,10 +521,10 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       ],
       _autostartRow(net, caps, busy),
       if (!bridged) ...[
-        _text(l10n.virtNetHosts),
+        paneText(l10n.virtNetHosts),
         for (final (i, h) in _hosts.indexed)
           _hostRow(i, h, busy, bad: issue == VirtResIssue.hostInvalid),
-        _empty(
+        paneEmpty(
           _hosts.isEmpty ? l10n.virtNetHostEmpty : l10n.virtNetHostOthers,
           l10n.virtNetHostAdd,
           key: 'net:edit:host:add',
@@ -519,13 +534,13 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       // Only where the change waits for one: a static host alone applies
       // live, and a switch that did nothing would be a lie.
       if (_dirty && net.active && _needsRestart(change)) ...[
-        _callout(
+        paneCallout(
           libL10n.attention,
           net.users.isEmpty
               ? l10n.virtNetEditAskNoGuest
               : l10n.virtNetEditAsk(net.users.length),
         ),
-        _toggle(
+        paneToggle(
           Icons.restart_alt,
           l10n.virtNetEditRestart,
           _restartOnSave,
@@ -547,8 +562,8 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     final ipv4 = net.ipv4Cidr;
     final others = [for (final c in net.cidrs) if (c != ipv4) c];
     return [
-      _field(Icons.dns_outlined, libL10n.node, net.node!),
-      _inputRow([Input(
+      paneField(Icons.dns_outlined, libL10n.node, net.node!),
+      paneInputRow([Input(
         key: const ValueKey('net:edit:ports'),
         controller: _ports,
         label: l10n.virtNetBridgePorts,
@@ -563,10 +578,10 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       _cidrInput(busy, hint: '10.20.0.1/24', errorText: on(const {VirtResIssue.cidrInvalid})),
       // Sent back as they are: the rows edit IPv4 only.
       if (others.isNotEmpty)
-        _field(Icons.language, 'IPv6', others.join('\n'), mono: true),
+        paneField(Icons.language, 'IPv6', others.join('\n'), mono: true),
       if (net.gateway case final g?)
-        _field(Icons.alt_route, libL10n.gateway, g, mono: true),
-      _toggle(
+        paneField(Icons.alt_route, libL10n.gateway, g, mono: true),
+      paneToggle(
         Icons.segment,
         l10n.virtNetVlanAware,
         _vlanAware,
@@ -574,7 +589,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
         note: l10n.virtNetVlanTip,
         onChanged: busy ? null : (v) => setState(() => _vlanAware = v),
       ),
-      _toggle(
+      paneToggle(
         Icons.power_settings_new,
         l10n.virtHwAutostart,
         _autostart,
@@ -582,14 +597,14 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
         onChanged: busy ? null : (v) => setState(() => _autostart = v),
       ),
       if (net.comment case final c? when c.isNotEmpty)
-        _field(Icons.notes, libL10n.note, c),
-      _text(l10n.virtNetPveApplyNote),
+        paneField(Icons.notes, libL10n.note, c),
+      paneText(l10n.virtNetPveApplyNote),
       ..._draftRows(net, busy, issue, text),
     ];
   }
 
   Widget _cidrInput(bool busy, {required String hint, String? errorText}) {
-    return _inputRow([Input(
+    return paneInputRow([Input(
       key: const ValueKey('net:edit:cidr'),
       controller: _cidr,
       label: 'IPv4 / CIDR',
@@ -626,15 +641,15 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   ) {
     if (!_dirty) return const [];
     return [
-      if (issue != null) _text(text ?? libL10n.fail, error: true),
-      _actions([
-        _Action(
+      if (issue != null) paneText(text ?? libL10n.fail, error: true),
+      paneActions([
+        VirtPaneAction(
           l10n.virtHwRevert,
           key: 'net:edit:revert',
           icon: Icons.undo,
           onTap: _saving ? null : () => setState(() => _seed(net)),
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.save,
           key: 'net:edit:save',
           primary: true,
@@ -647,7 +662,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
   /// One static host: its MAC, its address and its name, with Remove — one
   /// box, since the two lines of fields are one entry.
   Widget _hostRow(int i, _HostDraft h, bool busy, {required bool bad}) {
-    return _box(
+    return paneBox(
       key: ValueKey('net:edit:host:$i'),
       padding: const EdgeInsets.fromLTRB(13, 2, 7, 2),
       child: Column(
@@ -664,7 +679,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
             errorText: bad ? l10n.virtNetHostInvalid : null,
             onChanged: (_) => setState(() {}),
           ),
-          _inputLine(
+          paneInputLine(
             [
               Expanded(
                 flex: 3,
@@ -720,27 +735,27 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     if (seeded == null) return;
     final base = seeded.xml == net.xml ? net : seeded;
     setState(() => _saving = true);
-    final applied = await _virtManageFor(ref, _serverId, _change(base));
+    final applied = await virtManageFor(ref, _serverId, _change(base));
     if (!mounted) return;
     setState(() {
       _saving = false;
       // Filled again from the network as it is read next.
-      if (applied == _Applied.done || applied == _Applied.conflict) {
+      if (applied == VirtApplied.done || applied == VirtApplied.conflict) {
         _seeded = null;
       }
     });
   }
 
-  _Group _usersGroup(VirtNetwork net, VirtHostState host) {
+  VirtPaneGroup _usersGroup(VirtNetwork net, VirtHostState host) {
     final scheme = Theme.of(context).colorScheme;
-    return _Group(
+    return VirtPaneGroup(
       key: 'users',
       title: l10n.virtAttachedGuests,
       right: '${net.users.length}',
       warn: false,
       indexNote: '${net.users.length}',
       rows: [
-        if (net.users.isEmpty) _text(l10n.virtNoAttachedGuests),
+        if (net.users.isEmpty) paneText(l10n.virtNoAttachedGuests),
         for (final (i, u) in net.users.indexed)
           Builder(
             key: ValueKey('netguest:$i'),
@@ -748,14 +763,14 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
               final guest = virtGuestOf(host.guests, u);
               final state = guest == null ? null : host.displayState(guest);
               final sub = [?u.device, ?u.ip, ?u.mac].join(' · ');
-              return _box(
+              return paneBox(
                 onTap: guest == null ? null : () => widget.onOpenGuest(guest.id),
                 child: Row(
                   children: [
                     SizedBox(
                       width: 19,
                       child: state == null
-                          ? _icon(Icons.help_outline)
+                          ? paneIcon(Icons.help_outline)
                           : Center(child: VirtStateDot(state, size: 9)),
                     ),
                     UIs.width13,
@@ -790,9 +805,9 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     );
   }
 
-  _Group _opsGroup(VirtNetwork net, VirtCapabilities caps, bool busy) {
+  VirtPaneGroup _opsGroup(VirtNetwork net, VirtCapabilities caps, bool busy) {
     final inUse = net.users.isNotEmpty;
-    return _Group(
+    return VirtPaneGroup(
       key: 'ops',
       title: l10n.virtOps,
       right: '',
@@ -800,24 +815,24 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       dot: Theme.of(context).colorScheme.error,
       indexNote: inUse ? l10n.virtInUse : l10n.virtCanDelete,
       rows: [
-        if (inUse) _text(l10n.virtNetInUse(net.users.length)),
-        _actions([
+        if (inUse) paneText(l10n.virtNetInUse(net.users.length)),
+        paneActions([
           if (caps.networkStart)
             net.active
-                ? _Action(
+                ? VirtPaneAction(
                     libL10n.stop,
                     key: 'net:stop',
                     icon: Icons.stop_circle_outlined,
                     danger: true,
                     onTap: busy ? null : () => unawaited(_setActive(net, false)),
                   )
-                : _Action(
+                : VirtPaneAction(
                     libL10n.start,
                     key: 'net:start',
                     icon: Icons.play_circle_outline,
                     onTap: busy ? null : () => unawaited(_setActive(net, true)),
                   ),
-          _Action(
+          VirtPaneAction(
             l10n.virtNetDelete,
             key: 'net:delete',
             icon: Icons.delete_outline,
@@ -833,23 +848,23 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
 
   /// The design's `file` group: the definition as the host keeps it,
   /// folded — what the rows above are read from.
-  _Group _fileGroup(VirtNetwork net, String text) {
+  VirtPaneGroup _fileGroup(VirtNetwork net, String text) {
     final libvirt = net.node == null;
-    return _Group(
+    return VirtPaneGroup(
       key: 'file',
       title: l10n.virtNetConfigFile,
       right: '',
       warn: false,
       indexNote: libvirt ? 'net-dumpxml' : 'interfaces',
       rows: [
-        _disc(
+        paneDisc(
           'config',
           Icons.code,
           libvirt ? 'virsh net-dumpxml ${net.name}' : '/etc/network/interfaces',
           '',
         ),
-        _reveal('config', [
-          _box(
+        paneReveal('config', [
+          paneBox(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SelectableText(
@@ -933,50 +948,6 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
     if (picked == null || picked == widget.netId || !mounted) return;
     onSwitch(picked);
   }
-}
-/// Makes [change] through the host's notifier and says what came of it.
-/// True when the host took it.
-Future<bool> virtManage(
-  WidgetRef ref,
-  String serverId,
-  VirtResourceChange change, {
-  bool quiet = false,
-}) async =>
-    await _virtManageFor(ref, serverId, change, quiet: quiet) == _Applied.done;
-
-/// [virtManage], saying why it did not: a draft is kept through a failure
-/// that retrying could get past, and dropped on a conflict, which says the
-/// read it was made from is gone.
-Future<_Applied> _virtManageFor(
-  WidgetRef ref,
-  String serverId,
-  VirtResourceChange change, {
-  bool quiet = false,
-}) async {
-  // Read before the await: the page may be left while the host works, and
-  // a disposed ref throws — which would report a change that was made as
-  // failed.
-  final pending =
-      (change is VirtNetworkCreate || change is VirtNetworkDelete) &&
-      (ref.read(virtHostProvider(serverId)).data?.capabilities.networkApply ??
-          false);
-  try {
-    await ref.read(virtHostProvider(serverId).notifier).manage(change);
-    if (!quiet) {
-      Toast.success(pending ? l10n.virtNetPendingSaved : libL10n.success);
-    }
-    return _Applied.done;
-  } on VirtErr catch (e) {
-    if (e.type == VirtErrType.conflict) {
-      Toast.warn(e.title, body: e.detail);
-      return _Applied.conflict;
-    }
-    Toast.error(e.title, body: e.detail);
-  } catch (e, s) {
-    Loggers.app.warning('Virtualization storage or network', e, s);
-    Toast.error(libL10n.fail, body: '$e');
-  }
-  return _Applied.failed;
 }
 
 /// A node's network configuration written but not applied (PVE), with the
@@ -1135,7 +1106,7 @@ class VirtNetworkCreateView extends ConsumerStatefulWidget {
 }
 
 class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
-    with _PaneRows<VirtNetworkCreateView> {
+    with VirtPaneRows<VirtNetworkCreateView> {
   final _name = TextEditingController();
   final _bridge = TextEditingController();
   final _cidr = TextEditingController();
@@ -1264,9 +1235,9 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
         children: [
           SizedBox(height: 3, child: _creating ? const ProgressLine() : null),
           Expanded(
-            child: _buildGroups(
+            child: buildPaneGroups(
               [
-                _Group(
+                VirtPaneGroup(
                   key: 'new',
                   title: pve ? 'Linux bridge' : l10n.virtNetVirtual,
                   right:
@@ -1274,7 +1245,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                   warn: false,
                   indexNote: mode,
                   rows: [
-                    _inputRow([Input(
+                    paneInputRow([Input(
                       key: const ValueKey('net:new:name'),
                       controller: _name,
                       label: libL10n.name,
@@ -1288,7 +1259,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                       onChanged: (_) => setState(() {}),
                     )]),
                     if (pve && nodes.length > 1)
-                      _seg(
+                      paneSeg(
                         Icons.dns_outlined,
                         libL10n.node,
                         nodes,
@@ -1297,9 +1268,9 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         onSelected: (n) => setState(() => _node = n),
                       ),
                     if (!pve)
-                      _choice([
+                      paneChoice([
                         for (final m in modes)
-                          _Choice(
+                          VirtPaneChoice(
                             key: 'net:new:mode:$m',
                             icon: switch (m) {
                               'nat' => Icons.router_outlined,
@@ -1324,7 +1295,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                           ),
                       ]),
                     if (pve || hostBridge)
-                      _inputRow([Input(
+                      paneInputRow([Input(
                         key: const ValueKey('net:new:bridge'),
                         controller: _bridge,
                         label: pve ? l10n.virtNetBridgePorts : l10n.virtNetHostBridge,
@@ -1336,7 +1307,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         onChanged: (_) => setState(() {}),
                       )]),
                     if (!hostBridge)
-                      _inputRow([Input(
+                      paneInputRow([Input(
                         key: const ValueKey('net:new:cidr'),
                         controller: _cidr,
                         label: 'IPv4 / CIDR',
@@ -1351,7 +1322,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         onChanged: (_) => setState(_fillRange),
                       )]),
                     if (!pve && !hostBridge) ...[
-                      _toggle(
+                      paneToggle(
                         Icons.dns_outlined,
                         'DHCP',
                         _dhcp,
@@ -1360,7 +1331,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         onChanged: (v) => setState(() => _dhcp = v),
                       ),
                       if (_dhcp)
-                        _inputRow([
+                        paneInputRow([
                           Input(
                             key: const ValueKey('net:new:dhcp:start'),
                             controller: _dhcpStart,
@@ -1382,7 +1353,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         ]),
                     ],
                     if (pve) ...[
-                      _toggle(
+                      paneToggle(
                         Icons.segment,
                         l10n.virtNetVlanAware,
                         _vlanAware,
@@ -1390,15 +1361,15 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
                         note: l10n.virtNetVlanTip,
                         onChanged: (v) => setState(() => _vlanAware = v),
                       ),
-                      _text(l10n.virtNetPveApplyNote),
+                      paneText(l10n.virtNetPveApplyNote),
                     ],
-                    _actions([
-                      _Action(
+                    paneActions([
+                      VirtPaneAction(
                         libL10n.cancel,
                         icon: Icons.close,
                         onTap: widget.onCancel,
                       ),
-                      _Action(
+                      VirtPaneAction(
                         libL10n.create,
                         key: 'net:new:create',
                         primary: true,

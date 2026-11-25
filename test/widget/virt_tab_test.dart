@@ -40,8 +40,9 @@ import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
+import 'package:server_box/view/page/virt/create.dart';
 import 'package:server_box/view/page/virt/guest.dart';
-import 'package:server_box/view/page/virt/hardware.dart';
+import 'package:server_box/view/page/virt/storage.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
 import '../helpers/fake_shell.dart';

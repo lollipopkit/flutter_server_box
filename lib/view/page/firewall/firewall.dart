@@ -3,20 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/core/utils/privileged_exec.dart';
-import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/admin/firewall.dart';
 import 'package:server_box/data/model/server/firewall/firewalld.dart';
 import 'package:server_box/data/model/server/firewall/ufw.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/page/firewall/common.dart';
+import 'package:server_box/view/page/firewall/firewalld.dart';
+import 'package:server_box/view/page/firewall/ufw.dart';
 import 'package:server_box/view/widget/pullable_issue.dart';
-
-part 'common.dart';
-part 'firewalld.dart';
-part 'ufw.dart';
 
 /// A server's firewall: ufw or firewalld, whichever it has.
 ///
@@ -56,15 +52,15 @@ final class _FirewallPageState extends ConsumerState<FirewallPage> {
     final probe = _probe;
     final kind = _kind;
     if (probe != null && kind != null) {
-      final host = _FirewallHost(
+      final host = FirewallHost(
         spi: widget.args.spi,
         probe: probe,
         accesses: _accessesFor(widget.args.spi, probe),
         onSwitch: (kind) => setState(() => _kind = kind),
       );
       return switch (kind) {
-        FirewallKind.ufw => _UfwView(key: const ValueKey('ufw'), host: host),
-        FirewallKind.firewalld => _FirewalldView(
+        FirewallKind.ufw => UfwView(key: const ValueKey('ufw'), host: host),
+        FirewallKind.firewalld => FirewalldView(
           key: const ValueKey('firewalld'),
           host: host,
         ),

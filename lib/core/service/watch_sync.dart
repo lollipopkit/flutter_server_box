@@ -37,23 +37,16 @@ final class WatchSync {
 
   @visibleForTesting
   WatchSync.forTest({
-    required Future<Map<String, dynamic>?> Function() readContext,
-    required Future<void> Function(Map<String, dynamic> payload) writeContext,
-    required Future<ScopedToken> Function(Spi spi, String endpoint) issueToken,
-    required Future<void> Function(Spi spi, String? endpoint) revokeToken,
+    required Future<Map<String, dynamic>?> Function() this._readContext,
+    required Future<void> Function(Map<String, dynamic> payload) this._writeContext,
+    required Future<ScopedToken> Function(Spi spi, String endpoint) this._issueToken,
+    required Future<void> Function(Spi spi, String? endpoint) this._revokeToken,
     DateTime Function()? now,
-    Duration revokeRetryDelay = Duration.zero,
-    Duration revokeCredentialTtl = _defaultRevokeCredentialTtl,
-    Duration mintWait = _defaultMintWait,
+    this._revokeRetryDelay = Duration.zero,
+    this._revokeCredentialTtl = _defaultRevokeCredentialTtl,
+    this._mintWait = _defaultMintWait,
   }) : _enabled = true,
-       _readContext = readContext,
-       _writeContext = writeContext,
-       _issueToken = issueToken,
-       _revokeToken = revokeToken,
-       _now = now ?? DateTime.now,
-       _revokeRetryDelay = revokeRetryDelay,
-       _revokeCredentialTtl = revokeCredentialTtl,
-       _mintWait = mintWait;
+       _now = now ?? DateTime.now;
 
   static final instance = WatchSync._();
 

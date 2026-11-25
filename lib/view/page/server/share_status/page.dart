@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/provider/server/metric.dart';
@@ -358,9 +359,9 @@ final class _State extends ConsumerState<ServerStatusSharePage> {
         // A folder, then the file written here, as the rescue page's export
         // does: macOS's save panel needs a sandbox entitlement this app,
         // unsandboxed, does not declare.
-        final dir = await FilePicker.getDirectoryPath(dialogTitle: libL10n.save);
-        if (dir == null) return;
-        final path = dir.joinPath(name);
+        final uri = await FilePicker.pickDirectory(dialogTitle: libL10n.save);
+        if (uri == null || !uri.isScheme('file')) return;
+        final path = p.join(uri.toFilePath(), name);
         await File(path).writeAsBytes(png);
         Toast.success(libL10n.saved);
         await Pfs.revealPath(path);

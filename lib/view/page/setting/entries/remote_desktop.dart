@@ -1,7 +1,11 @@
-part of '../entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
-extension _RemoteDesktop on _AppSettingsPageState {
-  List<SettingsGroup> _buildRemoteDesktop() {
+extension RemoteDesktopSettingEntries on AppSettingsHost {
+  List<SettingsGroup> buildRemoteDesktopSettings() {
     return [
       SettingsGroup(libL10n.general, [_buildRemoteSessionIdleTimeout()]),
     ];
@@ -16,7 +20,7 @@ extension _RemoteDesktop on _AppSettingsPageState {
 
   SettingsRow _buildRemoteSessionIdleTimeout() {
     final label = l10n.remoteSessionIdleTimeout;
-    final prop = _setting.remoteSessionIdleTimeout;
+    final prop = setting.remoteSessionIdleTimeout;
     return SettingsRow(
       label,
       () => ListTile(

@@ -83,9 +83,8 @@ final class _FlightAnchorState extends State<FlightAnchor> {
 final class StatusElementFlight {
   StatusElementFlight({
     required Animation<double> progress,
-    required VoidCallback onChanged,
+    required this._onChanged,
   }) : _progress = progress,
-       _onChanged = onChanged,
        _departOpacity = progress.drive(
          Tween(begin: 1.0, end: 0.0).chain(
            CurveTween(curve: const Interval(0.0, 0.75, curve: Curves.easeOut)),

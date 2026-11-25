@@ -1,9 +1,20 @@
-part of '../entry.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/app_mcp.dart';
+import 'package:server_box/core/service/app_mcp_tokens.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
 
 enum _McpListenPreset { all, lan, local, custom }
 
-extension _McpSettings on _AppSettingsPageState {
-  List<SettingsGroup> _buildMcp() {
+extension McpSettingEntries on AppSettingsHost {
+  List<SettingsGroup> buildMcpSettings() {
     final l10n = context.l10n;
     return [
       SettingsGroup(l10n.connection, [

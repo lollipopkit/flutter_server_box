@@ -33,8 +33,6 @@ import 'package:server_box/view/page/storage/transfer_announce.dart';
 
 export 'package:server_box/view/page/storage/args.dart' show SftpPageArgs;
 
-part 'sftp_helpers.dart';
-
 /// A server's files.
 ///
 /// A [FileBrowserPage] over whichever backend this server's SSH connection
@@ -802,3 +800,12 @@ final class _GotoHistory implements BrowsePathHistory {
     Stores.history.sftpGoPath.add(path);
   }
 }
+
+String _normalizeSftpPath(String path) => path.replaceAll(RegExp(r'/+'), '/');
+
+/// The command that unpacks [filename] where it is, from
+/// `sbm_parser::files`; null for a file it does not know how to unpack.
+String? _getDecompressCmd(String filename) =>
+    files.filesExtractCommand(path: filename);
+
+bool _canDecompress(String filename) => _getDecompressCmd(filename) != null;

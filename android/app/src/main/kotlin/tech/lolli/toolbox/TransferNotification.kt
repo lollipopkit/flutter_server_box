@@ -28,13 +28,6 @@ object TransferNotification {
     private const val TIMEOUT_MS = 30_000L
 
     /**
-     * `Notification.EXTRA_REQUEST_PROMOTED_ONGOING`, which compileSdk 36 does
-     * not declare yet; the key is the platform's own.
-     * TODO: use the constant once compileSdk is 36.1 or later.
-     */
-    private const val EXTRA_REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
-
-    /**
      * Whether Dart says a transfer is running: what keeps `ForegroundService`
      * up through Stop All, since it could not be started again from the
      * background once stopped.
@@ -93,7 +86,7 @@ object TransferNotification {
                     .setProgressIndeterminate(progress < 0),
             )
             if (chip.isNotEmpty()) b.setShortCriticalText(chip)
-            b.extras.putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true)
+            b.extras.putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true)
         } else {
             b.setProgress(100, progress.coerceAtLeast(0), progress < 0)
         }

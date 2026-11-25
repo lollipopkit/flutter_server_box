@@ -70,11 +70,10 @@ class ServerTcpChannel implements SshTunnelChannel {
 class ServerTcpDialer {
   ServerTcpDialer({
     required this.spi,
-    required Future<ServerTcpSsh> Function() ssh,
+    required this._ssh,
     MonitorAccess? Function()? relayGrant,
     this.transports = const {...ServerTransport.values},
-  }) : _ssh = ssh,
-       _relayGrant = relayGrant ?? _notRead;
+  }) : _relayGrant = relayGrant ?? _notRead;
 
   static const openTimeout = Duration(seconds: 15);
 

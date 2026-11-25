@@ -101,8 +101,7 @@ bool isRetryableTerminalConnectionError(Object error) {
 /// and the plumbing between them. What a particular *view* of one needs — tmux,
 /// keep-alive, the virtual keyboard, state restoration — stays on the page.
 class TerminalSession {
-  TerminalSession({required this.source, ShellBackend? backend})
-    : _backend = backend {
+  TerminalSession({required this.source, this._backend}) {
     terminal.onPrivateOSC = _handlePrivateOSC;
     terminal.onStatus = _handleTerminalStatus;
   }

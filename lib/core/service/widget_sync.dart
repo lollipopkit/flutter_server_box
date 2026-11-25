@@ -41,12 +41,10 @@ final class WidgetSync {
 
   @visibleForTesting
   WidgetSync.forTest({
-    required Future<ScopedToken> Function(Spi, String) issueToken,
-    required Future<void> Function(Spi, MonitorHttpCredential) revokeToken,
-    required Future<void> Function(String) writePayload,
-  }) : _issueToken = issueToken,
-       _revokeToken = revokeToken,
-       _writePayload = writePayload;
+    required Future<ScopedToken> Function(Spi, String) this._issueToken,
+    required Future<void> Function(Spi, MonitorHttpCredential) this._revokeToken,
+    required Future<void> Function(String) this._writePayload,
+  });
 
   static final instance = WidgetSync._();
 

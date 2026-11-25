@@ -1,4 +1,17 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
 
 /// The datacenter's backup jobs — PVE's `/cluster/backup`, the list the
 /// design points at with "数据中心 → 备份" from a guest's Plan group.
@@ -73,7 +86,7 @@ class VirtBackupJobList extends ConsumerWidget {
 /// are — with Save, Run now and Delete.
 ///
 /// The design has no editor for this (its Plan group is read-only); the
-/// rows other than the node and the guests are a [_JobForm]'s, shared with
+/// rows other than the node and the guests are a [VirtBackupJobForm]'s, shared with
 /// a guest's Plan group. The fields and their names are PVE's own (`schedule`, `storage`, `mode`,
 /// `compress`, `vmid`/`all`, `enabled`, `mailnotification`, `notes-template`,
 /// `prune-backups`, `node`), because a job made here is one PVE's own panel
@@ -105,14 +118,14 @@ class VirtBackupJobView extends ConsumerStatefulWidget {
 }
 
 class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
-    with _PaneRows<VirtBackupJobView>, _JobFormRows<VirtBackupJobView> {
+    with VirtPaneRows<VirtBackupJobView>, VirtBackupJobFormRows<VirtBackupJobView> {
   String get _serverId => widget.serverId;
   bool get _isNew => widget.jobId == null;
 
   VirtHostNotifier get _notifier =>
       ref.read(virtHostProvider(_serverId).notifier);
 
-  late final _form = _JobForm(() => setState(() {}));
+  late final _form = VirtBackupJobForm(() => setState(() {}));
 
   String? _node;
   var _all = true;
@@ -211,8 +224,8 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     if (picked != null && picked != widget.jobId) onPick(picked);
   }
 
-  /// Where the job's backups can go: see [_backupStoragesFor].
-  List<VirtStoragePool> get _storages => _backupStoragesFor(
+  /// Where the job's backups can go: see [virtBackupStoragesFor].
+  List<VirtStoragePool> get _storages => virtBackupStoragesFor(
     ref.watch(virtBackupStoragesProvider(_serverId)).value ??
         const <VirtStoragePool>[],
     node: _node,
@@ -229,9 +242,9 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     final guests = _selectableGuests(guestList);
     final storage = _form.storageIn(storages);
 
-    return _buildGroups(
+    return buildPaneGroups(
       [
-        _Group(
+        VirtPaneGroup(
           key: 'when',
           title: l10n.virtBackupSchedule,
           right: '',
@@ -240,14 +253,14 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
               ? '-'
               : _form.schedule.text.trim(),
           rows: [
-            ..._jobWhenRows(
+            ...jobWhenRows(
               _form,
               key: 'job',
               busy: busy,
-              onValidate: () => _checkSchedule(_form, _notifier),
+              onValidate: () => checkJobSchedule(_form, _notifier),
             ),
             if (nodes.length > 1)
-              _seg(
+              paneSeg(
                 Icons.dns_outlined,
                 l10n.virtBackupJobNode,
                 [
@@ -269,7 +282,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
               ),
           ],
         ),
-        _Group(
+        VirtPaneGroup(
           key: 'what',
           title: libL10n.backup,
           right: '',
@@ -277,9 +290,9 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
           // The storage the row below shows, from the same list: a new job
           // has none picked, and the row shows the first it offers.
           indexNote: storage ?? l10n.virtBackupNoStorage,
-          rows: _jobWhatRows(_form, storages, key: 'job', busy: busy),
+          rows: jobWhatRows(_form, storages, key: 'job', busy: busy),
         ),
-        _Group(
+        VirtPaneGroup(
           key: 'guests',
           title: l10n.virtBackupSelection,
           right: _selectionLabel,
@@ -292,7 +305,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
             (null, false) => '${_vmids.length}',
           },
           rows: [
-            _seg(
+            paneSeg(
               Icons.group_outlined,
               l10n.virtBackupSelection,
               [
@@ -314,14 +327,14 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
             ),
             // A pool's members are PVE's to say: nothing to pick.
             if (_pool == null && _all)
-              _text(
+              paneText(
                 l10n.virtBackupExcludeTip,
               )
             else if (_pool == null && _vmids.isEmpty)
-              _text(l10n.virtBackupSelectionNone, error: true),
+              paneText(l10n.virtBackupSelectionNone, error: true),
             if (_pool == null)
               for (final g in guests)
-                _toggle(
+                paneToggle(
                 g.kind == VirtGuestKind.lxc
                     ? Icons.inventory_2_outlined
                     : Icons.memory,
@@ -333,7 +346,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
               ),
           ],
         ),
-        _Group(
+        VirtPaneGroup(
           key: 'actions',
           title: libL10n.save,
           right: '',
@@ -342,20 +355,20 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
           indexNote: _isNew ? l10n.virtBackupJobNew : job?.id ?? '',
           rows: [
             if (_confirmDelete && !_isNew)
-              _callout(
+              paneCallout(
                 l10n.virtSetDeleteAgain,
                 l10n.virtBackupJobDeleteAsk(job!.id),
                 key: const ValueKey('job:delete:confirm'),
               ),
-            _actions([
+            paneActions([
               if (_confirmDelete && !_isNew)
-                _Action(
+                VirtPaneAction(
                   libL10n.cancel,
                   icon: Icons.close,
                   onTap: () => setState(() => _confirmDelete = false),
                 ),
               if (!_isNew)
-                _Action(
+                VirtPaneAction(
                   _confirmDelete
                       ? l10n.virtBackupDeleteConfirm
                       : libL10n.delete,
@@ -365,13 +378,13 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
                   onTap: busy ? null : () => _delete(job!),
                 ),
               if (!_isNew)
-                _Action(
+                VirtPaneAction(
                   l10n.virtBackupJobRun,
                   key: 'job:run',
                   icon: Icons.play_arrow,
                   onTap: busy || _confirmDelete ? null : () => _run(job!),
                 ),
-              _Action(
+              VirtPaneAction(
                 _saving ? libL10n.loadingEllipsis : libL10n.save,
                 key: 'job:save',
                 primary: true,
@@ -427,7 +440,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
 
   Future<void> _save() async {
     final storage = _form.storageIn(
-      _backupStoragesFor(
+      virtBackupStoragesFor(
         ref.read(virtBackupStoragesProvider(_serverId)).value ??
             const <VirtStoragePool>[],
         node: _node,
@@ -506,7 +519,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
 /// a storage once per node that has it. A job pinned to [node] is offered
 /// that node's storages only; one that runs on any node, every storage some
 /// node has.
-List<VirtStoragePool> _backupStoragesFor(
+List<VirtStoragePool> virtBackupStoragesFor(
   List<VirtStoragePool> all, {
   required String? node,
 }) {
@@ -522,10 +535,10 @@ List<VirtStoragePool> _backupStoragesFor(
 /// The fields of a backup job that are the job's own rather than whom it
 /// takes: when it runs, whether it does, where its backups go and what they
 /// are. Two editors fill them in — the datacenter's Backup section and a
-/// guest's Plan group — with the same rows ([_JobFormRows]), so the same
+/// guest's Plan group — with the same rows ([VirtBackupJobFormRows]), so the same
 /// input makes the same job from either.
-final class _JobForm {
-  _JobForm(this._onChanged) {
+final class VirtBackupJobForm {
+  VirtBackupJobForm(this._onChanged) {
     schedule.addListener(_scheduleChanged);
   }
 
@@ -620,15 +633,15 @@ final class _JobForm {
   );
 }
 
-/// The rows of a [_JobForm], keyed under a prefix (`job` in the Backup
+/// The rows of a [VirtBackupJobForm], keyed under a prefix (`job` in the Backup
 /// section, `plan:<id>` in a guest's Plan group), and the schedule check
 /// both editors offer.
-mixin _JobFormRows<W extends ConsumerStatefulWidget>
-    on ConsumerState<W>, _PaneRows<W> {
+mixin VirtBackupJobFormRows<W extends ConsumerStatefulWidget>
+    on ConsumerState<W>, VirtPaneRows<W> {
   /// When: the schedule, what it means, the host's check, and whether the
   /// job runs at all.
-  List<Widget> _jobWhenRows(
-    _JobForm f, {
+  List<Widget> jobWhenRows(
+    VirtBackupJobForm f, {
     required String key,
     required bool busy,
     required VoidCallback onValidate,
@@ -640,7 +653,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
       VirtBackupScheduleIssue.invalid => l10n.virtBackupScheduleInvalid,
     };
     return [
-      _inputRow([Input(
+      paneInputRow([Input(
         key: ValueKey('$key:schedule'),
         controller: f.schedule,
         label: l10n.virtBackupSchedule,
@@ -652,16 +665,16 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         // is the authority on what a calendar event is.
         errorText: scheduleError ?? f.check?.error,
       )], indent: indent),
-      _text(l10n.virtBackupScheduleHelp, indent: indent),
+      paneText(l10n.virtBackupScheduleHelp, indent: indent),
       if (f.check?.next case final times? when times.isNotEmpty)
-        _text(
+        paneText(
           l10n.virtBackupScheduleNext(
             times.take(3).map(_scheduleTime).join(', '),
           ),
           indent: indent,
         ),
       Padding(
-        padding: EdgeInsets.only(left: indent ? _indent : 0),
+        padding: EdgeInsets.only(left: indent ? virtPaneIndent : 0),
         child: Wrap(
           spacing: 7,
           runSpacing: 7,
@@ -675,7 +688,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
           ],
         ),
       ),
-      _toggle(
+      paneToggle(
         Icons.play_circle_outline,
         l10n.virtBackupEnabled,
         f.enabled,
@@ -687,8 +700,8 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
   }
 
   /// What: where the backups go (of [storages]) and what they are.
-  List<Widget> _jobWhatRows(
-    _JobForm f,
+  List<Widget> jobWhatRows(
+    VirtBackupJobForm f,
     List<VirtStoragePool> storages, {
     required String key,
     required bool busy,
@@ -696,9 +709,9 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
   }) {
     return [
       if (storages.isEmpty)
-        _text(l10n.virtBackupNoStorage, indent: indent)
+        paneText(l10n.virtBackupNoStorage, indent: indent)
       else
-        _seg(
+        paneSeg(
           Icons.storage_outlined,
           libL10n.storage,
           [for (final s in storages) s.name],
@@ -707,7 +720,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
           indent: indent,
           onSelected: busy ? null : (v) => setState(() => f.storage = v),
         ),
-      _seg(
+      paneSeg(
         Icons.restart_alt,
         libL10n.mode,
         [for (final m in VirtBackupMode.values) m.name],
@@ -716,7 +729,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         indent: indent,
         onSelected: busy ? null : (v) => setState(() => f.mode = VirtBackupMode.values.byName(v)),
       ),
-      _seg(
+      paneSeg(
         Icons.compress,
         l10n.virtBackupCompress,
         const ['zstd', 'lzo', 'gzip', '0'],
@@ -725,7 +738,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         indent: indent,
         onSelected: busy ? null : (v) => setState(() => f.compress = v),
       ),
-      _seg(
+      paneSeg(
         Icons.mail_outline,
         l10n.virtBackupMail,
         const ['failure', 'always'],
@@ -734,7 +747,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         indent: indent,
         onSelected: busy ? null : (v) => setState(() => f.mail = v),
       ),
-      _inputRow([Input(
+      paneInputRow([Input(
         key: ValueKey('$key:notes'),
         controller: f.notes,
         label: l10n.virtBackupNotesTemplate,
@@ -744,8 +757,8 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         minLines: 1,
         enabled: !busy,
       )], indent: indent),
-      _text(l10n.virtBackupNotesTemplateTip(virtBackupNotesVars), indent: indent),
-      _inputRow([Input(
+      paneText(l10n.virtBackupNotesTemplateTip(virtBackupNotesVars), indent: indent),
+      paneInputRow([Input(
         key: ValueKey('$key:prune'),
         controller: f.prune,
         label: l10n.virtBackupPrune,
@@ -754,8 +767,8 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
         suggestion: false,
         enabled: !busy,
       )], indent: indent),
-      _text(l10n.virtBackupPruneTip, indent: indent),
-      _inputRow([Input(
+      paneText(l10n.virtBackupPruneTip, indent: indent),
+      paneInputRow([Input(
         key: ValueKey('$key:comment'),
         controller: f.comment,
         label: libL10n.description,
@@ -771,7 +784,7 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
   /// through the call its job editor's "Simulate" button makes. Its answer
   /// is shown either way: the runs it would make, or its refusal in its
   /// words.
-  Future<void> _checkSchedule(_JobForm f, VirtHostNotifier notifier) async {
+  Future<void> checkJobSchedule(VirtBackupJobForm f, VirtHostNotifier notifier) async {
     final schedule = f.schedule.text.trim();
     setState(() => f.check = null);
     try {

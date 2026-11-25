@@ -1,18 +1,25 @@
-part of 'entry.dart';
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/view/page/setting/menu.dart';
+import 'package:server_box/view/widget/edge_fade_scroll.dart';
 
 /// Height of the floating tab bar, and the gap around it.
 ///
 /// The gap is carried by the bar's own padding rather than by where it is
 /// placed, so that its shadow falls inside the scroll view that clips it. The
 /// two shadows are written to stay within this much — see where they are built.
-const _kTabsHeight = 56.0;
-const _kTabsMargin = 12.0;
+const kSettingsTabsHeight = 56.0;
+const kSettingsTabsMargin = 12.0;
 
 /// Displacement springs past its mark and settles, as it does elsewhere.
 /// Only the bar's own width: a size factor past 1 would be a gap.
-const _kTabsCurve = Curves.easeOutBack;
+const kSettingsTabsCurve = Curves.easeOutBack;
 
-/// The same tree as [_SettingsMenu], one level at a time.
+/// The same tree as [SettingsMenu], one level at a time.
 ///
 /// A narrow window has no room for a column beside the content, and a drawer
 /// hides where you are the moment you have gone there. This shows the level you
@@ -21,14 +28,14 @@ const _kTabsCurve = Curves.easeOutBack;
 /// Only the level: the way back out is the title bar's own button, which is
 /// where every other page in the app puts it. A second one here was the same
 /// move twice on one screen.
-final class _SettingsTabs extends StatelessWidget {
+final class SettingsTabs extends StatelessWidget {
   /// The level being shown, which is the root or one branch's children.
   final List<SettingsNode> nodes;
 
   final String? selectedId;
   final void Function(SettingsNode node) onTap;
 
-  const _SettingsTabs({
+  const SettingsTabs({
     super.key,
     required this.nodes,
     required this.selectedId,
@@ -38,10 +45,10 @@ final class _SettingsTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(_kTabsHeight / 2);
+    final radius = BorderRadius.circular(kSettingsTabsHeight / 2);
 
     final row = SizedBox(
-      height: _kTabsHeight,
+      height: kSettingsTabsHeight,
       child: Row(
         // As wide as what is on it. A level of two tabs is a short bar.
         mainAxisSize: MainAxisSize.min,
@@ -94,7 +101,7 @@ final class _SettingsTabs extends StatelessWidget {
             // already stopped growing.
             child: AnimatedSize(
               duration: context.motion(Durations.medium2),
-              curve: _kTabsCurve,
+              curve: kSettingsTabsCurve,
               alignment: Alignment.centerLeft,
               child: row,
             ),
@@ -114,7 +121,7 @@ final class _SettingsTabs extends StatelessWidget {
     // a level too wide for the phone has to scroll out of sight, not spill.
     //
     // It is padding here rather than an offset on the `Positioned` that places
-    // this, so the bar sits where it always did — see [_kTabsMargin].
+    // this, so the bar sits where it always did — see [kSettingsTabsMargin].
     //
     // A level wider than the window ends at the window's edge, and a tab cut
     // off square there reads as the last one rather than as one of several
@@ -124,10 +131,10 @@ final class _SettingsTabs extends StatelessWidget {
         builder: (context, constraints) => SingleChildScrollView(
           controller: controller,
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.all(_kTabsMargin),
+          padding: const EdgeInsets.all(kSettingsTabsMargin),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),
+              minWidth: math.max(0, constraints.maxWidth - kSettingsTabsMargin * 2),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -228,8 +235,8 @@ final class _TabButton extends StatelessWidget {
 ///
 /// One row, the way the menu beside it is one column: which subject is being
 /// read is the title, and which of its pages is on screen is the lit tab.
-final class _SettingsContentHeader extends StatelessWidget {
-  const _SettingsContentHeader({
+final class SettingsContentHeader extends StatelessWidget {
+  const SettingsContentHeader({super.key, 
     required this.title,
     required this.nodes,
     required this.selectedId,
@@ -380,12 +387,12 @@ final class _SettingsPill extends StatelessWidget {
 /// siblings, so moving between them is moving along a row, and it should look
 /// like it. Dragging the content does the same thing as tapping a tab, which is
 /// what having them side by side promises.
-final class _SettingsPages extends StatefulWidget {
+final class SettingsPages extends StatefulWidget {
   final List<SettingsNode> leaves;
   final String selectedId;
   final void Function(SettingsNode node) onChanged;
 
-  const _SettingsPages({
+  const SettingsPages({
     super.key,
     required this.leaves,
     required this.selectedId,
@@ -393,10 +400,10 @@ final class _SettingsPages extends StatefulWidget {
   });
 
   @override
-  State<_SettingsPages> createState() => _SettingsPagesState();
+  State<SettingsPages> createState() => _SettingsPagesState();
 }
 
-class _SettingsPagesState extends State<_SettingsPages> {
+class _SettingsPagesState extends State<SettingsPages> {
   late final PageController _controller = PageController(
     initialPage: _indexOf(widget.selectedId),
   );
@@ -429,7 +436,7 @@ class _SettingsPagesState extends State<_SettingsPages> {
   }
 
   @override
-  void didUpdateWidget(_SettingsPages oldWidget) {
+  void didUpdateWidget(SettingsPages oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedId == oldWidget.selectedId) return;
     final target = _indexOf(widget.selectedId);

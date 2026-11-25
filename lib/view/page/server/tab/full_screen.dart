@@ -310,8 +310,11 @@ extension _FullScreenActions on _ServerPageState {
     });
     if (!isDesktop) return;
     try {
-      _fsWindowWasFull = await windowManager.isFullScreen();
-      if (!_fsWindowWasFull) await windowManager.setFullScreen(true);
+      final window = _ensureWindow();
+      if (window != null) {
+        _fsWindowWasFull = window.isFullScreen;
+        if (!_fsWindowWasFull) window.isFullScreen = true;
+      }
     } catch (e, s) {
       Loggers.app.warning('Window full screen', e, s);
     }
@@ -323,7 +326,7 @@ extension _FullScreenActions on _ServerPageState {
     _fsManual.value = false;
     if (!isDesktop || !window || _fsWindowWasFull) return;
     try {
-      await windowManager.setFullScreen(false);
+      _ensureWindow()?.isFullScreen = false;
     } catch (e, s) {
       Loggers.app.warning('Window full screen', e, s);
     }

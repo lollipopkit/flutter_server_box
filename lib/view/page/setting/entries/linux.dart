@@ -1,4 +1,14 @@
-part of '../entry.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/page/setting/helpers.dart';
+import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/view/widget/rootfs_install.dart';
 
 /// A toolbar button's glyph, which is what each of a profile's actions is.
 const _linuxActionIconSize = 18.0;
@@ -24,13 +34,13 @@ const _linuxActionIconSize = 18.0;
 /// saving either rewrites them in the system already on disk. Otherwise the
 /// setting would only take effect on the next install, which on iOS means
 /// deleting everything the package manager ever put there.
-extension _Linux on _AppSettingsPageState {
+extension LinuxSettingEntries on AppSettingsHost {
   /// Which profile is selected decides what the rows below are *about* — the
   /// mirror is per distribution and each dialog's header names it — so they
   /// redraw together with the list. The listenable is `build`'s, round the
   /// whole grid: a group is a list of cards now, and a builder inside one of
   /// them would rebuild that card alone.
-  List<SettingsGroup> _buildLinux() {
+  List<SettingsGroup> buildLinuxSettings() {
     return [
       SettingsGroup(libL10n.system, [_buildLinuxProfiles()]),
       if (_buildLinuxShell() case final shell?)
@@ -186,7 +196,7 @@ extension _Linux on _AppSettingsPageState {
   void _selectProfile(LinuxProfile profile) {
     // Only which one a *new* terminal opens in. Sessions already running stay
     // where they are — the machine holds them all at once.
-    _setting.linuxProfile.put(profile.id);
+    setting.linuxProfile.put(profile.id);
     refresh();
   }
 
@@ -214,7 +224,7 @@ extension _Linux on _AppSettingsPageState {
       if (label.isEmpty || label == profile.label) return;
       await Rootfs.rename(profile, label);
     } finally {
-      _disposeAfterExit(ctrl);
+      disposeAfterExit(ctrl);
     }
   }
 
@@ -247,7 +257,7 @@ extension _Linux on _AppSettingsPageState {
     // What a *later* install with nothing picked would default to, which is
     // the only thing this setting decides. What is being installed now is
     // passed, not read back out of here.
-    _setting.linuxDistro.put(distro.id);
+    setting.linuxDistro.put(distro.id);
     // Another, beside whatever is there — not "one if there is none".
     await installRootfs(context, picked: picked, another: true, label: label);
     refresh();
@@ -292,18 +302,10 @@ extension _Linux on _AppSettingsPageState {
       // what `withTextFieldController`'s delay before disposing is for; that
       // helper cannot be used here because it returns `void`, so awaiting it
       // gives back nothing and does so before the dialog is answered.
-      _disposeAfterExit(ctrl);
+      disposeAfterExit(ctrl);
     }
   }
 
-  /// Frees a dialog's controller once its route has finished leaving.
-  ///
-  /// A second is far longer than any dialog transition and costs a controller
-  /// held that much longer; the alternative is delaying the caller, and what
-  /// follows this is a download.
-  void _disposeAfterExit(TextEditingController ctrl) {
-    Future.delayed(const Duration(seconds: 1), ctrl.dispose);
-  }
 
   /// Which distribution to install, and then which release of it.
   ///
@@ -438,7 +440,7 @@ extension _Linux on _AppSettingsPageState {
           leading: const Icon(Icons.cloud_download_outlined),
           title: TipText(_linuxMirrorLabel(distro), l10n.linuxMirrorTip),
           subtitle: ValBuilder(
-            listenable: _setting.linuxMirrors.listenable(),
+            listenable: setting.linuxMirrors.listenable(),
             // The mirror in force, not the row stored for it: nothing stored
             // means the distribution's own default, which is what is fetched.
             builder: (_) => Text(
@@ -463,7 +465,7 @@ extension _Linux on _AppSettingsPageState {
         leading: const Icon(Icons.dns_outlined),
         title: TipText('DNS', l10n.linuxDnsTip),
         subtitle: ValBuilder(
-          listenable: _setting.linuxDns.listenable(),
+          listenable: setting.linuxDns.listenable(),
           builder: (val) => Text(
             val,
             style: UIs.textGrey,
@@ -551,7 +553,7 @@ extension _Linux on _AppSettingsPageState {
   void _onTapLinuxDns() {
     _showLinuxNetDialog(
       title: 'DNS',
-      initial: _setting.linuxDns.fetch(),
+      initial: setting.linuxDns.fetch(),
       icon: Icons.dns_outlined,
       hint: FlTty.defaultDns,
       // Addresses only, and every one of them: `resolv.conf` takes nothing
@@ -562,7 +564,7 @@ extension _Linux on _AppSettingsPageState {
           value.isEmpty ||
           parseNameservers(value).length ==
               value.split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length,
-      onSave: (value) => _setting.linuxDns.put(
+      onSave: (value) => setting.linuxDns.put(
         value.isEmpty ? FlTty.defaultDns : value,
       ),
     );

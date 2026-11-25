@@ -889,7 +889,7 @@
       <Input label={$LL.filesName()} id="fs-name" bind:value={currentDialog.value} />
     {/if}
     {#snippet actions()}
-      {#if currentDialog.kind === 'delete'}
+      {#if dialog?.kind === 'delete'}
         <Button variant="destructive" icon="delete" onclick={() => void submitDialog()}>{$LL.filesDelete()}</Button>
         <Button variant="secondary" onclick={() => (dialog = null)}>{$LL.cancel()}</Button>
       {:else}

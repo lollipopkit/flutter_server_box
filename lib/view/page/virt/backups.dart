@@ -1,4 +1,18 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/view/page/virt/backup_jobs.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
 
 /// A guest's backups — the design's Backup view (PVE): the scheduled jobs
 /// that take it (the Plan group, "Datacenter → Backup"), and its backups,
@@ -18,7 +32,7 @@ part of 'hardware.dart';
 ///
 /// **A plan of the guest's own is edited here**: a job that takes this guest
 /// and no other ([VirtBackupJob.takesOnly]) is made, edited and deleted in
-/// the Plan group with the Backup section's own rows ([_JobFormRows]), where
+/// the Plan group with the Backup section's own rows ([VirtBackupJobFormRows]), where
 /// the design only lists it. A job that takes other guests too stays read
 /// only here and opens in that section ([onOpenJob]): a change to it is a
 /// change to their backups as well.
@@ -48,15 +62,13 @@ class VirtBackupView extends ConsumerStatefulWidget {
 
 class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     with
-        _PaneRows<VirtBackupView>,
-        _EditPane<VirtBackupView>,
-        _JobFormRows<VirtBackupView> {
-  @override
+        VirtPaneRows<VirtBackupView>,
+        VirtBackupJobFormRows<VirtBackupView> {
   String get _serverId => widget.serverId;
-  @override
   VirtGuest get _guest => widget.guest;
-  @override
   VirtCapabilities get _caps => widget.caps;
+  VirtHostNotifier get _notifier =>
+      ref.read(virtHostProvider(widget.serverId).notifier);
 
   List<VirtBackup>? _backups;
   List<VirtBackupJob> _jobs = const [];
@@ -89,7 +101,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
 
   /// A plan of this guest's own being edited in place, and which: the job's
   /// id, or null for a new one. One at a time, as a backup's notes are.
-  _JobForm? _plan;
+  VirtBackupJobForm? _plan;
   String? _planId;
 
   @override
@@ -148,7 +160,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   @override
   Widget build(BuildContext context) {
     if (_error case final e?) {
-      return _buildError(e, onRetry: () => unawaited(_load()));
+      return buildPaneError(e, onRetry: () => unawaited(_load()));
     }
     if (_backups == null) return const Center(child: SizedLoading.medium);
     final busy = ref.watch(
@@ -157,7 +169,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     // Not the hardware pane's own build: nothing here is read from the
     // hardware, and a pull reads again what these groups show — the
     // backups, the jobs and the storages.
-    return _buildGroups(
+    return buildPaneGroups(
       [
         _planGroup(busy),
         _listGroup(busy),
@@ -172,14 +184,14 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
 
   // --- Plan ---
 
-  _Group _planGroup(bool busy) {
+  VirtPaneGroup _planGroup(bool busy) {
     final job = _jobs.firstOrNull;
     final blocked = busy || _working;
     // Made and changed here only where the host has the datacenter's jobs
     // to make: elsewhere the group reads them, as the design has it.
     final editable = _caps.backupJobs && _guest.vmid != null;
     final creating = _plan != null && _planId == null;
-    return _Group(
+    return VirtPaneGroup(
       key: 'plan',
       title: l10n.virtBackupPlan,
       right: l10n.virtBackupPlanWhere,
@@ -189,7 +201,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         if (creating)
           ..._planEditor(null, blocked)
         else if (editable)
-          _empty(
+          paneEmpty(
             _jobs.isEmpty ? l10n.virtBackupNoPlan : l10n.virtBackupPlanNewTip,
             l10n.virtBackupPlanNew,
             key: 'plan:new',
@@ -197,7 +209,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
             onTap: blocked || _plan != null ? null : () => _editPlan(null),
           )
         else if (job == null)
-          _text(l10n.virtBackupNoPlan),
+          paneText(l10n.virtBackupNoPlan),
         for (final j in _jobs)
           if (_plan != null && _planId == j.id)
             ..._planEditor(j, blocked)
@@ -219,7 +231,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     final deleting = _confirm == 'job:${j.id}';
     // One line until opened: when, where, and whether it runs at all. A
     // guest can be in several jobs, and each in full was a screen of rows.
-    final row = _disc(
+    final row = paneDisc(
       key,
       Icons.schedule,
       j.schedule ?? '-',
@@ -230,20 +242,20 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       ].join(' · '),
       marked: j.enabled,
     );
-    if (!_open.contains(key)) return [row];
+    if (!paneOpen.contains(key)) return [row];
     return [
       row,
-      _field(Icons.storage_outlined, libL10n.storage, j.storage ?? '-', indent: true),
+      paneField(Icons.storage_outlined, libL10n.storage, j.storage ?? '-', indent: true),
       if (j.keep case final keep?)
-        _field(Icons.inventory_2_outlined, l10n.virtBackupKeep, keep, indent: true),
-      _field(
+        paneField(Icons.inventory_2_outlined, l10n.virtBackupKeep, keep, indent: true),
+      paneField(
         Icons.compress,
         libL10n.mode,
         [?j.mode?.name, ?j.compress].join(' · '),
         indent: true,
       ),
       if (!j.takesOnly(_guest.vmid))
-        _field(
+        paneField(
           Icons.group_outlined,
           l10n.virtBackupSelection,
           _othersLabel(j),
@@ -259,31 +271,31 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
               : null,
         ),
       if (j.node case final node?)
-        _field(Icons.dns_outlined, l10n.virtBackupJobNode, node, indent: true),
-      if (!j.enabled) _text(l10n.virtBackupJobDisabled, indent: true),
+        paneField(Icons.dns_outlined, l10n.virtBackupJobNode, node, indent: true),
+      if (!j.enabled) paneText(l10n.virtBackupJobDisabled, indent: true),
       if (deleting)
-        _callout(
+        paneCallout(
           l10n.virtSetDeleteAgain,
           l10n.virtBackupJobDeleteAsk(j.id),
           key: ValueKey('$key:confirm'),
           indent: true,
         ),
-      _actions(indent: true, [
+      paneActions(indent: true, [
         if (deleting)
-          _Action(
+          VirtPaneAction(
             libL10n.cancel,
             icon: Icons.close,
             onTap: () => setState(() => _confirm = null),
           ),
         if (own) ...[
-          _Action(
+          VirtPaneAction(
             deleting ? l10n.virtBackupDeleteConfirm : libL10n.delete,
             key: '$key:delete',
             icon: Icons.delete_outline,
             danger: true,
             onTap: blocked || _plan != null ? null : () => _deletePlan(j),
           ),
-          _Action(
+          VirtPaneAction(
             libL10n.edit,
             key: '$key:edit',
             icon: Icons.edit_outlined,
@@ -292,7 +304,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
                 : () => _editPlan(j),
           ),
         ],
-        _Action(
+        VirtPaneAction(
           l10n.virtBackupJobRun,
           key: '$key:run',
           icon: Icons.play_arrow,
@@ -324,22 +336,22 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
     final storages = _planStorages;
     final storage = f.storageIn(storages);
     return [
-      if (j == null) _text(l10n.virtBackupPlanNewTip),
-      ..._jobWhenRows(
+      if (j == null) paneText(l10n.virtBackupPlanNewTip),
+      ...jobWhenRows(
         f,
         key: key,
         busy: blocked,
-        onValidate: () => _checkSchedule(f, _notifier),
+        onValidate: () => checkJobSchedule(f, _notifier),
       ),
-      ..._jobWhatRows(f, storages, key: key, busy: blocked),
-      _actions([
-        _Action(
+      ...jobWhatRows(f, storages, key: key, busy: blocked),
+      paneActions([
+        VirtPaneAction(
           libL10n.cancel,
           key: '$key:cancel',
           icon: Icons.close,
           onTap: blocked ? null : _closePlan,
         ),
-        _Action(
+        VirtPaneAction(
           libL10n.save,
           key: '$key:save',
           primary: true,
@@ -352,9 +364,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   }
 
   /// Where a plan's backups can go: the storages of the guest's node that
-  /// hold backups, each once (see [_backupStoragesFor]).
+  /// hold backups, each once (see [virtBackupStoragesFor]).
   List<VirtStoragePool> get _planStorages =>
-      _backupStoragesFor(_storages, node: _guest.node);
+      virtBackupStoragesFor(_storages, node: _guest.node);
 
   // --- Backups ---
 
@@ -366,11 +378,11 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         _storages.firstOrNull;
   }
 
-  _Group _listGroup(bool busy) {
+  VirtPaneGroup _listGroup(bool busy) {
     final backups = _backups ?? const <VirtBackup>[];
     final target = _storage ?? _defaultTarget?.name;
     final blocked = busy || _working;
-    return _Group(
+    return VirtPaneGroup(
       key: 'list',
       title: libL10n.backup,
       right: l10n.virtBackupCount(backups.length),
@@ -379,7 +391,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           ? l10n.virtBackupCount(backups.length)
           : _when(backups.first),
       rows: [
-        _empty(
+        paneEmpty(
           target == null
               ? l10n.virtBackupNoStorage
               : _live
@@ -397,10 +409,10 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
 
   /// The options a run now takes — the design's mode and compression, plus
   /// the storage, the notes and the protection PVE's own dialog asks for.
-  _Group _runGroup(bool busy) {
+  VirtPaneGroup _runGroup(bool busy) {
     final blocked = busy || _working;
     final storages = _storages;
-    return _Group(
+    return VirtPaneGroup(
       key: 'options',
       title: l10n.virtBackupOptions,
       right: '',
@@ -408,9 +420,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       indexNote: '$_mode${_compress == '0' ? '' : ' · $_compress'}',
       rows: [
         if (storages.isEmpty)
-          _text(l10n.virtBackupNoStorage)
+          paneText(l10n.virtBackupNoStorage)
         else
-          _seg(
+          paneSeg(
             Icons.storage_outlined,
             libL10n.storage,
             [for (final s in storages) s.name],
@@ -418,7 +430,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
             key: 'opt:storage',
             onSelected: blocked ? null : (v) => setState(() => _storage = v),
           ),
-        _seg(
+        paneSeg(
           Icons.restart_alt,
           libL10n.mode,
           [for (final m in VirtBackupMode.values) m.name],
@@ -426,7 +438,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           key: 'opt:mode',
           onSelected: blocked ? null : (v) => setState(() => _mode = VirtBackupMode.values.byName(v)),
         ),
-        _seg(
+        paneSeg(
           Icons.compress,
           l10n.virtBackupCompress,
           const ['zstd', 'lzo', 'gzip', '0'],
@@ -434,7 +446,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           key: 'opt:compress',
           onSelected: blocked ? null : (v) => setState(() => _compress = v),
         ),
-        _inputRow([Input(
+        paneInputRow([Input(
           key: const ValueKey('opt:notes'),
           controller: _notes,
           label: l10n.virtBackupNotes,
@@ -444,7 +456,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           maxLines: 3,
           minLines: 1,
         )]),
-        _toggle(
+        paneToggle(
           Icons.lock_outline,
           l10n.virtBackupProtect,
           _protect,
@@ -453,9 +465,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
           onChanged: blocked ? null : (on) => setState(() => _protect = on),
         ),
         if (_live && _mode != VirtBackupMode.snapshot)
-          _text(l10n.virtBackupModeStops),
-        _actions([
-          _Action(
+          paneText(l10n.virtBackupModeStops),
+        paneActions([
+          VirtPaneAction(
             l10n.virtBackupNow,
             key: 'opt:go',
             primary: true,
@@ -494,9 +506,9 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
       node: _guest.node,
     );
     return [
-      _disc(key, Icons.backup_outlined, _when(b), summary),
-      _reveal(key, [
-        _field(
+      paneDisc(key, Icons.backup_outlined, _when(b), summary),
+      paneReveal(key, [
+        paneField(
           Icons.description_outlined,
           libL10n.file,
           b.fileName,
@@ -505,7 +517,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         ),
         if (notesOpen)
           ...[
-            _inputRow([Input(
+            paneInputRow([Input(
               key: ValueKey('$key:notes:field'),
               controller: notes,
               label: l10n.virtBackupEditNotes,
@@ -515,16 +527,16 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
               minLines: 1,
               enabled: !blocked,
             )], indent: true),
-            _actions(
+            paneActions(
               [
-                _Action(
+                VirtPaneAction(
                   libL10n.cancel,
                   icon: Icons.close,
                   onTap: () => setState(() {
                     _notesDraft.remove(b.id)?.dispose();
                   }),
                 ),
-                _Action(
+                VirtPaneAction(
                   l10n.virtBackupSaveNotes,
                   key: '$key:notes:save',
                   primary: true,
@@ -535,12 +547,12 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
             ),
           ]
         else if (b.notes case final n? when n.isNotEmpty)
-          _field(Icons.notes, l10n.virtBackupNotes, n, indent: true),
-        if (b.protected) _text(l10n.virtBackupProtected, indent: true),
+          paneField(Icons.notes, l10n.virtBackupNotes, n, indent: true),
+        if (b.protected) paneText(l10n.virtBackupProtected, indent: true),
         if (b.verification case final v?)
-          _text(l10n.virtBackupVerified(v), indent: true, error: v != 'ok'),
+          paneText(l10n.virtBackupVerified(v), indent: true, error: v != 'ok'),
         if (_live)
-          _callout(
+          paneCallout(
             l10n.virtBackupRestoreOverwrites,
             l10n.virtBackupStopFirst,
             indent: true,
@@ -549,7 +561,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
         // itself PVE has no storage to give (`force=1` restores in place),
         // so the row is only under the "as a new guest" action.
         if (restoreTo != null || diskStorages.isNotEmpty)
-          _seg(
+          paneSeg(
             Icons.storage_outlined,
             l10n.virtBackupRestoreStorage,
             [
@@ -567,21 +579,21 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
                   }),
           ),
         if (deleting || restoring)
-          _callout(
+          paneCallout(
             l10n.virtSetDeleteAgain,
             restoring ? l10n.virtBackupRestoreAgain : l10n.virtSetIrreversible,
             indent: true,
             key: ValueKey('$key:confirm'),
           ),
-        _actions(
+        paneActions(
           [
             if (deleting || restoring)
-              _Action(
+              VirtPaneAction(
                 libL10n.cancel,
                 icon: Icons.close,
                 onTap: () => setState(() => _confirm = null),
               ),
-            _Action(
+            VirtPaneAction(
               notesOpen ? l10n.virtBackupEditNotes : libL10n.edit,
               key: '$key:notes',
               icon: Icons.notes,
@@ -595,7 +607,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
                             );
                     }),
             ),
-            _Action(
+            VirtPaneAction(
               b.protected ? l10n.virtBackupUnprotect : l10n.virtBackupProtect,
               key: '$key:protect',
               icon: b.protected ? Icons.lock_open : Icons.lock_outline,
@@ -603,7 +615,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
                   ? null
                   : () => _setProtected(b, !b.protected),
             ),
-            _Action(
+            VirtPaneAction(
               deleting ? l10n.virtBackupDeleteConfirm : libL10n.delete,
               key: '$key:delete',
               icon: Icons.delete_outline,
@@ -612,13 +624,13 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
                   ? null
                   : () => _delete(b),
             ),
-            _Action(
+            VirtPaneAction(
               l10n.virtBackupRestoreNew,
               key: '$key:restore-new',
               icon: Icons.add_to_photos_outlined,
               onTap: blocked || deleting ? null : () => _restoreNew(b),
             ),
-            _Action(
+            VirtPaneAction(
               restoring ? l10n.virtBackupRestoreConfirm : libL10n.restore,
               key: '$key:restore',
               primary: true,
@@ -692,7 +704,7 @@ class _VirtBackupViewState extends ConsumerState<VirtBackupView>
   }
 
   void _editPlan(VirtBackupJob? j) {
-    final f = _JobForm(() => setState(() {}));
+    final f = VirtBackupJobForm(() => setState(() {}));
     if (j != null) f.fill(j);
     setState(() {
       _plan?.dispose();

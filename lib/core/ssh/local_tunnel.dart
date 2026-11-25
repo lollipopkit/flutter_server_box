@@ -45,14 +45,13 @@ abstract interface class SshTunnelChannel {
 /// device's loopback. The engine gets the token in-process, through FFI.
 class SshLocalTunnel {
   SshLocalTunnel._({
-    required ServerSocket listener,
+    required this._listener,
     SshTunnelDialer? dialer,
     SshTunnelTargetDialer? socks,
     required Future<void> sshDone,
     this.accessToken,
     this.once = false,
   }) : assert((dialer == null) != (socks == null)),
-       _listener = listener,
        _dialer = dialer,
        _socks = socks {
     _subscription = _listener.listen(_accept, onError: _listenerError);

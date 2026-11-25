@@ -87,8 +87,8 @@ final class ServerMetric {
     required this.format,
     this.percent,
     this.binary = false,
-    bool? over,
-  }) : _over = over;
+    this._over,
+  });
 
   final ServerMetricKind kind;
   final String label;

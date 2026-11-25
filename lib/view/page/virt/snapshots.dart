@@ -1,4 +1,15 @@
-part of 'hardware.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/view/page/virt/common.dart';
+import 'package:server_box/view/page/virt/edit_pane.dart';
 
 /// A guest's snapshots: the tree, a new one, and reverting to or deleting
 /// one — each asked first — with the disk chain the guest is on and what a
@@ -44,7 +55,7 @@ class VirtSnapshotsView extends ConsumerStatefulWidget {
 }
 
 class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
-    with _PaneRows<VirtSnapshotsView> {
+    with VirtPaneRows<VirtSnapshotsView> {
   /// [setState] for the extension below, which may not call it itself.
   void _setState(VoidCallback fn) => setState(fn);
 
@@ -85,7 +96,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
   Widget build(BuildContext context) {
     final snaps = ref.watch(_provider);
     if (snaps.error case final e?) {
-      return _buildError(e, onRetry: () => ref.invalidate(_provider));
+      return buildPaneError(e, onRetry: () => ref.invalidate(_provider));
     }
     final busy = ref.watch(
       virtHostProvider(
@@ -99,7 +110,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     final chain = widget.caps.snapshotExternal
         ? ref.watch(_chainProvider)
         : null;
-    return _buildGroups(
+    return buildPaneGroups(
       [
         _snapshotGroup(list, chain?.value, busy),
         if (chain != null && list != null) _chainGroup(chain, list),
@@ -119,7 +130,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
 
   /// The count, what reverting costs, the form or the way to it, and the
   /// tree.
-  _Group _snapshotGroup(
+  VirtPaneGroup _snapshotGroup(
     List<VirtGuestSnapshot>? list,
     VirtSnapChain? chain,
     bool busy,
@@ -131,7 +142,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
         ? chain?.refusal
         : ref.watch(_refusalProvider).value;
     final current = list?.firstWhereOrNull((s) => s.current);
-    return _Group(
+    return VirtPaneGroup(
       key: 'snapshots',
       title: l10n.virtSnapshots,
       right: list == null ? '' : l10n.virtSnapshotCount(list.length),
@@ -146,11 +157,11 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
           )
         else ...[
           if (unsupported != null)
-            _callout(l10n.virtSnapshotNoSupport, unsupported)
+            paneCallout(l10n.virtSnapshotNoSupport, unsupported)
           else if (_creating)
             ..._formRows(list, chain, busy)
           else
-            _empty(
+            paneEmpty(
               // What a snapshot taken now keeps, as the design's empty row
               // says it, for the kind the form will open on.
               _defaultForm(list, chain) == VirtSnapshotForm.external
@@ -168,7 +179,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
               onTap: busy ? null : () => _openForm(list),
             ),
           if (list.isEmpty)
-            _text(l10n.virtSnapshotNone)
+            paneText(l10n.virtSnapshotNone)
           else
             for (final (snap, depth) in virtSnapshotTree(list))
               ..._snapshotRows(snap, depth, list, busy),
@@ -237,14 +248,14 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     final externalRefusal = chain?.externalRefusal;
     void close() => setState(() => _creating = false);
     return [
-      _disc(
+      paneDisc(
         'snapshot:form',
         Icons.add_circle_outline,
         l10n.virtSnapshotCreate,
         libL10n.cancel,
         onTap: close,
       ),
-      _inputRow([Input(
+      paneInputRow([Input(
         key: const ValueKey('snapshot:name'),
         controller: _name,
         label: libL10n.name,
@@ -254,7 +265,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
         errorText: nameError,
         onChanged: (_) => setState(() {}),
       )], indent: true),
-      _inputRow([Input(
+      paneInputRow([Input(
         key: const ValueKey('snapshot:desc'),
         controller: _desc,
         label: libL10n.description,
@@ -265,15 +276,15 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
       )], indent: true),
       if (widget.caps.snapshotExternal) ...[
         // Each kind says what it is; the one refused says why instead.
-        _choice([
-          _Choice(
+        paneChoice([
+          VirtPaneChoice(
             key: 'snapshot:form:${VirtSnapshotForm.internal}',
             icon: Icons.save_outlined,
             label: l10n.virtSnapshotFormInternal,
             selected: !external,
             onTap: () => setState(() => _form = VirtSnapshotForm.internal),
           ),
-          _Choice(
+          VirtPaneChoice(
             key: 'snapshot:form:${VirtSnapshotForm.external}',
             icon: Icons.layers_outlined,
             label: l10n.virtSnapshotExternal,
@@ -285,17 +296,17 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
           ),
         ], indent: true),
         if (external) ...[
-          _text(l10n.virtSnapshotExternalTip, indent: true),
+          paneText(l10n.virtSnapshotExternalTip, indent: true),
           // How deep the chain gets. The layers are counted as the files
           // under each disk, whatever put them there (a snapshot or a thin
           // clone of a base image): the new one goes on top either way.
           if (chain != null && chain.hasOverlays)
-            _text(
+            paneText(
               l10n.virtSnapshotExternalExists('${chain.depth}'),
               indent: true,
             ),
           if (pools.isNotEmpty) ...[
-            _text(l10n.virtSnapshotOverlayPool, indent: true),
+            paneText(l10n.virtSnapshotOverlayPool, indent: true),
             _poolChoice(pools),
           ],
         ],
@@ -303,7 +314,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
       if (memory != VirtSnapshotMemory.none)
         KeyedSubtree(
           key: const ValueKey('snapshot:memory'),
-          child: _toggle(
+          child: paneToggle(
             Icons.memory,
             l10n.virtSnapshotMemory,
             memory == VirtSnapshotMemory.always || _memory,
@@ -316,10 +327,10 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
           ),
         )
       else if (memoryNote != null)
-        _text(memoryNote, indent: true),
-      _actions([
-        _Action(libL10n.cancel, icon: Icons.close, onTap: close),
-        _Action(
+        paneText(memoryNote, indent: true),
+      paneActions([
+        VirtPaneAction(libL10n.cancel, icon: Icons.close, onTap: close),
+        VirtPaneAction(
           l10n.virtSnapshotCreate,
           key: 'snapshot:create',
           primary: true,
@@ -335,8 +346,8 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     final picked = pools.contains(_pool) ? _pool : null;
     return KeyedSubtree(
       key: const ValueKey('snapshot:pool'),
-      child: _choice([
-        _Choice(
+      child: paneChoice([
+        VirtPaneChoice(
           // A pool's name is never empty, so this key is no pool's.
           key: 'snapshot:pool:',
           icon: Icons.folder_copy_outlined,
@@ -345,7 +356,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
           onTap: () => setState(() => _pool = null),
         ),
         for (final p in pools)
-          _Choice(
+          VirtPaneChoice(
             key: 'snapshot:pool:$p',
             icon: Icons.storage_outlined,
             label: p,
@@ -385,7 +396,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
       Padding(
         key: ValueKey(key),
         padding: inset,
-        child: _disc(
+        child: paneDisc(
           key,
           snap.withMemory ? Icons.memory : Icons.save_outlined,
           snap.name,
@@ -396,20 +407,20 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
       ),
       Padding(
         padding: inset,
-        child: _reveal(key, [
+        child: paneReveal(key, [
         if (when != null)
-          _field(Icons.schedule, libL10n.time, when.simple(), indent: true),
-        _field(
+          paneField(Icons.schedule, libL10n.time, when.simple(), indent: true),
+        paneField(
           Icons.account_tree_outlined,
           l10n.virtSnapshotParent,
           snap.parent ?? '--',
           indent: true,
         ),
         if (snap.description case final d?)
-          _field(Icons.notes, libL10n.description, d, indent: true),
+          paneField(Icons.notes, libL10n.description, d, indent: true),
         for (final layer in snap.layers)
           if (layer.file case final file?)
-            _field(
+            paneField(
               Icons.layers_outlined,
               '${l10n.virtSnapshotChain} · ${layer.target}',
               file,
@@ -417,28 +428,28 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
               indent: true,
             ),
         if (stops)
-          _text(l10n.virtSnapshotRevertStops(widget.guest.name), indent: true),
+          paneText(l10n.virtSnapshotRevertStops(widget.guest.name), indent: true),
         if (revertRefused)
-          _text(l10n.virtSnapshotRevertHasChildren, indent: true, error: true)
+          paneText(l10n.virtSnapshotRevertHasChildren, indent: true, error: true)
         else if (snap.external)
-          _text(l10n.virtSnapshotRevertChain, indent: true),
+          paneText(l10n.virtSnapshotRevertChain, indent: true),
         if (_diffs[snap.name] case final diff?)
-          _box(indent: true, child: _buildDiff(diff)),
-        _actions([
-          _Action(
+          paneBox(indent: true, child: _buildDiff(diff)),
+        paneActions([
+          VirtPaneAction(
             l10n.virtSnapshotDiffShow,
             key: 'snapshot:diff:${snap.name}',
             icon: Icons.difference_outlined,
             onTap: () => unawaited(_readDiff(snap)),
           ),
-          _Action(
+          VirtPaneAction(
             libL10n.delete,
             key: 'snapshot:delete:${snap.name}',
             icon: Icons.delete_outline,
             danger: true,
             onTap: busy ? null : () => unawaited(_delete(snap)),
           ),
-          _Action(
+          VirtPaneAction(
             l10n.virtSnapshotRevert,
             key: 'snapshot:revert:${snap.name}',
             primary: true,
@@ -491,7 +502,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
 
   /// The design has no chain group; a guest on one needs it, so it is a group
   /// of its own: each disk, and the files it is on, topmost first.
-  _Group _chainGroup(
+  VirtPaneGroup _chainGroup(
     AsyncValue<VirtSnapChain> chain,
     List<VirtGuestSnapshot> list,
   ) {
@@ -499,7 +510,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     final depth = value == null || !value.hasOverlays
         ? ''
         : l10n.virtSnapshotChainDepth('${value.depth}');
-    return _Group(
+    return VirtPaneGroup(
       key: 'chain',
       title: l10n.virtSnapshotChain,
       right: depth,
@@ -507,9 +518,9 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
       indexNote: depth,
       rows: [
         if (chain.error case final e?) ...[
-          _text(e is VirtErr ? (e.detail ?? e.title) : '$e', error: true),
-          _actions([
-            _Action(
+          paneText(e is VirtErr ? (e.detail ?? e.title) : '$e', error: true),
+          paneActions([
+            VirtPaneAction(
               libL10n.retry,
               icon: Icons.refresh,
               onTap: () => ref.invalidate(_chainProvider),
@@ -522,11 +533,11 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
           // A refusal of every snapshot is said in the snapshot group; here
           // only what refuses the external kind alone.
           if (value.refusal == null && value.externalRefusal != null)
-            _text(value.externalRefusal!, error: true),
+            paneText(value.externalRefusal!, error: true),
           // The revert rule is about external snapshots, not about any file
           // with a backing one: a thin clone of a base image is on two
           // layers without a snapshot to revert to.
-          _text(
+          paneText(
             list.any((s) => s.external)
                 ? l10n.virtSnapshotRevertChain
                 : l10n.virtSnapshotExternalTip,
@@ -537,14 +548,14 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
   }
 
   Widget _chainDisk(VirtSnapChainDisk d) {
-    return _box(
+    return paneBox(
       key: ValueKey('chain:disk:${d.target}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              _icon(Icons.storage),
+              paneIcon(Icons.storage),
               UIs.width13,
               Expanded(
                 child: Text(

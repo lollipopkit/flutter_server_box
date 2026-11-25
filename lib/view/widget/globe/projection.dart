@@ -185,28 +185,18 @@ final class GlobeProjection {
 
   const GlobeProjection._({
     required this.camera,
-    required double sinLat,
-    required double cosLat,
-    required double lon,
-    required double xa,
-    required double xb,
-    required double ya,
-    required double yb,
-    required double yc,
-    required double za,
-    required double zb,
-    required double zc,
-  }) : _sinLat = sinLat,
-       _cosLat = cosLat,
-       _lon = lon,
-       _xa = xa,
-       _xb = xb,
-       _ya = ya,
-       _yb = yb,
-       _yc = yc,
-       _za = za,
-       _zb = zb,
-       _zc = zc;
+    required this._sinLat,
+    required this._cosLat,
+    required this._lon,
+    required this._xa,
+    required this._xb,
+    required this._ya,
+    required this._yb,
+    required this._yc,
+    required this._za,
+    required this._zb,
+    required this._zc,
+  });
 
   final GlobeCamera camera;
   final double _sinLat;

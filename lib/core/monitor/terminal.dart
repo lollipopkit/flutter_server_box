@@ -109,9 +109,7 @@ class MonitorShellBackend implements ShellBackend {
 
 /// One PTY on the agent, kept alive across reconnects.
 class MonitorShellSession implements ShellSession {
-  MonitorShellSession._(this._client, {required int cols, required int rows})
-    : _cols = cols,
-      _rows = rows;
+  MonitorShellSession._(this._client, {required this._cols, required this._rows});
 
   /// Missing this much heartbeat means the link is gone. The agent sends one
   /// every 15s; three misses rather than one, so a stalled radio isn't

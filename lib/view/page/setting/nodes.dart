@@ -1,9 +1,28 @@
-part of 'entry.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/lkc.dart';
+import 'package:server_box/data/model/app/feature.dart';
+import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/view/page/bmc/credential/list.dart';
+import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/setting/about.dart';
+import 'package:server_box/view/page/setting/app_page.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/page/setting/entries/keybindings.dart';
+import 'package:server_box/view/page/setting/menu.dart';
+import 'package:server_box/view/page/setting/platform/desktop.dart';
+import 'package:server_box/view/page/setting/platform/ios.dart';
+import 'package:server_box/view/page/setting/seq/known_hosts.dart';
+import 'package:server_box/view/page/setting/seq/srv_orders.dart';
+import 'package:server_box/view/page/setting/seq/virtual_key.dart';
 
 /// The menu, built here because every title comes from the l10n of the
 /// moment. A group with settings of its own carries them in a leaf under
 /// itself, so that opening a branch and showing a page stay separate.
-List<SettingsNode> _buildNodes() {
+List<SettingsNode> buildSettingsNodes() {
   return [
     if (Lkc.enabled)
       SettingsNode.leaf(
@@ -229,7 +248,7 @@ List<SettingsNode> _buildNodes() {
       id: 'about',
       title: libL10n.about,
       icon: Icons.info_outline,
-      page: () => const _AppAboutPage(),
+      page: () => const AppAboutPage(),
     ),
   ];
 }

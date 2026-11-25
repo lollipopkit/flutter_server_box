@@ -1,12 +1,20 @@
-part of 'tab.dart';
+import 'dart:async';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/virt/virt.dart';
+import 'package:server_box/view/page/virt/common.dart';
 
 /// The host switcher: the hosts, then every other server under "Check this
 /// server", so a server is never missing only because nobody asked it yet.
 ///
 /// One widget for the list column and the sheet, watching the providers
 /// itself so a probe finishing while it is open moves its row up.
-class _VirtHostPicker extends ConsumerWidget {
-  const _VirtHostPicker({
+class VirtHostPicker extends ConsumerWidget {
+  const VirtHostPicker({
     super.key,
     required this.selectedId,
     required this.onSelect,
