@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>tech.lolli.toolbox</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <name>ServerBox</name>
+  <summary>Monitor and manage servers over SSH or Monitor</summary>
+  <developer id="tech.lolli">
+    <name>lollipopkit</name>
+  </developer>
+  <description>
+    <p>ServerBox is a cross-platform server status monitor and administration toolbox built with Flutter and Rust. Connect directly over SSH, through jump hosts, or over HTTP via ServerBox Monitor.</p>
+    <p>Key capabilities include:</p>
+    <ul>
+      <li>Real-time and historical metrics for CPU, memory, swap, disks, disk I/O, network, sensors, GPUs, batteries, and disk S.M.A.R.T.</li>
+      <li>Full terminal emulator with tmux support, split-pane workspaces, and synced input across multiple sessions</li>
+      <li>File browser and editor over SFTP, SCP, or the Monitor API, plus RDP and VNC remote desktop</li>
+      <li>Management for Docker and Podman containers, processes, systemd services, users, firewalls, storage, scheduled tasks, and port forwards</li>
+      <li>Virtualization management for libvirt and Proxmox VE, and hardware control over Redfish BMC</li>
+      <li>Built-in AI Agent and App MCP server for server automation, encrypted backup and sync, and custom themes</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">tech.lolli.toolbox.desktop</launchable>
+  <url type="homepage">https://serverbox.lollipopkit.com/docs/</url>
+  <url type="bugtracker">https://github.com/lollipopkit/flutter_server_box/issues</url>
+  <url type="vcs-browser">https://github.com/lollipopkit/flutter_server_box</url>
+  <url type="donation">https://lollipopkit.com/donate</url>
+  <branding>
+    <color type="primary" scheme_preference="light">#f8d7e8</color>
+    <color type="primary" scheme_preference="dark">#4a0e2e</color>
+  </branding>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Server list with live resource overview</caption>
+      <image type="source" width="662" height="1440">https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>Detailed CPU, memory, disk, and network charts</caption>
+      <image type="source" width="662" height="1440">https://cdn.lollipopkit.com/serverbox/screenshot/iphone/server-details.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>Built-in SSH terminal emulator</caption>
+      <image type="source" width="662" height="1440">https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>SFTP file browser and remote editor</caption>
+      <image type="source" width="662" height="1440">https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg</image>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>System</category>
+    <category>Monitor</category>
+    <category>RemoteAccess</category>
+  </categories>
+  <keywords>
+    <keyword>server</keyword>
+    <keyword>ssh</keyword>
+    <keyword>sftp</keyword>
+    <keyword>docker</keyword>
+    <keyword>terminal</keyword>
+    <keyword>monitor</keyword>
+  </keywords>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="1.0.1962" date="2026-11-23" type="stable">
+      <url type="details">https://github.com/lollipopkit/flutter_server_box/releases/tag/v1.0.1962</url>
+    </release>
+    <release version="1.0.1925" date="2026-11-11" type="stable">
+      <url type="details">https://github.com/lollipopkit/flutter_server_box/releases/tag/v1.0.1925</url>
+    </release>
+    <release version="1.0.1856" date="2026-11-01" type="stable">
+      <url type="details">https://github.com/lollipopkit/flutter_server_box/releases/tag/v1.0.1856</url>
+    </release>
+  </releases>
+</component>

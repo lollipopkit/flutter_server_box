@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ServerBox
+GenericName=Server Toolbox
+Comment=Monitor and manage servers over SSH or Monitor
+Exec=serverbox %U
+Icon=tech.lolli.toolbox
+Terminal=false
+Categories=System;Monitor;RemoteAccess;
+Keywords=server;ssh;sftp;docker;terminal;monitor;linux;
+StartupNotify=true
+StartupWMClass=tech.lolli.toolbox

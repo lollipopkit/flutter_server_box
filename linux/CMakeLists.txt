@@ -136,21 +136,42 @@ endforeach(bundled_library)
 #
 # `tray_icon.cc` links libayatana-appindicator rather than opening it, so the
 # loader needs it present at *startup*: a machine without it does not get an
-# app with no status icon, it gets an app that will not start. That is fine for
-# the deb and the rpm, where a dependency can be declared, and not fine for the
-# AppImage, which is meant to be a single file that runs.
+# app with no status icon, it gets an app that will not start. Bundling the
+# chain lets the AppImage, .deb, .rpm, and Flatpak work across distributions
+# whose ayatana-appindicator package names differ or are absent (e.g. RHEL 9).
 #
-# The chain rather than the one name: appindicator pulls in the ayatana
-# indicator and ido libraries and both halves of dbusmenu, and bundling only
-# the first moves the failure one library along. Resolved by SONAME and
-# skipped when not found, because which of these a distribution splits out
-# varies and a missing one here should not fail the build — the deb and rpm
-# paths do not need any of this.
+# Because the executable carries `DT_RUNPATH` (not legacy `DT_RPATH`), its
+# `$ORIGIN/lib` search path does not propagate to transitive dependencies such
+# as `libdbusmenu-gtk3.so.4` needed by `libayatana-appindicator3.so.1`. Set
+# `$ORIGIN` on each bundled tray library via `patchelf` so they resolve one
+# another from `bundle/lib/` without relying on system copies.
+find_program(PATCHELF_EXECUTABLE patchelf)
+if(NOT PATCHELF_EXECUTABLE)
+  message(WARNING "patchelf not found; bundled tray libraries will lack $ORIGIN RUNPATH")
+endif()
+
+function(PATCH_TRAY_LIBRARY_RPATH file_name)
+  if(NOT PATCHELF_EXECUTABLE)
+    return()
+  endif()
+  install(CODE "
+    execute_process(
+      COMMAND \"${PATCHELF_EXECUTABLE}\" --set-rpath \"\$ORIGIN\"
+        \"${INSTALL_BUNDLE_LIB_DIR}/${file_name}\"
+      RESULT_VARIABLE tray_rpath_result)
+    if(NOT tray_rpath_result EQUAL 0)
+      message(FATAL_ERROR \"Failed to set RUNPATH on tray library: ${file_name}\")
+    endif()
+    " COMPONENT Runtime)
+endfunction()
+
 function(INSTALL_TRAY_LIBRARY library_path)
   if(NOT IS_SYMLINK "${library_path}")
+    get_filename_component(real_name "${library_path}" NAME)
     install(FILES "${library_path}"
       DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
       COMPONENT Runtime)
+    patch_tray_library_rpath("${real_name}")
     return()
   endif()
 
@@ -191,9 +212,11 @@ function(INSTALL_TRAY_LIBRARY library_path)
     set(current_path "${next_path}")
   endwhile()
 
+  get_filename_component(real_name "${current_path}" NAME)
   install(FILES "${current_path}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
+  patch_tray_library_rpath("${real_name}")
 
   list(LENGTH link_names link_count)
   math(EXPR last_link "${link_count} - 1")

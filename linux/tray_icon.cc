@@ -139,19 +139,31 @@ GtkWidget* MakeRow(FlValue* line) {
 
 void Update(FlValue* payload) {
   if (g_indicator == nullptr) {
-    // The application icon already ships as a Flutter asset. Point the
-    // indicator at that directory instead of keeping a second tray-only copy.
-    g_autofree gchar* dir = g_path_get_dirname(
-        g_file_read_link("/proc/self/exe", nullptr) ?: g_strdup("."));
-    g_autofree gchar* icon_dir =
-        g_build_filename(dir, "data", "flutter_assets", "assets", nullptr);
     // Deprecated in newer libayatana-appindicator, which builds with
     // -Werror; the call is what Ubuntu 22.04's has, which the legacy build
     // links against, so it stays and the warning is silenced here.
     G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-    g_indicator = app_indicator_new_with_path(
-        "serverbox", "app_icon", APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
-        icon_dir);
+    const gchar* flatpak_id = g_getenv("FLATPAK_ID");
+    if ((flatpak_id != nullptr && flatpak_id[0] != '\0') ||
+        g_file_test("/.flatpak-info", G_FILE_TEST_EXISTS)) {
+      // Inside a Flatpak sandbox the host StatusNotifierWatcher cannot read
+      // paths under /app; reference the exported hicolor icon name instead.
+      const gchar* icon_name =
+          (flatpak_id != nullptr && flatpak_id[0] != '\0') ? flatpak_id
+                                                           : APPLICATION_ID;
+      g_indicator = app_indicator_new(
+          "serverbox", icon_name, APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+    } else {
+      // The application icon already ships as a Flutter asset. Point the
+      // indicator at that directory instead of keeping a second tray-only copy.
+      g_autofree gchar* exe = g_file_read_link("/proc/self/exe", nullptr);
+      g_autofree gchar* dir = g_path_get_dirname(exe != nullptr ? exe : ".");
+      g_autofree gchar* icon_dir =
+          g_build_filename(dir, "data", "flutter_assets", "assets", nullptr);
+      g_indicator = app_indicator_new_with_path(
+          "serverbox", "app_icon", APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
+          icon_dir);
+    }
     G_GNUC_END_IGNORE_DEPRECATIONS
     app_indicator_set_status(g_indicator, APP_INDICATOR_STATUS_ACTIVE);
     app_indicator_set_title(g_indicator, "ServerBox");

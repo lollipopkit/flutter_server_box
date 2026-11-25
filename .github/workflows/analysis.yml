@@ -55,6 +55,7 @@ jobs:
       android: ${{ steps.filter.outputs.android }}
       docker: ${{ steps.filter.outputs.docker }}
       winget: ${{ steps.filter.outputs.winget }}
+      linux_packaging: ${{ steps.filter.outputs.linux_packaging }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -65,7 +66,7 @@ jobs:
 
           # Which filters are answered from the diff: all of them on a pull
           # request, none otherwise.
-          strict=' rust dart frontend docs website android docker winget '
+          strict=' rust dart frontend docs website android docker winget linux_packaging '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
@@ -149,6 +150,7 @@ jobs:
           emit android "$shared|^android/|^scripts/release/patch-jni-build-id\.sh$"
           # Rendered and checked here: `build.yml` uses them only on a release.
           emit winget '^\.github/(workflows/(analysis|build)\.yml$|winget/)|^scripts/release/winget\.sh$'
+          emit linux_packaging '^\.github/workflows/(analysis|build)\.yml$|^linux/packaging/|^scripts/release/(install-nfpm|package-linux-native|flathub)\.sh$'
           emit docker '^\.github/workflows/analysis\.yml$|^monitor/(src/stacks/|src/container_backups\.rs$|src/api/(stacks|container_backups)\.rs$|tests/stacks_docker\.rs$|tests/apps/)|^crates/sbm_parser/src/(stack|container_backup)\.rs$'
 
   reproducibilityCheck:
@@ -412,6 +414,64 @@ jobs:
         run: |
           scripts/release/winget.sh render "$RUNNER_TEMP/winget"
           scripts/release/winget.sh check "$RUNNER_TEMP/winget"
+
+  # Validates Linux .deb/.rpm/tarball packaging and the Flathub manifest
+  # without running a full Flutter Linux build.
+  linux-packaging:
+    name: Linux packaging
+    needs: changes
+    if: needs.changes.outputs.linux_packaging == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            LICENSE
+            assets/app_icon.png
+            linux/packaging
+            scripts/release/install-nfpm.sh
+            scripts/release/package-linux-native.sh
+            scripts/release/flathub.sh
+      - name: Install validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y desktop-file-utils appstream shellcheck rpm python3-yaml
+      - name: Shellcheck packaging scripts
+        run: |
+          shellcheck \
+            linux/packaging/scripts/refresh-desktop.sh \
+            scripts/release/install-nfpm.sh \
+            scripts/release/package-linux-native.sh \
+            scripts/release/flathub.sh
+      - name: Smoke-test deb, rpm, and tarball packaging
+        run: |
+          set -euo pipefail
+          scripts/release/install-nfpm.sh "$RUNNER_TEMP/nfpm-bin"
+          mkdir -p "$RUNNER_TEMP/fake-bundle/lib" "$RUNNER_TEMP/fake-bundle/data"
+          printf '#!/bin/sh\nexit 0\n' > "$RUNNER_TEMP/fake-bundle/ServerBox"
+          chmod 755 "$RUNNER_TEMP/fake-bundle/ServerBox"
+          touch \
+            "$RUNNER_TEMP/fake-bundle/lib/libflutter_linux_gtk.so" \
+            "$RUNNER_TEMP/fake-bundle/lib/libayatana-appindicator3.so.1.0.0" \
+            "$RUNNER_TEMP/fake-bundle/data/icudtl.dat"
+          ln -s libayatana-appindicator3.so.1.0.0 \
+            "$RUNNER_TEMP/fake-bundle/lib/libayatana-appindicator3.so.1"
+          PATH="$RUNNER_TEMP/nfpm-bin:$PATH" scripts/release/package-linux-native.sh \
+            --bundle "$RUNNER_TEMP/fake-bundle" \
+            --version 1.0.9999 \
+            --out "$RUNNER_TEMP/dist"
+          dpkg-deb --contents "$RUNNER_TEMP/dist/ServerBox_v1.0.9999_amd64.deb" \
+            | grep -Fq "./opt/serverbox/lib/libayatana-appindicator3.so.1 -> libayatana-appindicator3.so.1.0.0"
+      - name: Render and check Flathub manifest
+        env:
+          URL: https://github.com/${{ github.repository }}/releases/download/v1.0.0/ServerBox_v1.0.0_linux_amd64.tar.gz
+          SHA256: '0000000000000000000000000000000000000000000000000000000000000000'
+        run: |
+          scripts/release/flathub.sh render "$RUNNER_TEMP/flathub"
+          scripts/release/flathub.sh check "$RUNNER_TEMP/flathub"
 
   website:
     name: Project website
