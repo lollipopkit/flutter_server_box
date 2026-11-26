@@ -24,7 +24,8 @@ When syncing personal data through LK Cloud, writes are additionally authenticat
 
 - Files, log batches, and snapshots are signed client-side before upload.
 - Clients verify the Ed25519 signature before applying downloaded data and reject unsigned or forged payloads.
-- Local monotonic version watermarks detect and reject rollback or replay attempts from a compromised server.
+- A file's signed version only rises: an older version served again is rejected.
+- Log batches and snapshots apply each change only where it is newer than what the device holds, so one sent again or an older one changes nothing.
 
 ## Threat model
 
@@ -32,7 +33,7 @@ When syncing personal data through LK Cloud, writes are additionally authenticat
 | --- | --- |
 | Sync server or object storage breached | Attacker obtains only `identity.age` and X25519 ciphertext. Without the 128-bit Secret Key, offline brute-force against the backup password is infeasible. |
 | Compromised server injects plaintext or single-factor backup | Automatic remote sync rejects unencrypted or password-only payloads. Once upgraded to two-factor encryption, a local marker permanently blocks downgrading back to bare-password sealing. |
-| Compromised LK Cloud server forges writes or rolls back state | Client rejects invalid or missing Ed25519 signatures and monotonic version regressions (`Untrusted`). |
+| Compromised LK Cloud server forges writes or rolls back state | Client rejects invalid or missing Ed25519 signatures and a file version older than one already seen (`Untrusted`). |
 | Secret Key lost on all devices | Neither ServerBox nor any sync backend holds a copy; cloud sync data cannot be decrypted or recovered. |
 
 ## Upgrading existing devices

@@ -352,7 +352,7 @@ const es: Translation = {
       tamper: {
         scenario: 'Servidor LK Cloud comprometido falsifica escrituras o revierte versiones',
         behavior:
-          'Los archivos, registros e instantáneas personales en LK Cloud se firman con tu AccountKey Ed25519. El cliente valida las firmas y rechaza reversiones o repeticiones mediante marcas locales.',
+          'Los archivos, registros e instantáneas personales en LK Cloud se firman con tu AccountKey Ed25519. El cliente valida las firmas y rechaza versiones de archivo anteriores a las ya vistas. Cada cambio sincronizado solo se aplica donde es más reciente, así que un lote o instantánea reenviado no cambia nada.',
       },
       loss: {
         scenario: 'Clave secreta perdida en todos los dispositivos',

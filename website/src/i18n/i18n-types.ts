@@ -1981,7 +1981,7 @@ export type TranslationFunctions = {
 				 */
 				scenario: () => LocalizedString
 				/**
-				 * Personal LK Cloud files, log batches, and snapshots are signed with your Ed25519 AccountKey. Clients verify signatures before applying data and reject out-of-order or replayed versions via local monotonic watermarks.
+				 * Personal LK Cloud files, log batches, and snapshots are signed with your Ed25519 AccountKey. Clients verify signatures before applying data and reject a file version older than one already seen. Each synced change applies only where it is newer, so a batch or snapshot sent again changes nothing.
 				 */
 				behavior: () => LocalizedString
 			}

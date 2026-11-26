@@ -352,7 +352,7 @@ const it: Translation = {
       tamper: {
         scenario: 'Server LK Cloud compromesso falsifica scritture o esegue rollback',
         behavior:
-          'File, log e snapshot personali su LK Cloud sono firmati con la tua chiave Ed25519. Il client verifica le firme e blocca versioni precedenti o ripetute tramite watermark locali.',
+          'File, log e snapshot personali su LK Cloud sono firmati con la tua chiave Ed25519. Il client verifica le firme e rifiuta versioni di file più vecchie di quelle già viste. Ogni modifica sincronizzata si applica solo dove è più recente, quindi un batch o uno snapshot reinviato non cambia nulla.',
       },
       loss: {
         scenario: 'Chiave segreta smarrita su tutti i dispositivi',

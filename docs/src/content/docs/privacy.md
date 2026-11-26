@@ -56,7 +56,7 @@ key, while the sync key itself is stored alongside it as `identity.age` and
 protected with `age scrypt` using a passphrase derived locally from the backup
 password and Secret Key via BLAKE3. Automatic remote sync rejects plaintext and
 password-only payloads; personal LK Cloud writes are additionally signed with an
-Ed25519 key and checked against local monotonic versions. If a device's backup
+Ed25519 key, and a file version older than one already seen is rejected. If a device's backup
 password or Secret Key cannot unlock that key, sync pauses on that device until
 you enter the matching credentials. ServerBox cannot see your data and cannot
 recover a lost Secret Key. See

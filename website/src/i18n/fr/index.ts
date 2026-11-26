@@ -352,7 +352,7 @@ const fr: Translation = {
       tamper: {
         scenario: 'Serveur LK Cloud compromis forgeant des écritures ou un retour arrière',
         behavior:
-          'Les fichiers, journaux et instantanés LK Cloud personnels sont signés avec votre clé Ed25519. Le client vérifie chaque signature et rejette les versions antérieures ou rejouées.',
+          'Les fichiers, journaux et instantanés LK Cloud personnels sont signés avec votre clé Ed25519. Le client vérifie chaque signature et rejette une version de fichier plus ancienne qu’une version déjà vue. Chaque modification synchronisée ne s’applique que là où elle est plus récente : un lot ou un instantané renvoyé ne change rien.',
       },
       loss: {
         scenario: 'Clé secrète perdue sur tous les appareils',

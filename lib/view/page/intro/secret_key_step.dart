@@ -291,7 +291,7 @@ final class SecretKeyIntroController {
       }
 
       if (toSave != null) {
-        await SecureStoreProps.syncSecretKey.write(toSave, limited: false);
+        await SyncKeyring.storeSecretKey(toSave);
       }
       await SyncSecretKeyPrefs.backupPending.set(false);
       await SyncSecretKeyPrefs.introDeferred.set(false);

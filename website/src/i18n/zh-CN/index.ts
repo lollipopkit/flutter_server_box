@@ -334,7 +334,7 @@ const zhCN: Translation = {
       tamper: {
         scenario: '被控 LK Cloud 服务端伪造写入或回滚历史版本',
         behavior:
-          '个人 LK Cloud 文件、日志批次与快照均使用 Ed25519 AccountKey 签名。客户端应用数据前验证签名，并通过本地单调水印拒绝回滚或重放。',
+          '个人 LK Cloud 文件、日志批次与快照均使用 Ed25519 AccountKey 签名。客户端应用数据前验证签名，并拒绝比已见版本更旧的文件版本。每项同步变更只在更新时生效，重发的批次或快照不会改变任何内容。',
       },
       loss: {
         scenario: '所有设备均丢失安全密钥',

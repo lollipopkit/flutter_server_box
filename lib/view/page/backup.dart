@@ -360,7 +360,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   }
 
   Future<void> _saveSecretKeyAndResume(String normalized) async {
-    await SecureStoreProps.syncSecretKey.write(normalized, limited: false);
+    await SyncKeyring.storeSecretKey(normalized);
     await SyncSecretKeyPrefs.backupPending.set(false);
     await SyncSecretKeyPrefs.introDeferred.set(false);
     if (Lkc.enabled) {
