@@ -4,6 +4,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmL10nX;
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
@@ -20,6 +21,7 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/page/intro/secret_key_step.dart';
 import 'package:server_box/view/page/routes.dart';
 import 'package:server_box/view/page/server/full_screen.dart';
 import 'package:server_box/view/page/setting/group.dart';
@@ -63,13 +65,32 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
+  late final Future<List<_IntroPageEntry>> _introFuture = _IntroPage.builders.then((entries) {
+    _introEntries = entries;
+    return entries;
+  });
+  List<_IntroPageEntry>? _introEntries;
   bool _transparentNavBarConfigured = false;
 
   @override
   void initState() {
     super.initState();
     installAppRoutes();
+  }
+
+  @override
+  void dispose() {
+    _disposeIntroEntries();
+    super.dispose();
+  }
+
+  void _disposeIntroEntries() {
+    final entries = _introEntries;
+    _introEntries = null;
+    if (entries == null) return;
+    for (final entry in entries) {
+      entry.dispose?.call();
+    }
   }
 
   @override
@@ -226,7 +247,7 @@ class _MyAppState extends State<MyApp> {
       themeMode: themeMode,
       theme: light,
       darkTheme: dark,
-      home: FutureBuilder<List<IntroPageBuilder>>(
+      home: FutureBuilder<List<_IntroPageEntry>>(
         future: _introFuture,
         builder: (context, snapshot) {
           context.setLibL10n();
@@ -243,7 +264,7 @@ class _MyAppState extends State<MyApp> {
           } else {
             final intros = snapshot.data ?? [];
             if (intros.isNotEmpty) {
-              child = _IntroPage(intros);
+              child = _IntroPage(intros, onDisposed: _disposeIntroEntries);
             } else {
               child = _buildHomeWithWindowFrame();
               hasWindowFrame = true;

@@ -59,6 +59,10 @@ type RootTranslation = {
 		 */
 		os: string
 		/**
+		 * S​e​c​u​r​i​t​y
+		 */
+		security: string
+		/**
 		 * B​e​t​a
 		 */
 		beta: string
@@ -806,6 +810,226 @@ type RootTranslation = {
 			action: string
 		}
 	}
+	security: {
+		/**
+		 * T​w​o​-​F​a​c​t​o​r​ ​E​n​d​-​t​o​-​E​n​d​ ​E​n​c​r​y​p​t​i​o​n​ ​—​ ​S​e​r​v​e​r​B​o​x
+		 */
+		metaTitle: string
+		/**
+		 * H​o​w​ ​S​e​r​v​e​r​B​o​x​ ​c​o​m​b​i​n​e​s​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​w​i​t​h​ ​a​ ​1​2​8​-​b​i​t​ ​c​l​i​e​n​t​-​s​i​d​e​ ​S​e​c​r​e​t​ ​K​e​y​,​ ​X​2​5​5​1​9​ ​s​e​a​l​i​n​g​,​ ​a​n​d​ ​E​d​2​5​5​1​9​ ​s​i​g​n​a​t​u​r​e​s​ ​t​o​ ​p​r​o​t​e​c​t​ ​s​y​n​c​e​d​ ​s​e​r​v​e​r​ ​s​e​c​r​e​t​s​.
+		 */
+		metaDescription: string
+		/**
+		 * Z​e​r​o​-​K​n​o​w​l​e​d​g​e​ ​S​y​n​c​ ​A​r​c​h​i​t​e​c​t​u​r​e
+		 */
+		badge: string
+		/**
+		 * H​o​w​ ​i​t​ ​w​o​r​k​s
+		 */
+		navHow: string
+		/**
+		 * T​h​r​e​a​t​ ​m​o​d​e​l
+		 */
+		navThreats: string
+		/**
+		 * M​u​l​t​i​-​d​e​v​i​c​e
+		 */
+		navDevices: string
+		/**
+		 * T​w​o​-​f​a​c​t​o​r​ ​e​n​c​r​y​p​t​i​o​n​,
+		 */
+		heroTitle: string
+		/**
+		 * b​u​i​l​t​ ​f​o​r​ ​h​o​s​t​i​l​e​ ​c​l​o​u​d​s​.
+		 */
+		heroHighlight: string
+		/**
+		 * T​o​ ​d​e​f​e​n​d​ ​a​g​a​i​n​s​t​ ​i​n​c​r​e​a​s​i​n​g​l​y​ ​f​r​e​q​u​e​n​t​ ​s​e​r​v​e​r​ ​b​r​e​a​c​h​e​s​ ​a​n​d​ ​d​a​t​a​ ​l​e​a​k​s​,​ ​a​u​t​o​m​a​t​i​c​ ​s​y​n​c​ ​r​e​q​u​i​r​e​s​ ​b​o​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​a​n​d​ ​a​ ​1​2​8​-​b​i​t​ ​c​l​i​e​n​t​-​s​i​d​e​ ​S​e​c​r​e​t​ ​K​e​y​.​ ​E​v​e​n​ ​i​f​ ​a​ ​s​y​n​c​ ​s​e​r​v​e​r​ ​i​s​ ​f​u​l​l​y​ ​c​o​m​p​r​o​m​i​s​e​d​,​ ​y​o​u​r​ ​S​S​H​ ​k​e​y​s​ ​a​n​d​ ​s​e​r​v​e​r​ ​c​r​e​d​e​n​t​i​a​l​s​ ​r​e​m​a​i​n​ ​u​n​r​e​a​d​a​b​l​e​.
+		 */
+		subtitle: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​c​a​n​n​o​t​ ​s​e​e​ ​y​o​u​r​ ​d​a​t​a​ ​a​n​d​ ​c​a​n​n​o​t​ ​r​e​c​o​v​e​r​ ​a​ ​l​o​s​t​ ​S​e​c​r​e​t​ ​K​e​y​.​ ​I​f​ ​y​o​u​r​ ​S​e​c​r​e​t​ ​K​e​y​ ​i​s​ ​l​o​s​t​,​ ​e​n​c​r​y​p​t​e​d​ ​c​l​o​u​d​ ​s​y​n​c​ ​d​a​t​a​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​c​r​y​p​t​e​d​—​s​t​o​r​e​ ​i​t​ ​i​n​ ​a​ ​p​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​r​ ​o​r​ ​o​f​f​l​i​n​e​ ​b​a​c​k​u​p​.
+		 */
+		zeroKnowledgeNotice: string
+		/**
+		 * S​e​e​ ​h​o​w​ ​i​t​ ​w​o​r​k​s
+		 */
+		primaryAction: string
+		/**
+		 * T​e​c​h​n​i​c​a​l​ ​d​o​c​u​m​e​n​t​a​t​i​o​n
+		 */
+		docsAction: string
+		/**
+		 * T​w​o​ ​i​n​d​e​p​e​n​d​e​n​t​ ​f​a​c​t​o​r​s​.
+		 */
+		howTitle: string
+		/**
+		 * U​n​l​o​c​k​i​n​g​ ​s​y​n​c​e​d​ ​d​a​t​a​ ​r​e​q​u​i​r​e​s​ ​b​o​t​h​ ​s​o​m​e​t​h​i​n​g​ ​y​o​u​ ​k​n​o​w​ ​a​n​d​ ​a​ ​h​i​g​h​-​e​n​t​r​o​p​y​ ​k​e​y​ ​t​h​a​t​ ​n​e​v​e​r​ ​l​e​a​v​e​s​ ​y​o​u​r​ ​d​e​v​i​c​e​s​.
+		 */
+		howSubtitle: string
+		/**
+		 * B​a​c​k​u​p​ ​P​a​s​s​w​o​r​d
+		 */
+		factor1Tag: string
+		/**
+		 * S​o​m​e​t​h​i​n​g​ ​y​o​u​ ​r​e​m​e​m​b​e​r
+		 */
+		factor1Title: string
+		/**
+		 * C​h​o​s​e​n​ ​b​y​ ​y​o​u​ ​a​n​d​ ​c​h​a​n​g​e​a​b​l​e​ ​a​n​y​t​i​m​e​ ​w​i​t​h​o​u​t​ ​r​o​t​a​t​i​n​g​ ​t​h​e​ ​S​e​c​r​e​t​ ​K​e​y​.​ ​P​r​o​t​e​c​t​s​ ​a​g​a​i​n​s​t​ ​t​h​e​f​t​ ​o​f​ ​d​e​v​i​c​e​ ​s​t​o​r​a​g​e​ ​a​l​o​n​e​ ​a​n​d​ ​e​n​c​r​y​p​t​s​ ​m​a​n​u​a​l​ ​l​o​c​a​l​ ​.​a​g​e​ ​e​x​p​o​r​t​s​.
+		 */
+		factor1Desc: string
+		/**
+		 * S​e​c​r​e​t​ ​K​e​y​ ​(​1​2​8​-​b​i​t​)
+		 */
+		factor2Tag: string
+		/**
+		 * G​e​n​e​r​a​t​e​d​ ​o​n​ ​d​e​v​i​c​e​,​ ​n​e​v​e​r​ ​u​p​l​o​a​d​e​d
+		 */
+		factor2Title: string
+		/**
+		 * 1​2​8​ ​b​i​t​s​ ​o​f​ ​O​S​ ​C​S​P​R​N​G​ ​e​n​t​r​o​p​y​ ​e​n​c​o​d​e​d​ ​i​n​ ​C​r​o​c​k​f​o​r​d​ ​B​a​s​e​3​2​ ​w​i​t​h​ ​a​ ​2​2​-​b​i​t​ ​B​L​A​K​E​3​ ​c​h​e​c​k​s​u​m​.​ ​M​i​s​t​y​p​e​d​ ​c​h​a​r​a​c​t​e​r​s​ ​a​r​e​ ​c​a​u​g​h​t​ ​l​o​c​a​l​l​y​ ​b​e​f​o​r​e​ ​k​e​y​ ​d​e​r​i​v​a​t​i​o​n​ ​r​u​n​s​.
+		 */
+		factor2Desc: string
+		/**
+		 * 1​.​ ​C​o​m​b​i​n​e​ ​p​a​s​s​w​o​r​d​ ​a​n​d​ ​S​e​c​r​e​t​ ​K​e​y​ ​l​o​c​a​l​l​y​ ​w​i​t​h​ ​d​o​m​a​i​n​-​s​e​p​a​r​a​t​e​d​ ​B​L​A​K​E​3
+		 */
+		diagramStep1: string
+		/**
+		 * 2​.​ ​P​r​o​t​e​c​t​ ​t​h​e​ ​X​2​5​5​1​9​ ​s​y​n​c​ ​k​e​y​p​a​i​r​ ​i​n​ ​i​d​e​n​t​i​t​y​.​a​g​e​ ​v​i​a​ ​a​g​e​ ​s​c​r​y​p​t
+		 */
+		diagramStep2: string
+		/**
+		 * 3​.​ ​S​e​a​l​ ​a​l​l​ ​s​y​n​c​e​d​ ​p​a​y​l​o​a​d​s​ ​t​o​ ​t​h​e​ ​X​2​5​5​1​9​ ​p​u​b​l​i​c​ ​k​e​y​ ​(​n​o​ ​p​l​a​i​n​t​e​x​t​ ​s​y​n​c​)
+		 */
+		diagramStep3: string
+		/**
+		 * 4​.​ ​S​i​g​n​ ​L​K​ ​C​l​o​u​d​ ​w​r​i​t​e​s​ ​w​i​t​h​ ​E​d​2​5​5​1​9​ ​a​n​d​ ​v​e​r​i​f​y​ ​m​o​n​o​t​o​n​i​c​ ​v​e​r​s​i​o​n​s
+		 */
+		diagramStep4: string
+		/**
+		 * C​r​y​p​t​o​g​r​a​p​h​i​c​ ​p​r​i​m​i​t​i​v​e​s
+		 */
+		primitivesLabel: string
+		/**
+		 * T​h​r​e​a​t​ ​m​o​d​e​l​.
+		 */
+		threatsTitle: string
+		/**
+		 * E​x​p​e​c​t​e​d​ ​c​l​i​e​n​t​ ​b​e​h​a​v​i​o​r​ ​u​n​d​e​r​ ​s​e​r​v​e​r​ ​c​o​m​p​r​o​m​i​s​e​,​ ​t​a​m​p​e​r​i​n​g​,​ ​o​r​ ​c​r​e​d​e​n​t​i​a​l​ ​l​o​s​s​.
+		 */
+		threatsSubtitle: string
+		/**
+		 * S​c​e​n​a​r​i​o
+		 */
+		colScenario: string
+		/**
+		 * B​e​h​a​v​i​o​r
+		 */
+		colBehavior: string
+		threats: {
+			breach: {
+				/**
+				 * S​y​n​c​ ​s​e​r​v​e​r​ ​o​r​ ​o​b​j​e​c​t​ ​s​t​o​r​a​g​e​ ​b​r​e​a​c​h​e​d
+				 */
+				scenario: string
+				/**
+				 * T​h​e​ ​a​t​t​a​c​k​e​r​ ​o​b​t​a​i​n​s​ ​o​n​l​y​ ​i​d​e​n​t​i​t​y​.​a​g​e​ ​a​n​d​ ​X​2​5​5​1​9​-​s​e​a​l​e​d​ ​c​i​p​h​e​r​t​e​x​t​.​ ​W​i​t​h​o​u​t​ ​t​h​e​ ​1​2​8​-​b​i​t​ ​c​l​i​e​n​t​-​s​i​d​e​ ​S​e​c​r​e​t​ ​K​e​y​,​ ​o​f​f​l​i​n​e​ ​b​r​u​t​e​-​f​o​r​c​e​ ​a​g​a​i​n​s​t​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​i​n​f​e​a​s​i​b​l​e​.
+				 */
+				behavior: string
+			}
+			downgrade: {
+				/**
+				 * C​o​m​p​r​o​m​i​s​e​d​ ​s​e​r​v​e​r​ ​i​n​j​e​c​t​s​ ​p​l​a​i​n​t​e​x​t​ ​o​r​ ​s​i​n​g​l​e​-​f​a​c​t​o​r​ ​b​a​c​k​u​p
+				 */
+				scenario: string
+				/**
+				 * A​u​t​o​m​a​t​i​c​ ​r​e​m​o​t​e​ ​s​y​n​c​ ​r​e​f​u​s​e​s​ ​u​n​e​n​c​r​y​p​t​e​d​ ​p​a​y​l​o​a​d​s​ ​a​n​d​ ​p​a​s​s​w​o​r​d​-​o​n​l​y​ ​b​a​c​k​u​p​s​.​ ​O​n​c​e​ ​a​ ​s​y​n​c​ ​s​t​o​r​e​ ​u​p​g​r​a​d​e​s​ ​t​o​ ​t​w​o​-​f​a​c​t​o​r​ ​e​n​c​r​y​p​t​i​o​n​,​ ​a​ ​l​o​c​a​l​ ​m​a​r​k​e​r​ ​b​l​o​c​k​s​ ​d​o​w​n​g​r​a​d​e​ ​b​a​c​k​ ​t​o​ ​b​a​r​e​-​p​a​s​s​w​o​r​d​ ​s​e​a​l​i​n​g​.
+				 */
+				behavior: string
+			}
+			tamper: {
+				/**
+				 * C​o​m​p​r​o​m​i​s​e​d​ ​L​K​ ​C​l​o​u​d​ ​s​e​r​v​e​r​ ​f​o​r​g​e​s​ ​w​r​i​t​e​s​ ​o​r​ ​r​o​l​l​s​ ​b​a​c​k​ ​s​t​a​t​e
+				 */
+				scenario: string
+				/**
+				 * P​e​r​s​o​n​a​l​ ​L​K​ ​C​l​o​u​d​ ​f​i​l​e​s​,​ ​l​o​g​ ​b​a​t​c​h​e​s​,​ ​a​n​d​ ​s​n​a​p​s​h​o​t​s​ ​a​r​e​ ​s​i​g​n​e​d​ ​w​i​t​h​ ​y​o​u​r​ ​E​d​2​5​5​1​9​ ​A​c​c​o​u​n​t​K​e​y​.​ ​C​l​i​e​n​t​s​ ​v​e​r​i​f​y​ ​s​i​g​n​a​t​u​r​e​s​ ​b​e​f​o​r​e​ ​a​p​p​l​y​i​n​g​ ​d​a​t​a​ ​a​n​d​ ​r​e​j​e​c​t​ ​o​u​t​-​o​f​-​o​r​d​e​r​ ​o​r​ ​r​e​p​l​a​y​e​d​ ​v​e​r​s​i​o​n​s​ ​v​i​a​ ​l​o​c​a​l​ ​m​o​n​o​t​o​n​i​c​ ​w​a​t​e​r​m​a​r​k​s​.
+				 */
+				behavior: string
+			}
+			loss: {
+				/**
+				 * S​e​c​r​e​t​ ​K​e​y​ ​l​o​s​t​ ​a​c​r​o​s​s​ ​a​l​l​ ​d​e​v​i​c​e​s
+				 */
+				scenario: string
+				/**
+				 * N​e​i​t​h​e​r​ ​S​e​r​v​e​r​B​o​x​ ​n​o​r​ ​a​n​y​ ​s​y​n​c​ ​b​a​c​k​e​n​d​ ​h​o​l​d​s​ ​a​ ​c​o​p​y​ ​o​f​ ​y​o​u​r​ ​S​e​c​r​e​t​ ​K​e​y​.​ ​E​x​i​s​t​i​n​g​ ​c​l​o​u​d​ ​s​y​n​c​ ​d​a​t​a​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​c​r​y​p​t​e​d​ ​o​r​ ​r​e​c​o​v​e​r​e​d​.
+				 */
+				behavior: string
+			}
+		}
+		/**
+		 * M​u​l​t​i​-​d​e​v​i​c​e​ ​s​y​n​c​ ​a​n​d​ ​u​p​g​r​a​d​e​.
+		 */
+		devicesTitle: string
+		/**
+		 * D​e​s​i​g​n​e​d​ ​t​o​ ​p​r​o​t​e​c​t​ ​n​e​w​ ​i​n​s​t​a​l​l​s​ ​a​n​d​ ​u​p​g​r​a​d​e​ ​e​x​i​s​t​i​n​g​ ​s​y​n​c​ ​u​s​e​r​s​ ​w​i​t​h​o​u​t​ ​b​r​e​a​k​i​n​g​ ​d​a​i​l​y​ ​S​S​H​ ​a​c​c​e​s​s​.
+		 */
+		devicesSubtitle: string
+		devices: {
+			apple: {
+				/**
+				 * i​O​S​ ​·​ ​m​a​c​O​S
+				 */
+				tag: string
+				/**
+				 * A​p​p​l​e​ ​K​e​y​c​h​a​i​n​ ​s​y​n​c
+				 */
+				title: string
+				/**
+				 * O​n​ ​A​p​p​l​e​ ​d​e​v​i​c​e​s​ ​s​i​g​n​e​d​ ​i​n​t​o​ ​t​h​e​ ​s​a​m​e​ ​i​C​l​o​u​d​ ​a​c​c​o​u​n​t​,​ ​t​h​e​ ​S​e​c​r​e​t​ ​K​e​y​ ​s​y​n​c​s​ ​t​h​r​o​u​g​h​ ​i​C​l​o​u​d​ ​K​e​y​c​h​a​i​n​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​s​o​ ​a​d​d​i​t​i​o​n​a​l​ ​A​p​p​l​e​ ​d​e​v​i​c​e​s​ ​u​n​l​o​c​k​ ​w​i​t​h​o​u​t​ ​m​a​n​u​a​l​ ​e​n​t​r​y​.
+				 */
+				description: string
+			}
+			crossPlatform: {
+				/**
+				 * A​n​d​r​o​i​d​ ​·​ ​W​i​n​d​o​w​s​ ​·​ ​L​i​n​u​x
+				 */
+				tag: string
+				/**
+				 * Q​R​ ​s​c​a​n​ ​o​r​ ​m​a​n​u​a​l​ ​i​m​p​o​r​t
+				 */
+				title: string
+				/**
+				 * A​d​d​ ​n​o​n​-​A​p​p​l​e​ ​d​e​v​i​c​e​s​ ​b​y​ ​s​c​a​n​n​i​n​g​ ​t​h​e​ ​S​e​c​r​e​t​ ​K​e​y​ ​Q​R​ ​c​o​d​e​ ​o​r​ ​t​y​p​i​n​g​ ​t​h​e​ ​S​1​-​.​.​.​ ​s​t​r​i​n​g​.​ ​C​o​n​f​u​s​a​b​l​e​ ​c​h​a​r​a​c​t​e​r​s​ ​(​I​/​L​→​1​,​ ​O​→​0​)​ ​a​r​e​ ​n​o​r​m​a​l​i​z​e​d​ ​a​n​d​ ​v​e​r​i​f​i​e​d​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​2​2​-​b​i​t​ ​c​h​e​c​k​s​u​m​.
+				 */
+				description: string
+			}
+			existing: {
+				/**
+				 * E​x​i​s​t​i​n​g​ ​u​s​e​r​s
+				 */
+				tag: string
+				/**
+				 * T​r​a​n​s​p​a​r​e​n​t​ ​i​n​-​p​l​a​c​e​ ​u​p​g​r​a​d​e
+				 */
+				title: string
+				/**
+				 * Y​o​u​r​ ​f​i​r​s​t​ ​u​p​g​r​a​d​e​d​ ​d​e​v​i​c​e​ ​k​e​e​p​s​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​a​n​d​ ​s​e​a​l​s​ ​i​d​e​n​t​i​t​y​.​a​g​e​ ​w​i​t​h​ ​t​w​o​-​f​a​c​t​o​r​ ​e​n​c​r​y​p​t​i​o​n​ ​o​n​c​e​ ​y​o​u​ ​c​o​n​f​i​r​m​ ​s​a​v​i​n​g​ ​t​h​e​ ​S​e​c​r​e​t​ ​K​e​y​.​ ​O​t​h​e​r​ ​d​e​v​i​c​e​s​ ​p​a​u​s​e​ ​s​y​n​c​ ​u​n​t​i​l​ ​y​o​u​ ​i​m​p​o​r​t​ ​t​h​e​ ​k​e​y​ ​w​h​i​l​e​ ​k​e​e​p​i​n​g​ ​l​o​c​a​l​ ​S​S​H​ ​u​s​a​b​l​e​.
+				 */
+				description: string
+			}
+		}
+		/**
+		 * T​h​e​ ​R​u​s​t​ ​e​n​c​r​y​p​t​i​o​n​ ​a​n​d​ ​s​i​g​n​i​n​g​ ​i​m​p​l​e​m​e​n​t​a​t​i​o​n​ ​i​s​ ​o​p​e​n​ ​s​o​u​r​c​e​ ​i​n​ ​f​l​_​l​i​b​ ​a​n​d​ ​S​e​r​v​e​r​B​o​x​ ​u​n​d​e​r​ ​A​G​P​L​v​3​.
+		 */
+		footerNote: string
+		/**
+		 * P​r​i​v​a​c​y​ ​P​o​l​i​c​y
+		 */
+		privacyLink: string
+	}
 	footer: {
 		/**
 		 * F​e​a​t​u​r​e​s
@@ -862,6 +1086,10 @@ export type TranslationFunctions = {
 		 * ServerBox OS
 		 */
 		os: () => LocalizedString
+		/**
+		 * Security
+		 */
+		security: () => LocalizedString
 		/**
 		 * Beta
 		 */
@@ -1608,6 +1836,226 @@ export type TranslationFunctions = {
 			 */
 			action: () => LocalizedString
 		}
+	}
+	security: {
+		/**
+		 * Two-Factor End-to-End Encryption — ServerBox
+		 */
+		metaTitle: () => LocalizedString
+		/**
+		 * How ServerBox combines your backup password with a 128-bit client-side Secret Key, X25519 sealing, and Ed25519 signatures to protect synced server secrets.
+		 */
+		metaDescription: () => LocalizedString
+		/**
+		 * Zero-Knowledge Sync Architecture
+		 */
+		badge: () => LocalizedString
+		/**
+		 * How it works
+		 */
+		navHow: () => LocalizedString
+		/**
+		 * Threat model
+		 */
+		navThreats: () => LocalizedString
+		/**
+		 * Multi-device
+		 */
+		navDevices: () => LocalizedString
+		/**
+		 * Two-factor encryption,
+		 */
+		heroTitle: () => LocalizedString
+		/**
+		 * built for hostile clouds.
+		 */
+		heroHighlight: () => LocalizedString
+		/**
+		 * To defend against increasingly frequent server breaches and data leaks, automatic sync requires both your backup password and a 128-bit client-side Secret Key. Even if a sync server is fully compromised, your SSH keys and server credentials remain unreadable.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * ServerBox cannot see your data and cannot recover a lost Secret Key. If your Secret Key is lost, encrypted cloud sync data cannot be decrypted—store it in a password manager or offline backup.
+		 */
+		zeroKnowledgeNotice: () => LocalizedString
+		/**
+		 * See how it works
+		 */
+		primaryAction: () => LocalizedString
+		/**
+		 * Technical documentation
+		 */
+		docsAction: () => LocalizedString
+		/**
+		 * Two independent factors.
+		 */
+		howTitle: () => LocalizedString
+		/**
+		 * Unlocking synced data requires both something you know and a high-entropy key that never leaves your devices.
+		 */
+		howSubtitle: () => LocalizedString
+		/**
+		 * Backup Password
+		 */
+		factor1Tag: () => LocalizedString
+		/**
+		 * Something you remember
+		 */
+		factor1Title: () => LocalizedString
+		/**
+		 * Chosen by you and changeable anytime without rotating the Secret Key. Protects against theft of device storage alone and encrypts manual local .age exports.
+		 */
+		factor1Desc: () => LocalizedString
+		/**
+		 * Secret Key (128-bit)
+		 */
+		factor2Tag: () => LocalizedString
+		/**
+		 * Generated on device, never uploaded
+		 */
+		factor2Title: () => LocalizedString
+		/**
+		 * 128 bits of OS CSPRNG entropy encoded in Crockford Base32 with a 22-bit BLAKE3 checksum. Mistyped characters are caught locally before key derivation runs.
+		 */
+		factor2Desc: () => LocalizedString
+		/**
+		 * 1. Combine password and Secret Key locally with domain-separated BLAKE3
+		 */
+		diagramStep1: () => LocalizedString
+		/**
+		 * 2. Protect the X25519 sync keypair in identity.age via age scrypt
+		 */
+		diagramStep2: () => LocalizedString
+		/**
+		 * 3. Seal all synced payloads to the X25519 public key (no plaintext sync)
+		 */
+		diagramStep3: () => LocalizedString
+		/**
+		 * 4. Sign LK Cloud writes with Ed25519 and verify monotonic versions
+		 */
+		diagramStep4: () => LocalizedString
+		/**
+		 * Cryptographic primitives
+		 */
+		primitivesLabel: () => LocalizedString
+		/**
+		 * Threat model.
+		 */
+		threatsTitle: () => LocalizedString
+		/**
+		 * Expected client behavior under server compromise, tampering, or credential loss.
+		 */
+		threatsSubtitle: () => LocalizedString
+		/**
+		 * Scenario
+		 */
+		colScenario: () => LocalizedString
+		/**
+		 * Behavior
+		 */
+		colBehavior: () => LocalizedString
+		threats: {
+			breach: {
+				/**
+				 * Sync server or object storage breached
+				 */
+				scenario: () => LocalizedString
+				/**
+				 * The attacker obtains only identity.age and X25519-sealed ciphertext. Without the 128-bit client-side Secret Key, offline brute-force against your backup password is infeasible.
+				 */
+				behavior: () => LocalizedString
+			}
+			downgrade: {
+				/**
+				 * Compromised server injects plaintext or single-factor backup
+				 */
+				scenario: () => LocalizedString
+				/**
+				 * Automatic remote sync refuses unencrypted payloads and password-only backups. Once a sync store upgrades to two-factor encryption, a local marker blocks downgrade back to bare-password sealing.
+				 */
+				behavior: () => LocalizedString
+			}
+			tamper: {
+				/**
+				 * Compromised LK Cloud server forges writes or rolls back state
+				 */
+				scenario: () => LocalizedString
+				/**
+				 * Personal LK Cloud files, log batches, and snapshots are signed with your Ed25519 AccountKey. Clients verify signatures before applying data and reject out-of-order or replayed versions via local monotonic watermarks.
+				 */
+				behavior: () => LocalizedString
+			}
+			loss: {
+				/**
+				 * Secret Key lost across all devices
+				 */
+				scenario: () => LocalizedString
+				/**
+				 * Neither ServerBox nor any sync backend holds a copy of your Secret Key. Existing cloud sync data cannot be decrypted or recovered.
+				 */
+				behavior: () => LocalizedString
+			}
+		}
+		/**
+		 * Multi-device sync and upgrade.
+		 */
+		devicesTitle: () => LocalizedString
+		/**
+		 * Designed to protect new installs and upgrade existing sync users without breaking daily SSH access.
+		 */
+		devicesSubtitle: () => LocalizedString
+		devices: {
+			apple: {
+				/**
+				 * iOS · macOS
+				 */
+				tag: () => LocalizedString
+				/**
+				 * Apple Keychain sync
+				 */
+				title: () => LocalizedString
+				/**
+				 * On Apple devices signed into the same iCloud account, the Secret Key syncs through iCloud Keychain automatically so additional Apple devices unlock without manual entry.
+				 */
+				description: () => LocalizedString
+			}
+			crossPlatform: {
+				/**
+				 * Android · Windows · Linux
+				 */
+				tag: () => LocalizedString
+				/**
+				 * QR scan or manual import
+				 */
+				title: () => LocalizedString
+				/**
+				 * Add non-Apple devices by scanning the Secret Key QR code or typing the S1-... string. Confusable characters (I/L→1, O→0) are normalized and verified against the 22-bit checksum.
+				 */
+				description: () => LocalizedString
+			}
+			existing: {
+				/**
+				 * Existing users
+				 */
+				tag: () => LocalizedString
+				/**
+				 * Transparent in-place upgrade
+				 */
+				title: () => LocalizedString
+				/**
+				 * Your first upgraded device keeps your existing backup password and seals identity.age with two-factor encryption once you confirm saving the Secret Key. Other devices pause sync until you import the key while keeping local SSH usable.
+				 */
+				description: () => LocalizedString
+			}
+		}
+		/**
+		 * The Rust encryption and signing implementation is open source in fl_lib and ServerBox under AGPLv3.
+		 */
+		footerNote: () => LocalizedString
+		/**
+		 * Privacy Policy
+		 */
+		privacyLink: () => LocalizedString
 	}
 	footer: {
 		/**

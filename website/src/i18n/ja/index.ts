@@ -14,6 +14,7 @@ const ja: Translation = {
     docs: 'ドキュメント',
     themes: 'テーマ',
     os: 'ServerBox OS',
+    security: 'セキュリティ',
     beta: 'ベータ',
     plugins: 'プラグイン',
     otherApps: 'その他',
@@ -297,6 +298,89 @@ const ja: Translation = {
         'macOS 標準の File Provider を通じて、カーネル拡張なしで SFTP・S3・WebDAV などのリモートストレージを Finder に直接マウント。',
       action: 'mfuse.lollipopkit.com',
     },
+  },
+  security: {
+    metaTitle: '2要素エンドツーエンド暗号化 — ServerBox',
+    metaDescription:
+      'バックアップパスワード、128ビットクライアントシークレットキー、X25519暗号化、Ed25519署名によって同期データを保護する仕組み。',
+    badge: 'ゼロ知識同期アーキテクチャ',
+    navHow: '仕組み',
+    navThreats: '脅威モデル',
+    navDevices: 'マルチデバイス',
+    heroTitle: '2要素エンドツーエンド暗号化、',
+    heroHighlight: 'クラウド侵害を前提とした設計。',
+    subtitle:
+      '増加するサーバー侵害やデータ漏洩に備え、自動同期ではバックアップパスワードと128ビットのクライアントシークレットキーの両方が必須になりました。同期サーバーが完全に侵害されても、SSH秘密鍵や認証情報は復号できません。',
+    zeroKnowledgeNotice:
+      'ServerBoxはあなたのデータを見ることも、紛失したシークレットキーを復元することもできません。紛失すると暗号化された同期データは復号できなくなるため、パスワードマネージャーやオフライン媒体に安全に保管してください。',
+    primaryAction: '仕組みを見る',
+    docsAction: '技術ドキュメント',
+    howTitle: '2つの独立した要素。',
+    howSubtitle:
+      '同期データの復号には、記憶しているパスワードと、端末外に送信されない高エントロピー鍵の両方が必要です。',
+    factor1Tag: 'バックアップパスワード',
+    factor1Title: '記憶しておく要素',
+    factor1Desc:
+      'シークレットキーを変更せずにいつでも変更可能です。端末キーチェーンのみの盗難を防ぎ、ローカルの手動 .age バックアップ暗号化にも使われます。',
+    factor2Tag: 'シークレットキー（128ビット）',
+    factor2Title: '端末内で生成、サーバーへ送信しない',
+    factor2Desc:
+      'OSのCSPRNGで生成した128ビットエントロピーをCrockford Base32と22ビットBLAKE3チェックサムで符号化。入力ミスは鍵導出前にローカルで検出されます。',
+    diagramStep1: '1. ドメイン分離したBLAKE3でパスワードとシークレットキーをローカル結合',
+    diagramStep2: '2. age scryptで identity.age 内のX25519同期鍵ペアを保護',
+    diagramStep3: '3. すべての同期データをX25519公開鍵で暗号化（平文同期を拒否）',
+    diagramStep4: '4. LK Cloud個人書き込みにEd25519署名と単調増加バージョン検証を適用',
+    primitivesLabel: '暗号プリミティブ',
+    threatsTitle: '脅威モデル。',
+    threatsSubtitle: 'サーバー侵害、改ざん、または鍵紛失時のクライアント挙動です。',
+    colScenario: 'シナリオ',
+    colBehavior: '挙動',
+    threats: {
+      breach: {
+        scenario: '同期サーバーまたはオブジェクトストレージの侵害',
+        behavior:
+          '攻撃者が得られるのは identity.age とX25519暗号文のみです。128ビットのシークレットキーなしではオフライン総当たり攻撃は現実的に不可能です。',
+      },
+      downgrade: {
+        scenario: '侵害サーバーによる平文や単一要素バックアップの注入',
+        behavior:
+          'リモート自動同期は平文データとパスワード単体バックアップを拒否します。2要素暗号化へ移行後はローカルマーカーによりダウングレードを遮断します。',
+      },
+      tamper: {
+        scenario: '侵害されたLK Cloudサーバーによる書き込み偽造やロールバック',
+        behavior:
+          '個人LK Cloudファイル・ログバッチ・スナップショットはEd25519 AccountKeyで署名されます。クライアントは署名を検証し、ローカルの単調ウォーターマークでロールバックやリプレイを拒否します。',
+      },
+      loss: {
+        scenario: 'すべての端末でシークレットキーを紛失',
+        behavior:
+          'ServerBoxも同期バックエンドもシークレットキーの複製を保持しません。既存のクラウド同期データは復号・復元できません。',
+      },
+    },
+    devicesTitle: 'マルチデバイス同期とアップグレード。',
+    devicesSubtitle: '新規インストールを保護し、既存同期ユーザーのSSH利用を妨げずに移行できます。',
+    devices: {
+      apple: {
+        tag: 'iOS · macOS',
+        title: 'Appleキーチェーン自動同期',
+        description:
+          '同じiCloudアカウントのApple端末間ではiCloudキーチェーン経由でシークレットキーが自動同期され、手入力なしで同期を継続できます。',
+      },
+      crossPlatform: {
+        tag: 'Android · Windows · Linux',
+        title: 'QRスキャンまたは手動インポート',
+        description:
+          'QRコードのスキャンまたは S1-... 文字列の入力で非Apple端末へ追加できます。紛らわしい文字（I/L→1、O→0）を自動正規化しチェックサムを検証します。',
+      },
+      existing: {
+        tag: '既存ユーザー',
+        title: 'パスワードを維持したまま移行',
+        description:
+          '最初にアップグレードした端末は既存のバックアップパスワードを維持し、シークレットキーの保存確認後に identity.age を2要素暗号化へ更新します。他端末は鍵をインポートするまで同期のみ一時停止します。',
+      },
+    },
+    footerNote: 'Rustによる暗号化と署名の実装は fl_lib と ServerBox でAGPLv3のもと公開されています。',
+    privacyLink: 'プライバシーポリシー',
   },
   footer: {
     features: '機能',

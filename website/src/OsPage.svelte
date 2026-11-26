@@ -219,6 +219,7 @@
     <span>© 2026 lollipopkit</span>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
+      <a href={`/security/?lang=${locale}`}>{$LL.nav.security()}</a>
       <a href="https://github.com/lollipopkit/flutter_server_box/tree/main/monitor">monitor/</a>
       <a href={releases}>{$LL.footer.releases()}</a>
     </div>

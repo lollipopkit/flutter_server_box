@@ -83,13 +83,15 @@ final class LkcThemeBlobs implements ThemeBlobStore {
 
   @override
   Future<Uint8List> get(String id, String name) async {
+    // Open the sync key (and attach personal Ed25519 verification) BEFORE
+    // downloading so the blob download is authenticated and rollback-checked.
+    final key = await lkcLog.key(create: false);
     final dir = await Directory.systemTemp.createTemp('sb-theme-blob-');
     try {
       final path = '${dir.path}/$name';
       final fetched = await (await _client).download(name: name, to: path);
       if (fetched.missing) throw StateError('Theme package $name is gone');
-      // A restore: a key file is not made for it on an account that never synced.
-      return await (await lkcLog.key(create: false)).open(sealed: await File(path).readAsBytes());
+      return await key.open(sealed: await File(path).readAsBytes());
     } finally {
       await dir.delete(recursive: true);
     }

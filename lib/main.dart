@@ -31,6 +31,7 @@ import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/remotes.dart';
+import 'package:server_box/core/sync/secret_key_prefs.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
@@ -603,8 +604,12 @@ Future<void> _migrateStorage() async {
   // TODO: remove with `StoreCredentials.adoptKeychain`.
   StoreCredentials.adopt = SyncRecorder.adopt;
   // What the syncs carry and how, before any runs; the shipped key files say
-  // this label.
+  // this label. ServerBox requires explicit user confirmation (in Intro or
+  // Backup) before creating a brand-new secret key so background sync never
+  // races onboarding or bypasses a user's "Set up later" pause.
   SyncKeyring.init(label: 'ServerBox sync key');
+  SyncKeyring.allowAutoGenerateSecretKey = () => false;
+  SyncKeyring.secretKeyGenerated.addListener(_persistPendingSecretKeyBackup);
   ServerSyncRecords.install();
   SyncCategory.define();
 
@@ -629,6 +634,12 @@ Future<void> _migrateStorage() async {
       }
     })(),
   );
+}
+
+void _persistPendingSecretKeyBackup() {
+  if (SyncKeyring.secretKeyGenerated.value != null) {
+    unawaited(SyncSecretKeyPrefs.backupPending.set(true));
+  }
 }
 
 Future<void> _initWindow() async {

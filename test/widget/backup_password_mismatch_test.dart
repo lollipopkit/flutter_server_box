@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
@@ -79,6 +80,32 @@ void main() {
     SyncKeyring.release('webdav:x');
     await tester.pump();
     expect(said, findsNothing);
+
+    // Missing secret key and untrusted sync responses surface in the status row.
+    SyncKeyring.secretKeyMissing.value = true;
+    await tester.pump();
+    expect(find.text(AppLocalizationsEn().syncSecretKeyMissing), findsOneWidget);
+    expect(find.text(AppLocalizationsEn().syncSecretKeyMissingDetail), findsOneWidget);
+
+    SyncKeyring.secretKeyMissing.value = false;
+    lkcLog.lastFailure.value = const SyncUntrusted('bad batch signature');
+    addTearDown(() => lkcLog.lastFailure.value = null);
+    await tester.pump();
+    expect(find.text(AppLocalizationsEn().syncUntrusted), findsOneWidget);
+    expect(find.text(AppLocalizationsEn().syncUntrustedDetail), findsOneWidget);
+    lkcLog.lastFailure.value = null;
+
+    // Tapping Secret key when set renders the QR + zero-knowledge warning sheet
+    // without layout overflow.
+    const demoKey = 'S1-7K4M9-2P8QX-5R3VN-8W6YB-4C9DF-3H2JK';
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.syncSecretKey.key: demoKey});
+    await pumpPage(tester);
+    expect(find.text(AppLocalizationsEn().syncSecretKey), findsOneWidget);
+    await tester.tap(find.text(AppLocalizationsEn().syncSecretKey));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(AppLocalizationsEn().syncSecretKeyZeroKnowledgeWarn), findsOneWidget);
+    expect(find.text(demoKey), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

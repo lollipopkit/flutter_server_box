@@ -10,13 +10,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/sync_key.dart';
 
-/// A key file as another device seals it.
-Future<Uint8List> _sealed(String pwd, List<String> keys, int epoch) async =>
-    utf8.encode(await AgeCryptor.encrypt(utf8.encode(['# ServerBox sync key, epoch $epoch', ...keys].join('\n')), pwd));
+/// Reads the active client-side secret key in the mock keychain.
+Future<String> _secretKey() async => (await SecureStoreProps.syncSecretKey.read(limited: false))!;
+
+/// A key file as another device seals it under `(pwd, secretKey)`.
+Future<Uint8List> _sealed(String pwd, List<String> keys, int epoch, {String? secretKey}) async {
+  final sk = secretKey ?? await _secretKey();
+  return utf8.encode(
+    await AgeCryptor.encrypt(
+      utf8.encode(['# ServerBox sync key, epoch $epoch', ...keys].join('\n')),
+      SyncKeyring.derivePassphrase(pwd, sk)!,
+    ),
+  );
+}
 
 /// [file] opened as another device opens it: its epoch and keys.
-Future<({int epoch, List<String> keys})> _opened(MemoryKeyFile file, String pwd) async {
-  final lines = utf8.decode(await AgeCryptor.decrypt(file.body!, pwd)).split('\n');
+Future<({int epoch, List<String> keys})> _opened(MemoryKeyFile file, String pwd, {String? secretKey}) async {
+  final sk = secretKey ?? await _secretKey();
+  final lines = utf8.decode(await AgeCryptor.decrypt(file.body!, SyncKeyring.derivePassphrase(pwd, sk)!)).split('\n');
   final epoch = int.parse(RegExp(r'epoch (\d+)$').firstMatch(lines.first)!.group(1)!);
   return (epoch: epoch, keys: lines.skip(1).toList());
 }
@@ -66,24 +77,35 @@ void main() {
     SyncKeyring.resetForTest();
   });
 
-  test('the first device puts a key there, sealed with the password at epoch 0', () async {
+  test('the first device puts a key there, sealed with two-factor password + secret key at epoch 0', () async {
     final file = MemoryKeyFile();
     final key = await SyncKeyring.ofFiles(file);
+    // Bare password alone must not open identity.age.
+    await expectLater(AgeCryptor.decrypt(file.body!, 'a'), throwsA(isA<WrongPasswordException>()));
     final opened = await _opened(file, 'a');
     expect(opened.epoch, 0);
     expect(opened.keys.single, startsWith('AGE-SECRET-KEY-1'));
     expect(await key.open(sealed: await key.seal(plain: Uint8List.fromList([1]))), [1]);
+
+    // A second device without the secret key gets SyncSecretKeyMissing.
+    _restart();
+    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'a'});
+    await expectLater(SyncKeyring.ofFiles(file), throwsA(isA<SyncSecretKeyMissing>()));
   });
 
   test('two devices that made a key at once end with both, sealing with one', () async {
     final file = MemoryKeyFile();
     final a = await SyncKeyring.ofFiles(file);
+    final sk = await _secretKey();
     final sealedByA = await a.seal(plain: Uint8List.fromList([1]));
     final keysOfA = (await _opened(file, 'a')).keys;
 
-    // B did not see A's file yet, and wrote over it.
+    // B did not see A's file yet, and wrote over it (same account secret key).
     _restart();
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'a'});
+    FlutterSecureStorage.setMockInitialValues({
+      SecureStoreProps.bakPwd.key: 'a',
+      SecureStoreProps.syncSecretKey.key: sk,
+    });
     file.blind = true;
     final b = await SyncKeyring.ofFiles(file);
     file.blind = false;
@@ -93,7 +115,11 @@ void main() {
 
     // A, on its keys, meets B's file: puts its own back beside B's.
     _restart();
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'a', 'syncIdentity.${file.id}': keysOfA.join('\n')});
+    FlutterSecureStorage.setMockInitialValues({
+      SecureStoreProps.bakPwd.key: 'a',
+      SecureStoreProps.syncSecretKey.key: sk,
+      'syncIdentity.${file.id}': keysOfA.join('\n'),
+    });
     final again = await SyncKeyring.ofFiles(file);
     expect(await again.open(sealed: sealedByB), [2]);
     expect(await again.open(sealed: sealedByA), [1]);
@@ -102,7 +128,11 @@ void main() {
 
     // B, on its keys, reads the file A wrote: one key seals for both.
     _restart();
-    FlutterSecureStorage.setMockInitialValues({SecureStoreProps.bakPwd.key: 'a', 'syncIdentity.${file.id}': keysOfB.join('\n')});
+    FlutterSecureStorage.setMockInitialValues({
+      SecureStoreProps.bakPwd.key: 'a',
+      SecureStoreProps.syncSecretKey.key: sk,
+      'syncIdentity.${file.id}': keysOfB.join('\n'),
+    });
     final b2 = await SyncKeyring.ofFiles(file);
     expect(await b2.open(sealed: byA), [3]);
     expect(await b2.open(sealed: sealedByA), [1]);

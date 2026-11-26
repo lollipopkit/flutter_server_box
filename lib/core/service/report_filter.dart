@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart'
     show
         LkcException,
+        LkcTeamError,
+        LkcTeamErrorKind,
         RemoteChangedException,
         SyncEngineErrorKind,
         SyncError,
@@ -12,7 +14,9 @@ import 'package:fl_lib/fl_lib.dart'
         SyncLogTooNew,
         SyncPasswordMismatch,
         SyncPasswordMissing,
-        SyncRefused;
+        SyncRefused,
+        SyncSecretKeyMissing,
+        SyncUntrusted;
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show McpTools;
 import 'package:icloud_storage_plus/models/exceptions.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -54,14 +58,23 @@ abstract final class ReportFilter {
     ICloudContainerAccessException() => false,
     // A password removed between `BakSyncer.sync`'s check and the upload.
     RemoteBackupPasswordMissing() || SyncPasswordMissing() => false,
-    // A sync key the password here does not open, or one not arrived yet.
-    SyncPasswordMismatch() || SyncKeyNotHere() => false,
+    // A sync key the password here does not open, missing secret key,
+    // untrusted remote response, or key not arrived yet.
+    SyncPasswordMismatch() || SyncSecretKeyMissing() || SyncUntrusted() || SyncKeyNotHere() => false,
     // The sync engine: the store out of reach, LK Cloud refusing (quota, no
     // plan), or a newer build's batch.
     SyncError(kind: SyncEngineErrorKind.remote || SyncEngineErrorKind.signedOut) || SyncRefused() || SyncLogTooNew() => false,
     // LK Cloud: unreachable, signed out, a plan without sync or its space
     // used up; and another device writing first three times in a row.
     LkcException() || RemoteChangedException() => false,
+    LkcTeamError(
+      kind: LkcTeamErrorKind.unreachable ||
+          LkcTeamErrorKind.signedOut ||
+          LkcTeamErrorKind.refused ||
+          LkcTeamErrorKind.wrongPassphrase ||
+          LkcTeamErrorKind.untrusted,
+    ) =>
+      false,
     // An MCP server the user added, wanting a sign-in or refusing a request.
     Object() when McpTools.isRemoteFailure(error) => false,
     _ => true,

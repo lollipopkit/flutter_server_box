@@ -14,6 +14,7 @@ const en: BaseTranslation = {
     docs: 'Docs',
     themes: 'Themes',
     os: 'ServerBox OS',
+    security: 'Security',
     beta: 'Beta',
     plugins: 'Plugins',
     otherApps: 'More',
@@ -299,6 +300,92 @@ const en: BaseTranslation = {
         'Mount SFTP, S3, WebDAV, and remote storage directly inside macOS Finder through Apple’s native File Provider—no kernel extensions required.',
       action: 'mfuse.lollipopkit.com',
     },
+  },
+  security: {
+    metaTitle: 'Two-Factor End-to-End Encryption — ServerBox',
+    metaDescription:
+      'How ServerBox combines your backup password with a 128-bit client-side Secret Key, X25519 sealing, and Ed25519 signatures to protect synced server secrets.',
+    badge: 'Zero-Knowledge Sync Architecture',
+    navHow: 'How it works',
+    navThreats: 'Threat model',
+    navDevices: 'Multi-device',
+    heroTitle: 'Two-factor encryption,',
+    heroHighlight: 'built for hostile clouds.',
+    subtitle:
+      'To defend against increasingly frequent server breaches and data leaks, automatic sync requires both your backup password and a 128-bit client-side Secret Key. Even if a sync server is fully compromised, your SSH keys and server credentials remain unreadable.',
+    zeroKnowledgeNotice:
+      'ServerBox cannot see your data and cannot recover a lost Secret Key. If your Secret Key is lost, encrypted cloud sync data cannot be decrypted—store it in a password manager or offline backup.',
+    primaryAction: 'See how it works',
+    docsAction: 'Technical documentation',
+    howTitle: 'Two independent factors.',
+    howSubtitle:
+      'Unlocking synced data requires both something you know and a high-entropy key that never leaves your devices.',
+    factor1Tag: 'Backup Password',
+    factor1Title: 'Something you remember',
+    factor1Desc:
+      'Chosen by you and changeable anytime without rotating the Secret Key. Protects against theft of device storage alone and encrypts manual local .age exports.',
+    factor2Tag: 'Secret Key (128-bit)',
+    factor2Title: 'Generated on device, never uploaded',
+    factor2Desc:
+      '128 bits of OS CSPRNG entropy encoded in Crockford Base32 with a 22-bit BLAKE3 checksum. Mistyped characters are caught locally before key derivation runs.',
+    diagramStep1: '1. Combine password and Secret Key locally with domain-separated BLAKE3',
+    diagramStep2: '2. Protect the X25519 sync keypair in identity.age via age scrypt',
+    diagramStep3: '3. Seal all synced payloads to the X25519 public key (no plaintext sync)',
+    diagramStep4: '4. Sign LK Cloud writes with Ed25519 and verify monotonic versions',
+    primitivesLabel: 'Cryptographic primitives',
+    threatsTitle: 'Threat model.',
+    threatsSubtitle:
+      'Expected client behavior under server compromise, tampering, or credential loss.',
+    colScenario: 'Scenario',
+    colBehavior: 'Behavior',
+    threats: {
+      breach: {
+        scenario: 'Sync server or object storage breached',
+        behavior:
+          'The attacker obtains only identity.age and X25519-sealed ciphertext. Without the 128-bit client-side Secret Key, offline brute-force against your backup password is infeasible.',
+      },
+      downgrade: {
+        scenario: 'Compromised server injects plaintext or single-factor backup',
+        behavior:
+          'Automatic remote sync refuses unencrypted payloads and password-only backups. Once a sync store upgrades to two-factor encryption, a local marker blocks downgrade back to bare-password sealing.',
+      },
+      tamper: {
+        scenario: 'Compromised LK Cloud server forges writes or rolls back state',
+        behavior:
+          'Personal LK Cloud files, log batches, and snapshots are signed with your Ed25519 AccountKey. Clients verify signatures before applying data and reject out-of-order or replayed versions via local monotonic watermarks.',
+      },
+      loss: {
+        scenario: 'Secret Key lost across all devices',
+        behavior:
+          'Neither ServerBox nor any sync backend holds a copy of your Secret Key. Existing cloud sync data cannot be decrypted or recovered.',
+      },
+    },
+    devicesTitle: 'Multi-device sync and upgrade.',
+    devicesSubtitle:
+      'Designed to protect new installs and upgrade existing sync users without breaking daily SSH access.',
+    devices: {
+      apple: {
+        tag: 'iOS · macOS',
+        title: 'Apple Keychain sync',
+        description:
+          'On Apple devices signed into the same iCloud account, the Secret Key syncs through iCloud Keychain automatically so additional Apple devices unlock without manual entry.',
+      },
+      crossPlatform: {
+        tag: 'Android · Windows · Linux',
+        title: 'QR scan or manual import',
+        description:
+          'Add non-Apple devices by scanning the Secret Key QR code or typing the S1-... string. Confusable characters (I/L→1, O→0) are normalized and verified against the 22-bit checksum.',
+      },
+      existing: {
+        tag: 'Existing users',
+        title: 'Transparent in-place upgrade',
+        description:
+          'Your first upgraded device keeps your existing backup password and seals identity.age with two-factor encryption once you confirm saving the Secret Key. Other devices pause sync until you import the key while keeping local SSH usable.',
+      },
+    },
+    footerNote:
+      'The Rust encryption and signing implementation is open source in fl_lib and ServerBox under AGPLv3.',
+    privacyLink: 'Privacy Policy',
   },
   footer: {
     features: 'Features',

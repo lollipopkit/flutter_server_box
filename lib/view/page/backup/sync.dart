@@ -91,6 +91,7 @@ extension _SyncWidgets on _BackupPageState {
     return SettingsGroupView(
       SettingsGroup(libL10n.content, [
         SettingsRow(l10n.backupPassword, () => _buildBakPwd),
+        SettingsRow(l10n.syncSecretKey, () => _buildSecretKey),
         SettingsRow(l10n.syncedData, () => _buildSyncedData),
       ]),
     );
@@ -286,7 +287,14 @@ extension _SyncWidgets on _BackupPageState {
           future: dest == _SyncDest.icloud ? _icloudConflict : null,
           builder: (context, icloudStatus) {
             final scheme = Theme.of(context).colorScheme;
-            final failure = bakSync.lastFailure.value;
+            final failures = [
+              bakSync.lastFailure.value,
+              lkcLog.lastFailure.value,
+              fileLog.lastFailure.value,
+            ].nonNulls;
+            final failure = failures.whereType<SyncUntrusted>().firstOrNull ??
+                failures.whereType<SyncSecretKeyMissing>().firstOrNull ??
+                failures.firstOrNull;
             final at = bakSync.syncCheckpoint?.$3;
             final last = at == null ? null : l10n.syncLastAt(DateTime.fromMillisecondsSinceEpoch(at).ymdhms());
             // A word for the state; what it is about, or when it last went
@@ -300,6 +308,20 @@ extension _SyncWidgets on _BackupPageState {
                 l10n.syncStateRunning,
                 last,
                 null,
+              ),
+              _ when failure is SyncUntrusted => (
+                Icons.gpp_bad_outlined,
+                scheme.error,
+                l10n.syncUntrusted,
+                l10n.syncUntrustedDetail,
+                null,
+              ),
+              _ when SyncKeyring.secretKeyMissing.value || failure is SyncSecretKeyMissing => (
+                Icons.vpn_key_off_outlined,
+                scheme.error,
+                l10n.syncSecretKeyMissing,
+                l10n.syncSecretKeyMissingDetail,
+                () => _onTapEnterSecretKey(context),
               ),
               _ when SyncKeyring.passwordMismatch.value.isNotEmpty => (
                 Icons.key_off,
@@ -449,6 +471,8 @@ extension _SyncActions on _BackupPageState {
   /// Synced once with [to], as the first sync there.
   Future<bool> _enable(_SyncDest to) async {
     if (!await _ensureBakPwd(context)) return false;
+    if (!mounted) return false;
+    if (!await _ensureSecretKey(context)) return false;
     if (!mounted) return false;
     switch (to) {
       case _SyncDest.off:

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -7182,6 +7183,83 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshTooManyKeysWarning => '选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。';
+
+  @override
+  String get syncSecretKey => '安全密钥';
+
+  @override
+  String get syncSecretKeyMissing => '需要安全密钥';
+
+  @override
+  String get syncSecretKeyMissingDetail => '请输入或扫描其他设备上的安全密钥。';
+
+  @override
+  String get syncSecretKeyInvalid => '安全密钥格式无效';
+
+  @override
+  String get syncSecretKeySaved => '安全密钥已保存';
+
+  @override
+  String get syncSecretKeyBackupNote => '为应对日益频发的黑客攻击与数据泄露事件，同步现强制启用安全密钥。';
+
+  @override
+  String get syncSecretKeyZeroKnowledgeWarn =>
+      'ServerBox 无法看到你的数据，也无法找回此密钥。安全密钥一旦丢失，云端同步数据将无法恢复，请妥善保存在密码管理器或离线介质中。';
+
+  @override
+  String get syncSecretKeyAck => '我已知晓安全密钥丢失后无法恢复，并已妥善保存';
+
+  @override
+  String get syncSecretKeySavedBtn => '我已保存';
+
+  @override
+  String get syncSecretKeyReplaceConfirm =>
+      '替换当前安全密钥？覆盖同步钥匙串中的密钥会影响共享该钥匙串的所有设备。';
+
+  @override
+  String get syncSecretKeyReplace => '替换';
+
+  @override
+  String get syncSecretKeyScan => '扫描二维码';
+
+  @override
+  String get syncUntrusted => '同步校验失败';
+
+  @override
+  String get syncUntrustedDetail => '远端同步数据未通过完整性或签名校验。';
+
+  @override
+  String get syncSecretKeyIntroFresh => '为防范黑客攻击与数据泄露，云同步需配合备份密码与安全密钥共同加密。';
+
+  @override
+  String get syncSecretKeyIntroUpgradeA =>
+      '为应对日益频发的黑客攻击与数据泄露事件，同步现强制启用安全密钥。原有备份密码不变，本机将自动升级远端密钥。';
+
+  @override
+  String get syncSecretKeyIntroUpgradeB =>
+      '你的另一台设备已启用安全密钥。请输入或扫描该设备「备份 → 安全密钥」中的密钥以恢复同步。';
+
+  @override
+  String get syncSecretKeyIntroSynced => '本机已检测到已同步的安全密钥。';
+
+  @override
+  String get syncSecretKeyIntroSyncedTip =>
+      '建议仍复制一份到密码管理器或离线保存，以便在其他设备或重装系统后恢复。';
+
+  @override
+  String get syncSecretKeyTabGenerate => '生成新密钥';
+
+  @override
+  String get syncSecretKeyTabImport => '我有安全密钥';
+
+  @override
+  String get syncSecretKeySkipNew => '暂不开启云同步（跳过）';
+
+  @override
+  String get syncSecretKeySkipLater => '稍后设置（暂停同步，直接进入）';
+
+  @override
+  String get syncSecretKeyUnavailable => '安全密钥模块暂不可用，请重启应用后重试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
