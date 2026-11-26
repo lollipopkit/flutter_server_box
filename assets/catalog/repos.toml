@@ -16,3 +16,6 @@ name = "ServerBox themes"
 # third party publishes in their own repository and adds a line here.
 [[repo]]
 url = "https://serverbox.lollipopkit.com/store.tar.gz"
+
+[[repo]]
+url = "https://github.com/Clementine-Miles/ServerBox_Gruvbox_Theme"
