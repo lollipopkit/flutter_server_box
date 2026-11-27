@@ -558,7 +558,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ungrouped => 'Sin agrupar';
 
   @override
-  String get containerReclaimable => 'Reclaimable';
+  String get containerReclaimable => 'recuperables';
 
   @override
   String get unused => 'Sin usar';
@@ -1531,10 +1531,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta cuenta no tiene bus de sesión de usuario en el servidor, por lo que solo se muestran las unidades del sistema.';
 
   @override
-  String get serviceSearchHint => 'Unit name';
+  String get serviceSearchHint => 'Nombre de la unidad';
 
   @override
-  String get serviceNeedsAttention => 'Needs attention';
+  String get serviceNeedsAttention => 'Requiere atención';
 
   @override
   String serviceOtherUnits(int count) {
@@ -1554,7 +1554,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get serviceUnitType => 'Tipo';
 
   @override
-  String get serviceScope => 'Scope';
+  String get serviceScope => 'Ámbito';
 
   @override
   String get serviceStartup => 'Inicio';
@@ -1585,10 +1585,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get serviceFullJournal => 'Full journal';
+  String get serviceFullJournal => 'Journal completo';
 
   @override
-  String get serviceUnitFile => 'Unit file';
+  String get serviceUnitFile => 'Archivo de unidad';
 
   @override
   String serviceJournalRecent(int count) {
@@ -1939,13 +1939,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'La gestión de usuarios del sistema solo admite servidores Linux por ahora.';
 
   @override
-  String get userRegularAccount => 'Regular';
+  String get userRegularAccount => 'Normales';
 
   @override
-  String get userCurrentAccount => 'Current account';
+  String get userCurrentAccount => 'Cuenta actual';
 
   @override
-  String get userSystemAccount => 'System account';
+  String get userSystemAccount => 'Cuenta del sistema';
 
   @override
   String get userUid => 'UID';
@@ -1954,7 +1954,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userLoginStatus => 'Estado';
 
   @override
-  String get userLoginEnabled => 'Login enabled';
+  String get userLoginEnabled => 'Puede iniciar sesión';
 
   @override
   String get userDetailAccount => 'Cuenta';
@@ -1963,13 +1963,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userDetailSecurity => 'Seguridad';
 
   @override
-  String get userSshKeys => 'SSH keys';
+  String get userSshKeys => 'Claves SSH';
 
   @override
-  String get userExpires => 'Expires';
+  String get userExpires => 'Caduca';
 
   @override
-  String get userNever => 'Never';
+  String get userNever => 'Nunca';
 
   @override
   String get userPasswordSet => 'Definido';
@@ -1981,7 +1981,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userPasswordNone => 'Ninguno';
 
   @override
-  String get userSuperuser => 'Superuser';
+  String get userSuperuser => 'Superusuario';
 
   @override
   String get userOpenShell => 'Abrir shell';
@@ -1994,13 +1994,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userComment => 'Comentario';
 
   @override
-  String get userPrimaryGroup => 'Primary group';
+  String get userPrimaryGroup => 'Grupo principal';
 
   @override
   String get userSupplementaryGroups => 'Grupos adicionales';
 
   @override
-  String get userLoginShell => 'Login shell';
+  String get userLoginShell => 'Shell de inicio de sesión';
 
   @override
   String get userCreateHome => 'Crear el directorio personal';
@@ -2119,11 +2119,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get agentPermissions => 'Permisos';
 
   @override
-  String get agentEmptyHint => 'Ejecuta acciones en el servidor.';
+  String get agentEmptyHint =>
+      'Pregunta sobre tus servidores o pide al Agente que haga algo en ellos.';
 
   @override
   String get agentTerminalEmptyHint =>
-      'Lee el contenido del terminal actual y ejecuta comandos en él.';
+      'Pregunta sobre este servidor. El Agente puede leer este terminal y ejecutar comandos en él.';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2182,7 +2183,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String devicesFmt(int count) {
-    return '$count dispositivos';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dispositivos',
+      one: '1 dispositivo',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -2338,11 +2345,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get connectionTip =>
-      'Ambos pueden estar activos a la vez. El orden es el orden en que se marcan.';
+      'Ambos pueden estar activos a la vez y se prueban en el orden mostrado.';
 
   @override
-  String get transportNoneOn =>
-      'Ambos están desactivados: no se puede conectar con este servidor.';
+  String get transportNoneOn => 'Activa al menos un método de conexión.';
 
   @override
   String get thisDevice => 'Este dispositivo';
@@ -2414,7 +2420,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get tagOnThisServer => 'en este servidor';
+  String get tagOnThisServer => 'En este servidor';
 
   @override
   String tagServersFmt(int count) {
@@ -2437,7 +2443,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tagRenamesOnSave => 'Los cambios de nombre se aplican al guardar';
 
   @override
-  String get scheduledTasks => 'Scheduled tasks';
+  String get scheduledTasks => 'Tareas programadas';
 
   @override
   String get scheduledTaskLinuxOnly =>
@@ -2455,21 +2461,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get scheduledTaskSchedule => 'Programación';
 
   @override
-  String get scheduledTaskAdd => 'Add task';
+  String get scheduledTaskAdd => 'Añadir tarea';
 
   @override
   String get scheduledTaskNextRun => 'Próxima ejecución';
 
   @override
   String scheduledTaskNextInFmt(String time) {
-    return 'in $time';
+    return 'en $time';
   }
 
   @override
   String get scheduledTaskEnabled => 'Activada';
 
   @override
-  String get scheduledTaskCommentedOut => 'Commented out';
+  String get scheduledTaskCommentedOut => 'Comentada';
 
   @override
   String scheduledTaskSummaryFmt(int enabled, int total) {
@@ -2489,16 +2495,16 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskFilterHint => 'Filter tasks';
+  String get scheduledTaskFilterHint => 'Filtrar tareas';
 
   @override
-  String get scheduledTaskPreserved => 'Preserved lines';
+  String get scheduledTaskPreserved => 'Líneas conservadas';
 
   @override
-  String get scheduledTaskRaw => 'Raw crontab';
+  String get scheduledTaskRaw => 'Crontab en bruto';
 
   @override
-  String get scheduledTaskEnableNow => 'Enable now';
+  String get scheduledTaskEnableNow => 'Activar ahora';
 
   @override
   String get scheduledTaskEnableNowTip =>
@@ -2510,19 +2516,19 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskFieldMinute => 'Minute';
+  String get scheduledTaskFieldMinute => 'Minuto';
 
   @override
   String get scheduledTaskFieldHour => 'Hora';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => 'Día del mes';
 
   @override
-  String get scheduledTaskFieldMonth => 'Month';
+  String get scheduledTaskFieldMonth => 'Mes';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => 'Día de la semana';
 
   @override
   String get cronErrScheduleEmpty => 'Debes indicar una programación.';
@@ -2543,7 +2549,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Una programación cron tiene cinco campos, o una macro como @reboot.';
 
   @override
-  String get cronAtBoot => 'At boot';
+  String get cronAtBoot => 'Al arrancar';
 
   @override
   String get cronEveryMin => 'Cada minuto';
@@ -2611,16 +2617,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'La recopilación ampliada ejecuta smartctl, sensors y amd-smi. Pausarla cuando ningún cliente consulta evita activar un disco para obtener datos que nadie está leyendo.';
 
   @override
-  String get idlePauseThreshold => 'Idle after';
+  String get idlePauseThreshold => 'Inactivo tras';
 
   @override
-  String get monitorAlerts => 'Alerts';
+  String get monitorAlerts => 'Alertas';
 
   @override
-  String get monitoringRules => 'Alert rules';
+  String get monitoringRules => 'Reglas de alerta';
 
   @override
-  String get ruleMonitorType => 'Metric';
+  String get ruleMonitorType => 'Métrica';
 
   @override
   String get ruleThreshold => 'Umbral';
@@ -2642,7 +2648,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pushRate => 'Límite de frecuencia';
 
   @override
-  String get pushHeaders => 'Headers';
+  String get pushHeaders => 'Cabeceras';
 
   @override
   String get pushSecretSet => 'Configurado en el Monitor; no se muestra';
@@ -2678,10 +2684,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Si se desactiva, el Monitor no elimina ningún dato y su base de datos sigue creciendo sin límite.';
 
   @override
-  String get retentionMetrics => 'Keep metrics';
+  String get retentionMetrics => 'Conservar métricas';
 
   @override
-  String get retentionAlerts => 'Keep alerts';
+  String get retentionAlerts => 'Conservar alertas';
 
   @override
   String get retentionCleanup => 'Ejecutar limpieza cada';
@@ -2730,8 +2736,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get disconnect => 'Desconectar';
 
   @override
-  String get searchServerTip =>
-      'Busca nombres y direcciones: los dos datos que el editor solicita primero.';
+  String get searchServerTip => 'Busca por nombre o dirección del servidor.';
 
   @override
   String get addServerTip =>
@@ -2757,7 +2762,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get connecting => 'Conectando…';
 
   @override
-  String get authShort => 'Auth';
+  String get authShort => 'Acceso';
 
   @override
   String get remoteDesktopFitToWindow => 'Ajustar a la ventana';
@@ -5282,10 +5287,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get firewallZone => 'Zona';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => 'Objetivo';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'Enmascaramiento';
 
   @override
   String get firewallServices => 'Servicios';
@@ -5716,7 +5721,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Un terminal en un espacio de trabajo deja a la app las combinaciones del espacio de trabajo y las globales; las demás combinaciones de aquí llegan a la shell. Los comandos de distintos ámbitos pueden compartir una combinación.';
+      'Los atajos del espacio de trabajo solo funcionan dentro de un espacio de trabajo. Los atajos globales, como abrir los ajustes, funcionan en todas las páginas. En las demás páginas de terminal, los atajos de acciones del espacio de trabajo, de los ajustes o de la pestaña de servidores se envían al shell, porque allí esas acciones no están disponibles. Copiar, pegar y seleccionar todo son controles del terminal, no atajos configurables.';
 
   @override
   String kbCurrent(String keys, String scope) {
@@ -6902,7 +6907,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count Monitors';
+    return 'Monitores: $count';
   }
 
   @override
@@ -7078,7 +7083,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userMembersHint => 'alice,bob';
 
   @override
-  String get userRegularGroup => 'Regular';
+  String get userRegularGroup => 'Normales';
 
   @override
   String get termMetricsBar => 'Lecturas del servidor bajo el terminal';
@@ -7283,7 +7288,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get discoveryAlternateAddress => 'Dirección alternativa';
 
   @override
-  String get agentPermsGroup => 'Agent';
+  String get agentPermsGroup => 'Agente';
 
   @override
   String get discardUnsaved => '¿Descartar los cambios sin guardar?';
