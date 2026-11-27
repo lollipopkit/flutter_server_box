@@ -12994,6 +12994,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.'**
   String get sshTooManyKeysWarning;
+
+  /// No description provided for @syncSecretKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret key'**
+  String get syncSecretKey;
+
+  /// No description provided for @syncSecretKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret key required'**
+  String get syncSecretKeyMissing;
+
+  /// No description provided for @syncSecretKeyMissingDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter or scan the secret key from another device.'**
+  String get syncSecretKeyMissingDetail;
+
+  /// No description provided for @syncSecretKeyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid secret key'**
+  String get syncSecretKeyInvalid;
+
+  /// No description provided for @syncSecretKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret key saved'**
+  String get syncSecretKeySaved;
+
+  /// No description provided for @syncSecretKeyBackupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'To defend against increasingly frequent breaches and data leaks, sync now requires a secret key.'**
+  String get syncSecretKeyBackupNote;
+
+  /// No description provided for @syncSecretKeyZeroKnowledgeWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox cannot see your data and cannot recover this key. If your secret key is lost, synced data cannot be recovered. Keep it safe in a password manager or offline.'**
+  String get syncSecretKeyZeroKnowledgeWarn;
+
+  /// No description provided for @syncSecretKeyAck.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand a lost secret key cannot be recovered and have saved it safely'**
+  String get syncSecretKeyAck;
+
+  /// No description provided for @syncSecretKeySavedBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get syncSecretKeySavedBtn;
+
+  /// No description provided for @syncSecretKeyReplaceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the current secret key? Overwriting it in synced keychain affects all devices sharing it.'**
+  String get syncSecretKeyReplaceConfirm;
+
+  /// No description provided for @syncSecretKeyReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get syncSecretKeyReplace;
+
+  /// No description provided for @syncSecretKeyScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR'**
+  String get syncSecretKeyScan;
+
+  /// No description provided for @syncUntrusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync verification failed'**
+  String get syncUntrusted;
+
+  /// No description provided for @syncUntrustedDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote sync data failed integrity or signature verification.'**
+  String get syncUntrustedDetail;
+
+  /// No description provided for @syncSecretKeyIntroFresh.
+  ///
+  /// In en, this message translates to:
+  /// **'To protect synced data against breaches and leaks, cloud sync requires a secret key alongside your backup password.'**
+  String get syncSecretKeyIntroFresh;
+
+  /// No description provided for @syncSecretKeyIntroUpgradeA.
+  ///
+  /// In en, this message translates to:
+  /// **'To defend against increasingly frequent breaches and data leaks, sync now requires a secret key. Your backup password stays unchanged and the remote key upgrades automatically.'**
+  String get syncSecretKeyIntroUpgradeA;
+
+  /// No description provided for @syncSecretKeyIntroUpgradeB.
+  ///
+  /// In en, this message translates to:
+  /// **'Another device has enabled a secret key. Enter or scan it from Backup → Secret key on that device to resume sync.'**
+  String get syncSecretKeyIntroUpgradeB;
+
+  /// No description provided for @syncSecretKeyIntroSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'A synced secret key was found on this device.'**
+  String get syncSecretKeyIntroSynced;
+
+  /// No description provided for @syncSecretKeyIntroSyncedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep a copy in a password manager or offline for other devices or recovery.'**
+  String get syncSecretKeyIntroSyncedTip;
+
+  /// No description provided for @syncSecretKeyTabGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate new key'**
+  String get syncSecretKeyTabGenerate;
+
+  /// No description provided for @syncSecretKeyTabImport.
+  ///
+  /// In en, this message translates to:
+  /// **'I have a secret key'**
+  String get syncSecretKeyTabImport;
+
+  /// No description provided for @syncSecretKeySkipNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip sync for now'**
+  String get syncSecretKeySkipNew;
+
+  /// No description provided for @syncSecretKeySkipLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up later (pause sync)'**
+  String get syncSecretKeySkipLater;
+
+  /// No description provided for @syncSecretKeyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret key module is unavailable right now. Restart the app or try again later.'**
+  String get syncSecretKeyUnavailable;
 }
 
 class _AppLocalizationsDelegate

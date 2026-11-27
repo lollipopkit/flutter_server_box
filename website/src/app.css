@@ -2265,3 +2265,116 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* /security/ two-factor encryption page. */
+.sec-warning-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.sec-warning-callout svg {
+  flex-shrink: 0;
+  margin-top: 0.18rem;
+  color: var(--brand);
+}
+
+.sec-factors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.sec-factor-card {
+  gap: 0.75rem;
+}
+
+.sec-card-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--brand);
+}
+
+.sec-key-sample {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--black);
+  overflow-wrap: anywhere;
+}
+
+.sec-diagram .command {
+  white-space: nowrap;
+}
+
+.sec-threat-table {
+  border-top: 1px solid var(--light-gray);
+}
+
+.sec-threat-head,
+.sec-threat-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
+  gap: 1.25rem;
+  align-items: start;
+  padding: 1.2rem 0.5rem;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.sec-threat-head {
+  padding-block: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--stone);
+}
+
+.sec-threat-scenario {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--brand);
+}
+
+.sec-threat-scenario svg {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.sec-threat-scenario h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1.35;
+}
+
+.sec-threat-row p {
+  color: var(--stone);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.sec-devices-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 860px) {
+  .sec-factors,
+  .sec-devices-grid,
+  .sec-threat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sec-threat-head {
+    display: none;
+  }
+}

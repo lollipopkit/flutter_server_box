@@ -14,6 +14,7 @@ const kr: Translation = {
     docs: '문서',
     themes: '테마',
     os: 'ServerBox OS',
+    security: '보안',
     beta: '베타',
     plugins: '플러그인',
     otherApps: '더보기',
@@ -297,6 +298,89 @@ const kr: Translation = {
         '커널 확장 없이 macOS 네이티브 File Provider를 통해 SFTP, S3, WebDAV 등 원격 스토리지를 Finder에 바로 마운트합니다.',
       action: 'mfuse.lollipopkit.com',
     },
+  },
+  security: {
+    metaTitle: '2단계 종단간 암호화 — ServerBox',
+    metaDescription:
+      'ServerBox가 백업 비밀번호, 128비트 클라이언트 시크릿 키, X25519 암호화 및 Ed25519 서명으로 동기화 데이터를 보호하는 방식.',
+    badge: '제로 지식 동기화 아키텍처',
+    navHow: '동작 원리',
+    navThreats: '위협 모델',
+    navDevices: '멀티 기기',
+    heroTitle: '2단계 종단간 암호화,',
+    heroHighlight: '신뢰할 수 없는 클라우드를 전제로.',
+    subtitle:
+      '빈번해지는 서버 침해와 데이터 유출에 대응하기 위해 자동 동기화는 백업 비밀번호와 128비트 클라이언트 시크릿 키를 모두 요구합니다. 동기화 서버가 완전히 탈취되어도 SSH 개인 키와 자격 증명은 해독할 수 없습니다.',
+    zeroKnowledgeNotice:
+      'ServerBox는 사용자의 데이터를 볼 수 없으며 분실된 시크릿 키를 복구할 수 없습니다. 시크릿 키를 잃어버리면 암호화된 클라우드 동기화 데이터를 복호화할 수 없으므로 비밀번호 관리자나 오프라인 매체에 안전하게 보관하세요.',
+    primaryAction: '동작 원리 보기',
+    docsAction: '기술 문서',
+    howTitle: '두 가지 독립 요소.',
+    howSubtitle:
+      '동기화 데이터를 해독하려면 사용자가 기억하는 비밀번호와 기기를 벗어나지 않는 고엔트로피 키가 모두 필요합니다.',
+    factor1Tag: '백업 비밀번호',
+    factor1Title: '사용자가 기억하는 요소',
+    factor1Desc:
+      '시크릿 키를 교체하지 않고 언제든 변경할 수 있습니다. 기기 키체인만 탈취당하는 상황을 방어하며 로컬 수동 .age 백업 암호화에도 사용됩니다.',
+    factor2Tag: '시크릿 키 (128비트)',
+    factor2Title: '기기에서 생성, 서버로 전송 안 함',
+    factor2Desc:
+      'OS CSPRNG로 생성된 128비트 엔트로피를 Crockford Base32와 22비트 BLAKE3 체크섬으로 인코딩합니다. 오타는 키 유도 전에 로컬에서 즉시 감지됩니다.',
+    diagramStep1: '1. 도메인 분리된 BLAKE3로 비밀번호와 시크릿 키를 로컬에서 결합',
+    diagramStep2: '2. age scrypt로 identity.age 안의 X25519 동기화 키 쌍 보호',
+    diagramStep3: '3. 모든 동기화 데이터를 X25519 공개 키로 봉인 (평문 동기화 거부)',
+    diagramStep4: '4. LK Cloud 개인 쓰기에 Ed25519 서명 및 단조 증가 버전 검증 적용',
+    primitivesLabel: '암호화 기본 요소',
+    threatsTitle: '위협 모델.',
+    threatsSubtitle: '서버 침해, 변조 또는 키 분실 시 클라이언트의 동작 방식입니다.',
+    colScenario: '시나리오',
+    colBehavior: '동작',
+    threats: {
+      breach: {
+        scenario: '동기화 서버 또는 오브젝트 스토리지 유출',
+        behavior:
+          '공격자는 identity.age와 X25519 암호문만 확보합니다. 128비트 클라이언트 시크릿 키 없이는 비밀번호에 대한 오프라인 무차별 대입이 불가능합니다.',
+      },
+      downgrade: {
+        scenario: '침해된 서버가 평문 또는 단일 요소 백업을 주입',
+        behavior:
+          '원격 자동 동기화는 평문과 비밀번호 전용 백업을 거부합니다. 2단계 암호화로 업그레이드되면 로컬 마커가 단일 요소로의 다운그레이드를 차단합니다.',
+      },
+      tamper: {
+        scenario: '침해된 LK Cloud 서버가 쓰기를 위조하거나 상태를 롤백',
+        behavior:
+          '개인 LK Cloud 파일, 로그 배치, 스냅샷은 Ed25519 AccountKey로 서명됩니다. 클라이언트는 서명을 검증하고 이미 본 것보다 오래된 파일 버전을 거부합니다. 동기화된 변경은 더 새로운 경우에만 적용되므로 다시 보낸 배치나 스냅샷은 아무것도 바꾸지 않습니다.',
+      },
+      loss: {
+        scenario: '모든 기기에서 시크릿 키 분실',
+        behavior:
+          'ServerBox와 어떤 동기화 백엔드도 시크릿 키 사본을 보관하지 않습니다. 기존 클라우드 동기화 데이터는 복호화하거나 복구할 수 없습니다.',
+      },
+    },
+    devicesTitle: '멀티 기기 동기화 및 업그레이드.',
+    devicesSubtitle: '신규 설치를 보호하고 기존 동기화 사용자의 SSH 작업을 중단 없이 업그레이드합니다.',
+    devices: {
+      apple: {
+        tag: 'iOS · macOS',
+        title: 'Apple 키체인 자동 동기화',
+        description:
+          '동일한 iCloud 계정의 Apple 기기에서는 iCloud 키체인을 통해 시크릿 키가 자동 동기화되어 별도 입력 없이 이어서 동기화됩니다.',
+      },
+      crossPlatform: {
+        tag: 'Android · Windows · Linux',
+        title: 'QR 스캔 또는 수동 입력',
+        description:
+          'QR 코드를 스캔하거나 S1-... 문자열을 입력해 비-Apple 기기에 추가할 수 있습니다. 혼동 문자(I/L→1, O→0)를 자동 정규화하고 체크섬을 검증합니다.',
+      },
+      existing: {
+        tag: '기존 사용자',
+        title: '기존 비밀번호 유지 및 현장 업그레이드',
+        description:
+          '첫 번째 업그레이드 기기는 기존 백업 비밀번호를 유지하며 시크릿 키 저장 확인 후 identity.age를 2단계 암호화로 전환합니다. 다른 기기는 키를 가져올 때까지 동기화만 일시 중지됩니다.',
+      },
+    },
+    footerNote: 'Rust 암호화 및 서명 구현은 fl_lib과 ServerBox 저장소에 AGPLv3로 공개되어 있습니다.',
+    privacyLink: '개인정보 처리방침',
   },
   footer: {
     features: '기능',

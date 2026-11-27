@@ -11,13 +11,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   // `virtual:store`: the themes (and plugins) in ../store, for their sections.
   plugins: [tailwindcss(), svelte(), storeData(path.resolve(__dirname, '../store'))],
-  // The site, the theme store at /themes/, and ServerBox OS at /os/.
+  // The site, the theme store at /themes/, ServerBox OS at /os/, and two-factor encryption at /security/.
   build: {
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
         themes: path.resolve(__dirname, 'themes/index.html'),
         os: path.resolve(__dirname, 'os/index.html'),
+        security: path.resolve(__dirname, 'security/index.html'),
       },
     },
   },

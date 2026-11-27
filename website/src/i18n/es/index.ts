@@ -14,6 +14,7 @@ const es: Translation = {
     docs: 'Docs',
     themes: 'Temas',
     os: 'ServerBox OS',
+    security: 'Seguridad',
     beta: 'Beta',
     plugins: 'Plugins',
     otherApps: 'Más',
@@ -299,6 +300,92 @@ const es: Translation = {
         'Monta SFTP, S3, WebDAV y almacenamiento remoto directamente en el Finder de macOS mediante File Provider nativo, sin extensiones de kernel.',
       action: 'mfuse.lollipopkit.com',
     },
+  },
+  security: {
+    metaTitle: 'Cifrado de extremo a extremo en dos factores — ServerBox',
+    metaDescription:
+      'Cómo ServerBox combina tu contraseña de respaldo, una clave secreta de cliente de 128 bits, sellado X25519 y firmas Ed25519 para proteger tus credenciales.',
+    badge: 'Sincronización de conocimiento cero',
+    navHow: 'Cómo funciona',
+    navThreats: 'Modelo de amenazas',
+    navDevices: 'Multidispositivo',
+    heroTitle: 'Cifrado en dos factores,',
+    heroHighlight: 'diseñado para nubes no confiables.',
+    subtitle:
+      'Para defenderse ante brechas de seguridad y filtraciones cada vez más frecuentes, la sincronización automática exige tanto tu contraseña de respaldo como una clave secreta local de 128 bits. Incluso si un servidor de sincronización es comprometido por completo, tus claves SSH y credenciales siguen siendo ilegibles.',
+    zeroKnowledgeNotice:
+      'ServerBox no puede ver tus datos ni recuperar una clave secreta perdida. Si pierdes la clave secreta, los datos sincronizados cifrados no podrán descifrarse: guárdala en un gestor de contraseñas o sin conexión.',
+    primaryAction: 'Ver cómo funciona',
+    docsAction: 'Documentación técnica',
+    howTitle: 'Dos factores independientes.',
+    howSubtitle:
+      'Desbloquear los datos sincronizados requiere algo que recuerdas y una clave de alta entropía que nunca sale de tus dispositivos.',
+    factor1Tag: 'Contraseña de respaldo',
+    factor1Title: 'Algo que recuerdas',
+    factor1Desc:
+      'Puedes cambiarla en cualquier momento sin rotar la clave secreta. Protege frente al robo aislado del llavero del dispositivo y cifra las exportaciones locales .age.',
+    factor2Tag: 'Clave secreta (128 bits)',
+    factor2Title: 'Generada en el dispositivo, nunca subida',
+    factor2Desc:
+      '128 bits de entropía CSPRNG codificados en Crockford Base32 con suma de comprobación BLAKE3 de 22 bits. Cualquier error tipográfico se detecta localmente antes de derivar claves.',
+    diagramStep1: '1. Combinar contraseña y clave secreta localmente con BLAKE3 con separación de dominio',
+    diagramStep2: '2. Proteger el par de claves X25519 en identity.age mediante age scrypt',
+    diagramStep3: '3. Sellar todos los datos sincronizados con la clave pública X25519 (sin texto plano)',
+    diagramStep4: '4. Firmar escrituras en LK Cloud con Ed25519 y verificar versiones monótonas',
+    primitivesLabel: 'Primitivas criptográficas',
+    threatsTitle: 'Modelo de amenazas.',
+    threatsSubtitle:
+      'Comportamiento esperado del cliente ante compromiso del servidor, manipulación o pérdida de credenciales.',
+    colScenario: 'Escenario',
+    colBehavior: 'Comportamiento',
+    threats: {
+      breach: {
+        scenario: 'Servidor de sincronización o almacenamiento comprometido',
+        behavior:
+          'El atacante solo obtiene identity.age y texto cifrado X25519. Sin la clave secreta local de 128 bits, un ataque offline por fuerza bruta resulta inviable.',
+      },
+      downgrade: {
+        scenario: 'El servidor inyecta texto plano o un respaldo de un solo factor',
+        behavior:
+          'La sincronización remota rechaza datos sin cifrar y respaldos protegidos solo con contraseña. Un marcador local bloquea la degradación tras actualizar a dos factores.',
+      },
+      tamper: {
+        scenario: 'Servidor LK Cloud comprometido falsifica escrituras o revierte versiones',
+        behavior:
+          'Los archivos, registros e instantáneas personales en LK Cloud se firman con tu AccountKey Ed25519. El cliente valida las firmas y rechaza versiones de archivo anteriores a las ya vistas. Cada cambio sincronizado solo se aplica donde es más reciente, así que un lote o instantánea reenviado no cambia nada.',
+      },
+      loss: {
+        scenario: 'Clave secreta perdida en todos los dispositivos',
+        behavior:
+          'Ni ServerBox ni ningún backend de sincronización guarda copias de tu clave secreta. Los datos sincronizados existentes no pueden descifrarse ni recuperarse.',
+      },
+    },
+    devicesTitle: 'Sincronización multidispositivo y actualización.',
+    devicesSubtitle:
+      'Protege las nuevas instalaciones y actualiza a usuarios existentes sin interrumpir el acceso SSH.',
+    devices: {
+      apple: {
+        tag: 'iOS · macOS',
+        title: 'Sincronización por Llavero de iCloud',
+        description:
+          'En dispositivos Apple con la misma cuenta de iCloud, la clave secreta se sincroniza automáticamente mediante el Llavero de iCloud.',
+      },
+      crossPlatform: {
+        tag: 'Android · Windows · Linux',
+        title: 'Escaneo QR o importación manual',
+        description:
+          'Añade dispositivos que no sean Apple escaneando el código QR o escribiendo la cadena S1-.... Los caracteres confusos (I/L→1, O→0) se normalizan y verifican.',
+      },
+      existing: {
+        tag: 'Usuarios existentes',
+        title: 'Actualización transparente en el sitio',
+        description:
+          'El primer dispositivo actualizado conserva tu contraseña de respaldo y actualiza identity.age al confirmar que guardaste la clave secreta. Los demás dispositivos pausan la sincronización hasta importarla.',
+      },
+    },
+    footerNote:
+      'La implementación en Rust de cifrado y firmas es de código abierto en fl_lib y ServerBox bajo AGPLv3.',
+    privacyLink: 'Política de privacidad',
   },
   footer: {
     features: 'Funciones',

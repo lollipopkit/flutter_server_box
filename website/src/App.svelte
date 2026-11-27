@@ -474,6 +474,7 @@
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
+        <a href={`/security/?lang=${locale}`}>{$LL.nav.security()}</a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         {#if showPlugins}
           <a href="#plugins" onclick={(event) => scrollToSection(event, 'plugins')}>{$LL.nav.plugins()}</a>
@@ -893,6 +894,7 @@
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
+        <a href={`/security/?lang=${locale}`}>{$LL.nav.security()}</a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         <a href="#other-apps" onclick={(event) => scrollToSection(event, 'other-apps')}>{$LL.nav.otherApps()}</a>
         <a href={docsHref(locale)}>{$LL.nav.docs()}</a>

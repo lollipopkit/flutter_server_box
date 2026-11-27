@@ -7,6 +7,9 @@
     <loc>https://serverbox.lollipopkit.com/os/</loc>
   </url>
   <url>
+    <loc>https://serverbox.lollipopkit.com/security/</loc>
+  </url>
+  <url>
     <loc>https://serverbox.lollipopkit.com/docs/</loc>
   </url>
 </urlset>

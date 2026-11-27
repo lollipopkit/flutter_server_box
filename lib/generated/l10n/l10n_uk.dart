@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -7636,4 +7637,88 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sshTooManyKeysWarning =>
       'Вибір надто великої кількості ключів може перевищити ліміт спроб автентифікації сервера або спричинити блокування IP.';
+
+  @override
+  String get syncSecretKey => 'Secret key';
+
+  @override
+  String get syncSecretKeyMissing => 'Secret key required';
+
+  @override
+  String get syncSecretKeyMissingDetail =>
+      'Enter or scan the secret key from another device.';
+
+  @override
+  String get syncSecretKeyInvalid => 'Invalid secret key';
+
+  @override
+  String get syncSecretKeySaved => 'Secret key saved';
+
+  @override
+  String get syncSecretKeyBackupNote =>
+      'To defend against increasingly frequent breaches and data leaks, sync now requires a secret key.';
+
+  @override
+  String get syncSecretKeyZeroKnowledgeWarn =>
+      'ServerBox cannot see your data and cannot recover this key. If your secret key is lost, synced data cannot be recovered. Keep it safe in a password manager or offline.';
+
+  @override
+  String get syncSecretKeyAck =>
+      'I understand a lost secret key cannot be recovered and have saved it safely';
+
+  @override
+  String get syncSecretKeySavedBtn => 'Saved';
+
+  @override
+  String get syncSecretKeyReplaceConfirm =>
+      'Replace the current secret key? Overwriting it in synced keychain affects all devices sharing it.';
+
+  @override
+  String get syncSecretKeyReplace => 'Replace';
+
+  @override
+  String get syncSecretKeyScan => 'Scan QR';
+
+  @override
+  String get syncUntrusted => 'Sync verification failed';
+
+  @override
+  String get syncUntrustedDetail =>
+      'Remote sync data failed integrity or signature verification.';
+
+  @override
+  String get syncSecretKeyIntroFresh =>
+      'To protect synced data against breaches and leaks, cloud sync requires a secret key alongside your backup password.';
+
+  @override
+  String get syncSecretKeyIntroUpgradeA =>
+      'To defend against increasingly frequent breaches and data leaks, sync now requires a secret key. Your backup password stays unchanged and the remote key upgrades automatically.';
+
+  @override
+  String get syncSecretKeyIntroUpgradeB =>
+      'Another device has enabled a secret key. Enter or scan it from Backup → Secret key on that device to resume sync.';
+
+  @override
+  String get syncSecretKeyIntroSynced =>
+      'A synced secret key was found on this device.';
+
+  @override
+  String get syncSecretKeyIntroSyncedTip =>
+      'Keep a copy in a password manager or offline for other devices or recovery.';
+
+  @override
+  String get syncSecretKeyTabGenerate => 'Generate new key';
+
+  @override
+  String get syncSecretKeyTabImport => 'I have a secret key';
+
+  @override
+  String get syncSecretKeySkipNew => 'Skip sync for now';
+
+  @override
+  String get syncSecretKeySkipLater => 'Set up later (pause sync)';
+
+  @override
+  String get syncSecretKeyUnavailable =>
+      'Secret key module is unavailable right now. Restart the app or try again later.';
 }

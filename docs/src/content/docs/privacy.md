@@ -50,14 +50,19 @@ A local backup may be unencrypted when no backup password is set. When you set a
 backup password, an exported backup is encrypted before it is written or
 uploaded, as an [age](https://age-encryption.org) file in passphrase mode:
 `age -d` and the backup password open it without ServerBox.
-Automatic sync requires a non-empty backup password. Synced data is encrypted
-with a sync key, while the sync key itself is stored alongside it as
-`identity.age` and is the only file encrypted directly with the backup password
-(`age -d` with the backup password decrypts the key, and `age -d -i` with the
-key decrypts the remaining files). If a device's backup password cannot unlock
-that key, sync pauses on that device until you enter the password used by your
-other devices. After data is uploaded to iCloud, WebDAV or LK Cloud, that
-provider's storage, access and retention policies also apply.
+Automatic sync requires both a non-empty backup password and a 128-bit
+client-side Secret Key (`S1-...`). Synced data is encrypted to an X25519 sync
+key, while the sync key itself is stored alongside it as `identity.age` and
+protected with `age scrypt` using a passphrase derived locally from the backup
+password and Secret Key via BLAKE3. Automatic remote sync rejects plaintext and
+password-only payloads; personal LK Cloud writes are additionally signed with an
+Ed25519 key, and a file version older than one already seen is rejected. If a device's backup
+password or Secret Key cannot unlock that key, sync pauses on that device until
+you enter the matching credentials. ServerBox cannot see your data and cannot
+recover a lost Secret Key. See
+[Two-Factor Sync Encryption](/docs/advanced/two-factor-encryption/) for details.
+After data is uploaded to iCloud, WebDAV or LK Cloud, that provider's storage,
+access and retention policies also apply.
 
 ## Automatic diagnostic data
 

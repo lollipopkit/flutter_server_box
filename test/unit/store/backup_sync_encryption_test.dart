@@ -28,11 +28,13 @@ void main() {
 
   setUp(() async {
     FlutterSecureStorage.setMockInitialValues({});
+    SecureProp.legacyApart = false;
     SqliteDb.openInMemory();
     await Stores.init();
   });
 
   tearDown(() async {
+    SecureProp.legacyApart = null;
     SyncKeyring.resetForTest();
     SyncKeyring.init(label: 'ServerBox sync key');
     await getIt.reset();
@@ -62,7 +64,7 @@ void main() {
     );
   });
 
-  test('a v4 remote, sealed with the password, and a plaintext one are read to be inherited', () async {
+  test('normal remote sync refuses plaintext and password-only payloads', () async {
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
@@ -78,15 +80,19 @@ void main() {
       history: const {},
       settings: const {'timeOut': 17},
     );
-    final plainFile = File(tempDir.path.joinPath('legacy-plaintext.json'));
+    final plainFile = File(tempDir.path.joinPath('injected-plaintext.json'));
     await plainFile.writeAsString(backup.toJsonString());
     final v4 = File(tempDir.path.joinPath('v4.age'));
     await v4.writeAsString(await AgeCryptor.encrypt(gzip.encode(utf8.encode(backup.toJsonString())), 'remote-password'));
 
-    for (final file in [plainFile, v4]) {
-      final restored = await bakSync.fromFile(file.path);
-      expect(restored, isA<BackupV2>(), reason: file.path);
-      expect((restored as BackupV2).settings['timeOut'], 17, reason: file.path);
-    }
+    // Normal sync strictly requires a sync-key-sealed ciphertext.
+    await expectLater(bakSync.fromFile(plainFile.path), throwsA(isA<SyncUntrusted>()));
+    await expectLater(bakSync.fromFile(v4.path), throwsA(isA<SyncUntrusted>()));
+
+    // Legacy inheritance accepts encrypted v4.age, but still refuses plaintext.
+    await expectLater(bakSync.fromLegacyFile(plainFile.path), throwsA(isA<SyncUntrusted>()));
+    final restored = await bakSync.fromLegacyFile(v4.path);
+    expect(restored, isA<BackupV2>());
+    expect((restored as BackupV2).settings['timeOut'], 17);
   });
 }

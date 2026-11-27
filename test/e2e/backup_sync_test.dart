@@ -120,7 +120,9 @@ void main() {
     final key = await BakSyncer.keyOf(rs);
     expect(BackupV2.fromPlainBytes(await key.open(sealed: bytes)).settings['timeOut'], 17);
     final keyFile = (await WebdavSyncFiles(() => SyncRemotes.webdav, 'srvbox_sync').read('identity.age'))!;
-    expect(await AgeCryptor.decrypt(keyFile, _password), isNotEmpty);
+    final secretKey = (await SecureStoreProps.syncSecretKey.read(limited: false))!;
+    await expectLater(AgeCryptor.decrypt(keyFile, _password), throwsA(isA<WrongPasswordException>()));
+    expect(await AgeCryptor.decrypt(keyFile, SyncKeyring.derivePassphrase(_password, secretKey)!), isNotEmpty);
     if (e2eEnv('SBM_E2E_BACKUP_OUT') case final out?) {
       await File(out.joinPath('backup.age')).writeAsBytes(bytes);
       await File(out.joinPath('identity.age')).writeAsBytes(keyFile);

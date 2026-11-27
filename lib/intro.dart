@@ -1,43 +1,75 @@
 part of 'app.dart';
 
+/// One resolved page of the intro, with optional Next/Done gating and commit.
+typedef _IntroPageEntry = ({
+  IntroPageBuilder build,
+  ValueListenable<bool>? canProceed,
+  Future<bool> Function()? onBeforeNext,
+  VoidCallback? dispose,
+});
+
 /// One step of the intro, and the question of whether it applies.
 ///
 /// The predicate travels with the page, so a step's condition sits next to
 /// the step it belongs to.
 typedef _IntroStep = ({Future<bool> Function() applies, IntroPageBuilder build});
 
-final class _IntroPage extends StatelessWidget {
-  const _IntroPage(this.pages);
+final class _IntroPage extends StatefulWidget {
+  const _IntroPage(
+    this.pages, {
+    this.disposeOnUnmount = false,
+    this.onDisposed,
+    this.onDoneOverride,
+  });
 
-  final List<IntroPageBuilder> pages;
+  final List<_IntroPageEntry> pages;
+  final bool disposeOnUnmount;
+  final VoidCallback? onDisposed;
+  final void Function(BuildContext)? onDoneOverride;
 
   static final _setting = Stores.setting;
 
   static const _kHeadPad = EdgeInsets.symmetric(horizontal: 13);
 
-  /// Every step there is, in the order they are shown.
-  static Future<List<_IntroStep>> get _steps async => [
-    (
-      applies: _isFirstLaunch,
-      // Asked before the page is built: the Security group has to know
-      // whether its row exists.
-      build: await PlatformPublicSettings.bioAuthAvailable.then(
-        (bio) =>
-            (BuildContext ctx, double padTop) =>
-                _buildAppSettings(ctx, padTop, bio: bio),
-      ),
-    ),
-    (applies: _needsDiagnosticsConsent, build: _buildDiagnostics),
-    (applies: _offersDiscovery, build: _buildDiscovery),
-  ];
-
-  /// The steps this launch should show.
-  static Future<List<IntroPageBuilder>> get builders async {
-    final builders = <IntroPageBuilder>[];
-    for (final step in await _steps) {
-      if (await step.applies()) builders.add(step.build);
+  /// The steps this launch should show, in the order they are shown.
+  static Future<List<_IntroPageEntry>> get builders async {
+    final firstLaunch = await _isFirstLaunch();
+    final secretKeyCtrl = await SecretKeyIntroController.detect(firstLaunch: firstLaunch);
+    final entries = <_IntroPageEntry>[];
+    if (firstLaunch) {
+      final bio = await PlatformPublicSettings.bioAuthAvailable;
+      entries.add((
+        build: (BuildContext ctx, double padTop) =>
+            _buildAppSettings(ctx, padTop, bio: bio),
+        canProceed: null,
+        onBeforeNext: null,
+        dispose: null,
+      ));
     }
-    return builders;
+    if (secretKeyCtrl != null) {
+      entries.add((
+        build: (BuildContext ctx, double padTop) =>
+            SecretKeyIntroPage(controller: secretKeyCtrl, padTop: padTop),
+        canProceed: secretKeyCtrl.canProceed,
+        onBeforeNext: secretKeyCtrl.commit,
+        dispose: secretKeyCtrl.dispose,
+      ));
+    }
+    final remaining = <_IntroStep>[
+      (applies: _needsDiagnosticsConsent, build: _buildDiagnostics),
+      (applies: _offersDiscovery, build: _buildDiscovery),
+    ];
+    for (final step in remaining) {
+      if (await step.applies()) {
+        entries.add((
+          build: step.build,
+          canProceed: null,
+          onBeforeNext: null,
+          dispose: null,
+        ));
+      }
+    }
+    return entries;
   }
 
   // — When a step applies ————————————————————————————————————————————
@@ -61,24 +93,8 @@ final class _IntroPage extends StatelessWidget {
       await _isFirstLaunch() &&
       (LocalServer.isSupported || (await availableSshDiscoveries()).isNotEmpty);
 
-  // — Widget build ——————————————————————————————————————————————————
-
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, cons) {
-        final padTop = (cons.maxHeight * .1).clamp(26.0, 77.0);
-        return IntroPage(
-          key: ValueKey(Localizations.localeOf(context)),
-          args: IntroPageArgs(
-            pages: pages.map((e) => e(context, padTop)).toList(),
-            maxWidth: PageColumns.columnWidth,
-            onDone: _onDone,
-          ),
-        );
-      },
-    );
-  }
+  State<_IntroPage> createState() => _IntroPageState();
 
   static void _onDone(BuildContext ctx) {
     SqliteStore.transact(() {
@@ -266,7 +282,42 @@ final class _IntroPage extends StatelessWidget {
 
 /// The intro this launch would show, or null when none applies.
 @visibleForTesting
-Future<Widget?> introForTest() async {
+Future<Widget?> introForTest({void Function(BuildContext)? onDone}) async {
   final pages = await _IntroPage.builders;
-  return pages.isEmpty ? null : _IntroPage(pages);
+  return pages.isEmpty
+      ? null
+      : _IntroPage(pages, disposeOnUnmount: true, onDoneOverride: onDone);
+}
+
+final class _IntroPageState extends State<_IntroPage> {
+  @override
+  void dispose() {
+    if (widget.disposeOnUnmount) {
+      for (final entry in widget.pages) {
+        entry.dispose?.call();
+      }
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, cons) {
+        final padTop = (cons.maxHeight * .1).clamp(26.0, 77.0);
+        return IntroPage(
+          args: IntroPageArgs(
+            pages: widget.pages.map((e) => e.build(context, padTop)).toList(),
+            maxWidth: PageColumns.columnWidth,
+            canProceed: (index) => widget.pages[index].canProceed,
+            onBeforeNext: (index) => widget.pages[index].onBeforeNext,
+            onDone: (ctx) {
+              (widget.onDoneOverride ?? _IntroPage._onDone)(ctx);
+              widget.onDisposed?.call();
+            },
+          ),
+        );
+      },
+    );
+  }
 }

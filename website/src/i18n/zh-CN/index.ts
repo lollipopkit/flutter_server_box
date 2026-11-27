@@ -14,6 +14,7 @@ const zhCN: Translation = {
     docs: '文档',
     themes: '主题',
     os: 'ServerBox OS',
+    security: '安全',
     beta: 'Beta',
     plugins: '插件',
     otherApps: '更多',
@@ -283,6 +284,88 @@ const zhCN: Translation = {
         '基于 macOS 原生 File Provider，无需内核扩展即可将 SFTP、S3、WebDAV 等远程存储直接挂载进访达（Finder）。',
       action: 'mfuse.lollipopkit.com',
     },
+  },
+  security: {
+    metaTitle: '双因素端到端加密 — ServerBox',
+    metaDescription:
+      '了解 ServerBox 如何通过备份密码、128 位客户端安全密钥、X25519 封装与 Ed25519 签名保护同步的服务器配置与 SSH 私钥。',
+    badge: '零知识同步架构',
+    navHow: '加密原理',
+    navThreats: '威胁模型',
+    navDevices: '多端与升级',
+    heroTitle: '双因素端到端加密，',
+    heroHighlight: '假设云端不可信。',
+    subtitle:
+      '为应对日益频发的黑客攻击与数据泄露事件，自动同步现强制要求同时使用备份密码与 128 位客户端安全密钥。即使同步服务器被完全攻陷，攻击者也无法读取你的 SSH 私钥与服务器凭据。',
+    zeroKnowledgeNotice:
+      'ServerBox 无法看到你的数据，也无法找回丢失的安全密钥。安全密钥一旦丢失，云端加密同步数据将无法恢复，请妥善保存在密码管理器或离线介质中。',
+    primaryAction: '查看加密原理',
+    docsAction: '技术文档',
+    howTitle: '两个独立因素。',
+    howSubtitle: '解密云端同步数据必须同时具备你记住的密码，以及永不上传至服务器的本地高熵密钥。',
+    factor1Tag: '备份密码',
+    factor1Title: '由你设定并记忆',
+    factor1Desc:
+      '可随时在客户端修改而无需轮换安全密钥。它防止仅获取设备钥匙串后的离线访问，同时继续用于手动导出的本地 .age 备份文件加密。',
+    factor2Tag: '安全密钥（128 位）',
+    factor2Title: '仅在本机生成，永不上传服务器',
+    factor2Desc:
+      '由操作系统 CSPRNG 生成 128 位随机熵，采用 Crockford Base32 编码并附带 22 位 BLAKE3 校验和，输入错误在密钥派生前即可在本地检出。',
+    diagramStep1: '1. 在本地使用带域分离的 BLAKE3 合并备份密码与安全密钥',
+    diagramStep2: '2. 用派生口令通过 age scrypt 保护 identity.age 中的 X25519 同步密钥对',
+    diagramStep3: '3. 所有同步数据均使用 X25519 公钥封装，拒绝明文同步',
+    diagramStep4: '4. LK Cloud 个人写入附带 Ed25519 签名并校验单调递增版本号',
+    primitivesLabel: '密码学原语',
+    threatsTitle: '威胁模型。',
+    threatsSubtitle: '在同步服务器失陷、数据篡改或密钥丢失场景下的客户端行为。',
+    colScenario: '场景',
+    colBehavior: '系统行为',
+    threats: {
+      breach: {
+        scenario: '同步服务器或对象存储被攻破并拖库',
+        behavior:
+          '攻击者仅能获取 identity.age 与 X25519 密文。在缺少 128 位客户端安全密钥的情况下，即使密码较弱也无法对 identity.age 进行离线暴力破解。',
+      },
+      downgrade: {
+        scenario: '被控服务器注入明文备份或降级为单因素密钥',
+        behavior:
+          '自动远程同步拒绝未封装的明文数据与仅口令加密的备份；同步目录完成双因素升级后，本地会持久化升级标记，阻止被降级回纯密码封装。',
+      },
+      tamper: {
+        scenario: '被控 LK Cloud 服务端伪造写入或回滚历史版本',
+        behavior:
+          '个人 LK Cloud 文件、日志批次与快照均使用 Ed25519 AccountKey 签名。客户端应用数据前验证签名，并拒绝比已见版本更旧的文件版本。每项同步变更只在更新时生效，重发的批次或快照不会改变任何内容。',
+      },
+      loss: {
+        scenario: '所有设备均丢失安全密钥',
+        behavior:
+          'ServerBox 与任何同步后端均不保存安全密钥副本，原有云端加密同步数据将无法解密或找回。',
+      },
+    },
+    devicesTitle: '多设备同步与升级。',
+    devicesSubtitle: '兼顾新安装用户与存量同步用户，在升级期间不阻塞本地 SSH 连接。',
+    devices: {
+      apple: {
+        tag: 'iOS · macOS',
+        title: 'Apple 钥匙串自动同步',
+        description:
+          '登录同一 iCloud 账号的 Apple 设备会通过 iCloud 钥匙串自动同步安全密钥，其余 Apple 设备升级后无需手动输入即可继续同步。',
+      },
+      crossPlatform: {
+        tag: 'Android · Windows · Linux',
+        title: '扫码或手动导入',
+        description:
+          '跨平台设备可通过扫描二维码或输入 S1-... 字符串导入安全密钥。系统自动归一化易混字符（I/L→1，O→0）并实时校验 22 位校验和。',
+      },
+      existing: {
+        tag: '存量老用户',
+        title: '保留原密码，原位平滑升级',
+        description:
+          '首台升级的设备沿用你原有的备份密码，在你确认保存安全密钥后自动将 identity.age 升级为双因素封装；其他设备导入密钥前会暂停同步，不影响本地 SSH 使用。',
+      },
+    },
+    footerNote: 'Rust 加密、密钥派生与签名实现已在 fl_lib 与 ServerBox 仓库中以 AGPLv3 开源。',
+    privacyLink: '隐私政策',
   },
   footer: {
     features: '功能',

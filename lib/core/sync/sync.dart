@@ -132,13 +132,17 @@ final class BakSyncer extends SyncIface<Mergeable, Object?> {
       return;
     }
     try {
-      // Nothing is read or written while the password does not open it.
+      // Nothing is read or written while the password or secret key does not open it.
       await keyOf(target);
     } catch (e, s) {
       // Said as the sync's failure, as one the base runs into is.
       lastFailure.value = e;
       if (e is SyncPasswordMismatch) {
         Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'password mismatch'});
+      } else if (e is SyncSecretKeyMissing) {
+        Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'secret key missing'});
+      } else if (e is SyncUntrusted) {
+        Loggers.app.warning('Sync untrusted', e, s);
       } else if (ReportFilter.isDefect(e)) {
         Diag.error(e, s, 'Sync key');
       } else {
@@ -156,29 +160,48 @@ final class BakSyncer extends SyncIface<Mergeable, Object?> {
     final content = await File(path).readAsBytes();
     final pwd = await SecureStoreProps.bakPwd.read();
     try {
-      // Only decrypting (in rage's isolate) and decoding leave this isolate:
-      // they read nothing but their arguments. Prefs, secure storage and
-      // [remoteTooNew] belong to this one — in a worker the pref answered
-      // its default and dropped every synced setting, with no error anywhere
-      // (#1562).
-      //
-      // Sealed to the remote's key; one an older build synced (v4, sealed
-      // with the password, or plaintext from before encryption was
-      // mandatory) is inherited once ([inheritLegacyRemote]).
+      // Normal remote sync strictly requires ciphertext sealed to the sync key.
+      // Never downgrade to plaintext or password-only envelopes from a remote
+      // server: a compromised server could otherwise inject arbitrary JSON.
+      if (!SyncKeyring.sealedToKey(content)) {
+        throw const SyncUntrusted('Remote backup is not sealed to the sync key');
+      }
       final Uint8List plain;
-      if (SyncKeyring.sealedToKey(content)) {
-        // With the keys of the syncs on here: the remote of the cycle that
-        // downloaded it is one of them, whichever that was. The one it is
-        // set to now is opened first, so a password it refuses stops here.
-        if (remoteStorage case final rs?) await keyOf(rs);
-        plain = await SyncKeyring.openAny(content);
+      // Use the storage of the cycle that downloaded this file (critical when
+      // switching channels before the new pref is persisted).
+      if (currentSyncStorage ?? remoteStorage case final rs?) {
+        final key = await keyOf(rs);
+        plain = await key.open(sealed: content);
       } else {
-        plain = await BackupV2.unlock(content, pwd);
+        plain = await SyncKeyring.openAny(content);
       }
       return await _read(plain, pwd);
     } on SchemaTooNewException catch (e) {
       // Recorded so `backup` refuses to upload over data this build cannot
       // read.
+      remoteTooNew.value = e;
+      rethrow;
+    }
+  }
+
+  /// Reads an encrypted legacy remote backup (`v4.age` or `v3` `LKFL_ENC`)
+  /// during one-shot inheritance. Refuses plaintext JSON so a compromised
+  /// server cannot inject unauthenticated data through the migration path.
+  ///
+  /// TODO(migration): remove once v3/v4 legacy sync inheritance is retired.
+  @visibleForTesting
+  Future<Mergeable> fromLegacyFile(String path) async {
+    remoteTooNew.value = null;
+    _remote = null;
+    final content = await File(path).readAsBytes();
+    if (!AgeCryptor.isEncrypted(content) || SyncKeyring.sealedToKey(content)) {
+      throw const SyncUntrusted('Refusing unencrypted or unexpected legacy remote backup');
+    }
+    final pwd = await SecureStoreProps.bakPwd.read();
+    try {
+      final plain = await BackupV2.unlock(content, pwd);
+      return await _read(plain, pwd);
+    } on SchemaTooNewException catch (e) {
       remoteTooNew.value = e;
       rethrow;
     }
@@ -362,7 +385,7 @@ final class BakSyncer extends SyncIface<Mergeable, Object?> {
         if (!await rs.exists(name)) continue;
         final localPath = Paths.doc.joinPath(name);
         await rs.download(relativePath: name, localPath: localPath);
-        final mergeable = await fromFile(localPath);
+        final mergeable = await fromLegacyFile(localPath);
         await mergeable.merge();
         Loggers.app.info('Inherited sync history from $name');
         return;
@@ -370,6 +393,8 @@ final class BakSyncer extends SyncIface<Mergeable, Object?> {
     } on SyncPasswordMismatch {
       // Not an attempt: tried again once the password opens the key, before
       // the first upload makes the versioned file.
+      _inheriting = null;
+    } on SyncSecretKeyMissing {
       _inheriting = null;
     } on SyncKeyNotHere {
       _inheriting = null;

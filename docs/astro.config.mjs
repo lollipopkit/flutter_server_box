@@ -61,6 +61,7 @@ export default defineConfig({
 						{ label: 'Widget Setup', translations: { 'zh-CN': '小组件设置' }, slug: 'advanced/widgets' },
 						{ label: 'Globe View', translations: { 'zh-CN': '地球仪视图' }, slug: 'advanced/globe' },
 						{ label: 'Host Keys and Certificates', translations: { 'zh-CN': '主机密钥与证书' }, slug: 'advanced/host-keys' },
+						{ label: 'Two-Factor Sync Encryption', translations: { 'zh-CN': '双因素同步加密' }, slug: 'advanced/two-factor-encryption' },
 						{ label: 'Custom Commands', translations: { 'zh-CN': '自定义命令' }, slug: 'advanced/custom-commands' },
 						{ label: 'Custom Logo', translations: { 'zh-CN': '自定义 Logo' }, slug: 'advanced/custom-logo' },
 						{ label: 'Links (serverbox://)', translations: { 'zh-CN': '链接(serverbox://)' }, slug: 'advanced/url-scheme' },

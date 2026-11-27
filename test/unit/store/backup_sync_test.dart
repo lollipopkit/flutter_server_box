@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
@@ -144,8 +146,18 @@ void main() {
     expect(bakSync.lastFailure.value, isNull);
     expect((await uploaded()).settings['timeOut'], 18);
     expect(SyncKeyring.sealedToKey(await remote.readAsBytes()), isTrue);
+    final secretKey = (await SecureStoreProps.syncSecretKey.read(limited: false))!;
+    // Bare passwords alone must not open the two-factor sealed key file.
     await expectLater(AgeCryptor.decrypt(keyFile.body!, 'remote-password'), throwsA(isA<WrongPasswordException>()));
-    expect(await AgeCryptor.decrypt(keyFile.body!, 'changed-here'), isNotEmpty);
+    await expectLater(AgeCryptor.decrypt(keyFile.body!, 'changed-here'), throwsA(isA<WrongPasswordException>()));
+    await expectLater(
+      AgeCryptor.decrypt(keyFile.body!, SyncKeyring.derivePassphrase('remote-password', secretKey)!),
+      throwsA(isA<WrongPasswordException>()),
+    );
+    expect(
+      await AgeCryptor.decrypt(keyFile.body!, SyncKeyring.derivePassphrase('changed-here', secretKey)!),
+      isNotEmpty,
+    );
 
     // Another device still on the one before syncs nothing.
     await becomeAnotherDevice();
@@ -269,14 +281,29 @@ void main() {
   });
 
   test('a remote from a newer build is recorded and not uploaded over', () async {
-    await remote.writeAsString(
-      '{"version": ${BackupV2.formatVer + 1}, "date": 0}',
+    final key = await keyOf(keyFile);
+    final sealed = await key.seal(
+      plain: Uint8List.fromList(utf8.encode('{"version": ${BackupV2.formatVer + 1}, "date": 0}')),
     );
+    await remote.writeAsBytes(sealed);
     final rs = _FileRemote(remote);
 
     await bakSync.sync(throttleMilli: 0, rs: rs);
 
     expect(BakSyncer.remoteTooNew.value, isNotNull);
+    expect(rs.uploads, 0);
+  });
+
+  test('an unsealed plaintext remote payload is refused and not merged or uploaded over', () async {
+    await remote.writeAsString(
+      '{"version": ${BackupV2.formatVer}, "date": 9999999999999, "settings": {"timeOut": 99}}',
+    );
+    final rs = _FileRemote(remote);
+
+    await bakSync.sync(throttleMilli: 0, rs: rs);
+
+    expect(bakSync.lastFailure.value, isA<SyncUntrusted>());
+    expect(Stores.setting.timeout.fetch(), 5);
     expect(rs.uploads, 0);
   });
 }

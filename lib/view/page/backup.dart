@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/core/sync/file_log.dart';
 import 'package:server_box/core/sync/lkc_log.dart';
 import 'package:server_box/core/sync/lkc_prefs.dart';
 import 'package:server_box/core/sync/remotes.dart';
+import 'package:server_box/core/sync/secret_key_prefs.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/pending_ops.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
@@ -30,6 +32,7 @@ import 'package:server_box/view/page/backup/service.dart';
 import 'package:server_box/view/page/backup/source.dart';
 import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:server_box/view/page/setting/group.dart';
+import 'package:server_box/view/widget/secret_key_widgets.dart';
 
 part 'backup/sync.dart';
 
@@ -75,6 +78,9 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   /// The backup password, read again when it is set or removed here.
   late Future<String?> _bakPwd = SecureStoreProps.bakPwd.read();
 
+  /// The client-side secret key, read again when set or auto-generated.
+  late Future<String?> _secretKey = SecureStoreProps.syncSecretKey.read();
+
   /// Built once: a new one each build would subscribe again each time.
   late final _destChanges = Listenable.merge([_SyncDest.changes, _webdavEdited]);
   late final _manualChanges = Listenable.merge([
@@ -86,7 +92,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     _syncing,
     bakSync.running,
     bakSync.lastFailure,
+    lkcLog.lastFailure,
+    fileLog.lastFailure,
     SyncKeyring.passwordMismatch,
+    SyncKeyring.secretKeyMissing,
     BakSyncer.remoteTooNew,
     lkcLog.tooNew,
     fileLog.tooNew,
@@ -105,15 +114,55 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (isICloudSupported) {
       _refreshIcloudStatus(notify: false);
     }
+    SyncKeyring.secretKeyGenerated.addListener(_onSecretKeyGenerated);
+    SyncKeyring.secretKeyMissing.addListener(_onSecretKeyStatusChanged);
+    if (SyncKeyring.secretKeyGenerated.value != null || SyncSecretKeyPrefs.backupPending.get()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_checkPendingSecretKeyBackup()));
+    }
   }
 
   @override
   void dispose() {
+    SyncKeyring.secretKeyGenerated.removeListener(_onSecretKeyGenerated);
+    SyncKeyring.secretKeyMissing.removeListener(_onSecretKeyStatusChanged);
     remoteLoading.dispose();
     lkcOps.dispose();
     _syncing.dispose();
     _webdavEdited.dispose();
     super.dispose();
+  }
+
+  void _onSecretKeyStatusChanged() {
+    if (!mounted) return;
+    setState(() {
+      _secretKey = SecureStoreProps.syncSecretKey.read();
+    });
+  }
+
+  void _onSecretKeyGenerated() {
+    final key = SyncKeyring.secretKeyGenerated.value;
+    if (key == null) return;
+    SyncKeyring.secretKeyGenerated.value = null;
+    unawaited(SyncSecretKeyPrefs.backupPending.set(true));
+    if (!mounted) return;
+    setState(() {
+      _secretKey = Future.value(key);
+    });
+    unawaited(_showSecretKeySheet(context, key, justGenerated: true));
+  }
+
+  Future<void> _checkPendingSecretKeyBackup() async {
+    if (SyncKeyring.secretKeyGenerated.value != null) {
+      _onSecretKeyGenerated();
+      return;
+    }
+    if (!SyncSecretKeyPrefs.backupPending.get()) return;
+    final key = await SecureStoreProps.syncSecretKey.read();
+    if (!mounted || key == null || key.isEmpty) return;
+    setState(() {
+      _secretKey = Future.value(key);
+    });
+    await _showSecretKeySheet(context, key, justGenerated: true);
   }
 
   @override
@@ -176,6 +225,267 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         );
       },
     );
+  }
+
+  Widget get _buildSecretKey {
+    return FutureBuilder<String?>(
+      future: _secretKey,
+      builder: (context, snapshot) {
+        final hasKey = snapshot.data?.isNotEmpty == true;
+        return ListTile(
+          leading: const Icon(Icons.vpn_key_outlined),
+          title: Text(l10n.syncSecretKey),
+          trailing: Text(
+            hasKey ? l10n.bakPwdSet : l10n.bakPwdNotSet,
+            style: hasKey
+                ? UIs.text15
+                : UIs.text15.copyWith(color: UIs.textGrey.color),
+          ),
+          onTap: () async => _onTapSecretKey(context),
+        );
+      },
+    );
+  }
+
+  Future<bool> _ensureSecretKey(BuildContext context) async {
+    final current = await SecureStoreProps.syncSecretKey.read(limited: false);
+    if (current != null && current.isNotEmpty) return true;
+    if (!context.mounted) return false;
+    return _onTapEnterSecretKey(context);
+  }
+
+  Future<void> _onTapSecretKey(BuildContext context) async {
+    final current = await SecureStoreProps.syncSecretKey.read();
+    if (!context.mounted) return;
+    if (current != null && current.isNotEmpty) {
+      await _showSecretKeySheet(
+        context,
+        current,
+        justGenerated: SyncSecretKeyPrefs.backupPending.get(),
+      );
+      if (mounted) {
+        setState(() {
+          _secretKey = SecureStoreProps.syncSecretKey.read();
+        });
+      }
+      return;
+    }
+    await _onTapEnterSecretKey(context);
+  }
+
+  Future<bool> _showSecretKeySheet(
+    BuildContext context,
+    String key, {
+    bool justGenerated = false,
+  }) async {
+    final acknowledged = (!justGenerated).vn;
+    final confirmed = await context.showSheet<bool>(
+      title: l10n.syncSecretKey,
+      child: DisposeWith(
+        notifiers: [acknowledged],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.syncSecretKeyBackupNote, style: UIs.textGrey),
+              UIs.height13,
+              const SecretKeyZeroKnowledgeWarning(),
+              UIs.height13,
+              SecretKeyQrDisplay(
+                secretKey: key,
+                qrWidth: 200,
+                inCard: false,
+                showCopyButton: false,
+              ),
+              if (justGenerated) ...[
+                UIs.height13,
+                acknowledged.listenVal(
+                  (checked) => CheckboxListTile(
+                    value: checked,
+                    onChanged: (v) => acknowledged.value = v ?? false,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(l10n.syncSecretKeyAck, style: UIs.text13),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        if (!justGenerated)
+          TextButton(
+            onPressed: () {
+              context.popSheet(false);
+              unawaited(_confirmReplaceSecretKey(context));
+            },
+            child: Text(l10n.syncSecretKeyReplace),
+          ),
+        TextButton(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: key));
+            Toast.success(libL10n.success);
+          },
+          child: Text(libL10n.copy),
+        ),
+        if (justGenerated)
+          acknowledged.listenVal(
+            (checked) => TextButton(
+              onPressed: checked ? () => context.popSheet(true) : null,
+              child: Text(l10n.syncSecretKeySavedBtn),
+            ),
+          )
+        else
+          ...Btnx.oks,
+      ],
+    );
+    if (justGenerated && confirmed == true) {
+      await SyncSecretKeyPrefs.backupPending.set(false);
+      await SyncSecretKeyPrefs.introDeferred.set(false);
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _confirmReplaceSecretKey(BuildContext context) async {
+    final ok = await context.showSheet<bool>(
+      title: l10n.syncSecretKeyReplace,
+      child: Text(l10n.syncSecretKeyReplaceConfirm),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !context.mounted) return;
+    await _onTapEnterSecretKey(context, allowGenerate: false);
+  }
+
+  Future<void> _saveSecretKeyAndResume(String normalized) async {
+    await SyncKeyring.storeSecretKey(normalized);
+    await SyncSecretKeyPrefs.backupPending.set(false);
+    await SyncSecretKeyPrefs.introDeferred.set(false);
+    if (Lkc.enabled) {
+      await Lkc.client.resetPersonalAuth(clearCachedKey: true);
+    }
+    if (mounted) {
+      setState(() {
+        _secretKey = Future.value(normalized);
+      });
+    }
+    unawaited(() async {
+      try {
+        await SyncKeyring.recheck();
+      } catch (e, s) {
+        Loggers.app.warning('SyncKeyring.recheck failed after saving secret key', e, s);
+      }
+      unawaited(lkcLog.sync());
+      unawaited(fileLog.sync());
+      if (_hasEnabledRemoteSync) bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+    }());
+    Toast.success(l10n.syncSecretKeySaved);
+  }
+
+  Future<bool> _onTapGenerateSecretKey(BuildContext context) async {
+    String generated;
+    try {
+      await FlRust.ensureInitialized();
+      generated = SyncKeyring.generateSecretKey();
+    } catch (e, s) {
+      Loggers.app.warning('Secret key generation failed', e, s);
+      Toast.show(l10n.syncSecretKeyUnavailable);
+      return false;
+    }
+    if (!context.mounted) return false;
+    final confirmed = await _showSecretKeySheet(context, generated, justGenerated: true);
+    if (!confirmed) return false;
+    // Never overwrite a key that arrived concurrently via platform keychain sync.
+    final concurrent = await SecureStoreProps.syncSecretKey.read(limited: false);
+    if (concurrent != null && concurrent.isNotEmpty) {
+      await SyncSecretKeyPrefs.backupPending.set(false);
+      await SyncSecretKeyPrefs.introDeferred.set(false);
+      if (mounted) {
+        setState(() {
+          _secretKey = Future.value(concurrent);
+        });
+      }
+      return true;
+    }
+    await _saveSecretKeyAndResume(generated);
+    return true;
+  }
+
+  Future<bool> _onTapEnterSecretKey(
+    BuildContext context, {
+    bool allowGenerate = true,
+  }) async {
+    final controller = TextEditingController();
+    final node = FocusNode();
+    final canGenerate = allowGenerate && !SyncKeyring.secretKeyMissing.value;
+    final result = await context.showSheet<String>(
+      title: l10n.syncSecretKey,
+      child: DisposeWith(
+        notifiers: [controller, node],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.syncSecretKeyMissingDetail, style: UIs.textGrey),
+            UIs.height13,
+            Input(
+              label: l10n.syncSecretKey,
+              hint: 'S1-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
+              controller: controller,
+              node: node,
+              suggestion: false,
+              onSubmitted: (_) => context.popSheet('import'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (canGenerate)
+          TextButton(
+            onPressed: () => context.popSheet('generate'),
+            child: Text(l10n.syncSecretKeyTabGenerate),
+          ),
+        if (isMobile)
+          TextButton.icon(
+            onPressed: () async {
+              final scanned = await BarcodeScannerPage.route.go(
+                context,
+                args: const BarcodeScannerPageArgs(),
+              );
+              final text = scanned?.text;
+              if (text == null || !context.mounted) return;
+              controller.text = text.trim();
+            },
+            icon: const Icon(Icons.qr_code_scanner),
+            label: Text(l10n.syncSecretKeyScan),
+          ),
+        TextButton(
+          onPressed: () => context.popSheet('import'),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
+    if (!context.mounted) return false;
+    if (result == 'generate') {
+      return _onTapGenerateSecretKey(context);
+    }
+    if (result != 'import') return false;
+    String? normalized;
+    try {
+      await FlRust.ensureInitialized();
+      normalized = SyncKeyring.normalizeSecretKey(controller.text);
+    } catch (e, s) {
+      Loggers.app.warning('Secret key validation unavailable', e, s);
+      Toast.show(l10n.syncSecretKeyUnavailable);
+      return false;
+    }
+    if (normalized == null) {
+      Toast.show(l10n.syncSecretKeyInvalid);
+      return false;
+    }
+    await _saveSecretKeyAndResume(normalized);
+    return true;
   }
 
   Future<void> _onTapDeleteBakPwd() async {
@@ -272,16 +582,21 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       // before they are sealed again must still open them.
       await SyncKeyring.passwordChanged(previous);
       await SecureStoreProps.bakPwd.write(pwd);
-      // Sealed again now; the syncs then go on with it.
-      unawaited(
-        SyncKeyring.recheck().whenComplete(() {
-          unawaited(lkcLog.sync());
-          unawaited(fileLog.sync());
-          // Not to upload (the backup is sealed to the key): to clear what the
-          // last one said of the password.
-          if (_hasEnabledRemoteSync) bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
-        }),
-      );
+      // Sealed again now; serialize account-key passphrase update before
+      // resuming LK Cloud syncs so `lkc/identity.age` never races ahead.
+      unawaited(() async {
+        await SyncKeyring.recheck();
+        if (previous != null && previous.isNotEmpty && Lkc.enabled && Lkc.client.signedIn) {
+          try {
+            await Lkc.client.changePersonalAuthPassphrase(old: previous, newPassphrase: pwd);
+          } catch (e, s) {
+            Loggers.app.warning('LK Cloud account key passphrase change', e, s);
+          }
+        }
+        unawaited(lkcLog.sync());
+        unawaited(fileLog.sync());
+        if (_hasEnabledRemoteSync) bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+      }());
     }
     Toast.show(l10n.backupPasswordSet);
     if (mounted) setState(() => _bakPwd = SecureStoreProps.bakPwd.read());
@@ -303,6 +618,9 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         await lkcLog.key();
       } on SyncPasswordMismatch catch (e) {
         Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
+        return;
+      } on SyncSecretKeyMissing catch (e) {
+        Toast.show(syncFailureText(e) ?? l10n.syncSecretKeyMissingDetail);
         return;
       } catch (e, s) {
         if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
@@ -573,6 +891,8 @@ extension on _BackupPageState {
       } on SyncPasswordMismatch catch (e) {
         // Said as the card above says it: no error to report.
         Toast.show(syncFailureText(e) ?? l10n.syncPasswordMismatch);
+      } on SyncSecretKeyMissing catch (e) {
+        Toast.show(syncFailureText(e) ?? l10n.syncSecretKeyMissingDetail);
       } catch (e, s) {
         if (context.mounted) _showLkcErr(e, s, libL10n.restore);
         Loggers.app.warning('Restore LK Cloud backup failed', e, s);
