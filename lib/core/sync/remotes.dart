@@ -14,7 +14,7 @@ abstract final class SyncRemotes {
   /// neither is enabled.
   static RemoteStorage<Object?>? get fileRemote {
     if (PrefProps.icloudSync.get() && isICloudSupported) return icloud;
-    if (PrefProps.webdavSync.get()) return webdav;
+    if (PrefProps.webdavSync.get() && hasWebdav) return webdav;
     return null;
   }
   static const _url = 'webdavUrl';
@@ -38,10 +38,24 @@ abstract final class SyncRemotes {
   static String? get webdavUser => _get(_user);
   static String? get webdavPwd => _get(_pwd);
 
+  /// Whether a WebDAV remote URL has been configured.
+  static bool get hasWebdav => webdavUrl != null;
+
   static void setWebdav({required String url, required String user, required String pwd}) {
-    _set(_url, url);
-    _set(_user, user);
-    _set(_pwd, pwd);
+    SqliteStore.transact(() {
+      _set(_url, url.trim());
+      _set(_user, user.trim());
+      _set(_pwd, pwd);
+    });
+  }
+
+  /// Removes the saved WebDAV endpoint and credentials across synced devices.
+  static void clearWebdav() {
+    SqliteStore.transact(() {
+      _set(_url, null);
+      _set(_user, null);
+      _set(_pwd, null);
+    });
   }
 
   static Webdav? _webdav;

@@ -69,14 +69,25 @@ void main() {
   });
 
   test('a changed setting is a new client; one in use keeps its server', () {
+    expect(SyncRemotes.hasWebdav, isFalse);
     expect(SyncRemotes.webdav.client, isNull);
-    SyncRemotes.setWebdav(url: 'https://a.example/', user: 'u', pwd: 'p');
+    SyncRemotes.setWebdav(url: ' https://a.example/ ', user: ' u ', pwd: 'p');
+    expect(SyncRemotes.hasWebdav, isTrue);
+    expect(SyncRemotes.webdavUrl, 'https://a.example/');
+    expect(SyncRemotes.webdavUser, 'u');
     final a = SyncRemotes.webdav;
     expect(SyncRemotes.webdav, same(a));
     SyncRemotes.setWebdav(url: 'https://b.example/', user: 'u', pwd: 'p');
     expect(SyncRemotes.webdav, isNot(same(a)));
     expect(a.client!.url, 'https://a.example/');
     expect(SyncRemotes.webdav.client!.url, 'https://b.example/');
+
+    SyncRemotes.clearWebdav();
+    expect(SyncRemotes.hasWebdav, isFalse);
+    expect(SyncRemotes.webdavUrl, isNull);
+    expect(SyncRemotes.webdavUser, isNull);
+    expect(SyncRemotes.webdavPwd, isNull);
+    expect(SyncRemotes.webdav.client, isNull);
   });
 
   test('what the retired Gist and monitor syncs left is removed, everywhere', () async {
@@ -101,10 +112,13 @@ void main() {
     expect(Stores.syncRemote.get<String>('githubToken'), isNull);
   });
 
-  test('fileRemote returns the enabled file-backed remote', () async {
+  test('fileRemote returns the enabled file-backed remote only when configured', () async {
     expect(SyncRemotes.fileRemote, isNull);
 
     await PrefProps.webdavSync.set(true);
+    expect(SyncRemotes.fileRemote, isNull);
+
+    SyncRemotes.setWebdav(url: 'https://dav.example/', user: 'u', pwd: 'p');
     expect(SyncRemotes.fileRemote, same(SyncRemotes.webdav));
 
     await PrefProps.icloudSync.set(true);
@@ -115,6 +129,9 @@ void main() {
     }
 
     await PrefProps.icloudSync.set(false);
+    SyncRemotes.clearWebdav();
+    expect(SyncRemotes.fileRemote, isNull);
+
     await PrefProps.webdavSync.set(false);
     expect(SyncRemotes.fileRemote, isNull);
   });

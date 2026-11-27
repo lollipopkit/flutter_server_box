@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -7636,4 +7637,12 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sshTooManyKeysWarning =>
       'Вибір надто великої кількості ключів може перевищити ліміт спроб автентифікації сервера або спричинити блокування IP.';
+
+  @override
+  String get webdavRemoveConfirm =>
+      'Clear the saved WebDAV URL and credentials? Remote backups will not be deleted.';
+
+  @override
+  String get webdavRemoveActiveConfirm =>
+      'Clear the saved WebDAV URL and credentials and turn off auto sync? Remote backups will not be deleted.';
 }

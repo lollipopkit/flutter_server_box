@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/pending_ops.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_reader.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -86,6 +88,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     _syncing,
     bakSync.running,
     bakSync.lastFailure,
+    lkcLog.lastFailure,
+    fileLog.lastFailure,
     SyncKeyring.passwordMismatch,
     BakSyncer.remoteTooNew,
     lkcLog.tooNew,
@@ -482,28 +486,38 @@ extension on _BackupPageState {
   /// Whether iCloud holds versions of the backup it could not reconcile.
   Future<bool> _loadIcloudConflict() async {
     if (!isICloudSupported) return false;
-    final files = await icloud.list();
-    return files.any((file) => file.relativePath == Paths.bakName && file.hasUnresolvedConflicts);
+    try {
+      final files = await icloud.list();
+      return files.any((file) => file.relativePath == Paths.bakName && file.hasUnresolvedConflicts);
+    } catch (e, s) {
+      Loggers.app.warning('Check iCloud conflict failed', e, s);
+      return false;
+    }
   }
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
+    if (!SyncRemotes.hasWebdav) {
+      Toast.show(l10n.webdavSettingEmpty);
+      return;
+    }
     remoteLoading.value = true;
     try {
       final files = await SyncRemotes.webdav.list();
+      if (!context.mounted) return;
       if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleSheet(
         title: libL10n.restore,
         items: files,
       );
-      if (fileName == null) return;
+      if (fileName == null || !context.mounted) return;
 
       await SyncRemotes.webdav.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
       if (!context.mounted) return;
       await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
-      context.showErrSheet(e, s, libL10n.restore);
+      if (context.mounted) context.showErrSheet(syncFailureText(e) ?? e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
       if (mounted) remoteLoading.value = false;
@@ -511,17 +525,21 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
+    if (!SyncRemotes.hasWebdav) {
+      Toast.show(l10n.webdavSettingEmpty);
+      return;
+    }
     remoteLoading.value = true;
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.exportBakFileName}';
     try {
       final ok = await _ensureBakPwd(context);
-      if (!ok) return;
+      if (!ok || !context.mounted) return;
       await BackupV2.backup(bakName, await SecureStoreProps.bakPwd.read());
       await SyncRemotes.webdav.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
-      context.showErrSheet(e, s, libL10n.upload);
+      if (context.mounted) context.showErrSheet(syncFailureText(e) ?? e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
       if (mounted) remoteLoading.value = false;
@@ -582,67 +600,266 @@ extension on _BackupPageState {
     });
   }
 
-  Future<void> _onTapWebdavSetting(BuildContext context) async {
-    final url = TextEditingController(text: SyncRemotes.webdavUrl);
-    final user = TextEditingController(text: SyncRemotes.webdavUser);
-    final pwd = TextEditingController(text: SyncRemotes.webdavPwd);
+  Future<_WebdavEditOutcome?> _onTapWebdavSetting(
+    BuildContext context, {
+    String? initialError,
+  }) async {
+    if (!context.mounted) return null;
+    final hasSaved = SyncRemotes.hasWebdav;
+    final url = TextEditingController(text: SyncRemotes.webdavUrl ?? '');
+    final user = TextEditingController(text: SyncRemotes.webdavUser ?? '');
+    final pwd = TextEditingController(text: SyncRemotes.webdavPwd ?? '');
+    final nodeUrl = FocusNode();
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
-    final result = await context.showSheet<bool>(
-      title: 'WebDAV',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            label: 'URL',
-            hint: 'https://example.com/sub/',
-            controller: url,
-            suggestion: false,
-            onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodeUser),
-          ),
-          Input(
-            label: libL10n.user,
-            controller: user,
-            node: nodeUser,
-            suggestion: false,
-            onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodePwd),
-          ),
-          Input(
-            label: libL10n.pwd,
-            controller: pwd,
-            node: nodePwd,
-            suggestion: false,
-            onSubmitted: (_) => context.popSheet(true),
-          ),
-        ],
-      ),
-      actions: Btnx.oks,
-    );
-    if (result == true) {
+    final busy = false.vn;
+    final committing = false.vn;
+    final error = ValueNotifier<String?>(initialError);
+    CancelToken? activeCancel;
+    VoidCallback? closeSelf;
+    Future<void>? commitInFlight;
+    _WebdavEditOutcome? completedOutcome;
+    var closed = false;
+
+    bool isSheetOpen(BuildContext ctx) => !closed && ctx.mounted && (ModalRoute.of(ctx)?.isCurrent ?? false);
+
+    void clearError(String _) {
+      if (error.value != null) error.value = null;
+    }
+
+    Future<void> submit(BuildContext ctx) async {
+      if (busy.value) return;
+      final url_ = url.text.trim();
+      final user_ = user.text.trim();
+      final pwd_ = pwd.text;
+      final parsed = Uri.tryParse(url_);
+      if (url_.isEmpty ||
+          parsed == null ||
+          (parsed.scheme != 'http' && parsed.scheme != 'https') ||
+          parsed.host.isEmpty) {
+        error.value = libL10n.invalidUrl;
+        return;
+      }
+      final cancel = activeCancel = CancelToken();
+      busy.value = true;
+      error.value = null;
       try {
-        final url_ = url.text;
-        final user_ = user.text;
-        final pwd_ = pwd.text;
-
-        await Webdav.test(url_, user_, pwd_);
-        Toast.success(libL10n.success);
-
-        SyncRemotes.setWebdav(url: url_, user: user_, pwd: pwd_);
-        // The sync shortcut remembers a tag from *a* WebDAV server, and the
-        // backend's type is the same whichever one it points at. Pointing it
-        // somewhere new is exactly when the skip would be wrong.
-        await BakSyncer.forgetCheckpoint();
-        // The server it names is shown.
-        _webdavEdited.value++;
+        await Webdav.test(url_, user_, pwd_, cancelToken: cancel);
       } catch (e, s) {
-        context.showErrSheet(e, s, 'Webdav');
+        if (!cancel.isCancelled) {
+          Loggers.app.warning('WebDAV test failed', e, s);
+        }
+        if (isSheetOpen(ctx) && !cancel.isCancelled) {
+          busy.value = false;
+          error.value = e is FormatException ? libL10n.invalidUrl : (syncFailureText(e) ?? '$e');
+        }
+        return;
+      } finally {
+        if (identical(activeCancel, cancel)) activeCancel = null;
+      }
+      if (!isSheetOpen(ctx) || cancel.isCancelled) return;
+      committing.value = true;
+      final commit = () async {
+        // Capture old store id BEFORE mutating SyncRemotes (webdavAccount reads live state).
+        final oldId = fileLog.storeIdOf(SyncRemotes.webdav);
+        SyncRemotes.setWebdav(url: url_, user: user_, pwd: pwd_);
+        completedOutcome = _WebdavEditOutcome.saved;
+        final newId = fileLog.storeIdOf(SyncRemotes.webdav);
+        try {
+          // The sync shortcut remembers a tag from *a* WebDAV server, and the
+          // backend's type is the same whichever one it points at. Pointing it
+          // somewhere new is exactly when the skip would be wrong.
+          await BakSyncer.forgetCheckpoint();
+          if (oldId != null && oldId != newId) {
+            await fileLog.forgetRemote(id: oldId);
+          } else {
+            fileLog.reset();
+          }
+        } catch (e, s) {
+          Loggers.app.warning('WebDAV post-save cleanup failed', e, s);
+        }
+        bakSync.lastFailure.value = null;
+        if (mounted) _webdavEdited.value++;
+        Toast.success(libL10n.success);
+      }();
+      commitInFlight = commit;
+      try {
+        await commit;
+      } finally {
+        if (isSheetOpen(ctx)) {
+          committing.value = false;
+          closeSelf?.call();
+        }
       }
     }
-    url.dispose();
-    user.dispose();
-    pwd.dispose();
-    nodeUser.dispose();
-    nodePwd.dispose();
+
+    Future<void> remove(BuildContext ctx) async {
+      if (busy.value) return;
+      final activeBeforeConfirm = PrefProps.webdavSync.get();
+      final confirmed = await ctx.showSheet<bool>(
+        title: '${libL10n.delete} WebDAV',
+        child: Text(activeBeforeConfirm ? l10n.webdavRemoveActiveConfirm : l10n.webdavRemoveConfirm),
+        actions: Btnx.cancelRedOk,
+      );
+      if (confirmed != true || !isSheetOpen(ctx)) return;
+      busy.value = true;
+      committing.value = true;
+      final commit = () async {
+        final oldId = fileLog.storeIdOf(SyncRemotes.webdav);
+        try {
+          if (PrefProps.webdavSync.get()) {
+            await PrefProps.webdavSync.set(false);
+          }
+        } catch (e, s) {
+          Loggers.app.warning('WebDAV disable failed during removal', e, s);
+        }
+        SyncRemotes.clearWebdav();
+        completedOutcome = _WebdavEditOutcome.removed;
+        try {
+          await BakSyncer.forgetCheckpoint();
+          await fileLog.forgetRemote(id: oldId);
+        } catch (e, s) {
+          Loggers.app.warning('WebDAV removal cleanup failed', e, s);
+        }
+        bakSync.lastFailure.value = null;
+        if (mounted) _webdavEdited.value++;
+      }();
+      commitInFlight = commit;
+      try {
+        await commit;
+      } finally {
+        if (isSheetOpen(ctx)) {
+          committing.value = false;
+          closeSelf?.call();
+        }
+      }
+    }
+
+    final result = await context.showSheet<_WebdavEditOutcome>(
+      title: 'WebDAV',
+      onShown: (close) => closeSelf = close,
+      childBuilder: (ctx) => DisposeWith(
+        notifiers: [url, user, pwd, nodeUrl, nodeUser, nodePwd, busy, committing, error],
+        child: ValueListenableBuilder<bool>(
+          valueListenable: committing,
+          builder: (_, isCommitting, child) => PopScope(
+            canPop: !isCommitting,
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop) activeCancel?.cancel();
+            },
+            child: child!,
+          ),
+          child: SingleChildScrollView(
+            child: ListenableBuilder(
+              listenable: Listenable.merge([busy, error]),
+              builder: (ctx, _) {
+                final isBusy = busy.value;
+                final errText = error.value;
+                final scheme = Theme.of(ctx).colorScheme;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (errText != null) ...[
+                      Container(
+                        key: const ValueKey('webdav_error_banner'),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: scheme.errorContainer,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 18, color: scheme.onErrorContainer),
+                            UIs.width7,
+                            Expanded(
+                              child: Text(
+                                errText,
+                                style: UIs.text13.copyWith(color: scheme.onErrorContainer),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      UIs.height13,
+                    ],
+                    Input(
+                      key: const ValueKey('webdav_url_input'),
+                      label: 'URL',
+                      hint: 'https://example.com/dav/',
+                      controller: url,
+                      node: nodeUrl,
+                      type: TextInputType.url,
+                      suggestion: false,
+                      enabled: !isBusy,
+                      onChanged: clearError,
+                      onSubmitted: (_) => FocusScope.of(ctx).requestFocus(nodeUser),
+                    ),
+                    Input(
+                      key: const ValueKey('webdav_user_input'),
+                      label: libL10n.user,
+                      controller: user,
+                      node: nodeUser,
+                      suggestion: false,
+                      enabled: !isBusy,
+                      onChanged: clearError,
+                      onSubmitted: (_) => FocusScope.of(ctx).requestFocus(nodePwd),
+                    ),
+                    Input(
+                      key: const ValueKey('webdav_pwd_input'),
+                      label: libL10n.pwd,
+                      controller: pwd,
+                      node: nodePwd,
+                      obscureText: true,
+                      suggestion: false,
+                      enabled: !isBusy,
+                      onChanged: clearError,
+                      onSubmitted: (_) => submit(ctx),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+      actionsBuilder: (ctx) => [
+        if (hasSaved)
+          busy.listenVal(
+            (isBusy) => TextButton(
+              onPressed: isBusy ? null : () => remove(ctx),
+              child: Text(
+                libL10n.delete,
+                style: TextStyle(color: isBusy ? null : Theme.of(ctx).colorScheme.error),
+              ),
+            ),
+          ),
+        committing.listenVal(
+          (isCommitting) => TextButton(
+            onPressed: isCommitting
+                ? null
+                : () {
+                    activeCancel?.cancel();
+                    closeSelf?.call();
+                  },
+            child: Text(libL10n.cancel),
+          ),
+        ),
+        busy.listenVal(
+          (isBusy) => FilledButton.tonal(
+            onPressed: isBusy ? null : () => submit(ctx),
+            child: isBusy ? SizedLoading.small : Text(libL10n.save),
+          ),
+        ),
+      ],
+    );
+    closed = true;
+    activeCancel?.cancel();
+    if (commitInFlight case final commit?) {
+      await commit;
+    }
+    return result ?? completedOutcome;
   }
 
   void _onBulkImportServers(BuildContext context) async {

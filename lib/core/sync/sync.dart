@@ -421,11 +421,15 @@ final class BakSyncer extends SyncIface<Mergeable, Object?> {
   /// pointed at a different server — and pointing it somewhere new is exactly
   /// when the shortcut would skip the sync that had everything to do.
   /// The remote read last is another's then too.
-  static Future<void> forgetCheckpoint() {
+  static Future<void> forgetCheckpoint() async {
+    await beforeForgetCheckpointForTest?.call();
     bakSync._remote = null;
     remoteTooNew.value = null;
-    return _checkpoint.remove();
+    await _checkpoint.remove();
   }
+
+  @visibleForTesting
+  static Future<void> Function()? beforeForgetCheckpointForTest;
 
   /// When the user last changed anything that gets synced.
   ///

@@ -55,13 +55,28 @@ enum _SyncDest {
   /// Which one of its kind: the server, the account.
   String? get note => switch (this) {
     off || icloud => null,
-    webdav => switch (SyncRemotes.webdavUrl) {
-      final url? => Uri.tryParse(url)?.host ?? url,
-      null => null,
-    },
+    webdav => _webdavHostLabel(SyncRemotes.webdavUrl),
     lkc => Lkc.client.user.value?.name ?? libL10n.lkcNotSignedIn,
   };
 }
+
+enum _WebdavEditOutcome { saved, removed }
+
+String? _webdavHostLabel(String? url) {
+  if (url == null || url.isEmpty) return null;
+  final uri = Uri.tryParse(url);
+  if (uri == null || uri.host.isEmpty) return url;
+  final path = uri.path.replaceFirst(RegExp(r'/+$'), '');
+  return path.isEmpty ? uri.host : '${uri.host}$path';
+}
+
+bool _isSyncKeyOrVersionFailure(Object e) =>
+    e is WrongPasswordException ||
+    e is SyncPasswordMismatch ||
+    e is SyncPasswordMissing ||
+    e is RemoteBackupPasswordMissing ||
+    e is SchemaTooNewException ||
+    e is SyncLogTooNew;
 
 /// The sync group: where it goes and how that went, what it carries, and the
 /// one-off copies to a file or the clipboard.
@@ -135,12 +150,14 @@ extension _SyncWidgets on _BackupPageState {
                   onRestore: _onTapIcloudRestore,
                 ),
               ),
-            if (_webdavSet && channel != _SyncDest.webdav)
+            if (SyncRemotes.hasWebdav && channel != _SyncDest.webdav)
               SettingsRow(
                 _SyncDest.webdav.name,
                 () => _manualRow(
                   _SyncDest.webdav.icon,
                   _SyncDest.webdav.name,
+                  subtitle: _webdavSubtitle,
+                  onTap: () => _onTapWebdavSetting(context),
                   busy: remoteLoading.value,
                   onRestore: () => _onTapWebdavDl(context),
                   action: libL10n.backup,
@@ -215,11 +232,13 @@ extension _SyncWidgets on _BackupPageState {
             leading: const Icon(Icons.dns_outlined),
             title: Text(libL10n.server),
             subtitle: Text(
-              [SyncRemotes.webdavUrl, SyncRemotes.webdavUser].nonNulls.join(' · '),
+              _webdavSubtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: UIs.textGrey,
             ),
             trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: () => _onTapWebdavSetting(context),
+            onTap: () => _editWebdavAndResync(context),
           ),
         ),
       if (dest == _SyncDest.lkc) ...[
@@ -286,7 +305,12 @@ extension _SyncWidgets on _BackupPageState {
           future: dest == _SyncDest.icloud ? _icloudConflict : null,
           builder: (context, icloudStatus) {
             final scheme = Theme.of(context).colorScheme;
-            final failure = bakSync.lastFailure.value;
+            final failure = bakSync.lastFailure.value ??
+                switch (dest) {
+                  _SyncDest.lkc => lkcLog.lastFailure.value,
+                  _SyncDest.icloud || _SyncDest.webdav => fileLog.lastFailure.value,
+                  _SyncDest.off => null,
+                };
             final at = bakSync.syncCheckpoint?.$3;
             final last = at == null ? null : l10n.syncLastAt(DateTime.fromMillisecondsSinceEpoch(at).ymdhms());
             // A word for the state; what it is about, or when it last went
@@ -320,7 +344,12 @@ extension _SyncWidgets on _BackupPageState {
                 Colors.orange,
                 l10n.syncStateFailed,
                 syncFailureText(failure) ?? '$failure',
-                null,
+                dest == _SyncDest.webdav
+                    ? () => _editWebdavAndResync(
+                        context,
+                        initialError: syncFailureText(failure) ?? '$failure',
+                      )
+                    : null,
               ),
               _ when icloudStatus.data ?? false => (
                 Icons.warning_rounded,
@@ -391,6 +420,8 @@ extension _SyncWidgets on _BackupPageState {
   Widget _manualRow(
     IconData icon,
     String title, {
+    String? subtitle,
+    VoidCallback? onTap,
     required VoidCallback onRestore,
     String? action,
     VoidCallback? onAction,
@@ -399,6 +430,15 @@ extension _SyncWidgets on _BackupPageState {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
+      subtitle: subtitle == null || subtitle.isEmpty
+          ? null
+          : Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: UIs.textGrey,
+            ),
+      onTap: busy ? null : onTap,
       trailing: busy
           ? SizedLoading.small
           : Row(
@@ -463,21 +503,76 @@ extension _SyncActions on _BackupPageState {
         _refreshIcloudStatus();
         return _syncWent();
       case _SyncDest.webdav:
-        if (!_webdavSet) {
-          await _onTapWebdavSetting(context);
-          if (!mounted) return false;
+        final prevFailure = bakSync.lastFailure.value;
+        final prevTooNew = BakSyncer.remoteTooNew.value;
+        final triedIds = <String>{};
+        void rollbackAttempt() {
+          if (_SyncDest.current == _SyncDest.webdav) return;
+          for (final id in triedIds) {
+            SyncKeyring.release(id);
+          }
+          bakSync.lastFailure.value = prevFailure;
+          BakSyncer.remoteTooNew.value = prevTooNew;
         }
-        if (!_webdavSet) {
-          Toast.show(l10n.webdavSettingEmpty);
-          return false;
+        if (!SyncRemotes.hasWebdav) {
+          final outcome = await _onTapWebdavSetting(context);
+          if (!mounted || outcome != _WebdavEditOutcome.saved || !SyncRemotes.hasWebdav) {
+            return false;
+          }
         }
-        remoteLoading.value = true;
-        try {
-          await bakSync.sync(rs: SyncRemotes.webdav, throttleMilli: 0);
-        } finally {
-          if (mounted) remoteLoading.value = false;
+        while (mounted && SyncRemotes.hasWebdav) {
+          if (fileLog.storeIdOf(SyncRemotes.webdav) case final id?) {
+            triedIds.add(id);
+          }
+          Object? err;
+          remoteLoading.value = true;
+          try {
+            await bakSync.sync(rs: SyncRemotes.webdav, throttleMilli: 0);
+            err = bakSync.lastFailure.value;
+          } catch (e, s) {
+            Loggers.app.warning('Enable WebDAV sync failed', e, s);
+            bakSync.lastFailure.value = e;
+            err = e;
+          } finally {
+            if (mounted) remoteLoading.value = false;
+          }
+          if (err == null) return true;
+          if (_isSyncKeyOrVersionFailure(err)) {
+            _syncWent();
+            rollbackAttempt();
+            return false;
+          }
+          if (!mounted) {
+            rollbackAttempt();
+            return false;
+          }
+          final errText = syncFailureText(err) ?? '$err';
+          final edit = await context.showSheet<bool>(
+            title: l10n.syncStateFailed,
+            child: Text(errText),
+            actions: [
+              TextButton(
+                onPressed: () => context.popSheet(false),
+                child: Text(libL10n.close),
+              ),
+              FilledButton.tonal(
+                onPressed: () => context.popSheet(true),
+                child: Text(libL10n.edit),
+              ),
+            ],
+          );
+          if (edit != true || !mounted) {
+            rollbackAttempt();
+            return false;
+          }
+          final outcome = await _onTapWebdavSetting(context, initialError: errText);
+          if (outcome != _WebdavEditOutcome.saved) {
+            rollbackAttempt();
+            return false;
+          }
         }
-        return _syncWent();
+        rollbackAttempt();
+        return false;
       case _SyncDest.lkc:
         if (!Lkc.client.signedIn) {
           unawaited(LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)));
@@ -508,8 +603,17 @@ extension _SyncActions on _BackupPageState {
     }
   }
 
-  bool get _webdavSet =>
-      SyncRemotes.webdavUrl != null && SyncRemotes.webdavUser != null && SyncRemotes.webdavPwd != null;
+  String get _webdavSubtitle => [SyncRemotes.webdavUrl, SyncRemotes.webdavUser].nonNulls.join(' · ');
+
+  Future<void> _editWebdavAndResync(
+    BuildContext context, {
+    String? initialError,
+  }) async {
+    final outcome = await _onTapWebdavSetting(context, initialError: initialError);
+    if (mounted && outcome == _WebdavEditOutcome.saved && _SyncDest.current == _SyncDest.webdav) {
+      unawaited(_syncNow());
+    }
+  }
 
   /// The backup and the log, now; what went wrong is the status line's.
   Future<void> _syncNow() async {

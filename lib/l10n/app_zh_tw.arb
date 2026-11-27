@@ -2142,5 +2142,7 @@
   "uptimerMinIntervalHint": "最小 {sec} 秒",
   "uptimerSchedule": "排程",
   "uptimerHttpRequest": "HTTP 請求",
-  "uptimerResponseValidation": "回應驗證"
+  "uptimerResponseValidation": "回應驗證",
+  "webdavRemoveConfirm": "清除已儲存的 WebDAV 位址與憑據？遠端備份不會刪除。",
+  "webdavRemoveActiveConfirm": "清除已儲存的 WebDAV 位址與憑據並關閉自動同步？遠端備份不會刪除。"
 }
