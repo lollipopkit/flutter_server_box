@@ -3,10 +3,12 @@
 //! store tree and the catalog the agent embeds. The reader's own rules are
 //! tested beside it, in fl_lib.
 
+use std::collections::HashSet;
 use std::path::Path;
 
-use fl_theme::repo::{Catalog, Index};
+use fl_theme::repo::{Catalog, Index, archive_url_of, https_url};
 use indexmap::IndexMap;
+use toml::{Table, Value};
 
 fn root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/.."))
@@ -40,8 +42,26 @@ fn every_store_theme_in_this_repository_installs() {
 
 #[test]
 fn the_shipped_catalog_reads() {
-    let c = Catalog::parse(&std::fs::read(root().join("assets/catalog/repos.toml")).unwrap(), None).unwrap();
-    assert_eq!(c.repos, ["https://serverbox.lollipopkit.com/store.tar.gz"]);
+    let bytes = std::fs::read(root().join("assets/catalog/repos.toml")).unwrap();
+    let c = Catalog::parse(&bytes, None).unwrap();
+    let raw: Table = std::str::from_utf8(&bytes).unwrap().parse().unwrap();
+    let raw_repos = raw.get("repo").and_then(Value::as_array).unwrap();
+    assert_eq!(c.repos.len(), raw_repos.len(), "duplicate repository entries in assets/catalog/repos.toml");
+
+    // Official store must stay first: stacks and desk catalogs resolve ID collisions first-seen-wins.
+    let official = "https://serverbox.lollipopkit.com/store.tar.gz";
+    assert_eq!(c.repos.first().map(String::as_str), Some(official));
+    assert_eq!(archive_url_of(official), official);
+
+    let mut archives = HashSet::new();
+    for url in &c.repos {
+        let archive = archive_url_of(url);
+        let parsed = https_url(&archive).unwrap_or_else(|e| panic!("{url} -> {archive}: {e}"));
+        assert!(parsed.query().is_none(), "{url} must not carry a query string: {archive}");
+        let path = parsed.path().to_ascii_lowercase();
+        assert!(path.ends_with(".tar.gz") || path.ends_with(".tgz"), "{url} -> {archive}");
+        assert!(archives.insert(archive.clone()), "duplicate archive target in assets/catalog/repos.toml: {url} -> {archive}");
+    }
 }
 
 #[test]
