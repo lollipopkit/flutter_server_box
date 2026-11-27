@@ -37,6 +37,7 @@ void main() {
 
   late Directory docDir;
   late HttpServer server;
+  late SyncKeyHandle testKeyHandle;
   Completer<void>? hangProbe;
 
   setUpAll(() async {
@@ -64,6 +65,11 @@ void main() {
     SqliteDb.openInMemory();
     await Stores.init();
     SyncRecorder.resetForTest();
+    // Initialize SyncKeyring in setUp (real async Zone.root, outside FakeAsync)
+    // so Rust->Dart secret callbacks never deadlock with testWidgets FakeAsync.
+    SyncKeyring.resetForTest();
+    SyncKeyring.init(label: 'ServerBox sync key');
+    testKeyHandle = await keyOf(MemoryKeyFile('webdav-ux-test-key'));
 
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     server.listen((req) async {
@@ -305,8 +311,7 @@ void main() {
     expect(urlField.controller?.text, badUrl);
 
     // Fix URL to /dav/ and verify automatic retry enables WebDAV.
-    final keyHandle = (await tester.runAsync(() => keyOf(MemoryKeyFile('webdav-recover'))))!;
-    BakSyncer.keyForTest = (_) async => keyHandle;
+    BakSyncer.keyForTest = (_) async => testKeyHandle;
     await tester.enterText(find.byType(TextField).at(0), goodUrl);
     await tester.pump();
     await tester.tap(find.text(libL10n.save));
@@ -321,9 +326,8 @@ void main() {
   testWidgets('upload error thrown by bakSync.sync still enters Edit recovery loop and rolls back on cancel', (tester) async {
     final badUrl = 'http://127.0.0.1:${server.port}/';
     SyncRemotes.setWebdav(url: badUrl, user: 'alice', pwd: 'secret');
-    final keyHandle = (await tester.runAsync(() => keyOf(MemoryKeyFile('webdav-upload-err'))))!;
     // Key check succeeds, then backup upload PUT hits 405 on the root path and throws.
-    BakSyncer.keyForTest = (_) async => keyHandle;
+    BakSyncer.keyForTest = (_) async => testKeyHandle;
 
     await pumpSyncPage(tester);
 
@@ -432,8 +436,7 @@ void main() {
     final badUrl = 'http://127.0.0.1:${server.port}/';
     final goodUrl = 'http://127.0.0.1:${server.port}/dav/';
     SyncRemotes.setWebdav(url: badUrl, user: 'alice', pwd: 'secret');
-    final keyHandle = (await tester.runAsync(() => keyOf(MemoryKeyFile('webdav-commit-dismiss'))))!;
-    BakSyncer.keyForTest = (_) async => keyHandle;
+    BakSyncer.keyForTest = (_) async => testKeyHandle;
 
     await pumpSyncPage(tester);
 
@@ -449,6 +452,9 @@ void main() {
 
     final enteredCommit = Completer<void>();
     final releaseCommit = Completer<void>();
+    addTearDown(() {
+      if (!releaseCommit.isCompleted) releaseCommit.complete();
+    });
     BakSyncer.beforeForgetCheckpointForTest = () async {
       if (!enteredCommit.isCompleted) enteredCommit.complete();
       await releaseCommit.future;
