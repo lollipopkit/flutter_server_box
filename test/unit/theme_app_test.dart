@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/theme.dart';
@@ -45,23 +46,79 @@ void main() {
 
   test('the catalog this repository ships is one this build reads', () {
     final file = File(themeCatalogAsset);
-    final catalog = ThemeRepoCatalog.parse(file.readAsBytesSync());
+    final bytes = file.readAsBytesSync();
+    final catalog = ThemeRepoCatalog.parse(bytes);
     expect(
       catalog.repos,
       isNotEmpty,
       reason: 'the bundled catalog offers no repository',
     );
-    // `store/`, served by the website build (scripts/store-tarball.sh).
+    final raw = TomlDocument.parse(utf8.decode(bytes)).toMap();
+    final rawRepos = raw['repo'] as List;
     expect(
-      catalog.repos.single.url.toString(),
+      catalog.repos.length,
+      rawRepos.length,
+      reason: 'duplicate repository entries in $themeCatalogAsset',
+    );
+    // `store/`, served by the website build (scripts/store-tarball.sh), stays
+    // first so the official repository takes precedence over third-party ones.
+    final official = catalog.repos.first.url.toString();
+    expect(
+      official,
       'https://serverbox.lollipopkit.com/store.tar.gz',
-      reason: 'the official repository moved',
+      reason: 'the official repository must stay first',
     );
     expect(
-      ThemeRepos.archiveUrlOf(catalog.repos.single.url.toString()),
-      catalog.repos.single.url.toString(),
+      ThemeRepos.archiveUrlOf(official),
+      official,
       reason: 'an address naming a tarball is fetched as it is',
     );
+    final archives = <String>{};
+    for (final repo in catalog.repos) {
+      final archive = ThemeRepos.archiveUrlOf(repo.url.toString());
+      final parsed = Uri.tryParse(archive);
+      expect(
+        parsed,
+        isNotNull,
+        reason: '${repo.url} must resolve to a valid archive URL',
+      );
+      expect(
+        parsed!.scheme,
+        'https',
+        reason: '${repo.url} must resolve to an HTTPS archive URL',
+      );
+      expect(
+        parsed.host,
+        isNotEmpty,
+        reason: '${repo.url} archive URL must have a host',
+      );
+      expect(
+        parsed.userInfo,
+        isEmpty,
+        reason: '${repo.url} archive URL must not carry credentials',
+      );
+      expect(
+        parsed.hasQuery,
+        isFalse,
+        reason: '${repo.url} must not carry a query string',
+      );
+      expect(
+        parsed.hasFragment,
+        isFalse,
+        reason: '${repo.url} must not carry a fragment',
+      );
+      final path = parsed.path.toLowerCase();
+      expect(
+        path.endsWith('.tar.gz') || path.endsWith('.tgz'),
+        isTrue,
+        reason: '${repo.url} must resolve to a .tar.gz or .tgz archive: $archive',
+      );
+      expect(
+        archives.add(archive),
+        isTrue,
+        reason: 'duplicate archive target in $themeCatalogAsset: ${repo.url} -> $archive',
+      );
+    }
   });
 
   test('the reference theme can be listed under the id it declares', () {
