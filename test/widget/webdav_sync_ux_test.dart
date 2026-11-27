@@ -15,7 +15,6 @@ import 'package:server_box/core/sync/remotes.dart';
 import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/view/page/backup.dart';
@@ -111,6 +110,7 @@ void main() {
     await server.close(force: true);
     await PrefProps.webdavSync.set(false);
     await PrefProps.icloudSync.set(false);
+    BakSyncer.beforeForgetCheckpointForTest = null;
     await BakSyncer.forgetCheckpoint();
     bakSync.forgetInheritForTest();
     bakSync.lastFailure.value = null;
@@ -247,7 +247,10 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), goodUrl);
     await tester.pump();
     await tester.tap(find.text(libL10n.save));
-    await waitUntil(tester, () => SyncRemotes.webdavUrl == goodUrl);
+    await waitUntil(
+      tester,
+      () => SyncRemotes.webdavUrl == goodUrl && find.byKey(const ValueKey('webdav_url_input')).evaluate().isEmpty,
+    );
 
     expect(SyncRemotes.webdavUrl, goodUrl);
     expect(find.text('$goodUrl · alice'), findsOneWidget);
@@ -260,7 +263,10 @@ void main() {
 
     expect(find.text(AppLocalizationsEn().webdavRemoveConfirm), findsOneWidget);
     await tester.tap(find.text(libL10n.ok));
-    await waitUntil(tester, () => !SyncRemotes.hasWebdav);
+    await waitUntil(
+      tester,
+      () => !SyncRemotes.hasWebdav && find.byKey(const ValueKey('webdav_url_input')).evaluate().isEmpty,
+    );
 
     expect(SyncRemotes.hasWebdav, isFalse);
     expect(find.text('$goodUrl · alice'), findsNothing);
@@ -419,6 +425,65 @@ void main() {
 
     await tester.tap(find.text(libL10n.cancel));
     await pumpAnim(tester);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('dismissing sheet during post-save cleanup still waits and returns saved outcome', (tester) async {
+    final badUrl = 'http://127.0.0.1:${server.port}/';
+    final goodUrl = 'http://127.0.0.1:${server.port}/dav/';
+    SyncRemotes.setWebdav(url: badUrl, user: 'alice', pwd: 'secret');
+    final keyHandle = (await tester.runAsync(() => keyOf(MemoryKeyFile('webdav-commit-dismiss'))))!;
+    BakSyncer.keyForTest = (_) async => keyHandle;
+
+    await pumpSyncPage(tester);
+
+    // Trigger 405 failure when switching channel to WebDAV, then tap Edit.
+    await tester.tap(find.text(AppLocalizationsEn().syncChannel));
+    await pumpAnim(tester);
+    await tester.tap(find.text('WebDAV').last);
+    await waitUntil(tester, () => find.text(AppLocalizationsEn().syncStateFailed).evaluate().isNotEmpty);
+
+    await tester.tap(find.text(libL10n.edit));
+    await pumpAnim(tester);
+    await pumpAnim(tester);
+
+    final enteredCommit = Completer<void>();
+    final releaseCommit = Completer<void>();
+    BakSyncer.beforeForgetCheckpointForTest = () async {
+      if (!enteredCommit.isCompleted) enteredCommit.complete();
+      await releaseCommit.future;
+    };
+
+    await tester.enterText(find.byType(TextField).at(0), goodUrl);
+    await tester.pump();
+    await tester.tap(find.text(libL10n.save));
+
+    await waitUntil(tester, () => enteredCommit.isCompleted);
+
+    // Settings have already been saved; Cancel must now be disabled during commit.
+    expect(SyncRemotes.webdavUrl, goodUrl);
+    final cancelBtn = tester.widget<TextButton>(
+      find.ancestor(of: find.text(libL10n.cancel), matching: find.byType(TextButton)),
+    );
+    expect(cancelBtn.onPressed, isNull);
+
+    // PopScope blocks scrim dismissal while commit cleanup is in flight.
+    await tester.tapAt(const Offset(10, 10));
+    await pumpAnim(tester);
+    expect(find.byKey(const ValueKey('webdav_url_input')), findsOneWidget);
+
+    // Even if the sheet is closed externally mid-commit (bypassing PopScope),
+    // the caller waits for cleanup and receives the saved outcome rather than null.
+    SheetX.frontSheet!.close();
+    await pumpAnim(tester);
+    expect(find.byKey(const ValueKey('webdav_url_input')), findsNothing);
+    expect(PrefProps.webdavSync.get(), isFalse);
+
+    releaseCommit.complete();
+    await waitUntil(tester, () => PrefProps.webdavSync.get());
+
+    expect(PrefProps.webdavSync.get(), isTrue);
+    expect(bakSync.lastFailure.value, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }
