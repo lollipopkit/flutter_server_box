@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -7182,6 +7183,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshTooManyKeysWarning => '选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。';
+
+  @override
+  String get webdavRemoveConfirm => '清除已保存的 WebDAV 地址与凭据？远端备份不会删除。';
+
+  @override
+  String get webdavRemoveActiveConfirm =>
+      '清除已保存的 WebDAV 地址与凭据并关闭自动同步？远端备份不会删除。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -14366,4 +14374,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshTooManyKeysWarning => '選擇過多私鑰可能觸發伺服器認證重試上限或導致 IP 被封鎖。';
+
+  @override
+  String get webdavRemoveConfirm => '清除已儲存的 WebDAV 位址與憑據？遠端備份不會刪除。';
+
+  @override
+  String get webdavRemoveActiveConfirm =>
+      '清除已儲存的 WebDAV 位址與憑據並關閉自動同步？遠端備份不會刪除。';
 }

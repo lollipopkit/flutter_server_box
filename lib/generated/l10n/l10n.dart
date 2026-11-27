@@ -12994,6 +12994,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Selecting many keys may hit the server\'s auth retry limit or trigger an IP ban.'**
   String get sshTooManyKeysWarning;
+
+  /// No description provided for @webdavRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the saved WebDAV URL and credentials? Remote backups will not be deleted.'**
+  String get webdavRemoveConfirm;
+
+  /// No description provided for @webdavRemoveActiveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the saved WebDAV URL and credentials and turn off auto sync? Remote backups will not be deleted.'**
+  String get webdavRemoveActiveConfirm;
 }
 
 class _AppLocalizationsDelegate

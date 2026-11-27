@@ -2142,5 +2142,7 @@
   "uptimerSchedule": "检查计划",
   "uptimerHttpRequest": "HTTP 请求",
   "uptimerResponseValidation": "响应校验",
-  "sshTooManyKeysWarning": "选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。"
+  "sshTooManyKeysWarning": "选择过多私钥可能触发服务端认证重试上限或导致 IP 被封禁。",
+  "webdavRemoveConfirm": "清除已保存的 WebDAV 地址与凭据？远端备份不会删除。",
+  "webdavRemoveActiveConfirm": "清除已保存的 WebDAV 地址与凭据并关闭自动同步？远端备份不会删除。"
 }
